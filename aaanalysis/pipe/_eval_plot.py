@@ -182,18 +182,22 @@ def _fig_marginal(df_grid, axes, score_col, figsize):
 
 def _fig_nfilter(df_nf, score_col, std_col, best_coords, figsize):
     """``n_filter`` refinement Figure: score vs n_filter (a line over the dominant-axis winner)."""
-    levels = _axis_levels(df_nf, "n_filter")
-    means = [float(df_nf.loc[_row_mask(df_nf, {"n_filter": v}), score_col].mean()) for v in levels]
+    # Drop levels whose score is undefined (all-NaN) so min/max and the color norm stay finite.
+    pairs = [(v, float(df_nf.loc[_row_mask(df_nf, {"n_filter": v}), score_col].mean()))
+             for v in _axis_levels(df_nf, "n_filter")]
+    pairs = [(v, m) for v, m in pairs if not np.isnan(m)]
+    levels, means = [v for v, _ in pairs], [m for _, m in pairs]
     fig, ax = plt.subplots(figsize=figsize or (6.0, 3.8), constrained_layout=True)
     x = np.arange(len(levels))
-    cmap, norm = plt.get_cmap(STR_CMAP), plt.Normalize(min(means), max(means) if max(means) > min(means) else min(means) + 1e-9)
+    lo, hi = (min(means), max(means)) if means else (0.0, 1.0)
+    cmap, norm = plt.get_cmap(STR_CMAP), plt.Normalize(lo, hi if hi > lo else lo + 1e-9)
     ax.plot(x, means, color="0.6", zorder=1)
     if std_col is not None and std_col in df_nf.columns:
         stds = [float(df_nf.loc[_row_mask(df_nf, {"n_filter": v}), std_col].mean()) for v in levels]
         ax.errorbar(x, means, yerr=stds, fmt="none", ecolor="0.7", capsize=3, zorder=1)
     ax.scatter(x, means, c=[cmap(norm(m)) for m in means], s=90, edgecolors="0.3", zorder=2)
     bx = best_coords.get("n_filter") if best_coords else None
-    bpos = next((i for i, v in enumerate(levels) if v == bx), None)
+    bpos = next((i for i, v in enumerate(levels) if (pd.isna(v) and pd.isna(bx)) or v == bx), None)
     if bpos is not None:
         ax.scatter([bpos], [means[bpos]], marker="*", s=260, c="red", edgecolors="white", zorder=3)
     ax.set_xticks(x)
@@ -280,6 +284,8 @@ def plot_eval(df_eval: pd.DataFrame,
             for combo in _product([_axis_levels(df_grid, a) for a in facet_axes]):
                 coords = dict(zip(facet_axes, combo))
                 sub = df_grid[_row_mask(df_grid, coords)] if facet_axes else df_grid
+                if facet_axes and sub.empty:
+                    continue   # a sparse/correlated sweep can leave a facet combo unpopulated
                 title = ", ".join(f"{DICT_AXIS_LABEL.get(a, a)}={_level_label(a, v)}"
                                   for a, v in coords.items()) or "sensitivity grid"
                 figs.append(_fig_heatmap(sub, x_axis, y_axis, score_col, x_levels, y_levels,
