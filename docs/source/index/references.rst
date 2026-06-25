@@ -37,11 +37,11 @@ AAanalysis Algorithms
    *A fast and elitist multiobjective genetic algorithm: NSGA-II*,
    `IEEE Transactions on Evolutionary Computation <https://doi.org/10.1109/4235.996017>`__.
 
-.. [Yang19] Yang, Wu and Arnold (2019),
-   *Machine-learning-guided directed evolution for protein engineering*,
-   `Nature Methods <https://doi.org/10.1038/s41592-019-0496-6>`__.
+.. [Wittmann21] Wittmann, Johnston, Wu and Arnold (2021),
+   *Advances in machine learning for directed evolution*,
+   `Current Opinion in Structural Biology <https://doi.org/10.1016/j.sbi.2021.01.008>`__.
 
-.. [DeNovoReview26] (2026),
+.. [Yang26] Yang *et al.* (2026),
    *The past, present and future of de novo protein design*,
    `Nature <https://doi.org/10.1038/s41586-026-10328-7>`__.
 

@@ -112,13 +112,14 @@ class SeqOpt(Tool):
     multi-objective directed evolution over sequence variants [Breimann24a]_.
 
     ``SeqOpt`` performs **protein engineering**, not **de novo protein design**. The two are
-    distinct paradigms: *de novo design* generates entirely new proteins from scratch -- typically
-    a structure-first deep-learning pipeline such as **RFdiffusion** [Watson23]_ (backbone
-    generation) -> **ProteinMPNN** [Dauparas22]_ (sequence design) -> **AlphaFold** [Jumper21]_
-    (in-silico validation) -- reviewed in [DeNovoReview26]_. *Protein engineering* instead
-    **optimizes an existing sequence** by mutation. ``SeqOpt`` is the **machine-learning-guided
-    directed-evolution** flavour of engineering [Yang19]_: it proposes mutations, scores them with
-    a model, and iterates -- here as a multi-objective evolutionary search.
+    distinct paradigms: *de novo design* builds **new proteins from the ground up** rather than
+    repurposing an existing one -- typically a structure-first deep-learning pipeline such as
+    **RFdiffusion** [Watson23]_ (backbone generation) -> **ProteinMPNN** [Dauparas22]_ (sequence
+    design) -> **AlphaFold** [Jumper21]_ (in-silico validation), reviewed in [Yang26]_. *Protein
+    engineering* instead **optimizes an existing sequence** through iterative mutation and
+    selection (directed evolution). ``SeqOpt`` is the **machine-learning-guided** flavour
+    [Wittmann21]_: a model predicts variant fitness so the search prioritizes which mutations to
+    make -- here as a multi-objective evolutionary search.
 
     ``SeqOpt`` is the **search/optimization** counterpart of :class:`SeqMut`: where ``SeqMut``
     *scores* mutations, ``SeqOpt`` *searches* the space of multi-mutation variants of a single
