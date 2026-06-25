@@ -380,7 +380,9 @@ class ShapModel(Wrapper):
             If ``True``, verbose outputs are enabled.
         random_state : int, optional
             The seed used by the random number generator. If a positive integer, results of stochastic processes are
-            consistent, enabling reproducibility. If ``None``, stochastic processes will be truly random.
+            consistent, enabling reproducibility. If ``None``, stochastic processes will be truly random. For
+            ``fuzzy_aggregation='interpolate'`` it is the initial seed and each round re-seeds with
+            ``random_state + round`` (see :meth:`ShapModel.fit` Notes).
 
         Notes
         -----
@@ -555,10 +557,19 @@ class ShapModel(Wrapper):
           per-cell threshold ``<= p`` and the per-cell SHAP matrices are averaged — the sweep of [Breimann25]_. Because
           the grid is non-uniform on (0, 1], the effective positive-fraction is a *biased* approximation of ``p``.
 
+        **Per-round seeding (interpolate only)**
+
+        The constructor ``random_state`` is the initial seed, and ``'interpolate'`` re-seeds **each round** with
+        ``random_state + round`` (round 0 -> ``random_state``, round 1 -> ``random_state + 1``, ...). So every round
+        fits a *different* model and ``n_rounds`` averages a Monte-Carlo mean over model variance, yet a fixed
+        ``random_state`` gives the identical seed sequence and therefore an exactly reproducible result;
+        ``random_state=None`` draws fresh entropy each round (truly-random, non-reproducible). The ``'threshold'``
+        estimator and the non-fuzzy Monte-Carlo path do **not** re-seed per round — they bake ``random_state`` in once,
+        so their per-round variation comes from the threshold grid, not from the model seed.
+
         **Choosing n_rounds for 'interpolate'**
 
-        Each round re-seeds the model fit (``random_state + round``), so ``n_rounds`` averages a Monte-Carlo mean over
-        model variance (reproducible for a fixed ``random_state``):
+        Because each round re-seeds, ``n_rounds`` is a speed/stability dial:
 
         * ``n_rounds=1`` -- the exact two-fit point estimate; fastest, but a single model draw (run-to-run spread ~20%
           across seeds).
