@@ -140,21 +140,26 @@ class TestCrowdingParity:
 
 
 class TestSelectNsga2Parity:
-    @settings(max_examples=15, deadline=None)
-    @given(seed=some.integers(0, 200), n=some.integers(6, 25), m=some.integers(2, 3))
-    def test_survivor_set_matches_deap(self, seed, n, m):
-        # selNSGA2 is identical UP TO crowding ties on the partial front (DEAP breaks ties by
-        # front-appearance order, we by index — both valid). So we assert the selected
-        # rank/crowding *profile* is identical: the multiset of (rank, crowding) of the
-        # survivors matches, which is equivalence modulo arbitrary tie-breaks.
-        W = _rand_W(seed, n, m)
-        mu = max(2, n // 2)
+    def _rank_crowd(self, W):
         _, rank = fast_non_dominated_sort(W)
         crowd = np.zeros(len(W))
         for front in fast_non_dominated_sort(W)[0]:
             d = crowding_distance(W, front)
             for idx, member in enumerate(front):
                 crowd[member] = d[idx]
+        return rank, crowd
+
+    @settings(max_examples=30, deadline=None)
+    @given(seed=some.integers(0, 400), n=some.integers(6, 25), m=some.integers(2, 3))
+    def test_survivor_profile_matches_deap_continuous(self, seed, n, m):
+        # selNSGA2 always keeps the same *rank/crowding profile* as DEAP (the multiset of
+        # (rank, crowding) of the survivors is identical). The exact survivor SET can differ
+        # ONLY when a front is truncated across equally-crowded individuals — note even
+        # continuous objectives tie at the boundary points (all inf crowding) — and that
+        # tie-break is arbitrary in DEAP too (both selections are equally valid NSGA-II).
+        W = _rand_W(seed, n, m)
+        mu = max(2, n // 2)
+        rank, crowd = self._rank_crowd(W)
 
         def profile(idxs):
             return sorted((int(rank[i]), round(float(crowd[i]), 9)) for i in idxs)
@@ -162,6 +167,20 @@ class TestSelectNsga2Parity:
         theirs = profile(_deap_select(W, mu))
         assert profile(select_nsga2(W, mu)[0]) == theirs
         assert profile(select_nsga2_engine(W, mu, engine="fast")[0]) == theirs
+
+    @settings(max_examples=15, deadline=None)
+    @given(seed=some.integers(0, 200), n=some.integers(6, 25), m=some.integers(2, 3))
+    def test_survivor_rank_distribution_matches_deap_with_ties(self, seed, n, m):
+        # Under heavy integer ties (duplicate fitness vectors) the exact survivor set is
+        # arbitrary (so is DEAP's), but both fill fronts in rank order, so the survivors'
+        # rank distribution (how many from each front) is identical — the front structure
+        # of the selection is preserved.
+        W = _rand_W_ties(seed, n, m)
+        mu = max(2, n // 2)
+        rank, _ = self._rank_crowd(W)
+        ours = sorted(int(rank[i]) for i in select_nsga2(W, mu)[0])
+        theirs = sorted(int(rank[i]) for i in _deap_select(W, mu))
+        assert ours == theirs
 
     def test_engines_agree_on_survivor_order(self):
         W = _rand_W(7, 20, 2)
