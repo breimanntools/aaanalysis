@@ -54,6 +54,16 @@ deprecation cycle.
 - **D7 — Enriched `df_eval` contract.** One `mean`/`std` column **per metric**, plus `stage`,
   `is_pareto` (Pareto-optimal within its stage), `rank`, and `is_selected` (the single winner).
 
+- **D8 — Publication eval figures via `ax.eval`.** `plot_eval` (refines #251's `aap.plot_eval`)
+  **decomposes** the structural sweep into a set of **separate** publication-ready figures: the two
+  most-informative axes (largest marginal-mean impact) form each 2D `viridis` heatmap, the
+  least-informative axis is the slice (one figure per level), all sharing one color scale with the
+  winner starred — plus a marginal-impact bar panel and an `n_filter` panel. `find_features` attaches
+  the list to the returned feature-map `Axes` as **`ax.eval`** (empty for `fast`), preserving the
+  uniform `(df_feat, ax, df_eval)` triple while letting users save each figure individually. This
+  amends ADR-0041's return slot (the `figs` slot may carry auxiliary figures on the primary `Axes`)
+  and supersedes #251's single faceted figure for the find_features path.
+
 ## Rejected alternatives
 
 - **One-axis-at-a-time (OAT) sensitivity** (additive cost ≈ `|Part|+|Split|+|Scale|`). Cheaper, but

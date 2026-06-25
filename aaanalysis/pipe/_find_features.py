@@ -21,6 +21,7 @@ import aaanalysis.utils as ut
 from aaanalysis.feature_engineering import SequenceFeature, CPP, CPPGrid, CPPPlot
 from aaanalysis.explainable_ai import TreeModel
 from aaanalysis.data_handling import load_scales
+from ._eval_plot import plot_eval
 
 
 # I Helper Functions
@@ -290,7 +291,8 @@ def find_features(labels: ut.ArrayLike1D,
     name_ref : str, default="REF"
         Display name of the reference/negative group in the feature map.
     plot : bool, default=True
-        If ``True``, draw the CPP feature map and return its ``Axes``; if ``False``, return ``None``.
+        If ``True``, draw the CPP feature map (returned as ``ax``) and the publication eval figures
+        (attached as ``ax.eval``); if ``False``, draw nothing and return ``None``.
     random_state : int, optional
         The seed used by the random number generator. If a positive integer, results of stochastic
         processes are reproducible.
@@ -306,7 +308,10 @@ def find_features(labels: ut.ArrayLike1D,
         Feature DataFrame of the selected configuration in the canonical CPP schema, ranked by
         tree-based importance.
     ax : matplotlib.axes.Axes or None
-        The feature-map ``Axes`` if ``plot=True``, else ``None`` (Figure via ``ax.figure``).
+        The feature-map ``Axes`` if ``plot=True``, else ``None``. When a search was run, the
+        publication eval figures are attached as ``ax.eval`` (a list of
+        :class:`matplotlib.figure.Figure`; empty for a single-configuration ``fast`` search) — see
+        :func:`plot_eval`.
     df_eval : pd.DataFrame
         Per-configuration sweep table: the configuration descriptors, one ``<metric>_mean`` /
         ``<metric>_std`` column per metric, plus ``stage``, ``is_pareto`` (Pareto-optimal within its
@@ -365,6 +370,10 @@ def find_features(labels: ut.ArrayLike1D,
     if plot:
         _, ax = CPPPlot(df_scales=df_scales_all, verbose=verbose).feature_map(
             df_feat=df_feat, name_test=name_test, name_ref=name_ref)
+        # The feature map is the primary figure (returned as ``ax``); the publication eval figures
+        # are attached as ``ax.eval`` (a list — empty for a single-configuration ``fast`` search) so
+        # the user can save each individually. This keeps the uniform (df_feat, ax, df_eval) triple.
+        ax.eval = plot_eval(df_eval)
     return df_feat, ax, df_eval
 
 

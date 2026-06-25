@@ -277,6 +277,18 @@ class TestFindFeaturesComplex:
                                            random_state=1, n_jobs=1)
         assert len(df_feat) <= 8 and isinstance(ax, Axes)
 
+    def test_fast_ax_eval_empty(self):
+        from matplotlib.figure import Figure
+        _, ax, _ = aap.find_features(labels, df_seq=df_seq, search="fast", plot=True,
+                                     random_state=0, n_jobs=1)
+        assert isinstance(ax, Axes) and ax.eval == []
+
+    def test_balanced_ax_eval_publication_figures(self):
+        from matplotlib.figure import Figure
+        _, ax, _ = aap.find_features(labels, df_seq=df_seq, search="balanced",
+                                     kws={"n_split_max": 15}, plot=True, random_state=0, n_jobs=1)
+        assert len(ax.eval) >= 1 and all(isinstance(f, Figure) for f in ax.eval)
+
 
 class TestFindFeaturesHelpers:
     """Unit tests for the internal selection / sensitivity helpers."""
