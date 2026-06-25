@@ -89,6 +89,27 @@ def _per_obj_best(F, goals, rank) -> List[float]:
     return out
 
 
+def _per_obj_worst(F, goals) -> List[float]:
+    """Worst raw value per objective over the population (the opposite extreme of the goal)."""
+    F = np.asarray(F, dtype=float)
+    return [float(F[:, j].min() if g == ut.LIST_OBJECTIVE_GOALS[0] else F[:, j].max())
+            for j, g in enumerate(goals)]
+
+
+def _update_archive(archive, genomes, F, goals):
+    """Keep the running cumulative non-dominated set (DEAP ParetoFront analogue), unbounded.
+
+    Adds the newly-evaluated genomes, then prunes the archive back to its non-dominated members
+    so no best-ever solution is lost to per-generation crowding truncation.
+    """
+    for g, row in zip(genomes, np.asarray(F, dtype=float)):
+        archive[canonical(g)] = (g, row)
+    keys = list(archive)
+    Wa = normalize_objectives_(np.array([archive[k][1] for k in keys], dtype=float), goals)
+    _, rank = fast_non_dominated_sort(Wa)
+    return {keys[i]: archive[keys[i]] for i in range(len(keys)) if rank[i] == 0}
+
+
 def _front_rank_crowding(W, engine="exact") -> Tuple[np.ndarray, np.ndarray]:
     """Assign every row its non-dominated rank and crowding distance (engine-aware)."""
     if engine == ut.LIST_SEQOPT_ENGINE[1]:              # "fast"
@@ -142,9 +163,12 @@ def evolve_nsga2(wt_seq: str,
     # generations -- under (mu+lambda) elitism the first front never worsens, so the trace is
     # non-decreasing (the convergence KPI).
     hv_ref = W.min(axis=0) - 1e-9
+    archive = _update_archive({}, pop, F, goals)
     trajectory = [hypervolume(W, ref=hv_ref)]
     spread_traj = [spread(W)]
     best_traj = [_per_obj_best(F, goals, rank)]
+    mean_traj = [list(F.mean(axis=0))]
+    worst_traj = [_per_obj_worst(F, goals)]
     for _gen in range(n_gen):
         weights = guide_fn(pop)
         parent_idx = dcd_tournament(rank, crowding, pop_size, rng)
@@ -153,6 +177,7 @@ def evolve_nsga2(wt_seq: str,
                                cx_prob, mut_prob, crossover, mutation, weights, pop_size)
         F_off = np.asarray(fitness_fn(offspring), dtype=float)
         hof = _update_hof(hof, offspring, F_off, goals, hof_size)
+        archive = _update_archive(archive, offspring, F_off, goals)
         if survival == ut.LIST_SEQOPT_SURVIVAL[2]:      # "ea_simple" — generational replacement
             pop, F = offspring, F_off
         else:
@@ -169,9 +194,16 @@ def evolve_nsga2(wt_seq: str,
         trajectory.append(hypervolume(W, ref=hv_ref))
         spread_traj.append(spread(W))
         best_traj.append(_per_obj_best(F, goals, rank))
+        mean_traj.append(list(F.mean(axis=0)))
+        worst_traj.append(_per_obj_worst(F, goals))
     hall_of_fame = [g for _p, g in sorted(hof.values(), key=lambda t: -t[0])]
+    arch_genomes = [g for g, _row in archive.values()]
+    arch_F = np.array([row for _g, row in archive.values()], dtype=float) if archive else \
+        np.empty((0, len(goals)))
     return {"genomes": pop, "F": F, "rank": rank, "crowding": crowding,
             "spread_trajectory": spread_traj, "best_trajectory": best_traj,
+            "mean_trajectory": mean_traj, "worst_trajectory": worst_traj,
+            "pareto_archive": (arch_genomes, arch_F),
             "trajectory": trajectory, "hall_of_fame": hall_of_fame}
 
 

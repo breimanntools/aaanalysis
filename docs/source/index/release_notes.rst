@@ -40,9 +40,15 @@ Added
   predictor (a scikit / torch model, or a sequence-level tool / web API) can be
   optimized jointly with the model-on-features objectives (results cached per
   variant). **Visualization**: ``SeqOptPlot`` adds ``convergence`` (per-generation
-  hypervolume + spread + per-objective best, from ``SeqOpt.history_``), a 3-D
-  ``pareto_front`` (optional ``z``), and ``parallel_coordinates`` for many-objective
-  fronts (alongside the 2-D ``pareto_front`` and ``hypervolume`` trace).
+  hypervolume + spread + per-objective best/mean/worst **fitness band**, from
+  ``SeqOpt.history_``), a 3-D ``pareto_front`` (optional ``z``),
+  ``parallel_coordinates`` for many-objective fronts, and ``mutation_map`` (a
+  position x amino-acid substitution-enrichment heatmap across the front — the
+  directed-evolution view), alongside the 2-D ``pareto_front`` and ``hypervolume``
+  trace. ``run`` also keeps a **cumulative Pareto archive**, so the returned
+  ``rank=0`` front is the best-ever non-dominated set (none lost to crowding); the
+  ``engine="fast"`` non-dominated sort is memory-bounded (chunked) for large
+  populations.
 
 **Data Handling**
 

@@ -15,7 +15,7 @@ from aaanalysis.protein_design import SeqMut
 from aaanalysis.explainable_ai_pro import ShapModel
 from ._backend.seqopt.genome import canonical, apply_genome, variant_label
 from ._backend.seqopt.run import evolve_nsga2, evolve_greedy
-from ._backend.seqopt.nsga2 import normalize_objectives_
+from ._backend.seqopt.nsga2 import normalize_objectives_, rank_and_crowding
 from ._backend.seqopt.metrics import hypervolume, spread, convergence
 from ._backend.seqopt.penalty import apply_penalty
 
@@ -496,17 +496,37 @@ class SeqOpt(Tool):
         self.hall_of_fame_ = [variant_label(wt_seq, g) for g in res.get("hall_of_fame", [])]
         # Per-generation history (hypervolume + spread + per-objective best front value).
         self.history_ = self._build_history(res, names)
-        df_pareto = self._build_output(res, wt_entry, wt_seq, names)
+        df_pareto = self._build_output(res, wt_entry, wt_seq, names, goals)
         if self._verbose:
             n_front = int((df_pareto[ut.COL_RANK] == 0).sum())
             ut.print_out(f"SeqOpt ({self._mode}/{algorithm}) returned {len(df_pareto)} variants "
                          f"({n_front} on the Pareto front).")
         return df_pareto
 
-    def _build_output(self, res, wt_entry, wt_seq, names):
-        """Assemble df_pareto from the evolve result (genomes + objective matrix + rank/crowd)."""
-        genomes, F = res["genomes"], np.asarray(res["F"], dtype=float)
-        rank, crowding = res["rank"], res["crowding"]
+    def _build_output(self, res, wt_entry, wt_seq, names, goals):
+        """Assemble df_pareto from the evolve result (final population + cumulative archive).
+
+        The cumulative non-dominated archive is merged into the final population before fronts
+        are recomputed, so the returned ``rank=0`` front is the **best-ever** non-dominated set
+        (no solution lost to per-generation crowding), not just the final population's front.
+        """
+        genomes = list(res["genomes"])
+        F = np.asarray(res["F"], dtype=float)
+        arch_g, arch_F = res.get("pareto_archive", ([], np.empty((0, len(names)))))
+        if len(arch_g):
+            genomes = genomes + list(arch_g)
+            F = np.vstack([F, np.asarray(arch_F, dtype=float)])
+        # Deduplicate genomes, then recompute rank/crowding over the merged set.
+        seen, keep = set(), []
+        for i, g in enumerate(genomes):
+            key = canonical(g)
+            if key not in seen:
+                seen.add(key)
+                keep.append(i)
+        genomes = [genomes[i] for i in keep]
+        F = F[keep]
+        W = normalize_objectives_(F, goals)
+        rank, crowding = rank_and_crowding(W)
         data = {ut.COL_ENTRY: [wt_entry] * len(genomes),
                 ut.COL_VARIANT: [variant_label(wt_seq, g) for g in genomes],
                 ut.COL_N_MUT: [len(g) for g in genomes],
@@ -530,10 +550,18 @@ class SeqOpt(Tool):
         best = res.get("best_trajectory")
         data = {ut.COL_GENERATION: list(range(len(hv))),
                 ut.COL_HYPERVOLUME: hv, ut.COL_SPREAD: sp}
+        mean = res.get("mean_trajectory")
+        worst = res.get("worst_trajectory")
         if best is not None and len(best):
             best = np.asarray(best, dtype=float)
+            mean = np.asarray(mean, dtype=float) if mean is not None and len(mean) else None
+            worst = np.asarray(worst, dtype=float) if worst is not None and len(worst) else None
             for j, name in enumerate(names):
                 data[f"best_{name}"] = best[:, j]
+                if mean is not None:
+                    data[f"mean_{name}"] = mean[:, j]
+                if worst is not None:
+                    data[f"worst_{name}"] = worst[:, j]
         return pd.DataFrame(data)
 
     def eval(self,

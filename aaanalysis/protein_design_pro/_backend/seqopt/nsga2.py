@@ -211,20 +211,38 @@ def select_nsga2(W, mu) -> Tuple[List[int], np.ndarray, np.ndarray]:
 
 
 # III Fast (vectorized) engine — numerically identical fronts, numpy-vectorized for speed
+def _dominance_matrix(W, max_cells=4_000_000):
+    """Boolean ``dom[i, j] = i dominates j`` via row-chunks (caps the (block, n, m) transient).
+
+    Computing the full ``(n, n, m)`` broadcast at once costs O(n^2 m) transient memory; chunking
+    the first axis keeps it at O(block * n * m) while the stored result is the lean ``(n, n)``
+    boolean matrix. ``max_cells`` bounds the transient (block adapts to n * m).
+    """
+    W = np.asarray(W, dtype=float)
+    n, m = W.shape
+    dom = np.zeros((n, n), dtype=bool)
+    block = max(1, min(n, int(max_cells // max(n * m, 1))))
+    for s in range(0, n, block):
+        e = min(s + block, n)
+        sub = W[s:e]
+        ge = (sub[:, None, :] >= W[None, :, :]).all(axis=2)     # (block, n)
+        gt = (sub[:, None, :] > W[None, :, :]).any(axis=2)
+        dom[s:e] = ge & gt
+    return dom
+
+
 def fast_non_dominated_sort_vec(W) -> Tuple[List[List[int]], np.ndarray]:
     """Vectorized fast non-dominated sort (``engine='fast'``).
 
     Produces the **same** fronts and ranks as :func:`fast_non_dominated_sort` (same dominance
-    relation, same ascending-index order within a front) by computing the full pairwise
-    dominance matrix with numpy broadcasting instead of a Python double loop.
+    relation, same ascending-index order within a front), computing the pairwise dominance
+    matrix with numpy in **row-chunks** (memory-bounded) instead of a Python double loop.
     """
     W = np.asarray(W, dtype=float)
     n = W.shape[0]
     if n == 0:
         return [], np.zeros(0, dtype=int)
-    ge = np.all(W[:, None, :] >= W[None, :, :], axis=2)
-    gt = np.any(W[:, None, :] > W[None, :, :], axis=2)
-    dom = ge & gt                       # dom[i, j] == True  <=>  i dominates j
+    dom = _dominance_matrix(W)          # dom[i, j] == True  <=>  i dominates j
     remaining = dom.sum(axis=0)         # how many points dominate j
     rank = np.zeros(n, dtype=int)
     placed = np.zeros(n, dtype=bool)

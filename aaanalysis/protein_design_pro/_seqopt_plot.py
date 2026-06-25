@@ -4,6 +4,7 @@ multi-objective directed-evolution results: the Pareto-front objective scatter a
 per-generation hypervolume convergence trace.
 """
 from typing import Optional, Tuple, List
+import re
 import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
@@ -210,9 +211,17 @@ class SeqOptPlot:
         if ut.COL_SPREAD in history:
             axes[1].plot(gen, history[ut.COL_SPREAD], marker="o", markersize=3, color="C1")
         axes[1].set_ylabel(ut.COL_SPREAD)
-        for c in best_cols:
-            axes[2].plot(gen, history[c], marker="o", markersize=3, label=c[len("best_"):])
-        axes[2].set_ylabel("best objective")
+        # Per-objective best line + (when tracked) the population mean line and min-max band —
+        # the classic GA "fitness over generations" view.
+        for i, c in enumerate(best_cols):
+            name = c[len("best_"):]
+            color = f"C{i}"
+            axes[2].plot(gen, history[c], marker="o", markersize=3, color=color, label=name)
+            mean_c, worst_c = f"mean_{name}", f"worst_{name}"
+            if mean_c in history and worst_c in history:
+                axes[2].plot(gen, history[mean_c], color=color, alpha=0.6, linewidth=1, ls="--")
+                axes[2].fill_between(gen, history[worst_c], history[c], color=color, alpha=0.12)
+        axes[2].set_ylabel("objective (best / mean band)")
         axes[2].set_xlabel(ut.COL_GENERATION)
         if best_cols:
             axes[2].legend(fontsize="small")
@@ -280,4 +289,71 @@ class SeqOptPlot:
         ax.set_xticks(xs)
         ax.set_xticklabels(objectives, rotation=20, ha="right")
         ax.set_ylabel("min-max normalized")
+        return ut.FigAxResult(ax.get_figure(), ax)
+
+    def mutation_map(self,
+                     df_pareto: pd.DataFrame,
+                     ax: Optional[Axes] = None,
+                     figsize: tuple = (8, 4),
+                     front_only: bool = True,
+                     ) -> Tuple[Figure, Axes]:
+        """
+        Heatmap of substitution enrichment across the Pareto front (position x amino acid).
+
+        Each cell counts how often a given substitution (target amino acid at a 1-based position)
+        appears among the front's variants — the directed-evolution view of *which* mutations the
+        optimization converged on.
+
+        Parameters
+        ----------
+        df_pareto : pd.DataFrame
+            Output of :meth:`SeqOpt.run` (its ``variant`` labels are parsed).
+        ax : matplotlib.axes.Axes, optional
+            Axes to draw on. A new figure is created when ``None``.
+        figsize : tuple, default=(8, 4)
+            Figure size when ``ax`` is None.
+        front_only : bool, default=True
+            If ``True``, count only the first (``rank=0``) front.
+
+        Returns
+        -------
+        fig : matplotlib.figure.Figure
+            The figure.
+        ax : matplotlib.axes.Axes
+            The axes the heatmap was drawn on.
+
+        Examples
+        --------
+        .. include:: examples/seqopt_mutation_map.rst
+        """
+        # Validate
+        ut.check_df(df=df_pareto, name="df_pareto",
+                    cols_required=[ut.COL_RANK, ut.COL_VARIANT])
+        ut.check_bool(name="front_only", val=front_only)
+        # Count substitutions (parse '<from><pos><to>' tokens) across the selected variants
+        df = df_pareto[df_pareto[ut.COL_RANK] == 0] if front_only else df_pareto
+        aas = list(ut.LIST_CANONICAL_AA)
+        counts: dict = {}
+        for label in df[ut.COL_VARIANT]:
+            for m in re.finditer(r"([A-Z])(\d+)([A-Z])", str(label)):
+                pos, to_aa = int(m.group(2)), m.group(3)
+                counts[(pos, to_aa)] = counts.get((pos, to_aa), 0) + 1
+        if not counts:
+            raise ValueError("'df_pareto' has no mutations to map (front is the wild-type only).")
+        positions = sorted({p for p, _ in counts})
+        mat = np.zeros((len(aas), len(positions)), dtype=float)
+        for (pos, to_aa), c in counts.items():
+            mat[aas.index(to_aa), positions.index(pos)] = c
+        # Plot
+        if ax is None:
+            _, ax = plt.subplots(figsize=figsize)
+        im = ax.imshow(mat, aspect="auto", cmap="Reds")
+        ax.set_xticks(range(len(positions)))
+        ax.set_xticklabels(positions, rotation=90, fontsize="small")
+        ax.set_yticks(range(len(aas)))
+        ax.set_yticklabels(aas, fontsize="small")
+        ax.set_xlabel("position")
+        ax.set_ylabel("substituted amino acid")
+        cbar = ax.get_figure().colorbar(im, ax=ax)
+        cbar.set_label("count on front")
         return ut.FigAxResult(ax.get_figure(), ax)

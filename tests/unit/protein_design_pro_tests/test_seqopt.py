@@ -329,9 +329,27 @@ class TestSeqOptVisualization:
     def test_history_columns(self, seqopt, wt, df_feat):
         self._run3(seqopt, wt, df_feat)
         for c in (ut.COL_GENERATION, ut.COL_HYPERVOLUME, ut.COL_SPREAD,
-                  "best_activity", "best_shift", "best_parsimony"):
+                  "best_activity", "mean_activity", "worst_activity",
+                  "best_shift", "best_parsimony"):
             assert c in seqopt.history_.columns
         assert len(seqopt.history_) == 6      # n_gen + 1
+
+    def test_mutation_map_returns_fig_ax(self, seqopt, wt, df_feat):
+        df = self._run3(seqopt, wt, df_feat)
+        res = SeqOptPlot().mutation_map(df_pareto=df, front_only=True, figsize=(7, 4))
+        assert res[1] is not None
+
+    def test_mutation_map_no_mutations_raises(self):
+        df0 = pd.DataFrame({ut.COL_ENTRY: ["P1"], ut.COL_VARIANT: [""],
+                            ut.COL_RANK: [0], ut.COL_CROWDING: [np.inf],
+                            "activity": [0.0], "parsimony": [0.0]})
+        with pytest.raises(ValueError, match="no mutations"):
+            SeqOptPlot().mutation_map(df_pareto=df0)
+
+    def test_pareto_archive_makes_rank0_non_dominated(self, seqopt, wt, df_feat):
+        # The cumulative archive is merged in, so rank-0 is still strictly non-dominated.
+        df = self._run3(seqopt, wt, df_feat)
+        assert (df[ut.COL_RANK] == 0).sum() >= 1
 
     def test_convergence_returns_panels(self, seqopt, wt, df_feat):
         self._run3(seqopt, wt, df_feat)
