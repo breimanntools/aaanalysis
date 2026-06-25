@@ -70,3 +70,16 @@ protocol puts to work end to end.
    :maxdepth: 1
 
    generated/tutorial6_comparison_harness
+
+Protein Design
+--------------
+Design optimized sequence variants with **SeqOpt** — multi-objective, ML-guided
+directed evolution — and read the results with **SeqOptPlot**. The **Protein Design**
+tutorial walks a complete case study: training a substrate classifier, designing a
+"super substrate" for gamma-secretase, and visualizing the Pareto front, convergence,
+mutation map and lineage.
+
+.. toctree::
+   :maxdepth: 1
+
+   generated/tutorial7_protein_design
