@@ -14,6 +14,11 @@ settings.load_profile("ci")
 
 aa.options["verbose"] = False
 
+# Every test here runs a cross-validated TreeModel fit (tens of seconds each), so the
+# whole module is the `slow` tier: deselected from the fast PR unit matrix (-m "not slow")
+# and run in full by the coverage job and the nightly. See tests/pytest.ini `markers`.
+pytestmark = pytest.mark.slow
+
 
 # Shared seeded fixture data (small DOM_GSEC slice)
 df_seq = aa.load_dataset(name="DOM_GSEC", n=20)

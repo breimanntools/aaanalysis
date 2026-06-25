@@ -72,6 +72,17 @@ Datasets are named beginning with a classification (e.g., 'AA_LDR', 'DOM_GSEC', 
 Some datasets have an additional version for positive-unlabeled (PU) learning containing only positive (1)
 and unlabeled (2) data samples, as indicated by appending '_PU' to the dataset name (e.g., 'DOM_GSEC_PU').
 
+**Columns at a glance:**
+
+- **Level** — prediction level (Amino acid, Domain, or Sequence).
+- **Dataset** — dataset name passed to ``aa.load_dataset``.
+- **# Sequences**, **Avg length**, **# Amino acids** — dataset size.
+- **# Positives**, **# Negatives** — class balance (label ``1`` / ``0``).
+- **Predictor** — reference method the benchmark accompanies.
+- **Description** — the prediction task.
+- **Reference** — source publication.
+- **Label** — meaning of the ``1`` / ``0`` (and ``2`` for PU) labels.
+
 
 .. list-table::
    :header-rows: 1
@@ -251,6 +262,13 @@ Amino Acid Scale Datasets
 -------------------------
 Various amino acid scale datasets are provided.
 
+**Columns at a glance:**
+
+- **Dataset** — scale-set name passed to ``aa.load_scales``.
+- **Description** — what the scale set contains.
+- **# Scales** — number of amino acid scales.
+- **Reference** — source publication.
+
 
 .. list-table::
    :header-rows: 1
@@ -300,6 +318,13 @@ be allocated to a specific subcategory are labeled as 'unclassified'.
 
 Categories
 ''''''''''
+**Columns at a glance:**
+
+- **Category** — top-level AAontology category.
+- **Category Description** — what the category captures.
+- **Key References** — defining publications.
+- **# Scales**, **# Unclassified Scales** — scales in the category, and those not assignable to any subcategory.
+- **# Subcategories** — number of subcategories, also split into those with ≥ 4 and < 4 scales.
 
 
 .. list-table::
@@ -385,385 +410,554 @@ Categories
 
 Subcategories
 '''''''''''''
+**Columns at a glance:**
+
+- **Category**, **Subcategory** — the AAontology grouping.
+- **# Scales** — number of amino acid scales in the subcategory.
+- **Interpretability** — a 1–10 expert grade of how intuitive the subcategory's property
+  is. Grade 1 (most interpretable) marks a commonly understood physicochemical property
+  (e.g. volume, charge, hydrophobicity); higher grades mark more niche or abstract
+  technical / mathematical properties (e.g. principal components or graph-based descriptors).
+- **Explainability level** — the smallest tier (5, 10, …, 60) at which the subcategory
+  enters the "explainable" scale set (``aa.load_scales(name="scales", top_explain_n=N)``).
+  The tiers are nested: a level of 5 means the subcategory is among the top 5 most
+  explainable subcategories, a level of 10 means it is among the top 10 (which already
+  includes the top 5), and so on. The tiers group the AAontology subcategories by
+  combining their interpretability grade with AAclust clustering, and the loaded set can
+  be further redundancy-reduced via ``top_explain_min_th``. A lower level means the
+  subcategory is included earlier; unclassified subcategories (excluded from the set)
+  show ``-``.
+- **Subcategory Description** — what the subcategory captures.
+- **Key References** — defining publications.
 
 
 .. list-table::
    :header-rows: 1
-   :widths: 8 8 8 8 8
+   :widths: 8 8 8 8 8 8 8
 
    * - Category
      - Subcategory
      - # Scales
+     - Interpretability
+     - Explainability level
      - Subcategory Description
      - Key References
    * - ASA/Volume
      - Accessible surface area (ASA)
      - 23
+     - 1
+     - 10
      - Solvent accessible surface area (ASA) in folded proteins (Lins), measuring a residues surface area that is accessible/exposed to solvent (typically water) at the protein surface
      - Lins et al., 2003; Chothia, 1976
    * - ASA/Volume
      - Buried
      - 12
+     - 1
+     - 15
      - Tendency of residue being buried in folded proteins (Janin), as opposed to being accessible at the protein surface (Chothia)
      - Janin et al., 1978; Chothia, 1976
    * - ASA/Volume
      - Hydrophobic ASA
      - 3
+     - 2
+     - 15
      - Hydrophobic solvent accessible surface area (ASA) in folded proteins (Lins), measuring a residues surface area that is hydrophobic and exposed to solvent (typically water) at the protein surface
      - Lins et al., 2003
    * - ASA/Volume
      - Partial specific volume
      - 9
+     - 4
+     - 30
      - Effective volume in water, accounting for physical volume and any extra water displacement caused by residue-solvent interactions (mainly hydrophobic ones)
      - Bull-Breese, 1974
    * - ASA/Volume
      - Volume
      - 17
+     - 1
+     - 5
      - Volume or size of residue
      - Bigelow, 1967
    * - Composition
      - AA composition
      - 23
+     - 1
+     - 15
      - Frequency of occurrence in proteins (Jones), denoted as amino acid (AA) composition by Dayhoff
      - Dayhoff, 1978b; Jones et al., 1992
    * - Composition
      - AA composition (surface)
      - 5
+     - 3
+     - 25
      - Frequency of occurrence at protein surface, as opposed to occurrence at protein interior (compared with “AA composition”, lower for unpolar amino acids)
      - Fukuchi-Nishikawa, 2001
    * - Composition
      - Membrane proteins (MPs)
      - 13
+     - 2
+     - 25
      - Frequency of occurrence in membrane proteins (MPs)
      - Nakashima et al., 1990; Cedano et al., 1997
    * - Composition
      - Mitochondrial proteins
      - 4
+     - 2
+     - 60
      - Frequency of occurrence in mitochondrial proteins (similar to membrane proteins, but with less Val)
      - Nakashima et al., 1990
    * - Composition
      - MPs (anchor)
      - 11
+     - 3
+     - 25
      - Frequency of occurrence in N-/C-terminal anchoring region of membrane proteins (cf. high N-terminal and C-terminal helix capping propensity (Asp, Glu resp. Lys, Arg) observed by Aurora-Rose). Characterized by a high partition energy (Guy, 1985)
      - Punta and Maritan, 2003; Aurora-Rose, 1998; Guy, 1985
    * - Composition
      - Unclassified (Composition)
      - 2
+     - 10
+     - -
      - nan
      - nan
    * - Conformation
      - Coil
      - 13
+     - 1
+     - 5
      - Frequency of occurrence in random coil (see window positions given by Qian-Sejnowski)
      - Robson-Suzuki, 1976; Qian-Sejnowski, 1988
    * - Conformation
      - Coil (C-term)
      - 4
+     - 6
+     - 55
      - Frequency of occurrence at C-terminus in random coil (see window positions in Qian-Sejnowski)
      - Qian-Sejnowski, 1988
    * - Conformation
      - Coil (N-term)
      - 3
+     - 6
+     - 55
      - Frequency of occurrence at N-terminus in random coil (see window positions in Qian-Sejnowski)
      - Qian-Sejnowski, 1988
    * - Conformation
      - Linker (>14 AA)
      - 6
+     - 5
+     - 35
      - Frequency of occurrence in linker (length>14 residues)
      - George-Heringa, 2003
    * - Conformation
      - Linker (6-14 AA)
      - 6
+     - 5
+     - 35
      - Frequency of occurrence in medium sized linker (length between 6 to 14 residues)
      - George-Heringa, 2004
    * - Conformation
      - Unclassified (Conformation)
      - 19
+     - 10
+     - -
      - nan
      - nan
    * - Conformation
      - α-helix
      - 36
+     - 1
+     - 5
      - Frequency of occurrence in right-handed α-helix, defined as helical structure with 3.6 residues per turn
      - Chou-Fasman, 1978b
    * - Conformation
      - α-helix (C-cap)
      - 4
+     - 4
+     - 35
      - Frequency of occurrence at C-cap position, defined as C-terminal interface residue, which is half in and half out of the helix (Richardson-Richardson); denoted as helix termination parameter (Finkelstein et al.)
      - Richardson-Richardson 1988; Aurora-Rose, 1998, Finkelstein et al., 1991
    * - Conformation
      - α-helix (C-term, out)
      - 5
+     - 5
+     - 55
      - Frequency of occurrence at C-terminus outside of right-handed α-helix, i.e., after end of helix, denoted as C-cap (Aurora-Rose) for C-terminal helix capping (Richardson-Richardson)
      - Richardson-Richardson 1988; Aurora-Rose, 1997
    * - Conformation
      - α-helix (C-term)
      - 8
+     - 5
+     - 50
      - Frequency of occurrence at C-terminus inside right-handed α-helix, i.e., before end of helix, denoted as C-cap (Aurora-Rose) for C-terminal helix capping (Richardson-Richardson)
      - Chou-Fasman, 1978b; Richardson-Richardson 1988; Aurora-Rose, 1998
    * - Conformation
      - α-helix (left-handed)
      - 11
+     - 5
+     - 45
      - Frequency of occurrence in left-handed α-helix
      - Tanaka-Scheraga, 1977
    * - Conformation
      - α-helix (N-cap)
      - 5
+     - 4
+     - 35
      - Frequency of occurrence at N-cap position, defined as N-terminal interface residue, which is half in and half out of the helix (Richardson-Richardson); denoted as helix initiation parameter (Finkelstein et al.)
      - Richardson-Richardson 1988; Aurora-Rose, 1998, Finkelstein et al., 1991
    * - Conformation
      - α-helix (N-term, out)
      - 3
+     - 5
+     - 50
      - Frequency of occurrence at N-terminus outside of right-handed α-helix, i.e., before start of helix, denoted as N-cap (Aurora-Rose) for N-terminal helix capping (Richardson-Richardson)
      - Richardson-Richardson 1988; Aurora-Rose, 1998
    * - Conformation
      - α-helix (N-term)
      - 7
+     - 5
+     - 50
      - Frequency of occurrence at N-terminus inside right-handed α-helix, i.e., after start of helix, denoted as N-cap (Aurora-Rose) for N-terminal helix capping (Richardson-Richardson)
      - Chou-Fasman, 1978b; Richardson-Richardson 1988; Aurora-Rose, 1998
    * - Conformation
      - α-helix (α-proteins)
      - 5
+     - 7
+     - 60
      - Frequency of occurrence in α-helix (based on only α-helical structures)
      - Geisow-Roberts, 1980
    * - Conformation
      - β/α-bridge
      - 2
+     - 6
+     - 35
      - Frequency of occurrence in the 'β/α-bridge' region of Ramachandran plot, reflecting conformational state between β-sheet (top-left quadrant) and right-handed α-helix (bottom-left quadrant)
      - Tanaka-Scheraga, 1977; Pauling et al., 1951
    * - Conformation
      - β-sheet
      - 21
+     - 1
+     - 5
      - Frequency of occurrence in β-sheet (see window positions in Qian-Sejnowski)
      - Chou-Fasman, 1978b; Qian-Sejnowski, 1988
    * - Conformation
      - β-sheet (C-term)
      - 5
+     - 5
+     - 50
      - Frequency of occurrence at C-terminus in β-sheet (see window positions in Qian-Sejnowski)
      - Qian-Sejnowski, 1988
    * - Conformation
      - β-sheet (N-term)
      - 5
+     - 5
+     - 50
      - Frequency of occurrence at N-terminus in β-sheet (see window positions in Qian-Sejnowski)
      - Qian-Sejnowski, 1988
    * - Conformation
      - β-strand
      - 15
+     - 1
+     - 20
      - Frequency of occurrence extended chain conformation/β-strand (typically 6-10 residues long, n>=2 parallel or antiparallel β-strands form a β-sheet)
      - Chou-Fasman, 1978; Lifson-Sander, 1979
    * - Conformation
      - β-turn
      - 21
+     - 1
+     - 20
      - Frequency of occurrence in β-turn (also called e.g. β-bend, reverse turn, tight turn), consisting of 4 consecutive residues forming a 180° back folded chain (Chou-Fasman), where two end residues (i -> i+3) form a main chain hydrogen bond
      - Chou-Fasman, 1978b, Robson-Suzuki, 1976
    * - Conformation
      - β-turn (C-term)
      - 6
+     - 6
+     - 55
      - Frequency of occurrence at 3rd or 4th position in β-turn (3rd position is denoted as chain reversal state S by Tanaka-Scheraga)
      - Chou-Fasman, 1978b; Tanaka-Scheraga, 1977
    * - Conformation
      - β-turn (N-term)
      - 6
+     - 6
+     - 55
      - Frequency of occurrence at 1st or 2nd position in β-turn (2nd position is denoted as chain reversal state R by Tanaka-Scheraga)
      - Chou-Fasman, 1978b; Tanaka-Scheraga, 1977
    * - Conformation
      - β-turn (TM helix)
      - 3
+     - 8
+     - 60
      - Frequency of occurrence in β-turn when placed in middle of transmembrane (TM) helix
      - Monné et al., 1999
    * - Conformation
      - π-helix
      - 5
+     - 4
+     - 30
      - Frequency of occurrence in right-handed π-helix, defined as helical structure with 4.4 residues per turn (compared with “α-helix”, lower for Ala, Asp, Glu, and Gln)
      - Fodje-Al-Karadaghi, 2002
    * - Energy
      - Charge
      - 2
+     - 1
+     - 10
      - Net charge and donor charge capability. Net charge is defined as 1 for positively charged residues (Arg, Lys),  0 for negatively charged residues (Asp, Glu), and 0.5 otherwise. Donor charge capability is defined as presence (1) or absence (0) of charge transfer donor capability in residue.
      - Klein et al., 1984; Charton-Charton, 1983
    * - Energy
      - Charge (negative)
      - 2
+     - 1
+     - 10
      - Negative charge and transfer charge. Negative charge is defined as presence (1) or absence (0) of negative charge in residue (Asp, Glu).Transfer charge is defined as presence (1) or absence (0) of charge transfer acceptor capability in residue.
      - Fauchere et al., 1988; Charton-Charton, 1983
    * - Energy
      - Charge (positive)
      - 1
+     - 1
+     - 25
      - Presence (1) or absence (0) of positive charge in residue (Arg, Lys, His)
      - Fauchere et al., 1988
    * - Energy
      - Electron-ion interaction pot.
      - 3
+     - 7
+     - 40
      - Electron-ion interaction potential, defined as the average energy state in a residue of all valence electrons (i.e., electrons that can participate in chemical bond formation)
      - Cosic, 1994
    * - Energy
      - Entropy
      - 3
+     - 4
+     - 15
      - Conformational entropy, associated with the number of possible conformations a residue can participate in (e.g., Ala has a low entropy due to is strong α-helix formation)
      - Hutchens, 1970
    * - Energy
      - Free energy (unfolding)
      - 8
+     - 4
+     - 10
      - Activation Gibbs free energy of unfolding in water or denaturant; measure of conformational stability
      - Yutani et al., 1987; Radzicka-Wolfenden, 1988
    * - Energy
      - Free energy (folding)
      - 5
+     - 4
+     - 40
      - Free energy of formation of α-helix or extended structure; measure of conformational instability of α-helix resp. extended structure (highest value for structure breaking Pro) 
      - Munoz-Serrano, 1994
    * - Energy
      - Isoelectric point
      - 3
+     - 3
+     - 30
      - pH at which residue is electrically neutral
      - Zimmerman et al., 1968
    * - Energy
      - Non-bonded energy
      - 4
+     - 8
+     - 60
      - Average non-bonded energy E per residue in 16 protein crystal structures, where E is computed as sum of pairwise interactions between constituent atoms (using Lennard-Jones potential)
      - Oobatake-Ooi, 1977
    * - Energy
      - Unclassified (Energy)
      - 5
+     - 10
+     - -
      - nan
      - nan
    * - Others
      - Mutability
      - 3
+     - 4
+     - 30
      - Relative mutability of a residue, defined as the number of observed changes of a residue divided by it´s frequency of occurrence
      - Jones et al., 1992
    * - Others
      - PC 1
      - 1
+     - 9
+     - 67
      - 1. Vector of Principal Component analysis performed by Sneath, described as 'aliphaticity' (i.e., presence of linear, non-aromatic carbon chains)
      - Sneath, 1966
    * - Others
      - PC 2
      - 2
+     - 9
+     - 67
      - 2. Vector of Principal Component analysis performed by Sneath, described as 'hydrogenation' (approximately corresponds to the inverse of the number of reactive groups in a residue)
      - Sneath, 1966
    * - Others
      - PC 3
      - 2
+     - 9
+     - 67
      - 3. Vector of Principal Component analysis performed by Sneath, described as 'aromaticity' (i.e., aromatic property of residues)
      - Sneath, 1966
    * - Others
      - PC 4
      - 2
+     - 9
+     - 67
      - 4. Vector of Principal Component analysis performed by Sneath, described as 'hydroxythiolation' (might reflect hydrogen bonding potential)
      - Sneath, 1966
    * - Others
      - PC 5
      - 2
+     - 9
+     - 67
      - 1. Vector of Principal Component analysis performed by Wold
      - Wold et al., 1987
    * - Others
      - Unclassified (Others)
      - 5
+     - 10
+     - -
      - nan
      - nan
    * - Polarity
      - Amphiphilicity
      - 6
+     - 2
+     - 25
      - Preference of residue to occur at interface of polar and non-polar solvents (esp., membrane-water interface)
      - Mitaku et al., 2002
    * - Polarity
      - Amphiphilicity (α-helix)
      - 13
+     - 4
+     - 40
      - Characteristic of residue to form amphipathic α-helices (compared to “Amphiphilicity”, higher for unpolar amino acids), highly correlating with signal sequence helical potential  (Argos et al., 1982)
      - Cornette et al., 1987; Argos et al., 1982
    * - Polarity
      - Hydrophobicity
      - 38
+     - 1
+     - 5
      - Preference of residue for non-polar/hydrophobic environment, measured as transfer free energy from non-polar solvent to water or from inside of a protein to surface/outside
      - Kyte-Doolittle, 1982; Eisenberg-McLachlan 1986
    * - Polarity
      - Hydrophobicity (interface)
      - 3
+     - 4
+     - 15
      - Preference of residue for non-polar/hydrophobic environment at membrane interfaces
      - Koehler et al., 2009
    * - Polarity
      - Hydrophobicity (surrounding)
      - 17
+     - 5
+     - 45
      - Total hydrophobicity of residues appearing within an 8 Angstrom radius volume, describing the internal packing arrangements of residues in globular proteins
      - Ponnuswamy et al., 1980; Wolfenden et al., 1981
    * - Polarity
      - Hydrophilicity
      - 28
+     - 1
+     - 20
      - Preference of residue for polar/hydrophilic environment, measured as transfer free energy from water to non-polar solvent
      - Kyte-Doolittle, 1982; Radzicka-Wolfenden, 1988
    * - Polarity
      - Unclassified (Polarity)
      - 6
+     - 10
+     - -
      - nan
      - nan
    * - Shape
      - Graph (1. eigenvalue)
      - 5
+     - 9
+     - 62
      - Measure of graph-theoretic representation of residue, defined as eigenvalue of Laplacian matrix of undirected node-weighted graph (nodes represent atoms (weighted by mass) and edges represent molecular bonds)
      - Kakraba-Knisley, 2016
    * - Shape
      - Graph (2. eigenvalue)
      - 3
+     - 9
+     - 62
      - Measure of graph-theoretic representation of residue, defined as second smallest eigenvalue of Laplacian matrix of undirected node-weighted graph (nodes represent atoms (weighted by mass) and edges represent molecular bonds)
      - Kakraba-Knisley, 2016
    * - Shape
      - Side chain length
      - 19
+     - 1
+     - 20
      - Length of side chain and graph-based size measures like eccentricity of undirected node-weighted graph (nodes represent atoms (weighted by mass) and edges represent molecular bonds)
      - Charton-Charton, 1983; Kakraba-Knisley, 2016
    * - Shape
      - Reduced distance
      - 5
+     - 7
+     - 40
      - Reduced distance from the center of mass of a protein, defined as actual distance divided by the root-mean-square radius of gyration of the radius (e.g., reduced distance > 1 means that residue is farther away from center of mass than the average)
      - Rackovsky-Scheraga, 1977
    * - Shape
      - Shape and Surface
      - 3
+     - 7
+     - 45
      - Measure of relationships between the physical form of an amino acid and its solvent accessibility (e.g., rate at which the accessible surface increases relative to the distance from the protein center)
      - Prabhakaran-Ponnuswamy, 1982
    * - Shape
      - Steric parameter
      - 6
+     - 7
+     - 60
      - Measure of the steric factors of a residue such as branching, it´s symmetry, or side chain angles
      - Fauchere et al., 1988
    * - Shape
      - Unclassified (Shape)
      - 4
+     - 10
+     - -
      - nan
      - nan
    * - Structure-Activity
      - Backbone-dynamics (-CH)
      - 3
+     - 8
+     - 45
      - α-CH chemical shifts of residue as measure of general backbone-dynamics/stability
      - Bundi-Wuthrich, 1979
    * - Structure-Activity
      - Backbone-dynamics (-NH)
      - 2
+     - 8
+     - 45
      - α-NH chemical shifts of residue as measure of general backbone-dynamics/stability
      - Bundi-Wuthrich, 1979
    * - Structure-Activity
      - Flexibility
      - 11
+     - 1
+     - 10
      - Flexibility parameter, measured as average B-factor (atomic temperature factor obtained from protein crystal structures)
      - Vihinen et al., 1994
    * - Structure-Activity
      - Flexibility (2 rigid neighbors)
      - 3
+     - 5
+     - 30
      - Flexibility parameter, measured as B-factor for residue being surrounded by two rigid neighbors (compared with “Flexibility”, lower for Gly and Ser)
      - Vihinen et al., 1994
    * - Structure-Activity
      - Stability
      - 7
+     - 1
+     - 20
      - Contribution of residue to protein stability (particularly depending on hydrophobic interactions)
      - Ptitsyn-Finkelstein, 1983; Zhou-Zhou, 2004;  Bastolla, 2005
    * - Structure-Activity
      - Stability (helix-coil)
      - 4
+     - 5
+     - 40
      - Contribution of residue to protein stability for helix-coil equilibrium
      - Ptitsyn-Finkelstein, 1983; Sueki et al., 1984
    * - Structure-Activity
      - Unclassified (Structure-Activity)
      - 1
+     - 10
+     - -
      - nan
      - nan
 

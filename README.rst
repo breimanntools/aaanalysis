@@ -134,17 +134,20 @@ The AAanalysis Ecosystem
 ========================
 AAanalysis is the interpretable middle layer between bioinformatics I/O and the downstream machine
 learning, explainable AI, and protein-design stack. It *consumes* upstream representations (sequences,
-embeddings, structures) and even competitor descriptor sets, runs them through its interpretable core
-(*Part × Split × Scale* · AAontology · CPP · ShapModel), and *exposes* the resulting features,
-explanations, and objectives to the standard ML / XAI / optimization tools.
+embeddings, structures) and even competitor descriptor sets, and runs them through its interpretable
+core (*Part × Split × Scale* · AAontology · CPP). Downstream machine-learning and explainable-AI
+methods then either *consume* these features directly or are *integrated* into AAanalysis through
+wrappers or native implementations — for example SHAP via ``ShapModel``, or machine-learning models
+such as random forests via ``TreeModel`` — so the resulting features, explanations, and design
+objectives feed straight into the standard ML / XAI / optimization tools.
 
-Click the diagram to open the
-`standalone ecosystem map <https://aaanalysis.readthedocs.io/en/latest/_static/aaanalysis_ecosystem.html>`_
-(per-method maturity and adoption status).
+Click the diagram to view and download the full map, or open the
+`ecosystem positioning page <https://aaanalysis.readthedocs.io/en/latest/_static/aaanalysis_ecosystem.html>`_
+— a self-contained walkthrough with the map, its introduction, and further background.
 
 .. image:: https://raw.githubusercontent.com/breimanntools/aaanalysis/master/docs/source/_artwork/diagrams/aaanalysis_ecosystem.png
    :alt: The AAanalysis ecosystem — where AAanalysis fits in the protein-ML stack
-   :target: https://aaanalysis.readthedocs.io/en/latest/_static/aaanalysis_ecosystem.html
+   :target: https://raw.githubusercontent.com/breimanntools/aaanalysis/master/docs/source/_artwork/diagrams/aaanalysis_ecosystem.svg
    :width: 100%
    :align: center
 

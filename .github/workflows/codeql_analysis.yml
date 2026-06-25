@@ -28,6 +28,10 @@ concurrency:
 jobs:
   analyze:
     name: Analyze
+    # CodeQL is a security scan, not a correctness gate, and adds several minutes.
+    # Keep it off the PR fast path: it runs on every master push and on the weekly
+    # schedule above. The fast `code-quality` job below still runs on PRs.
+    if: github.event_name != 'pull_request'
     runs-on: ubuntu-latest
 
     steps:
