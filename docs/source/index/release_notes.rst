@@ -233,6 +233,11 @@ Changed
 - **CPPPlot.feature**: Titles the plot with the feature's human-readable description,
   line-wrapped via ``show_title`` (default ``True``) and ``title_wrap_width`` (default
   ``45``).
+- **load_dataset verbose reporting**: New ``verbose`` parameter (default ``False``)
+  reports how many entries each removal step (``min_len``, ``max_len``, and
+  ``non_canonical_aa='remove'``) drops, making the previously silent filtering
+  observable. The returned data is unchanged; to retain every entry use
+  ``non_canonical_aa='keep'``.
 - **Docstring discoverability**: Surfaced previously implicit API contracts at the
   docstrings users read (no behavior change) — the ``get_parts`` → ``run_num`` call order
   and ``[0, 1]`` normalization contract, and a ``[pro]`` install marker on the pro
