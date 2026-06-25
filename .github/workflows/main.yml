@@ -26,43 +26,55 @@ concurrency:
   cancel-in-progress: ${{ github.ref != 'refs/heads/master' }}
 
 jobs:
+  # Pick the matrix by event so the PR gate stays fast (the merge-blocking check):
+  #   - pull_request -> floor+ceiling Python on both OSes (4 jobs, ~5 min) and the
+  #     heavy `slow` tier is deselected (it runs in the coverage job + nightly).
+  #   - push to master -> the full Linux 3.10-3.14 range + Windows brackets (7 jobs),
+  #     so every supported interpreter is still exercised once changes land.
+  configure:
+    runs-on: ubuntu-latest
+    outputs:
+      matrix: ${{ steps.pick.outputs.matrix }}
+    steps:
+      - id: pick
+        shell: bash
+        run: |
+          if [ "${{ github.event_name }}" = "pull_request" ]; then
+            echo 'matrix={"include":[{"os":"ubuntu-latest","python-version":"3.10"},{"os":"ubuntu-latest","python-version":"3.14"},{"os":"windows-2022","python-version":"3.10"},{"os":"windows-2022","python-version":"3.14"}]}' >> "$GITHUB_OUTPUT"
+          else
+            echo 'matrix={"include":[{"os":"ubuntu-latest","python-version":"3.10"},{"os":"ubuntu-latest","python-version":"3.11"},{"os":"ubuntu-latest","python-version":"3.12"},{"os":"ubuntu-latest","python-version":"3.13"},{"os":"ubuntu-latest","python-version":"3.14"},{"os":"windows-2022","python-version":"3.10"},{"os":"windows-2022","python-version":"3.14"}]}' >> "$GITHUB_OUTPUT"
+          fi
+
   test:
+    needs: configure
     runs-on: ${{ matrix.os }}
     strategy:
       fail-fast: true
-      matrix:
-        # windows pinned to a concrete image (windows-latest redirects to
-        # windows-2025 by 2026-06-15) for reproducible runs; bump deliberately.
-        os: [ubuntu-latest, windows-2022]
-        python-version: ['3.10', '3.11', '3.12', '3.13', '3.14']
-        # Linux covers the full Python range; Windows only brackets min+max
-        # (3.10 + 3.14) here, full Windows range runs in the nightly. 10 jobs -> 7.
-        exclude:
-          - {os: windows-2022, python-version: '3.11'}
-          - {os: windows-2022, python-version: '3.12'}
-          - {os: windows-2022, python-version: '3.13'}
+      # windows pinned to a concrete image (windows-latest redirects to
+      # windows-2025 by 2026-06-15) for reproducible runs; bump deliberately.
+      matrix: ${{ fromJSON(needs.configure.outputs.matrix) }}
 
     steps:
     - uses: actions/checkout@v6
-
-    - name: Cache Python dependencies
-      uses: actions/cache@v5
-      with:
-        path: ~/.cache/pip
-        key: ${{ runner.os }}-pip-${{ matrix.python-version }}-${{ hashFiles('pyproject.toml') }}
-        restore-keys: |
-          ${{ runner.os }}-pip-${{ matrix.python-version }}-
 
     - name: Set up Python ${{ matrix.python-version }}
       uses: actions/setup-python@v6
       with:
         python-version: ${{ matrix.python-version }}
 
+    # uv resolves + installs an order of magnitude faster than pip and carries its
+    # own wheel cache (keyed on pyproject.toml), so dependency install stops being
+    # a per-job tax. `--system` targets the interpreter set up above (no venv).
+    - name: Set up uv
+      uses: astral-sh/setup-uv@v8
+      with:
+        enable-cache: true
+        cache-dependency-glob: pyproject.toml
+
     - name: Install package and test dependencies
       run: |
-        python -m pip install --upgrade pip
-        pip install -e .[pro]
-        pip install pytest hypothesis ipython pytest-xdist
+        uv pip install --system -e .[pro]
+        uv pip install --system pytest hypothesis ipython pytest-xdist
 
     - name: Install cd-hit (Ubuntu)
       if: runner.os == 'Linux'
@@ -106,17 +118,17 @@ jobs:
       run: echo "$HOME/meme-install/bin" >> "$GITHUB_PATH"
 
     - name: Run Tests
-      # The exact-value regression anchor (-m regression) runs in the nightly
-      # job, not in this fail-fast matrix (ADR-0015) — its frozen values are
-      # canonical-cell-specific and must not gate every cell.
-      # The integration/e2e tiers have their own `Integration & E2E Tests`
-      # workflow (integration_e2e.yml, ADR-0031); excluded here to avoid a
-      # double-run.
-      run: pytest tests -m "not regression and not integration and not e2e" -x -n auto --durations=20
+      # Fast PR gate: the exact-value regression anchor (-m regression, ADR-0015),
+      # the integration/e2e tiers (own `Integration & E2E Tests` workflow,
+      # ADR-0031), and the heavy `slow` tier (multi-minute pipe sweeps; run by the
+      # coverage job + nightly) are all deselected so this check stays the ~5-minute
+      # merge gate.
+      run: pytest tests -m "not regression and not integration and not e2e and not slow" -x -n auto --durations=20
       env:
         MPLBACKEND: Agg
 
   # Coverage is measured and uploaded by the standalone `Test Coverage` workflow
   # (.github/workflows/test_coverage.yml) — kept separate so it appears as its own
-  # action/check and runs on its own canonical config (Linux, Python 3.12), per
-  # ADR-0016.
+  # action/check and runs on its own canonical config (Linux, Python 3.12). It runs
+  # the FULL suite including the `slow` tier, so the coverage number is unaffected by
+  # the fast gate's deselections (per ADR-0016).

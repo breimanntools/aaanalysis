@@ -39,25 +39,22 @@ jobs:
     steps:
     - uses: actions/checkout@v6
 
-    - name: Cache Python dependencies
-      uses: actions/cache@v5
-      with:
-        path: ~/.cache/pip
-        key: ${{ runner.os }}-pip-${{ matrix.python-version }}-${{ hashFiles('pyproject.toml') }}
-        restore-keys: |
-          ${{ runner.os }}-pip-${{ matrix.python-version }}-
-
     - name: Set up Python ${{ matrix.python-version }}
       uses: actions/setup-python@v6
       with:
         python-version: ${{ matrix.python-version }}
 
+    - name: Set up uv
+      uses: astral-sh/setup-uv@v8
+      with:
+        enable-cache: true
+        cache-dependency-glob: pyproject.toml
+
     - name: Install package and test dependencies
       # Core install only — the integration/e2e tiers import no `pro` features.
       run: |
-        python -m pip install --upgrade pip
-        pip install -e .
-        pip install pytest hypothesis pytest-xdist
+        uv pip install --system -e .
+        uv pip install --system pytest hypothesis pytest-xdist
 
     - name: Run integration & e2e tiers
       # One combined check over both directories. The network-marked live-endpoint

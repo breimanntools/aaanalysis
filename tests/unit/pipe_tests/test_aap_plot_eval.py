@@ -123,6 +123,7 @@ class TestPlotEval:
 class TestPlotEvalNFilter:
     """The n_filter refinement panel (its own stage in df_eval)."""
 
+    @pytest.mark.slow
     def test_nfilter_panel_from_real_sweep(self):
         df_seq = aa.load_dataset(name="DOM_GSEC", n=20)
         labels = df_seq["label"].to_list()

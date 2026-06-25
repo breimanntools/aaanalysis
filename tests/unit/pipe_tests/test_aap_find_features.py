@@ -234,6 +234,7 @@ class TestFindFeaturesComplex:
                                          top_n=5, plot=False, random_state=0, n_jobs=1)
         assert df_top.equals(df_full.head(5))
 
+    @pytest.mark.slow
     def test_balanced_staged_search(self):
         df_feat, _, df_eval = aap.find_features(labels, df_seq=df_seq, search="balanced",
                                                 kws=SMALL, plot=False, random_state=0, n_jobs=1)
@@ -246,6 +247,7 @@ class TestFindFeaturesComplex:
                     "balanced_accuracy_mean", "balanced_accuracy_std", "is_pareto", "rank"]:
             assert col in df_eval.columns
 
+    @pytest.mark.slow
     def test_balanced_multi_metric_pareto(self):
         df_feat, _, df_eval = aap.find_features(labels, df_seq=df_seq, search="balanced", kws=SMALL,
                                                 metric=["balanced_accuracy", "f1"], plot=False,
@@ -254,6 +256,7 @@ class TestFindFeaturesComplex:
         assert int(df_eval["is_pareto"].sum()) >= 1
         assert int(df_eval["is_selected"].sum()) == 1
 
+    @pytest.mark.slow
     def test_reproducible_same_seed_balanced(self):
         d1, _, e1 = aap.find_features(labels, df_seq=df_seq, search="balanced", kws=SMALL,
                                       plot=False, random_state=7, n_jobs=1)
@@ -270,6 +273,7 @@ class TestFindFeaturesComplex:
         sens = df_eval[df_eval["stage"] == "sensitivity"]
         assert sens["list_parts"].nunique() > 1   # Part axis is swept in exhaustive
 
+    @pytest.mark.slow
     def test_combined_subcategories_top_n_plot(self):
         subs = sorted(aa.load_scales(name="scales_cat")["subcategory"].unique())[:8]
         df_feat, ax, _ = aap.find_features(labels, df_seq=df_seq, subcategories=subs,
@@ -283,6 +287,7 @@ class TestFindFeaturesComplex:
                                      random_state=0, n_jobs=1)
         assert isinstance(ax, Axes) and ax.eval == []
 
+    @pytest.mark.slow
     def test_balanced_ax_eval_publication_figures(self):
         from matplotlib.figure import Figure
         _, ax, _ = aap.find_features(labels, df_seq=df_seq, search="balanced",

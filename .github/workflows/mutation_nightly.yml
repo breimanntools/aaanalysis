@@ -1,8 +1,10 @@
 name: Nightly (mutation + regression)
 
 # NON-GATING nightly job (ADR-0015 / ADR-0016). Runs on a schedule and on
-# manual dispatch — never on push/PR, so it never blocks merges. It does three
+# manual dispatch — never on push/PR, so it never blocks merges. It does four
 # things on the canonical cell (Linux + py3.11):
+#   0. Runs the heavy `slow` tier (`-m slow`) that the fast PR matrix deselects,
+#      so the multi-minute pipe sweeps still get exercised at least daily.
 #   1. Re-verifies the exact-value CPP regression anchor (`-m regression`).
 #   2. Runs the live online-fetch tests (`-m network --run-network`) so an
 #      upstream API/version change (e.g. AlphaFold's v4->v6 file rename, which
@@ -28,10 +30,24 @@ jobs:
         with:
           python-version: '3.11'
 
+      - name: Set up uv
+        uses: astral-sh/setup-uv@v8
+        with:
+          enable-cache: true
+          cache-dependency-glob: pyproject.toml
+
       - name: Install package + dev/pro deps
         run: |
-          python -m pip install --upgrade pip
-          pip install -e .[dev,pro]
+          uv pip install --system -e .[dev,pro]
+          uv pip install --system pytest-xdist
+
+      - name: Run the slow tier (deselected from the fast PR gate)
+        # The heavy `slow` tests (multi-minute pipe sweeps) are deselected from the
+        # fast Unit Tests matrix so PRs stay ~5 min. They still run here nightly and
+        # in the coverage job, so a real failure surfaces within a day.
+        env:
+          MPLBACKEND: Agg
+        run: pytest tests -m slow -n auto --durations=20
 
       - name: Verify CPP regression anchor (canonical cell)
         env:
