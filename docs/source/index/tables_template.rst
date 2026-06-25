@@ -110,11 +110,15 @@ Subcategories
 
 - **Category**, **Subcategory** — the AAontology grouping.
 - **# Scales** — number of amino acid scales in the subcategory.
-- **Interpretability** — 1–10 expert grade of how directly the subcategory maps to a
-  physicochemical property (1 = most interpretable).
-- **Explainability level** — the smallest ``top_explain_n`` tier at which the subcategory
-  enters the explainable scale set (``aa.load_scales(name="scales", top_explain_n=N)``,
-  with ``N`` in 5, 10, …, 60); a lower level means it is included earlier, and
+- **Interpretability** — a 1–10 expert grade of how intuitive the subcategory's property
+  is. Grade 1 (most interpretable) marks a commonly understood physicochemical property
+  (e.g. volume, charge, hydrophobicity); higher grades mark more niche or abstract
+  technical / mathematical properties (e.g. principal components or graph-based descriptors).
+- **Explainability level** — the smallest tier (5, 10, …, 60) at which the subcategory
+  enters the "explainable" scale set (``aa.load_scales(name="scales", top_explain_n=N)``).
+  The tiers group the AAontology subcategories by combining their interpretability grade
+  with AAclust clustering, and the loaded set can be further redundancy-reduced via
+  ``top_explain_min_th``. A lower level means the subcategory is included earlier;
   unclassified subcategories (excluded from the set) show ``-``.
 - **Subcategory Description** — what the subcategory captures.
 - **Key References** — defining publications.
