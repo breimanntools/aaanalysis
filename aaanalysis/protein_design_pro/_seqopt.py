@@ -16,7 +16,8 @@ from aaanalysis.explainable_ai_pro import ShapModel
 from ._backend.seqopt.genome import canonical, apply_genome, variant_label
 from ._backend.seqopt.run import evolve_nsga2, evolve_greedy
 from ._backend.seqopt.nsga2 import normalize_objectives_
-from ._backend.seqopt.metrics import hypervolume, spread
+from ._backend.seqopt.metrics import hypervolume, spread, convergence
+from ._backend.seqopt.penalty import apply_penalty
 
 
 # I Helper Functions
@@ -201,7 +202,8 @@ class SeqOpt(Tool):
         base = int(df_seq[ut.COL_TMD_START].iloc[0]) - jmd_n_len
         return wt_entry, wt_seq, positions, alphabet, base
 
-    def _build_fitness(self, df_seq, df_feat, names, sources, jmd_n_len, jmd_c_len):
+    def _build_fitness(self, df_seq, df_feat, names, sources, goals, constraints, penalty,
+                       jmd_n_len, jmd_c_len):
         """Build a cached fitness_fn(genomes)->objective matrix backed by SeqMut.combine."""
         wt_entry = df_seq[ut.COL_ENTRY].iloc[0]
         wt_seq = df_seq[ut.COL_SEQ].iloc[0]
@@ -251,7 +253,10 @@ class SeqOpt(Tool):
                     else:
                         vec.append(float(sc[src]))
                 F.append(vec)
-            return np.asarray(F, dtype=float)
+            F = np.asarray(F, dtype=float)
+            if constraints:
+                F = apply_penalty(F, genomes, constraints, goals, penalty=penalty)
+            return F
 
         return fitness_fn, wt_entry, wt_seq
 
@@ -317,6 +322,11 @@ class SeqOpt(Tool):
             cx_prob: float = 0.5,
             mut_prob: float = 0.2,
             survival: str = "mu_plus_lambda",
+            variation: str = "and",
+            engine: str = "exact",
+            constraints: Optional[List[Callable]] = None,
+            penalty: str = "delta",
+            hof_size: int = 10,
             n_mut_max: int = 5,
             region: Optional[Any] = None,
             to_aa: Optional[List[str]] = None,
@@ -360,7 +370,23 @@ class SeqOpt(Tool):
         mut_prob : float, default=0.2
             Per-individual mutation probability.
         survival : str, default='mu_plus_lambda'
-            Survival scheme: ``'mu_plus_lambda'`` or ``'mu_comma_lambda'``.
+            Survival scheme: ``'mu_plus_lambda'`` (elitist), ``'mu_comma_lambda'`` or
+            ``'ea_simple'`` (generational replacement).
+        variation : str, default='and'
+            Variation scheme: ``'and'`` (varAnd — crossover *and* mutation) or ``'or'`` (varOr —
+            each offspring is crossover *or* mutation *or* reproduction; needs cx_prob+mut_prob<=1).
+        engine : str, default='exact'
+            ``'exact'`` (pure-Python, RNG-matched to the DEAP reference) or ``'fast'`` (numpy-
+            vectorized non-dominated sort; numerically identical fronts, faster).
+        constraints : list of callable, optional
+            Feasibility predicates ``genome -> bool`` (``True`` = feasible). Infeasible variants
+            are penalized so the search avoids them.
+        penalty : str, default='delta'
+            Penalty applied to infeasible variants: ``'delta'`` (fixed worst objective) or
+            ``'closest_valid'`` (penalty scaled by the number of violated constraints).
+        hof_size : int, default=10
+            Size of the single-objective Hall of Fame (``SeqOpt.hall_of_fame_``) accumulated
+            across generations.
         n_mut_max : int, default=5
             Maximum number of point mutations per variant.
         region : str or list of int, optional
@@ -403,12 +429,26 @@ class SeqOpt(Tool):
                              list_str_options=ut.LIST_SEQOPT_MUTATION)
         ut.check_str_options(name="survival", val=survival,
                              list_str_options=ut.LIST_SEQOPT_SURVIVAL)
+        ut.check_str_options(name="variation", val=variation,
+                             list_str_options=ut.LIST_SEQOPT_VARIATION)
+        ut.check_str_options(name="engine", val=engine, list_str_options=ut.LIST_SEQOPT_ENGINE)
+        ut.check_str_options(name="penalty", val=penalty, list_str_options=ut.LIST_SEQOPT_PENALTY)
         ut.check_str_options(name="init", val=init, list_str_options=ut.LIST_SEQOPT_INIT)
         ut.check_number_range(name="pop_size", val=pop_size, min_val=2, just_int=True)
         ut.check_number_range(name="n_gen", val=n_gen, min_val=1, just_int=True)
         ut.check_number_range(name="n_mut_max", val=n_mut_max, min_val=1, just_int=True)
+        ut.check_number_range(name="hof_size", val=hof_size, min_val=1, just_int=True)
         ut.check_number_range(name="cx_prob", val=cx_prob, min_val=0, max_val=1, just_int=False)
         ut.check_number_range(name="mut_prob", val=mut_prob, min_val=0, max_val=1, just_int=False)
+        if constraints is not None:
+            constraints = ut.check_list_like(name="constraints", val=constraints)
+            for i, c in enumerate(constraints):
+                if not callable(c):
+                    raise ValueError(f"'constraints[{i}]' ({c}) should be a callable "
+                                     f"genome->bool feasibility predicate.")
+        if variation == ut.LIST_SEQOPT_VARIATION[1] and cx_prob + mut_prob > 1:
+            raise ValueError(f"variation='or' requires cx_prob + mut_prob <= 1 "
+                             f"(got {cx_prob} + {mut_prob}).")
         if seed is not None:
             ut.check_number_range(name="seed", val=seed, min_val=0, just_int=True)
         # Resolve RNG + scannable space
@@ -420,8 +460,8 @@ class SeqOpt(Tool):
         if len(positions) == 0:
             raise ValueError("No scannable positions for the given 'region'.")
         # Fitness + guidance
-        fitness_fn, _, _ = self._build_fitness(df_seq, df_feat, names, sources,
-                                               jmd_n_len, jmd_c_len)
+        fitness_fn, _, _ = self._build_fitness(df_seq, df_feat, names, sources, goals,
+                                               constraints, penalty, jmd_n_len, jmd_c_len)
         guide_fn = self._build_guide(df_seq, df_feat, fitness_fn, goals, wt_seq, base,
                                      jmd_n_len, jmd_c_len)
         suggest_seeds = None
@@ -438,8 +478,11 @@ class SeqOpt(Tool):
             res = evolve_nsga2(wt_seq, positions, alphabet, goals, fitness_fn, guide_fn, rng,
                                pop_size=pop_size, n_gen=n_gen, n_mut_max=n_mut_max,
                                crossover=crossover, mutation=mutation, cx_prob=cx_prob,
-                               mut_prob=mut_prob, survival=survival, suggest_seeds=suggest_seeds)
+                               mut_prob=mut_prob, survival=survival, variation=variation,
+                               engine=engine, hof_size=hof_size, suggest_seeds=suggest_seeds)
         self.trajectory_ = list(res["trajectory"])
+        # Hall of Fame: best-k single-objective variants (labels) across all generations.
+        self.hall_of_fame_ = [variant_label(wt_seq, g) for g in res.get("hall_of_fame", [])]
         df_pareto = self._build_output(res, wt_entry, wt_seq, names)
         if self._verbose:
             n_front = int((df_pareto[ut.COL_RANK] == 0).sum())
@@ -470,9 +513,10 @@ class SeqOpt(Tool):
     def eval(self,
              df_pareto: pd.DataFrame,
              ref_point: Optional[ut.ArrayLike1D] = None,
+             ref_front: Optional[ut.ArrayLike2D] = None,
              ) -> pd.DataFrame:
         """
-        Evaluate a Pareto front: hypervolume, front size and objective-space spread.
+        Evaluate a Pareto front: hypervolume, front size, spread and (optionally) convergence.
 
         Parameters
         ----------
@@ -481,11 +525,15 @@ class SeqOpt(Tool):
         ref_point : array-like, shape (n_objectives,), optional
             Reference (nadir) point for the hypervolume. If ``None``, the per-objective minimum
             (minus a small margin) of the front is used.
+        ref_front : array-like, shape (n_ref, n_objectives), optional
+            A reference (target) front in raw objective space. When given, a ``convergence``
+            column (generational distance to this front; lower = closer) is added.
 
         Returns
         -------
-        df_eval : pd.DataFrame, shape (1, 3)
-            One row with ``hypervolume``, ``n_front`` (rank-0 size) and ``spread``.
+        df_eval : pd.DataFrame, shape (1, 3 or 4)
+            One row with ``hypervolume``, ``n_front`` (rank-0 size) and ``spread`` (plus
+            ``convergence`` when ``ref_front`` is given).
 
         Examples
         --------
@@ -508,8 +556,10 @@ class SeqOpt(Tool):
         eval_goals = [obj_meta.get(c, ut.LIST_OBJECTIVE_GOALS[0]) for c in obj_cols]
         W = normalize_objectives_(F, eval_goals)
         ref = None if ref_point is None else np.asarray(ref_point, dtype=float)
-        hv = hypervolume(W, ref=ref)
-        sp = spread(W)
-        df_eval = pd.DataFrame([{ut.COL_HYPERVOLUME: hv, ut.COL_N_FRONT: int(len(front)),
-                                 ut.COL_SPREAD: sp}])
+        record = {ut.COL_HYPERVOLUME: hypervolume(W, ref=ref),
+                  ut.COL_N_FRONT: int(len(front)), ut.COL_SPREAD: spread(W)}
+        if ref_front is not None:
+            ref_W = normalize_objectives_(np.asarray(ref_front, dtype=float), eval_goals)
+            record[ut.COL_CONVERGENCE] = convergence(W, ref_W)
+        df_eval = pd.DataFrame([record])
         return df_eval

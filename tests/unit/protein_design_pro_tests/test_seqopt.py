@@ -291,3 +291,67 @@ class TestSeqOptPlot:
     def test_empty_trajectory_raises(self):
         with pytest.raises(ValueError):
             SeqOptPlot().hypervolume(trajectory=[])
+
+
+class TestSeqOptCapabilities:
+    """The DEAP-mapped operator/algorithm families, all pure-Python."""
+
+    def _base(self, wt, df_feat):
+        return dict(df_seq=wt, df_feat=df_feat, objectives=OBJ, pop_size=10, n_gen=4,
+                    n_mut_max=3, region="tmd", seed=4)
+
+    def test_variation_or(self, seqopt, wt, df_feat):
+        df = seqopt.run(variation="or", cx_prob=0.5, mut_prob=0.3, **self._base(wt, df_feat))
+        assert _non_dominated(df)
+
+    def test_variation_or_prob_sum_gt_one_raises(self, seqopt, wt, df_feat):
+        with pytest.raises(ValueError, match="cx_prob"):
+            seqopt.run(variation="or", cx_prob=0.8, mut_prob=0.5, **self._base(wt, df_feat))
+
+    def test_engine_fast(self, seqopt, wt, df_feat):
+        df = seqopt.run(engine="fast", **self._base(wt, df_feat))
+        assert _non_dominated(df)
+
+    def test_engine_exact_equals_fast(self, model, wt, df_feat):
+        kw = dict(df_seq=wt, df_feat=df_feat, objectives=OBJ, pop_size=10, n_gen=5,
+                  n_mut_max=3, region="tmd", seed=11)
+        ex = SeqOpt(mode="importance", model=model).run(engine="exact", **kw)
+        fa = SeqOpt(mode="importance", model=model).run(engine="fast", **kw)
+        assert set(ex[ut.COL_VARIANT]) == set(fa[ut.COL_VARIANT])
+
+    def test_survival_ea_simple(self, seqopt, wt, df_feat):
+        df = seqopt.run(survival="ea_simple", **self._base(wt, df_feat))
+        assert len(df) >= 1
+
+    def test_hall_of_fame_populated(self, seqopt, wt, df_feat):
+        seqopt.run(hof_size=7, **self._base(wt, df_feat))
+        assert 1 <= len(seqopt.hall_of_fame_) <= 7
+
+    def test_constraints_delta_excludes_position(self, seqopt, wt, df_feat):
+        df = seqopt.run(constraints=[lambda g: 11 not in g], penalty="delta",
+                        **self._base(wt, df_feat))
+        front = df[df[ut.COL_RANK] == 0]
+        touches_11 = front[ut.COL_VARIANT].str.contains(r"\D11\D", regex=True).any()
+        assert not touches_11 or (front[ut.COL_VARIANT] == "").all()
+
+    def test_constraints_closest_valid(self, seqopt, wt, df_feat):
+        df = seqopt.run(constraints=[lambda g: len(g) <= 2], penalty="closest_valid",
+                        **self._base(wt, df_feat))
+        assert len(df) >= 1
+
+    def test_constraints_non_callable_raises(self, seqopt, wt, df_feat):
+        with pytest.raises(ValueError, match="constraints"):
+            seqopt.run(constraints=[123], **self._base(wt, df_feat))
+
+    def test_eval_convergence_with_ref_front(self, seqopt, wt, df_feat):
+        df = seqopt.run(**self._base(wt, df_feat))
+        de = seqopt.eval(df_pareto=df, ref_front=[[5.0, 1.0], [3.0, 1.0]])
+        assert ut.COL_CONVERGENCE in de.columns and de.iloc[0][ut.COL_CONVERGENCE] >= 0
+
+    def test_bad_engine_raises(self, seqopt, wt, df_feat):
+        with pytest.raises(ValueError):
+            seqopt.run(engine="cuda", **self._base(wt, df_feat))
+
+    def test_bad_variation_raises(self, seqopt, wt, df_feat):
+        with pytest.raises(ValueError):
+            seqopt.run(variation="xor", **self._base(wt, df_feat))

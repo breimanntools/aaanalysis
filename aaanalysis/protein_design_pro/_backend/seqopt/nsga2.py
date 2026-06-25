@@ -114,15 +114,17 @@ def crowding_distance(W, front) -> np.ndarray:
     for k in range(m):
         order = np.argsort(sub[:, k], kind="mergesort")   # stable, deterministic
         lo, hi = sub[order[0], k], sub[order[-1], k]
-        span = hi - lo
+        # DEAP normalizes each objective by ``nobj * (max - min)`` (assignCrowdingDist), so the
+        # crowding values are byte-comparable with the reference oracle, not just rank-equal.
+        norm = m * (hi - lo)
         dist[order[0]] = np.inf
         dist[order[-1]] = np.inf
-        if span == 0:
+        if norm == 0:
             continue
         for r in range(1, n - 1):
             prev_v = sub[order[r - 1], k]
             next_v = sub[order[r + 1], k]
-            dist[order[r]] += (next_v - prev_v) / span
+            dist[order[r]] += (next_v - prev_v) / norm
     return dist
 
 
@@ -202,6 +204,87 @@ def select_nsga2(W, mu) -> Tuple[List[int], np.ndarray, np.ndarray]:
         else:
             remaining = mu - len(survivors)
             # Fill the partial front by descending crowding (stable on ties by index).
+            order = sorted(front, key=lambda i: (-crowding[i], i))
+            survivors.extend(order[:remaining])
+            break
+    return survivors, rank, crowding
+
+
+# III Fast (vectorized) engine — numerically identical fronts, numpy-vectorized for speed
+def fast_non_dominated_sort_vec(W) -> Tuple[List[List[int]], np.ndarray]:
+    """Vectorized fast non-dominated sort (``engine='fast'``).
+
+    Produces the **same** fronts and ranks as :func:`fast_non_dominated_sort` (same dominance
+    relation, same ascending-index order within a front) by computing the full pairwise
+    dominance matrix with numpy broadcasting instead of a Python double loop.
+    """
+    W = np.asarray(W, dtype=float)
+    n = W.shape[0]
+    if n == 0:
+        return [], np.zeros(0, dtype=int)
+    ge = np.all(W[:, None, :] >= W[None, :, :], axis=2)
+    gt = np.any(W[:, None, :] > W[None, :, :], axis=2)
+    dom = ge & gt                       # dom[i, j] == True  <=>  i dominates j
+    remaining = dom.sum(axis=0)         # how many points dominate j
+    rank = np.zeros(n, dtype=int)
+    placed = np.zeros(n, dtype=bool)
+    fronts: List[List[int]] = []
+    current = np.where(remaining == 0)[0]
+    f = 0
+    while current.size:
+        rank[current] = f
+        placed[current] = True
+        fronts.append(sorted(current.tolist()))
+        remaining = remaining - dom[current].sum(axis=0)
+        current = np.where((remaining == 0) & (~placed))[0]
+        f += 1
+    return fronts, rank
+
+
+def rank_and_crowding(W, engine="exact") -> Tuple[np.ndarray, np.ndarray]:
+    """Assign rank + crowding to every row, via the exact or the fast (vectorized) sort.
+
+    Both engines return identical ``rank`` and ``crowding`` (the fast path only vectorizes the
+    O(n^2) dominance scan); ``engine='fast'`` is a speed option, not a different result.
+    """
+    W = np.asarray(W, dtype=float)
+    n = W.shape[0]
+    if engine == ut.LIST_SEQOPT_ENGINE[1]:      # "fast"
+        fronts, rank = fast_non_dominated_sort_vec(W)
+    else:                                       # "exact"
+        fronts, rank = fast_non_dominated_sort(W)
+    crowding = np.zeros(n, dtype=float)
+    for front in fronts:
+        d = crowding_distance(W, front)
+        for idx, member in enumerate(front):
+            crowding[member] = d[idx]
+    return rank, crowding
+
+
+def select_nsga2_engine(W, mu, engine="exact") -> Tuple[List[int], np.ndarray, np.ndarray]:
+    """Engine-aware NSGA-II survival selection (exact or vectorized sort, identical result).
+
+    The fast path fills survivors **front-by-front in the same order** as :func:`select_nsga2`
+    (ascending index within a front, partial front by descending crowding) so the survivor
+    list -- not just its set -- is identical to the exact engine; population order drives the
+    downstream RNG, so any order difference would otherwise cascade into different offspring.
+    """
+    if engine != ut.LIST_SEQOPT_ENGINE[1]:              # "exact"
+        return select_nsga2(W, mu)
+    W = np.asarray(W, dtype=float)
+    n = W.shape[0]
+    fronts, rank = fast_non_dominated_sort_vec(W)
+    crowding = np.zeros(n, dtype=float)
+    for front in fronts:
+        d = crowding_distance(W, front)
+        for idx, member in enumerate(front):
+            crowding[member] = d[idx]
+    survivors: List[int] = []
+    for front in fronts:
+        if len(survivors) + len(front) <= mu:
+            survivors.extend(front)
+        else:
+            remaining = mu - len(survivors)
             order = sorted(front, key=lambda i: (-crowding[i], i))
             survivors.extend(order[:remaining])
             break

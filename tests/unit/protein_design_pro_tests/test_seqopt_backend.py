@@ -60,8 +60,8 @@ class TestCrowdingGoldenValues:
         F = np.array([[0., 1.], [0.5, 0.5], [1., 0.]])
         W = normalize_objectives_(F, ["max", "max"])
         d = crowding_distance(W, [0, 1, 2])
-        # interior gets normalized neighbour gaps on both objectives: 1.0 + 1.0
-        assert d[1] == pytest.approx(2.0)
+        # DEAP normalization (nobj * span): per-objective 0.5 each -> 1.0 total (matches DEAP).
+        assert d[1] == pytest.approx(1.0)
 
     def test_two_points_both_infinite(self):
         W = normalize_objectives_(np.array([[0., 0.], [1., 1.]]), ["max", "max"])

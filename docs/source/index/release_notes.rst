@@ -28,7 +28,14 @@ Added
   by static ``feat_importance``. ``run`` returns ``df_pareto`` (objective columns
   + non-dominated ``rank`` + ``crowding``); ``eval`` reports hypervolume, front
   size and spread; both plots return a ``(fig, ax)`` pair. Fully reproducible via
-  ``random_state`` / ``seed``.
+  ``random_state`` / ``seed``. The evolutionary toolbox is a complete pure-Python
+  re-implementation (no runtime dependency): ``crossover`` (uniform / one- /
+  two-point), ``mutation`` (substitution / shift), ``variation`` (varAnd / varOr),
+  ``survival`` ((mu+lambda) / (mu,lambda) / eaSimple), ``constraints`` (delta /
+  closest-valid penalty), a single-objective Hall of Fame (``hall_of_fame_``), a
+  ``convergence`` metric, and an ``engine="exact"|"fast"`` switch (numpy-vectorized
+  sort, identical fronts). Validated for equivalence against a dev-only DEAP oracle
+  (parity tests + an ours-vs-DEAP comparison; the shipped runtime stays DEAP-free).
 
 **Data Handling**
 

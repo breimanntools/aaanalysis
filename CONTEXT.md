@@ -155,6 +155,18 @@ _Avoid_: strategy, policy.
 How generated variants — which have no ground-truth label — enter the per-generation `ShapModel` refit: each variant's own model **prediction score** in `[0, 1]` becomes its **soft label** (`ShapModel.fit(fuzzy_labeling=True)`), explained against the original balanced 0/1 reference set. This is what lets SHAP attribution track the moving [[population]] (the `mode="impact"` engine). The shipped `ShapModel` fuzzy-labeling path, applied to directed evolution.
 _Avoid_: pseudo-labeling (no hard threshold is assigned — the label *is* the continuous score), self-training.
 
+**evolutionary operators** (in [[SeqOpt]]):
+The DEAP-mapped algorithm families [[SeqOpt]] re-implements in **pure Python** (DEAP is a dev/test-only parity oracle, never a runtime dependency): **crossover** (uniform / one-point / two-point over mutation-sets), **mutation** (substitution / shift), **variation** (`varAnd` = crossover *and* mutation, `varOr` = one of crossover / mutation / reproduction), **survival** (`mu_plus_lambda` elitist / `mu_comma_lambda` / `ea_simple` generational), **constraints** (feasibility callables penalized DeltaPenalty- or ClosestValidPenalty-style), and the single-objective **Hall of Fame** (`SeqOpt.hall_of_fame_`) alongside the [[Pareto front]] archive. Counterpart to the multi-objective [[non-dominated rank]] / [[crowding distance]] selection core.
+_Avoid_: GA primitive (these are the EA layer); DEAP operator (ours is an independent re-implementation).
+
+**engine (exact / fast)** (in [[SeqOpt]]):
+The NSGA-II sort/selection kernel. `engine="exact"` is the pure-Python path whose RNG stream and crowding formula (`nobj·span` normalization) are matched to the **DEAP reference**, so on a fixed seed it reproduces DEAP's [[non-dominated rank]] + [[crowding distance]] ordering; `engine="fast"` vectorizes the O(n²) non-dominated sort with numpy and yields a **numerically identical** front (verified faster than DEAP). The orthogonal axis to [[guidance mode (impact / importance)]].
+_Avoid_: byte-exact (the bar is equivalence — identical front membership + ordering, values within tolerance — not byte-identical serialization).
+
+**convergence** (`SeqOpt.eval`):
+The optional generational-distance metric: the mean range-normalized distance from each [[Pareto front]] point to its nearest point on a user-supplied **reference front** (`ref_front`); lower = closer to the target. Joins `hypervolume` and `spread` in `df_eval` only when a reference is given.
+_Avoid_: accuracy (this is a set-to-set distance, not a classification score).
+
 ### Multi-class & regression labeling vocabulary
 
 Helpers on `SequenceFeature` that turn a multi-class or continuous target into the

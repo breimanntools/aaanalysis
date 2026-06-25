@@ -87,6 +87,24 @@ def hypervolume(W, ref: Optional[np.ndarray] = None) -> float:
     return float(box * dominated.mean())
 
 
+def convergence(W, ref_front) -> float:
+    """Generational distance from a front to a reference front (lower = closer/converged).
+
+    Mean over the front of the minimum range-normalized Euclidean distance to a reference
+    point; ``inf`` when either front is empty.
+    """
+    W = np.asarray(W, dtype=float)
+    R = np.asarray(ref_front, dtype=float)
+    if W.size == 0 or R.size == 0:
+        return float("inf")
+    both = np.vstack([W, R])
+    rng = both.max(axis=0) - both.min(axis=0)
+    rng[rng == 0] = 1.0
+    Wn, Rn = W / rng, R / rng
+    dists = np.sqrt(((Wn[:, None, :] - Rn[None, :, :]) ** 2).sum(axis=2))
+    return float(dists.min(axis=1).mean())
+
+
 def spread(W) -> float:
     """Objective-space diversity of a front: mean pairwise Euclidean distance (0 if <2 points)."""
     W = np.asarray(W, dtype=float)
