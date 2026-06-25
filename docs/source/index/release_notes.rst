@@ -202,6 +202,10 @@ Added
   *Guides* (Tutorials · Protocols), *Reference*, and *Project* — and the landing page gains a
   "You want to… / Go to" routing table; the previously unwired **Comparison Harness**
   tutorial (``tutorial6_comparison_harness``) is now reachable.
+- **Standardized tutorial header box**: every tool tutorial now opens with a uniform
+  green *You will learn* box (Tool · Input · Output · Best used for · Related protocol ·
+  Related API), giving a one-glance answer to *what tool, what goes in, what comes out,
+  and where to go next* and cross-linking the matching protocol and API reference.
 
 Changed
 ~~~~~~~

@@ -38,6 +38,34 @@ plt.show()                              # flushes the figure as an inline PNG; r
   `plt.tight_layout()` / `plot_settings()`. Library plot code still never calls
   them (see `plotting.md`).
 
+## Tutorial header box ("You will learn")
+
+Every **tool tutorial** under `tutorials/` (the ones wired into `tutorials.rst` —
+not the Getting-Started workflow intros `tutorial0/1_*` / `plotting_prelude`) opens
+with a uniform green box right below its H1. It is a **raw reStructuredText cell**
+(`metadata.raw_mimetype = "text/restructuredtext"`) so it renders as the same
+`:class: tip` admonition the landing page uses — reproduce it verbatim, only varying
+the field contents:
+
+```rst
+.. admonition:: You will learn
+   :class: tip
+
+   - **Tool** — :class:`~aaanalysis.CPP`
+   - **Input** — ``df_parts``, ``labels``
+   - **Output** — ``df_feat``
+   - **Best used for** — <one-line "best used for">
+   - **Related protocol** — :doc:`P1: CPP signature </generated/protocol1_cpp_signature>`
+   - **Related API** — :class:`~aaanalysis.CPP`, :class:`~aaanalysis.CPPPlot`
+```
+
+All six fields are mandatory. Use real cross-refs (`:class:`/`:func:` for API,
+`:doc:` for the protocol) so the links resolve — a broken target is a Sphinx
+warning. The *Related protocol* is the protocol whose golden `aap` workflow uses the
+tool. Only add the `id` key to the raw cell when the notebook already uses cell ids
+(nbformat ≥ 4.5); the older `tutorial2a` (minor 0) must stay id-less or it fails
+`nbformat.validate`.
+
 ## General
 
 - Cover every public parameter of the demonstrated method (grouped sensibly).
