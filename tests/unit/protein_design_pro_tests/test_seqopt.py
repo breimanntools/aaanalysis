@@ -293,6 +293,67 @@ class TestSeqOptPlot:
             SeqOptPlot().hypervolume(trajectory=[])
 
 
+OBJ3 = [("activity", "max", ut.COL_DELTA_PRED), ("shift", "min", ut.COL_SHIFT_SCORE),
+        ("parsimony", "min", ut.COL_N_MUT)]
+
+
+class TestSeqOptVisualization:
+    """Convergence history + richer SeqOptPlot views (3-D, parallel coordinates)."""
+
+    def _run3(self, seqopt, wt, df_feat):
+        return seqopt.run(df_seq=wt, df_feat=df_feat, objectives=OBJ3, pop_size=12, n_gen=5,
+                          n_mut_max=3, region="tmd", seed=2)
+
+    def test_history_columns(self, seqopt, wt, df_feat):
+        self._run3(seqopt, wt, df_feat)
+        for c in (ut.COL_GENERATION, ut.COL_HYPERVOLUME, ut.COL_SPREAD,
+                  "best_activity", "best_shift", "best_parsimony"):
+            assert c in seqopt.history_.columns
+        assert len(seqopt.history_) == 6      # n_gen + 1
+
+    def test_convergence_returns_panels(self, seqopt, wt, df_feat):
+        self._run3(seqopt, wt, df_feat)
+        fig, axes = SeqOptPlot().convergence(history=seqopt.history_, figsize=(5, 6))
+        assert len(axes) == 3
+
+    def test_pareto_front_3d(self, seqopt, wt, df_feat):
+        df = self._run3(seqopt, wt, df_feat)
+        res = SeqOptPlot().pareto_front(df_pareto=df, x="activity", y="parsimony", z="shift")
+        assert res[1] is not None
+
+    def test_parallel_coordinates(self, seqopt, wt, df_feat):
+        df = self._run3(seqopt, wt, df_feat)
+        res = SeqOptPlot().parallel_coordinates(
+            df_pareto=df, objectives=["activity", "shift", "parsimony"], front_only=True)
+        assert res[1] is not None
+
+    def test_parallel_coordinates_one_objective_raises(self, seqopt, wt, df_feat):
+        df = self._run3(seqopt, wt, df_feat)
+        with pytest.raises(ValueError):
+            SeqOptPlot().parallel_coordinates(df_pareto=df, objectives=["activity"])
+
+    def test_callable_sequence_objective(self, seqopt, wt, df_feat):
+        # External-predictor objective: receives the variant SEQUENCE, returns a float.
+        seen = {}
+
+        def frac_tryptophan(sequence):
+            seen[sequence] = sequence.count("W") / len(sequence)
+            return seen[sequence]
+
+        obj = [("activity", "max", ut.COL_DELTA_PRED), ("low_w", "min", frac_tryptophan)]
+        df = seqopt.run(df_seq=wt, df_feat=df_feat, objectives=obj, pop_size=10, n_gen=4,
+                        n_mut_max=3, region="tmd", seed=1)
+        assert "low_w" in df.columns and len(seen) >= 1
+
+    def test_callable_only_objectives_need_no_model(self, wt, df_feat):
+        # A pure-callable multi-objective run works without any CPP model.
+        so = SeqOpt(mode="importance", model=None)
+        obj = [("len_w", "min", lambda s: s.count("W")), ("len_p", "max", lambda s: s.count("P"))]
+        df = so.run(df_seq=wt, df_feat=df_feat, objectives=obj, pop_size=8, n_gen=3,
+                    n_mut_max=2, region="tmd", seed=4)
+        assert {"len_w", "len_p"}.issubset(df.columns)
+
+
 class TestSeqOptCapabilities:
     """The DEAP-mapped operator/algorithm families, all pure-Python."""
 

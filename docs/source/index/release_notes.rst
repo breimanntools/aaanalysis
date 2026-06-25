@@ -36,6 +36,13 @@ Added
   ``convergence`` metric, and an ``engine="exact"|"fast"`` switch (numpy-vectorized
   sort, identical fronts). Validated for equivalence against a dev-only DEAP oracle
   (parity tests + an ours-vs-DEAP comparison; the shipped runtime stays DEAP-free).
+  **Objectives accept any ``callable(sequence) -> float``**, so an external
+  predictor (a scikit / torch model, or a sequence-level tool / web API) can be
+  optimized jointly with the model-on-features objectives (results cached per
+  variant). **Visualization**: ``SeqOptPlot`` adds ``convergence`` (per-generation
+  hypervolume + spread + per-objective best, from ``SeqOpt.history_``), a 3-D
+  ``pareto_front`` (optional ``z``), and ``parallel_coordinates`` for many-objective
+  fronts (alongside the 2-D ``pareto_front`` and ``hypervolume`` trace).
 
 **Data Handling**
 

@@ -208,8 +208,11 @@ class SeqOpt(Tool):
         wt_entry = df_seq[ut.COL_ENTRY].iloc[0]
         wt_seq = df_seq[ut.COL_SEQ].iloc[0]
         combine_cols = {ut.COL_DELTA_PRED, ut.COL_DELTA_CPP, ut.COL_SHIFT_SCORE}
-        need_combine = any((s in combine_cols) or callable(s) for s in sources)
+        need_combine = any(s in combine_cols for s in sources)
         cache: Dict[Tuple, Dict[str, float]] = {}
+        # Per-(objective, variant) cache for callable objectives so a slow external predictor /
+        # API is queried once per distinct variant sequence, not once per generation.
+        call_cache: Dict[Tuple, float] = {}
 
         def _score_uniq(genomes):
             uniq = {}
@@ -247,7 +250,10 @@ class SeqOpt(Tool):
                     if src == ut.COL_N_MUT:
                         vec.append(float(len(g)))
                     elif callable(src):
-                        vec.append(float(src(g, wt_seq)))
+                        key = (id(src), canonical(g))
+                        if key not in call_cache:
+                            call_cache[key] = float(src(apply_genome(wt_seq, g)))
+                        vec.append(call_cache[key])
                     elif len(g) == 0:
                         vec.append(0.0)
                     else:
@@ -353,8 +359,11 @@ class SeqOpt(Tool):
             attribution (``feat_importance`` / ``feat_impact``, ``positions``) the search reads.
         objectives : list of (str, str, object)
             ``(name, goal, source)`` per objective; ``goal`` in ``{'max','min'}`` and ``source``
-            in ``{'delta_pred','delta_cpp','shift_score','n_mut'}`` or a ``callable(genome, wt_seq)``.
-            At least two objectives.
+            in ``{'delta_pred','delta_cpp','shift_score','n_mut'}`` or a ``callable(sequence) ->
+            float``. The callable receives the **variant sequence** and returns a scalar, so any
+            external predictor (scikit / torch model, or a sequence-level tool / web API such as
+            a topology or signal-peptide predictor) can be optimized as an objective; its result
+            is cached per distinct variant. At least two objectives.
         algorithm : str, default='nsga2'
             ``'nsga2'`` (population) or ``'greedy'`` (importance-ordered single path).
         pop_size : int, default=50
@@ -483,6 +492,8 @@ class SeqOpt(Tool):
         self.trajectory_ = list(res["trajectory"])
         # Hall of Fame: best-k single-objective variants (labels) across all generations.
         self.hall_of_fame_ = [variant_label(wt_seq, g) for g in res.get("hall_of_fame", [])]
+        # Per-generation history (hypervolume + spread + per-objective best front value).
+        self.history_ = self._build_history(res, names)
         df_pareto = self._build_output(res, wt_entry, wt_seq, names)
         if self._verbose:
             n_front = int((df_pareto[ut.COL_RANK] == 0).sum())
@@ -509,6 +520,19 @@ class SeqOpt(Tool):
         # keeps the best-crowding copy of each.
         df_pareto = df_pareto.drop_duplicates(subset=[ut.COL_VARIANT]).reset_index(drop=True)
         return df_pareto
+
+    def _build_history(self, res, names):
+        """Per-generation convergence history (one row per generation)."""
+        hv = list(res.get("trajectory", []))
+        sp = list(res.get("spread_trajectory", [np.nan] * len(hv)))
+        best = res.get("best_trajectory")
+        data = {ut.COL_GENERATION: list(range(len(hv))),
+                ut.COL_HYPERVOLUME: hv, ut.COL_SPREAD: sp}
+        if best is not None and len(best):
+            best = np.asarray(best, dtype=float)
+            for j, name in enumerate(names):
+                data[f"best_{name}"] = best[:, j]
+        return pd.DataFrame(data)
 
     def eval(self,
              df_pareto: pd.DataFrame,

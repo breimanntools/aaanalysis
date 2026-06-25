@@ -12,7 +12,7 @@ import aaanalysis.utils as ut
 from .nsga2 import (normalize_objectives_, fast_non_dominated_sort, crowding_distance,
                     dcd_tournament, select_nsga2, rank_and_crowding, select_nsga2_engine)
 from .genome import (crossover_uniform, crossover_npoint, mutate, init_population, canonical)
-from .metrics import hypervolume
+from .metrics import hypervolume, spread
 
 
 # I Helper Functions
@@ -76,6 +76,19 @@ def _update_hof(hof, genomes, F, goals, k):
     return dict((canonical(g), (p, g)) for p, g in best)
 
 
+def _per_obj_best(F, goals, rank) -> List[float]:
+    """Best raw value per objective on the current rank-0 front (in each objective's goal sense)."""
+    F = np.asarray(F, dtype=float)
+    front = F[np.asarray(rank) == 0]
+    if len(front) == 0:
+        front = F
+    out = []
+    for j, goal in enumerate(goals):
+        col = front[:, j]
+        out.append(float(col.max() if goal == ut.LIST_OBJECTIVE_GOALS[0] else col.min()))
+    return out
+
+
 def _front_rank_crowding(W, engine="exact") -> Tuple[np.ndarray, np.ndarray]:
     """Assign every row its non-dominated rank and crowding distance (engine-aware)."""
     if engine == ut.LIST_SEQOPT_ENGINE[1]:              # "fast"
@@ -130,6 +143,8 @@ def evolve_nsga2(wt_seq: str,
     # non-decreasing (the convergence KPI).
     hv_ref = W.min(axis=0) - 1e-9
     trajectory = [hypervolume(W, ref=hv_ref)]
+    spread_traj = [spread(W)]
+    best_traj = [_per_obj_best(F, goals, rank)]
     for _gen in range(n_gen):
         weights = guide_fn(pop)
         parent_idx = dcd_tournament(rank, crowding, pop_size, rng)
@@ -152,8 +167,11 @@ def evolve_nsga2(wt_seq: str,
         W = normalize_objectives_(F, goals)
         rank, crowding = _front_rank_crowding(W, engine=engine)
         trajectory.append(hypervolume(W, ref=hv_ref))
+        spread_traj.append(spread(W))
+        best_traj.append(_per_obj_best(F, goals, rank))
     hall_of_fame = [g for _p, g in sorted(hof.values(), key=lambda t: -t[0])]
     return {"genomes": pop, "F": F, "rank": rank, "crowding": crowding,
+            "spread_trajectory": spread_traj, "best_trajectory": best_traj,
             "trajectory": trajectory, "hall_of_fame": hall_of_fame}
 
 

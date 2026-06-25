@@ -3,7 +3,7 @@ This is a script for the frontend of the SeqOptPlot class (**[pro]**) for visual
 multi-objective directed-evolution results: the Pareto-front objective scatter and the
 per-generation hypervolume convergence trace.
 """
-from typing import Optional, Tuple
+from typing import Optional, Tuple, List
 import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
@@ -58,12 +58,13 @@ class SeqOptPlot:
                      df_pareto: pd.DataFrame,
                      x: str,
                      y: str,
+                     z: Optional[str] = None,
                      ax: Optional[Axes] = None,
                      figsize: tuple = (6, 5),
                      front_only: bool = False,
                      ) -> Tuple[Figure, Axes]:
         """
-        Scatter two objectives of a Pareto front, colored by non-dominated rank.
+        Scatter two (or three) objectives of a Pareto front, colored by non-dominated rank.
 
         Parameters
         ----------
@@ -73,8 +74,11 @@ class SeqOptPlot:
             Objective column for the x-axis.
         y : str
             Objective column for the y-axis.
+        z : str, optional
+            Third objective column. When given, a 3-D scatter is drawn (for ``> 3`` objectives
+            use :meth:`SeqOptPlot.parallel_coordinates`).
         ax : matplotlib.axes.Axes, optional
-            Axes to draw on. A new figure is created when ``None``.
+            Axes to draw on. A new figure (3-D when ``z`` is given) is created when ``None``.
         figsize : tuple, default=(6, 5)
             Figure size when ``ax`` is None.
         front_only : bool, default=False
@@ -95,20 +99,31 @@ class SeqOptPlot:
         ut.check_df(df=df_pareto, name="df_pareto", cols_required=[ut.COL_RANK])
         check_objective_col(df_pareto=df_pareto, name=x, arg="x")
         check_objective_col(df_pareto=df_pareto, name=y, arg="y")
+        if z is not None:
+            check_objective_col(df_pareto=df_pareto, name=z, arg="z")
         ut.check_bool(name="front_only", val=front_only)
         # Plot
-        if ax is None:
-            _, ax = plt.subplots(figsize=figsize)
         df = df_pareto[df_pareto[ut.COL_RANK] == 0] if front_only else df_pareto
         ranks = df[ut.COL_RANK].to_numpy()
-        sc = ax.scatter(df[x], df[y], c=ranks, cmap="viridis_r", s=45,
-                        edgecolor="white", linewidth=0.5)
-        # Connect the first front (sorted by x) to show the trade-off curve.
-        front = df_pareto[df_pareto[ut.COL_RANK] == 0].sort_values(x)
-        ax.plot(front[x], front[y], color=ut.COLOR_BASE if hasattr(ut, "COLOR_BASE") else "black",
-                alpha=0.4, zorder=0)
-        ax.set_xlabel(x)
-        ax.set_ylabel(y)
+        if z is not None:
+            if ax is None:
+                fig = plt.figure(figsize=figsize)
+                ax = fig.add_subplot(111, projection="3d")
+            sc = ax.scatter(df[x], df[y], df[z], c=ranks, cmap="viridis_r", s=40,
+                            edgecolor="white", linewidth=0.5)
+            ax.set_xlabel(x)
+            ax.set_ylabel(y)
+            ax.set_zlabel(z)
+        else:
+            if ax is None:
+                _, ax = plt.subplots(figsize=figsize)
+            sc = ax.scatter(df[x], df[y], c=ranks, cmap="viridis_r", s=45,
+                            edgecolor="white", linewidth=0.5)
+            # Connect the first front (sorted by x) to show the trade-off curve.
+            front = df_pareto[df_pareto[ut.COL_RANK] == 0].sort_values(x)
+            ax.plot(front[x], front[y], color="black", alpha=0.4, zorder=0)
+            ax.set_xlabel(x)
+            ax.set_ylabel(y)
         if len(np.unique(ranks)) > 1:
             cbar = ax.get_figure().colorbar(sc, ax=ax)
             cbar.set_label(ut.COL_RANK)
@@ -152,4 +167,117 @@ class SeqOptPlot:
         ax.plot(range(len(traj)), traj, marker="o", markersize=3)
         ax.set_xlabel(ut.COL_GENERATION)
         ax.set_ylabel(ut.COL_HYPERVOLUME)
+        return ut.FigAxResult(ax.get_figure(), ax)
+
+    def convergence(self,
+                    history: pd.DataFrame,
+                    figsize: tuple = (6, 7),
+                    ) -> Tuple[Figure, List[Axes]]:
+        """
+        Plot per-generation convergence: hypervolume, spread and per-objective best.
+
+        A multi-panel view of the optimization converging across generations — the dominated
+        hypervolume rising, the front diversity (spread), and each objective's best front value.
+
+        Parameters
+        ----------
+        history : pd.DataFrame
+            Per-generation history (``SeqOpt.history_`` after a ``run``) with a ``generation``
+            column, ``hypervolume``, ``spread`` and one ``best_<objective>`` column per objective.
+        figsize : tuple, default=(6, 7)
+            Figure size.
+
+        Returns
+        -------
+        fig : matplotlib.figure.Figure
+            The figure.
+        ax : numpy.ndarray of matplotlib.axes.Axes
+            The panel axes (hypervolume, spread, per-objective best).
+
+        Examples
+        --------
+        .. include:: examples/seqopt_convergence.rst
+        """
+        # Validate
+        ut.check_df(df=history, name="history", cols_required=[ut.COL_GENERATION])
+        best_cols = [c for c in history.columns if c.startswith("best_")]
+        gen = history[ut.COL_GENERATION]
+        # Plot
+        fig, axes = plt.subplots(3, 1, figsize=figsize, sharex=True)
+        if ut.COL_HYPERVOLUME in history:
+            axes[0].plot(gen, history[ut.COL_HYPERVOLUME], marker="o", markersize=3)
+        axes[0].set_ylabel(ut.COL_HYPERVOLUME)
+        if ut.COL_SPREAD in history:
+            axes[1].plot(gen, history[ut.COL_SPREAD], marker="o", markersize=3, color="C1")
+        axes[1].set_ylabel(ut.COL_SPREAD)
+        for c in best_cols:
+            axes[2].plot(gen, history[c], marker="o", markersize=3, label=c[len("best_"):])
+        axes[2].set_ylabel("best objective")
+        axes[2].set_xlabel(ut.COL_GENERATION)
+        if best_cols:
+            axes[2].legend(fontsize="small")
+        return ut.FigAxResult(fig, axes)
+
+    def parallel_coordinates(self,
+                             df_pareto: pd.DataFrame,
+                             objectives: List[str],
+                             ax: Optional[Axes] = None,
+                             figsize: tuple = (7, 4),
+                             front_only: bool = True,
+                             ) -> Tuple[Figure, Axes]:
+        """
+        Parallel-coordinates plot of a Pareto front over any number of objectives.
+
+        Each variant is a line across the objective axes (min-max normalized per objective),
+        colored by non-dominated rank — the way to read trade-offs for ``> 3`` objectives.
+
+        Parameters
+        ----------
+        df_pareto : pd.DataFrame
+            Output of :meth:`SeqOpt.run`.
+        objectives : list of str
+            Objective columns to place on the parallel axes (in order).
+        ax : matplotlib.axes.Axes, optional
+            Axes to draw on. A new figure is created when ``None``.
+        figsize : tuple, default=(7, 4)
+            Figure size when ``ax`` is None.
+        front_only : bool, default=True
+            If ``True``, plot only the first (``rank=0``) front.
+
+        Returns
+        -------
+        fig : matplotlib.figure.Figure
+            The figure.
+        ax : matplotlib.axes.Axes
+            The axes the lines were drawn on.
+
+        Examples
+        --------
+        .. include:: examples/seqopt_parallel_coordinates.rst
+        """
+        # Validate
+        ut.check_df(df=df_pareto, name="df_pareto", cols_required=[ut.COL_RANK])
+        objectives = ut.check_list_like(name="objectives", val=objectives, accept_none=False)
+        if len(objectives) < 2:
+            raise ValueError(f"'objectives' (n={len(objectives)}) should list at least two columns.")
+        for o in objectives:
+            check_objective_col(df_pareto=df_pareto, name=o, arg="objectives")
+        ut.check_bool(name="front_only", val=front_only)
+        # Plot
+        if ax is None:
+            _, ax = plt.subplots(figsize=figsize)
+        df = df_pareto[df_pareto[ut.COL_RANK] == 0] if front_only else df_pareto
+        M = df[objectives].to_numpy(dtype=float)
+        lo, hi = M.min(axis=0), M.max(axis=0)
+        span = np.where(hi - lo == 0, 1.0, hi - lo)
+        Mn = (M - lo) / span
+        xs = np.arange(len(objectives))
+        cmap = plt.get_cmap("viridis_r")
+        ranks = df[ut.COL_RANK].to_numpy()
+        rmax = max(int(ranks.max()), 1)
+        for row, r in zip(Mn, ranks):
+            ax.plot(xs, row, color=cmap(r / rmax), alpha=0.6, linewidth=1.0)
+        ax.set_xticks(xs)
+        ax.set_xticklabels(objectives, rotation=20, ha="right")
+        ax.set_ylabel("min-max normalized")
         return ut.FigAxResult(ax.get_figure(), ax)
