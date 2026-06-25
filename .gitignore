@@ -103,6 +103,8 @@ venv.bak/
 
 # Documentation
 docs/_build/
+docs/_build_check/
+docs/_build_check.log
 ## Cheat-sheet build (docs/_cheatsheet/): the toolkit (build_cheat_sheet.py,
 ## content.py, gen_plots.py, cheat_sheet.css, template.html.jinja, fonts/) is
 ## tracked; the build virtualenv is not (it's only otherwise caught by the
