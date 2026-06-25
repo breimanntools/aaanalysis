@@ -488,7 +488,7 @@ class TreeModel(Wrapper):
     def add_feat_importance(self,
                             df_feat: pd.DataFrame,
                             drop: bool = False,
-                            sort: bool = True,
+                            sort: bool = False,
                             ) -> pd.DataFrame:
         """
         Include feature importance and its standard deviation to feature DataFrame.
@@ -505,13 +505,9 @@ class TreeModel(Wrapper):
         drop : bool, default=False
             If ``True``, allow dropping of already existing ``feat_importance`` and ``feat_importance_std`` columns
             from ``df_feat`` before inserting.
-        sort : bool, default=True
+        sort : bool, default=False
             If ``True``, sort the returned DataFrame by ``feat_importance`` in descending order (most important
             feature first) and reset the index. If ``False``, the input feature order is preserved.
-
-            .. versionchanged:: 1.1.0
-               Default changed from ``False`` to ``True`` so that ranking and feature-map plots
-               receive a pre-sorted DataFrame without an extra step.
 
         Returns
         -------

@@ -189,10 +189,6 @@ Changed
   the one-time notice is now a ``UserWarning`` (visible even with ``verbose=False``).
 - **SequenceFeature.feature_matrix**: New ``batch=`` parameter accepts a list of
   ``df_parts`` built in a single Cython pass (faster for many small part tables).
-- **TreeModel.add_feat_importance** now defaults to ``sort=True`` (was ``False``), returning
-  the feature DataFrame ordered by ``feat_importance`` so ``CPPPlot.ranking`` /
-  ``feature_map`` work without an explicit sort step. Pass ``sort=False`` to keep the input
-  order.
 - **get_df_parts / NumericalFeature.get_parts**: New ``pos``-anchor mode (``tmd_len=``)
   explodes each 1-based anchor into one ``jmd_n`` / ``tmd`` / ``jmd_c`` row
   (``entry_win``). ``get_df_parts`` is also several-fold faster (vectorized; output
