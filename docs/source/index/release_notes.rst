@@ -88,12 +88,12 @@ Added
 - **ShapModel — unbiased fuzzy estimator, now the default** (``[pro]``): ``fit`` gains
   ``fuzzy_aggregation``, defaulting to the new ``'interpolate'`` estimator. It weights a
   soft label by *exactly* ``p`` — fitting at 0 (``S0``) and at 1 (``S1``) and blending
-  ``p * S1 + (1 - p) * S0`` — instead of the biased threshold sweep used in v1.0
-  (still available via ``fuzzy_aggregation='threshold'``). ``n_rounds`` now defaults per
-  estimator (``None`` → ``1`` for ``interpolate``, ``5`` otherwise): the default fuzzy
-  estimate is the exact two-fit blend, ~2x faster than the v1.0 default on the same cell,
-  while ``n_rounds > 1`` averages per-round re-seeded fits into a reproducible Monte-Carlo
-  mean that converges around ``n_rounds ≈ 15–20``.
+  ``p * S1 + (1 - p) * S0`` — the unbiased alternative to the biased threshold sweep, which
+  stays available as a first-class option via ``fuzzy_aggregation='threshold'``. For
+  ``interpolate``, ``n_rounds`` (default ``5``) is a speed/stability dial: ``1`` is the fast
+  exact two-fit estimate (~2x faster than the threshold default on the same cell), ``5`` adds
+  light Monte-Carlo averaging, and the mean converges (run-to-run spread below ~5%) around
+  ``n_rounds ≈ 15–20``; a fixed ``random_state`` keeps every run reproducible.
 
 **Sequence Analysis**
 
