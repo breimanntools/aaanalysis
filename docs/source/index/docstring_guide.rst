@@ -492,6 +492,20 @@ Math
 Render formulas with ``.. math::`` (or inline ``:math:`...```) rather than ASCII,
 e.g. in the ``metrics`` functions (AUC*, BIC, KLD).
 
+Prose & punctuation
+-------------------
+
+Keep punctuation plain across all documentation (docstrings *and* ``.rst``
+pages), not only this guide.
+
+* **Avoid em dashes (``—``).** They read as a tic when overused. Prefer a
+  **colon** to introduce a label, list, or elaboration
+  (``**Overview**: New to AAanalysis ...``, ``four sections: ...``) and a
+  **comma** for an aside or appositive
+  (``... signatures, the features that distinguish ...``).
+* Reserve the em dash for the rare genuine break in thought; never use it as a
+  default connector or as bullet-label punctuation.
+
 Conformance checklist
 ---------------------
 
