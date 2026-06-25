@@ -4,6 +4,7 @@ This is a script for testing the aa.load_dataset function.
 from hypothesis import given, example, settings
 import hypothesis.strategies as some
 import numpy as np
+import pandas as pd
 import aaanalysis.utils as ut
 import aaanalysis as aa
 import pytest
@@ -96,6 +97,23 @@ class TestLoadDataset:
         if non_canonical_aa not in ["remove", "keep", "gap"]:
             with pytest.raises(ValueError):
                 aa.load_dataset(name="SEQ_LOCATION", non_canonical_aa=non_canonical_aa)
+
+    @settings(max_examples=5, deadline=None)
+    @given(verbose=some.booleans())
+    def test_load_dataset_verbose_bool(self, verbose):
+        """Test the 'verbose' parameter accepts booleans without changing the result."""
+        df = aa.load_dataset(name="SEQ_CAPSID", verbose=verbose)
+        assert set(ut.COLS_SEQ_INFO).issubset(set(df))
+
+    @settings(max_examples=10, deadline=None)
+    @given(verbose=some.one_of(some.integers(), some.text(), some.floats()))
+    @example(verbose="yes")
+    @example(verbose=1)
+    def test_load_dataset_invalid_verbose(self, verbose):
+        """Test with an invalid (non-boolean) 'verbose' value."""
+        if not isinstance(verbose, bool):
+            with pytest.raises(ValueError):
+                aa.load_dataset(name="SEQ_CAPSID", verbose=verbose)
 
 
 class TestLoadDatasetComplex:
@@ -211,6 +229,68 @@ class TestLoadDatasetComplex:
         df = aa.load_dataset(name="SEQ_LOCATION", n=5, random=True)
         assert len(df) == 5 * 2
         assert set(df[ut.COL_LABEL]) == {0, 1}
+
+
+# SEQ_CAPSID has both non-canonical sequences and a wide length spread, so each
+# removal step (non-canonical / min_len / max_len) drops a non-zero, verifiable count.
+DATASET_WITH_NON_CANONICAL = "SEQ_CAPSID"
+
+
+class TestLoadDatasetVerbose:
+    """Test that verbose reporting counts every entry-removal step exactly (issue #76)."""
+
+    def test_verbose_reports_non_canonical_removal_exact_count(self, capsys):
+        """verbose=True reports the non-canonical drop count == n_keep - n_remove exactly."""
+        n_keep = len(aa.load_dataset(name=DATASET_WITH_NON_CANONICAL, non_canonical_aa="keep"))
+        df = aa.load_dataset(name=DATASET_WITH_NON_CANONICAL, verbose=True)
+        n_removed = n_keep - len(df)
+        assert n_removed > 0
+        out = capsys.readouterr().out
+        assert "non-canonical" in out
+        assert f"removed {n_removed} sequence" in out
+
+    def test_verbose_reports_min_len_removal_exact_count(self, capsys):
+        """verbose=True reports the min_len drop count == n_before - n_after exactly."""
+        n_before = len(aa.load_dataset(name=DATASET_WITH_NON_CANONICAL, non_canonical_aa="keep"))
+        min_len = 50
+        df_keep = aa.load_dataset(name=DATASET_WITH_NON_CANONICAL, non_canonical_aa="keep", min_len=min_len)
+        n_removed = n_before - len(df_keep)
+        assert n_removed > 0
+        aa.load_dataset(name=DATASET_WITH_NON_CANONICAL, min_len=min_len, verbose=True)
+        out = capsys.readouterr().out
+        assert "min_len" in out
+        assert f"removed {n_removed} sequence" in out
+
+    def test_verbose_reports_max_len_removal_exact_count(self, capsys):
+        """verbose=True reports the max_len drop count == n_before - n_after exactly."""
+        n_before = len(aa.load_dataset(name=DATASET_WITH_NON_CANONICAL, non_canonical_aa="keep"))
+        max_len = 300
+        df_keep = aa.load_dataset(name=DATASET_WITH_NON_CANONICAL, non_canonical_aa="keep", max_len=max_len)
+        n_removed = n_before - len(df_keep)
+        assert n_removed > 0
+        aa.load_dataset(name=DATASET_WITH_NON_CANONICAL, max_len=max_len, verbose=True)
+        out = capsys.readouterr().out
+        assert "max_len" in out
+        assert f"removed {n_removed} sequence" in out
+
+    def test_verbose_off_is_silent(self, capsys):
+        """verbose=False (the default) emits no removal messages."""
+        aa.load_dataset(name=DATASET_WITH_NON_CANONICAL, verbose=False)
+        assert capsys.readouterr().out == ""
+
+    def test_opt_out_keeps_all_entries(self):
+        """The non_canonical_aa='keep' opt-out removes 0 entries (raw on-disk row count)."""
+        raw = ut.read_csv_cached(
+            ut.FOLDER_DATA + "benchmarks" + ut.SEP + DATASET_WITH_NON_CANONICAL + f".{ut.STR_FILE_TYPE}"
+        )
+        df_keep = aa.load_dataset(name=DATASET_WITH_NON_CANONICAL, non_canonical_aa="keep")
+        assert len(df_keep) == len(raw)
+
+    def test_default_output_byte_identical_to_verbose_off(self):
+        """Default call returns df_seq byte-identical regardless of verbose (no data change)."""
+        df_default = aa.load_dataset(name=DATASET_WITH_NON_CANONICAL)
+        df_verbose = aa.load_dataset(name=DATASET_WITH_NON_CANONICAL, verbose=True)
+        pd.testing.assert_frame_equal(df_default, df_verbose)
 
 
 def _recompute_avg_length(name):

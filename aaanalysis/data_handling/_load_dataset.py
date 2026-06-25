@@ -146,6 +146,7 @@ def load_dataset(name: str = "Overview",
                  min_len: Optional[int] = None,
                  max_len: Optional[int] = None,
                  aa_window_size: Union[int, None] = 9,
+                 verbose: bool = False,
                  ) -> DataFrame:
     """
     Load protein benchmarking datasets.
@@ -154,6 +155,11 @@ def load_dataset(name: str = "Overview",
     By default, an overview table is provided (``name='Overview'``). For in-depth details, refer to [Breimann24a]_.
 
     .. versionadded:: 0.1.0
+
+    .. versionchanged:: 1.1.0
+        Added the ``verbose`` parameter, which reports how many entries each
+        removal step (``min_len``, ``max_len``, and ``non_canonical_aa='remove'``)
+        dropped. The returned data is unchanged.
 
     Parameters
     ----------
@@ -168,17 +174,25 @@ def load_dataset(name: str = "Overview",
     non_canonical_aa : {'remove', 'keep', 'gap'}, default='remove'
         Options for handling non-canonical amino acids:
 
-        * ``remove``: Remove sequences containing non-canonical amino acids.
+        * ``remove``: Remove sequences containing non-canonical amino acids
+          (the count removed is reported when ``verbose=True``). To retain every
+          entry (e.g. for inspection), use ``keep``.
         * ``keep``: Don't remove sequences containing non-canonical amino acids.
         * ``gap``: Non-canonical amino acids are replaced by the gap symbol ('-').
 
     min_len : int, optional
-        Minimum length of sequences for filtering.
+        Minimum length of sequences for filtering. The number of entries removed
+        is reported when ``verbose=True``.
     max_len : int, optional
-        Maximum length of sequences for filtering.
+        Maximum length of sequences for filtering. The number of entries removed
+        is reported when ``verbose=True``.
     aa_window_size : int, default=9
         Length of amino acid window, only used for the amino acid dataset level (``name='AA_'``). Disabled if ``None``.
         Must be odd, except for cleavage site datasets (e.g., 'AA_CASPASE3', 'AA_FURIN', 'AA_MMP2').
+    verbose : bool, default=False
+        If ``True``, report how many entries each removal step (``min_len``,
+        ``max_len``, and ``non_canonical_aa='remove'``) dropped. Does not change
+        the returned data.
 
     Returns
     -------
@@ -237,6 +251,7 @@ def load_dataset(name: str = "Overview",
     check_min_max_val(min_len=min_len, max_len=max_len)
     is_cs_dataset = _is_cleavage_site_dataset(name=name)
     check_aa_window_size(aa_window_size=aa_window_size, is_cs_dataset=is_cs_dataset)
+    verbose = ut.check_verbose(verbose)
 
     # Load overview table
     if name == "Overview":
@@ -244,17 +259,29 @@ def load_dataset(name: str = "Overview",
     df = ut.read_csv_cached(FOLDER_BENCHMARKS + name + f".{ut.STR_FILE_TYPE}")
     # Filter data
     if min_len is not None:
+        n_before = len(df)
         mask = [len(x) >= min_len for x in df[ut.COL_SEQ]]
         df = df[mask]
         if len(df) == 0:
             raise ValueError(f"'min_len' ({min_len}) is too high and removed all sequences.")
+        n_removed = n_before - len(df)
+        if verbose and n_removed > 0:
+            ut.print_out(f"'{name}': removed {n_removed} sequence(s) shorter than 'min_len' ({min_len}).")
     if max_len is not None:
+        n_before = len(df)
         mask = [len(x) <= max_len for x in df[ut.COL_SEQ]]
         df = df[mask]
         if len(df) == 0:
             raise ValueError(f"'max_len' ({max_len}) is too low and removed all sequences.")
+        n_removed = n_before - len(df)
+        if verbose and n_removed > 0:
+            ut.print_out(f"'{name}': removed {n_removed} sequence(s) longer than 'max_len' ({max_len}).")
     # Adjust non-canonical amino acid (keep, remove, or replace by gap)
+    n_before = len(df)
     df_seq = _adjust_non_canonical_aa(df=df, non_canonical_aa=non_canonical_aa)
+    n_removed = n_before - len(df_seq)
+    if verbose and non_canonical_aa == "remove" and n_removed > 0:
+        ut.print_out(f"'{name}': removed {n_removed} sequence(s) containing non-canonical amino acids.")
     # Adjust amino acid windows for 'AA' datasets
     if _is_aa_level(name=name):
         # Special case that unfiltered df_seq is returned
