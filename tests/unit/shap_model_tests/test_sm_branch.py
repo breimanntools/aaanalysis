@@ -103,7 +103,7 @@ class TestFitBranch:
         X, _ = _small_data(n_samples=12)
         labels = np.array([1, 1, 1, 0, 0, 0, 1, 1, 0, 0, 1, 0.5], dtype=float)
         sm = aa.ShapModel(**MODEL_KWARGS, verbose=False)
-        sm.fit(X, labels=labels, fuzzy_labeling=True, **ARGS)
+        sm.fit(X, labels=labels, fuzzy_labeling=True, fuzzy_aggregation="threshold", **ARGS)
         assert sm.shap_values.shape == X.shape
 
     def test_fuzzy_label_out_of_range_raises(self):

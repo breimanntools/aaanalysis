@@ -528,14 +528,32 @@ class TestShapModelFitFuzzyAggregation:
         finally:
             B._compute_shap_values = orig
 
-    # No regression: the default 'threshold' path is unchanged by the routing refactor
-    def test_threshold_default_unchanged(self):
+    # 'interpolate' is the default estimator; explicit selection matches the default
+    def test_default_is_interpolate(self):
         default = aa.ShapModel(**ONE_MODEL, verbose=False, random_state=9).fit(
             SMALL_X, labels=SMALL_LABELS_1FUZZY, fuzzy_labeling=True, n_rounds=3).shap_values
         explicit = aa.ShapModel(**ONE_MODEL, verbose=False, random_state=9).fit(
             SMALL_X, labels=SMALL_LABELS_1FUZZY, fuzzy_labeling=True,
-            fuzzy_aggregation="threshold", n_rounds=3).shap_values
+            fuzzy_aggregation="interpolate", n_rounds=3).shap_values
         assert np.array_equal(default, explicit)
+
+    # n_rounds=None resolves to the per-estimator natural default: 1 for interpolate, 5 for threshold
+    def test_n_rounds_none_natural_default(self):
+        # interpolate default-rounds == explicit n_rounds=1
+        auto_i = aa.ShapModel(**ONE_MODEL, verbose=False, random_state=9).fit(
+            SMALL_X, labels=SMALL_LABELS_1FUZZY, fuzzy_labeling=True).shap_values
+        explicit_i1 = aa.ShapModel(**ONE_MODEL, verbose=False, random_state=9).fit(
+            SMALL_X, labels=SMALL_LABELS_1FUZZY, fuzzy_labeling=True,
+            fuzzy_aggregation="interpolate", n_rounds=1).shap_values
+        assert np.array_equal(auto_i, explicit_i1)
+        # threshold default-rounds == explicit n_rounds=5
+        auto_t = aa.ShapModel(**ONE_MODEL, verbose=False, random_state=9).fit(
+            SMALL_X, labels=SMALL_LABELS_1FUZZY, fuzzy_labeling=True,
+            fuzzy_aggregation="threshold").shap_values
+        explicit_t5 = aa.ShapModel(**ONE_MODEL, verbose=False, random_state=9).fit(
+            SMALL_X, labels=SMALL_LABELS_1FUZZY, fuzzy_labeling=True,
+            fuzzy_aggregation="threshold", n_rounds=5).shap_values
+        assert np.array_equal(auto_t, explicit_t5)
 
     # fuzzy_aggregation is inert when fuzzy labeling is off (binary path untouched)
     def test_fuzzy_aggregation_inert_without_fuzzy(self):

@@ -85,13 +85,15 @@ Added
   ``add_feat_impact`` / ``add_sample_mean_dif`` accept ``df_seq`` and a ``samples``
   parameter taking row positions or entry names. The array-``labels`` path is unchanged;
   ``sample_positions`` is a deprecated alias for ``samples`` (removed in 1.2.0).
-- **ShapModel — unbiased fuzzy estimator** (``[pro]``): ``fit`` gains
-  ``fuzzy_aggregation`` (default ``'threshold'``, unchanged). ``'interpolate'`` weights a
+- **ShapModel — unbiased fuzzy estimator, now the default** (``[pro]``): ``fit`` gains
+  ``fuzzy_aggregation``, defaulting to the new ``'interpolate'`` estimator. It weights a
   soft label by *exactly* ``p`` — fitting at 0 (``S0``) and at 1 (``S1``) and blending
-  ``p * S1 + (1 - p) * S0`` — instead of the biased threshold sweep. With ``n_rounds=1``
-  it needs only two fits per fuzzy sample; ``n_rounds > 1`` averages per-round re-seeded
-  fits (reproducible for a fixed ``random_state``). Recommended for explaining
-  newly-predicted proteins.
+  ``p * S1 + (1 - p) * S0`` — instead of the biased threshold sweep used in v1.0
+  (still available via ``fuzzy_aggregation='threshold'``). ``n_rounds`` now defaults per
+  estimator (``None`` → ``1`` for ``interpolate``, ``5`` otherwise): the default fuzzy
+  estimate is the exact two-fit blend, ~2x faster than the v1.0 default on the same cell,
+  while ``n_rounds > 1`` averages per-round re-seeded fits into a reproducible Monte-Carlo
+  mean that converges around ``n_rounds ≈ 15–20``.
 
 **Sequence Analysis**
 

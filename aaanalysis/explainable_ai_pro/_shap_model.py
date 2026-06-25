@@ -470,10 +470,10 @@ class ShapModel(Wrapper):
             X: ut.ArrayLike2D,
             labels: ut.ArrayLike1D,
             label_target_class: int = 1,
-            n_rounds: int = 5,
+            n_rounds: Optional[int] = None,
             is_selected: Optional[ut.ArrayLike2D] = None,
             fuzzy_labeling: bool = False,
-            fuzzy_aggregation: str = "threshold",
+            fuzzy_aggregation: str = "interpolate",
             n_background_data: Optional[int] = None,
             df_seq: Optional[pd.DataFrame] = None,
             fuzzy_labels: Optional[dict] = None,
@@ -499,18 +499,22 @@ class ShapModel(Wrapper):
         label_target_class : int, default=1
             The label of the class for which SHAP values are computed in a classification tasks.
             For binary classification, '0' represents the negative class and '1' the positive class.
-        n_rounds : int, default=5
+        n_rounds : int, optional
             The number of rounds (>=1) to fit the models and obtain the SHAP values by explainer.
+            If ``None``, a per-estimator natural default is used: ``1`` for
+            ``fuzzy_aggregation='interpolate'`` (exact in a single round) and ``5`` otherwise
+            (the threshold sweep and the non-fuzzy Monte-Carlo estimate need several rounds).
         is_selected : array-like, shape (n_selection_round, n_features)
             2D boolean arrays indicating different feature selections.
         fuzzy_labeling : bool, default=False
             If ``True``, fuzzy labeling is applied to approximate SHAP values for samples with uncertain/partial
             memberships (e.g., between >0 and <1 for binary classification scenarios).
-        fuzzy_aggregation : str, default='threshold'
+        fuzzy_aggregation : str, default='interpolate'
             Strategy to turn a soft label ``p`` into a SHAP estimate when fuzzy labeling is active (see Notes):
 
-            - ``'threshold'``: hard-label the fuzzy sample over a threshold grid and average (biased; the default).
-            - ``'interpolate'``: blend ``p * S1 + (1 - p) * S0`` from a fit at 0 and at 1 (unbiased, exact ``p``).
+            - ``'interpolate'`` (default): blend ``p * S1 + (1 - p) * S0`` from a fit at 0 and at 1
+              (unbiased, exact ``p``; with ``n_rounds=1`` only two fits per fuzzy sample).
+            - ``'threshold'``: hard-label the fuzzy sample over a threshold grid and average (biased; legacy default).
 
         n_background_data : None or int, optional
             The number samples (< 'n_samples') in the background dataset used for the `KernelExplainer`` to reduce
@@ -542,16 +546,17 @@ class ShapModel(Wrapper):
 
         The ``fuzzy_aggregation`` parameter selects how a soft label ``p`` (in [0, 1]) is turned into a SHAP estimate:
 
-        * ``'threshold'`` (default): Over an ``n_rounds`` x ``n_selection`` grid the fuzzy sample is hard-labeled ``1``
-          when a per-cell threshold ``<= p`` and the per-cell SHAP matrices are averaged. Because the threshold grid is
-          non-uniform on (0, 1], the effective positive-fraction is a *biased* approximation of ``p``.
-        * ``'interpolate'``: The fuzzy sample is weighted by *exactly* ``p`` by fitting the model twice (fuzzy sample at
-          0 -> ``S0``, at 1 -> ``S1``) and blending ``p * S1 + (1 - p) * S0`` (the ``exp_value`` is blended the same way).
-          This is *unbiased* and, with ``n_rounds=1``, the fastest fuzzy estimator (exactly two fits per fuzzy sample).
-          ``n_rounds > 1`` averages re-seeded fits per round (``random_state + round``), capturing model variance while
-          staying reproducible for a fixed ``random_state``. Each fuzzy protein is explained independently against the
-          fixed balanced 0/1 core, with the other fuzzy proteins excluded from its training data. Recommended for the
-          "explain newly-predicted proteins" path.
+        * ``'interpolate'`` (default): The fuzzy sample is weighted by *exactly* ``p`` by fitting the model twice (fuzzy
+          sample at 0 -> ``S0``, at 1 -> ``S1``) and blending ``p * S1 + (1 - p) * S0`` (the ``exp_value`` is blended the
+          same way). This is *unbiased* and, with the default ``n_rounds=1``, the fastest fuzzy estimator (exactly two
+          fits per fuzzy sample). ``n_rounds > 1`` averages re-seeded fits per round (``random_state + round``), a
+          Monte-Carlo mean over model variance that converges as ``n_rounds`` grows while staying reproducible for a
+          fixed ``random_state``. Each fuzzy protein is explained independently against the fixed balanced 0/1 core, with
+          the other fuzzy proteins excluded from its training data.
+        * ``'threshold'``: Over an ``n_rounds`` x ``n_selection`` grid (default ``n_rounds=5``) the fuzzy sample is
+          hard-labeled ``1`` when a per-cell threshold ``<= p`` and the per-cell SHAP matrices are averaged. Because the
+          threshold grid is non-uniform on (0, 1], the effective positive-fraction is a *biased* approximation of ``p``.
+          This was the default in v1.0; kept for backward-compatible results.
 
         **Setting soft labels**
 
@@ -592,6 +597,10 @@ class ShapModel(Wrapper):
         check_match_labels_target_class_labels(label_target_class=label_target_class, labels=labels)
         is_selected = check_is_selected(is_selected=is_selected, n_feat=n_feat)
         check_match_X_is_selected(X=X, is_selected=is_selected)
+        # Resolve the per-estimator natural default: interpolate is exact in a single round,
+        # while the threshold sweep (and the non-fuzzy Monte-Carlo) need several rounds.
+        if n_rounds is None:
+            n_rounds = 1 if (fuzzy_labeling and fuzzy_aggregation == "interpolate") else 5
         ut.check_number_range(name="n_rounds", val=n_rounds, min_val=1, just_int=True)
         ut.check_number_range(name="n_background_data", val=n_background_data, min_val=1, just_int=True, accept_none=True)
         check_match_n_background_data_X(n_background_data=n_background_data, X=X)
