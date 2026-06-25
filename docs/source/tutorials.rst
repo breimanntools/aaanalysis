@@ -84,4 +84,4 @@ mutation map and lineage.
 .. toctree::
    :maxdepth: 1
 
-   generated/tutorial7_protein_design
+   generated/tutorial7_protein_engineering

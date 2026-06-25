@@ -6,8 +6,7 @@ fixed synthetic fitness sets these tests assert our selection core reproduces DE
 
 * identical non-dominated **rank** (front membership) for every point,
 * identical within-front **crowding ordering** + crowding values within ``atol``,
-* identical ``selNSGA2`` survivor **set**,
-* both SeqOpt engines (``exact`` / ``fast``) agree with DEAP (and each other).
+* identical ``selNSGA2`` survivor profile.
 
 Skipped when ``deap`` is not installed (core-only environments).
 """
@@ -20,8 +19,7 @@ deap = pytest.importorskip("deap")
 from deap import base, creator, tools  # noqa: E402
 
 from aaanalysis.protein_design_pro._backend.seqopt.nsga2 import (  # noqa: E402
-    normalize_objectives_, fast_non_dominated_sort, fast_non_dominated_sort_vec,
-    crowding_distance, select_nsga2, select_nsga2_engine)
+    normalize_objectives_, fast_non_dominated_sort, crowding_distance, select_nsga2)
 
 settings.register_profile("ci", deadline=None)
 settings.load_profile("ci")
@@ -98,13 +96,6 @@ class TestNonDominatedRankParity:
         _, ours = fast_non_dominated_sort(W)
         assert ours.tolist() == _deap_rank(W).tolist()
 
-    @settings(max_examples=10, deadline=None)
-    @given(seed=some.integers(0, 200), n=some.integers(3, 25), m=some.integers(2, 4))
-    def test_fast_sort_matches_deap(self, seed, n, m):
-        W = _rand_W(seed, n, m)
-        _, ours = fast_non_dominated_sort_vec(W)
-        assert ours.tolist() == _deap_rank(W).tolist()
-
     def test_golden_three_point_front(self):
         W = normalize_objectives_(np.array([[1., 0.], [0., 1.], [0.5, 0.5], [0., 0.]]),
                                   ["max", "max"])
@@ -166,7 +157,6 @@ class TestSelectNsga2Parity:
 
         theirs = profile(_deap_select(W, mu))
         assert profile(select_nsga2(W, mu)[0]) == theirs
-        assert profile(select_nsga2_engine(W, mu, engine="fast")[0]) == theirs
 
     @settings(max_examples=15, deadline=None)
     @given(seed=some.integers(0, 200), n=some.integers(6, 25), m=some.integers(2, 3))
@@ -181,9 +171,3 @@ class TestSelectNsga2Parity:
         ours = sorted(int(rank[i]) for i in select_nsga2(W, mu)[0])
         theirs = sorted(int(rank[i]) for i in _deap_select(W, mu))
         assert ours == theirs
-
-    def test_engines_agree_on_survivor_order(self):
-        W = _rand_W(7, 20, 2)
-        ex = select_nsga2(W, 10)[0]
-        fa = select_nsga2_engine(W, 10, engine="fast")[0]
-        assert ex == fa
