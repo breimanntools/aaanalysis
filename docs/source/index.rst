@@ -67,7 +67,7 @@ classes grouped by capability, the prediction levels (residue / domain / protein
 .. raw:: html
 
    <p>
-     Click the image to open the interactive cheat sheet in your browser or
+     Click the image to open the cheat sheet in your browser or
      <a href="_static/AAanalysis_cheat_sheet.pdf" download="AAanalysis_cheat_sheet.pdf">click here to download the PDF cheat sheet</a>.
    </p>
    <a href="_static/cheat_sheet.html" target="_blank" rel="noopener">
@@ -117,9 +117,19 @@ The AAanalysis Ecosystem
 ========================
 AAanalysis is the interpretable middle layer between bioinformatics I/O and the downstream machine
 learning, explainable AI, and protein-design stack. It *consumes* upstream representations (sequences,
-embeddings, structures) and even competitor descriptor sets, runs them through its interpretable core
-(*Part × Split × Scale* · AAontology · CPP · ShapModel), and *exposes* the resulting features,
-explanations, and objectives to the standard ML / XAI / optimization tools.
+embeddings, structures) and even competitor descriptor sets, and runs them through its interpretable
+core (*Part × Split × Scale* · AAontology · CPP). Downstream machine-learning and explainable-AI
+methods then either *consume* these features directly or are *integrated* into AAanalysis through
+wrappers or native implementations — for example SHAP via ``ShapModel``, or machine-learning models
+such as random forests via ``TreeModel`` — so the resulting features, explanations, and design
+objectives feed straight into the standard ML / XAI / optimization tools.
+
+Click to open the
+`standalone ecosystem map <https://raw.githubusercontent.com/breimanntools/aaanalysis/master/docs/source/_artwork/diagrams/aaanalysis_ecosystem.svg>`_,
+`download the map <https://raw.githubusercontent.com/breimanntools/aaanalysis/master/docs/source/_artwork/diagrams/aaanalysis_ecosystem.png>`_,
+or read the full
+`ecosystem positioning page <https://aaanalysis.readthedocs.io/en/latest/_static/aaanalysis_ecosystem.html>`_
+— a self-contained walkthrough with the map, its introduction, and further background.
 
 .. figure:: _artwork/diagrams/aaanalysis_ecosystem.svg
    :target: _static/aaanalysis_ecosystem.html
@@ -127,10 +137,6 @@ explanations, and objectives to the standard ML / XAI / optimization tools.
    :width: 100%
    :align: center
    :figclass: ecosystem-figure
-
-Explore the full `ecosystem map <_static/aaanalysis_ecosystem.html>`_ — per-category
-packages, the comparison matrix, and where AAanalysis sits in the protein-ML stack. Click the diagram
-to open it.
 
 Citation
 ========
