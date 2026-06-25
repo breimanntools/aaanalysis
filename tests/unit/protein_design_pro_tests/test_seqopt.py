@@ -233,6 +233,28 @@ class TestSeqOptInit:
                     n_mut_max=2, region="tmd")
         assert _non_dominated(df)
 
+    def test_impact_mode_df_seq_ref_with_extra_columns(self, wt, df_feat):
+        # Regression: a reference from load_dataset carries jmd_n/tmd/jmd_c/label columns; the
+        # per-generation ShapModel refit must keep only the position-based columns (else the
+        # appended variant row NaN-trips check_df_seq).
+        pytest.importorskip("sklearn")
+        from sklearn.ensemble import RandomForestClassifier
+        seqs = ["MKLAGTWYVFAILMVFWCGSTNQDEHKRPYLAGTWYVFAI",
+                "ACDEFGHIKLMNPQRSTVWYACDEFGHIKLMNPQRSTVWY"] * 4
+        ref = pd.DataFrame({ut.COL_ENTRY: [f"R{i}" for i in range(8)], ut.COL_SEQ: seqs,
+                            ut.COL_TMD_START: [11] * 8, ut.COL_TMD_STOP: [20] * 8,
+                            ut.COL_JMD_N: ["X" * 10] * 8, "label": [1, 0] * 4})
+        labels = [1, 0] * 4
+        sf = aa.SequenceFeature(verbose=False)
+        X = np.asarray(sf.feature_matrix(features=list(df_feat[ut.COL_FEATURE]),
+                                         df_parts=sf.get_df_parts(df_seq=ref),
+                                         df_scales=ut.load_default_scales()), float)
+        rf = RandomForestClassifier(n_estimators=10, random_state=0).fit(X, labels)
+        so = SeqOpt(mode="impact", model=rf, df_seq_ref=ref, labels=labels, random_state=3)
+        df = so.run(df_seq=wt, df_feat=df_feat, objectives=OBJ, pop_size=6, n_gen=2,
+                    n_mut_max=2, region="tmd")
+        assert _non_dominated(df)
+
 
 class TestSeqOptEval:
     def test_columns(self, seqopt, wt, df_feat):

@@ -271,11 +271,13 @@ class SeqOpt(Tool):
         mut_seq = apply_genome(wt_seq, best_genome)
         ts = int(df_seq[ut.COL_TMD_START].iloc[0])
         te = int(df_seq[ut.COL_TMD_STOP].iloc[0])
-        df_var = self._df_seq_ref[list(ut.COLS_SEQ_POS) + [ut.COL_ENTRY]].copy() \
-            if ut.COL_ENTRY in self._df_seq_ref.columns else self._df_seq_ref.copy()
+        # Keep only the position-based columns (the reference may carry jmd_n/tmd/jmd_c/label
+        # etc. that would NaN-out for the appended variant row and trip check_df_seq).
+        pos_cols = [ut.COL_ENTRY] + list(ut.COLS_SEQ_POS)
+        df_ref = self._df_seq_ref[pos_cols].copy()
         var_row = {ut.COL_ENTRY: "__variant__", ut.COL_SEQ: mut_seq,
                    ut.COL_TMD_START: ts, ut.COL_TMD_STOP: te}
-        df_all = pd.concat([self._df_seq_ref, pd.DataFrame([var_row])], ignore_index=True)
+        df_all = pd.concat([df_ref, pd.DataFrame([var_row])[pos_cols]], ignore_index=True)
         df_parts = self._sf.get_df_parts(df_seq=df_all, jmd_n_len=jmd_n_len, jmd_c_len=jmd_c_len)
         features = list(df_feat[ut.COL_FEATURE])
         X = np.asarray(self._sf.feature_matrix(features=features, df_parts=df_parts,
