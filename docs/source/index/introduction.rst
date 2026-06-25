@@ -38,15 +38,25 @@ It enables the discovery of physicochemical signatures that underlie biological 
 
 Overview of Documentation
 -------------------------
-Start your journey with AAanalysis by visiting our :ref:`Contributing <contributing>` page for installation instructions
-and information on contribution. Delve into the core concepts behind our algorithms in the
-:ref:`Usage Principles <usage_principles>` section to understand our design philosophy, equipping
-you with the mental models necessary for effective application. Our :ref:`Evaluation <evaluation>`
-strategies are detailed to facilitate an transparent and objective analysis of our algorithms´s outcome.
+The documentation is organized into four sections — *Overview*, *Guides*, *Reference*, and *Project*.
 
-To get hands-on experience, explore our :ref:`Tutorials <tutorials>`. In addition to our detailed :ref:`API <api>`
-documentation, we compiled various overview :ref:`Tables <tables>` that provide in-depth resources, including our
-**AAontology** scale classification and a variety of benchmark protein datasets. Discover the scientific foundation
-of AAanalysis in the :ref:`References <references>` section. To see how AAanalysis fits among related bioinformatics,
-machine-learning, and explainability tools, explore the
-`AAanalysis Ecosystem <../_static/aaanalysis_ecosystem.html>`_.
+**Overview** — New to AAanalysis? Begin with :ref:`Getting Started <getting_started>` to install
+the package and run your first analysis. Delve into the core concepts and design philosophy behind
+the algorithms in the :ref:`Usage Principles <usage_principles>` section, equipping you with the
+mental models necessary for effective application, and see the :ref:`Evaluation <evaluation>`
+strategies for a transparent, objective analysis of the algorithms´ outcomes.
+
+**Guides** — For hands-on experience, the :ref:`Tutorials <tutorials>` teach each tool with its
+parameters and outputs, while the :ref:`Protocols <protocols>` walk through complete, end-to-end
+analyses for biological questions.
+
+**Reference** — Look up the exact signatures in the :ref:`API <api>` documentation, browse the
+overview :ref:`Tables <tables>` (including the **AAontology** scale classification and benchmark
+protein datasets), check the :ref:`Glossary <glossary>` of key terms, and discover the scientific
+foundation of AAanalysis in the :ref:`References <references>` section.
+
+**Project** — Development conventions and how to contribute live in the
+:ref:`Contributing <contributing>` guide.
+
+To see how AAanalysis fits among related bioinformatics, machine-learning, and explainability
+tools, explore the `AAanalysis Ecosystem <../_static/aaanalysis_ecosystem.html>`_.
