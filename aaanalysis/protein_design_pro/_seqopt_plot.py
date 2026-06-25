@@ -75,6 +75,7 @@ class SeqOptPlot:
                      ax: Optional[Axes] = None,
                      figsize: tuple = (6, 5),
                      front_only: bool = False,
+                     cmap: str = "viridis_r",
                      ) -> Tuple[Figure, Axes]:
         """
         Scatter two (or three) objectives of a Pareto front, colored by non-dominated rank.
@@ -96,6 +97,8 @@ class SeqOptPlot:
             Figure size when ``ax`` is None.
         front_only : bool, default=False
             If ``True``, plot only the first (``rank=0``) front.
+        cmap : str, default="viridis_r"
+            Matplotlib colormap name for the rank coloring.
 
         Returns
         -------
@@ -122,7 +125,7 @@ class SeqOptPlot:
             if ax is None:
                 fig = plt.figure(figsize=figsize)
                 ax = fig.add_subplot(111, projection="3d")
-            sc = ax.scatter(df[x], df[y], df[z], c=ranks, cmap="viridis_r", s=40,
+            sc = ax.scatter(df[x], df[y], df[z], c=ranks, cmap=cmap, s=40,
                             edgecolor="white", linewidth=0.5)
             ax.set_xlabel(x)
             ax.set_ylabel(y)
@@ -130,7 +133,7 @@ class SeqOptPlot:
         else:
             if ax is None:
                 _, ax = plt.subplots(figsize=figsize)
-            sc = ax.scatter(df[x], df[y], c=ranks, cmap="viridis_r", s=45,
+            sc = ax.scatter(df[x], df[y], c=ranks, cmap=cmap, s=45,
                             edgecolor="white", linewidth=0.5)
             # Connect the first front (sorted by x) to show the trade-off curve.
             front = df_pareto[df_pareto[ut.COL_RANK] == 0].sort_values(x)
@@ -245,6 +248,7 @@ class SeqOptPlot:
                              ax: Optional[Axes] = None,
                              figsize: tuple = (7, 4),
                              front_only: bool = True,
+                             cmap: str = "viridis_r",
                              ) -> Tuple[Figure, Axes]:
         """
         Parallel-coordinates plot of a Pareto front over any number of objectives.
@@ -264,6 +268,8 @@ class SeqOptPlot:
             Figure size when ``ax`` is None.
         front_only : bool, default=True
             If ``True``, plot only the first (``rank=0``) front.
+        cmap : str, default="viridis_r"
+            Matplotlib colormap name for the rank coloring.
 
         Returns
         -------
@@ -293,11 +299,11 @@ class SeqOptPlot:
         span = np.where(hi - lo == 0, 1.0, hi - lo)
         Mn = (M - lo) / span
         xs = np.arange(len(objectives))
-        cmap = plt.get_cmap("viridis_r")
+        cmap_obj = plt.get_cmap(cmap)
         ranks = df[ut.COL_RANK].to_numpy()
         rmax = max(int(ranks.max()), 1)
         for row, r in zip(Mn, ranks):
-            ax.plot(xs, row, color=cmap(r / rmax), alpha=0.6, linewidth=1.0)
+            ax.plot(xs, row, color=cmap_obj(r / rmax), alpha=0.6, linewidth=1.0)
         ax.set_xticks(xs)
         ax.set_xticklabels(objectives, rotation=20, ha="right")
         ax.set_ylabel("min-max normalized")
@@ -308,6 +314,7 @@ class SeqOptPlot:
                      ax: Optional[Axes] = None,
                      figsize: tuple = (8, 4),
                      front_only: bool = True,
+                     cmap: str = "Reds",
                      ) -> Tuple[Figure, Axes]:
         """
         Heatmap of substitution enrichment across the Pareto front (position x amino acid).
@@ -326,6 +333,8 @@ class SeqOptPlot:
             Figure size when ``ax`` is None.
         front_only : bool, default=True
             If ``True``, count only the first (``rank=0``) front.
+        cmap : str, default="Reds"
+            Matplotlib colormap name for the enrichment counts.
 
         Returns
         -------
@@ -359,7 +368,7 @@ class SeqOptPlot:
         # Plot
         if ax is None:
             _, ax = plt.subplots(figsize=figsize)
-        im = ax.imshow(mat, aspect="auto", cmap="Reds")
+        im = ax.imshow(mat, aspect="auto", cmap=cmap)
         ax.set_xticks(range(len(positions)))
         ax.set_xticklabels(positions, rotation=90, fontsize="small")
         ax.set_yticks(range(len(aas)))
@@ -375,6 +384,7 @@ class SeqOptPlot:
                   ax: Optional[Axes] = None,
                   figsize: tuple = (8, 5),
                   front_only: bool = True,
+                  cmap: str = "viridis",
                   ) -> Tuple[Figure, Axes]:
         """
         Mutational-lineage tree of the variants, rooted at the wild-type.
@@ -394,6 +404,8 @@ class SeqOptPlot:
             Figure size when ``ax`` is None.
         front_only : bool, default=True
             If ``True``, build the lineage from the first (``rank=0``) front only.
+        cmap : str, default="viridis"
+            Matplotlib colormap name for the objective coloring.
 
         Returns
         -------
@@ -445,7 +457,7 @@ class SeqOptPlot:
         xs = [pos[k][0] for k in variant_keys]
         ys = [pos[k][1] for k in variant_keys]
         vals = [nodes[k] for k in variant_keys]
-        sc = ax.scatter(xs, ys, c=vals, cmap="viridis", s=45, edgecolor="white", linewidth=0.5)
+        sc = ax.scatter(xs, ys, c=vals, cmap=cmap, s=45, edgecolor="white", linewidth=0.5)
         ax.scatter([0], [0], marker="s", s=70, color="black")
         ax.annotate("WT", (0, 0), textcoords="offset points", xytext=(0, 8), ha="center")
         ax.set_xlabel("number of mutations")
