@@ -484,6 +484,30 @@ class TestShapModelFitFuzzyAggregation:
             return np.mean(np.var(np.stack(runs), axis=0))
         assert variance(6, 12) < variance(6, 1)
 
+    # The per-round average is a bootstrap mean: it converges to a stable value as n_rounds grows,
+    # so a single round (n_rounds=1) sits well off the mean while late rounds barely move it.
+    def test_interpolate_converges_with_n_rounds(self):
+        # n_rounds=R (fixed base seed) == cumulative mean of per-round blends S_0..S_{R-1},
+        # where S_i = a single-round fit at seed base+i. Compute the 25 blends once.
+        R_MAX = 25
+        base = 42
+        blends = np.stack([
+            aa.ShapModel(**ONE_MODEL, verbose=False, random_state=base + i).fit(
+                SMALL_X, labels=SMALL_LABELS_1FUZZY, fuzzy_labeling=True,
+                fuzzy_aggregation="interpolate", n_rounds=1).shap_values
+            for i in range(R_MAX)])
+        means = np.stack([blends[:R].mean(axis=0).ravel() for R in range(1, R_MAX + 1)])  # M_1..M_25
+        final = means[-1]
+        norm = np.linalg.norm(final)
+        d_final = np.linalg.norm(means - final, axis=1) / norm          # distance to the stable mean
+        d_incr = np.linalg.norm(np.diff(means, axis=0), axis=1) / norm  # per-round change (len R_MAX-1)
+        # 1) a single round is clearly off the converged mean (this is why averaging exists)
+        assert d_final[0] > 0.05
+        # 2) the average converges: late rounds move it far less than early rounds
+        assert np.mean(d_incr[-5:]) < 0.5 * np.mean(d_incr[:5])
+        # 3) it is stable by the tail: the last few rounds barely change the estimate
+        assert d_final[-5] < 0.1
+
     # Multi-fuzzy: each fuzzy protein explained independently against the core (baseline + 2 per fuzzy)
     def test_interpolate_multi_fuzzy(self):
         from aaanalysis.explainable_ai_pro._backend.shap_model import shap_model_fit as B
