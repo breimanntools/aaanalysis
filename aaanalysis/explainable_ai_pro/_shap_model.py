@@ -606,6 +606,8 @@ class ShapModel(Wrapper):
                             label_target_class=label_target_class,
                             n_background_data=n_background_data)
         if fuzzy_labeling and fuzzy_aggregation == "interpolate":
+            # Only the interpolate path threads 'random_state' explicitly: it re-seeds per round
+            # (random_state + round). The threshold path keeps the seed baked into the model kwargs.
             shap_values, exp_val = interpolate_fuzzy_shap_estimation(X, labels=labels,
                                                                     random_state=self._random_state,
                                                                     **backend_args)

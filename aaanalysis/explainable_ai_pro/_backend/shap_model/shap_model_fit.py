@@ -47,6 +47,12 @@ def _get_shap_values(shap_output, class_index=1):
     return shap_values
 
 
+def _class_index_from_labels(labels, label_target_class=1):
+    """Map the target class label to its index among the integer (non-fuzzy) classes."""
+    label_classes = sorted(list(dict.fromkeys([x for x in labels if x == int(x)])))
+    return label_classes.index(label_target_class)
+
+
 def _compute_shap_values(X, labels, model_class=None, model_kwargs=None,
                          explainer_class=None, explainer_kwargs=None,
                          class_index=1, n_background_data=None):
@@ -130,8 +136,7 @@ def monte_carlo_shap_estimation(X, labels=None, list_model_classes=None, list_mo
                                 label_target_class=1, n_background_data=None):
     """Compute Monte Carlo estimates of SHAP values for multiple models and feature selections."""
     # Get class index
-    label_classes = sorted(list(dict.fromkeys([x for x in labels if x == int(x)])))
-    class_index = label_classes.index(label_target_class)
+    class_index = _class_index_from_labels(labels, label_target_class)
     # Create empty SHAP value matrix
     n_samples, n_features = X.shape
     n_selection_rounds = len(is_selected)
@@ -185,8 +190,7 @@ def interpolate_fuzzy_shap_estimation(X, labels=None, list_model_classes=None, l
     """
     labels = list(labels)
     # Get class index (fuzzy float labels are excluded; classes come from the 0/1 core)
-    label_classes = sorted(list(dict.fromkeys([x for x in labels if x == int(x)])))
-    class_index = label_classes.index(label_target_class)
+    class_index = _class_index_from_labels(labels, label_target_class)
     n_samples, n_features = X.shape
     n_selection_rounds = len(is_selected)
     n_cells = n_rounds * n_selection_rounds
@@ -212,7 +216,6 @@ def interpolate_fuzzy_shap_estimation(X, labels=None, list_model_classes=None, l
             args = dict(list_model_classes=list_model_classes, list_model_kwargs=_list_model_kwargs,
                         explainer_class=explainer_class, explainer_kwargs=explainer_kwargs,
                         class_index=class_index, n_background_data=n_background_data)
-            cell = np.zeros(shape=(n_samples, X_selected.shape[1]))
             if single_fuzzy:
                 f = fuzzy_idx[0]
                 p = labels[f]
@@ -223,6 +226,7 @@ def interpolate_fuzzy_shap_estimation(X, labels=None, list_model_classes=None, l
                 cell = p * shap_1 + (1 - p) * shap_0
                 list_expected_value.append(p * exp_1 + (1 - p) * exp_0)
             else:
+                cell = np.zeros(shape=(n_samples, X_selected.shape[1]))
                 # Non-fuzzy core rows come from a single baseline fit on the core
                 shap_core, exp_core = _aggregate_shap_values(X_selected[core_idx], labels=core_labels, **args)
                 cell[core_idx] = shap_core
