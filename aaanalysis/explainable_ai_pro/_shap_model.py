@@ -13,7 +13,8 @@ import aaanalysis.utils as ut
 from aaanalysis.template_classes import Wrapper
 from ._backend.check_models import (check_match_labels_X,
                                     check_match_X_is_selected)
-from ._backend.shap_model.shap_model_fit import monte_carlo_shap_estimation
+from ._backend.shap_model.shap_model_fit import (monte_carlo_shap_estimation,
+                                                 interpolate_fuzzy_shap_estimation)
 from ._backend.shap_model.sm_add_feat_impact import (comp_shap_feature_importance,
                                                      insert_shap_feature_importance,
                                                      comp_shap_feature_impact,
@@ -472,6 +473,7 @@ class ShapModel(Wrapper):
             n_rounds: int = 5,
             is_selected: Optional[ut.ArrayLike2D] = None,
             fuzzy_labeling: bool = False,
+            fuzzy_aggregation: str = "threshold",
             n_background_data: Optional[int] = None,
             df_seq: Optional[pd.DataFrame] = None,
             fuzzy_labels: Optional[dict] = None,
@@ -504,6 +506,12 @@ class ShapModel(Wrapper):
         fuzzy_labeling : bool, default=False
             If ``True``, fuzzy labeling is applied to approximate SHAP values for samples with uncertain/partial
             memberships (e.g., between >0 and <1 for binary classification scenarios).
+        fuzzy_aggregation : str, default='threshold'
+            Strategy to turn a soft label ``p`` into a SHAP estimate when fuzzy labeling is active (see Notes):
+
+            - ``'threshold'``: hard-label the fuzzy sample over a threshold grid and average (biased; the default).
+            - ``'interpolate'``: blend ``p * S1 + (1 - p) * S0`` from a fit at 0 and at 1 (unbiased, exact ``p``).
+
         n_background_data : None or int, optional
             The number samples (< 'n_samples') in the background dataset used for the `KernelExplainer`` to reduce
             computation time. The dataset is obtained by k-means clustering. If ``None``, the full dataset 'X' is used.
@@ -530,6 +538,21 @@ class ShapModel(Wrapper):
         * Idea: Adjusts label thresholds dynamically in Monte Carlo estimation to better represent label uncertainties.
         * Background: Inspired by fuzzy logic, replacing binary true/false with degrees of truth.
 
+        **Fuzzy aggregation strategies**
+
+        The ``fuzzy_aggregation`` parameter selects how a soft label ``p`` (in [0, 1]) is turned into a SHAP estimate:
+
+        * ``'threshold'`` (default): Over an ``n_rounds`` x ``n_selection`` grid the fuzzy sample is hard-labeled ``1``
+          when a per-cell threshold ``<= p`` and the per-cell SHAP matrices are averaged. Because the threshold grid is
+          non-uniform on (0, 1], the effective positive-fraction is a *biased* approximation of ``p``.
+        * ``'interpolate'``: The fuzzy sample is weighted by *exactly* ``p`` by fitting the model twice (fuzzy sample at
+          0 -> ``S0``, at 1 -> ``S1``) and blending ``p * S1 + (1 - p) * S0`` (the ``exp_value`` is blended the same way).
+          This is *unbiased* and, with ``n_rounds=1``, the fastest fuzzy estimator (exactly two fits per fuzzy sample).
+          ``n_rounds > 1`` averages re-seeded fits per round (``random_state + round``), capturing model variance while
+          staying reproducible for a fixed ``random_state``. Each fuzzy protein is explained independently against the
+          fixed balanced 0/1 core, with the other fuzzy proteins excluded from its training data. Recommended for the
+          "explain newly-predicted proteins" path.
+
         **Setting soft labels**
 
         There are two equivalent ways to provide soft labels, both enabling fuzzy labeling:
@@ -554,6 +577,8 @@ class ShapModel(Wrapper):
         n_samples, n_feat = X.shape
         ut.check_X_unique_samples(X=X, min_n_unique_samples=2)
         ut.check_bool(name="fuzzy_labeling", val=fuzzy_labeling)
+        ut.check_str_options(name="fuzzy_aggregation", val=fuzzy_aggregation,
+                             list_str_options=["threshold", "interpolate"])
         if fuzzy_labels is not None:
             # Entry-keyed soft labels override 'labels' and enable fuzzy labeling
             check_match_df_seq_X(df_seq=df_seq, X=X)
@@ -571,17 +596,23 @@ class ShapModel(Wrapper):
         ut.check_number_range(name="n_background_data", val=n_background_data, min_val=1, just_int=True, accept_none=True)
         check_match_n_background_data_X(n_background_data=n_background_data, X=X)
         # Compute SHAP values
-        shap_values, exp_val = monte_carlo_shap_estimation(X, labels=labels,
-                                                           list_model_classes=self._list_model_classes,
-                                                           list_model_kwargs=self._list_model_kwargs,
-                                                           explainer_class=self._explainer_class,
-                                                           explainer_kwargs=self._explainer_kwargs,
-                                                           is_selected=is_selected,
-                                                           fuzzy_labeling=fuzzy_labeling,
-                                                           n_rounds=n_rounds,
-                                                           verbose=self._verbose,
-                                                           label_target_class=label_target_class,
-                                                           n_background_data=n_background_data)
+        backend_args = dict(list_model_classes=self._list_model_classes,
+                            list_model_kwargs=self._list_model_kwargs,
+                            explainer_class=self._explainer_class,
+                            explainer_kwargs=self._explainer_kwargs,
+                            is_selected=is_selected,
+                            n_rounds=n_rounds,
+                            verbose=self._verbose,
+                            label_target_class=label_target_class,
+                            n_background_data=n_background_data)
+        if fuzzy_labeling and fuzzy_aggregation == "interpolate":
+            shap_values, exp_val = interpolate_fuzzy_shap_estimation(X, labels=labels,
+                                                                    random_state=self._random_state,
+                                                                    **backend_args)
+        else:
+            shap_values, exp_val = monte_carlo_shap_estimation(X, labels=labels,
+                                                              fuzzy_labeling=fuzzy_labeling,
+                                                              **backend_args)
         self.shap_values = shap_values
         self.exp_value = exp_val
         return self

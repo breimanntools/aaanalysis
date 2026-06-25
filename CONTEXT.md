@@ -561,6 +561,10 @@ _Avoid_: feature importance (unsigned, group-level), SHAP value (the raw per-fea
 The uniform boolean toggle on the `CPPPlot` family (`profile`, `heatmap`, `ranking`, `feature_map`) selecting **CPP analysis** (`False`, group-level **feature importance**, `feat_importance` / `mean_dif`) versus **CPP-SHAP analysis** (`True`, sample-level **feature impact**, `feat_impact_'name'` / `mean_dif_'name'`). `True` switches color encoding to signed red/blue and the colorbar to the diverging SHAP colormap. It selects the *interpretation level*; it does not itself run SHAP (that is `ShapModel`). In `feature_map(shap_plot=True)` the cumulative bars stack the per-feature impact in one direction colored by sign; a `mean_dif_'name'` `col_val` keeps the mean-difference heatmap with those bars, while a `feat_impact_'name'` `col_val` moves the impact into the heatmap cells and switches the bars off.
 _Avoid_: shap_mode, use_shap, sample_plot.
 
+**fuzzy aggregation** (`fuzzy_aggregation`):
+The strategy `ShapModel.fit` uses to turn a soft label `p` ∈ (0, 1) into a SHAP estimate when **fuzzy labeling** is active. `"threshold"` (default) hard-labels the fuzzy sample `1` across a non-uniform `n_rounds × n_selection` threshold grid and averages — a **biased** approximation whose effective positive-fraction is the grid's `frac1`, not `p`. `"interpolate"` fits the model twice (fuzzy sample at 0 → `S0`, at 1 → `S1`) and blends `p·S1 + (1−p)·S0` — the **unbiased** exact-`p` estimate, and at `n_rounds=1` the fastest one (exactly 2 fits per fuzzy sample). Each fuzzy protein is explained independently against the fixed balanced 0/1 **core**, with the other fuzzy proteins excluded from that run's training data.
+_Avoid_: fuzzy mode, blend mode, soft-label aggregation.
+
 ### Scale-set vocabulary
 
 **explainable scale set** (`top_explain_n`):

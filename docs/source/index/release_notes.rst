@@ -85,6 +85,13 @@ Added
   ``add_feat_impact`` / ``add_sample_mean_dif`` accept ``df_seq`` and a ``samples``
   parameter taking row positions or entry names. The array-``labels`` path is unchanged;
   ``sample_positions`` is a deprecated alias for ``samples`` (removed in 1.2.0).
+- **ShapModel — unbiased fuzzy estimator** (``[pro]``): ``fit`` gains
+  ``fuzzy_aggregation`` (default ``'threshold'``, unchanged). ``'interpolate'`` weights a
+  soft label by *exactly* ``p`` — fitting at 0 (``S0``) and at 1 (``S1``) and blending
+  ``p * S1 + (1 - p) * S0`` — instead of the biased threshold sweep. With ``n_rounds=1``
+  it needs only two fits per fuzzy sample; ``n_rounds > 1`` averages per-round re-seeded
+  fits (reproducible for a fixed ``random_state``). Recommended for explaining
+  newly-predicted proteins.
 
 **Sequence Analysis**
 

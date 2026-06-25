@@ -393,3 +393,132 @@ class TestShapModelFitFuzzyLabels:
         sm = aa.ShapModel(**MODEL_KWARGS, verbose=False)
         with pytest.raises(ValueError):
             sm.fit(valid_X, labels=valid_labels, df_seq=df_bad, fuzzy_labels={entry: 0.6}, **ARGS)
+
+
+# Small deterministic fixture for the exact-p / fit-count assertions (single model -> exact fit counts)
+_RNG = np.random.default_rng(0)
+SMALL_X = _RNG.normal(size=(7, 5))
+SMALL_LABELS_1FUZZY = [1, 1, 1, 0, 0, 0, 0.6]            # one fuzzy protein (last row), balanced 3/3 core
+SMALL_X_2FUZZY = _RNG.normal(size=(8, 5))
+SMALL_LABELS_2FUZZY = [1, 1, 1, 0, 0, 0, 0.6, 0.3]       # two fuzzy proteins, balanced 3/3 core
+ONE_MODEL = dict(list_model_classes=[RandomForestClassifier])
+
+
+class TestShapModelFitFuzzyAggregation:
+    """The ``fuzzy_aggregation`` estimator: 'threshold' (default) vs unbiased 'interpolate'."""
+
+    # Positive: both options are accepted and produce SHAP values
+    def test_fuzzy_aggregation_options_valid(self):
+        for fuzzy_aggregation in ["threshold", "interpolate"]:
+            sm = aa.ShapModel(**ONE_MODEL, verbose=False, random_state=0)
+            sm.fit(SMALL_X, labels=SMALL_LABELS_1FUZZY, fuzzy_labeling=True,
+                   fuzzy_aggregation=fuzzy_aggregation, n_rounds=1)
+            assert sm.shap_values.shape == SMALL_X.shape
+            assert sm.exp_value is not None
+
+    # Negative: an unknown value is rejected
+    def test_invalid_fuzzy_aggregation(self):
+        sm = aa.ShapModel(**ONE_MODEL, verbose=False)
+        with pytest.raises(ValueError):
+            sm.fit(SMALL_X, labels=SMALL_LABELS_1FUZZY, fuzzy_labeling=True, fuzzy_aggregation="bogus")
+
+    # KPI: unbiased exact-p weighting (single fuzzy, n_rounds=1) == p*S1 + (1-p)*S0
+    def test_interpolate_exact_p_blend(self):
+        from aaanalysis.explainable_ai_pro._backend.shap_model import shap_model_fit as B
+        p = SMALL_LABELS_1FUZZY[-1]
+        sm = aa.ShapModel(**ONE_MODEL, verbose=False, random_state=42)
+        sm.fit(SMALL_X, labels=SMALL_LABELS_1FUZZY, fuzzy_labeling=True,
+               fuzzy_aggregation="interpolate", n_rounds=1)
+        model_kwargs = dict(sm._list_model_kwargs[0])
+        model_kwargs["random_state"] = 42  # round 0 -> random_state + 0
+        args = dict(list_model_classes=[RandomForestClassifier], list_model_kwargs=[model_kwargs],
+                    explainer_class=sm._explainer_class, explainer_kwargs=sm._explainer_kwargs,
+                    class_index=1, n_background_data=None)
+        labels_0 = [1, 1, 1, 0, 0, 0, 0]
+        labels_1 = [1, 1, 1, 0, 0, 0, 1]
+        shap_0, _ = B._aggregate_shap_values(SMALL_X, labels=labels_0, **args)
+        shap_1, _ = B._aggregate_shap_values(SMALL_X, labels=labels_1, **args)
+        ref = p * shap_1 + (1 - p) * shap_0
+        assert np.allclose(sm.shap_values, ref, atol=1e-10, rtol=0)
+
+    # KPI: 2-fit fast path — exactly two model fits per fuzzy sample, scaling with n_rounds
+    def test_interpolate_two_fits_single_fuzzy(self):
+        from aaanalysis.explainable_ai_pro._backend.shap_model import shap_model_fit as B
+        orig = B._compute_shap_values
+        counter = {"n": 0}
+
+        def spy(*a, **k):
+            counter["n"] += 1
+            return orig(*a, **k)
+
+        B._compute_shap_values = spy
+        try:
+            sm = aa.ShapModel(**ONE_MODEL, verbose=False, random_state=42)
+            sm.fit(SMALL_X, labels=SMALL_LABELS_1FUZZY, fuzzy_labeling=True,
+                   fuzzy_aggregation="interpolate", n_rounds=1)
+            assert counter["n"] == 2
+            counter["n"] = 0
+            sm.fit(SMALL_X, labels=SMALL_LABELS_1FUZZY, fuzzy_labeling=True,
+                   fuzzy_aggregation="interpolate", n_rounds=10)
+            assert counter["n"] == 20
+        finally:
+            B._compute_shap_values = orig
+
+    # KPI: n_rounds is meaningful (rounds differ) yet reproducible for a fixed random_state
+    def test_interpolate_reproducible_and_rounds_matter(self):
+        def run(n_rounds):
+            return aa.ShapModel(**ONE_MODEL, verbose=False, random_state=7).fit(
+                SMALL_X, labels=SMALL_LABELS_1FUZZY, fuzzy_labeling=True,
+                fuzzy_aggregation="interpolate", n_rounds=n_rounds).shap_values
+        # Reproducible across runs at a fixed seed
+        assert np.array_equal(run(3), run(3))
+        # n_rounds genuinely changes the estimate (per-round re-seeding)
+        assert not np.allclose(run(1), run(10))
+
+    # KPI: Monte-Carlo averaging — variance shrinks with n_rounds when random_state=None
+    def test_interpolate_mc_variance_decreases(self):
+        def variance(reps, n_rounds):
+            runs = [aa.ShapModel(**ONE_MODEL, verbose=False, random_state=None).fit(
+                SMALL_X, labels=SMALL_LABELS_1FUZZY, fuzzy_labeling=True,
+                fuzzy_aggregation="interpolate", n_rounds=n_rounds).shap_values for _ in range(reps)]
+            return np.mean(np.var(np.stack(runs), axis=0))
+        assert variance(6, 12) < variance(6, 1)
+
+    # Multi-fuzzy: each fuzzy protein explained independently against the core (baseline + 2 per fuzzy)
+    def test_interpolate_multi_fuzzy(self):
+        from aaanalysis.explainable_ai_pro._backend.shap_model import shap_model_fit as B
+        orig = B._compute_shap_values
+        counter = {"n": 0}
+
+        def spy(*a, **k):
+            counter["n"] += 1
+            return orig(*a, **k)
+
+        B._compute_shap_values = spy
+        try:
+            sm = aa.ShapModel(**ONE_MODEL, verbose=False, random_state=5)
+            sm.fit(SMALL_X_2FUZZY, labels=SMALL_LABELS_2FUZZY, fuzzy_labeling=True,
+                   fuzzy_aggregation="interpolate", n_rounds=1)
+            assert sm.shap_values.shape == SMALL_X_2FUZZY.shape
+            assert counter["n"] == 1 + 2 * 2  # one baseline core fit + two fits per fuzzy protein
+        finally:
+            B._compute_shap_values = orig
+
+    # No regression: the default 'threshold' path is unchanged by the routing refactor
+    def test_threshold_default_unchanged(self):
+        default = aa.ShapModel(**ONE_MODEL, verbose=False, random_state=9).fit(
+            SMALL_X, labels=SMALL_LABELS_1FUZZY, fuzzy_labeling=True, n_rounds=3).shap_values
+        explicit = aa.ShapModel(**ONE_MODEL, verbose=False, random_state=9).fit(
+            SMALL_X, labels=SMALL_LABELS_1FUZZY, fuzzy_labeling=True,
+            fuzzy_aggregation="threshold", n_rounds=3).shap_values
+        assert np.array_equal(default, explicit)
+
+    # fuzzy_aggregation is inert when fuzzy labeling is off (binary path untouched)
+    def test_fuzzy_aggregation_inert_without_fuzzy(self):
+        labels = [1, 1, 1, 0, 0, 0, 0]  # all binary -> no fuzzy sample
+        base = aa.ShapModel(**ONE_MODEL, verbose=False, random_state=3).fit(
+            SMALL_X, labels=labels, fuzzy_labeling=False, n_rounds=2).shap_values
+        with_interp = aa.ShapModel(**ONE_MODEL, verbose=False, random_state=3).fit(
+            SMALL_X, labels=labels, fuzzy_labeling=False,
+            fuzzy_aggregation="interpolate", n_rounds=2).shap_values
+        assert np.array_equal(base, with_interp)
