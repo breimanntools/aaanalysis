@@ -116,10 +116,13 @@ Subcategories
   technical / mathematical properties (e.g. principal components or graph-based descriptors).
 - **Explainability level** — the smallest tier (5, 10, …, 60) at which the subcategory
   enters the "explainable" scale set (``aa.load_scales(name="scales", top_explain_n=N)``).
-  The tiers group the AAontology subcategories by combining their interpretability grade
-  with AAclust clustering, and the loaded set can be further redundancy-reduced via
-  ``top_explain_min_th``. A lower level means the subcategory is included earlier;
-  unclassified subcategories (excluded from the set) show ``-``.
+  The tiers are nested: a level of 5 means the subcategory is among the top 5 most
+  explainable subcategories, a level of 10 means it is among the top 10 (which already
+  includes the top 5), and so on. The tiers group the AAontology subcategories by
+  combining their interpretability grade with AAclust clustering, and the loaded set can
+  be further redundancy-reduced via ``top_explain_min_th``. A lower level means the
+  subcategory is included earlier; unclassified subcategories (excluded from the set)
+  show ``-``.
 - **Subcategory Description** — what the subcategory captures.
 - **Key References** — defining publications.
 
