@@ -233,6 +233,28 @@ class TestSeqOptInit:
                     n_mut_max=2, region="tmd")
         assert _non_dominated(df)
 
+    def test_impact_mode_df_seq_ref_with_extra_columns(self, wt, df_feat):
+        # Regression: a reference from load_dataset carries jmd_n/tmd/jmd_c/label columns; the
+        # per-generation ShapModel refit must keep only the position-based columns (else the
+        # appended variant row NaN-trips check_df_seq).
+        pytest.importorskip("sklearn")
+        from sklearn.ensemble import RandomForestClassifier
+        seqs = ["MKLAGTWYVFAILMVFWCGSTNQDEHKRPYLAGTWYVFAI",
+                "ACDEFGHIKLMNPQRSTVWYACDEFGHIKLMNPQRSTVWY"] * 4
+        ref = pd.DataFrame({ut.COL_ENTRY: [f"R{i}" for i in range(8)], ut.COL_SEQ: seqs,
+                            ut.COL_TMD_START: [11] * 8, ut.COL_TMD_STOP: [20] * 8,
+                            ut.COL_JMD_N: ["X" * 10] * 8, "label": [1, 0] * 4})
+        labels = [1, 0] * 4
+        sf = aa.SequenceFeature(verbose=False)
+        X = np.asarray(sf.feature_matrix(features=list(df_feat[ut.COL_FEATURE]),
+                                         df_parts=sf.get_df_parts(df_seq=ref),
+                                         df_scales=ut.load_default_scales()), float)
+        rf = RandomForestClassifier(n_estimators=10, random_state=0).fit(X, labels)
+        so = SeqOpt(mode="impact", model=rf, df_seq_ref=ref, labels=labels, random_state=3)
+        df = so.run(df_seq=wt, df_feat=df_feat, objectives=OBJ, pop_size=6, n_gen=2,
+                    n_mut_max=2, region="tmd")
+        assert _non_dominated(df)
+
 
 class TestSeqOptEval:
     def test_columns(self, seqopt, wt, df_feat):
@@ -291,3 +313,156 @@ class TestSeqOptPlot:
     def test_empty_trajectory_raises(self):
         with pytest.raises(ValueError):
             SeqOptPlot().hypervolume(trajectory=[])
+
+
+OBJ3 = [("activity", "max", ut.COL_DELTA_PRED), ("shift", "min", ut.COL_SHIFT_SCORE),
+        ("parsimony", "min", ut.COL_N_MUT)]
+
+
+class TestSeqOptVisualization:
+    """Convergence history + richer SeqOptPlot views (3-D, parallel coordinates)."""
+
+    def _run3(self, seqopt, wt, df_feat):
+        return seqopt.run(df_seq=wt, df_feat=df_feat, objectives=OBJ3, pop_size=12, n_gen=5,
+                          n_mut_max=3, region="tmd", seed=2)
+
+    def test_history_columns(self, seqopt, wt, df_feat):
+        self._run3(seqopt, wt, df_feat)
+        for c in (ut.COL_GENERATION, ut.COL_HYPERVOLUME, ut.COL_SPREAD,
+                  "best_activity", "mean_activity", "worst_activity",
+                  "best_shift", "best_parsimony"):
+            assert c in seqopt.history_.columns
+        assert len(seqopt.history_) == 6      # n_gen + 1
+
+    def test_mutation_map_returns_fig_ax(self, seqopt, wt, df_feat):
+        df = self._run3(seqopt, wt, df_feat)
+        res = SeqOptPlot().mutation_map(df_pareto=df, front_only=True, figsize=(7, 4))
+        assert res[1] is not None
+
+    def test_mutation_map_no_mutations_raises(self):
+        df0 = pd.DataFrame({ut.COL_ENTRY: ["P1"], ut.COL_VARIANT: [""],
+                            ut.COL_RANK: [0], ut.COL_CROWDING: [np.inf],
+                            "activity": [0.0], "parsimony": [0.0]})
+        with pytest.raises(ValueError, match="no mutations"):
+            SeqOptPlot().mutation_map(df_pareto=df0)
+
+    def test_pareto_archive_makes_rank0_non_dominated(self, seqopt, wt, df_feat):
+        # The cumulative archive is merged in, so rank-0 is still strictly non-dominated.
+        df = self._run3(seqopt, wt, df_feat)
+        assert (df[ut.COL_RANK] == 0).sum() >= 1
+
+    def test_genealogy_returns_fig_ax(self, seqopt, wt, df_feat):
+        df = self._run3(seqopt, wt, df_feat)
+        res = SeqOptPlot().genealogy(df_pareto=df, front_only=False, figsize=(7, 5))
+        assert res[1] is not None
+
+    def test_genealogy_front_only(self, seqopt, wt, df_feat):
+        df = self._run3(seqopt, wt, df_feat)
+        res = SeqOptPlot().genealogy(df_pareto=df, front_only=True)
+        assert res[1] is not None
+
+    def test_convergence_returns_panels(self, seqopt, wt, df_feat):
+        self._run3(seqopt, wt, df_feat)
+        fig, axes = SeqOptPlot().convergence(history=seqopt.history_, figsize=(5, 6))
+        assert len(axes) == 3
+
+    def test_pareto_front_3d(self, seqopt, wt, df_feat):
+        df = self._run3(seqopt, wt, df_feat)
+        res = SeqOptPlot().pareto_front(df_pareto=df, x="activity", y="parsimony", z="shift")
+        assert res[1] is not None
+
+    def test_parallel_coordinates(self, seqopt, wt, df_feat):
+        df = self._run3(seqopt, wt, df_feat)
+        res = SeqOptPlot().parallel_coordinates(
+            df_pareto=df, objectives=["activity", "shift", "parsimony"], front_only=True)
+        assert res[1] is not None
+
+    def test_parallel_coordinates_one_objective_raises(self, seqopt, wt, df_feat):
+        df = self._run3(seqopt, wt, df_feat)
+        with pytest.raises(ValueError):
+            SeqOptPlot().parallel_coordinates(df_pareto=df, objectives=["activity"])
+
+    def test_callable_sequence_objective(self, seqopt, wt, df_feat):
+        # External-predictor objective: receives the variant SEQUENCE, returns a float.
+        seen = {}
+
+        def frac_tryptophan(sequence):
+            seen[sequence] = sequence.count("W") / len(sequence)
+            return seen[sequence]
+
+        obj = [("activity", "max", ut.COL_DELTA_PRED), ("low_w", "min", frac_tryptophan)]
+        df = seqopt.run(df_seq=wt, df_feat=df_feat, objectives=obj, pop_size=10, n_gen=4,
+                        n_mut_max=3, region="tmd", seed=1)
+        assert "low_w" in df.columns and len(seen) >= 1
+
+    def test_callable_only_objectives_need_no_model(self, wt, df_feat):
+        # A pure-callable multi-objective run works without any CPP model.
+        so = SeqOpt(mode="importance", model=None)
+        obj = [("len_w", "min", lambda s: s.count("W")), ("len_p", "max", lambda s: s.count("P"))]
+        df = so.run(df_seq=wt, df_feat=df_feat, objectives=obj, pop_size=8, n_gen=3,
+                    n_mut_max=2, region="tmd", seed=4)
+        assert {"len_w", "len_p"}.issubset(df.columns)
+
+
+class TestSeqOptCapabilities:
+    """The DEAP-mapped operator/algorithm families, all pure-Python."""
+
+    def _base(self, wt, df_feat):
+        return dict(df_seq=wt, df_feat=df_feat, objectives=OBJ, pop_size=10, n_gen=4,
+                    n_mut_max=3, region="tmd", seed=4)
+
+    def test_variation_or(self, seqopt, wt, df_feat):
+        df = seqopt.run(variation="or", cx_prob=0.5, mut_prob=0.3, **self._base(wt, df_feat))
+        assert _non_dominated(df)
+
+    def test_variation_or_prob_sum_gt_one_raises(self, seqopt, wt, df_feat):
+        with pytest.raises(ValueError, match="cx_prob"):
+            seqopt.run(variation="or", cx_prob=0.8, mut_prob=0.5, **self._base(wt, df_feat))
+
+    def test_engine_fast(self, seqopt, wt, df_feat):
+        df = seqopt.run(engine="fast", **self._base(wt, df_feat))
+        assert _non_dominated(df)
+
+    def test_engine_exact_equals_fast(self, model, wt, df_feat):
+        kw = dict(df_seq=wt, df_feat=df_feat, objectives=OBJ, pop_size=10, n_gen=5,
+                  n_mut_max=3, region="tmd", seed=11)
+        ex = SeqOpt(mode="importance", model=model).run(engine="exact", **kw)
+        fa = SeqOpt(mode="importance", model=model).run(engine="fast", **kw)
+        assert set(ex[ut.COL_VARIANT]) == set(fa[ut.COL_VARIANT])
+
+    def test_survival_ea_simple(self, seqopt, wt, df_feat):
+        df = seqopt.run(survival="ea_simple", **self._base(wt, df_feat))
+        assert len(df) >= 1
+
+    def test_hall_of_fame_populated(self, seqopt, wt, df_feat):
+        seqopt.run(hof_size=7, **self._base(wt, df_feat))
+        assert 1 <= len(seqopt.hall_of_fame_) <= 7
+
+    def test_constraints_delta_excludes_position(self, seqopt, wt, df_feat):
+        df = seqopt.run(constraints=[lambda g: 11 not in g], penalty="delta",
+                        **self._base(wt, df_feat))
+        front = df[df[ut.COL_RANK] == 0]
+        touches_11 = front[ut.COL_VARIANT].str.contains(r"\D11\D", regex=True).any()
+        assert not touches_11 or (front[ut.COL_VARIANT] == "").all()
+
+    def test_constraints_closest_valid(self, seqopt, wt, df_feat):
+        df = seqopt.run(constraints=[lambda g: len(g) <= 2], penalty="closest_valid",
+                        **self._base(wt, df_feat))
+        assert len(df) >= 1
+
+    def test_constraints_non_callable_raises(self, seqopt, wt, df_feat):
+        with pytest.raises(ValueError, match="constraints"):
+            seqopt.run(constraints=[123], **self._base(wt, df_feat))
+
+    def test_eval_convergence_with_ref_front(self, seqopt, wt, df_feat):
+        df = seqopt.run(**self._base(wt, df_feat))
+        de = seqopt.eval(df_pareto=df, ref_front=[[5.0, 1.0], [3.0, 1.0]])
+        assert ut.COL_CONVERGENCE in de.columns and de.iloc[0][ut.COL_CONVERGENCE] >= 0
+
+    def test_bad_engine_raises(self, seqopt, wt, df_feat):
+        with pytest.raises(ValueError):
+            seqopt.run(engine="cuda", **self._base(wt, df_feat))
+
+    def test_bad_variation_raises(self, seqopt, wt, df_feat):
+        with pytest.raises(ValueError):
+            seqopt.run(variation="xor", **self._base(wt, df_feat))

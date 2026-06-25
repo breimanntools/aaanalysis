@@ -106,14 +106,27 @@ Added
 
 **Protein Design**
 
-- **SeqOpt — multi-objective directed evolution** (``[pro]``): A new ``SeqOpt`` optimizer
-  (with ``SeqOptPlot``) searches variants of one wild-type for the Pareto front across
-  several objectives at once, reusing a model-bound ``SeqMut`` as the fitness engine and
-  NSGA-II for selection. ``mode="impact"`` refits ``ShapModel`` each generation under
-  fuzzy labeling to target the strongest-``feat_impact`` residues; ``mode="importance"``
-  walks positions by static ``feat_importance``. ``run`` returns ``df_pareto`` (objective
-  columns + ``rank`` + ``crowding``); ``eval`` reports hypervolume / front size / spread;
-  both plots return ``(fig, ax)``. Reproducible via ``random_state`` / ``seed``.
+- **SeqOpt — multi-objective protein engineering** (``[pro]``): A new ``SeqOpt`` optimizer
+  (with ``SeqOptPlot``) performs **machine-learning-guided directed evolution** of one
+  wild-type — searching the Pareto front across several objectives at once, with a
+  model-bound ``SeqMut`` as the fitness engine and a re-implementation of NSGA-II for
+  selection (this is protein *engineering*, not *de novo design*). Two guidance modes:
+  ``mode="impact"`` refits ``ShapModel`` each generation under fuzzy labeling to target the
+  strongest-``feat_impact`` residues; ``mode="importance"`` walks positions by static
+  ``feat_importance``. The evolutionary toolbox is a complete pure-Python re-implementation
+  (DEAP is a dev/test-only parity oracle; runtime stays DEAP-free): ``crossover`` (uniform /
+  one- / two-point), ``mutation`` (substitution / shift), ``variation`` (varAnd / varOr),
+  ``survival`` ((mu+lambda) / (mu,lambda) / eaSimple), ``constraints`` (delta / closest-valid
+  penalty), a single-objective Hall of Fame (``hall_of_fame_``), and a memory-bounded
+  ``engine="exact"|"fast"`` switch (identical fronts). Objectives accept any
+  ``callable(sequence) -> float`` (an external scikit / torch model or sequence-level
+  tool / web API), cached per variant. ``run`` returns ``df_pareto`` (objective columns +
+  ``rank`` + ``crowding``) backed by a cumulative Pareto archive; ``eval`` reports
+  hypervolume / front size / spread / convergence. **Visualization**: ``SeqOptPlot`` covers
+  ``pareto_front`` (2-D / 3-D), ``parallel_coordinates``, ``convergence`` (hypervolume +
+  spread + per-objective best/mean/worst band), ``hypervolume``, ``mutation_map`` (front
+  substitution-enrichment heatmap) and ``genealogy`` (mutational-lineage tree). Reproducible
+  via ``random_state`` / ``seed``.
 - **SeqMut model-guided mode (ML-guided directed evolution)**: ``SeqMut`` is optionally
   model-aware — binding a fitted classifier (``SeqMut(model=..., target_class=...)``, any
   object with ``predict_proba``) makes ``scan`` / ``suggest`` / ``mutate`` report

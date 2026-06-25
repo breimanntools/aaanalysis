@@ -128,8 +128,8 @@ _Avoid_: interaction (overloaded with the relational/PPI [[relational / interact
 ### SeqOpt directed-evolution vocabulary
 
 **SeqOpt**:
-The **search/optimization** layer of [[design / engineering]] (**[pro]**, `aaanalysis/protein_design_pro/`), the counterpart to [[SeqMut]]'s scoring: it *searches* over sequence variants of **one wild-type** for those that best satisfy several objectives at once. A `Tool` (`run` → [[Pareto front]] `df_pareto`, `eval` → Pareto-quality metrics), paired with `SeqOptPlot`. Reuses model-bound [[SeqMut]] as the fitness engine and `ShapModel` for residue guidance, so it is `pro` (imports SHAP) even though [[SeqMut]] stays core. Two modes — `"impact"` (SHAP-guided, adaptive) and `"importance"` (feature-importance-guided, greedy) — see [[guidance mode (impact / importance)]]. It realizes the search that [[SeqMut]] and [[combined variant]] defer to.
-_Avoid_: optimizer (overloaded with numerical/perf optimization — this is evolutionary *search*); generator, sampler.
+The **search/optimization** layer of [[design / engineering]] (**[pro]**, `aaanalysis/protein_design_pro/`), the counterpart to [[SeqMut]]'s scoring: it *searches* over sequence variants of **one wild-type** for those that best satisfy several objectives at once. This is **protein engineering** — machine-learning-guided **directed evolution** of an *existing* sequence (Yang et al. 2019; Wittmann et al. 2021) — explicitly **not** *de novo protein design* (building new proteins from the ground up, e.g. RFdiffusion→ProteinMPNN→AlphaFold; Yang et al. 2026), which is out of scope. A `Tool` (`run` → [[Pareto front]] `df_pareto`, `eval` → Pareto-quality metrics), paired with `SeqOptPlot`. Reuses model-bound [[SeqMut]] as the fitness engine and `ShapModel` for residue guidance, so it is `pro` (imports SHAP) even though [[SeqMut]] stays core. Two modes — `"impact"` (SHAP-guided, adaptive) and `"importance"` (feature-importance-guided, greedy) — see [[guidance mode (impact / importance)]]. It realizes the search that [[SeqMut]] and [[combined variant]] defer to.
+_Avoid_: optimizer (overloaded with numerical/perf optimization — this is evolutionary *search*); generator, sampler; **de novo design / protein design** (SeqOpt does protein *engineering* / directed evolution, not generation of new proteins).
 
 **population** / **generation**:
 A **population** is the set of candidate **variants** (each a mutation-set on the one wild-type, carrying its [[prediction shift]] fitness and a per-residue importance map) that [[SeqOpt]] evolves; a **generation** (`generation`) is one evolve-score-select round. Standard NSGA-II vocabulary, claimed here from the reservation the [[design / engineering]] entry held for it.
@@ -154,6 +154,18 @@ _Avoid_: strategy, policy.
 **fuzzy labeling** (in [[SeqOpt]]):
 How generated variants — which have no ground-truth label — enter the per-generation `ShapModel` refit: each variant's own model **prediction score** in `[0, 1]` becomes its **soft label** (`ShapModel.fit(fuzzy_labeling=True)`), explained against the original balanced 0/1 reference set. This is what lets SHAP attribution track the moving [[population]] (the `mode="impact"` engine). The shipped `ShapModel` fuzzy-labeling path, applied to directed evolution.
 _Avoid_: pseudo-labeling (no hard threshold is assigned — the label *is* the continuous score), self-training.
+
+**evolutionary operators** (in [[SeqOpt]]):
+The DEAP-mapped algorithm families [[SeqOpt]] re-implements in **pure Python** (DEAP is a dev/test-only parity oracle, never a runtime dependency): **crossover** (uniform / one-point / two-point over mutation-sets), **mutation** (substitution / shift), **variation** (`varAnd` = crossover *and* mutation, `varOr` = one of crossover / mutation / reproduction), **survival** (`mu_plus_lambda` elitist / `mu_comma_lambda` / `ea_simple` generational), **constraints** (feasibility callables penalized DeltaPenalty- or ClosestValidPenalty-style), and the single-objective **Hall of Fame** (`SeqOpt.hall_of_fame_`) alongside the [[Pareto front]] archive. Counterpart to the multi-objective [[non-dominated rank]] / [[crowding distance]] selection core.
+_Avoid_: GA primitive (these are the EA layer); DEAP operator (ours is an independent re-implementation).
+
+**engine (exact / fast)** (in [[SeqOpt]]):
+The NSGA-II sort/selection kernel. `engine="exact"` is the pure-Python path whose RNG stream and crowding formula (`nobj·span` normalization) are matched to the **DEAP reference**, so on a fixed seed it reproduces DEAP's [[non-dominated rank]] + [[crowding distance]] ordering; `engine="fast"` vectorizes the O(n²) non-dominated sort with numpy and yields a **numerically identical** front (verified faster than DEAP). The orthogonal axis to [[guidance mode (impact / importance)]].
+_Avoid_: byte-exact (the bar is equivalence — identical front membership + ordering, values within tolerance — not byte-identical serialization).
+
+**convergence** (`SeqOpt.eval`):
+The optional generational-distance metric: the mean range-normalized distance from each [[Pareto front]] point to its nearest point on a user-supplied **reference front** (`ref_front`); lower = closer to the target. Joins `hypervolume` and `spread` in `df_eval` only when a reference is given.
+_Avoid_: accuracy (this is a set-to-set distance, not a classification score).
 
 ### Multi-class & regression labeling vocabulary
 

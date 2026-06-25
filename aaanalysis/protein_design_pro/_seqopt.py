@@ -15,8 +15,9 @@ from aaanalysis.protein_design import SeqMut
 from aaanalysis.explainable_ai_pro import ShapModel
 from ._backend.seqopt.genome import canonical, apply_genome, variant_label
 from ._backend.seqopt.run import evolve_nsga2, evolve_greedy
-from ._backend.seqopt.nsga2 import normalize_objectives_
-from ._backend.seqopt.metrics import hypervolume, spread
+from ._backend.seqopt.nsga2 import normalize_objectives_, rank_and_crowding
+from ._backend.seqopt.metrics import hypervolume, spread, convergence
+from ._backend.seqopt.penalty import apply_penalty
 
 
 # I Helper Functions
@@ -110,6 +111,16 @@ class SeqOpt(Tool):
     Sequence Optimizer (SeqOpt) class (**[pro]**, requires ``aaanalysis[pro]``) for SHAP-guided,
     multi-objective directed evolution over sequence variants [Breimann24a]_.
 
+    ``SeqOpt`` performs **protein engineering**, not **de novo protein design**. The two are
+    distinct paradigms: *de novo design* builds **new proteins from the ground up** rather than
+    repurposing an existing one -- typically a structure-first deep-learning pipeline such as
+    **RFdiffusion** [Watson23]_ (backbone generation) -> **ProteinMPNN** [Dauparas22]_ (sequence
+    design) -> **AlphaFold** [Jumper21]_ (in-silico validation), reviewed in [Yang26]_. *Protein
+    engineering* instead **optimizes an existing sequence** through iterative mutation and
+    selection (directed evolution). ``SeqOpt`` is the **machine-learning-guided** flavour
+    [Yang19]_, [Wittmann21]_: a model predicts variant fitness so the search prioritizes which
+    mutations to make -- here as a multi-objective evolutionary search.
+
     ``SeqOpt`` is the **search/optimization** counterpart of :class:`SeqMut`: where ``SeqMut``
     *scores* mutations, ``SeqOpt`` *searches* the space of multi-mutation variants of a single
     wild-type for the trade-off (Pareto) front that best satisfies several objectives at once.
@@ -117,6 +128,44 @@ class SeqOpt(Tool):
     fitness engine, guided each generation by residue-level model attribution: ``mode="impact"``
     refits :class:`ShapModel` under fuzzy labeling, ``mode="importance"`` uses the static
     ``feat_importance`` ranking.
+
+    The evolutionary machinery is a **pure-Python re-implementation of DEAP** (a dev/test-only
+    parity oracle; the shipped runtime never imports DEAP). Each ``run`` setting selects the
+    equivalent DEAP function:
+
+    .. list-table:: SeqOpt setting -> DEAP function
+       :header-rows: 1
+       :widths: 45 55
+
+       * - SeqOpt (method / parameter = value)
+         - DEAP
+       * - ``run(...)`` driver
+         - ``algorithms.eaMuPlusLambda`` / ``eaMuCommaLambda`` / ``eaSimple``
+       * - ``algorithm="nsga2"``
+         - ``tools.selNSGA2`` (``sortNondominated`` + ``assignCrowdingDist``)
+       * - mating selection
+         - ``tools.selTournamentDCD``
+       * - ``survival="mu_plus_lambda" / "mu_comma_lambda" / "ea_simple"``
+         - ``eaMuPlusLambda`` / ``eaMuCommaLambda`` / ``eaSimple``
+       * - ``variation="and" / "or"``
+         - ``algorithms.varAnd`` / ``algorithms.varOr``
+       * - ``crossover="uniform" / "one_point" / "two_point"``
+         - ``tools.cxUniform`` / ``cxOnePoint`` / ``cxTwoPoint``
+       * - ``mutation="substitution"``
+         - ``tools.mutUniformInt`` (categorical resampling analogue)
+       * - ``constraints=[...], penalty="delta" / "closest_valid"``
+         - ``tools.DeltaPenalty`` / ``tools.ClosestValidPenalty``
+       * - ``objectives=[(name, "max"/"min", src)]``
+         - ``base.Fitness`` ``weights`` (+1 / -1 per objective) + ``toolbox.register("evaluate")``
+       * - ``df_pareto`` output / ``hall_of_fame_`` / ``trajectory_``
+         - ``tools.ParetoFront`` / ``tools.HallOfFame`` / ``tools.Logbook``
+       * - ``eval`` hypervolume / convergence / spread
+         - ``deap.benchmarks.tools.hypervolume`` / ``convergence`` / ``diversity``
+
+    Rows with no DEAP analogue are the aaanalysis value-add: the SHAP / ``feat_importance``
+    residue guidance (``mode``), the sequence genome + domain constraints (``n_mut_max``,
+    ``region``, ``to_aa``), the ``algorithm="greedy"`` baseline, and any ``callable(sequence)``
+    objective. ``engine="exact"/"fast"`` is an implementation detail (identical fronts).
 
     .. versionadded:: 1.0.0
 
@@ -201,13 +250,17 @@ class SeqOpt(Tool):
         base = int(df_seq[ut.COL_TMD_START].iloc[0]) - jmd_n_len
         return wt_entry, wt_seq, positions, alphabet, base
 
-    def _build_fitness(self, df_seq, df_feat, names, sources, jmd_n_len, jmd_c_len):
+    def _build_fitness(self, df_seq, df_feat, names, sources, goals, constraints, penalty,
+                       jmd_n_len, jmd_c_len):
         """Build a cached fitness_fn(genomes)->objective matrix backed by SeqMut.combine."""
         wt_entry = df_seq[ut.COL_ENTRY].iloc[0]
         wt_seq = df_seq[ut.COL_SEQ].iloc[0]
         combine_cols = {ut.COL_DELTA_PRED, ut.COL_DELTA_CPP, ut.COL_SHIFT_SCORE}
-        need_combine = any((s in combine_cols) or callable(s) for s in sources)
+        need_combine = any(s in combine_cols for s in sources)
         cache: Dict[Tuple, Dict[str, float]] = {}
+        # Per-(objective, variant) cache for callable objectives so a slow external predictor /
+        # API is queried once per distinct variant sequence, not once per generation.
+        call_cache: Dict[Tuple, float] = {}
 
         def _score_uniq(genomes):
             uniq = {}
@@ -245,13 +298,19 @@ class SeqOpt(Tool):
                     if src == ut.COL_N_MUT:
                         vec.append(float(len(g)))
                     elif callable(src):
-                        vec.append(float(src(g, wt_seq)))
+                        key = (id(src), canonical(g))
+                        if key not in call_cache:
+                            call_cache[key] = float(src(apply_genome(wt_seq, g)))
+                        vec.append(call_cache[key])
                     elif len(g) == 0:
                         vec.append(0.0)
                     else:
                         vec.append(float(sc[src]))
                 F.append(vec)
-            return np.asarray(F, dtype=float)
+            F = np.asarray(F, dtype=float)
+            if constraints:
+                F = apply_penalty(F, genomes, constraints, goals, penalty=penalty)
+            return F
 
         return fitness_fn, wt_entry, wt_seq
 
@@ -260,11 +319,13 @@ class SeqOpt(Tool):
         mut_seq = apply_genome(wt_seq, best_genome)
         ts = int(df_seq[ut.COL_TMD_START].iloc[0])
         te = int(df_seq[ut.COL_TMD_STOP].iloc[0])
-        df_var = self._df_seq_ref[list(ut.COLS_SEQ_POS) + [ut.COL_ENTRY]].copy() \
-            if ut.COL_ENTRY in self._df_seq_ref.columns else self._df_seq_ref.copy()
+        # Keep only the position-based columns (the reference may carry jmd_n/tmd/jmd_c/label
+        # etc. that would NaN-out for the appended variant row and trip check_df_seq).
+        pos_cols = [ut.COL_ENTRY] + list(ut.COLS_SEQ_POS)
+        df_ref = self._df_seq_ref[pos_cols].copy()
         var_row = {ut.COL_ENTRY: "__variant__", ut.COL_SEQ: mut_seq,
                    ut.COL_TMD_START: ts, ut.COL_TMD_STOP: te}
-        df_all = pd.concat([self._df_seq_ref, pd.DataFrame([var_row])], ignore_index=True)
+        df_all = pd.concat([df_ref, pd.DataFrame([var_row])[pos_cols]], ignore_index=True)
         df_parts = self._sf.get_df_parts(df_seq=df_all, jmd_n_len=jmd_n_len, jmd_c_len=jmd_c_len)
         features = list(df_feat[ut.COL_FEATURE])
         X = np.asarray(self._sf.feature_matrix(features=features, df_parts=df_parts,
@@ -317,6 +378,11 @@ class SeqOpt(Tool):
             cx_prob: float = 0.5,
             mut_prob: float = 0.2,
             survival: str = "mu_plus_lambda",
+            variation: str = "and",
+            engine: str = "exact",
+            constraints: Optional[List[Callable]] = None,
+            penalty: str = "delta",
+            hof_size: int = 10,
             n_mut_max: int = 5,
             region: Optional[Any] = None,
             to_aa: Optional[List[str]] = None,
@@ -343,8 +409,11 @@ class SeqOpt(Tool):
             attribution (``feat_importance`` / ``feat_impact``, ``positions``) the search reads.
         objectives : list of (str, str, object)
             ``(name, goal, source)`` per objective; ``goal`` in ``{'max','min'}`` and ``source``
-            in ``{'delta_pred','delta_cpp','shift_score','n_mut'}`` or a ``callable(genome, wt_seq)``.
-            At least two objectives.
+            in ``{'delta_pred','delta_cpp','shift_score','n_mut'}`` or a ``callable(sequence) ->
+            float``. The callable receives the **variant sequence** and returns a scalar, so any
+            external predictor (scikit / torch model, or a sequence-level tool / web API such as
+            a topology or signal-peptide predictor) can be optimized as an objective; its result
+            is cached per distinct variant. At least two objectives.
         algorithm : str, default='nsga2'
             ``'nsga2'`` (population) or ``'greedy'`` (importance-ordered single path).
         pop_size : int, default=50
@@ -360,7 +429,23 @@ class SeqOpt(Tool):
         mut_prob : float, default=0.2
             Per-individual mutation probability.
         survival : str, default='mu_plus_lambda'
-            Survival scheme: ``'mu_plus_lambda'`` or ``'mu_comma_lambda'``.
+            Survival scheme: ``'mu_plus_lambda'`` (elitist), ``'mu_comma_lambda'`` or
+            ``'ea_simple'`` (generational replacement).
+        variation : str, default='and'
+            Variation scheme: ``'and'`` (varAnd — crossover *and* mutation) or ``'or'`` (varOr —
+            each offspring is crossover *or* mutation *or* reproduction; needs cx_prob+mut_prob<=1).
+        engine : str, default='exact'
+            ``'exact'`` (pure-Python, RNG-matched to the DEAP reference) or ``'fast'`` (numpy-
+            vectorized non-dominated sort; numerically identical fronts, faster).
+        constraints : list of callable, optional
+            Feasibility predicates ``genome -> bool`` (``True`` = feasible). Infeasible variants
+            are penalized so the search avoids them.
+        penalty : str, default='delta'
+            Penalty applied to infeasible variants: ``'delta'`` (fixed worst objective) or
+            ``'closest_valid'`` (penalty scaled by the number of violated constraints).
+        hof_size : int, default=10
+            Size of the single-objective Hall of Fame (``SeqOpt.hall_of_fame_``) accumulated
+            across generations.
         n_mut_max : int, default=5
             Maximum number of point mutations per variant.
         region : str or list of int, optional
@@ -403,12 +488,26 @@ class SeqOpt(Tool):
                              list_str_options=ut.LIST_SEQOPT_MUTATION)
         ut.check_str_options(name="survival", val=survival,
                              list_str_options=ut.LIST_SEQOPT_SURVIVAL)
+        ut.check_str_options(name="variation", val=variation,
+                             list_str_options=ut.LIST_SEQOPT_VARIATION)
+        ut.check_str_options(name="engine", val=engine, list_str_options=ut.LIST_SEQOPT_ENGINE)
+        ut.check_str_options(name="penalty", val=penalty, list_str_options=ut.LIST_SEQOPT_PENALTY)
         ut.check_str_options(name="init", val=init, list_str_options=ut.LIST_SEQOPT_INIT)
         ut.check_number_range(name="pop_size", val=pop_size, min_val=2, just_int=True)
         ut.check_number_range(name="n_gen", val=n_gen, min_val=1, just_int=True)
         ut.check_number_range(name="n_mut_max", val=n_mut_max, min_val=1, just_int=True)
+        ut.check_number_range(name="hof_size", val=hof_size, min_val=1, just_int=True)
         ut.check_number_range(name="cx_prob", val=cx_prob, min_val=0, max_val=1, just_int=False)
         ut.check_number_range(name="mut_prob", val=mut_prob, min_val=0, max_val=1, just_int=False)
+        if constraints is not None:
+            constraints = ut.check_list_like(name="constraints", val=constraints)
+            for i, c in enumerate(constraints):
+                if not callable(c):
+                    raise ValueError(f"'constraints[{i}]' ({c}) should be a callable "
+                                     f"genome->bool feasibility predicate.")
+        if variation == ut.LIST_SEQOPT_VARIATION[1] and cx_prob + mut_prob > 1:
+            raise ValueError(f"variation='or' requires cx_prob + mut_prob <= 1 "
+                             f"(got {cx_prob} + {mut_prob}).")
         if seed is not None:
             ut.check_number_range(name="seed", val=seed, min_val=0, just_int=True)
         # Resolve RNG + scannable space
@@ -420,8 +519,8 @@ class SeqOpt(Tool):
         if len(positions) == 0:
             raise ValueError("No scannable positions for the given 'region'.")
         # Fitness + guidance
-        fitness_fn, _, _ = self._build_fitness(df_seq, df_feat, names, sources,
-                                               jmd_n_len, jmd_c_len)
+        fitness_fn, _, _ = self._build_fitness(df_seq, df_feat, names, sources, goals,
+                                               constraints, penalty, jmd_n_len, jmd_c_len)
         guide_fn = self._build_guide(df_seq, df_feat, fitness_fn, goals, wt_seq, base,
                                      jmd_n_len, jmd_c_len)
         suggest_seeds = None
@@ -438,19 +537,44 @@ class SeqOpt(Tool):
             res = evolve_nsga2(wt_seq, positions, alphabet, goals, fitness_fn, guide_fn, rng,
                                pop_size=pop_size, n_gen=n_gen, n_mut_max=n_mut_max,
                                crossover=crossover, mutation=mutation, cx_prob=cx_prob,
-                               mut_prob=mut_prob, survival=survival, suggest_seeds=suggest_seeds)
+                               mut_prob=mut_prob, survival=survival, variation=variation,
+                               engine=engine, hof_size=hof_size, suggest_seeds=suggest_seeds)
         self.trajectory_ = list(res["trajectory"])
-        df_pareto = self._build_output(res, wt_entry, wt_seq, names)
+        # Hall of Fame: best-k single-objective variants (labels) across all generations.
+        self.hall_of_fame_ = [variant_label(wt_seq, g) for g in res.get("hall_of_fame", [])]
+        # Per-generation history (hypervolume + spread + per-objective best front value).
+        self.history_ = self._build_history(res, names)
+        df_pareto = self._build_output(res, wt_entry, wt_seq, names, goals)
         if self._verbose:
             n_front = int((df_pareto[ut.COL_RANK] == 0).sum())
             ut.print_out(f"SeqOpt ({self._mode}/{algorithm}) returned {len(df_pareto)} variants "
                          f"({n_front} on the Pareto front).")
         return df_pareto
 
-    def _build_output(self, res, wt_entry, wt_seq, names):
-        """Assemble df_pareto from the evolve result (genomes + objective matrix + rank/crowd)."""
-        genomes, F = res["genomes"], np.asarray(res["F"], dtype=float)
-        rank, crowding = res["rank"], res["crowding"]
+    def _build_output(self, res, wt_entry, wt_seq, names, goals):
+        """Assemble df_pareto from the evolve result (final population + cumulative archive).
+
+        The cumulative non-dominated archive is merged into the final population before fronts
+        are recomputed, so the returned ``rank=0`` front is the **best-ever** non-dominated set
+        (no solution lost to per-generation crowding), not just the final population's front.
+        """
+        genomes = list(res["genomes"])
+        F = np.asarray(res["F"], dtype=float)
+        arch_g, arch_F = res.get("pareto_archive", ([], np.empty((0, len(names)))))
+        if len(arch_g):
+            genomes = genomes + list(arch_g)
+            F = np.vstack([F, np.asarray(arch_F, dtype=float)])
+        # Deduplicate genomes, then recompute rank/crowding over the merged set.
+        seen, keep = set(), []
+        for i, g in enumerate(genomes):
+            key = canonical(g)
+            if key not in seen:
+                seen.add(key)
+                keep.append(i)
+        genomes = [genomes[i] for i in keep]
+        F = F[keep]
+        W = normalize_objectives_(F, goals)
+        rank, crowding = rank_and_crowding(W)
         data = {ut.COL_ENTRY: [wt_entry] * len(genomes),
                 ut.COL_VARIANT: [variant_label(wt_seq, g) for g in genomes],
                 ut.COL_N_MUT: [len(g) for g in genomes],
@@ -467,12 +591,34 @@ class SeqOpt(Tool):
         df_pareto = df_pareto.drop_duplicates(subset=[ut.COL_VARIANT]).reset_index(drop=True)
         return df_pareto
 
+    def _build_history(self, res, names):
+        """Per-generation convergence history (one row per generation)."""
+        hv = list(res.get("trajectory", []))
+        sp = list(res.get("spread_trajectory", [np.nan] * len(hv)))
+        best = res.get("best_trajectory")
+        data = {ut.COL_GENERATION: list(range(len(hv))),
+                ut.COL_HYPERVOLUME: hv, ut.COL_SPREAD: sp}
+        mean = res.get("mean_trajectory")
+        worst = res.get("worst_trajectory")
+        if best is not None and len(best):
+            best = np.asarray(best, dtype=float)
+            mean = np.asarray(mean, dtype=float) if mean is not None and len(mean) else None
+            worst = np.asarray(worst, dtype=float) if worst is not None and len(worst) else None
+            for j, name in enumerate(names):
+                data[f"best_{name}"] = best[:, j]
+                if mean is not None:
+                    data[f"mean_{name}"] = mean[:, j]
+                if worst is not None:
+                    data[f"worst_{name}"] = worst[:, j]
+        return pd.DataFrame(data)
+
     def eval(self,
              df_pareto: pd.DataFrame,
              ref_point: Optional[ut.ArrayLike1D] = None,
+             ref_front: Optional[ut.ArrayLike2D] = None,
              ) -> pd.DataFrame:
         """
-        Evaluate a Pareto front: hypervolume, front size and objective-space spread.
+        Evaluate a Pareto front: hypervolume, front size, spread and (optionally) convergence.
 
         Parameters
         ----------
@@ -481,11 +627,15 @@ class SeqOpt(Tool):
         ref_point : array-like, shape (n_objectives,), optional
             Reference (nadir) point for the hypervolume. If ``None``, the per-objective minimum
             (minus a small margin) of the front is used.
+        ref_front : array-like, shape (n_ref, n_objectives), optional
+            A reference (target) front in raw objective space. When given, a ``convergence``
+            column (generational distance to this front; lower = closer) is added.
 
         Returns
         -------
-        df_eval : pd.DataFrame, shape (1, 3)
-            One row with ``hypervolume``, ``n_front`` (rank-0 size) and ``spread``.
+        df_eval : pd.DataFrame, shape (1, 3 or 4)
+            One row with ``hypervolume``, ``n_front`` (rank-0 size) and ``spread`` (plus
+            ``convergence`` when ``ref_front`` is given).
 
         Examples
         --------
@@ -508,8 +658,10 @@ class SeqOpt(Tool):
         eval_goals = [obj_meta.get(c, ut.LIST_OBJECTIVE_GOALS[0]) for c in obj_cols]
         W = normalize_objectives_(F, eval_goals)
         ref = None if ref_point is None else np.asarray(ref_point, dtype=float)
-        hv = hypervolume(W, ref=ref)
-        sp = spread(W)
-        df_eval = pd.DataFrame([{ut.COL_HYPERVOLUME: hv, ut.COL_N_FRONT: int(len(front)),
-                                 ut.COL_SPREAD: sp}])
+        record = {ut.COL_HYPERVOLUME: hypervolume(W, ref=ref),
+                  ut.COL_N_FRONT: int(len(front)), ut.COL_SPREAD: spread(W)}
+        if ref_front is not None:
+            ref_W = normalize_objectives_(np.asarray(ref_front, dtype=float), eval_goals)
+            record[ut.COL_CONVERGENCE] = convergence(W, ref_W)
+        df_eval = pd.DataFrame([record])
         return df_eval
