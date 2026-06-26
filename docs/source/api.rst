@@ -93,10 +93,10 @@ Explainable AI
     TreeModel
     ShapModel
 
-.. _protein_design_api:
+.. _protein_engineering_api:
 
-Protein Design
-==============
+Protein Engineering
+===================
 .. autosummary::
     :toctree: generated/
     :template: autosummary/class_template.rst
@@ -105,6 +105,8 @@ Protein Design
     AAMutPlot
     SeqMut
     SeqMutPlot
+    SeqOpt
+    SeqOptPlot
 
 .. _utility_functions_api:
 
