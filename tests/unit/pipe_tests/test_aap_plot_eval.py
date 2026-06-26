@@ -46,6 +46,28 @@ _DF_2METRIC = _make_eval(pats=("none", "p1"), scales=("explain:30", "explain:50"
                          metrics=("balanced_accuracy", "f1"))
 
 
+def _make_eval_njmd(njmd=(6, 10, 14), pats=("none", "p1"), metric="balanced_accuracy"):
+    """Synthetic sensitivity table whose structural axes are the symmetric JMD length and splits."""
+    rows = []
+    for nj, pm in itertools.product(njmd, pats):
+        row = {"stage": "sensitivity", "list_parts": "tmd", "split_types": pm, "pattern_mode": pm,
+               "n_split_max": 15, "scale": "explain:30", "n_jmd": nj, "n_filter": 100,
+               "n_features": 100}
+        # Score varies clearly with n_jmd so the axis registers a non-zero marginal impact.
+        row[metric + "_mean"] = 0.5 + 0.02 * nj + 0.01 * len(pm)
+        row[metric + "_std"] = 0.03
+        rows.append(row)
+    df = pd.DataFrame(rows)
+    df["is_pareto"] = False
+    df["rank"] = df[metric + "_mean"].rank(ascending=False, method="first").astype(int)
+    df["is_selected"] = False
+    df.loc[df[metric + "_mean"].idxmax(), "is_selected"] = True
+    return df
+
+
+_DF_NJMD = _make_eval_njmd()
+
+
 @pytest.fixture(autouse=True)
 def _close_figs():
     yield
@@ -111,6 +133,18 @@ class TestPlotEval:
     def test_figsize_parameter(self):
         figs = plot_eval(_DF_2AX, figsize=(5, 4))
         assert len(figs) >= 1
+
+    def test_n_jmd_rendered_as_heatmap_axis(self):
+        # A sweep table carrying the symmetric JMD-length axis renders it on a heatmap (x or y).
+        figs = plot_eval(_DF_NJMD)
+        heatmap_axes = [ax for f in figs for ax in f.axes if ax.images]
+        assert heatmap_axes  # at least one heatmap exists
+        labels = {ax.get_xlabel() for ax in heatmap_axes} | {ax.get_ylabel() for ax in heatmap_axes}
+        assert "JMD length (n_jmd)" in labels
+
+    def test_n_jmd_is_numeric_axis(self):
+        # n_jmd levels sort numerically (not lexically) for the eval grid.
+        assert _axis_levels(_DF_NJMD, "n_jmd") == [6, 10, 14]
 
     def test_most_informative_axes_on_heatmap(self):
         # The lowest-impact axis becomes the slice; the top-2 are the heatmap x/y.

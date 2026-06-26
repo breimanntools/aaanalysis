@@ -18,13 +18,15 @@ import aaanalysis.utils as ut
 
 COL_SELECTED = "is_selected"
 COL_STAGE = "stage"
-# Structural sweep axes (the Part x Split x Scale grid), in fallback inner-priority order; ``n_filter``
-# is a refinement sweep shown in its own panel, not a heatmap axis. ``pattern_mode`` is the split-type
-# axis (a 1:1 recoding of ``split_types``); the two are never both counted.
-LIST_STRUCT_AXES = ["list_parts", "pattern_mode", "n_split_max", "scale"]
-LIST_NUMERIC_AXES = ["n_filter", "n_split_max"]
+# Structural sweep axes (the Part x Split x Scale x JMD-length grid), in fallback inner-priority
+# order; ``n_filter`` is a refinement sweep shown in its own panel, not a heatmap axis.
+# ``pattern_mode`` is the split-type axis (a 1:1 recoding of ``split_types``); the two are never both
+# counted. ``n_jmd`` is the symmetric JMD length (jmd_n_len = jmd_c_len), a numeric heatmap axis.
+LIST_STRUCT_AXES = ["list_parts", "pattern_mode", "n_split_max", "n_jmd", "scale"]
+LIST_NUMERIC_AXES = ["n_filter", "n_split_max", "n_jmd"]
 DICT_AXIS_LABEL = {"n_filter": "n_filter", "n_split_max": "n_split_max", "scale": "scale set",
-                   "list_parts": "parts", "pattern_mode": "splits (pattern mode)"}
+                   "list_parts": "parts", "pattern_mode": "splits (pattern mode)",
+                   "n_jmd": "JMD length (n_jmd)"}
 STR_CMAP = "viridis"
 
 

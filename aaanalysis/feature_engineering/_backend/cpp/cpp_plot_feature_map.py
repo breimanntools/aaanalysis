@@ -5,7 +5,6 @@ import pandas as pd
 import numpy as np
 import seaborn as sns
 import matplotlib.pyplot as plt
-import warnings
 
 import aaanalysis.utils as ut
 
@@ -69,17 +68,21 @@ def plot_feat_importance_bars_subcat(ax=None,
     ax.set_xlabel(label, size=fontsize_label, weight="bold",
                   ha=ha, position=position, multialignment=multialignment)
     ax.xaxis.set_label_position("top")
-    # Add annotations (only for non-signed cumulative importance bars)
+    # Add annotations (only for non-signed cumulative importance bars). Anchor the
+    # label just outside each bar tip (ha="left", clip_on=False) so it is never cut
+    # by the axes spine (which previously turned e.g. "9.6%" into "6%") and never
+    # spills back over the heatmap.
     if not shap_plot:
         v_max = int(np.ceil(max(list_imp)))
         annotation_th = v_max / 2 if annotation_th is None else annotation_th
         for i, val in enumerate(list_imp):
             if val >= annotation_th:
-                ax.text(val, i + 0.45, f"{round(val, 1)}% ",
-                        va="center", ha="right",
+                ax.text(val, i + 0.45, f" {round(val, 1)}%",
+                        va="center", ha="left",
                         weight=weight_annotation,
-                        color="white",
-                        size=fontsize_imp_bar)
+                        color=ut.COLOR_FEAT_IMP,
+                        size=fontsize_imp_bar,
+                        clip_on=False)
 
     # Adjust ticks
     ax.tick_params(axis='y', which='both', length=0, labelsize=0)
@@ -92,10 +95,6 @@ def plot_feat_importance_bars_subcat(ax=None,
         ax.set_xlim(0, max(list(dict_total.values()) + [0]))
     else:
         ax.set_xlim(0, v_max)
-    # Adjust plot size
-    with warnings.catch_warnings():
-        warnings.simplefilter("ignore", category=UserWarning)
-        plt.tight_layout()
 
 
 def plot_feat_importance_bars_pos(ax=None,
@@ -269,11 +268,15 @@ def plot_feature_map(df_feat=None, df_cat=None,
         gridspc_kw = {'width_ratios': width_ratio, "wspace": 0, "hspace": 0}
         if add_imp_bar_top:
             gridspc_kw["height_ratios"] = height_ratio
+        # NOTE: no constrained/tight layout engine here. The frontend finalises the
+        # layout with fig.tight_layout(); switching a constrained engine to tight
+        # after the heatmap colorbar exists raises, and the engines also fight the
+        # manually placed colorbar/legend axes. Spacing is controlled explicitly via
+        # the gridspec ratios (wspace/hspace=0 glue the bars to the heatmap).
         fig, axes = plt.subplots(figsize=figsize,
                                  nrows=2 if add_imp_bar_top else 1,
                                  ncols=2,
-                                 gridspec_kw=gridspc_kw,
-                                 layout="constrained")
+                                 gridspec_kw=gridspc_kw)
         if add_imp_bar_top:
             ax_hm, ax_bt, ax_br, ax_empty = axes[1, 0], axes[0, 0], axes[1, 1], axes[0, 1]
             ax_hm.sharex(ax_bt)

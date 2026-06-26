@@ -27,30 +27,34 @@ from ._eval_plot import plot_eval
 # I Helper Functions
 # Optimization-mode sweep grids. The ``search`` grade names which CPP levers vary: "fast" runs a
 # single default configuration (no search, byte-identical to the explicit CPP chain); "balanced"
-# sweeps the Split levers + Scale + n_filter over default parts (~10 min); "exhaustive" also sweeps
-# the Part region set and adds the orthogonal performance-ranked top60 scale sets and a finer
-# n_split_max step. Held as a structured registry so the whole grid stays in one place and tunable.
-# Scale candidates are (kind, value): ("explain", n) = top_explain_n interpretability tier (None =
-# all); ("top60", k) = the k-th performance-ranked top60 set.
+# sweeps the Split levers + Scale + JMD length (n_jmd) + n_filter over default parts (~10 min);
+# "exhaustive" also sweeps the Part region set and adds the orthogonal performance-ranked top60
+# scale sets, a finer n_split_max step, and a wider n_jmd range. Held as a structured registry so the
+# whole grid stays in one place and tunable. Scale candidates are (kind, value): ("explain", n) =
+# top_explain_n interpretability tier (None = all); ("top60", k) = the k-th performance-ranked top60
+# set. The ``n_jmd`` axis sweeps the JMD length symmetrically (jmd_n_len = jmd_c_len = n_jmd).
 _MODES = {
     "fast": {
-        "sweep_parts": False, "sweep_scales": False, "sweep_split": False,
+        "sweep_parts": False, "sweep_scales": False, "sweep_split": False, "sweep_jmd": False,
         "scale_specs": [("explain", 30)], "n_split_max_vals": [15], "n_filter_vals": [100],
+        "n_jmd_vals": [10],
         "simplify_strategy": "greedy",
     },
     "balanced": {
-        "sweep_parts": False, "sweep_scales": True, "sweep_split": True,
+        "sweep_parts": False, "sweep_scales": True, "sweep_split": True, "sweep_jmd": True,
         "scale_specs": [("explain", n) for n in (10, 20, 30, 40, 50, None)],
         "n_split_max_vals": [1, 5, 10, 15],
         "n_filter_vals": [25, 50, 75, 100, 125, 150],
+        "n_jmd_vals": [6, 10, 14],
         "simplify_strategy": "greedy",
     },
     "exhaustive": {
-        "sweep_parts": True, "sweep_scales": True, "sweep_split": True,
+        "sweep_parts": True, "sweep_scales": True, "sweep_split": True, "sweep_jmd": True,
         "scale_specs": [("explain", n) for n in (5, 10, 20, 30, 40, 50, 60)]
                        + [("top60", k) for k in range(1, 11)],
         "n_split_max_vals": [1, 3, 5, 7, 9, 11, 13, 15],
         "n_filter_vals": [10, 20, 30, 40, 50, 60, 70, 80, 90, 100, 110, 120, 130, 140, 150],
+        "n_jmd_vals": [2, 4, 6, 8, 10, 12, 14],
         "simplify_strategy": "consolidate",
     },
 }
@@ -75,7 +79,8 @@ _PATTERN_MODE = {(ut.STR_SEGMENT,): "none",
                  (ut.STR_SEGMENT, ut.STR_PERIODIC_PATTERN): "p2",
                  (ut.STR_SEGMENT, ut.STR_PATTERN, ut.STR_PERIODIC_PATTERN): "p1+p2"}
 # Levers a power user may pin via the bounded ``kws`` dict (unknown keys raise).
-_KWS_KEYS = {"n_explain", "n_split_max", "n_filter", "simplify_strategy", "max_cor", "max_overlap"}
+_KWS_KEYS = {"n_explain", "n_split_max", "n_filter", "n_jmd", "simplify_strategy",
+             "max_cor", "max_overlap"}
 _LIST_MODELS = [ut.MODEL_SVM, ut.MODEL_RF, ut.MODEL_LOG_REG]
 
 
@@ -144,12 +149,13 @@ def _resolve_config(search="balanced", kws=None):
     mode = _MODES[search]
     cfg = {
         "sweep_parts": mode["sweep_parts"], "sweep_split": mode["sweep_split"],
-        "sweep_scales": mode["sweep_scales"],
+        "sweep_scales": mode["sweep_scales"], "sweep_jmd": mode["sweep_jmd"],
         "part_sets": list(_PART_SETS) if mode["sweep_parts"] else [_PART_SETS[0]],
         "split_type_sets": list(_SPLIT_TYPE_SETS) if mode["sweep_split"] else [_SPLIT_TYPE_SETS[-1]],
         "n_split_max_vals": list(mode["n_split_max_vals"]),
         "scale_specs": list(mode["scale_specs"]),
         "n_filter_vals": list(mode["n_filter_vals"]),
+        "n_jmd_vals": list(mode["n_jmd_vals"]),
         "simplify_strategy": mode["simplify_strategy"],
         "max_cor": 0.5, "max_overlap": 0.5,
     }
@@ -165,6 +171,9 @@ def _resolve_config(search="balanced", kws=None):
             cfg["n_split_max_vals"] = [kws["n_split_max"]]
         if "n_filter" in kws:
             cfg["n_filter_vals"] = [kws["n_filter"]]
+        if "n_jmd" in kws:
+            cfg["n_jmd_vals"] = [kws["n_jmd"]]
+            cfg["sweep_jmd"] = False
         if "simplify_strategy" in kws:
             cfg["simplify_strategy"] = kws["simplify_strategy"]
         if "max_cor" in kws:
@@ -262,8 +271,9 @@ def find_features(labels: ut.ArrayLike1D,
         swept lever and must be (re)built from the sequences via :meth:`SequenceFeature.get_df_parts`.
     search : str, default="balanced"
         Search effort: ``"fast"`` (single default configuration, no search), ``"balanced"`` (sweep
-        the Split levers + Scale + ``n_filter``), or ``"exhaustive"`` (also sweep the Part region
-        set and the performance-ranked scale sets, with a finer grid).
+        the Split levers + Scale + symmetric JMD length ``n_jmd`` + ``n_filter``), or
+        ``"exhaustive"`` (also sweep the Part region set and the performance-ranked scale sets, with
+        a finer grid and a wider ``n_jmd`` range).
     simplify : bool, default=True
         If ``True``, refine the winning feature set with :meth:`CPP.simplify` (kept only if it is
         not Pareto-dominated).
@@ -276,8 +286,8 @@ def find_features(labels: ut.ArrayLike1D,
         Cross-validation scoring metric(s). A list triggers multi-objective Pareto selection.
     kws : dict, optional
         Bounded power-user overrides; each pins a swept lever to a single value (unknown keys raise).
-        Recognized keys: ``n_explain``, ``n_split_max``, ``n_filter``, ``simplify_strategy``,
-        ``max_cor``, ``max_overlap``.
+        Recognized keys: ``n_explain``, ``n_split_max``, ``n_filter``, ``n_jmd`` (the symmetric JMD
+        length ``jmd_n_len = jmd_c_len``), ``simplify_strategy``, ``max_cor``, ``max_overlap``.
     subcategories : list of str, optional
         AAontology subcategories to restrict the scale sets to. If ``None``, all scales of the grade.
     top_n : int, optional
@@ -368,7 +378,11 @@ def find_features(labels: ut.ArrayLike1D,
         df_feat = df_feat.head(top_n)
     ax = None
     if plot:
-        _, ax = CPPPlot(df_scales=df_scales_all, verbose=verbose).feature_map(
+        # Draw the feature map with the winning JMD length so the map geometry matches the parts the
+        # winning features were computed on (CPPPlot defaults jmd_n_len = jmd_c_len = 10).
+        n_jmd_win = int(df_eval.loc[df_eval["is_selected"], "n_jmd"].iloc[0])
+        _, ax = CPPPlot(df_scales=df_scales_all, jmd_n_len=n_jmd_win, jmd_c_len=n_jmd_win,
+                        verbose=verbose).feature_map(
             df_feat=df_feat, name_test=name_test, name_ref=name_ref)
         # The feature map is the primary figure (returned as ``ax``); the publication eval figures
         # are attached as ``ax.eval`` (a list — empty for a single-configuration ``fast`` search) so
@@ -378,12 +392,12 @@ def find_features(labels: ut.ArrayLike1D,
 
 
 def _eval_row(stage=None, list_parts=None, split_types=None, n_split_max=None, scale_spec=None,
-              n_filter=None, n_features=None, scores=None, metrics=None):
+              n_filter=None, n_features=None, n_jmd=None, scores=None, metrics=None):
     """Assemble one ``df_eval`` row (descriptors + per-metric mean/std columns)."""
     row = {"stage": stage, "list_parts": ",".join(list_parts),
            "split_types": ",".join(split_types), "pattern_mode": _PATTERN_MODE[tuple(split_types)],
-           "n_split_max": n_split_max, "scale": _scale_label(scale_spec), "n_filter": n_filter,
-           "n_features": n_features}
+           "n_split_max": n_split_max, "scale": _scale_label(scale_spec), "n_jmd": n_jmd,
+           "n_filter": n_filter, "n_features": n_features}
     for m in metrics:
         row[m + "_mean"], row[m + "_std"] = scores[m]
     return row
@@ -395,7 +409,10 @@ def _run_fast(sf=None, labels=None, df_seq=None, cfg=None, simplify=True, models
     """Single default configuration: the explicit CPP path, byte-identical to writing it by hand."""
     list_parts, split_types = cfg["part_sets"][0], _SPLIT_TYPE_SETS[-1]
     spec = cfg["scale_specs"][0]
-    df_parts = sf.get_df_parts(df_seq=df_seq, list_parts=list_parts)
+    # Pin the JMD length to the default 10 (no sweep) so fast stays byte-identical to the explicit
+    # single-CPP chain (get_df_parts defaults jmd_n_len = jmd_c_len = 10).
+    n_jmd = cfg["n_jmd_vals"][0]
+    df_parts = sf.get_df_parts(df_seq=df_seq, list_parts=list_parts, jmd_n_len=n_jmd, jmd_c_len=n_jmd)
     df_scales = _load_scale_spec(spec, subcategories=subcategories)
     if df_scales is None:
         raise ValueError(f"'subcategories' ({subcategories}) should be names that match a scale.")
@@ -414,7 +431,7 @@ def _run_fast(sf=None, labels=None, df_seq=None, cfg=None, simplify=True, models
     df_eval = pd.DataFrame([_eval_row(stage="single", list_parts=list_parts, split_types=split_types,
                                       n_split_max=cfg["n_split_max_vals"][0], scale_spec=spec,
                                       n_filter=cfg["n_filter_vals"][0], n_features=len(df_feat),
-                                      scores=scores, metrics=metrics)])
+                                      n_jmd=n_jmd, scores=scores, metrics=metrics)])
     df_eval["is_pareto"] = True
     df_eval["rank"] = 1
     df_eval["is_selected"] = True
@@ -422,13 +439,15 @@ def _run_fast(sf=None, labels=None, df_seq=None, cfg=None, simplify=True, models
 
 
 def _grid_stage(sf=None, df_seq=None, parts=None, split_sets=None, n_split_vals=None, specs=None,
-                n_filters=None, cfg=None, labels=None, label_test=1, label_ref=0, models=None,
-                cv=5, metrics=None, subcategories=None, df_scales_all=None, random_state=None,
-                n_jobs=None, verbose=False, stage=None, parts_cache=None):
+                n_filters=None, n_jmd_vals=None, cfg=None, labels=None, label_test=1, label_ref=0,
+                models=None, cv=5, metrics=None, subcategories=None, df_scales_all=None,
+                random_state=None, n_jobs=None, verbose=False, stage=None, parts_cache=None):
     """Run a CPPGrid sweep over the given axis levels, CV-score every config, return eval rows.
 
     Returns ``(rows, payloads)`` aligned: ``payloads[i]`` carries the kept ``df_feat`` and the parts
-    plus the axis levels needed to rebuild / pin the winner.
+    plus the axis levels needed to rebuild / pin the winner. The JMD length is swept symmetrically:
+    ``jmd_n_len`` and ``jmd_c_len`` are both varied over ``n_jmd_vals`` and only the diagonal
+    (``jmd_n_len == jmd_c_len == n_jmd``) is kept, so a winning ``n_jmd`` is unambiguous.
     """
     scale_dfs, scale_specs = [], []
     for spec in specs:
@@ -438,7 +457,8 @@ def _grid_stage(sf=None, df_seq=None, parts=None, split_sets=None, n_split_vals=
             scale_specs.append(spec)
     if not scale_dfs:
         raise ValueError(f"'subcategories' ({subcategories}) should match at least one scale.")
-    params_parts = {"list_parts": [list(p) for p in parts]}
+    params_parts = {"list_parts": [list(p) for p in parts],
+                    "jmd_n_len": list(n_jmd_vals), "jmd_c_len": list(n_jmd_vals)}
     params_split = {"split_types": [list(s) for s in split_sets], "n_split_max": list(n_split_vals)}
     params_cpp = {"n_filter": list(n_filters), "label_test": label_test, "label_ref": label_ref,
                   "max_cor": cfg["max_cor"], "max_overlap": cfg["max_overlap"]}
@@ -447,10 +467,11 @@ def _grid_stage(sf=None, df_seq=None, parts=None, split_sets=None, n_split_vals=
     list_df_feat, df_params = cppg.run(params_parts=params_parts, params_split=params_split,
                                        params_scales=scale_dfs, params_cpp=params_cpp)
 
-    def _parts_for(lp):
-        key = tuple(lp)
+    def _parts_for(lp, n_jmd):
+        key = (tuple(lp), n_jmd)
         if key not in parts_cache:
-            parts_cache[key] = sf.get_df_parts(df_seq=df_seq, list_parts=list(lp))
+            parts_cache[key] = sf.get_df_parts(df_seq=df_seq, list_parts=list(lp),
+                                               jmd_n_len=n_jmd, jmd_c_len=n_jmd)
         return parts_cache[key]
 
     rows, payloads = [], []
@@ -458,10 +479,16 @@ def _grid_stage(sf=None, df_seq=None, parts=None, split_sets=None, n_split_vals=
         if df_feat_i is None or len(df_feat_i) == 0:
             continue
         rec = df_params.iloc[i]
+        # Keep only the symmetric JMD-length diagonal (jmd_n_len == jmd_c_len); the off-diagonal
+        # combinations CPPGrid also produces are dropped so the kept n_jmd is unambiguous.
+        n_jmd_n, n_jmd_c = int(rec["jmd_n_len"]), int(rec["jmd_c_len"])
+        if n_jmd_n != n_jmd_c:
+            continue
+        n_jmd = n_jmd_n
         lp = parts[int(rec["list_parts"])] if len(parts) > 1 else parts[0]
         sts = split_sets[int(rec["split_types"])] if len(split_sets) > 1 else split_sets[0]
         spec = scale_specs[int(rec["df_scales"])] if len(scale_specs) > 1 else scale_specs[0]
-        df_parts_i = _parts_for(lp)
+        df_parts_i = _parts_for(lp, n_jmd)
         X_i = sf.feature_matrix(features=df_feat_i[ut.COL_FEATURE], df_parts=df_parts_i,
                                 df_scales=df_scales_all, n_jobs=n_jobs)
         scores = _cv_scores(X_i, labels, models=models, cv=cv, metrics=metrics,
@@ -469,10 +496,10 @@ def _grid_stage(sf=None, df_seq=None, parts=None, split_sets=None, n_split_vals=
         rows.append(_eval_row(stage=stage, list_parts=lp, split_types=sts,
                               n_split_max=int(rec["n_split_max"]), scale_spec=spec,
                               n_filter=int(rec["n_filter"]), n_features=len(df_feat_i),
-                              scores=scores, metrics=metrics))
+                              n_jmd=n_jmd, scores=scores, metrics=metrics))
         payloads.append({"df_feat": df_feat_i.reset_index(drop=True), "df_parts": df_parts_i,
                          "list_parts": lp, "split_types": sts, "n_split_max": int(rec["n_split_max"]),
-                         "scale_spec": spec, "n_filter": int(rec["n_filter"])})
+                         "scale_spec": spec, "n_filter": int(rec["n_filter"]), "n_jmd": n_jmd})
     return rows, payloads
 
 
@@ -487,10 +514,11 @@ def _run_search(sf=None, labels=None, df_seq=None, cfg=None, simplify=True, mode
                   random_state=random_state, n_jobs=n_jobs, verbose=verbose, parts_cache=parts_cache)
     ref_nfilter = max(cfg["n_filter_vals"])
 
-    # Stage 1 — full Cartesian Part × Split × Scale at the reference n_filter.
+    # Stage 1 — full Cartesian Part × Split × Scale × JMD-length at the reference n_filter.
     rows1, pay1 = _grid_stage(parts=cfg["part_sets"], split_sets=cfg["split_type_sets"],
                               n_split_vals=cfg["n_split_max_vals"], specs=cfg["scale_specs"],
-                              n_filters=[ref_nfilter], stage="sensitivity", **common)
+                              n_filters=[ref_nfilter], n_jmd_vals=cfg["n_jmd_vals"],
+                              stage="sensitivity", **common)
     if not rows1:
         raise RuntimeError("'find_features' produced no valid configurations; relax 'kws' / "
                            "'subcategories' or use a less restrictive 'search'.")
@@ -500,20 +528,22 @@ def _run_search(sf=None, labels=None, df_seq=None, cfg=None, simplify=True, mode
 
     # Rank the swept axes by normalized marginal-mean impact; the dominant axis gets the n_filter sweep.
     df1["_split_lvl"] = df1["pattern_mode"] + "/" + df1["n_split_max"].astype(str)
-    axis_cols = {"part": "list_parts", "split": "_split_lvl", "scale": "scale"}
+    axis_cols = {"part": "list_parts", "split": "_split_lvl", "scale": "scale", "n_jmd": "n_jmd"}
     swept = [a for a, col in axis_cols.items() if df1[col].nunique() > 1]
     impacts = {a: _axis_impact(df1, axis_cols[a], metrics) for a in swept}
     dominant = max(impacts, key=impacts.get) if impacts else "scale"
 
-    # Stage 2 — sweep the dominant axis's levels × n_filter, the other two pinned at the Stage-1 winner.
+    # Stage 2 — sweep the dominant axis's levels × n_filter, the others pinned at the Stage-1 winner.
     parts2 = cfg["part_sets"] if dominant == "part" else [win1["list_parts"]]
     if dominant == "split":
         split2, nsplit2 = cfg["split_type_sets"], cfg["n_split_max_vals"]
     else:
         split2, nsplit2 = [win1["split_types"]], [win1["n_split_max"]]
     specs2 = cfg["scale_specs"] if dominant == "scale" else [win1["scale_spec"]]
+    njmd2 = cfg["n_jmd_vals"] if dominant == "n_jmd" else [win1["n_jmd"]]
     rows2, pay2 = _grid_stage(parts=parts2, split_sets=split2, n_split_vals=nsplit2, specs=specs2,
-                              n_filters=cfg["n_filter_vals"], stage="n_filter", **common)
+                              n_filters=cfg["n_filter_vals"], n_jmd_vals=njmd2, stage="n_filter",
+                              **common)
     df2 = pd.DataFrame(rows2)
     win2_pos = _select_pareto_simplest(df2, metrics)
     win2 = pay2[df2.index.get_loc(win2_pos)]
@@ -540,7 +570,8 @@ def _run_search(sf=None, labels=None, df_seq=None, cfg=None, simplify=True, mode
             rows3.append(_eval_row(stage="refine", list_parts=win2["list_parts"],
                                    split_types=win2["split_types"], n_split_max=win2["n_split_max"],
                                    scale_spec=win2["scale_spec"], n_filter=win2["n_filter"],
-                                   n_features=len(df_feat_win), scores=base, metrics=metrics))
+                                   n_features=len(df_feat_win), n_jmd=win2["n_jmd"],
+                                   scores=base, metrics=metrics))
     df_feat_win, df_parts_win = _refine_rfe_winner(
         df_feat_win, df_parts_win, df_scales_all, base, sf=sf, labels=labels, models=models, cv=cv,
         metrics=metrics, random_state=random_state, n_jobs=n_jobs, rows3=rows3, win=win2)
@@ -586,5 +617,6 @@ def _refine_rfe_winner(df_feat, df_parts, df_scales_all, base, sf=None, labels=N
         rows3.append(_eval_row(stage="refine", list_parts=win["list_parts"],
                                split_types=win["split_types"], n_split_max=win["n_split_max"],
                                scale_spec=win["scale_spec"], n_filter=win["n_filter"],
-                               n_features=len(df_feat_new), scores=base_new, metrics=metrics))
+                               n_features=len(df_feat_new), n_jmd=win["n_jmd"],
+                               scores=base_new, metrics=metrics))
     return df_feat_new, df_parts

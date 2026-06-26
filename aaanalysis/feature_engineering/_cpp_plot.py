@@ -1514,11 +1514,25 @@ class CPPPlot:
                                    legend_imp_xy=legend_imp_xy,
                                    **args_xtick)
 
-        # Adjust plot
+        # Adjust plot. Leave a little more room on the right than the heatmap needs
+        # so the cumulative-importance bar column's label ("Cumulative feature
+        # importance") and its per-category percentage annotations are not clipped at
+        # the figure edge under the default figsize/font scale.
         with warnings.catch_warnings():
             warnings.simplefilter("ignore", category=UserWarning)
             fig.tight_layout()
-            plt.subplots_adjust(right=0.95)
+            plt.subplots_adjust(right=0.92)
+        # Pin the scale-category legend to a fixed position in figure coordinates,
+        # in the left zone clear of the centred "Feature value" colorbar. The legend
+        # is otherwise anchored to the heatmap axes, which tight_layout pushes right
+        # when the y-tick labels grow (e.g. under plot_settings()), sliding the legend
+        # over the colorbar. The colorbar and the importance-dot legend already sit at
+        # fixed figure positions, so pinning the category legend lays the three out
+        # side by side without overlap at any font scale (group-level importance and
+        # both SHAP layouts). Skip only when the user supplied a custom legend_xy.
+        cat_legend = ax.get_legend()
+        if cat_legend is not None and tuple(legend_xy) == (-0.1, -0.01):
+            cat_legend.set_bbox_to_anchor((0.23, 0.183), transform=fig.transFigure)
         if tmd_seq is not None and seq_size is None:
             ax, seq_size = update_seq_size_(ax=ax, **args_seq, **args_part_color, **args_seq_color)
             if self._verbose:

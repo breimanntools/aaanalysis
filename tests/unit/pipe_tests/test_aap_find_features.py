@@ -113,6 +113,13 @@ class TestFindFeatures:
                                           kws={"n_filter": 75}, plot=False, random_state=0, n_jobs=1)
         assert sorted(df_eval["n_filter"].unique()) == [75]
 
+    def test_fast_n_jmd_is_10(self):
+        # fast pins the JMD length to 10 (no sweep) -> the single eval row carries n_jmd == 10.
+        _, _, df_eval = aap.find_features(labels, df_seq=df_seq, search="fast",
+                                          plot=False, random_state=0, n_jobs=1)
+        assert "n_jmd" in df_eval.columns
+        assert sorted(df_eval["n_jmd"].unique()) == [10]
+
     def test_subcategories_parameter(self):
         subs = sorted(aa.load_scales(name="scales_cat")["subcategory"].unique())[:5]
         df_feat, _, _ = aap.find_features(labels, df_seq=df_seq, subcategories=subs, search="fast",
@@ -248,6 +255,40 @@ class TestFindFeaturesComplex:
             assert col in df_eval.columns
 
     @pytest.mark.slow
+    def test_balanced_sweeps_n_jmd(self):
+        # The symmetric JMD-length axis is swept in balanced -> >1 unique n_jmd in the sweep table.
+        _, _, df_eval = aap.find_features(labels, df_seq=df_seq, search="balanced", kws=SMALL,
+                                          plot=False, random_state=0, n_jobs=1)
+        assert "n_jmd" in df_eval.columns
+        assert df_eval["n_jmd"].nunique() > 1
+        assert set(df_eval["n_jmd"].dropna().unique()).issubset(set(_MODES["balanced"]["n_jmd_vals"]))
+
+    @pytest.mark.slow
+    def test_kws_n_jmd_pins_all_rows(self):
+        # Pinning n_jmd disables its sweep -> every configuration uses the pinned symmetric length.
+        _, _, df_eval = aap.find_features(labels, df_seq=df_seq, search="balanced",
+                                          kws={**SMALL, "n_jmd": 8}, plot=False,
+                                          random_state=0, n_jobs=1)
+        assert sorted(df_eval["n_jmd"].unique()) == [8]
+
+    @pytest.mark.slow
+    def test_balanced_winner_n_jmd_consistent(self):
+        # The selected winner's n_jmd is a single, valid swept level (the value the winner uses).
+        df_feat, _, df_eval = aap.find_features(labels, df_seq=df_seq, search="balanced", kws=SMALL,
+                                                plot=False, random_state=0, n_jobs=1)
+        sel_n_jmd = df_eval.loc[df_eval["is_selected"], "n_jmd"]
+        assert len(sel_n_jmd) == 1 and int(sel_n_jmd.iloc[0]) in _MODES["balanced"]["n_jmd_vals"]
+        assert len(df_feat) > 0
+
+    @pytest.mark.slow
+    def test_reproducible_same_seed_balanced_n_jmd(self):
+        _, _, e1 = aap.find_features(labels, df_seq=df_seq, search="balanced", kws=SMALL,
+                                     plot=False, random_state=11, n_jobs=1)
+        _, _, e2 = aap.find_features(labels, df_seq=df_seq, search="balanced", kws=SMALL,
+                                     plot=False, random_state=11, n_jobs=1)
+        assert e1["n_jmd"].equals(e2["n_jmd"]) and e1.equals(e2)
+
+    @pytest.mark.slow
     def test_balanced_multi_metric_pareto(self):
         df_feat, _, df_eval = aap.find_features(labels, df_seq=df_seq, search="balanced", kws=SMALL,
                                                 metric=["balanced_accuracy", "f1"], plot=False,
@@ -307,6 +348,18 @@ class TestFindFeaturesHelpers:
         cfg = _resolve_config(search="balanced", kws={"n_filter": 42, "n_explain": 20})
         assert cfg["n_filter_vals"] == [42]
         assert cfg["scale_specs"] == [("explain", 20)] and cfg["sweep_scales"] is False
+
+    def test_resolve_config_modes_have_n_jmd(self):
+        # Every grade exposes an n_jmd level set; only fast leaves it unswept ([10]).
+        assert _resolve_config(search="fast")["n_jmd_vals"] == [10]
+        assert _resolve_config(search="fast")["sweep_jmd"] is False
+        for mode in ("balanced", "exhaustive"):
+            cfg = _resolve_config(search=mode)
+            assert len(cfg["n_jmd_vals"]) > 1 and cfg["sweep_jmd"] is True
+
+    def test_resolve_config_kws_pins_n_jmd(self):
+        cfg = _resolve_config(search="balanced", kws={"n_jmd": 8})
+        assert cfg["n_jmd_vals"] == [8] and cfg["sweep_jmd"] is False
 
     def test_resolve_config_unknown_kws_raises(self):
         with pytest.raises(ValueError):
