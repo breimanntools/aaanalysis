@@ -1,5 +1,5 @@
 """
-This is a script for the frontend of the SeqOptPlot class (**[pro]**) for visualizing SeqOpt
+This is a script for the frontend of the SeqOptPlot class for visualizing SeqOpt
 multi-objective directed-evolution results: the Pareto-front objective scatter and the
 per-generation hypervolume convergence trace.
 """
@@ -38,8 +38,7 @@ def _objective_cols(df_pareto):
 # II Main Functions
 class SeqOptPlot:
     """
-    Plotting class for :class:`SeqOpt` (Sequence Optimizer) results (**[pro]**, requires
-    ``aaanalysis[pro]``) [Breimann24a]_.
+    Plotting class for :class:`SeqOpt` (Sequence Optimizer) results [Breimann24a]_.
 
     Visualizes the Pareto front produced by :meth:`SeqOpt.run`: a 2-D objective scatter colored
     by non-dominated rank, and the per-generation hypervolume convergence trace.

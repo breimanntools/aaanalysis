@@ -1,7 +1,8 @@
-"""This is a script to test SeqOpt.run / SeqOpt.eval and SeqOptPlot (**[pro]**).
+"""This is a script to test SeqOpt.run / SeqOpt.eval and SeqOptPlot.
 
-Guarded by ``shap`` (the whole protein_design_pro subpackage imports ShapModel); skipped in a
-core-only environment. Tiny deterministic wild-type + real-scale df_feat so the genuine ΔCPP /
+SeqOpt is a core class — these tests run in a base install. Only the SHAP-guided
+``mode="impact"`` tests skip without ``shap`` (they call ``pytest.importorskip("shap")``
+locally). Tiny deterministic wild-type + real-scale df_feat so the genuine ΔCPP /
 SequenceFeature engine runs while staying fast.
 """
 import numpy as np
@@ -13,8 +14,7 @@ import hypothesis.strategies as some
 import aaanalysis as aa
 import aaanalysis.utils as ut
 
-pytest.importorskip("shap")
-from aaanalysis.protein_design_pro import SeqOpt, SeqOptPlot  # noqa: E402
+from aaanalysis.protein_design import SeqOpt, SeqOptPlot
 
 settings.register_profile("ci", deadline=None)
 settings.load_profile("ci")
@@ -201,6 +201,19 @@ class TestSeqOptRun:
 
 
 class TestSeqOptInit:
+    def test_seqopt_is_core(self):
+        # SeqOpt is a core class (not pro-gated): the real class, exported, not a stub.
+        assert "SeqOpt" in aa.__all__ and "SeqOptPlot" in aa.__all__
+        assert aa.SeqOpt.__module__ == "aaanalysis.protein_design._seqopt"
+
+    def test_impact_without_shap_raises_pro_hint(self, model, wt, monkeypatch):
+        # mode="impact" imports ShapModel lazily; without the pro dependency it raises a
+        # friendly install hint (SeqOpt itself stays importable in a base install).
+        import sys
+        monkeypatch.setitem(sys.modules, "aaanalysis.explainable_ai_pro", None)
+        with pytest.raises(ImportError, match=r"aaanalysis\[pro\]"):
+            SeqOpt(mode="impact", model=model, df_seq_ref=wt, labels=[1], random_state=0)
+
     def test_impact_requires_reference(self, model):
         with pytest.raises(ValueError, match="mode='impact'"):
             SeqOpt(mode="impact", model=model, df_seq_ref=None, labels=None)
@@ -215,6 +228,7 @@ class TestSeqOptInit:
         assert so is not None
 
     def test_impact_mode_runs(self, wt, df_feat):
+        pytest.importorskip("shap")
         pytest.importorskip("sklearn")
         from sklearn.ensemble import RandomForestClassifier
         ref = pd.DataFrame({ut.COL_ENTRY: [f"R{i}" for i in range(8)],
@@ -234,6 +248,7 @@ class TestSeqOptInit:
         assert _non_dominated(df)
 
     def test_impact_mode_df_seq_ref_with_extra_columns(self, wt, df_feat):
+        pytest.importorskip("shap")
         # Regression: a reference from load_dataset carries jmd_n/tmd/jmd_c/label columns; the
         # per-generation ShapModel refit must keep only the position-based columns (else the
         # appended variant row NaN-trips check_df_seq).

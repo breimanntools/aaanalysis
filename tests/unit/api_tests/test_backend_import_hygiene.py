@@ -30,7 +30,7 @@ DEDICATED_OWNERS = {
         "num_feat": {"_numerical_feature"},
         "aaclust": {"_aaclust", "_aaclust_plot"},
     },
-    "protein_design_pro": {
+    "protein_design": {
         "seqopt": {"_seqopt"},
     },
 }

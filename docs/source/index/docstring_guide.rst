@@ -346,7 +346,7 @@ Rules:
      -
    * - ``SeqOpt`` / ``SeqOptPlot``
      - ``seqopt`` / ``seqopt_plot``
-     - ``pro``
+     - core (``mode="impact"`` needs ``pro``)
    * - ``TreeModel``
      - ``tm``
      -

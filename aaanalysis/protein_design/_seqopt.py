@@ -1,8 +1,8 @@
 """
-This is a script for the frontend of the SeqOpt class (**[pro]**): SHAP-guided, fuzzy-labeled
-multi-objective directed-evolution optimization over sequence variants of one wild-type. SeqOpt
-reuses a model-bound SeqMut as its fitness engine and ShapModel for per-generation residue
-guidance, and is therefore gated behind the ``pro`` extra.
+This is a script for the frontend of the SeqOpt class: multi-objective directed-evolution
+optimization over sequence variants of one wild-type, reusing a model-bound SeqMut as its
+fitness engine. SeqOpt is a core class; only its SHAP-guided ``mode="impact"`` (per-generation
+ShapModel refit) needs the optional ``aaanalysis[pro]`` dependency, imported lazily.
 """
 from typing import Optional, List, Any, Callable, Tuple, Dict
 import numpy as np
@@ -11,8 +11,9 @@ import pandas as pd
 import aaanalysis.utils as ut
 from aaanalysis.template_classes import Tool
 from aaanalysis.feature_engineering._sequence_feature import SequenceFeature
-from aaanalysis.protein_design import SeqMut
-from aaanalysis.explainable_ai_pro import ShapModel
+from ._seqmut import SeqMut
+# ShapModel (and its heavy SHAP dependency) is imported lazily inside mode="impact" only, so
+# SeqOpt stays importable in a base install; mode="impact" then needs aaanalysis[pro].
 from ._backend.seqopt.genome import canonical, apply_genome, variant_label
 from ._backend.seqopt.run import evolve_nsga2, evolve_greedy
 from ._backend.seqopt.nsga2 import normalize_objectives_, rank_and_crowding
@@ -108,8 +109,9 @@ def residue_weights_(df_feat, col, base):
 # II Main Functions
 class SeqOpt(Tool):
     """
-    Sequence Optimizer (SeqOpt) class (**[pro]**, requires ``aaanalysis[pro]``) for SHAP-guided,
-    multi-objective directed evolution over sequence variants [Breimann24a]_.
+    Sequence Optimizer (SeqOpt) class for multi-objective directed evolution over sequence
+    variants [Breimann24a]_. Core class; only the SHAP-guided ``mode="impact"`` needs
+    ``aaanalysis[pro]`` (``mode="importance"`` and everything else run in a base install).
 
     ``SeqOpt`` performs **protein engineering**, not **de novo protein design**. The two are
     distinct paradigms: *de novo design* builds **new proteins from the ground up** rather than
@@ -186,9 +188,10 @@ class SeqOpt(Tool):
         mode : str, default='impact'
             Residue-guidance mode. ``'impact'`` refits :class:`ShapModel` every generation under
             fuzzy labeling (the new variant's prediction score as a soft label vs. the balanced
-            reference) and mutates the strongest-``feat_impact`` residues. ``'importance'`` uses
-            the static ``feat_importance`` ranking from ``df_feat`` (no SHAP, no refit) and walks
-            positions highest-first.
+            reference) and mutates the strongest-``feat_impact`` residues — this is the only
+            SeqOpt feature that needs ``aaanalysis[pro]`` (SHAP), imported lazily. ``'importance'``
+            uses the static ``feat_importance`` ranking from ``df_feat`` (no SHAP, no refit) and
+            walks positions highest-first (no pro dependency).
         model : object, optional
             A fitted classifier exposing ``predict_proba`` used as the fitness engine (the
             ``delta_pred`` objective) and, in ``mode='impact'``, as the model whose attribution
@@ -227,12 +230,23 @@ class SeqOpt(Tool):
                               target_class=target_class)
         self._model = model
         self._target_class = target_class
-        # mode='impact' needs the labeled reference set for the per-generation ShapModel refit.
+        # mode='impact' needs the labeled reference set + the (pro) ShapModel for the
+        # per-generation refit. ShapModel is imported lazily so SeqOpt stays core-importable.
+        self._ShapModel = None
         if self._mode == "impact":
             if model is None or df_seq_ref is None or labels is None:
                 raise ValueError("mode='impact' requires 'model', 'df_seq_ref' and 'labels' "
                                  "(the balanced reference the per-generation ShapModel refit is "
                                  "anchored on); use mode='importance' for a SHAP-free run.")
+            try:
+                from aaanalysis.explainable_ai_pro import ShapModel
+            except ImportError as e:
+                raise ImportError(
+                    "SeqOpt mode='impact' needs the SHAP-based ShapModel. Install via:\n"
+                    "\n\tpip install 'aaanalysis[pro]'\n\n"
+                    "or use mode='importance' (feature-importance-guided; no pro dependency)."
+                ) from e
+            self._ShapModel = ShapModel
             ut.check_df_seq(df_seq=df_seq_ref)
             labels = ut.check_labels(labels=labels, len_required=len(df_seq_ref))
         self._df_seq_ref = df_seq_ref
@@ -335,7 +349,7 @@ class SeqOpt(Tool):
         p_var = float(proba[-1]) if proba.ndim == 1 and len(proba) else float(np.ravel(proba)[-1])
         p_var = min(max(p_var, 0.0), 1.0)
         labels_fuzzy = list(np.asarray(self._labels, dtype=float)) + [p_var]
-        sm = ShapModel(random_state=self._random_state, verbose=False)
+        sm = self._ShapModel(random_state=self._random_state, verbose=False)
         sm.fit(X, labels_fuzzy, fuzzy_labeling=True)
         df_imp = sm.add_feat_impact(df_feat.copy(), samples=int(len(X) - 1), names="var", drop=True)
         impact_cols = [c for c in df_imp.columns if c.startswith(ut.COL_FEAT_IMPACT)
@@ -401,8 +415,10 @@ class SeqOpt(Tool):
         Parameters
         ----------
         df_seq : pd.DataFrame, shape (1, n_seq_info)
-            The single wild-type, in the **position-based** format (``sequence``, ``tmd_start``,
-            ``tmd_stop``). See :meth:`SequenceFeature.get_df_parts` for the full specification.
+            DataFrame containing an ``entry`` column with unique protein identifiers, in the
+            **position-based** format (``sequence``, ``tmd_start``, ``tmd_stop``). See
+            :meth:`SequenceFeature.get_df_parts` for the full ``df_seq`` format specification.
+            Must hold **exactly one** wild-type sequence (SeqOpt optimizes one sequence per run).
         df_feat : pd.DataFrame
             CPP feature set (output of :meth:`CPP.run`) defining the features and the residue
             attribution (``feat_importance`` / ``feat_impact``, ``positions``) the search reads.

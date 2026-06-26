@@ -9,11 +9,11 @@ import pytest
 from hypothesis import given, settings
 import hypothesis.strategies as some
 
-from aaanalysis.protein_design_pro._backend.seqopt.nsga2 import (
+from aaanalysis.protein_design._backend.seqopt.nsga2 import (
     normalize_objectives_, fast_non_dominated_sort, crowding_distance, crowded_better,
     dcd_tournament, select_nsga2)
-from aaanalysis.protein_design_pro._backend.seqopt.metrics import hypervolume, spread
-from aaanalysis.protein_design_pro._backend.seqopt.genome import (
+from aaanalysis.protein_design._backend.seqopt.metrics import hypervolume, spread
+from aaanalysis.protein_design._backend.seqopt.genome import (
     canonical, apply_genome, variant_label, random_genome, init_population, repair,
     crossover_uniform, crossover_npoint, mutate)
 
