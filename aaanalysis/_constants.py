@@ -488,6 +488,24 @@ DICT_COLOR = {"SHAP_POS": COLOR_SHAP_POS,
               "SAMPLES_REL_NEG": COLOR_REL_NEG
               }
 
+# pLDDT confidence palette (AlphaFold-DB), ordered low -> high confidence. Read
+# high -> low it is the familiar blue -> cyan -> yellow -> orange ramp used to
+# paint per-residue AlphaFold model confidence onto a structure.
+COLOR_PLDDT_VERY_LOW = '#FF7D45'    # orange, pLDDT < 50
+COLOR_PLDDT_LOW = '#FFDB13'         # yellow, 50 <= pLDDT < 70
+COLOR_PLDDT_CONFIDENT = '#65CBF3'   # cyan,   70 <= pLDDT < 90
+COLOR_PLDDT_VERY_HIGH = '#0053D6'   # blue,   pLDDT >= 90
+COLOR_STRUCT_MISSING = '#BFBFBF'    # gray for residues without a mapped value
+
+# Continuous low -> high ramp consumed by the pLDDT structure colouring.
+LIST_COLOR_PLDDT = [COLOR_PLDDT_VERY_LOW, COLOR_PLDDT_LOW,
+                    COLOR_PLDDT_CONFIDENT, COLOR_PLDDT_VERY_HIGH]
+
+DICT_COLOR_PLDDT = {"very_low": COLOR_PLDDT_VERY_LOW,
+                    "low": COLOR_PLDDT_LOW,
+                    "confident": COLOR_PLDDT_CONFIDENT,
+                    "very_high": COLOR_PLDDT_VERY_HIGH}
+
 DICT_COLOR_CAT = {"ASA/Volume": "tab:blue",
                   "Composition": "tab:orange",
                   "Conformation": "tab:green",

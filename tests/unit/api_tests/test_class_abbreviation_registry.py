@@ -39,6 +39,7 @@ REGISTRY = {
     "CPP": "cpp",
     "CPPGrid": "cppg",
     "CPPPlot": "cpp_plot",
+    "CPPStructurePlot": "csp",
     "dPULearn": "dpul",
     "dPULearnPlot": "dpul_plot",
     "AAMut": "aamut",

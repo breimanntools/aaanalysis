@@ -80,7 +80,7 @@ __all__ = [
 # the ImportError's ``.name`` (reliable for ModuleNotFoundError on the Python 3.11+ floor), never on a
 # substring of the message. See .claude/rules/pro-core-boundary.md.
 _EXTRA_MODULES = {
-    "pro": {"shap", "Bio", "biopython", "upsetplot", "UpSetPlot", "requests", "afragmenter"},
+    "pro": {"shap", "Bio", "biopython", "upsetplot", "UpSetPlot", "requests", "afragmenter", "py3Dmol"},
     "embed": {"torch", "transformers", "sentencepiece", "huggingface_hub"},
     "dev": {"IPython"},
 }
@@ -169,6 +169,15 @@ except ImportError as e:
     AnnotationPreprocessor = None
     globals()["AnnotationPreprocessor"] = missing_feature_stub(
         "AnnotationPreprocessor", e, mode="pro")
+
+
+try:
+    from .feature_engineering_pro import CPPStructurePlot
+    __all__.append("CPPStructurePlot")
+except ImportError as e:
+    CPPStructurePlot = None
+    globals()["CPPStructurePlot"] = missing_feature_stub(
+        "CPPStructurePlot", e, mode="pro")
 
 
 try:
