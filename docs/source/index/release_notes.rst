@@ -200,9 +200,14 @@ Added
 - **A minimal CPP analysis** tutorial (``tutorial0_minimal``): the shortest end-to-end
   loop — load a dataset, run CPP, read out the signature.
 - **Documentation navigation**: the sidebar is grouped into four sections — *Overview*,
-  *Guides* (Tutorials · Protocols), *Reference*, and *Project* — and the landing page gains a
-  "You want to… / Go to" routing table; the previously unwired **Comparison Harness**
-  tutorial (``tutorial6_comparison_harness``) is now reachable.
+  *Guides* (Tutorials · Protocols · Use Cases), *Reference*, and *Project* — and the landing
+  page gains a "You want to… / Go to" routing table; the previously unwired **Comparison
+  Harness** tutorial (``tutorial6_comparison_harness``) is now reachable.
+- **Use Cases** guide (third *Guides* subchapter): each use case reproduces a published
+  study end to end from bundled data. The first, *UC1: Charting gamma-secretase substrates*
+  (``use_case1_gamma_secretase``), reproduces the key results of Breimann *et al.*, Nat.
+  Commun. 2025 — the CPP signature and the CPP-vs-scale-based benchmark (~85% balanced
+  accuracy) — on the bundled ``DOM_GSEC`` set.
 - **Standardized tutorial header box**: every tool tutorial now opens with a uniform
   green *You will learn* box (Tool · Input · Output · Best used for · Related protocol ·
   Related API), giving a one-glance answer to *what tool, what goes in, what comes out,

@@ -19,7 +19,7 @@ Pick a section by what you want to do:
    - **New here** and want a first result → :ref:`Getting Started <getting_started>`.
    - Learn what **one specific tool** does, with its parameters and outputs → :ref:`Tutorials <tutorials>`.
    - **Design a valid, end-to-end analysis** for a biological question → :ref:`Protocols <protocols>`.
-   - **Adapt a full biological case study** to your own data → Use Cases *(coming soon)*.
+   - **Adapt a full biological case study** to your own data → :ref:`Use Cases <use_cases>`.
    - Look up the **exact signature, parameters, or return value** → :doc:`API <api>`.
 
 Install
@@ -85,6 +85,7 @@ classes grouped by capability, the prediction levels (residue / domain / protein
 
    tutorials.rst
    protocols.rst
+   use_cases.rst
 
 .. toctree::
    :maxdepth: 2

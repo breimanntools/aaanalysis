@@ -165,5 +165,7 @@ Where to go next
      this table into a start-to-finish workflow.
    - **Mechanics:** the per-function :ref:`tutorials <tutorials>` cover
      ``CPP``, ``SequenceFeature``, ``AAclust``, and the rest.
+   - **Full case studies:** the :ref:`use cases <use_cases>` reproduce a
+     published study end to end, as a template to adapt to your own data.
    - **Vocabulary:** every term used here is defined in the
      :ref:`glossary <glossary>`.

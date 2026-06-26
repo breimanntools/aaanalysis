@@ -3,7 +3,7 @@
    The paths to notebooks are relative to ensure compatibility with the Sphinx referencing system
    used throughout the documentation. Getting Started is the onboarding pillar: only the first
    success belongs here (install + first result + publication-ready plots), no deep theory — that
-   is what the Tutorials and Protocols pillars are for.
+   is what the Tutorials, Protocols, and Use Cases pillars are for.
 ..
 
 
