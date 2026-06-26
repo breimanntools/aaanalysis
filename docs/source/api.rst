@@ -7,8 +7,9 @@
 API
 ===
 
-This Application Programming Interface (API) is the public interface for the objects and functions of our AAanalysis
-Python toolkit, which can be imported by:
+This Application Programming Interface (API) is the public interface for the building
+blocks of our AAanalysis Python toolkit: the explicit objects and functions, imported
+by:
 
 .. code-block:: python
 
@@ -16,51 +17,13 @@ Python toolkit, which can be imported by:
 
 You can then access all methods and objects via the `aa` alias, such as `aa.load_dataset`.
 
-AAanalysis exposes two interfaces. The **golden pipelines** (``aap``) are the
-high-level, one-call entry point; the **building blocks** below are the explicit
-objects and functions they compose, for full control.
-
-.. _pipe_api:
-
-Golden Pipelines (``aap``)
-==========================
-
-The golden pipelines chain the standard ``load → CPP → model → explain → plot``
-workflow into a single call — the implicit counterpart to the explicit building
-blocks below (much as ``pyplot`` sits over Matplotlib's ``Axes`` / ``Figure``).
-They are stateless wrappers whose defaults match the explicit path. Unlike the
-rest of the API (the building blocks below, reached through ``import aaanalysis
-as aa``), the golden pipelines live in their own module and are imported under a
-separate alias — ``import aaanalysis.pipe as aap``:
-
-.. code-block:: python
-
-    import aaanalysis as aa            # explicit interface — the building blocks
-    import aaanalysis.pipe as aap      # implicit interface — the golden pipelines
-
-.. currentmodule:: aaanalysis.pipe
-
-.. autosummary::
-    :toctree: generated/
-
-    obtain_samples
-    find_features
-    predict_samples
-    plot_eval
-    explain_features
-
-.. currentmodule:: aaanalysis
-
-Building Blocks
-===============
-
-The explicit objects and functions the pipelines compose — use them directly
-when you need to customise a step.
+For the high-level, one-call **golden pipelines** (``aap``) that chain these building
+blocks into complete workflows, see the :ref:`API (Pipe) <api_pipe>` reference.
 
 .. _data_api:
 
 Data Handling
--------------
+=============
 .. autosummary::
     :toctree: generated/
     :template: autosummary/class_template.rst
@@ -79,7 +42,7 @@ Data Handling
 .. _sequence_analysis_api:
 
 Sequence Analysis
------------------
+=================
 .. autosummary::
     :toctree: generated/
     :template: autosummary/class_template.rst
@@ -94,7 +57,7 @@ Sequence Analysis
 .. _feature_engineering_api:
 
 Feature Engineering
--------------------
+===================
 .. autosummary::
     :toctree: generated/
     :template: autosummary/class_template.rst
@@ -110,7 +73,7 @@ Feature Engineering
 .. _pu_learning_api:
 
 PU Learning
------------
+===========
 .. autosummary::
     :toctree: generated/
     :template: autosummary/class_template.rst
@@ -121,7 +84,7 @@ PU Learning
 .. _explainable_ai_api:
 
 Explainable AI
---------------
+==============
 .. autosummary::
     :toctree: generated/
     :template: autosummary/class_template.rst
@@ -132,7 +95,7 @@ Explainable AI
 .. _protein_design_api:
 
 Protein Design
---------------
+==============
 .. autosummary::
     :toctree: generated/
     :template: autosummary/class_template.rst
@@ -145,7 +108,7 @@ Protein Design
 .. _utility_functions_api:
 
 Utility Functions
------------------
+=================
 .. autosummary::
     :toctree: generated/
 

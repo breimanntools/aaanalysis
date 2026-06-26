@@ -212,6 +212,12 @@ Added
   green *You will learn* box (Tool · Input · Output · Best used for · Related protocol ·
   Related API), giving a one-glance answer to *what tool, what goes in, what comes out,
   and where to go next* and cross-linking the matching protocol and API reference.
+- **Split API reference**: the reference is now two pages, each listing its members
+  directly at the top level. *API* documents the explicit **building blocks**
+  (``import aaanalysis as aa``) grouped by category; the new *API (Pipe)* page documents
+  the **golden pipelines** (``import aaanalysis.pipe as aap``), one function per pipeline.
+  Golden pipelines are no longer mixed into the building-block page or the Tutorials
+  section; Getting Started links both references.
 
 Changed
 ~~~~~~~

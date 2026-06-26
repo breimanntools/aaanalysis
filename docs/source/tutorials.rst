@@ -16,17 +16,6 @@ here for the mechanics instead of repeating them — so the two stay distinct wi
 overlap. New to AAanalysis? Begin with :ref:`Getting Started <getting_started>` for
 your first result, then return here to go deeper on each tool.
 
-Golden Pipelines
-----------------
-Tour the high-level **golden pipelines** (``aap``) end to end — ``obtain_samples`` →
-``find_features`` → ``predict_samples`` → ``explain_features``, each a one-call wrapper over the
-explicit objects — in the **Golden Pipelines** tutorial, which explains every output along the way.
-
-.. toctree::
-   :maxdepth: 1
-
-   generated/tutorial8_golden_pipelines
-
 Data Handling
 -------------
 Learn how to load protein benchmarking datasets and amino acid scale sets in the **Data Loader** and **Scale Loader**  tutorials.

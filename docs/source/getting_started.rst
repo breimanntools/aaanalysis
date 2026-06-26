@@ -37,22 +37,9 @@ feature signature.
     cpp = aa.CPP(df_parts=df_parts)
     df_feat = cpp.run(labels=labels)            # the CPP signature
 
-``df_feat`` is the CPP signature — the interpretable feature table that the rest
-of the workflow (modelling, explanation, plotting) builds on. The **Quick
-start** notebook below walks through this loop step by step.
-
-Two interfaces: ``aa`` and ``aap``
-----------------------------------
-AAanalysis offers the same analysis two ways — the explicit building blocks and
-the golden pipelines:
-
-.. code-block:: python
-
-    import aaanalysis as aa            # explicit building blocks — full control
-    import aaanalysis.pipe as aap      # golden pipelines — one-call workflows
-
-See the :ref:`API reference <api>` for the difference between the two and when
-to reach for each.
+``df_feat`` is the CPP signature, the interpretable feature table that the rest
+of the workflow (modelling, explanation, plotting) builds on. The notebooks below
+walk through this loop step by step.
 
 .. toctree::
    :maxdepth: 1
@@ -61,3 +48,17 @@ to reach for each.
    generated/tutorial1_quick_start
    generated/tutorial1_slow_start
    generated/plotting_prelude
+
+Two interfaces: ``aa`` and ``aap``
+----------------------------------
+AAanalysis offers the same analysis two ways. The :ref:`API reference <api>` covers the
+explicit **building blocks** (``import aaanalysis as aa``): the individual objects and
+functions you compose for full control. The :ref:`pipeline reference <api_pipe>` covers
+the **golden pipelines** (``import aaanalysis.pipe as aap``): stateless one-call wrappers
+that chain those building blocks into complete workflows. Reach for ``aa`` when you want
+control over each step, and ``aap`` when you want a sensible default workflow in one call.
+
+.. code-block:: python
+
+    import aaanalysis as aa            # explicit building blocks
+    import aaanalysis.pipe as aap      # golden pipelines
