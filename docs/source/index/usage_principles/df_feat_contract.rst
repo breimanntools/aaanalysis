@@ -9,12 +9,12 @@ is a **documented, test-guarded contract**: each consumer reads columns by their
 documented name and type, and a schema-stability test fails if a contracted column
 is renamed or removed, a dtype changes, or the feature-id format changes.
 
-``df_feat`` follows a **standardized, deterministic column order**. The columns below
-are the *canonical lower bound* — every ``CPP.run`` output carries them, always in this
-order. Optional and dynamic columns (a test-dependent p-value variant, diagnostic
-residue columns, and the explainable-AI columns appended by ``TreeModel`` /
-``ShapModel``) are appended after ``positions`` in a stable order, so the canonical order
-is a lower bound, never a restriction.
+``df_feat`` follows a **standardized, deterministic column order**. The columns listed
+in the :ref:`Data Dictionary <df_schemas>` are the *canonical lower bound* — every
+``CPP.run`` output carries them, always in this order. Optional and dynamic columns (a
+test-dependent p-value variant, diagnostic residue columns, and the explainable-AI
+columns appended by ``TreeModel`` / ``ShapModel``) are appended after ``positions`` in a
+stable order, so the canonical order is a lower bound, never a restriction.
 
 Feature id grammar
 ------------------
@@ -35,123 +35,7 @@ place.
 Column schema
 -------------
 
-Required columns are present in every ``CPP.run`` output; optional columns appear
-depending on settings or are appended downstream.
-
-.. list-table::
-   :header-rows: 1
-   :widths: 22 8 9 9 52
-
-   * - Column
-     - Type
-     - Required
-     - Nullable
-     - Description
-   * - ``feature``
-     - str
-     - yes
-     - no
-     - Opaque ``PART-SPLIT-SCALE`` feature id; split with ``split_feat_id``.
-   * - ``category``
-     - str
-     - yes
-     - no
-     - AAontology scale category of the feature's scale.
-   * - ``subcategory``
-     - str
-     - yes
-     - no
-     - AAontology scale subcategory.
-   * - ``scale_name``
-     - str
-     - yes
-     - no
-     - Human-readable scale name.
-   * - ``scale_description``
-     - str
-     - yes
-     - no
-     - One-sentence scale description.
-   * - ``abs_auc``
-     - float
-     - yes
-     - no
-     - Absolute adjusted AUC, range [-0.5, 0.5]; primary feature ranking statistic.
-   * - ``abs_mean_dif``
-     - float
-     - yes
-     - no
-     - Absolute mean difference between test and reference group, range [0, 1].
-   * - ``mean_dif``
-     - float
-     - yes
-     - no
-     - Signed mean difference (test - reference), range [-1, 1]; the sign gives the direction.
-   * - ``std_test``
-     - float
-     - yes
-     - no
-     - Standard deviation of the feature in the test group.
-   * - ``std_ref``
-     - float
-     - yes
-     - no
-     - Standard deviation of the feature in the reference group.
-   * - ``p_val_mann_whitney``
-     - float
-     - yes
-     - no
-     - Mann-Whitney U p-value (default, non-parametric). Named ``p_val_ttest_indep`` instead when ``parametric=True``.
-   * - ``p_val_fdr_bh``
-     - float
-     - yes
-     - no
-     - Benjamini-Hochberg FDR-corrected p-value.
-   * - ``positions``
-     - str
-     - yes
-     - no
-     - Comma-separated 1-based residue positions the feature spans.
-   * - ``p_val_ttest_indep``
-     - float
-     - no
-     - no
-     - Independent t-test p-value; replaces ``p_val_mann_whitney`` when ``parametric=True``.
-   * - ``amino_acids_test``
-     - str
-     - no
-     - no
-     - Amino acids at the feature positions in the test group (diagnostic).
-   * - ``amino_acids_ref``
-     - str
-     - no
-     - no
-     - Amino acids at the feature positions in the reference group (diagnostic).
-   * - ``feature_description``
-     - str
-     - no
-     - yes
-     - Optional readable one-sentence feature description.
-   * - ``feat_importance``
-     - float
-     - no
-     - no
-     - Feature importance from ``TreeModel.fit`` (post-fit).
-   * - ``feat_importance_std``
-     - float
-     - no
-     - no
-     - Standard deviation of the feature importance across CV rounds (post-fit).
-   * - ``feat_impact``
-     - float
-     - no
-     - no
-     - SHAP-based signed feature impact from ``ShapModel`` (post-fit, pro).
-   * - ``feat_impact_std``
-     - float
-     - no
-     - no
-     - Standard deviation of the feature impact (post-fit, pro).
+The full, test-guarded column list — every column with its dtype, required / nullable / unique flags, ranges, and an example — lives in the :ref:`Data Dictionary <df_schemas>` (the ``df_feat`` entry), so the column set is documented in exactly one place. This page covers the rest of the contract: the feature-id grammar above, the ``positions`` encoding below, and the stability policy.
 
 Per-residue positions
 ---------------------

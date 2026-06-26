@@ -65,7 +65,5 @@ concepts of AAanalysis are provided by the following sections:
    usage_principles/aaontology
    usage_principles/aaclust
    usage_principles/feature_identification
-   usage_principles/df_feat_contract
-   usage_principles/df_schemas
    usage_principles/pu_learning
    usage_principles/xai

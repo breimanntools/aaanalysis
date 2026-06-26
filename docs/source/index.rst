@@ -95,6 +95,7 @@ classes grouped by capability, the prediction levels (residue / domain / protein
    api.rst
    api_pipe.rst
    index/tables.rst
+   index/usage_principles/df_schemas
    index/glossary.rst
    index/references.rst
    index/release_notes.rst

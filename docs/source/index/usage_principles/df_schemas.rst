@@ -1,11 +1,18 @@
 .. _df_schemas:
 
-DataFrame Schemas (Data Dictionary)
-===================================
+Data Dictionary
+===============
 
 This page is the data dictionary for the key AAanalysis DataFrames: the documented, test-guarded contract for the columns each frame carries. It is generated from ``aaanalysis.utils.DICT_DF_SCHEMAS`` and kept in sync by a contract test, so the documentation cannot drift from the code.
 
 Every column lists its dtype, whether it is required / nullable / unique, the allowed values or numeric range where applicable, a one-line meaning, and an example value.
+
+The :ref:`df_feat contract <df_feat_contract>` expands the ``df_feat`` entry below with the feature-id grammar, the per-residue ``positions`` encoding, and the stability policy.
+
+.. toctree::
+   :maxdepth: 1
+
+   df_feat_contract
 
 ``df_seq``
 ----------

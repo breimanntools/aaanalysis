@@ -487,8 +487,8 @@ def render_schemas_rst():
     out = []
     out.append(".. _df_schemas:")
     out.append("")
-    out.append("DataFrame Schemas (Data Dictionary)")
-    out.append("===================================")
+    out.append("Data Dictionary")
+    out.append("===============")
     out.append("")
     out.append("This page is the data dictionary for the key AAanalysis DataFrames: the "
                "documented, test-guarded contract for the columns each frame carries. It "
@@ -498,6 +498,15 @@ def render_schemas_rst():
     out.append("Every column lists its dtype, whether it is required / nullable / unique, "
                "the allowed values or numeric range where applicable, a one-line meaning, "
                "and an example value.")
+    out.append("")
+    out.append("The :ref:`df_feat contract <df_feat_contract>` expands the ``df_feat`` "
+               "entry below with the feature-id grammar, the per-residue ``positions`` "
+               "encoding, and the stability policy.")
+    out.append("")
+    out.append(".. toctree::")
+    out.append("   :maxdepth: 1")
+    out.append("")
+    out.append("   df_feat_contract")
     out.append("")
     for frame, spec in DICT_DF_SCHEMAS.items():
         out.append(f"``{frame}``")
