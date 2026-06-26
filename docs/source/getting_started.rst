@@ -11,24 +11,22 @@
 
 Getting Started
 ===============
-New to AAanalysis? Start here. The **A minimal CPP analysis** notebook is the
-shortest complete loop — load a dataset, run CPP, read out the signature — and
-pairs with the :ref:`Prediction tasks <prediction_tasks>` concept page. For a
-fuller introduction, explore our **Quick start** and **Slow start** tutorials,
-both offering the same examples, with the latter explaining the conceptual
-background. The **Plotting Prelude** tutorial can help you create
-publication-ready plots.
+New to AAanalysis? Start here. Get a first result with the **Quick start**
+below, then learn how to choose between the two interfaces. The
+**A minimal CPP analysis** notebook is the shortest complete loop — load a
+dataset, run CPP, read out the signature — and pairs with the
+:ref:`Prediction tasks <prediction_tasks>` concept page. For a fuller
+introduction, our **Quick start** and **Slow start** tutorials share the same
+examples, the latter adding the conceptual background, and the
+**Plotting Prelude** tutorial helps you create publication-ready plots.
 
-Two interfaces: ``aa`` and ``aap``
-----------------------------------
-AAanalysis offers the same analysis two ways. The **explicit** interface
-(``import aaanalysis as aa``) exposes every object and step for full control.
-The **golden-pipeline** interface (``import aaanalysis.pipe as aap``) wraps the
-standard ``load → CPP → model → explain → plot`` flow into a single call.
+Quick start
+-----------
+The shortest complete loop: load a benchmark dataset, run CPP, and read out the
+feature signature.
 
 .. code-block:: python
 
-    # Explicit — full control over every step
     import aaanalysis as aa
 
     df_seq = aa.load_dataset(name="DOM_GSEC", n=50)
@@ -39,22 +37,22 @@ standard ``load → CPP → model → explain → plot`` flow into a single call
     cpp = aa.CPP(df_parts=df_parts)
     df_feat = cpp.run(labels=labels)            # the CPP signature
 
+``df_feat`` is the CPP signature — the interpretable feature table that the rest
+of the workflow (modelling, explanation, plotting) builds on. The **Quick
+start** notebook below walks through this loop step by step.
+
+Two interfaces: ``aa`` and ``aap``
+----------------------------------
+AAanalysis offers the same analysis two ways — the explicit building blocks and
+the golden pipelines:
+
 .. code-block:: python
 
-    # Golden pipeline — a result in one call
-    import aaanalysis as aa
-    import aaanalysis.pipe as aap
+    import aaanalysis as aa            # explicit building blocks — full control
+    import aaanalysis.pipe as aap      # golden pipelines — one-call workflows
 
-    df_seq = aa.load_dataset(name="DOM_GSEC", n=50)
-    labels = df_seq["label"].to_list()
-
-    df_feat, ax, df_eval = aap.find_features(df_seq=df_seq, labels=labels)
-
-Both produce a ``df_feat`` CPP signature. The explicit path exposes every step
-to customise; ``aap.find_features`` additionally runs a cross-validated feature
-search and returns an evaluation table — all in one call. Reach for ``aap`` to
-move fast, and drop to ``aa`` for full control. See the
-:ref:`API reference <api>` for both tiers.
+See the :ref:`API reference <api>` for the difference between the two and when
+to reach for each.
 
 .. toctree::
    :maxdepth: 1

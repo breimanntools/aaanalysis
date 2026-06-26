@@ -34,31 +34,31 @@ Key Algorithms
 Purpose and Audience
 --------------------
 For computational biologists, bioinformaticians, and protein engineers, AAanalysis facilitates the analysis and
-comparison of proteins to discover interpretable physicochemical signatures — the features that distinguish groups of
+comparison of proteins to discover interpretable physicochemical signatures, the features that distinguish groups of
 proteins and underlie their biological interactions and functions. These signatures span the whole workflow, from
 simple sequence analysis to interpretable protein prediction and protein engineering, integrating state-of-the-art
 explainable AI (XAI) methods.
 
 Overview of Documentation
 -------------------------
-The documentation is organized into four sections — *Overview*, *Guides*, *Reference*, and *Project*.
+The documentation is organized into four sections: *Overview*, *Guides*, *Reference*, and *Project*.
 
-**Overview** — New to AAanalysis? Begin with :ref:`Getting Started <getting_started>` to install
+**Overview**: New to AAanalysis? Begin with :ref:`Getting Started <getting_started>` to install
 the package and run your first analysis. Delve into the core concepts and design philosophy behind
 the algorithms in the :ref:`Usage Principles <usage_principles>` section, equipping you with the
 mental models necessary for effective application, and see the :ref:`Evaluation <evaluation>`
 strategies for a transparent, objective analysis of the algorithms´ outcomes.
 
-**Guides** — For hands-on experience, the :ref:`Tutorials <tutorials>` teach each tool with its
+**Guides**: For hands-on experience, the :ref:`Tutorials <tutorials>` teach each tool with its
 parameters and outputs, while the :ref:`Protocols <protocols>` walk through complete, end-to-end
 analyses for biological questions.
 
-**Reference** — Look up the exact signatures in the :ref:`API <api>` documentation, browse the
+**Reference**: Look up the exact signatures in the :ref:`API <api>` documentation, browse the
 overview :ref:`Tables <tables>` (including the **AAontology** scale classification and benchmark
 protein datasets), check the :ref:`Glossary <glossary>` of key terms, and discover the scientific
 foundation of AAanalysis in the :ref:`References <references>` section.
 
-**Project** — Development conventions and how to contribute live in the
+**Project**: Development conventions and how to contribute live in the
 :ref:`Contributing <contributing>` guide.
 
 To see how AAanalysis fits among related bioinformatics, machine-learning, and explainability
