@@ -28,12 +28,15 @@ Golden Pipelines (``aap``)
 The golden pipelines chain the standard ``load → CPP → model → explain → plot``
 workflow into a single call — the implicit counterpart to the explicit building
 blocks below (much as ``pyplot`` sits over Matplotlib's ``Axes`` / ``Figure``).
-They are stateless wrappers whose defaults match the explicit path, imported
-under their own alias:
+They are stateless wrappers whose defaults match the explicit path. Unlike the
+rest of the API (the building blocks below, reached through ``import aaanalysis
+as aa``), the golden pipelines live in their own module and are imported under a
+separate alias — ``import aaanalysis.pipe as aap``:
 
 .. code-block:: python
 
-    import aaanalysis.pipe as aap
+    import aaanalysis as aa            # explicit interface — the building blocks
+    import aaanalysis.pipe as aap      # implicit interface — the golden pipelines
 
 .. currentmodule:: aaanalysis.pipe
 

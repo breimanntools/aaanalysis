@@ -89,7 +89,8 @@ class TestPlotEval:
         assert len(clims) == 1   # every slice on one shared scale
 
     def test_best_marked(self):
-        marked = any(len(ax.collections) > 0
+        # The selected configuration is boxed (a Rectangle patch) on a heatmap (image) panel.
+        marked = any(len(ax.patches) > 0
                      for f in plot_eval(_DF_2AX) for ax in f.axes if ax.images)
         assert marked
 
