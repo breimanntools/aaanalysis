@@ -93,8 +93,10 @@ class StructureView:
                            "use 'write_html' for the py3Dmol backend")
 
     def _repr_html_(self):
-        """Notebook rich display: the py3Dmol widget or an embedded PNG."""
+        """Notebook rich display: the py3Dmol widget HTML or an embedded PNG."""
         if self.backend == "py3dmol":
-            return self._view._repr_html_()
+            # py3Dmol's own _repr_html_ returns None (side-effect display); _make_html
+            # returns the self-contained widget HTML, which displays reliably inline.
+            return self._view._make_html()
         png_b64 = _figure_to_png_b64(self._fig)
         return f"<img src='data:image/png;base64,{png_b64}'/>"

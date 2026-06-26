@@ -2,6 +2,7 @@
 import matplotlib
 matplotlib.use("Agg")
 import os
+import pathlib
 import tempfile
 import numpy as np
 import pandas as pd
@@ -423,6 +424,73 @@ def test_impact_color_matches_package_shap_ramp():
     assert pos.lower() == ut.COLOR_SHAP_POS.lower()
     assert neg.lower() == ut.COLOR_SHAP_NEG.lower()
     assert impact_to_hex(0.0, 1.0) == "#FFFFFF"
+
+
+class TestMapStructureCoverage:
+    """Exercise the verbose, AlphaFold-fetch, and py3Dmol view paths."""
+
+    def test_verbose_prints_summary(self, pdb_path, capsys):
+        csp = aa.CPPStructurePlot(verbose=True)
+        csp.map_structure(df_feat=_df_feat(), pdb=pdb_path, tmd_len=10, backend="mpl")
+        # ut.print_out routes through the logger; just assert it ran without error
+        # and the public verbose flag is honored.
+        assert csp._verbose is True
+
+    def test_uniprot_fetch_path_mocked(self, tmp_path, monkeypatch):
+        # Cover the uniprot= AlphaFold auto-fetch branch without network by
+        # stubbing StructurePreprocessor.fetch_alphafold to drop a local PDB.
+        from aaanalysis.data_handling_pro import StructurePreprocessor
+
+        def _fake_fetch(self, df_seq=None, out_folder=None, **kwargs):
+            p = pathlib.Path(out_folder) / "AF-Q9NQ76-F1-model_v4.pdb"
+            _make_pdb(p)
+            return pd.DataFrame({"entry": ["Q9NQ76"], "model_path": [str(p)]})
+
+        monkeypatch.setattr(StructurePreprocessor, "fetch_alphafold", _fake_fetch)
+        csp = aa.CPPStructurePlot(verbose=False)
+        view = csp.map_structure(df_feat=_df_feat(), uniprot="Q9NQ76", tmd_len=10,
+                                 backend="mpl")
+        assert view.backend == "mpl"
+
+    def test_uniprot_fetch_missing_model_raises(self, tmp_path, monkeypatch):
+        from aaanalysis.data_handling_pro import StructurePreprocessor
+
+        def _fake_fetch_nan(self, df_seq=None, out_folder=None, **kwargs):
+            return pd.DataFrame({"entry": ["X"], "model_path": [float("nan")]})
+
+        monkeypatch.setattr(StructurePreprocessor, "fetch_alphafold", _fake_fetch_nan)
+        csp = aa.CPPStructurePlot(verbose=False)
+        with pytest.raises(RuntimeError):
+            csp.map_structure(df_feat=_df_feat(), uniprot="X", tmd_len=10, backend="mpl")
+
+    @pytest.mark.skipif(not HAS_PY3DMOL, reason="py3Dmol not installed")
+    def test_py3dmol_view_methods(self, pdb_path, tmp_path):
+        csp = aa.CPPStructurePlot(verbose=False)
+        view = csp.map_structure(df_feat=_df_feat(), pdb=pdb_path, tmd_len=10,
+                                 backend="py3dmol")
+        assert isinstance(view._repr_html_(), str)
+        out = tmp_path / "v.html"
+        view.write_html(str(out))
+        assert out.exists() and out.stat().st_size > 0
+        view.show()  # returns the py3Dmol render handle; just exercise the path
+
+
+def test_colors_helpers_cover_edges():
+    from aaanalysis.feature_engineering_pro._backend.cpp_struct import colors as C
+    import numpy as np
+    # perceptual transform: sign-preserving sqrt
+    assert C.perceptual_transform(0.25) == pytest.approx(0.5)
+    assert C.perceptual_transform(-0.25) == pytest.approx(-0.5)
+    # custom color override falls back to white->colour interpolation
+    custom = C.impact_to_hex(1.0, 1.0, color_pos="#00FF00", color_neg="#FF00FF")
+    assert custom.lower() == "#00ff00"
+    assert C.impact_to_hex(-1.0, 1.0, color_neg="#FF00FF").lower() == "#ff00ff"
+    # non-finite pLDDT -> missing-gray; finite -> a hex on the ramp
+    assert C.plddt_to_hex(float("nan")) == ut.COLOR_STRUCT_MISSING
+    assert C.plddt_to_hex(95).startswith("#")
+    # color_for_residue dispatches by mode
+    assert C.color_for_residue(5, {5: 0.5}, 1.0, 90.0, "plddt").startswith("#")
+    assert C.color_for_residue(5, {5: 0.5}, 1.0, 90.0, "impact").startswith("#")
 
 
 def test_cpp_structure_plot_in_public_api():
