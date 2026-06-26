@@ -24,11 +24,25 @@ def py3dmol_available():
         return False
 
 
-def _stick_radius(impact, max_abs, max_radius=0.4):
-    """Stick radius proportional to ``|impact| / max_abs`` (0 when undefined)."""
-    if max_abs is None or max_abs <= 0 or not np.isfinite(impact):
+# Stick radii (Angstrom) for impact residues, matching the deployed app: a visible
+# floor so every impact-carrying residue shows a stick, growing with |impact|.
+_STICK_MIN = 0.18
+_STICK_SPAN = 0.55
+_STICK_FLAT = 0.22
+
+
+def _stick_radius(impact, max_abs, size_by_impact):
+    """Stick radius (A) for an impact residue; 0 for zero / undefined impact.
+
+    With ``size_by_impact`` the radius floors at ``_STICK_MIN`` and grows with
+    ``|impact| / max_abs`` (so even faint impacts stay visible, like the app);
+    otherwise every impact residue gets a constant ``_STICK_FLAT`` stick.
+    """
+    if max_abs is None or max_abs <= 0 or not np.isfinite(impact) or impact == 0:
         return 0.0
-    return float(max_radius * min(1.0, abs(impact) / max_abs))
+    if not size_by_impact:
+        return _STICK_FLAT
+    return float(_STICK_MIN + _STICK_SPAN * min(1.0, abs(impact) / max_abs))
 
 
 def _read_structure_text(pdb_path):
@@ -63,8 +77,8 @@ def render_py3dmol(pdb_path, records, dict_impact, max_abs, mode,
         if focus == "fade" and not in_window:
             cartoon["opacity"] = 0.2
         style = {"cartoon": cartoon}
-        if size_by_impact and mode == "impact":
-            radius = _stick_radius(dict_impact.get(resi, 0.0), max_abs)
+        if mode == "impact":
+            radius = _stick_radius(dict_impact.get(resi, 0.0), max_abs, size_by_impact)
             if radius > 0:
                 style["stick"] = {"radius": radius, "color": color}
         sel = {"resi": str(resi)}
@@ -107,8 +121,10 @@ def render_mpl(records, dict_impact, max_abs, mode, focus, window_resis,
         zs.append(coord[2])
         rgba.append(mcolors.to_rgba(color, alpha=alpha))
         size = 30.0
-        if size_by_impact and mode == "impact":
-            size = 30.0 + 220.0 * _stick_radius(dict_impact.get(resi, 0.0), max_abs)
+        if mode == "impact":
+            radius = _stick_radius(dict_impact.get(resi, 0.0), max_abs, size_by_impact)
+            if radius > 0:
+                size = 30.0 + 300.0 * radius  # radius ~0.18..0.73 -> marker ~84..249
         sizes.append(size)
         if in_window:
             win_coords.append(coord)
