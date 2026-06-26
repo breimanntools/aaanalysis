@@ -94,6 +94,13 @@ Added
   exact two-fit estimate (~2x faster than the threshold default on the same cell), ``5`` adds
   light Monte-Carlo averaging, and the mean converges (run-to-run spread below ~5%) around
   ``n_rounds ≈ 15–20``; a fixed ``random_state`` keeps every run reproducible.
+- **CPPStructurePlot** (``[pro]``): Paints per-residue CPP / CPP-SHAP feature impact onto a
+  3D protein structure. ``map_structure(df_feat, pdb=...)`` (or ``uniprot=...`` to auto-fetch
+  the AlphaFold model) reuses the same normalized-sum mapping as ``CPPPlot.profile`` and
+  returns a ``StructureView`` with a uniform ``show`` / ``write_html`` / ``savefig`` surface
+  over an interactive `py3Dmol <https://pypi.org/project/py3Dmol/>`_ backend (added to the
+  ``[pro]`` extra) and a static matplotlib fallback. Supports an ``'impact'`` red-white-blue
+  ramp and an ``'plddt'`` AlphaFold-confidence mode, with ``whole`` / ``fade`` / ``zoom`` focus.
 
 **Sequence Analysis**
 

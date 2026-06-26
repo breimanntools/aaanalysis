@@ -135,6 +135,9 @@ def _align_atom_values_to_target(target_seq: str,
 
 
 # II Main Functions
+# NOTE: load_structure / _collect_chain_residues / _resolve_best_chain are reused by
+# feature_engineering_pro.CPPStructurePlot (no duplication) — they are load-bearing
+# beyond StructurePreprocessor; keep their signatures and behaviour stable.
 def load_structure(pdb_path):
     """Parse a PDB or mmCIF file and return a Bio.PDB Structure (quiet mode).
 

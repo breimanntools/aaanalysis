@@ -33,6 +33,9 @@ DEDICATED_OWNERS = {
     "protein_design": {
         "seqopt": {"_seqopt"},
     },
+    "feature_engineering_pro": {
+        "cpp_struct": {"_cpp_structure_plot"},
+    },
 }
 
 

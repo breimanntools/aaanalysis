@@ -69,6 +69,7 @@ Feature Engineering
     CPP
     CPPGrid
     CPPPlot
+    CPPStructurePlot
 
 .. _pu_learning_api:
 

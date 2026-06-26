@@ -335,6 +335,9 @@ Rules:
    * - ``CPPGrid``
      - ``cppg``
      -
+   * - ``CPPStructurePlot``
+     - ``csp``
+     - ``pro``
    * - ``dPULearn`` / ``dPULearnPlot``
      - ``dpul`` / ``dpul_plot``
      -
