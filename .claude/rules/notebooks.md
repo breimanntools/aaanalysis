@@ -40,31 +40,39 @@ plt.show()                              # flushes the figure as an inline PNG; r
 
 ## Tutorial header box ("You will learn")
 
-Every **tool tutorial** under `tutorials/` (the ones wired into `tutorials.rst` —
+Every **tool tutorial** under `tutorials/` (the ones wired into `tutorials.rst`,
 not the Getting-Started workflow intros `tutorial0/1_*` / `plotting_prelude`) opens
-with a uniform green box right below its H1. It is a **raw reStructuredText cell**
+with a uniform green box. It is a **raw reStructuredText cell**
 (`metadata.raw_mimetype = "text/restructuredtext"`) so it renders as the same
-`:class: tip` admonition the landing page uses — reproduce it verbatim, only varying
+`:class: tip` admonition the landing page uses. Reproduce it verbatim, only varying
 the field contents:
 
 ```rst
 .. admonition:: You will learn
    :class: tip
 
-   - **Tool** — :class:`~aaanalysis.CPP`
-   - **Input** — ``df_parts``, ``labels``
-   - **Output** — ``df_feat``
-   - **Best used for** — <one-line "best used for">
-   - **Related protocol** — :doc:`P1: CPP signature </generated/protocol1_cpp_signature>`
-   - **Related API** — :class:`~aaanalysis.CPP`, :class:`~aaanalysis.CPPPlot`
+   - **Tool**: :class:`~aaanalysis.CPP`
+   - **Input**: ``df_parts``, ``labels``
+   - **Output**: ``df_feat``
+   - **Best used for**: <one-line "best used for">
+   - **Related protocol**: :doc:`P1: CPP signature </generated/protocol1_cpp_signature>`
+   - **Related API**: :class:`~aaanalysis.CPP`, :class:`~aaanalysis.CPPPlot`
 ```
 
-All six fields are mandatory. Use real cross-refs (`:class:`/`:func:` for API,
-`:doc:` for the protocol) so the links resolve — a broken target is a Sphinx
-warning. The *Related protocol* is the protocol whose golden `aap` workflow uses the
-tool. Only add the `id` key to the raw cell when the notebook already uses cell ids
-(nbformat ≥ 4.5); the older `tutorial2a` (minor 0) must stay id-less or it fails
-`nbformat.validate`.
+Rules:
+
+- **Placement: directly after the H1 intro paragraph, before the first `## ` section**
+  so it does not break the flow. When the first markdown cell bundles the opening
+  `## ` heading into the same cell, split it: keep the H1 + lede in the first cell,
+  the box next, then the `## ` section as its own cell.
+- **No em dashes** (house style, see `protocol_style_guide.md`): use a colon for the
+  label break and a comma / parentheses in field values.
+- **All six fields are mandatory.** Use real cross-refs (`:class:`/`:func:` for API,
+  `:doc:` for the protocol) so the links resolve; a broken target is a Sphinx warning.
+  The *Related protocol* is the protocol whose golden `aap` workflow uses the tool.
+- Only add the `id` key to the raw cell when the notebook already uses cell ids
+  (nbformat >= 4.5); the older `tutorial2a` (minor 0) must stay id-less or it fails
+  `nbformat.validate`.
 
 ## General
 
