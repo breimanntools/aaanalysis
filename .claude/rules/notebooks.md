@@ -61,10 +61,11 @@ the field contents:
 
 Rules:
 
-- **Placement: directly after the H1 intro paragraph, before the first `## ` section**
-  so it does not break the flow. When the first markdown cell bundles the opening
-  `## ` heading into the same cell, split it: keep the H1 + lede in the first cell,
-  the box next, then the `## ` section as its own cell.
+- **Placement: directly after the *first* intro paragraph (the lede).** Keep the H1
+  plus that opening paragraph (and any bullet/numbered list that completes it, e.g. a
+  "the three components:" list) in the first cell, then the box. Every remaining setup
+  paragraph and the first `## ` section move *below* the box into their own cell(s) so
+  the box sits high up and does not bury the lede under setup prose.
 - **No em dashes** (house style, see `protocol_style_guide.md`): use a colon for the
   label break and a comma / parentheses in field values.
 - **All six fields are mandatory.** Use real cross-refs (`:class:`/`:func:` for API,
