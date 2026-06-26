@@ -38,11 +38,15 @@ jobs:
 
       - name: Run the slow tier (deselected from the fast PR gate)
         # The heavy `slow` tests (multi-minute pipe sweeps) are deselected from the
-        # fast Unit Tests matrix so PRs stay ~5 min. They still run here nightly and
-        # in the coverage job, so a real failure surfaces within a day.
+        # fast Unit Tests matrix AND from the blocking Test Coverage job so both
+        # stay fast. They run here nightly instead, so a real failure surfaces
+        # within a day. We measure their coverage contribution (--cov, non-gating,
+        # printed term-missing) so the slow tier's lines aren't invisible now that
+        # the master coverage badge is computed on the non-slow suite.
         env:
           MPLBACKEND: Agg
-        run: pytest tests -m slow -n auto --durations=20
+          COVERAGE_CORE: sysmon
+        run: pytest tests -m slow --cov=aaanalysis --cov-branch --cov-report=term-missing -n auto --durations=20
 
       - name: Verify CPP regression anchor (canonical cell)
         env:

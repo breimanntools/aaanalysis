@@ -13,9 +13,12 @@ on:
     branches:
       - master
 
-# Cancel a superseded in-progress run on the same branch/PR (saves runner minutes).
+# Cancel EVERY in-progress Test Coverage run when a new one is triggered. The
+# group is keyed on the workflow name only (no ${{ github.ref }}), so a fresh run
+# on any branch/PR supersedes all in-flight coverage runs -- only the newest one
+# survives. This is the heaviest workflow, so we never let two of them run at once.
 concurrency:
-  group: ${{ github.workflow }}-${{ github.ref }}
+  group: ${{ github.workflow }}
   cancel-in-progress: true
 
 jobs:
@@ -87,8 +90,14 @@ jobs:
         # Use CPython's sys.monitoring coverage backend (py3.12+): much faster
         # than the default C-tracer, so the coverage job stops being the long pole.
         COVERAGE_CORE: sysmon
+      # The heavy `slow` tier (multi-minute pipe AutoML sweeps: predict_samples,
+      # find_features, eval-grid) is deselected here so this blocking job stays
+      # fast (~12 min) instead of ~50. The slow tier still runs daily in the
+      # nightly (mutation_nightly.yml), which also measures its coverage
+      # contribution (non-gating), so nothing goes unexercised -- only the master
+      # badge/gate is computed on the non-slow suite.
       run: |
-        pytest tests -m "not regression" --cov=aaanalysis --cov-branch --cov-report=xml -x -n auto --durations=20
+        pytest tests -m "not regression and not slow" --cov=aaanalysis --cov-branch --cov-report=xml -x -n auto --durations=20
 
     # Branch coverage cannot be gated by --cov-fail-under once --cov-branch is on
     # (that flag then checks the *combined* line+branch number, silently redefining

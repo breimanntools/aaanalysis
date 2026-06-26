@@ -149,8 +149,11 @@ mini-pipeline and asserts the **top-feature identity + frozen `auc.round(3)`**.
 It is `@pytest.mark.regression` and **`skipif` off the canonical cell**
 (Linux + floor Python; `AAA_RUN_REGRESSION=1` forces it locally) because
 exact-value freezing is only reproducible on a fixed environment. The **blocking
-CI runs `-m "not regression"`** (`main.yml`, `test_coverage.yml`); the anchor
-runs/re-verifies in the **non-gating nightly** (`mutation_nightly.yml`) so a
+CI deselects it** (`main.yml` and `test_coverage.yml` both run with
+`-m "not regression and not slow"` — the heavy `slow` pipe sweeps are also kept
+out of the blocking coverage job so it stays ~12 min, and run nightly instead);
+the anchor runs/re-verifies in the **non-gating nightly**
+(`mutation_nightly.yml`, which also measures the slow tier's coverage) so a
 3rd-decimal drift never blocks merges. Frozen values are re-frozen only on an
 intentional, reviewed change. It extends the unit-level parity-test precedent —
 it is **not** the deferred integration tier.

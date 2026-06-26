@@ -129,6 +129,6 @@ jobs:
 
   # Coverage is measured and uploaded by the standalone `Test Coverage` workflow
   # (.github/workflows/test_coverage.yml) — kept separate so it appears as its own
-  # action/check and runs on its own canonical config (Linux, Python 3.12). It runs
-  # the FULL suite including the `slow` tier, so the coverage number is unaffected by
-  # the fast gate's deselections (per ADR-0016).
+  # action/check and runs on its own canonical config (Linux, Python 3.12). Like
+  # this matrix it deselects the heavy `slow` tier so the blocking job stays fast;
+  # the slow tier's coverage is measured nightly (mutation_nightly.yml, non-gating).
