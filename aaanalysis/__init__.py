@@ -7,7 +7,7 @@ from .seq_analysis import AAlogo, AAlogoPlot, AAWindowSampler
 from .feature_engineering import AAclust, AAclustPlot, SequenceFeature, NumericalFeature, CPP, CPPGrid, CPPPlot
 from .pu_learning import dPULearn, dPULearnPlot
 from .explainable_ai import TreeModel
-from .protein_design import AAMut, AAMutPlot, SeqMut, SeqMutPlot
+from .protein_design import AAMut, AAMutPlot, SeqMut, SeqMutPlot, SeqOpt, SeqOptPlot
 from .plotting import (plot_get_clist, plot_get_cmap, plot_get_cdict,
                        plot_settings, plot_legend, plot_gcfs, plot_rank)
 from .metrics import (comp_auc_adjusted, comp_bic_score, comp_kld,
@@ -54,6 +54,8 @@ __all__ = [
     "AAMutPlot",
     "SeqMut",
     "SeqMutPlot",
+    "SeqOpt",
+    "SeqOptPlot",
     "TreeModel",
     # "ShapModel"       # SHAP
     "plot_get_clist",
@@ -116,16 +118,6 @@ try:
 except ImportError as e:
     ShapModel = None
     globals()["ShapModel"] = missing_feature_stub("ShapModel", e, mode="pro")
-
-
-try:
-    from .protein_design_pro import SeqOpt, SeqOptPlot
-    __all__.extend(["SeqOpt", "SeqOptPlot"])
-except ImportError as e:
-    SeqOpt = None
-    SeqOptPlot = None
-    globals()["SeqOpt"] = missing_feature_stub("SeqOpt", e, mode="pro")
-    globals()["SeqOptPlot"] = missing_feature_stub("SeqOptPlot", e, mode="pro")
 
 
 try:

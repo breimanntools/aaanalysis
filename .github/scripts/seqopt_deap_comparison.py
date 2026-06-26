@@ -16,7 +16,7 @@ import time
 import tracemalloc
 import numpy as np
 
-from aaanalysis.protein_design_pro._backend.seqopt.nsga2 import (
+from aaanalysis.protein_design._backend.seqopt.nsga2 import (
     fast_non_dominated_sort, crowding_distance, select_nsga2)
 
 try:

@@ -106,7 +106,8 @@ Added
 
 **Protein Design**
 
-- **SeqOpt — multi-objective protein engineering** (``[pro]``): A new ``SeqOpt`` optimizer
+- **SeqOpt — multi-objective protein engineering** (**core**; only ``mode="impact"`` needs
+  ``aaanalysis[pro]``): A new ``SeqOpt`` optimizer
   (with ``SeqOptPlot``) performs **machine-learning-guided directed evolution** of one
   wild-type — searching the Pareto front across several objectives at once, with a
   model-bound ``SeqMut`` as the fitness engine and a re-implementation of NSGA-II for

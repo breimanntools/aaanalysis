@@ -38,6 +38,15 @@ dependency forced": that decision keeps `SeqMut` and the `protein_design` **core
 the new optimizer lives in a separate `*_pro` module. `SeqMut` (core) remains the fitness engine and
 is imported by `SeqOpt`.
 
+> **Amended (2026-06-26): D1 reversed — `SeqOpt`/`SeqOptPlot` are now CORE.** Only the SHAP-guided
+> `mode="impact"` actually needs SHAP, and it is the minority path (`mode="importance"` + the whole
+> NSGA-II/EA layer + plots are SHAP-free). `ShapModel` is therefore imported **lazily** inside the
+> impact path, so SeqOpt is importable in a base install; constructing `mode="impact"` without
+> `shap` raises a friendly `aaanalysis[pro]` hint. `SeqOpt`/`SeqOptPlot` + the `_backend/seqopt/`
+> code moved from `protein_design_pro/` into the core `protein_design/` subpackage, and the
+> now-empty `protein_design_pro` package was removed. The pro-gating in `aaanalysis/__init__.py` is
+> replaced by core exports.
+
 **D2 — Two guidance modes, named after their `df_feat` attribution column.**
 - `mode="impact"` (default, headline): per-round `ShapModel` refit under **fuzzy labeling** →
   fresh per-residue `|feat_impact|` → an **adaptive NSGA-II** population evolves the Pareto front.
