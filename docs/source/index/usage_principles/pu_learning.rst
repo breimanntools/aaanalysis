@@ -10,6 +10,11 @@ protein sequence prediction, where even minor alterations can lead to significan
 A practical solution is to harness the abundance of unlabeled data to identify negative samples, a strategy
 that becomes essential when obtaining a balanced dataset is challenging.
 
+.. toctree::
+   :hidden:
+
+   /index/evaluation/eval_pu_learning
+
 What is PU learning?
 --------------------
 Positive-Unlabeled (PU) learning, a subfield of machine learning, is tailored for situations with only positive and
@@ -29,8 +34,3 @@ reliably negative samples from unlabeled data, as introduced in [Breimann25]_.
 
 See the :ref:`Evaluating PU Learning <eval_pu_learning>` chapter for how the identified negatives
 and overall predictive performance are assessed.
-
-.. toctree::
-   :maxdepth: 1
-
-   /index/evaluation/eval_pu_learning
