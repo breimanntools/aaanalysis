@@ -30,4 +30,10 @@ The distinctions between these modes and their respective AAclust options are de
 
 Generally, AAclust works not only with amino acid scales sets but also with any set of numerical scales.
 
-See our :doc:`AAclust Tutorial </generated/tutorial3a_aaclust>` for hands-on examples.
+See our :doc:`AAclust Tutorial </generated/tutorial3a_aaclust>` for hands-on examples, and the
+:ref:`Evaluating Clustering <eval_aaclust>` chapter for how clustering results are assessed.
+
+.. toctree::
+   :maxdepth: 1
+
+   /index/evaluation/eval_aaclust

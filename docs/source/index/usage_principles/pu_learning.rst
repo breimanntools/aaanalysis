@@ -26,3 +26,11 @@ reliably negative samples from unlabeled data, as introduced in [Breimann25]_.
 .. figure:: /_artwork/schemes/scheme_dPULearn.png
 
    Scheme of dPULearn algorithm, adapted from [Breimann25]_.
+
+See the :ref:`Evaluating PU Learning <eval_pu_learning>` chapter for how the identified negatives
+and overall predictive performance are assessed.
+
+.. toctree::
+   :maxdepth: 1
+
+   /index/evaluation/eval_pu_learning
