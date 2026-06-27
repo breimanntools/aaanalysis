@@ -49,14 +49,15 @@ walk through this loop step by step.
    generated/tutorial1_slow_start
    generated/plotting_prelude
 
-Two interfaces: ``aa`` and ``aap``
-----------------------------------
-AAanalysis offers the same analysis two ways. The :ref:`API reference <api>` covers the
-explicit **building blocks** (``import aaanalysis as aa``): the individual objects and
-functions you compose for full control. The :ref:`pipeline reference <api_pipe>` covers
-the **golden pipelines** (``import aaanalysis.pipe as aap``): stateless one-call wrappers
-that chain those building blocks into complete workflows. Reach for ``aa`` when you want
-control over each step, and ``aap`` when you want a sensible default workflow in one call.
+The two APIs
+------------
+AAanalysis offers the same analysis two ways, both documented in the Reference:
+
+- **Building blocks** (``import aaanalysis as aa``) — the individual objects and
+  functions you compose, for full control over each step. See :ref:`API <api>`.
+- **Golden pipelines** (``import aaanalysis.pipe as aap``) — stateless one-call
+  wrappers that chain those building blocks into a sensible default workflow.
+  See :ref:`API (Pipe) <api_pipe>`.
 
 .. code-block:: python
 
