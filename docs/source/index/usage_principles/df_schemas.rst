@@ -617,7 +617,7 @@ SeqMut.scan per-mutation scan (one row per scanned single mutation).
      - yes
      - no
      - no
-     - Sum|dX| feature-space magnitude of the mutation.
+     - Summed absolute (L1) feature-space magnitude of the mutation.
      - range: [0, inf]; e.g. 2.4
    * - ``shift_score``
      - float
@@ -697,7 +697,7 @@ SeqMut.combine combined-variant table (one row per multi-mutation variant; all o
      - yes
      - no
      - no
-     - Sum|dX| feature-space magnitude of the combined variant.
+     - Summed absolute (L1) feature-space magnitude of the combined variant.
      - range: [0, inf]; e.g. 4.1
    * - ``shift_score``
      - float
@@ -770,7 +770,7 @@ SeqMut.eval per-protein/region summary (one row per region).
      - yes
      - no
      - no
-     - Mean |delta_cpp| over scanned mutations.
+     - Mean delta_cpp (summed absolute feature-space magnitude) over scanned mutations.
      - range: [0, inf]; e.g. 1.1
 
 ``df_pareto``
@@ -843,7 +843,7 @@ SeqOpt.run Pareto front (one row per non-dominated variant of the single wild-ty
      - no
      - no
      - no
-     - Objective: Sum|dX| feature-space magnitude. Present when an objective uses it.
+     - Objective: summed absolute (L1) feature-space magnitude. Present when an objective uses it.
      - range: [0, inf]; e.g. 4.1
    * - ``shift_score``
      - float
