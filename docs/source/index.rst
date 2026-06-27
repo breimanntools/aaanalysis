@@ -97,7 +97,6 @@ classes grouped by capability, the prediction levels (residue / domain / protein
    index/usage_principles/df_schemas
    index/glossary.rst
    index/references.rst
-   index/release_notes.rst
 
 .. toctree::
    :maxdepth: 1
@@ -106,6 +105,7 @@ classes grouped by capability, the prediction levels (residue / domain / protein
 
    index/CONTRIBUTING_COPY.rst
    index/docstring_guide.rst
+   index/release_notes.rst
 
 The AAanalysis Ecosystem
 ========================

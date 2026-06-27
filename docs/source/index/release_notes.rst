@@ -1,4 +1,6 @@
-Release notes
+.. _release_notes:
+
+Release Notes
 =============
 
 Version 1.1

@@ -57,10 +57,11 @@ studies end to end from bundled data.
 **Reference**: Look up the exact signatures in the :ref:`API <api>` documentation, browse the
 overview :ref:`Data Tables <tables>` (including the **AAontology** scale classification and benchmark
 protein datasets), check the :ref:`Glossary <glossary>` of key terms, and discover the scientific
-foundation of AAanalysis in the :ref:`References <references>` section.
+foundation of AAanalysis in the :ref:`Scientific References <references>` section.
 
 **Project**: Development conventions and how to contribute live in the
-:ref:`Contributing <contributing>` guide.
+:ref:`Contributing <contributing>` guide, and the :ref:`Release Notes <release_notes>` track changes
+across versions.
 
 To see how AAanalysis fits among related bioinformatics, machine-learning, and explainability
 tools, explore the `AAanalysis Ecosystem <../_static/aaanalysis_ecosystem.html>`_.

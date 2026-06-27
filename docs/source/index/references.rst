@@ -20,8 +20,8 @@
 
 .. _references:
 
-References
-==========
+Scientific References
+=====================
 
 AAanalysis Algorithms
 ---------------------
@@ -215,6 +215,8 @@ Sampling Strategies
 
 Use Cases
 ---------
+- :doc:`Charting γ-secretase substrates by explainable AI </generated/use_case1_gamma_secretase>`
+  reproduces [Breimann25]_.
 
 Further Information
 -------------------
