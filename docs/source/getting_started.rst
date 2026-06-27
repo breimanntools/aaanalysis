@@ -20,6 +20,14 @@ introduction, our **Quick start** and **Slow start** tutorials share the same
 examples, the latter adding the conceptual background, and the
 **Plotting Prelude** tutorial helps you create publication-ready plots.
 
+.. toctree::
+   :maxdepth: 1
+
+   generated/tutorial0_minimal
+   generated/tutorial1_quick_start
+   generated/tutorial1_slow_start
+   generated/plotting_prelude
+
 Quick start
 -----------
 The shortest complete loop: load a benchmark dataset, run CPP, and read out the
@@ -38,16 +46,8 @@ feature signature.
     df_feat = cpp.run(labels=labels)            # the CPP signature
 
 ``df_feat`` is the CPP signature, the interpretable feature table that the rest
-of the workflow (modelling, explanation, plotting) builds on. The notebooks below
-walk through this loop step by step.
-
-.. toctree::
-   :maxdepth: 1
-
-   generated/tutorial0_minimal
-   generated/tutorial1_quick_start
-   generated/tutorial1_slow_start
-   generated/plotting_prelude
+of the workflow (modelling, explanation, plotting) builds on. The notebooks
+above walk through this loop step by step.
 
 The two APIs
 ------------
