@@ -84,6 +84,11 @@ pro = [
   # self-contained HTML export for CPPStructurePlot.map_structure. Pure-Python,
   # no DL framework; lazy-imported so the matplotlib fallback works without it.
   "py3Dmol>=2.0",
+  # ipywidgets: the live, selection-linked explorer (CPPStructurePlot.interactive).
+  # Pure-Python notebook UI, lazy-imported inside .interactive() so the static
+  # map_structure / plot_combined paths never require it. Also pinned in [docs]
+  # for nbsphinx widget rendering.
+  "ipywidgets>=8.0.0",
 ]
 embed = [
   # Protein-language-model embedding compute path for

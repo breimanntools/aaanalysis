@@ -82,7 +82,7 @@ __all__ = [
 # the ImportError's ``.name`` (reliable for ModuleNotFoundError on the Python 3.11+ floor), never on a
 # substring of the message. See .claude/rules/pro-core-boundary.md.
 _EXTRA_MODULES = {
-    "pro": {"shap", "Bio", "biopython", "upsetplot", "UpSetPlot", "requests", "afragmenter", "py3Dmol"},
+    "pro": {"shap", "Bio", "biopython", "upsetplot", "UpSetPlot", "requests", "afragmenter", "py3Dmol", "ipywidgets"},
     "embed": {"torch", "transformers", "sentencepiece", "huggingface_hub"},
     "dev": {"IPython"},
 }

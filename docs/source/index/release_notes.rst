@@ -107,6 +107,10 @@ Added
   by ``CPPPlot.profile`` and the ``CPPPlot.feature_map`` top per-position bar. ``plot_combined``
   draws the structure and the ``CPPPlot.feature_map`` side by side in one static figure
   (``savefig`` to PNG / PDF), reproducing the deployed cleavage app's signature layout.
+  ``interactive`` returns a live `ipywidgets <https://ipywidgets.readthedocs.io>`_ explorer
+  (added to the ``[pro]`` extra) where a site slider drives a user ``predictor`` and repaints the
+  linked 3D structure and ``CPPPlot.feature_map`` together (debounced), the notebook-native
+  version of the app's per-site explore loop.
 
 **Sequence Analysis**
 

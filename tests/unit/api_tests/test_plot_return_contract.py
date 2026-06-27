@@ -14,9 +14,11 @@ This meta-test enforces the contract by introspection so it cannot silently drif
   ``(Figure, Axes)`` tuple, and
 * its numpydoc ``Returns`` section names exactly ``fig`` first and ``ax`` second.
 
-The single deliberate exception is ``CPPStructurePlot`` (pro), which returns a
-``StructureView`` wrapper because its py3Dmol / matplotlib backends cannot share a
-native return type — see the class docstring for the rationale.
+The single deliberate exception is ``CPPStructurePlot`` (pro): ``map_structure``
+returns a ``StructureView`` wrapper (its py3Dmol / matplotlib backends cannot share
+a native return type), ``plot_combined`` returns a ``(Figure, (ax, ax))`` pair, and
+``interactive`` returns an ``ipywidgets`` panel — none fit the uniform single-Axes
+contract, so the whole class is excluded. See the class docstring for the rationale.
 """
 import inspect
 import typing

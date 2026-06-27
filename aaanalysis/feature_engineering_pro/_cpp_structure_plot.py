@@ -5,7 +5,7 @@ per-residue CPP / CPP-SHAP feature impact onto a 3D protein structure.
 import os
 import tempfile
 import warnings
-from typing import Optional, List, Tuple, Union, Literal
+from typing import Optional, List, Tuple, Union, Literal, Callable
 
 import numpy as np
 import pandas as pd
@@ -65,6 +65,18 @@ def _check_feature_map_kws(feature_map_kws=None):
         raise ValueError(f"'feature_map_kws' ({sorted(clash)}) should not set keys already "
                          f"controlled by plot_combined: {sorted(owned)}")
     return dict(feature_map_kws)
+
+
+def _require_ipywidgets():
+    """Import ipywidgets or raise the friendly pro-install hint (interactive needs it)."""
+    try:
+        import ipywidgets
+        return ipywidgets
+    except ImportError as e:
+        raise RuntimeError("CPPStructurePlot.interactive requires the optional 'ipywidgets' "
+                           "package; install it via \"pip install 'aaanalysis[pro]'\" (or "
+                           "\"pip install ipywidgets\"). The static map_structure / "
+                           "plot_combined work without it.") from e
 
 
 def _resolve_backend(backend):
@@ -504,7 +516,199 @@ class CPPStructurePlot:
         buffer.seek(0)
         return mpimg.imread(buffer)
 
+    def interactive(self,
+                    predictor: Callable,
+                    sequence: str,
+                    pdb: Optional[str] = None,
+                    uniprot: Optional[str] = None,
+                    col_imp: str = ut.COL_FEAT_IMPACT,
+                    col_val: str = "mean_dif",
+                    shap_plot: bool = True,
+                    tmd_len: int = 20,
+                    mode: Literal["impact", "plddt"] = "impact",
+                    focus: Literal["whole", "fade", "zoom"] = "fade",
+                    focus_region: Optional[Union[Tuple[int, int], List[Tuple[int, int]]]] = None,
+                    size_by_impact: bool = True,
+                    normalize_by_span: bool = False,
+                    feature_map: bool = True,
+                    site_to_start: Optional[Callable] = None,
+                    chain: Optional[str] = None,
+                    init_site: Optional[int] = None,
+                    debounce_ms: int = 250,
+                    ) -> "ipywidgets.Widget":
+        """
+        Build a live, selection-linked explorer that re-predicts and repaints on each site.
+
+        Returns an `ipywidgets <https://ipywidgets.readthedocs.io>`_ panel (**[pro]**, needs
+        ``ipywidgets``) reproducing the deployed app's per-site explore loop in a notebook:
+        a site slider drives a user ``predictor`` that returns a ``df_feat`` for that site, and
+        both the 3D structure (the :meth:`map_structure` render path) and the
+        :meth:`CPPPlot.feature_map` repaint in place from that one selection — reading the same
+        per-residue impact. Rapid changes are debounced so the predictor is not re-run on every
+        intermediate slider value.
+
+        The exact prediction itself runs on the live Python kernel via ``predictor``; this class
+        does not hard-code :class:`CPP` / :class:`TreeModel` / :class:`ShapModel`.
+
+        .. versionadded:: 1.1.0
+
+        Parameters
+        ----------
+        predictor : callable
+            User callable ``(sequence, p1) -> df_feat`` returning a feature DataFrame (with the
+            ``col_imp`` and feature-map columns) for the site ``p1``. Example wiring
+            :class:`CPP` + :class:`ShapModel` into such a callable is shown in the notebook.
+        sequence : str
+            Full protein sequence; the site slider ranges over ``1..len(sequence)``.
+        pdb : str, optional
+            Path to a ``.pdb`` / ``.cif`` structure file. Exactly one of ``pdb`` or ``uniprot``
+            must be given. The structure is parsed once and reused across selections.
+        uniprot : str, optional
+            UniProt accession; the AlphaFold model is fetched once into a temporary folder.
+            Exactly one of ``pdb`` or ``uniprot`` must be given.
+        col_imp : str, default='feat_impact'
+            Column of the predictor's ``df_feat`` holding the signed per-feature impact.
+        col_val : str, default='mean_dif'
+            Column shown in the feature-map heatmap cells.
+        shap_plot : bool, default=True
+            Passed to :meth:`CPPPlot.feature_map`.
+        tmd_len : int, default=20
+            Length of the TMD (>=1). Must match the geometry the predictor's features use.
+        mode : {'impact', 'plddt'}, default='impact'
+            Initial structure colouring (a live dropdown also toggles it).
+        focus : {'whole', 'fade', 'zoom'}, default='fade'
+            Initial structure framing (a live dropdown also toggles it).
+        focus_region : tuple or list of tuples, optional
+            Fixed ``(start, stop)`` focus window; default derives it from each selection's
+            ``df_feat`` positions.
+        size_by_impact : bool, default=True
+            Scale each impact residue's stick / marker by ``|impact|`` (impact mode only).
+        normalize_by_span : bool, default=False
+            Per-residue aggregation for the structure colouring; see :meth:`map_structure`.
+        feature_map : bool, default=True
+            If ``True``, show the linked :meth:`CPPPlot.feature_map` panel; if ``False``, the
+            3D structure panel only.
+        site_to_start : callable, optional
+            Maps the selected site to the structure anchor ``start`` (first JMD-N residue):
+            ``p1 -> start``. Default ``lambda p1: p1 - jmd_n_len`` (the site is the first TMD
+            residue). Supply your own to match a different window geometry.
+        chain : str, optional
+            Chain id to render; default selects the best-matching / first amino-acid chain.
+        init_site : int, optional
+            Initial selected site (default the middle of ``sequence``).
+        debounce_ms : int, default=250
+            Coalesce slider/dropdown changes within this many milliseconds into one predictor
+            call and repaint (>=0; 0 renders synchronously).
+
+        Returns
+        -------
+        panel : ipywidgets.Widget
+            A widget container (controls + linked structure / feature-map outputs) that displays
+            inline in Jupyter.
+
+        Raises
+        ------
+        ValueError
+            On invalid arguments (e.g. ``predictor`` not callable, neither or both of
+            ``pdb`` / ``uniprot``, an unknown ``mode`` / ``focus``, an out-of-range ``init_site``).
+        RuntimeError
+            If ``ipywidgets`` is not installed, or an AlphaFold model cannot be fetched.
+
+        Examples
+        --------
+        .. include:: examples/csp_interactive.rst
+        """
+        # Validate
+        if not callable(predictor):
+            raise ValueError(f"'predictor' ({predictor}) should be a callable (sequence, p1) "
+                             f"-> df_feat")
+        ut.check_str(name="sequence", val=sequence, accept_none=False)
+        ut.check_str(name="col_imp", val=col_imp)
+        ut.check_str(name="col_val", val=col_val)
+        ut.check_bool(name="shap_plot", val=shap_plot)
+        ut.check_bool(name="feature_map", val=feature_map)
+        ut.check_number_range(name="tmd_len", val=tmd_len, min_val=1, just_int=True)
+        jmd_n_len = ut.check_jmd_n_len(jmd_n_len=self._jmd_n_len)
+        jmd_c_len = ut.check_jmd_c_len(jmd_c_len=self._jmd_c_len)
+        ut.check_str_options(name="mode", val=mode, list_str_options=LIST_MODES)
+        ut.check_str_options(name="focus", val=focus, list_str_options=LIST_FOCUS)
+        ut.check_bool(name="size_by_impact", val=size_by_impact)
+        ut.check_bool(name="normalize_by_span", val=normalize_by_span)
+        ut.check_number_range(name="debounce_ms", val=debounce_ms, min_val=0, just_int=True)
+        if site_to_start is not None and not callable(site_to_start):
+            raise ValueError(f"'site_to_start' ({site_to_start}) should be a callable p1 -> start")
+        if chain is not None:
+            ut.check_str(name="chain", val=chain)
+        focus_region = check_focus_region(focus_region=focus_region)
+        if (pdb is None) == (uniprot is None):
+            raise ValueError("Exactly one of 'pdb' or 'uniprot' should be given "
+                             f"(got pdb={pdb}, uniprot={uniprot})")
+        n_res = len(sequence)
+        if init_site is None:
+            init_site = max(1, n_res // 2)
+        ut.check_number_range(name="init_site", val=init_site, min_val=1, max_val=n_res,
+                              just_int=True)
+
+        ipw = _require_ipywidgets()
+        if site_to_start is None:
+            site_to_start = lambda p1: p1 - jmd_n_len   # noqa: E731 (site = first TMD residue)
+
+        # Resolve the structure once (reused across selections)
+        records, chain_id, pdb_path, tmp_holder = self._resolve_structure_persistent(
+            pdb, uniprot, chain, sequence)
+
+        # Feature-map renderer (frontend owns CPPPlot); None disables the map panel
+        feature_map_renderer = None
+        if feature_map:
+            def _render_feature_map(df_feat, start):
+                from aaanalysis import CPPPlot
+                cpp_plot = CPPPlot(df_scales=self._df_scales, df_cat=self._df_cat,
+                                   jmd_n_len=self._jmd_n_len, jmd_c_len=self._jmd_c_len,
+                                   accept_gaps=True, verbose=False)
+                fig, _ax = cpp_plot.feature_map(df_feat=df_feat, shap_plot=shap_plot,
+                                                col_val=col_val, col_imp=col_imp,
+                                                tmd_len=tmd_len, start=start)
+                return fig
+            feature_map_renderer = _render_feature_map
+
+        from ._backend.cpp_struct.interactive_widgets import InteractivePanel
+        panel = InteractivePanel(
+            ipw, predictor=predictor, sequence=sequence, records=records, pdb_path=pdb_path,
+            chain_id=chain_id, col_imp=col_imp, tmd_len=tmd_len, jmd_n_len=jmd_n_len,
+            jmd_c_len=jmd_c_len, mode=mode, focus=focus, focus_region=focus_region,
+            size_by_impact=size_by_impact, normalize_by_span=normalize_by_span,
+            site_to_start=site_to_start, feature_map_renderer=feature_map_renderer,
+            init_site=init_site, debounce_ms=debounce_ms, tmp_holder=tmp_holder,
+            verbose=self._verbose)
+        if self._verbose:
+            ut.print_out(f"CPPStructurePlot: interactive explorer over {n_res} residues "
+                         f"(feature_map={feature_map}, debounce_ms={debounce_ms}).")
+        return panel.container
+
     # Internal orchestration helpers (map_structure)
+    def _resolve_structure_persistent(self, pdb, uniprot, chain, sequence):
+        """Resolve the structure once for interactive use; keep any temp dir alive.
+
+        Returns ``(records, chain_id, pdb_path, tmp_holder)``. ``pdb_path`` stays valid for the
+        panel's life (py3Dmol re-reads it each repaint); ``tmp_holder`` is the AlphaFold
+        ``TemporaryDirectory`` (or ``None``) the caller must keep referenced.
+        """
+        tmp_holder = None
+        if uniprot is not None:
+            tmp_holder = tempfile.TemporaryDirectory()
+            pdb_path = self._fetch_alphafold(uniprot, sequence, tmp_holder.name)
+        else:
+            pdb_path = pdb
+        structure = load_structure(pdb_path)
+        records, identity, chain_id = extract_chain_residues(
+            structure, chain=chain, sequence=sequence)
+        # Per-selection positions vary, so only the chain-identity check applies here.
+        if sequence is not None and identity < 0.5:
+            warnings.warn(
+                f"The selected chain matches 'sequence' with low identity ({identity:.2f}); "
+                f"the painted residues may be misaligned.", UserWarning, stacklevel=2)
+        return records, chain_id, pdb_path, tmp_holder
+
     def _fetch_alphafold(self, uniprot, sequence, out_folder):
         """Fetch the AlphaFold model for ``uniprot`` into ``out_folder``; return its path."""
         from aaanalysis.data_handling_pro import StructurePreprocessor
