@@ -22,8 +22,8 @@
 
 .. _tables_XXX:
 
-Tables
-======
+Data Tables
+===========
 
 .. contents::
     :local:

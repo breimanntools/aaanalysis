@@ -10,7 +10,7 @@ documented name and type, and a schema-stability test fails if a contracted colu
 is renamed or removed, a dtype changes, or the feature-id format changes.
 
 ``df_feat`` follows a **standardized, deterministic column order**. The columns listed
-in the :ref:`Data Dictionary <df_schemas>` are the *canonical lower bound* — every
+in the :ref:`Data Schemas <df_schemas>` are the *canonical lower bound* — every
 ``CPP.run`` output carries them, always in this order. Optional and dynamic columns (a
 test-dependent p-value variant, diagnostic residue columns, and the explainable-AI
 columns appended by ``TreeModel`` / ``ShapModel``) are appended after ``positions`` in a
@@ -35,7 +35,7 @@ place.
 Column schema
 -------------
 
-The full, test-guarded column list — every column with its dtype, required / nullable / unique flags, ranges, and an example — lives in the :ref:`Data Dictionary <df_schemas>` (the ``df_feat`` entry), so the column set is documented in exactly one place. This page covers the rest of the contract: the feature-id grammar above, the ``positions`` encoding below, and the stability policy.
+The full, test-guarded column list — every column with its dtype, required / nullable / unique flags, ranges, and an example — lives in the :ref:`Data Schemas <df_schemas>` (the ``df_feat`` entry), so the column set is documented in exactly one place. This page covers the rest of the contract: the feature-id grammar above, the ``positions`` encoding below, and the stability policy.
 
 Per-residue positions
 ---------------------

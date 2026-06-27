@@ -57,7 +57,7 @@ AAanalysis offers the same analysis two ways, both documented in the Reference:
   functions you compose, for full control over each step. See :ref:`API <api>`.
 - **Golden pipelines** (``import aaanalysis.pipe as aap``) — stateless one-call
   wrappers that chain those building blocks into a sensible default workflow.
-  See :ref:`API (Pipe) <api_pipe>`.
+  See :ref:`API (Pipelines) <api_pipe>`.
 
 .. code-block:: python
 

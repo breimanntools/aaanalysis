@@ -18,7 +18,7 @@ by:
 You can then access all methods and objects via the `aa` alias, such as `aa.load_dataset`.
 
 For the high-level, one-call **golden pipelines** (``aap``) that chain these building
-blocks into complete workflows, see the :ref:`API (Pipe) <api_pipe>` reference.
+blocks into complete workflows, see the :ref:`API (Pipelines) <api_pipe>` reference.
 
 .. _data_api:
 

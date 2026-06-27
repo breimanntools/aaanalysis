@@ -489,13 +489,14 @@ def render_schemas_rst():
     out = []
     out.append(".. _df_schemas:")
     out.append("")
-    out.append("Data Dictionary")
-    out.append("===============")
+    out.append("Data Schemas")
+    out.append("============")
     out.append("")
-    out.append("This page is the data dictionary for the key AAanalysis DataFrames: the "
-               "documented, test-guarded contract for the columns each frame carries. It "
-               "is generated from ``aaanalysis.utils.DICT_DF_SCHEMAS`` and kept in sync "
-               "by a contract test, so the documentation cannot drift from the code.")
+    out.append("This page documents the schemas (the data dictionary) for the key "
+               "AAanalysis DataFrames: the documented, test-guarded contract for the "
+               "columns each frame carries. It is generated from "
+               "``aaanalysis.utils.DICT_DF_SCHEMAS`` and kept in sync by a contract "
+               "test, so the documentation cannot drift from the code.")
     out.append("")
     out.append("Every column lists its dtype, whether it is required / nullable / unique, "
                "the allowed values or numeric range where applicable, a one-line meaning, "

@@ -55,7 +55,7 @@ analyses for biological questions, and the :ref:`Use Cases <use_cases>` reproduc
 studies end to end from bundled data.
 
 **Reference**: Look up the exact signatures in the :ref:`API <api>` documentation, browse the
-overview :ref:`Tables <tables>` (including the **AAontology** scale classification and benchmark
+overview :ref:`Data Tables <tables>` (including the **AAontology** scale classification and benchmark
 protein datasets), check the :ref:`Glossary <glossary>` of key terms, and discover the scientific
 foundation of AAanalysis in the :ref:`References <references>` section.
 

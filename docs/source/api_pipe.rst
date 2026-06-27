@@ -2,9 +2,9 @@
 
 .. _api_pipe:
 
-==========
-API (Pipe)
-==========
+===============
+API (Pipelines)
+===============
 
 AAanalysis exposes the same analysis through two interfaces:
 

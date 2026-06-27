@@ -1,9 +1,9 @@
 .. _df_schemas:
 
-Data Dictionary
-===============
+Data Schemas
+============
 
-This page is the data dictionary for the key AAanalysis DataFrames: the documented, test-guarded contract for the columns each frame carries. It is generated from ``aaanalysis.utils.DICT_DF_SCHEMAS`` and kept in sync by a contract test, so the documentation cannot drift from the code.
+This page documents the schemas (the data dictionary) for the key AAanalysis DataFrames: the documented, test-guarded contract for the columns each frame carries. It is generated from ``aaanalysis.utils.DICT_DF_SCHEMAS`` and kept in sync by a contract test, so the documentation cannot drift from the code.
 
 Every column lists its dtype, whether it is required / nullable / unique, the allowed values or numeric range where applicable, a one-line meaning, and an example value.
 

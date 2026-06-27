@@ -225,7 +225,7 @@ Added
   and where to go next* and cross-linking the matching protocol and API reference.
 - **Split API reference**: the reference is now two pages, each listing its members
   directly at the top level. *API* documents the explicit **building blocks**
-  (``import aaanalysis as aa``) grouped by category; the new *API (Pipe)* page documents
+  (``import aaanalysis as aa``) grouped by category; the new *API (Pipelines)* page documents
   the **golden pipelines** (``import aaanalysis.pipe as aap``), one function per pipeline.
   Golden pipelines are no longer mixed into the building-block page or the Tutorials
   section; Getting Started links both references.

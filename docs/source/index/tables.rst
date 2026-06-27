@@ -22,8 +22,8 @@
 
 .. _tables:
 
-Tables
-======
+Data Tables
+===========
 
 .. contents::
     :local:
