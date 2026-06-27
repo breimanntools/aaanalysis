@@ -284,32 +284,46 @@ class TestMapStructureComplex:
         assert view.max_abs > 0
 
 
-# --- golden values (hand-computed normalized perpos) -------------------------
+# --- golden values (hand-computed per-residue impact) ------------------------
 class TestMapStructureGoldenValues:
-    """Hand-computed per-residue impact == normalized-sum mapping."""
+    """Hand-computed per-residue impact for both aggregation modes."""
 
-    def test_whole_tmd_segment_normalized(self, pdb_path):
-        # TMD Segment(1,1) spans the whole 10-residue TMD (residues 11..20 with
-        # start=1, jmd_n_len=10). Impact 0.8 spread over 10 positions -> 0.08 each.
+    def test_whole_tmd_segment_app_exact_default(self, pdb_path):
+        # Default (app-exact, no divide): TMD Segment(1,1) spans the whole 10-residue
+        # TMD (residues 11..20 with start=1, jmd_n_len=10); its full impact 0.8 lands
+        # on every spanned residue, matching the deployed app's per-residue colouring.
         csp = aa.CPPStructurePlot(jmd_n_len=10, jmd_c_len=10, verbose=False)
         view = csp.map_structure(df_feat=_df_feat(tmd_impact=0.8, jmd_impact=0.0),
                                  pdb=pdb_path, tmd_len=10, start=1, backend="mpl")
         for resi in range(11, 21):
-            assert view.dict_impact[resi] == pytest.approx(0.08)
+            assert view.dict_impact[resi] == pytest.approx(0.8)
+        assert view.max_abs == pytest.approx(0.8)
 
-    def test_whole_jmd_segment_normalized(self, pdb_path):
-        # JMD_N Segment(1,1) spans residues 1..10; impact -0.4 / 10 -> -0.04 each.
+    def test_whole_tmd_segment_normalize_by_span(self, pdb_path):
+        # normalize_by_span=True: impact 0.8 spread over 10 positions -> 0.08 each
+        # (the span-normalized sum used by the feature_map top per-position bar).
+        csp = aa.CPPStructurePlot(jmd_n_len=10, jmd_c_len=10, verbose=False)
+        view = csp.map_structure(df_feat=_df_feat(tmd_impact=0.8, jmd_impact=0.0),
+                                 pdb=pdb_path, tmd_len=10, start=1, backend="mpl",
+                                 normalize_by_span=True)
+        for resi in range(11, 21):
+            assert view.dict_impact[resi] == pytest.approx(0.08)
+        assert view.max_abs == pytest.approx(0.08)
+
+    def test_whole_jmd_segment_app_exact_default(self, pdb_path):
+        # JMD_N Segment(1,1) spans residues 1..10; full impact -0.4 on each (default).
         csp = aa.CPPStructurePlot(jmd_n_len=10, jmd_c_len=10, verbose=False)
         view = csp.map_structure(df_feat=_df_feat(tmd_impact=0.0, jmd_impact=-0.4),
                                  pdb=pdb_path, tmd_len=10, start=1, backend="mpl")
         for resi in range(1, 11):
-            assert view.dict_impact[resi] == pytest.approx(-0.04)
+            assert view.dict_impact[resi] == pytest.approx(-0.4)
 
     def test_max_abs_is_max_per_residue(self, pdb_path):
         csp = aa.CPPStructurePlot(jmd_n_len=10, jmd_c_len=10, verbose=False)
         view = csp.map_structure(df_feat=_df_feat(tmd_impact=0.8, jmd_impact=-0.4),
                                  pdb=pdb_path, tmd_len=10, start=1, backend="mpl")
-        assert view.max_abs == pytest.approx(0.08)
+        # default (no divide): max per-residue |impact| = max(0.8, 0.4) = 0.8
+        assert view.max_abs == pytest.approx(0.8)
 
     def test_start_shifts_absolute_residues(self, pdb_path):
         # start=312 -> JMD_N spans 312..321, TMD spans 322..331.
@@ -317,8 +331,15 @@ class TestMapStructureGoldenValues:
         with pytest.warns(UserWarning):  # window outside the 1..40 synthetic structure
             view = csp.map_structure(df_feat=_df_feat(tmd_impact=0.8, jmd_impact=0.0),
                                      pdb=pdb_path, tmd_len=10, start=312, backend="mpl")
-        assert view.dict_impact[322] == pytest.approx(0.08)
+        assert view.dict_impact[322] == pytest.approx(0.8)
         assert min(view.dict_impact) == 312
+
+    @pytest.mark.parametrize("normalize_by_span", [True, False])
+    def test_normalize_by_span_param(self, pdb_path, normalize_by_span):
+        csp = aa.CPPStructurePlot(jmd_n_len=10, jmd_c_len=10, verbose=False)
+        view = csp.map_structure(df_feat=_df_feat(), pdb=pdb_path, tmd_len=10,
+                                 normalize_by_span=normalize_by_span, backend="mpl")
+        assert view.backend == "mpl"
 
 
 # --- constructor -------------------------------------------------------------
