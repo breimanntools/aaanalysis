@@ -304,9 +304,9 @@ DICT_DF_SCHEMAS = {
             COL_REGION: _field("str", "Sequence part the position falls in.",
                                required=True, allowed_values=list(COLS_SEQ_PARTS),
                                example="tmd"),
-            COL_DELTA_CPP: _field("float", "Sum|dX| feature-space magnitude of the "
-                                  "mutation.", required=True, range=[0, None],
-                                  example=2.4),
+            COL_DELTA_CPP: _field("float", "Summed absolute (L1) feature-space "
+                                  "magnitude of the mutation.", required=True,
+                                  range=[0, None], example=2.4),
             COL_SHIFT_SCORE: _field("float", "Signed shift toward the test-class "
                                     "profile.", required=True, example=-0.8),
             COL_DELTA_PRED: _field("float", "Change of the model prediction score "
@@ -335,9 +335,9 @@ DICT_DF_SCHEMAS = {
                               required=True, range=[1, None], example=2),
             COL_SEQ_MUT: _field("str", "Full sequence with all the variant's mutations "
                                 "applied.", required=True, example="...K...P..."),
-            COL_DELTA_CPP: _field("float", "Sum|dX| feature-space magnitude of the "
-                                  "combined variant.", required=True, range=[0, None],
-                                  example=4.1),
+            COL_DELTA_CPP: _field("float", "Summed absolute (L1) feature-space "
+                                  "magnitude of the combined variant.", required=True,
+                                  range=[0, None], example=4.1),
             COL_SHIFT_SCORE: _field("float", "Signed shift toward the test-class "
                                     "profile for the combined variant.", required=True,
                                     example=1.3),
@@ -360,7 +360,8 @@ DICT_DF_SCHEMAS = {
                                      range=[0, None], example=3),
             COL_FRAC_DISRUPTIVE: _field("float", "n_disruptive / n_mut.", required=True,
                                         range=[0, 1], example=0.15),
-            COL_MEAN_DELTA_CPP: _field("float", "Mean |delta_cpp| over scanned "
+            COL_MEAN_DELTA_CPP: _field("float", "Mean delta_cpp (summed absolute "
+                                       "feature-space magnitude) over scanned "
                                        "mutations.", required=True, range=[0, None],
                                        example=1.1),
         },
@@ -390,9 +391,10 @@ DICT_DF_SCHEMAS = {
             COL_DELTA_PRED: _field("float", "Objective: change of the model prediction "
                                    "score (percentage points). Present when an objective "
                                    "uses it.", required=False, example=18.7),
-            COL_DELTA_CPP: _field("float", "Objective: Sum|dX| feature-space magnitude. "
-                                  "Present when an objective uses it.", required=False,
-                                  range=[0, None], example=4.1),
+            COL_DELTA_CPP: _field("float", "Objective: summed absolute (L1) "
+                                  "feature-space magnitude. Present when an objective "
+                                  "uses it.", required=False, range=[0, None],
+                                  example=4.1),
             COL_SHIFT_SCORE: _field("float", "Objective: signed shift toward the "
                                     "test-class profile. Present when an objective uses "
                                     "it.", required=False, example=1.3),
