@@ -100,11 +100,14 @@ def render_py3dmol(pdb_path, records, dict_impact, max_abs, mode,
                          max_abs=max_abs, mode=mode)
 
 
-def render_mpl(records, dict_impact, max_abs, mode, focus, window_resis,
-               size_by_impact, color_pos=None, color_neg=None, figsize=(6, 6)):
-    """Build a matplotlib ``mplot3d`` Cα scatter coloured per residue; wrap as StructureView."""
-    fig = plt.figure(figsize=figsize)
-    ax = fig.add_subplot(111, projection="3d")
+def draw_structure_mpl(ax, records, dict_impact, max_abs, mode, focus, window_resis,
+                       size_by_impact, color_pos=None, color_neg=None, set_title=True):
+    """Draw the per-residue Cα scatter / backbone trace onto a provided 3D ``ax``.
+
+    Shared by :func:`render_mpl` (which owns its own Figure) and the combined
+    static figure (which supplies its left 3D panel), so both paint pixel-identical
+    structures from one code path.
+    """
     xs, ys, zs, rgba, sizes = [], [], [], [], []
     win_coords = []
     for res in records:
@@ -142,7 +145,20 @@ def render_mpl(records, dict_impact, max_abs, mode, focus, window_resis,
     ax.set_xlabel("x")
     ax.set_ylabel("y")
     ax.set_zlabel("z")
-    label = "pLDDT" if mode == "plddt" else "CPP feature impact"
-    ax.set_title(f"{label} on structure")
+    if set_title:
+        label = "pLDDT" if mode == "plddt" else "CPP feature impact"
+        ax.set_title(f"{label} on structure")
+    return ax
+
+
+def render_mpl(records, dict_impact, max_abs, mode, focus, window_resis,
+               size_by_impact, color_pos=None, color_neg=None, figsize=(6, 6)):
+    """Build a matplotlib ``mplot3d`` Cα scatter coloured per residue; wrap as StructureView."""
+    fig = plt.figure(figsize=figsize)
+    ax = fig.add_subplot(111, projection="3d")
+    draw_structure_mpl(ax=ax, records=records, dict_impact=dict_impact, max_abs=max_abs,
+                       mode=mode, focus=focus, window_resis=window_resis,
+                       size_by_impact=size_by_impact, color_pos=color_pos,
+                       color_neg=color_neg)
     return StructureView(backend="mpl", fig=fig, ax=ax, dict_impact=dict_impact,
                          max_abs=max_abs, mode=mode)
