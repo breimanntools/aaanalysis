@@ -46,8 +46,8 @@ The documentation is organized into four sections: *Overview*, *Guides*, *Refere
 **Overview**: New to AAanalysis? Begin with :ref:`Getting Started <getting_started>` to install
 the package and run your first analysis. Delve into the core concepts and design philosophy behind
 the algorithms in the :ref:`Usage Principles <usage_principles>` section, equipping you with the
-mental models necessary for effective application, and see the :ref:`Evaluation <evaluation>`
-strategies for a transparent, objective analysis of the algorithms´ outcomes.
+mental models necessary for effective application — including the evaluation strategies for a
+transparent, objective analysis of the algorithms´ outcomes.
 
 **Guides**: For hands-on experience, the :ref:`Tutorials <tutorials>` teach each tool with its
 parameters and outputs, the :ref:`Protocols <protocols>` walk through complete, end-to-end

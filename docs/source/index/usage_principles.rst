@@ -64,6 +64,8 @@ concepts of AAanalysis are provided by the following sections:
    usage_principles/prediction_tasks
    usage_principles/aaontology
    usage_principles/aaclust
+   evaluation/eval_aaclust
    usage_principles/feature_identification
    usage_principles/pu_learning
+   evaluation/eval_pu_learning
    usage_principles/xai
