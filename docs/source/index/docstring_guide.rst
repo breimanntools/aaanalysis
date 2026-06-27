@@ -363,6 +363,40 @@ Rules:
      - ``ap``
      - ``pro``
 
+Tutorial notebook titles
+------------------------
+
+A tutorial notebook's first ``#`` heading **is** its rendered page title and the
+sidebar link text, so the titles must stay consistent across the tutorial set. A
+tutorial centred on a single public class is titled
+
+   ``<ClassName>: <capability phrase>``
+
+— the **exact public class name** (as in the API), a colon, then a short phrase
+for what the reader learns. Examples already in the set:
+``AAclust: Selecting redundancy-reduced scale sets``,
+``SequenceFeature: Creation of CPP feature components``,
+``CPP: Identification of physicochemical signatures``,
+``dPULearn: Learning from unbalanced data``,
+``ShapModel: Explaining with single-residue resolution``,
+``CPPGrid: Sweeping, evaluating, and ranking configurations``,
+``SeqOpt: Optimizing sequences by directed evolution``.
+
+Rules:
+
+* **No ``Tutorial`` word or number in the title** (never ``Tutorial 6 — …`` or
+  ``Tutorial: …``). Ordering lives in the filename (``tutorial6_*``) and the
+  ``tutorials.rst`` toctree, not the heading.
+* When a section of ``tutorials.rst`` introduces the notebook in prose, name it by
+  the **same class** (``the **CPPGrid** tutorial``, ``the **SeqOpt** tutorial``) so
+  the prose, the title, and the API all read the same.
+* A tutorial that teaches a **function** or a **cross-cutting topic** rather than
+  one class uses a plain descriptive title — ``Data loading``, ``Scale loading``,
+  ``CPP across data representations: …``.
+* The onboarding notebooks under :ref:`Getting Started <getting_started>`
+  (``A minimal CPP analysis``, ``Quick start with AAanalysis``,
+  ``Slow start with AAanalysis``) are titled by what they deliver, not a class.
+
 Output / data-object names
 --------------------------
 

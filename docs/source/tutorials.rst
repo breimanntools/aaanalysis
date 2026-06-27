@@ -63,7 +63,7 @@ Evaluation & Comparison
 -----------------------
 Learn the evaluation tools — **CPPGrid** configuration sweeps, per-protein
 site-localization metrics, and fair ranking under cross-validation — in the
-**Comparison Harness** tutorial. These are the mechanics that the *P10: Validation*
+**CPPGrid** tutorial. These are the mechanics that the *P10: Validation*
 protocol puts to work end to end.
 
 .. toctree::
@@ -76,7 +76,7 @@ Protein Engineering
 Optimize an existing sequence with **SeqOpt** — machine-learning-guided directed
 evolution — and read the results with **SeqOptPlot**. This is **protein engineering**
 (mutating a known protein), distinct from **de novo protein design** (generating new
-proteins, e.g. RFdiffusion → ProteinMPNN → AlphaFold). The **Protein Engineering**
+proteins, e.g. RFdiffusion → ProteinMPNN → AlphaFold). The **SeqOpt**
 tutorial walks a complete case study: training a substrate classifier, engineering a
 "super substrate" for gamma-secretase, and visualizing the Pareto front, convergence,
 mutation map and lineage.
