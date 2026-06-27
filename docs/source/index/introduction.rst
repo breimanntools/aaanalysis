@@ -51,7 +51,7 @@ transparent, objective analysis of the algorithms´ outcomes.
 
 **Guides**: For hands-on experience, the :ref:`Tutorials <tutorials>` teach each tool with its
 parameters and outputs, the :ref:`Protocols <protocols>` walk through complete, end-to-end
-analyses for biological questions, and the :ref:`Use Cases <use_cases>` reproduce published
+analyses for biological questions, and the :ref:`Use Cases <use_cases>` showcase published
 studies end to end from bundled data.
 
 **Reference**: Look up the exact signatures in the :ref:`API <api>` documentation, browse the

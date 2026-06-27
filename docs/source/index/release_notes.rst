@@ -212,7 +212,7 @@ Added
   *Guides* (Tutorials · Protocols · Use Cases), *Reference*, and *Project* — and the landing
   page gains a "You want to… / Go to" routing table; the previously unwired **Comparison
   Harness** tutorial (``tutorial6_comparison_harness``) is now reachable.
-- **Use Cases** guide (third *Guides* subchapter): each use case reproduces a published
+- **Use Cases** guide (third *Guides* subchapter): each use case showcases a published
   study end to end from bundled data. The first, *Charting γ-secretase substrates by
   explainable AI* (``use_case1_gamma_secretase``), walks the full AAanalysis pipeline of
   Breimann and Kamp *et al.*, Nat. Commun. 2025 on the bundled ``DOM_GSEC`` /
