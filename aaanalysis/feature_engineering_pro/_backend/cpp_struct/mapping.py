@@ -79,6 +79,10 @@ def compute_residue_impact(df_feat=None, col_imp=None, start=1, tmd_len=20,
         dict_impact = {p: 0.0 for p in range(start, stop + 1)}
         values = df_feat[col_imp].astype(float).to_list()
         for pos_str, imp in zip(feat_positions, values):
+            # Skip NaN impact (e.g. a partially failed SHAP run) so it does not poison
+            # the per-residue sum — mirrors the skipna sum of the normalized branch.
+            if not np.isfinite(imp):
+                continue
             for p in str(pos_str).split(","):
                 if p == "":
                     continue

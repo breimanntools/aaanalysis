@@ -197,6 +197,18 @@ class TestPlotCombinedComplex:
                                       col_imp="feat_impact", mode="plddt", focus="fade")
         plt.close(fig)
 
+    def test_custom_df_scales_and_df_cat(self, pdb_path, df_feat):
+        # Forwarding df_cat to the inner CPPPlot avoids the "scale ids missing in df_cat"
+        # crash when the plotter is built with custom scales.
+        df_scales = aa.load_scales()
+        df_cat = aa.load_scales(name="scales_cat")
+        csp = aa.CPPStructurePlot(jmd_n_len=10, jmd_c_len=10,
+                                  df_scales=df_scales, df_cat=df_cat, verbose=False)
+        fig, _ = csp.plot_combined(df_feat=df_feat, pdb=pdb_path, tmd_len=10,
+                                   col_imp="feat_impact")
+        assert isinstance(fig, plt.Figure)
+        plt.close(fig)
+
     def test_uniprot_fetch_path_mocked(self, df_feat, tmp_path, monkeypatch):
         from aaanalysis.data_handling_pro import StructurePreprocessor
 

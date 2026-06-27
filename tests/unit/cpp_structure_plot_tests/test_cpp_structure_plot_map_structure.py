@@ -341,6 +341,19 @@ class TestMapStructureGoldenValues:
                                  normalize_by_span=normalize_by_span, backend="mpl")
         assert view.backend == "mpl"
 
+    def test_nan_impact_does_not_poison_residue(self, pdb_path):
+        # A NaN-impact feature sharing residues with a real one must not wipe the real
+        # impact (NaN is skipped in the default no-divide sum, like the skipna branch).
+        df = pd.DataFrame({
+            ut.COL_FEATURE: ["TMD-Segment(1,1)-ABC", "TMD-Segment(1,1)-XYZ"],
+            ut.COL_CAT: ["Polarity", "Energy"],
+            "feat_impact": [1.0, float("nan")],
+        })
+        csp = aa.CPPStructurePlot(jmd_n_len=10, jmd_c_len=10, verbose=False)
+        view = csp.map_structure(df_feat=df, pdb=pdb_path, tmd_len=10, start=1, backend="mpl")
+        assert view.dict_impact[11] == pytest.approx(1.0)
+        assert view.max_abs == pytest.approx(1.0)
+
 
 # --- constructor -------------------------------------------------------------
 class TestCPPStructurePlotInit:
@@ -362,6 +375,11 @@ class TestCPPStructurePlotInit:
         df_scales = aa.load_scales()
         csp = aa.CPPStructurePlot(df_scales=df_scales, verbose=False)
         assert csp._df_scales is not None
+
+    def test_df_cat_positive(self):
+        df_cat = aa.load_scales(name="scales_cat")
+        csp = aa.CPPStructurePlot(df_cat=df_cat, verbose=False)
+        assert csp._df_cat is not None
 
     @pytest.mark.parametrize("verbose", [True, False])
     def test_verbose_positive(self, verbose):

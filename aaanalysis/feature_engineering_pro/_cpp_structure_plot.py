@@ -109,6 +109,7 @@ class CPPStructurePlot:
                  jmd_n_len: int = 10,
                  jmd_c_len: int = 10,
                  df_scales: Optional[pd.DataFrame] = None,
+                 df_cat: Optional[pd.DataFrame] = None,
                  verbose: bool = True
                  ):
         """
@@ -119,8 +120,11 @@ class CPPStructurePlot:
         jmd_c_len : int, default=10
             Length of JMD-C (>=0). Must match the value used when the features were generated.
         df_scales : pd.DataFrame, shape (n_letters, n_scales), optional
-            DataFrame of scales with letters typically representing amino acids. Stored for
-            consistency with :class:`CPPPlot`; not required for structure mapping.
+            DataFrame of scales with letters typically representing amino acids. Not required for
+            structure mapping; forwarded to :class:`CPPPlot` by :meth:`plot_combined`.
+        df_cat : pd.DataFrame, shape (n_scales, n_scales_info), optional
+            DataFrame of categories for the scales. Not required for structure mapping; forwarded
+            to :class:`CPPPlot` by :meth:`plot_combined` (must cover the scales in ``df_feat``).
         verbose : bool, default=True
             If ``True``, verbose outputs are enabled.
 
@@ -140,9 +144,12 @@ class CPPStructurePlot:
         jmd_c_len = ut.check_jmd_c_len(jmd_c_len=jmd_c_len)
         if df_scales is not None:
             ut.check_df(name="df_scales", df=df_scales)
+        if df_cat is not None:
+            ut.check_df(name="df_cat", df=df_cat)
         # General settings
         self._verbose = verbose
         self._df_scales = df_scales
+        self._df_cat = df_cat
         self._jmd_n_len = jmd_n_len
         self._jmd_c_len = jmd_c_len
 
@@ -265,7 +272,7 @@ class CPPStructurePlot:
             raise ValueError("Exactly one of 'pdb' or 'uniprot' should be given "
                              f"(got pdb={pdb}, uniprot={uniprot})")
 
-        # Compute per-residue impact (shared CPP normalized-sum backend)
+        # Compute per-residue impact (shared CPP feature-position backend)
         dict_impact, max_abs, positions_union = compute_residue_impact(
             df_feat=df_feat, col_imp=col_imp, start=start, tmd_len=tmd_len,
             jmd_n_len=jmd_n_len, jmd_c_len=jmd_c_len,
@@ -439,6 +446,13 @@ class CPPStructurePlot:
         records, _chain_id = self._prepare_records(pdb, uniprot, chain, sequence,
                                                    positions_union)
 
+        # Render the feature map first (its own figure -> raster); building it before the
+        # combined figure means a feature_map error leaves no half-built figure leaking.
+        image = self._feature_map_image(df_feat=df_feat, col_val=col_val, col_imp=col_imp,
+                                        shap_plot=shap_plot, tmd_len=tmd_len, start=start,
+                                        tmd_seq=tmd_seq, jmd_n_seq=jmd_n_seq,
+                                        jmd_c_seq=jmd_c_seq, dpi=feature_map_dpi,
+                                        feature_map_kws=feature_map_kws)
         # Build the combined figure: structure (left) + feature_map raster (right)
         import matplotlib.pyplot as plt
         fig = plt.figure(figsize=figsize)
@@ -448,11 +462,6 @@ class CPPStructurePlot:
         draw_structure_mpl(ax=ax_struct, records=records, dict_impact=dict_impact,
                            max_abs=max_abs, mode=mode, focus=focus,
                            window_resis=window_resis, size_by_impact=size_by_impact)
-        image = self._feature_map_image(df_feat=df_feat, col_val=col_val, col_imp=col_imp,
-                                        shap_plot=shap_plot, tmd_len=tmd_len, start=start,
-                                        tmd_seq=tmd_seq, jmd_n_seq=jmd_n_seq,
-                                        jmd_c_seq=jmd_c_seq, dpi=feature_map_dpi,
-                                        feature_map_kws=feature_map_kws)
         ax_map.imshow(image)
         ax_map.axis("off")
 
@@ -479,16 +488,19 @@ class CPPStructurePlot:
         import io
         import matplotlib.pyplot as plt
         import matplotlib.image as mpimg
-        from aaanalysis.feature_engineering._cpp_plot import CPPPlot
-        cpp_plot = CPPPlot(df_scales=self._df_scales, jmd_n_len=self._jmd_n_len,
-                           jmd_c_len=self._jmd_c_len, accept_gaps=True, verbose=False)
+        from aaanalysis import CPPPlot
+        cpp_plot = CPPPlot(df_scales=self._df_scales, df_cat=self._df_cat,
+                           jmd_n_len=self._jmd_n_len, jmd_c_len=self._jmd_c_len,
+                           accept_gaps=True, verbose=False)
         fig_fm, _ax_fm = cpp_plot.feature_map(
             df_feat=df_feat, shap_plot=shap_plot, col_val=col_val, col_imp=col_imp,
             tmd_len=tmd_len, start=start, tmd_seq=tmd_seq, jmd_n_seq=jmd_n_seq,
             jmd_c_seq=jmd_c_seq, **feature_map_kws)
-        buffer = io.BytesIO()
-        fig_fm.savefig(buffer, format="png", dpi=dpi, bbox_inches="tight")
-        plt.close(fig_fm)
+        try:
+            buffer = io.BytesIO()
+            fig_fm.savefig(buffer, format="png", dpi=dpi, bbox_inches="tight")
+        finally:
+            plt.close(fig_fm)
         buffer.seek(0)
         return mpimg.imread(buffer)
 
