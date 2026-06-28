@@ -10,9 +10,11 @@ from typing import Optional, List, Tuple, Union, Literal, Callable
 
 import numpy as np
 import pandas as pd
+from sklearn.base import BaseEstimator
 
 import aaanalysis.utils as ut
 
+from ._backend.cpp_struct.predict import build_builtin_predictor
 from ._backend.cpp_struct.mapping import compute_residue_impact
 from ._backend.cpp_struct.structure import (load_structure, extract_chain_residues,
                                             residue_numbers)
@@ -24,6 +26,7 @@ from ._backend.cpp_struct.linked_html import build_linked_html, _columns
 
 LIST_MODES = ["impact", "plddt"]
 LIST_FOCUS = ["whole", "fade", "zoom"]
+LIST_OUTPUTS = ["widget", "html", "static"]
 # Per-call counter for unique linked-view DOM ids (deterministic within a kernel session,
 # so committed notebook outputs are stable, but unique across views on one page).
 _LINKED_UID = itertools.count(1)
@@ -885,6 +888,228 @@ class CPPStructurePlot:
             ut.print_out(f"CPPStructurePlot: interactive explorer over {n_res} residues "
                          f"(feature_map={feature_map}, debounce_ms={debounce_ms}).")
         return panel.container
+
+    def explore(self,
+                df_feat: pd.DataFrame,
+                sequence: str,
+                pdb: Optional[str] = None,
+                uniprot: Optional[str] = None,
+                df_seq: Optional[pd.DataFrame] = None,
+                labels: Optional[ut.ArrayLike1D] = None,
+                model: Union[str, BaseEstimator, List] = ut.MODEL_RF,
+                predictor: Optional[Callable] = None,
+                output: Literal["widget", "html", "static"] = "widget",
+                path: Optional[str] = None,
+                col_imp: str = ut.COL_FEAT_IMPACT,
+                col_val: str = "mean_dif",
+                shap_plot: bool = True,
+                tmd_len: int = 20,
+                init_site: Optional[int] = None,
+                label_target_class: int = 1,
+                mode: Literal["impact", "plddt"] = "impact",
+                focus: Literal["whole", "fade", "zoom"] = "fade",
+                focus_region: Optional[Union[Tuple[int, int], List[Tuple[int, int]]]] = None,
+                size_by_impact: bool = True,
+                normalize_by_span: bool = False,
+                chain: Optional[str] = None,
+                random_state: Optional[int] = None,
+                n_jobs: Optional[int] = None,
+                debounce_ms: int = 250,
+                ) -> object:
+        """
+        Predict per site and paint the structure, with a selectable output type.
+
+        The integrated explorer (**[pro]**): given a feature set ``df_feat`` plus a labeled training
+        population (``df_seq`` + ``labels``) and a ``model``, it builds a per-site predictor that, for
+        a P1 site, computes the query window's feature values for the **fixed** feature set (never a
+        :meth:`CPP.run` rediscovery), predicts its probability, and attaches the per-site SHAP impact
+        (a default :class:`ShapModel` refit, fuzzy interpolate). It then dispatches to one of the
+        render paths by ``output``:
+
+        - ``'widget'`` -> :meth:`interactive` (a live ipywidgets explorer; the P1 slider re-predicts
+          and repaints per site; needs a kernel + ``ipywidgets``).
+        - ``'html'`` -> :meth:`plot_linked` (a self-contained linked HTML, written to ``path`` if
+          given). Baked for the single ``init_site`` (no live kernel; live multi-site is out of scope).
+        - ``'static'`` -> :meth:`plot_combined` (the structure beside the feature map, baked for
+          ``init_site``).
+
+        The site geometry follows the package convention: ``p1`` is the first TMD residue, so the
+        TMD spans ``[p1, p1 + tmd_len - 1]`` and ``start = p1 - jmd_n_len`` (the construction
+        ``jmd_n_len`` / ``jmd_c_len``). Pass ``predictor`` to override the built-in with a custom
+        ``(sequence, p1) -> df_feat`` callable, in which case ``df_seq`` / ``labels`` / ``model`` are
+        ignored.
+
+        .. versionadded:: 1.1.0
+
+        Parameters
+        ----------
+        df_feat : pd.DataFrame, shape (n_features, n_feature_info)
+            Feature DataFrame with a ``feature`` column (the fixed feature set) and the
+            scale-information columns the feature map needs. The per-site impact is computed and
+            written to ``col_imp``; an existing ``col_imp`` is overwritten per site.
+        sequence : str
+            Full protein sequence of the query protein the P1 site ranges over.
+        pdb : str, optional
+            Path to a ``.pdb`` / ``.cif`` structure file. Exactly one of ``pdb`` or ``uniprot``
+            must be given.
+        uniprot : str, optional
+            UniProt accession; the AlphaFold model is fetched. Exactly one of ``pdb`` or ``uniprot``
+            must be given.
+        df_seq : pd.DataFrame, shape (n_samples, n_seq_info), optional
+            DataFrame containing an ``entry`` column with a unique protein identifier per row, the
+            labeled training population row-aligned to ``labels``. Required for the built-in
+            predictor (``predictor=None``); the training feature matrix is built from it via
+            :meth:`SequenceFeature.get_df_parts`.
+        labels : array-like, shape (n_samples,), optional
+            Class labels for ``df_seq`` (typically 1=positive, 0=negative). Required for the built-in
+            predictor.
+        model : str, estimator, or list, default='rf'
+            Prediction model for the per-site probability: a name (``'rf'``, ``'svm'``,
+            ``'log_reg'``, ``'extra_trees'``), a scikit-learn estimator, or a list of those
+            (probabilities averaged). The :class:`ShapModel` that computes the impact always uses
+            its own defaults (``TreeExplainer`` + RandomForest / ExtraTrees), so the prediction
+            model and the explanation model may differ.
+        predictor : callable, optional
+            Escape hatch: a custom ``(sequence, p1) -> df_feat`` callable. When given, the built-in
+            predictor is not built and ``df_seq`` / ``labels`` / ``model`` are ignored.
+        output : {'widget', 'html', 'static'}, default='widget'
+            Which output to produce (see the method summary).
+        path : str, optional
+            For ``output='html'``, write the self-contained page to this path.
+        col_imp : str, default='feat_impact'
+            Column the per-site signed impact is written to (and painted from). With
+            ``shap_plot=True`` it must be ``'feat_impact'`` or follow ``'feat_impact_<name>'`` (the
+            SHAP feature map's requirement).
+        col_val : str, default='mean_dif'
+            Column shown in the feature-map heatmap cells.
+        shap_plot : bool, default=True
+            Passed to :meth:`CPPPlot.feature_map`.
+        tmd_len : int, default=20
+            TMD length of the predicted window (>=1).
+        init_site : int, optional
+            The P1 site to bake for ``output`` in {``'html'``, ``'static'``} and the initial slider
+            site for ``'widget'`` (default near the middle of ``sequence``).
+        label_target_class : int, default=1
+            Class whose probability is predicted and explained.
+        mode : {'impact', 'plddt'}, default='impact'
+            Initial structure colouring.
+        focus : {'whole', 'fade', 'zoom'}, default='fade'
+            Structure framing.
+        focus_region : tuple or list of tuples, optional
+            Fixed ``(start, stop)`` focus window; default from the window's positions.
+        size_by_impact : bool, default=True
+            Scale each impact residue's stick by ``|impact|`` (impact mode only).
+        normalize_by_span : bool, default=False
+            Per-residue aggregation for the structure colouring; see :meth:`map_structure`.
+        chain : str, optional
+            Chain id to render; default selects the best-matching / first amino-acid chain.
+        random_state : int, optional
+            Seed for the prediction estimator and the SHAP estimation (reproducibility).
+        n_jobs : int, optional
+            Cores for building the training feature matrix.
+        debounce_ms : int, default=250
+            For ``output='widget'``, coalesce slider changes within this many milliseconds.
+
+        Returns
+        -------
+        view : object
+            For ``output='widget'`` an ``ipywidgets`` panel; for ``'html'`` a ``LinkedView``; for
+            ``'static'`` a ``CombinedView``. All render inline in Jupyter.
+
+        Raises
+        ------
+        ValueError
+            On invalid arguments (e.g. an unknown ``output``, neither or both of ``pdb`` /
+            ``uniprot``, ``predictor=None`` without ``df_seq`` / ``labels``, or an unknown ``model``
+            name).
+        RuntimeError
+            If a required optional package (py3Dmol, or ``ipywidgets`` for the widget) is missing, or
+            an AlphaFold model cannot be fetched.
+
+        Examples
+        --------
+        .. include:: examples/csp_explore.rst
+        """
+        # Validate (cheap checks first, so an invalid argument fails before the predictor is built)
+        ut.check_df(name="df_feat", df=df_feat, cols_required=[ut.COL_FEATURE])
+        ut.check_str(name="sequence", val=sequence, accept_none=False)
+        ut.check_str_options(name="output", val=output, list_str_options=LIST_OUTPUTS)
+        ut.check_str(name="col_imp", val=col_imp)
+        ut.check_str(name="col_val", val=col_val)
+        ut.check_bool(name="shap_plot", val=shap_plot)
+        ut.check_bool(name="size_by_impact", val=size_by_impact)
+        ut.check_bool(name="normalize_by_span", val=normalize_by_span)
+        ut.check_str_options(name="mode", val=mode, list_str_options=LIST_MODES)
+        ut.check_str_options(name="focus", val=focus, list_str_options=LIST_FOCUS)
+        focus_region = check_focus_region(focus_region=focus_region)
+        ut.check_number_range(name="tmd_len", val=tmd_len, min_val=1, just_int=True)
+        ut.check_number_range(name="label_target_class", val=label_target_class, min_val=0,
+                              just_int=True)
+        # The SHAP feature map (shap_plot=True) requires col_imp in the feat_impact family; fail
+        # here with a clear message instead of deep inside CPPPlot.feature_map after a full refit.
+        if shap_plot and ut.COL_FEAT_IMPACT not in col_imp:
+            raise ValueError(f"With 'shap_plot=True', 'col_imp' ('{col_imp}') must be "
+                             f"'{ut.COL_FEAT_IMPACT}' or follow '{ut.COL_FEAT_IMPACT}_<name>'")
+        if (pdb is None) == (uniprot is None):
+            raise ValueError("Exactly one of 'pdb' or 'uniprot' should be given "
+                             f"(got pdb={pdb}, uniprot={uniprot})")
+        if predictor is not None and not callable(predictor):
+            raise ValueError(f"'predictor' ({predictor}) should be a callable (sequence, p1) "
+                             f"-> df_feat")
+        jmd_n_len = ut.check_jmd_n_len(jmd_n_len=self._jmd_n_len)
+        n_res = len(sequence)
+        # The site geometry needs jmd_n_len residues before p1, so the first JMD-N residue (start =
+        # p1 - jmd_n_len) is valid; validate init_site here (naming init_site, not 'start').
+        if init_site is not None:
+            ut.check_number_range(name="init_site", val=init_site, min_val=jmd_n_len + 1,
+                                  max_val=n_res, just_int=True)
+
+        # Resolve the per-site predictor (built-in unless the escape hatch is given)
+        if predictor is None:
+            if df_seq is None or labels is None:
+                raise ValueError("The built-in predictor needs 'df_seq' and 'labels' (or pass a "
+                                 "custom 'predictor'); got "
+                                 f"df_seq={'set' if df_seq is not None else None}, "
+                                 f"labels={'set' if labels is not None else None}")
+            ut.check_df_seq(df_seq=df_seq)
+            predictor = build_builtin_predictor(
+                df_feat=df_feat, df_seq=df_seq, labels=labels, tmd_len=tmd_len,
+                jmd_n_len=self._jmd_n_len, jmd_c_len=self._jmd_c_len, model=model,
+                col_imp=col_imp, df_scales=self._df_scales,
+                label_target_class=label_target_class, random_state=random_state,
+                n_jobs=n_jobs, verbose=self._verbose)
+
+        # Dispatch on the selected output
+        if output == "widget":
+            return self.interactive(
+                predictor=predictor, sequence=sequence, pdb=pdb, uniprot=uniprot, col_imp=col_imp,
+                col_val=col_val, shap_plot=shap_plot, tmd_len=tmd_len, mode=mode, focus=focus,
+                focus_region=focus_region, size_by_impact=size_by_impact,
+                normalize_by_span=normalize_by_span, chain=chain, init_site=init_site,
+                debounce_ms=debounce_ms)
+
+        # One-shot bake (no live kernel): predict the chosen site once and render it
+        if init_site is None:
+            init_site = max(jmd_n_len + 1, n_res // 2)
+            ut.check_number_range(name="init_site", val=init_site, min_val=jmd_n_len + 1,
+                                  max_val=n_res, just_int=True)  # guards a very short 'sequence'
+        df_feat_site = predictor(sequence, init_site)
+        start = init_site - jmd_n_len
+        if output == "static":
+            return self.plot_combined(
+                df_feat=df_feat_site, pdb=pdb, uniprot=uniprot, col_imp=col_imp, col_val=col_val,
+                shap_plot=shap_plot, tmd_len=tmd_len, start=start, chain=chain, sequence=sequence,
+                mode=mode, focus=focus, focus_region=focus_region, size_by_impact=size_by_impact,
+                normalize_by_span=normalize_by_span)
+        # output == "html"
+        view = self.plot_linked(
+            df_feat=df_feat_site, pdb=pdb, uniprot=uniprot, col_imp=col_imp, col_val=col_val,
+            shap_plot=shap_plot, tmd_len=tmd_len, start=start, chain=chain, sequence=sequence,
+            mode=mode, focus=focus, focus_region=focus_region, size_by_impact=size_by_impact,
+            normalize_by_span=normalize_by_span)
+        if path is not None:
+            view.write_html(path)
+        return view
 
     # Internal orchestration helpers (map_structure)
     def _resolve_structure_persistent(self, pdb, uniprot, chain, sequence):
