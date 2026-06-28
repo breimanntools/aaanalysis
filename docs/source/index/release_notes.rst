@@ -113,7 +113,13 @@ Added
   notebook-native version of the app's per-site explore loop. ``plot_linked`` returns a
   ``LinkedView`` — a self-contained HTML where **hovering a feature-map column highlights the
   corresponding residue** in the 3Dmol cartoon (the app's signature interaction); ``write_html``
-  exports it as a standalone, shareable page.
+  exports it as a standalone, shareable page. ``explore(df_feat, sequence, df_seq=..., labels=...,
+  model=...)`` is the integrated one call: it builds a **built-in per-site predictor** (compute the
+  query window's values for the fixed feature set, predict the probability, attach the per-site SHAP
+  impact via a default ``ShapModel`` refit — no ``CPP.run`` rediscovery) and dispatches to a
+  selectable ``output`` (``'widget'`` / ``'html'`` / ``'static'``); ``model`` takes a name
+  (``'rf'`` / ``'svm'`` / ``'log_reg'``), an estimator, or a list, and a custom
+  ``predictor=(sequence, p1) -> df_feat`` remains the escape hatch.
 
 **Sequence Analysis**
 
