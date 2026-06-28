@@ -496,6 +496,7 @@ COLOR_PLDDT_LOW = '#FFDB13'         # yellow, 50 <= pLDDT < 70
 COLOR_PLDDT_CONFIDENT = '#65CBF3'   # cyan,   70 <= pLDDT < 90
 COLOR_PLDDT_VERY_HIGH = '#0053D6'   # blue,   pLDDT >= 90
 COLOR_STRUCT_MISSING = '#BFBFBF'    # gray for residues without a mapped value
+COLOR_STRUCT_HIGHLIGHT = '#9D2A71'  # magenta for the hovered/selected residue (linked view)
 
 # Continuous low -> high ramp consumed by the pLDDT structure colouring.
 LIST_COLOR_PLDDT = [COLOR_PLDDT_VERY_LOW, COLOR_PLDDT_LOW,
