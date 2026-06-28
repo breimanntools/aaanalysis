@@ -307,3 +307,108 @@ class TestDebouncer:
 
 def test_interactive_in_public_api():
     assert hasattr(aa.CPPStructurePlot, "interactive")
+
+
+# --- Stage B: feature-map <-> structure linking (highlight slider + click) ----
+class TestLinkedHighlight:
+    """The highlight (position) slider links the feature map to the structure."""
+
+    def test_w_pos_exists_and_window_range(self, pdb_path):
+        # init_site=20, jmd_n_len=10 -> start=10, n_pos=10+10+10=30 -> window [10, 39]
+        _, p = _panel(pdb_path, init_site=20)
+        assert hasattr(p, "w_pos")
+        assert (p.w_pos.min, p.w_pos.max) == (10, 39)
+        assert p.w_pos.value == 20
+
+    def test_initial_highlight_recorded(self, pdb_path):
+        _, p = _panel(pdb_path, init_site=20)
+        assert p.last["highlight_resi"] == 20
+
+    def test_highlight_change_does_not_repredict(self, pdb_path):
+        pred = _RecordingPredictor()
+        _, p = _panel(pdb_path, predictor=pred, init_site=20)
+        n0 = p.n_predict
+        p.w_pos.value = 15
+        assert p.n_predict == n0                 # highlight repaint only, no predictor call
+        assert p.last["highlight_resi"] == 15
+
+    def test_site_change_resets_highlight_range(self, pdb_path):
+        _, p = _panel(pdb_path, init_site=20)
+        p.w_site.value = 30                       # start=20 -> window [20, 49]
+        assert (p.w_pos.min, p.w_pos.max) == (20, 49)
+
+    def test_highlight_clamped_into_new_window(self, pdb_path):
+        _, p = _panel(pdb_path, init_site=20)
+        p.w_pos.value = 12                        # in [10,39]
+        p.w_site.value = 40                       # start=30 -> window [30, 59]; 12 -> clamped to 30
+        assert p.w_pos.min <= p.w_pos.value <= p.w_pos.max
+
+    def test_click_maps_xdata_to_residue(self, pdb_path):
+        _, p = _panel(pdb_path, init_site=20)     # start=10
+
+        class _Evt:
+            pass
+        e = _Evt()
+        e.inaxes = p._click_ctx["heat_ax"]
+        e.xdata = 4.7                             # column 4 -> residue start+4 = 14
+        p._on_map_click(e)
+        assert p.w_pos.value == 14
+
+    def test_click_outside_heatmap_ignored(self, pdb_path):
+        _, p = _panel(pdb_path, init_site=20)
+        before = p.w_pos.value
+
+        class _Evt:
+            pass
+        e = _Evt()
+        e.inaxes = None
+        e.xdata = 4.7
+        p._on_map_click(e)
+        assert p.w_pos.value == before
+
+    def test_site_change_does_not_trigger_highlight_repaint(self, pdb_path):
+        # A site change paints the frame itself; the clamp-driven w_pos change must be suppressed
+        # (no second, momentarily-stale highlight repaint).
+        _, p = _panel(pdb_path, init_site=20)
+        h0 = p.n_highlight
+        p.w_site.value = 40                       # window moves; w_pos clamps
+        assert p.n_highlight == h0
+
+    def test_manual_highlight_counts(self, pdb_path):
+        _, p = _panel(pdb_path, init_site=20)
+        h0 = p.n_highlight
+        p.w_pos.value = 15                         # a manual drag does repaint the highlight
+        assert p.n_highlight == h0 + 1
+
+    def test_no_map_panel_still_has_slider(self, pdb_path):
+        # feature_map=False -> no map panel, but the structure highlight slider still works
+        _, p = _panel(pdb_path, init_site=20, feature_map=False)
+        assert hasattr(p, "w_pos") and p.out_map is None
+        n0 = p.n_predict
+        p.w_pos.value = 15
+        assert p.n_predict == n0 and p.last["highlight_resi"] == 15
+
+
+class TestRenderHighlight:
+    """render_py3dmol accepts a highlight_resi marker overlay."""
+
+    def test_highlight_resi_renders(self, pdb_path):
+        from aaanalysis.feature_engineering_pro._backend.cpp_struct.render import render_py3dmol
+        from aaanalysis.feature_engineering_pro._backend.cpp_struct.structure import (
+            load_structure, extract_chain_residues)
+        records, _identity, chain_id = extract_chain_residues(load_structure(pdb_path))
+        view = render_py3dmol(pdb_path=pdb_path, records=records, dict_impact={12: 0.5},
+                              max_abs=0.5, mode="impact", focus="whole", window_resis=None,
+                              size_by_impact=True, chain_id=chain_id, highlight_resi=12)
+        assert view is not None     # builds without error with a highlight marker
+
+    def test_highlight_resi_absent_ok(self, pdb_path):
+        from aaanalysis.feature_engineering_pro._backend.cpp_struct.render import render_py3dmol
+        from aaanalysis.feature_engineering_pro._backend.cpp_struct.structure import (
+            load_structure, extract_chain_residues)
+        records, _identity, chain_id = extract_chain_residues(load_structure(pdb_path))
+        # A highlight residue not present in the structure is silently skipped (no crash)
+        view = render_py3dmol(pdb_path=pdb_path, records=records, dict_impact={}, max_abs=1.0,
+                              mode="impact", focus="whole", window_resis=None,
+                              size_by_impact=True, chain_id=chain_id, highlight_resi=9999)
+        assert view is not None

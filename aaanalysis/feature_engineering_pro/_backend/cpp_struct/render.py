@@ -27,6 +27,13 @@ _STICK_MIN = 0.18
 _STICK_SPAN = 0.55
 _STICK_FLAT = 0.22
 
+# Linked-selection highlight marker (the residue picked on the feature map): a bold, high-contrast
+# stick + sphere drawn on top of the impact styling so the selection is unmistakable. The colour is
+# shared with the feature-map column line (ut.COLOR_LINK_HIGHLIGHT) so the two panels read as linked.
+_HIGHLIGHT_COLOR = ut.COLOR_LINK_HIGHLIGHT
+_HIGHLIGHT_STICK = 0.9
+_HIGHLIGHT_SPHERE = 0.6
+
 
 def _stick_radius(impact, max_abs, size_by_impact):
     """Stick radius (A) for an impact residue; 0 for zero / undefined impact.
@@ -64,7 +71,8 @@ def _sel(resi, chain_id):
 # II Main Functions
 def render_py3dmol(pdb_path, records, dict_impact, max_abs, mode,
                    focus, window_resis, size_by_impact, chain_id=None,
-                   color_pos=None, color_neg=None, width=600, height=450):
+                   color_pos=None, color_neg=None, width=600, height=450,
+                   highlight_resi=None):
     """Build a py3Dmol cartoon view and wrap it in a StructureView, mirroring the app.
 
     The cartoon gets a neutral gray base; impact residues are then painted on the
@@ -114,6 +122,14 @@ def render_py3dmol(pdb_path, records, dict_impact, max_abs, mode,
             if radius > 0:
                 style["stick"] = {"radius": radius, "color": color}
             view.setStyle(_sel(resi, chain_id), style)
+
+    # Linked-selection marker: a bold highlight stick + sphere on the selected residue, added on
+    # top of the impact styling (and full opacity even when the context is faded) so the residue
+    # the user picked on the feature map stands out. Only marks residues present in the structure.
+    if highlight_resi is not None and highlight_resi in present_resis:
+        sel = _sel(highlight_resi, chain_id)
+        view.addStyle(sel, {"stick": {"radius": _HIGHLIGHT_STICK, "color": _HIGHLIGHT_COLOR}})
+        view.addStyle(sel, {"sphere": {"radius": _HIGHLIGHT_SPHERE, "color": _HIGHLIGHT_COLOR}})
 
     # Zoom to the in-focus window if asked (and it exists), else fit the whole model.
     if focus == "zoom" and in_focus:

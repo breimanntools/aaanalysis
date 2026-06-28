@@ -110,7 +110,11 @@ Added
   layout. ``interactive`` returns a live `ipywidgets <https://ipywidgets.readthedocs.io>`_
   explorer (added to the ``[pro]`` extra) where a site slider drives a user ``predictor`` and
   repaints the linked 3D structure and ``CPPPlot.feature_map`` together (debounced), the
-  notebook-native version of the app's per-site explore loop. ``plot_linked`` returns a
+  notebook-native version of the app's per-site explore loop. A **highlight (position) slider**
+  links the two panels live: picking a residue lights it up in the 3D cartoon and marks its
+  feature-map column without re-predicting, and with the ``ipympl`` (``%matplotlib widget``)
+  backend the feature map becomes **clickable** for the same highlight (``ipympl`` is optional —
+  the slider is the always-present link, no extra dependency). ``plot_linked`` returns a
   ``LinkedView`` — a self-contained HTML where **hovering a feature-map column highlights the
   corresponding residue** in the 3Dmol cartoon (the app's signature interaction); ``write_html``
   exports it as a standalone, shareable page. ``explore(df_feat, sequence, df_seq=..., labels=...,

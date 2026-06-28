@@ -465,6 +465,9 @@ LABEL_MEAN_DIF = "Mean difference"
 # Standard colors
 COLOR_SHAP_POS = '#FF0D57'  # (255, 13, 87)
 COLOR_SHAP_NEG = '#1E88E5'  # (30, 136, 229)
+# Linked-selection highlight (CPPStructurePlot.interactive): the same colour marks the picked
+# residue in the 3D structure and its feature-map column, so the link reads at a glance.
+COLOR_LINK_HIGHLIGHT = '#00E5FF'  # (0, 229, 255) bright cyan, distinct from the SHAP ramp
 COLOR_FEAT_POS = '#9D2B39'  # (157, 43, 57) Mean difference
 COLOR_FEAT_NEG = '#326599'  # (50, 101, 133) Mean difference
 COLOR_FEAT_IMP = '#7F7F7F'  # (127, 127, 127) feature importance

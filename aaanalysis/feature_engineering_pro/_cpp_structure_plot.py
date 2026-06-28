@@ -753,6 +753,13 @@ class CPPStructurePlot:
         The exact prediction itself runs on the live Python kernel via ``predictor``; this class
         does not hard-code :class:`CPP` / :class:`TreeModel` / :class:`ShapModel`.
 
+        A **highlight (position) slider** links the feature map to the structure: pick a residue in
+        the current window and it lights up in the 3D cartoon (a bold marker) while a vertical line
+        marks its feature-map column — without re-running the predictor. When the ``ipympl``
+        (``%matplotlib widget``) backend is active the feature map is also **clickable** (clicking a
+        column drives the same highlight); ``ipympl`` is optional — the slider is the always-present
+        link, so no extra dependency is required.
+
         .. versionadded:: 1.1.0
 
         Parameters
@@ -861,18 +868,31 @@ class CPPStructurePlot:
         records, chain_id, pdb_path, tmp_holder = self._resolve_structure_persistent(
             pdb, uniprot, chain, sequence)
 
-        # Feature-map renderer (frontend owns CPPPlot); None disables the map panel
+        # Feature-map renderer (frontend owns CPPPlot); None disables the map panel. Returns
+        # (fig, heat_ax): heat_ax is the column-spanning heatmap axes (for the highlight line +
+        # the ipympl click->residue mapping), found like plot_linked's _feature_map_png_and_columns.
         feature_map_renderer = None
         if feature_map:
-            def _render_feature_map(df_feat, start):
+            n_pos = self._jmd_n_len + tmd_len + self._jmd_c_len
+
+            def _render_feature_map(df_feat, start, highlight_resi=None):
                 from aaanalysis import CPPPlot
                 cpp_plot = CPPPlot(df_scales=self._df_scales, df_cat=self._df_cat,
                                    jmd_n_len=self._jmd_n_len, jmd_c_len=self._jmd_c_len,
                                    accept_gaps=True, verbose=False)
-                fig, _ax = cpp_plot.feature_map(df_feat=df_feat, shap_plot=shap_plot,
-                                                col_val=col_val, col_imp=col_imp,
-                                                tmd_len=tmd_len, start=start)
-                return fig
+                fig, ax = cpp_plot.feature_map(df_feat=df_feat, shap_plot=shap_plot,
+                                               col_val=col_val, col_imp=col_imp,
+                                               tmd_len=tmd_len, start=start)
+                fig.canvas.draw()
+                cands = [a for a in fig.get_axes()
+                         if abs((a.get_xlim()[1] - a.get_xlim()[0]) - n_pos) < 1e-6]
+                heat_ax = max(cands, key=lambda a: a.get_position().height) if cands else ax
+                if highlight_resi is not None and heat_ax is not None:
+                    # Column i (0-based) is residue start+i; draw the line at the column centre.
+                    heat_ax.axvline(x=(int(highlight_resi) - int(start)) + 0.5,
+                                    color=ut.COLOR_LINK_HIGHLIGHT, linewidth=2.0, alpha=0.95,
+                                    zorder=10)
+                return fig, heat_ax
             feature_map_renderer = _render_feature_map
 
         from ._backend.cpp_struct.interactive_widgets import InteractivePanel
