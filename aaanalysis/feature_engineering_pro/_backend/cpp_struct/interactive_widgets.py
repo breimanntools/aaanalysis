@@ -119,11 +119,13 @@ class InteractivePanel:
         self._tmp_holder = tmp_holder   # keep an AlphaFold temp dir alive for the panel's life
         self._verbose = verbose
         self.n_predict = 0              # test hook: count of predictor calls
+        self.n_highlight = 0            # test hook: count of highlight-only repaints
         self.last = None               # test hook: last rendered {p1, start, ...}
         self._n_pos = jmd_n_len + tmd_len + jmd_c_len   # window length (feature-map columns)
         self._highlight_resi = None     # residue linked-selected on the feature map (None = off)
         self._render_state = None       # cached last render, for highlight-only repaints
         self._open_fig = None           # the open interactive (ipympl) figure, if any
+        self._syncing_pos = False       # True while render_site drives w_pos (suppress observer)
         self._ipympl = _ipympl_active() # clickable feature map only when the widget backend is on
 
         # Controls (continuous_update=False -> the slider fires only on release)
@@ -161,6 +163,8 @@ class InteractivePanel:
 
     def _on_pos_change(self, _change):
         """Highlight observer: repaint the linked residue (debounced) without re-predicting."""
+        if self._syncing_pos:
+            return   # range/value driven programmatically by render_site; it paints the frame
         self._debounced_hl(self.w_pos.value)
 
     def render_site(self, p1, mode, focus):
@@ -179,7 +183,13 @@ class InteractivePanel:
             normalize_by_span=self._normalize_by_span)
         window_resis = _window_resis(focus, self._focus_region, positions_union)
         # The window moved: reset the highlight slider's range to it and keep/clamp the selection.
-        self._set_pos_range(start)
+        # Suppress the highlight observer while we drive w_pos here — render_site paints the frame
+        # itself, so a clamp must not schedule a second (and momentarily stale) highlight repaint.
+        self._syncing_pos = True
+        try:
+            self._set_pos_range(start)
+        finally:
+            self._syncing_pos = False
         self._highlight_resi = int(self.w_pos.value)
         self._render_state = dict(df_feat=df_feat, start=start, mode=mode, focus=focus,
                                   dict_impact=dict_impact, max_abs=max_abs,
@@ -201,6 +211,7 @@ class InteractivePanel:
         st = self._render_state
         if st is None:
             return
+        self.n_highlight += 1
         self._highlight_resi = int(resi)
         self._paint_structure(st["dict_impact"], st["max_abs"], st["mode"], st["focus"],
                               st["window_resis"], self._highlight_resi)
@@ -237,9 +248,7 @@ class InteractivePanel:
         the highlight slider; otherwise the figure is shown as a static image and closed.
         """
         import matplotlib.pyplot as plt
-        if self._open_fig is not None:
-            plt.close(self._open_fig)   # close the previous interactive figure (avoid leaks)
-            self._open_fig = None
+        prev_fig = self._open_fig            # close only AFTER the new figure is shown (no flash)
         fig, heat_ax = self._feature_map_renderer(df_feat, start, highlight_resi)
         self._click_ctx = dict(start=int(start), heat_ax=heat_ax)  # for the ipympl click mapping
         self.out_map.clear_output(wait=True)
@@ -249,9 +258,12 @@ class InteractivePanel:
             with self.out_map:
                 self._display(fig.canvas)
         else:
+            self._open_fig = None
             with self.out_map:
                 self._display(fig)
             plt.close(fig)
+        if prev_fig is not None and prev_fig is not fig:
+            plt.close(prev_fig)             # release the previous interactive figure
 
     def _on_map_click(self, event):
         """ipympl click handler: map a click on the heatmap column to a residue and highlight it."""

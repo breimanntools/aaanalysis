@@ -28,8 +28,9 @@ _STICK_SPAN = 0.55
 _STICK_FLAT = 0.22
 
 # Linked-selection highlight marker (the residue picked on the feature map): a bold, high-contrast
-# stick + sphere drawn on top of the impact styling so the selection is unmistakable.
-_HIGHLIGHT_COLOR = "#00E5FF"   # bright cyan, distinct from the red/white/blue impact ramp
+# stick + sphere drawn on top of the impact styling so the selection is unmistakable. The colour is
+# shared with the feature-map column line (ut.COLOR_LINK_HIGHLIGHT) so the two panels read as linked.
+_HIGHLIGHT_COLOR = ut.COLOR_LINK_HIGHLIGHT
 _HIGHLIGHT_STICK = 0.9
 _HIGHLIGHT_SPHERE = 0.6
 

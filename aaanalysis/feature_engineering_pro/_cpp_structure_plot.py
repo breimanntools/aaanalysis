@@ -890,7 +890,8 @@ class CPPStructurePlot:
                 if highlight_resi is not None and heat_ax is not None:
                     # Column i (0-based) is residue start+i; draw the line at the column centre.
                     heat_ax.axvline(x=(int(highlight_resi) - int(start)) + 0.5,
-                                    color=ut.COLOR_SHAP_POS, linewidth=2.0, alpha=0.9, zorder=10)
+                                    color=ut.COLOR_LINK_HIGHLIGHT, linewidth=2.0, alpha=0.95,
+                                    zorder=10)
                 return fig, heat_ax
             feature_map_renderer = _render_feature_map
 

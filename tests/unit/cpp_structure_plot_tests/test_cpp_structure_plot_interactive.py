@@ -366,6 +366,20 @@ class TestLinkedHighlight:
         p._on_map_click(e)
         assert p.w_pos.value == before
 
+    def test_site_change_does_not_trigger_highlight_repaint(self, pdb_path):
+        # A site change paints the frame itself; the clamp-driven w_pos change must be suppressed
+        # (no second, momentarily-stale highlight repaint).
+        _, p = _panel(pdb_path, init_site=20)
+        h0 = p.n_highlight
+        p.w_site.value = 40                       # window moves; w_pos clamps
+        assert p.n_highlight == h0
+
+    def test_manual_highlight_counts(self, pdb_path):
+        _, p = _panel(pdb_path, init_site=20)
+        h0 = p.n_highlight
+        p.w_pos.value = 15                         # a manual drag does repaint the highlight
+        assert p.n_highlight == h0 + 1
+
     def test_no_map_panel_still_has_slider(self, pdb_path):
         # feature_map=False -> no map panel, but the structure highlight slider still works
         _, p = _panel(pdb_path, init_site=20, feature_map=False)
