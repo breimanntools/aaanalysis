@@ -5,14 +5,11 @@ per-residue CPP / CPP-SHAP feature impact onto a 3D protein structure.
 import os
 import tempfile
 import warnings
-from typing import Optional, List, Tuple, Union, Literal, Callable, TYPE_CHECKING
+from typing import Optional, List, Tuple, Union, Literal, Callable
 
 import pandas as pd
 
 import aaanalysis.utils as ut
-
-if TYPE_CHECKING:   # annotation-only; ipywidgets stays lazy-imported at runtime
-    import ipywidgets
 
 from ._backend.cpp_struct.mapping import compute_residue_impact
 from ._backend.cpp_struct.structure import (load_structure, extract_chain_residues,
@@ -506,7 +503,7 @@ class CPPStructurePlot:
                     chain: Optional[str] = None,
                     init_site: Optional[int] = None,
                     debounce_ms: int = 250,
-                    ) -> "ipywidgets.Widget":
+                    ) -> object:  # an ipywidgets.Widget (kept loose to avoid importing ipywidgets)
         """
         Build a live, selection-linked explorer that re-predicts and repaints on each site.
 
