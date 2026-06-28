@@ -1,6 +1,26 @@
 # ADR-0028 — `CPPStructurePlot` returns a `StructureView` wrapper, not a matplotlib `Axes`
 
-Status: Accepted — 2026-06-11
+Status: Accepted — 2026-06-11 (amended 2026-06-28: matplotlib backend removed)
+
+## Amendment (2026-06-28) — py3Dmol-only, no matplotlib structure backend
+
+The original decision below kept a **matplotlib `mplot3d` fallback** so a structure could
+render without py3Dmol. In practice that fallback drew a per-residue Cα **scatter** that
+looked nothing like a protein and leaked into the rendered example notebooks — a real
+quality problem. py3Dmol also cannot render a cartoon into a matplotlib figure or to a PNG
+headlessly, so a "static matplotlib structure" can only ever be that scatter.
+
+Decision: **drop the matplotlib structure backend entirely.** All `CPPStructurePlot`
+rendering is py3Dmol (a real interactive cartoon); the methods now *require* py3Dmol (a
+friendly install hint is raised otherwise). The `backend` argument of `map_structure` is
+gone. `plot_combined` no longer returns a matplotlib `(fig, ax)` — it returns a
+`CombinedView` (py3Dmol cartoon + the `CPPPlot.feature_map` image side by side, HTML).
+`interactive` returns an ipywidgets panel. The wrapper rationale below still holds: none of
+these are a matplotlib `Axes`, so `CPPStructurePlot` remains the documented exception to the
+"return `(fig, ax)`" rule — now because the outputs are genuinely 3D / HTML, not because two
+backends disagree. `StructureView` is a pure py3Dmol delegator (`show` / `write_html` /
+`_repr_html_`); `savefig` is gone (use `write_html`). The original 2026-06-11 context (which
+weighed the two-backend split) is retained below for history.
 
 ## Context
 

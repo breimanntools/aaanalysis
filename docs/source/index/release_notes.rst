@@ -96,17 +96,21 @@ Added
   exact two-fit estimate (~2x faster than the threshold default on the same cell), ``5`` adds
   light Monte-Carlo averaging, and the mean converges (run-to-run spread below ~5%) around
   ``n_rounds ≈ 15–20``; a fixed ``random_state`` keeps every run reproducible.
-- **CPPStructurePlot** (``[pro]``): Paints per-residue CPP / CPP-SHAP feature impact onto a
-  3D protein structure. ``map_structure(df_feat, pdb=...)`` (or ``uniprot=...`` to auto-fetch
-  the AlphaFold model) returns a ``StructureView`` with a uniform ``show`` / ``write_html`` /
-  ``savefig`` surface over an interactive `py3Dmol <https://pypi.org/project/py3Dmol/>`_ backend
-  (added to the ``[pro]`` extra) and a static matplotlib fallback. Supports an ``'impact'``
-  red-white-blue ramp and an ``'plddt'`` AlphaFold-confidence mode, with ``whole`` / ``fade`` /
+- **CPPStructurePlot** (``[pro]``): Paints per-residue CPP / CPP-SHAP feature impact onto an
+  interactive 3D protein structure, rendered with `py3Dmol <https://pypi.org/project/py3Dmol/>`_
+  (no matplotlib structure fallback — the cartoon is always a real 3D view). ``map_structure(
+  df_feat, pdb=...)`` (or ``uniprot=...`` to auto-fetch the AlphaFold model) returns a
+  ``StructureView`` (``show`` / ``write_html`` / ``_repr_html_``). Supports an ``'impact'``
+  red-white-blue ramp and a ``'plddt'`` AlphaFold-confidence mode, with ``whole`` / ``fade`` /
   ``zoom`` focus. By default each feature's full impact is painted on every residue it spans
   (app-fidelity colouring); ``normalize_by_span=True`` switches to the span-normalized sum used
   by ``CPPPlot.profile`` and the ``CPPPlot.feature_map`` top per-position bar. ``plot_combined``
-  draws the structure and the ``CPPPlot.feature_map`` side by side in one static figure
-  (``savefig`` to PNG / PDF), reproducing the deployed cleavage app's signature layout.
+  returns a ``CombinedView`` showing the py3Dmol cartoon next to the ``CPPPlot.feature_map``
+  image (``write_html`` exports the pair), reproducing the deployed cleavage app's signature
+  layout. ``interactive`` returns a live `ipywidgets <https://ipywidgets.readthedocs.io>`_
+  explorer (added to the ``[pro]`` extra) where a site slider drives a user ``predictor`` and
+  repaints the linked 3D structure and ``CPPPlot.feature_map`` together (debounced), the
+  notebook-native version of the app's per-site explore loop.
 
 **Sequence Analysis**
 

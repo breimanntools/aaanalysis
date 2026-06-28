@@ -69,11 +69,22 @@ def plddt_cmap():
 
 
 def plddt_to_hex(plddt):
-    """Map a pLDDT value (0-100) to a hex colour; non-finite -> gray."""
+    """Map a pLDDT value (0-100) to the discrete AlphaFold confidence colour.
+
+    Uses the canonical AlphaFold bins (very high >=90, confident >=70, low >=50, very
+    low <50) read from ``ut.LIST_COLOR_PLDDT`` (ordered low->high), matching the
+    AlphaFold DB / deployed-app look rather than a smooth gradient. Non-finite -> gray.
+    """
     if plddt is None or not np.isfinite(plddt):
         return ut.COLOR_STRUCT_MISSING
-    frac = float(np.clip(plddt / 100.0, 0.0, 1.0))
-    return mcolors.to_hex(plddt_cmap()(frac))
+    c_low, c_lo_mid, c_hi_mid, c_high = ut.LIST_COLOR_PLDDT  # orange, yellow, cyan, blue
+    if plddt >= 90:
+        return c_high
+    if plddt >= 70:
+        return c_hi_mid
+    if plddt >= 50:
+        return c_lo_mid
+    return c_low
 
 
 def color_for_residue(resi, dict_impact, max_abs, plddt, mode,

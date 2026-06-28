@@ -1,22 +1,21 @@
-"""This is a script to test CPPStructurePlot.plot_combined()."""
+"""This is a script to test CPPStructurePlot.plot_combined() (py3Dmol + feature_map)."""
 import matplotlib
 matplotlib.use("Agg")
-import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
 import pytest
 
-# Pro-gated: structure parsing needs biopython. Skip the whole module cleanly
-# when the pro extra is not installed.
+# Pro-gated: structure parsing needs biopython, rendering needs py3Dmol.
 pytest.importorskip("Bio")
+pytest.importorskip("py3Dmol")
 
 import aaanalysis as aa
 import aaanalysis.utils as ut
+from aaanalysis.feature_engineering_pro._backend.cpp_struct.view import CombinedView
 
 
 # --- fixtures / helpers ------------------------------------------------------
 def _make_pdb(path, n=30, chain="A"):
-    """Write a tiny synthetic PDB: one CA per residue, B-factor used as pLDDT."""
     lines = []
     serial = 1
     for i in range(n):
@@ -33,8 +32,7 @@ def _make_pdb(path, n=30, chain="A"):
 
 @pytest.fixture(scope="module")
 def pdb_path(tmp_path_factory):
-    p = tmp_path_factory.mktemp("struct_combined") / "synthetic.pdb"
-    return _make_pdb(p)
+    return _make_pdb(tmp_path_factory.mktemp("struct_combined") / "synthetic.pdb")
 
 
 @pytest.fixture(scope="module")
@@ -64,71 +62,69 @@ def _csp():
     return aa.CPPStructurePlot(jmd_n_len=10, jmd_c_len=10, verbose=False)
 
 
-# --- normal cases, one parameter per test ------------------------------------
+# --- normal cases ------------------------------------------------------------
 class TestPlotCombined:
     """Normal cases — one parameter per test."""
 
-    def test_returns_fig_and_two_axes(self, pdb_path, df_feat):
-        fig, ax = _csp().plot_combined(df_feat=df_feat, pdb=pdb_path, tmd_len=10,
-                                       col_imp="feat_impact")
-        assert isinstance(fig, plt.Figure)
-        assert len(ax) == 2
-        plt.close(fig)
+    def test_returns_combined_view(self, pdb_path, df_feat):
+        view = _csp().plot_combined(df_feat=df_feat, pdb=pdb_path, tmd_len=10,
+                                    col_imp="feat_impact")
+        assert isinstance(view, CombinedView)
+        assert view.view is not None
+        assert isinstance(view._repr_html_(), str)
 
     @pytest.mark.parametrize("mode", ["impact", "plddt"])
     def test_mode_positive(self, pdb_path, df_feat, mode):
-        fig, ax = _csp().plot_combined(df_feat=df_feat, pdb=pdb_path, tmd_len=10,
-                                       col_imp="feat_impact", mode=mode)
-        assert isinstance(fig, plt.Figure)
-        plt.close(fig)
+        view = _csp().plot_combined(df_feat=df_feat, pdb=pdb_path, tmd_len=10,
+                                    col_imp="feat_impact", mode=mode)
+        assert view.mode == mode
 
     @pytest.mark.parametrize("focus", ["whole", "fade", "zoom"])
     def test_focus_positive(self, pdb_path, df_feat, focus):
-        fig, _ = _csp().plot_combined(df_feat=df_feat, pdb=pdb_path, tmd_len=10,
-                                      col_imp="feat_impact", focus=focus)
-        plt.close(fig)
+        view = _csp().plot_combined(df_feat=df_feat, pdb=pdb_path, tmd_len=10,
+                                    col_imp="feat_impact", focus=focus)
+        assert isinstance(view, CombinedView)
 
     @pytest.mark.parametrize("normalize_by_span", [True, False])
     def test_normalize_by_span_positive(self, pdb_path, df_feat, normalize_by_span):
-        fig, _ = _csp().plot_combined(df_feat=df_feat, pdb=pdb_path, tmd_len=10,
-                                      col_imp="feat_impact",
-                                      normalize_by_span=normalize_by_span)
-        plt.close(fig)
+        view = _csp().plot_combined(df_feat=df_feat, pdb=pdb_path, tmd_len=10,
+                                    col_imp="feat_impact",
+                                    normalize_by_span=normalize_by_span)
+        assert isinstance(view, CombinedView)
 
     @pytest.mark.parametrize("shap_plot", [True, False])
     def test_shap_plot_positive(self, pdb_path, df_feat, shap_plot):
         col_imp = "feat_impact" if shap_plot else "feat_importance"
-        fig, _ = _csp().plot_combined(df_feat=df_feat, pdb=pdb_path, tmd_len=10,
-                                      col_imp=col_imp, shap_plot=shap_plot)
-        plt.close(fig)
+        view = _csp().plot_combined(df_feat=df_feat, pdb=pdb_path, tmd_len=10,
+                                    col_imp=col_imp, shap_plot=shap_plot)
+        assert isinstance(view, CombinedView)
 
     def test_size_by_impact_positive(self, pdb_path, df_feat):
-        fig, _ = _csp().plot_combined(df_feat=df_feat, pdb=pdb_path, tmd_len=10,
-                                      col_imp="feat_impact", size_by_impact=False)
-        plt.close(fig)
+        view = _csp().plot_combined(df_feat=df_feat, pdb=pdb_path, tmd_len=10,
+                                    col_imp="feat_impact", size_by_impact=False)
+        assert isinstance(view, CombinedView)
 
     def test_focus_region_positive(self, pdb_path, df_feat):
-        fig, _ = _csp().plot_combined(df_feat=df_feat, pdb=pdb_path, tmd_len=10,
-                                      col_imp="feat_impact", focus="zoom",
-                                      focus_region=(11, 20))
-        plt.close(fig)
+        view = _csp().plot_combined(df_feat=df_feat, pdb=pdb_path, tmd_len=10,
+                                    col_imp="feat_impact", focus="zoom", focus_region=(11, 20))
+        assert isinstance(view, CombinedView)
 
     def test_part_sequences_positive(self, pdb_path, df_feat):
-        fig, _ = _csp().plot_combined(df_feat=df_feat, pdb=pdb_path, tmd_len=10,
-                                      col_imp="feat_impact", tmd_seq="A" * 10,
-                                      jmd_n_seq="A" * 10, jmd_c_seq="A" * 10)
-        plt.close(fig)
+        view = _csp().plot_combined(df_feat=df_feat, pdb=pdb_path, tmd_len=10,
+                                    col_imp="feat_impact", tmd_seq="A" * 10,
+                                    jmd_n_seq="A" * 10, jmd_c_seq="A" * 10)
+        assert isinstance(view, CombinedView)
 
     def test_feature_map_kws_positive(self, pdb_path, df_feat):
-        fig, _ = _csp().plot_combined(df_feat=df_feat, pdb=pdb_path, tmd_len=10,
-                                      col_imp="feat_impact",
-                                      feature_map_kws={"name_test": "site"})
-        plt.close(fig)
+        view = _csp().plot_combined(df_feat=df_feat, pdb=pdb_path, tmd_len=10,
+                                    col_imp="feat_impact",
+                                    feature_map_kws={"name_test": "site"})
+        assert isinstance(view, CombinedView)
 
-    def test_width_ratios_positive(self, pdb_path, df_feat):
-        fig, _ = _csp().plot_combined(df_feat=df_feat, pdb=pdb_path, tmd_len=10,
-                                      col_imp="feat_impact", width_ratios=(1, 2))
-        plt.close(fig)
+    def test_feature_map_dpi_positive(self, pdb_path, df_feat):
+        view = _csp().plot_combined(df_feat=df_feat, pdb=pdb_path, tmd_len=10,
+                                    col_imp="feat_impact", feature_map_dpi=120)
+        assert isinstance(view, CombinedView)
 
     # --- negatives -----------------------------------------------------------
     @pytest.mark.parametrize("mode", ["Impact", "shap", ""])
@@ -174,42 +170,31 @@ class TestPlotCombined:
 
 # --- combinations & edge interactions ----------------------------------------
 class TestPlotCombinedComplex:
-    """Combinations, savefig, and the AlphaFold-fetch path."""
+    """write_html, custom scales, the AlphaFold-fetch path, and the py3Dmol gate."""
 
-    def test_savefig_png(self, pdb_path, df_feat, tmp_path):
-        fig, _ = _csp().plot_combined(df_feat=df_feat, pdb=pdb_path, tmd_len=10,
-                                      col_imp="feat_impact")
-        out = tmp_path / "combined.png"
-        fig.savefig(str(out), dpi=80)
-        assert out.exists() and out.stat().st_size > 0
-        plt.close(fig)
+    def test_write_html(self, pdb_path, df_feat, tmp_path):
+        view = _csp().plot_combined(df_feat=df_feat, pdb=pdb_path, tmd_len=10,
+                                    col_imp="feat_impact")
+        out = tmp_path / "combined.html"
+        view.write_html(str(out))
+        text = out.read_text(encoding="utf-8")
+        assert out.stat().st_size > 0
+        assert "base64" in text  # the feature-map image is embedded
 
-    def test_savefig_pdf(self, pdb_path, df_feat, tmp_path):
-        fig, _ = _csp().plot_combined(df_feat=df_feat, pdb=pdb_path, tmd_len=10,
-                                      col_imp="feat_impact")
-        out = tmp_path / "combined.pdf"
-        fig.savefig(str(out))
-        assert out.exists() and out.stat().st_size > 0
-        plt.close(fig)
-
-    def test_plddt_zoom_fade_combo(self, pdb_path, df_feat):
-        fig, _ = _csp().plot_combined(df_feat=df_feat, pdb=pdb_path, tmd_len=10,
-                                      col_imp="feat_impact", mode="plddt", focus="fade")
-        plt.close(fig)
+    def test_plddt_fade_combo(self, pdb_path, df_feat):
+        view = _csp().plot_combined(df_feat=df_feat, pdb=pdb_path, tmd_len=10,
+                                    col_imp="feat_impact", mode="plddt", focus="fade")
+        assert view.mode == "plddt"
 
     def test_custom_df_scales_and_df_cat(self, pdb_path, df_feat):
-        # Forwarding df_cat to the inner CPPPlot avoids the "scale ids missing in df_cat"
-        # crash when the plotter is built with custom scales.
-        df_scales = aa.load_scales()
-        df_cat = aa.load_scales(name="scales_cat")
+        # Forwarding df_cat to the inner CPPPlot avoids the "scale ids missing in df_cat" crash.
         csp = aa.CPPStructurePlot(jmd_n_len=10, jmd_c_len=10,
-                                  df_scales=df_scales, df_cat=df_cat, verbose=False)
-        fig, _ = csp.plot_combined(df_feat=df_feat, pdb=pdb_path, tmd_len=10,
-                                   col_imp="feat_impact")
-        assert isinstance(fig, plt.Figure)
-        plt.close(fig)
+                                  df_scales=aa.load_scales(),
+                                  df_cat=aa.load_scales(name="scales_cat"), verbose=False)
+        view = csp.plot_combined(df_feat=df_feat, pdb=pdb_path, tmd_len=10, col_imp="feat_impact")
+        assert isinstance(view, CombinedView)
 
-    def test_uniprot_fetch_path_mocked(self, df_feat, tmp_path, monkeypatch):
+    def test_uniprot_fetch_path_mocked(self, df_feat, monkeypatch):
         from aaanalysis.data_handling_pro import StructurePreprocessor
 
         def _fake_fetch(self, df_seq=None, out_folder=None, **kwargs):
@@ -219,10 +204,15 @@ class TestPlotCombinedComplex:
             return pd.DataFrame({"entry": ["Q9NQ76"], "model_path": [str(p)]})
 
         monkeypatch.setattr(StructurePreprocessor, "fetch_alphafold", _fake_fetch)
-        fig, _ = _csp().plot_combined(df_feat=df_feat, uniprot="Q9NQ76", tmd_len=10,
-                                      col_imp="feat_impact")
-        assert isinstance(fig, plt.Figure)
-        plt.close(fig)
+        view = _csp().plot_combined(df_feat=df_feat, uniprot="Q9NQ76", tmd_len=10,
+                                    col_imp="feat_impact")
+        assert isinstance(view, CombinedView)
+
+    def test_missing_py3dmol_raises_friendly(self, pdb_path, df_feat, monkeypatch):
+        from aaanalysis.feature_engineering_pro import _cpp_structure_plot as csp_mod
+        monkeypatch.setattr(csp_mod, "py3dmol_available", lambda: False)
+        with pytest.raises(RuntimeError, match="py3Dmol"):
+            _csp().plot_combined(df_feat=df_feat, pdb=pdb_path, tmd_len=10, col_imp="feat_impact")
 
 
 def test_plot_combined_in_public_api():

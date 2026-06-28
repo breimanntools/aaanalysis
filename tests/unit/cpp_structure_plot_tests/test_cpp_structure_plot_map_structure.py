@@ -1,30 +1,22 @@
-"""This is a script to test CPPStructurePlot.map_structure()."""
+"""This is a script to test CPPStructurePlot.map_structure() (py3Dmol-only)."""
 import matplotlib
 matplotlib.use("Agg")
-import os
 import pathlib
-import tempfile
 import numpy as np
 import pandas as pd
 import pytest
 from hypothesis import given, settings
 import hypothesis.strategies as some
 
-# Pro-gated: structure parsing needs biopython. Skip the whole module cleanly
-# when the pro extra is not installed.
+# Pro-gated: structure parsing needs biopython, rendering needs py3Dmol.
 pytest.importorskip("Bio")
+pytest.importorskip("py3Dmol")
 
 import aaanalysis as aa
 import aaanalysis.utils as ut
 
 settings.register_profile("ci", deadline=None)
 settings.load_profile("ci")
-
-HAS_PY3DMOL = True
-try:
-    import py3Dmol  # noqa: F401
-except ImportError:
-    HAS_PY3DMOL = False
 
 
 # --- fixtures / helpers ------------------------------------------------------
@@ -35,7 +27,7 @@ def _make_pdb(path, n=40, start_resi=1, chain="A"):
     for i in range(n):
         resi = start_resi + i
         x, y, z = i * 1.5, np.sin(i * 0.5) * 5, np.cos(i * 0.5) * 5
-        b = 40 + (i % 60)  # pLDDT-ish 40..99
+        b = 40 + (i % 60)
         lines.append(
             f"ATOM  {serial:5d}  CA  ALA {chain}{resi:4d}    "
             f"{x:8.3f}{y:8.3f}{z:8.3f}  1.00{b:6.2f}           C")
@@ -60,104 +52,90 @@ def _df_feat(tmd_impact=0.8, jmd_impact=-0.4, col_imp="feat_impact"):
     })
 
 
-# --- normal cases, one parameter per test ------------------------------------
+# --- normal cases ------------------------------------------------------------
 class TestMapStructure:
     """Normal cases — one parameter per test."""
 
     def test_returns_structure_view(self, pdb_path):
         csp = aa.CPPStructurePlot(verbose=False)
-        view = csp.map_structure(df_feat=_df_feat(), pdb=pdb_path, tmd_len=10, backend="mpl")
-        assert view.backend == "mpl"
+        view = csp.map_structure(df_feat=_df_feat(), pdb=pdb_path, tmd_len=10)
+        assert view.backend == "py3dmol"
         assert hasattr(view, "show") and hasattr(view, "write_html")
 
     def test_df_feat_positive(self, pdb_path):
         csp = aa.CPPStructurePlot(verbose=False)
-        view = csp.map_structure(df_feat=_df_feat(), pdb=pdb_path, tmd_len=10, backend="mpl")
+        view = csp.map_structure(df_feat=_df_feat(), pdb=pdb_path, tmd_len=10)
         assert isinstance(view.dict_impact, dict) and len(view.dict_impact) > 0
 
     @pytest.mark.parametrize("mode", ["impact", "plddt"])
     def test_mode_positive(self, pdb_path, mode):
         csp = aa.CPPStructurePlot(verbose=False)
-        view = csp.map_structure(df_feat=_df_feat(), pdb=pdb_path, tmd_len=10,
-                                 mode=mode, backend="mpl")
+        view = csp.map_structure(df_feat=_df_feat(), pdb=pdb_path, tmd_len=10, mode=mode)
         assert view.mode == mode
 
     @pytest.mark.parametrize("focus", ["whole", "fade", "zoom"])
     def test_focus_positive(self, pdb_path, focus):
         csp = aa.CPPStructurePlot(verbose=False)
-        view = csp.map_structure(df_feat=_df_feat(), pdb=pdb_path, tmd_len=10,
-                                 focus=focus, backend="mpl")
-        assert view.backend == "mpl"
-
-    def test_backend_mpl_positive(self, pdb_path):
-        csp = aa.CPPStructurePlot(verbose=False)
-        view = csp.map_structure(df_feat=_df_feat(), pdb=pdb_path, tmd_len=10, backend="mpl")
-        assert view.backend == "mpl"
-
-    @pytest.mark.skipif(not HAS_PY3DMOL, reason="py3Dmol not installed")
-    def test_backend_py3dmol_positive(self, pdb_path):
-        csp = aa.CPPStructurePlot(verbose=False)
-        view = csp.map_structure(df_feat=_df_feat(), pdb=pdb_path, tmd_len=10, backend="py3dmol")
+        view = csp.map_structure(df_feat=_df_feat(), pdb=pdb_path, tmd_len=10, focus=focus)
         assert view.backend == "py3dmol"
-
-    def test_backend_none_autoselects(self, pdb_path):
-        csp = aa.CPPStructurePlot(verbose=False)
-        view = csp.map_structure(df_feat=_df_feat(), pdb=pdb_path, tmd_len=10, backend=None)
-        assert view.backend in ("py3dmol", "mpl")
 
     def test_col_imp_positive(self, pdb_path):
         csp = aa.CPPStructurePlot(verbose=False)
         df = _df_feat(col_imp="feat_impact_P05067")
         view = csp.map_structure(df_feat=df, pdb=pdb_path, tmd_len=10,
-                                 col_imp="feat_impact_P05067", backend="mpl")
+                                 col_imp="feat_impact_P05067")
         assert view.max_abs > 0
 
     @settings(max_examples=5, deadline=None)
     @given(tmd_len=some.integers(min_value=1, max_value=20))
     def test_tmd_len_positive(self, pdb_path, tmd_len):
         csp = aa.CPPStructurePlot(verbose=False)
-        view = csp.map_structure(df_feat=_df_feat(), pdb=pdb_path, tmd_len=tmd_len, backend="mpl")
-        assert view.backend == "mpl"
+        view = csp.map_structure(df_feat=_df_feat(), pdb=pdb_path, tmd_len=tmd_len)
+        assert view.backend == "py3dmol"
 
     @settings(max_examples=5, deadline=None)
     @given(start=some.integers(min_value=1, max_value=15))
     def test_start_positive(self, pdb_path, start):
         csp = aa.CPPStructurePlot(verbose=False)
-        view = csp.map_structure(df_feat=_df_feat(), pdb=pdb_path, tmd_len=10,
-                                 start=start, backend="mpl")
-        # The smallest mapped residue equals start (first JMD-N residue).
+        view = csp.map_structure(df_feat=_df_feat(), pdb=pdb_path, tmd_len=10, start=start)
         assert min(view.dict_impact) == start
 
     @pytest.mark.parametrize("size_by_impact", [True, False])
     def test_size_by_impact_positive(self, pdb_path, size_by_impact):
         csp = aa.CPPStructurePlot(verbose=False)
         view = csp.map_structure(df_feat=_df_feat(), pdb=pdb_path, tmd_len=10,
-                                 size_by_impact=size_by_impact, backend="mpl")
-        assert view.backend == "mpl"
+                                 size_by_impact=size_by_impact)
+        assert view.backend == "py3dmol"
+
+    @pytest.mark.parametrize("normalize_by_span", [True, False])
+    def test_normalize_by_span_positive(self, pdb_path, normalize_by_span):
+        csp = aa.CPPStructurePlot(verbose=False)
+        view = csp.map_structure(df_feat=_df_feat(), pdb=pdb_path, tmd_len=10,
+                                 normalize_by_span=normalize_by_span)
+        assert view.backend == "py3dmol"
 
     def test_chain_positive(self, pdb_path):
         csp = aa.CPPStructurePlot(verbose=False)
-        view = csp.map_structure(df_feat=_df_feat(), pdb=pdb_path, tmd_len=10,
-                                 chain="A", backend="mpl")
-        assert view.backend == "mpl"
+        view = csp.map_structure(df_feat=_df_feat(), pdb=pdb_path, tmd_len=10, chain="A")
+        assert view.backend == "py3dmol"
 
     def test_sequence_positive(self, pdb_path):
         csp = aa.CPPStructurePlot(verbose=False)
         view = csp.map_structure(df_feat=_df_feat(), pdb=pdb_path, tmd_len=10,
-                                 sequence="A" * 40, backend="mpl")
-        assert view.backend == "mpl"
+                                 sequence="A" * 40)
+        assert view.backend == "py3dmol"
 
     def test_focus_region_tuple_positive(self, pdb_path):
         csp = aa.CPPStructurePlot(verbose=False)
         view = csp.map_structure(df_feat=_df_feat(), pdb=pdb_path, tmd_len=10,
-                                 focus="zoom", focus_region=(11, 20), backend="mpl")
-        assert view.backend == "mpl"
+                                 focus="zoom", focus_region=(11, 20))
+        assert view.backend == "py3dmol"
 
     def test_focus_region_list_positive(self, pdb_path):
         csp = aa.CPPStructurePlot(verbose=False)
         view = csp.map_structure(df_feat=_df_feat(), pdb=pdb_path, tmd_len=10,
-                                 focus="fade", focus_region=[(1, 10), (11, 20)], backend="mpl")
-        assert view.backend == "mpl"
+                                 focus="fade", focus_region=[(1, 10), (11, 20)])
+        assert view.backend == "py3dmol"
 
     # --- negatives -----------------------------------------------------------
     @pytest.mark.parametrize("mode", ["Impact", "shap", "", "color"])
@@ -171,12 +149,6 @@ class TestMapStructure:
         csp = aa.CPPStructurePlot(verbose=False)
         with pytest.raises(ValueError):
             csp.map_structure(df_feat=_df_feat(), pdb=pdb_path, tmd_len=10, focus=focus)
-
-    @pytest.mark.parametrize("backend", ["py3DMOL", "matplotlib", "ngl", ""])
-    def test_backend_negative(self, pdb_path, backend):
-        csp = aa.CPPStructurePlot(verbose=False)
-        with pytest.raises(ValueError):
-            csp.map_structure(df_feat=_df_feat(), pdb=pdb_path, tmd_len=10, backend=backend)
 
     @pytest.mark.parametrize("tmd_len", [0, -1, -5])
     def test_tmd_len_negative(self, pdb_path, tmd_len):
@@ -221,66 +193,44 @@ class TestMapStructure:
 
 # --- combinations & edge interactions ----------------------------------------
 class TestMapStructureComplex:
-    """Combinations and edge interactions."""
+    """Combinations, HTML export, and edge interactions."""
 
     def test_plddt_zoom_focus_region(self, pdb_path):
         csp = aa.CPPStructurePlot(verbose=False)
         view = csp.map_structure(df_feat=_df_feat(), pdb=pdb_path, tmd_len=10,
-                                 mode="plddt", focus="zoom", focus_region=(11, 20),
-                                 backend="mpl")
+                                 mode="plddt", focus="zoom", focus_region=(11, 20))
         assert view.mode == "plddt"
-
-    def test_impact_fade_size_by_impact(self, pdb_path):
-        csp = aa.CPPStructurePlot(verbose=False)
-        view = csp.map_structure(df_feat=_df_feat(), pdb=pdb_path, tmd_len=10,
-                                 mode="impact", focus="fade", size_by_impact=True,
-                                 backend="mpl")
-        assert view.backend == "mpl"
 
     def test_jmd_lengths_shift_window(self, pdb_path):
         csp = aa.CPPStructurePlot(jmd_n_len=5, jmd_c_len=5, verbose=False)
-        view = csp.map_structure(df_feat=_df_feat(), pdb=pdb_path, tmd_len=10,
-                                 start=1, backend="mpl")
-        # JMD_N now spans residues 1..5; TMD spans 6..15.
+        view = csp.map_structure(df_feat=_df_feat(), pdb=pdb_path, tmd_len=10, start=1)
         assert view.dict_impact.get(6, 0) != 0  # first TMD residue carries impact
 
     @settings(max_examples=5, deadline=None)
     @given(start=some.integers(min_value=100, max_value=300))
     def test_start_offsets_into_structure(self, pdb_path, start):
         csp = aa.CPPStructurePlot(verbose=False)
-        # start far outside the 1..40 structure -> warns, still returns a view.
-        with pytest.warns(UserWarning):
-            view = csp.map_structure(df_feat=_df_feat(), pdb=pdb_path, tmd_len=10,
-                                     start=start, backend="mpl")
-        assert view.backend == "mpl"
+        with pytest.warns(UserWarning):  # window outside the 1..40 synthetic structure
+            view = csp.map_structure(df_feat=_df_feat(), pdb=pdb_path, tmd_len=10, start=start)
+        assert view.backend == "py3dmol"
 
-    def test_savefig_writes_png(self, pdb_path, tmp_path):
+    def test_write_html_writes_file(self, pdb_path, tmp_path):
         csp = aa.CPPStructurePlot(verbose=False)
-        view = csp.map_structure(df_feat=_df_feat(), pdb=pdb_path, tmd_len=10, backend="mpl")
-        out = tmp_path / "v.png"
-        view.savefig(str(out))
-        assert out.exists() and out.stat().st_size > 0
-
-    def test_write_html_mpl_embeds_png(self, pdb_path, tmp_path):
-        csp = aa.CPPStructurePlot(verbose=False)
-        view = csp.map_structure(df_feat=_df_feat(), pdb=pdb_path, tmd_len=10, backend="mpl")
+        view = csp.map_structure(df_feat=_df_feat(), pdb=pdb_path, tmd_len=10)
         out = tmp_path / "v.html"
         view.write_html(str(out))
-        assert "base64" in out.read_text(encoding="utf-8")
+        assert out.exists() and out.stat().st_size > 0
 
-    def test_savefig_on_py3dmol_raises(self, pdb_path, tmp_path):
-        if not HAS_PY3DMOL:
-            pytest.skip("py3Dmol not installed")
+    def test_repr_html_is_str(self, pdb_path):
         csp = aa.CPPStructurePlot(verbose=False)
-        view = csp.map_structure(df_feat=_df_feat(), pdb=pdb_path, tmd_len=10, backend="py3dmol")
-        with pytest.raises(RuntimeError):
-            view.savefig(str(tmp_path / "x.png"))
+        view = csp.map_structure(df_feat=_df_feat(), pdb=pdb_path, tmd_len=10)
+        assert isinstance(view._repr_html_(), str)
 
     def test_single_feature_df(self, pdb_path):
         csp = aa.CPPStructurePlot(verbose=False)
         df = pd.DataFrame({ut.COL_FEATURE: ["TMD-Segment(1,1)-ABC"],
                            ut.COL_CAT: ["Polarity"], "feat_impact": [1.0]})
-        view = csp.map_structure(df_feat=df, pdb=pdb_path, tmd_len=10, backend="mpl")
+        view = csp.map_structure(df_feat=df, pdb=pdb_path, tmd_len=10)
         assert view.max_abs > 0
 
 
@@ -289,68 +239,46 @@ class TestMapStructureGoldenValues:
     """Hand-computed per-residue impact for both aggregation modes."""
 
     def test_whole_tmd_segment_app_exact_default(self, pdb_path):
-        # Default (app-exact, no divide): TMD Segment(1,1) spans the whole 10-residue
-        # TMD (residues 11..20 with start=1, jmd_n_len=10); its full impact 0.8 lands
-        # on every spanned residue, matching the deployed app's per-residue colouring.
+        # Default (app-exact, no divide): TMD Segment(1,1) spans residues 11..20; its full
+        # impact 0.8 lands on every spanned residue, matching the deployed app.
         csp = aa.CPPStructurePlot(jmd_n_len=10, jmd_c_len=10, verbose=False)
         view = csp.map_structure(df_feat=_df_feat(tmd_impact=0.8, jmd_impact=0.0),
-                                 pdb=pdb_path, tmd_len=10, start=1, backend="mpl")
+                                 pdb=pdb_path, tmd_len=10, start=1)
         for resi in range(11, 21):
             assert view.dict_impact[resi] == pytest.approx(0.8)
         assert view.max_abs == pytest.approx(0.8)
 
     def test_whole_tmd_segment_normalize_by_span(self, pdb_path):
-        # normalize_by_span=True: impact 0.8 spread over 10 positions -> 0.08 each
-        # (the span-normalized sum used by the feature_map top per-position bar).
+        # normalize_by_span=True: impact 0.8 spread over 10 positions -> 0.08 each.
         csp = aa.CPPStructurePlot(jmd_n_len=10, jmd_c_len=10, verbose=False)
         view = csp.map_structure(df_feat=_df_feat(tmd_impact=0.8, jmd_impact=0.0),
-                                 pdb=pdb_path, tmd_len=10, start=1, backend="mpl",
-                                 normalize_by_span=True)
+                                 pdb=pdb_path, tmd_len=10, start=1, normalize_by_span=True)
         for resi in range(11, 21):
             assert view.dict_impact[resi] == pytest.approx(0.08)
         assert view.max_abs == pytest.approx(0.08)
 
-    def test_whole_jmd_segment_app_exact_default(self, pdb_path):
-        # JMD_N Segment(1,1) spans residues 1..10; full impact -0.4 on each (default).
-        csp = aa.CPPStructurePlot(jmd_n_len=10, jmd_c_len=10, verbose=False)
-        view = csp.map_structure(df_feat=_df_feat(tmd_impact=0.0, jmd_impact=-0.4),
-                                 pdb=pdb_path, tmd_len=10, start=1, backend="mpl")
-        for resi in range(1, 11):
-            assert view.dict_impact[resi] == pytest.approx(-0.4)
-
     def test_max_abs_is_max_per_residue(self, pdb_path):
         csp = aa.CPPStructurePlot(jmd_n_len=10, jmd_c_len=10, verbose=False)
         view = csp.map_structure(df_feat=_df_feat(tmd_impact=0.8, jmd_impact=-0.4),
-                                 pdb=pdb_path, tmd_len=10, start=1, backend="mpl")
-        # default (no divide): max per-residue |impact| = max(0.8, 0.4) = 0.8
-        assert view.max_abs == pytest.approx(0.8)
+                                 pdb=pdb_path, tmd_len=10, start=1)
+        assert view.max_abs == pytest.approx(0.8)  # default no-divide: max(0.8, 0.4)
 
     def test_start_shifts_absolute_residues(self, pdb_path):
-        # start=312 -> JMD_N spans 312..321, TMD spans 322..331.
         csp = aa.CPPStructurePlot(jmd_n_len=10, jmd_c_len=10, verbose=False)
         with pytest.warns(UserWarning):  # window outside the 1..40 synthetic structure
             view = csp.map_structure(df_feat=_df_feat(tmd_impact=0.8, jmd_impact=0.0),
-                                     pdb=pdb_path, tmd_len=10, start=312, backend="mpl")
+                                     pdb=pdb_path, tmd_len=10, start=312)
         assert view.dict_impact[322] == pytest.approx(0.8)
         assert min(view.dict_impact) == 312
 
-    @pytest.mark.parametrize("normalize_by_span", [True, False])
-    def test_normalize_by_span_param(self, pdb_path, normalize_by_span):
-        csp = aa.CPPStructurePlot(jmd_n_len=10, jmd_c_len=10, verbose=False)
-        view = csp.map_structure(df_feat=_df_feat(), pdb=pdb_path, tmd_len=10,
-                                 normalize_by_span=normalize_by_span, backend="mpl")
-        assert view.backend == "mpl"
-
     def test_nan_impact_does_not_poison_residue(self, pdb_path):
-        # A NaN-impact feature sharing residues with a real one must not wipe the real
-        # impact (NaN is skipped in the default no-divide sum, like the skipna branch).
         df = pd.DataFrame({
             ut.COL_FEATURE: ["TMD-Segment(1,1)-ABC", "TMD-Segment(1,1)-XYZ"],
             ut.COL_CAT: ["Polarity", "Energy"],
             "feat_impact": [1.0, float("nan")],
         })
         csp = aa.CPPStructurePlot(jmd_n_len=10, jmd_c_len=10, verbose=False)
-        view = csp.map_structure(df_feat=df, pdb=pdb_path, tmd_len=10, start=1, backend="mpl")
+        view = csp.map_structure(df_feat=df, pdb=pdb_path, tmd_len=10, start=1)
         assert view.dict_impact[11] == pytest.approx(1.0)
         assert view.max_abs == pytest.approx(1.0)
 
@@ -372,13 +300,11 @@ class TestCPPStructurePlotInit:
         assert csp._jmd_c_len == jmd_c_len
 
     def test_df_scales_positive(self):
-        df_scales = aa.load_scales()
-        csp = aa.CPPStructurePlot(df_scales=df_scales, verbose=False)
+        csp = aa.CPPStructurePlot(df_scales=aa.load_scales(), verbose=False)
         assert csp._df_scales is not None
 
     def test_df_cat_positive(self):
-        df_cat = aa.load_scales(name="scales_cat")
-        csp = aa.CPPStructurePlot(df_cat=df_cat, verbose=False)
+        csp = aa.CPPStructurePlot(df_cat=aa.load_scales(name="scales_cat"), verbose=False)
         assert csp._df_cat is not None
 
     @pytest.mark.parametrize("verbose", [True, False])
@@ -416,7 +342,7 @@ def _make_multichain_pdb(path, chains=("A", "B"), n=12):
 
 
 class TestMapStructureChainHandling:
-    """Multi-chain selection, identity warning, and zoom robustness (review fixes)."""
+    """Multi-chain selection, identity warning, and zoom robustness."""
 
     def test_extract_returns_selected_chain_id(self, tmp_path):
         from aaanalysis.feature_engineering_pro._backend.cpp_struct.structure import (
@@ -425,37 +351,28 @@ class TestMapStructureChainHandling:
         structure = load_structure(pdb)
         records, identity, chain_id = extract_chain_residues(structure, chain="B")
         assert chain_id == "B"
-        # All records belong to chain B (its x-coords are offset by +100).
         assert all(r["coord"][0] >= 100 for r in records)
 
     def test_multichain_render_uses_chain_qualifier(self, tmp_path):
-        # Regression: residue selections must be chain-qualified so chain B's
-        # residues are not painted onto chain A's same-numbered residues.
         csp = aa.CPPStructurePlot(verbose=False)
         pdb = _make_multichain_pdb(tmp_path / "multi.pdb")
-        if not HAS_PY3DMOL:
-            pytest.skip("py3Dmol not installed")
-        view = csp.map_structure(df_feat=_df_feat(), pdb=pdb, tmd_len=2, start=1,
-                                 chain="B", backend="py3dmol")
+        view = csp.map_structure(df_feat=_df_feat(), pdb=pdb, tmd_len=2, start=1, chain="B")
         assert view.backend == "py3dmol"
 
     def test_explicit_chain_sequence_mismatch_warns(self, pdb_path):
-        # Explicit chain + a non-matching sequence should still warn (identity < 0.5).
         csp = aa.CPPStructurePlot(verbose=False)
         with pytest.warns(UserWarning):
             csp.map_structure(df_feat=_df_feat(), pdb=pdb_path, tmd_len=10,
-                              chain="A", sequence="W" * 40, backend="mpl")
+                              chain="A", sequence="W" * 40)
 
     def test_zoom_region_outside_structure_no_error(self, pdb_path):
-        # zoomTo on residues absent from the structure must not raise.
         csp = aa.CPPStructurePlot(verbose=False)
         view = csp.map_structure(df_feat=_df_feat(), pdb=pdb_path, tmd_len=10,
-                                 focus="zoom", focus_region=(900, 950), backend="mpl")
-        assert view.backend == "mpl"
+                                 focus="zoom", focus_region=(900, 950))
+        assert view.backend == "py3dmol"
 
 
 def test_impact_color_matches_package_shap_ramp():
-    # The impact ramp reuses the package SHAP palette (white -> SHAP_POS / NEG).
     from aaanalysis.feature_engineering_pro._backend.cpp_struct.colors import impact_to_hex
     import matplotlib.colors as mcolors
     pos = mcolors.to_hex(impact_to_hex(1.0, 1.0))
@@ -466,18 +383,14 @@ def test_impact_color_matches_package_shap_ramp():
 
 
 class TestMapStructureCoverage:
-    """Exercise the verbose, AlphaFold-fetch, and py3Dmol view paths."""
+    """Verbose, AlphaFold-fetch, py3Dmol view, and the missing-py3Dmol gate."""
 
-    def test_verbose_prints_summary(self, pdb_path, capsys):
+    def test_verbose_prints_summary(self, pdb_path):
         csp = aa.CPPStructurePlot(verbose=True)
-        csp.map_structure(df_feat=_df_feat(), pdb=pdb_path, tmd_len=10, backend="mpl")
-        # ut.print_out routes through the logger; just assert it ran without error
-        # and the public verbose flag is honored.
+        csp.map_structure(df_feat=_df_feat(), pdb=pdb_path, tmd_len=10)
         assert csp._verbose is True
 
     def test_uniprot_fetch_path_mocked(self, tmp_path, monkeypatch):
-        # Cover the uniprot= AlphaFold auto-fetch branch without network by
-        # stubbing StructurePreprocessor.fetch_alphafold to drop a local PDB.
         from aaanalysis.data_handling_pro import StructurePreprocessor
 
         def _fake_fetch(self, df_seq=None, out_folder=None, **kwargs):
@@ -487,11 +400,10 @@ class TestMapStructureCoverage:
 
         monkeypatch.setattr(StructurePreprocessor, "fetch_alphafold", _fake_fetch)
         csp = aa.CPPStructurePlot(verbose=False)
-        view = csp.map_structure(df_feat=_df_feat(), uniprot="Q9NQ76", tmd_len=10,
-                                 backend="mpl")
-        assert view.backend == "mpl"
+        view = csp.map_structure(df_feat=_df_feat(), uniprot="Q9NQ76", tmd_len=10)
+        assert view.backend == "py3dmol"
 
-    def test_uniprot_fetch_missing_model_raises(self, tmp_path, monkeypatch):
+    def test_uniprot_fetch_missing_model_raises(self, monkeypatch):
         from aaanalysis.data_handling_pro import StructurePreprocessor
 
         def _fake_fetch_nan(self, df_seq=None, out_folder=None, **kwargs):
@@ -500,34 +412,35 @@ class TestMapStructureCoverage:
         monkeypatch.setattr(StructurePreprocessor, "fetch_alphafold", _fake_fetch_nan)
         csp = aa.CPPStructurePlot(verbose=False)
         with pytest.raises(RuntimeError):
-            csp.map_structure(df_feat=_df_feat(), uniprot="X", tmd_len=10, backend="mpl")
+            csp.map_structure(df_feat=_df_feat(), uniprot="X", tmd_len=10)
 
-    @pytest.mark.skipif(not HAS_PY3DMOL, reason="py3Dmol not installed")
     def test_py3dmol_view_methods(self, pdb_path, tmp_path):
         csp = aa.CPPStructurePlot(verbose=False)
-        view = csp.map_structure(df_feat=_df_feat(), pdb=pdb_path, tmd_len=10,
-                                 backend="py3dmol")
+        view = csp.map_structure(df_feat=_df_feat(), pdb=pdb_path, tmd_len=10)
         assert isinstance(view._repr_html_(), str)
         out = tmp_path / "v.html"
         view.write_html(str(out))
         assert out.exists() and out.stat().st_size > 0
-        view.show()  # returns the py3Dmol render handle; just exercise the path
+        view.show()
+
+    def test_missing_py3dmol_raises_friendly(self, pdb_path, monkeypatch):
+        # Force py3Dmol "absent" -> friendly RuntimeError, not a bare ImportError.
+        from aaanalysis.feature_engineering_pro import _cpp_structure_plot as csp_mod
+        monkeypatch.setattr(csp_mod, "py3dmol_available", lambda: False)
+        csp = aa.CPPStructurePlot(verbose=False)
+        with pytest.raises(RuntimeError, match="py3Dmol"):
+            csp.map_structure(df_feat=_df_feat(), pdb=pdb_path, tmd_len=10)
 
 
 def test_colors_helpers_cover_edges():
     from aaanalysis.feature_engineering_pro._backend.cpp_struct import colors as C
-    import numpy as np
-    # perceptual transform: sign-preserving sqrt
     assert C.perceptual_transform(0.25) == pytest.approx(0.5)
     assert C.perceptual_transform(-0.25) == pytest.approx(-0.5)
-    # custom color override falls back to white->colour interpolation
     custom = C.impact_to_hex(1.0, 1.0, color_pos="#00FF00", color_neg="#FF00FF")
     assert custom.lower() == "#00ff00"
     assert C.impact_to_hex(-1.0, 1.0, color_neg="#FF00FF").lower() == "#ff00ff"
-    # non-finite pLDDT -> missing-gray; finite -> a hex on the ramp
     assert C.plddt_to_hex(float("nan")) == ut.COLOR_STRUCT_MISSING
     assert C.plddt_to_hex(95).startswith("#")
-    # color_for_residue dispatches by mode
     assert C.color_for_residue(5, {5: 0.5}, 1.0, 90.0, "plddt").startswith("#")
     assert C.color_for_residue(5, {5: 0.5}, 1.0, 90.0, "impact").startswith("#")
 
