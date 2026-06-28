@@ -15,6 +15,13 @@ per-issue planning notes are ephemeral.
 merge (a substantial bug-fix issue counts). **Not** for typos, one-line fixes, or trivial local
 edits — make those directly.
 
+**Why the full branch + PR machinery, even solo:** this is a one-maintainer package, but the PR is
+still the gate that makes `master` trustworthy as the version users install. The branch isolates the
+work; the PR forces the checks — CI must pass before code enters `master`, the automated-review +
+ripple pass makes you confront docs/tests/API-stability before merge, `Closes #NN` links the change
+back to its issue, and conventional PR titles seed the release notes. `master` stays releasable at
+all times; the cost of the ceremony is paid back the first time a check stops a regression.
+
 ## Happy path
 
 `⛔` = stop for an explicit §0 permission; each is its **own** ask (push ≠ PR ≠ merge ≠ each cleanup deletion).
