@@ -11,6 +11,19 @@ from .render import render_py3dmol
 
 
 # I Helper Functions
+def _ipympl_active():
+    """True if the ipympl (``%matplotlib widget``) backend is active, so the feature map is clickable.
+
+    The highlight slider always works; clicking the feature map is an opportunistic enhancement that
+    needs the interactive widget backend (it cannot be detected from a static / inline backend).
+    """
+    try:
+        import matplotlib
+        return "ipympl" in matplotlib.get_backend().lower()
+    except Exception:
+        return False
+
+
 def _window_resis(focus, focus_region, positions_union):
     """Residues defining the focus window (``None`` for ``'whole'``)."""
     if focus == "whole":
@@ -107,6 +120,11 @@ class InteractivePanel:
         self._verbose = verbose
         self.n_predict = 0              # test hook: count of predictor calls
         self.last = None               # test hook: last rendered {p1, start, ...}
+        self._n_pos = jmd_n_len + tmd_len + jmd_c_len   # window length (feature-map columns)
+        self._highlight_resi = None     # residue linked-selected on the feature map (None = off)
+        self._render_state = None       # cached last render, for highlight-only repaints
+        self._open_fig = None           # the open interactive (ipympl) figure, if any
+        self._ipympl = _ipympl_active() # clickable feature map only when the widget backend is on
 
         # Controls (continuous_update=False -> the slider fires only on release)
         self.w_site = ipw.IntSlider(value=init_site, min=1, max=len(sequence),
@@ -114,14 +132,23 @@ class InteractivePanel:
         self.w_mode = ipw.Dropdown(options=["impact", "plddt"], value=mode, description="colour")
         self.w_focus = ipw.Dropdown(options=["whole", "fade", "zoom"], value=focus,
                                     description="focus")
+        # Highlight (position) slider: pick a residue in the current window to light up in the
+        # structure and mark on the feature map. Its range is reset to the window on each site change.
+        start0 = int(site_to_start(init_site))
+        lo0 = max(start0, 1)
+        self.w_pos = ipw.IntSlider(value=min(max(init_site, lo0), max(start0 + self._n_pos - 1, lo0)),
+                                   min=lo0, max=max(start0 + self._n_pos - 1, lo0),
+                                   description="highlight", continuous_update=False)
         self.out_struct = ipw.Output()
         self.out_map = ipw.Output() if feature_map_renderer is not None else None
 
         self._debounced = _Debouncer(debounce_ms / 1000.0, self.render_site)
+        self._debounced_hl = _Debouncer(debounce_ms / 1000.0, self.highlight_resi)
         for w in (self.w_site, self.w_mode, self.w_focus):
             w.observe(self._on_change, names="value")
+        self.w_pos.observe(self._on_pos_change, names="value")
 
-        controls = ipw.HBox([self.w_site, self.w_mode, self.w_focus])
+        controls = ipw.HBox([self.w_site, self.w_mode, self.w_focus, self.w_pos])
         panel_row = [self.out_struct] + ([self.out_map] if self.out_map is not None else [])
         self.container = ipw.VBox([controls, ipw.HBox(panel_row)])
         self.container._cpp_panel = self   # introspection / test handle
@@ -131,6 +158,10 @@ class InteractivePanel:
     def _on_change(self, _change):
         """Widget observer: re-render (debounced) from the current control values."""
         self._debounced(self.w_site.value, self.w_mode.value, self.w_focus.value)
+
+    def _on_pos_change(self, _change):
+        """Highlight observer: repaint the linked residue (debounced) without re-predicting."""
+        self._debounced_hl(self.w_pos.value)
 
     def render_site(self, p1, mode, focus):
         """Call the predictor for ``p1`` and repaint the structure (+ feature map)."""
@@ -147,30 +178,89 @@ class InteractivePanel:
             jmd_n_len=self._jmd_n_len, jmd_c_len=self._jmd_c_len,
             normalize_by_span=self._normalize_by_span)
         window_resis = _window_resis(focus, self._focus_region, positions_union)
-        self._paint_structure(dict_impact, max_abs, mode, focus, window_resis)
+        # The window moved: reset the highlight slider's range to it and keep/clamp the selection.
+        self._set_pos_range(start)
+        self._highlight_resi = int(self.w_pos.value)
+        self._render_state = dict(df_feat=df_feat, start=start, mode=mode, focus=focus,
+                                  dict_impact=dict_impact, max_abs=max_abs,
+                                  window_resis=window_resis)
+        self._paint_structure(dict_impact, max_abs, mode, focus, window_resis,
+                              self._highlight_resi)
         if self.out_map is not None:
-            self._paint_map(df_feat, start)
-        self.last = dict(p1=p1, start=start, mode=mode, focus=focus,
-                         df_feat=df_feat, dict_impact=dict_impact, max_abs=max_abs)
+            self._paint_map(df_feat, start, self._highlight_resi)
+        self.last = dict(p1=p1, start=start, mode=mode, focus=focus, df_feat=df_feat,
+                         dict_impact=dict_impact, max_abs=max_abs,
+                         highlight_resi=self._highlight_resi)
 
-    def _paint_structure(self, dict_impact, max_abs, mode, focus, window_resis):
+    def highlight_resi(self, resi):
+        """Repaint only the linked-residue marker (structure + feature-map column); no re-predict.
+
+        Reuses the cached last render (impact / mode / focus), so moving the highlight slider or
+        clicking the feature map does not call the predictor again.
+        """
+        st = self._render_state
+        if st is None:
+            return
+        self._highlight_resi = int(resi)
+        self._paint_structure(st["dict_impact"], st["max_abs"], st["mode"], st["focus"],
+                              st["window_resis"], self._highlight_resi)
+        if self.out_map is not None:
+            self._paint_map(st["df_feat"], st["start"], self._highlight_resi)
+        if self.last is not None:
+            self.last["highlight_resi"] = self._highlight_resi
+
+    def _set_pos_range(self, start):
+        """Point the highlight slider at the current window ``[start, start+n_pos-1]``."""
+        lo, hi = max(int(start), 1), max(int(start) + self._n_pos - 1, max(int(start), 1))
+        self.w_pos.max = max(hi, self.w_pos.min)   # widen before narrowing to avoid min>max
+        self.w_pos.min = lo
+        self.w_pos.max = hi
+        if not (lo <= self.w_pos.value <= hi):
+            self.w_pos.value = min(max(self.w_pos.value, lo), hi)
+
+    def _paint_structure(self, dict_impact, max_abs, mode, focus, window_resis, highlight_resi):
         """Render the py3Dmol structure into the structure output (in place)."""
         view = render_py3dmol(pdb_path=self._pdb_path, records=self._records,
                               dict_impact=dict_impact, max_abs=max_abs, mode=mode,
                               focus=focus, window_resis=window_resis,
-                              size_by_impact=self._size_by_impact, chain_id=self._chain_id)
+                              size_by_impact=self._size_by_impact, chain_id=self._chain_id,
+                              highlight_resi=highlight_resi)
         self.out_struct.clear_output(wait=True)
         with self.out_struct:
             self._display(view)
 
-    def _paint_map(self, df_feat, start):
-        """Render the feature map (frontend-supplied) into the map output (in place)."""
+    def _paint_map(self, df_feat, start, highlight_resi):
+        """Render the feature map (frontend-supplied) into the map output (in place).
+
+        Draws the vertical highlight line at ``highlight_resi``. When the ipympl widget backend is
+        active the figure is left open and a click handler is connected so clicking a column drives
+        the highlight slider; otherwise the figure is shown as a static image and closed.
+        """
         import matplotlib.pyplot as plt
-        fig = self._feature_map_renderer(df_feat, start)
+        if self._open_fig is not None:
+            plt.close(self._open_fig)   # close the previous interactive figure (avoid leaks)
+            self._open_fig = None
+        fig, heat_ax = self._feature_map_renderer(df_feat, start, highlight_resi)
+        self._click_ctx = dict(start=int(start), heat_ax=heat_ax)  # for the ipympl click mapping
         self.out_map.clear_output(wait=True)
-        with self.out_map:
-            self._display(fig)
-        plt.close(fig)
+        if self._ipympl and heat_ax is not None:
+            fig.canvas.mpl_connect("button_press_event", self._on_map_click)
+            self._open_fig = fig
+            with self.out_map:
+                self._display(fig.canvas)
+        else:
+            with self.out_map:
+                self._display(fig)
+            plt.close(fig)
+
+    def _on_map_click(self, event):
+        """ipympl click handler: map a click on the heatmap column to a residue and highlight it."""
+        ctx = getattr(self, "_click_ctx", None)
+        if ctx is None or event.inaxes is not ctx["heat_ax"] or event.xdata is None:
+            return
+        resi = ctx["start"] + int(event.xdata)               # column i (0-based) -> residue start+i
+        resi = min(max(resi, self.w_pos.min), self.w_pos.max)
+        self.w_pos.value = resi   # drives _on_pos_change -> highlight_resi (debounced)
 
     def _show_message(self, msg):
         """Show an informational message in the structure output (no crash, no print)."""
