@@ -13,15 +13,6 @@ import aaanalysis.utils as ut
 # White anchor of the signed impact ramp (a neutral, not a domain colour).
 _WHITE = "#FFFFFF"
 
-# Reuse the package's SHAP ramps (``sns.light_palette`` via ``plot_get_cmap_``) so the
-# 3D structure colours match CPPPlot.profile / feature_map exactly instead of a
-# divergent linear interpolation. Both go white (index 0) -> saturated (index 100).
-_N_RAMP = 101
-_RAMP_POS = [mcolors.to_hex(c) for c in
-             ut.plot_get_cmap_(cmap=ut.STR_CMAP_SHAP, n_colors=_N_RAMP, only_pos=True)]
-_RAMP_NEG = [mcolors.to_hex(c) for c in
-             ut.plot_get_cmap_(cmap=ut.STR_CMAP_SHAP, n_colors=_N_RAMP, only_neg=True)][::-1]
-
 
 # I Helper Functions
 def _lerp_hex(color_lo, color_hi, frac):
@@ -45,22 +36,23 @@ def perceptual_transform(t):
 
 
 def impact_to_hex(impact, max_abs, color_pos=None, color_neg=None):
-    """Map a signed impact to a hex colour on the white->SHAP-pos / white->SHAP-neg ramp.
+    """Map a signed impact to a hex colour, white -> SHAP-red (+) / SHAP-blue (-).
 
-    ``impact`` is normalised by ``max_abs`` to ``[-1, 1]`` and passed through the
-    ``sign * sqrt`` transform to get a blend fraction in ``[0, 1]``. By default the
-    colour is read off the package SHAP ramp (so it matches the 2D CPP plots); a
-    custom ``color_pos`` / ``color_neg`` falls back to a white->colour interpolation.
-    Zero / non-finite impact and a non-positive ``max_abs`` map to white.
+    ``impact`` is normalised by ``max_abs`` to ``[-1, 1]``; the blend fraction off white
+    is ``sqrt(|impact| / max_abs)`` (the ``sign * sqrt`` perceptual transform), so the
+    colour **intensity scales with the absolute impact** — faint impacts stay near white,
+    strong ones reach full ``COLOR_SHAP_POS`` / ``COLOR_SHAP_NEG``. This is a **linear**
+    white->colour interpolation, matching the deployed app's ``shapColor`` exactly
+    (``color_pos`` / ``color_neg`` override the endpoints). Zero / non-finite impact and a
+    non-positive ``max_abs`` map to white.
     """
     if max_abs is None or max_abs <= 0 or not np.isfinite(impact) or impact == 0:
         return _WHITE
     t = float(np.clip(impact / max_abs, -1.0, 1.0))
     frac = float(np.sqrt(abs(t)))  # |sign * sqrt(t)| -> blend fraction in [0, 1]
-    idx = int(round(frac * (_N_RAMP - 1)))
     if t > 0:
-        return _RAMP_POS[idx] if color_pos is None else _lerp_hex(_WHITE, color_pos, frac)
-    return _RAMP_NEG[idx] if color_neg is None else _lerp_hex(_WHITE, color_neg, frac)
+        return _lerp_hex(_WHITE, color_pos if color_pos is not None else ut.COLOR_SHAP_POS, frac)
+    return _lerp_hex(_WHITE, color_neg if color_neg is not None else ut.COLOR_SHAP_NEG, frac)
 
 
 def plddt_cmap():
