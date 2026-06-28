@@ -7,8 +7,9 @@ import numpy as np
 import pandas as pd
 import pytest
 
-# Pro-gated: structure parsing needs biopython, the explorer needs ipywidgets.
+# Pro-gated: biopython parses structures, py3Dmol renders them, ipywidgets drives the panel.
 pytest.importorskip("Bio")
+pytest.importorskip("py3Dmol")
 pytest.importorskip("ipywidgets")
 
 import aaanalysis as aa
@@ -234,6 +235,14 @@ class TestInteractiveComplex:
         monkeypatch.setitem(sys.modules, "ipywidgets", None)
         csp = aa.CPPStructurePlot(verbose=False)
         with pytest.raises(RuntimeError, match="ipywidgets"):
+            csp.interactive(predictor=_RecordingPredictor(), sequence=SEQ, pdb=pdb_path,
+                            tmd_len=10)
+
+    def test_missing_py3dmol_raises_friendly(self, pdb_path, monkeypatch):
+        from aaanalysis.feature_engineering_pro import _cpp_structure_plot as csp_mod
+        monkeypatch.setattr(csp_mod, "py3dmol_available", lambda: False)
+        csp = aa.CPPStructurePlot(verbose=False)
+        with pytest.raises(RuntimeError, match="py3Dmol"):
             csp.interactive(predictor=_RecordingPredictor(), sequence=SEQ, pdb=pdb_path,
                             tmd_len=10)
 

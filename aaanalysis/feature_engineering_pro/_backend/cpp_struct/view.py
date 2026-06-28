@@ -1,35 +1,30 @@
 """
-This is a script for the backend StructureView wrapper of the CPPStructurePlot
-class: a thin, pure delegator that gives the interactive (py3Dmol) and static
-(matplotlib) renderers one uniform surface — ``show`` / ``write_html`` /
-``savefig`` / ``_repr_html_`` — so the return type of ``map_structure`` does not
-vary with the backend that fired.
+This is a script for the backend view wrappers of the CPPStructurePlot class:
+``StructureView`` (a thin handle over a py3Dmol view) and ``CombinedView`` (a
+py3Dmol cartoon next to the CPPPlot feature-map image). Both expose a uniform
+``show`` / ``write_html`` / ``_repr_html_`` surface so the structure is always a
+real 3D cartoon, never a matplotlib scatter.
 """
-import base64
-import io
 
 
 # I Helper Functions
-def _figure_to_png_b64(fig):
-    """Render a matplotlib Figure to a base64-encoded PNG string."""
-    buffer = io.BytesIO()
-    fig.savefig(buffer, format="png", bbox_inches="tight")
-    buffer.seek(0)
-    return base64.b64encode(buffer.read()).decode("ascii")
+def _html_page(body):
+    """Wrap an HTML body fragment in a minimal standalone page."""
+    return f"<!DOCTYPE html><html><head><meta charset='utf-8'></head><body>{body}</body></html>"
 
 
 # II Main Functions
 class StructureView:
-    """Uniform handle over a py3Dmol view or a matplotlib Figure.
+    """Thin handle over a py3Dmol view.
 
-    Returned by :meth:`CPPStructurePlot.map_structure`. A pure delegator: it
-    forwards ``show`` / ``write_html`` / ``savefig`` / ``_repr_html_`` to whichever
-    backend produced it and otherwise carries the mapped impact for inspection.
+    Returned by :meth:`CPPStructurePlot.map_structure`. A pure delegator: it forwards
+    ``show`` / ``write_html`` / ``_repr_html_`` to the underlying py3Dmol view and otherwise
+    carries the mapped impact for inspection.
 
     Attributes
     ----------
     backend : str
-        ``'py3dmol'`` or ``'mpl'``.
+        Always ``'py3dmol'`` (kept for backward compatibility / introspection).
     dict_impact : dict
         ``{resi: impact}`` painted onto the structure.
     max_abs : float
@@ -38,65 +33,85 @@ class StructureView:
         ``'impact'`` or ``'plddt'``.
     """
 
-    def __init__(self, backend, view=None, fig=None, ax=None,
-                 dict_impact=None, max_abs=None, mode=None):
-        """Store the backend object and the mapped-impact metadata."""
+    def __init__(self, backend="py3dmol", view=None, dict_impact=None, max_abs=None, mode=None):
+        """Store the py3Dmol view object and the mapped-impact metadata."""
         self.backend = backend
         self._view = view
-        self._fig = fig
-        self._ax = ax
         self.dict_impact = dict_impact
         self.max_abs = max_abs
         self.mode = mode
 
     @property
-    def fig(self):
-        """The matplotlib :class:`~matplotlib.figure.Figure` (``mpl`` backend only)."""
-        return self._fig
-
-    @property
-    def ax(self):
-        """The matplotlib :class:`~matplotlib.axes.Axes` (``mpl`` backend only)."""
-        return self._ax
-
-    @property
     def view(self):
-        """The underlying ``py3Dmol`` view object (``py3dmol`` backend only)."""
+        """The underlying ``py3Dmol`` view object."""
         return self._view
 
     def show(self):
-        """Display the structure (py3Dmol viewer; the Figure for the mpl backend)."""
-        if self.backend == "py3dmol":
-            return self._view.show()
-        return self._fig
+        """Display the interactive py3Dmol viewer."""
+        return self._view.show()
 
     def write_html(self, path):
-        """Write a self-contained HTML file (py3Dmol export, or an embedded PNG for mpl)."""
+        """Write a self-contained interactive HTML file (py3Dmol export)."""
         path = str(path)
-        if self.backend == "py3dmol":
-            self._view.write_html(path)
-            return path
-        png_b64 = _figure_to_png_b64(self._fig)
-        html = (f"<html><body>"
-                f"<img src='data:image/png;base64,{png_b64}'/>"
-                f"</body></html>")
-        with open(path, "w", encoding="utf-8") as f:
-            f.write(html)
+        self._view.write_html(path)
         return path
 
-    def savefig(self, path, **kwargs):
-        """Save a static image (mpl backend only; py3Dmol exports via ``write_html``)."""
-        if self.backend == "mpl":
-            self._fig.savefig(str(path), **kwargs)
-            return str(path)
-        raise RuntimeError("'savefig' is only available for the matplotlib backend; "
-                           "use 'write_html' for the py3Dmol backend")
+    def _repr_html_(self):
+        """Notebook rich display: the self-contained py3Dmol widget HTML."""
+        return self._view._make_html()
+
+
+class CombinedView:
+    """Structure cartoon (py3Dmol) and the CPP feature map (image) shown side by side.
+
+    Returned by :meth:`CPPStructurePlot.plot_combined`. Lays the interactive py3Dmol cartoon
+    next to the rendered :meth:`CPPPlot.feature_map` image, reproducing the deployed app's
+    layout. ``write_html`` exports the pair as one self-contained page.
+
+    Attributes
+    ----------
+    dict_impact : dict
+        ``{resi: impact}`` painted onto the structure.
+    max_abs : float
+        Normalisation constant for the impact ramp.
+    mode : str
+        ``'impact'`` or ``'plddt'``.
+    """
+
+    def __init__(self, view=None, feature_map_png_b64=None, dict_impact=None,
+                 max_abs=None, mode=None):
+        """Store the py3Dmol view, the feature-map PNG, and the mapped-impact metadata."""
+        self._view = view
+        self._png_b64 = feature_map_png_b64
+        self.dict_impact = dict_impact
+        self.max_abs = max_abs
+        self.mode = mode
+
+    @property
+    def view(self):
+        """The underlying ``py3Dmol`` view object (the structure panel)."""
+        return self._view
+
+    def _body(self):
+        """Side-by-side HTML body: the py3Dmol cartoon (left) and the feature map (right)."""
+        struct_html = self._view._make_html()
+        img_html = (f"<img src='data:image/png;base64,{self._png_b64}' "
+                    f"style='max-width:100%;height:auto;'/>") if self._png_b64 else ""
+        return (f"<div style='display:flex;align-items:flex-start;gap:12px;flex-wrap:wrap;'>"
+                f"<div>{struct_html}</div><div>{img_html}</div></div>")
+
+    def show(self):
+        """Display the combined view inline (structure + feature map)."""
+        from IPython.display import HTML, display
+        return display(HTML(self._body()))
+
+    def write_html(self, path):
+        """Write the combined structure + feature-map view as one self-contained HTML page."""
+        path = str(path)
+        with open(path, "w", encoding="utf-8") as f:
+            f.write(_html_page(self._body()))
+        return path
 
     def _repr_html_(self):
-        """Notebook rich display: the py3Dmol widget HTML or an embedded PNG."""
-        if self.backend == "py3dmol":
-            # py3Dmol's own _repr_html_ returns None (side-effect display); _make_html
-            # returns the self-contained widget HTML, which displays reliably inline.
-            return self._view._make_html()
-        png_b64 = _figure_to_png_b64(self._fig)
-        return f"<img src='data:image/png;base64,{png_b64}'/>"
+        """Notebook rich display: the side-by-side structure + feature-map HTML."""
+        return self._body()

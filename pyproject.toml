@@ -80,9 +80,10 @@ pro = [
   # StructurePreprocessor.get_domains(tool='afragmenter'); ~10 MB of new
   # transitive deps (python-igraph + rich), no DL framework.
   "afragmenter>=0.0.6",
-  # py3Dmol (Python binding to 3Dmol.js): interactive in-notebook 3D viewer and
-  # self-contained HTML export for CPPStructurePlot.map_structure. Pure-Python,
-  # no DL framework; lazy-imported so the matplotlib fallback works without it.
+  # py3Dmol (Python binding to 3Dmol.js): the 3D structure renderer for
+  # CPPStructurePlot (map_structure / plot_combined / interactive) and its
+  # self-contained HTML export. Pure-Python, no DL framework; lazy-imported (the
+  # rest of the package works without it) but required by the structure methods.
   "py3Dmol>=2.0",
   # ipywidgets: the live, selection-linked explorer (CPPStructurePlot.interactive).
   # Pure-Python notebook UI, lazy-imported inside .interactive() so the static

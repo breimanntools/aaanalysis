@@ -36,7 +36,7 @@ Regenerate this table with:
 | [0025](0025-interpretability-tiered-explainable-scale-sets.md) | Interpretability-tiered "explainable" scale sets in `load_scales` | Accepted | 2026-06-06 |  |
 | [0026](0026-feature-pruning-empirical-not-scale-correlation.md) | Feature pruning is empirical (sample-level), df_feat-in/out methods on `SequenceFeature` | Accepted | 2026-06-11 |  |
 | [0027](0027-protein-design-mutation-deltacpp-scope.md) | Protein design (AAMut/SeqMut): scope boundary and model-free ΔCPP | Accepted | 2026-06-11 | amended 2026-06-24 — see *Amendment* below and ADR-0042 |
-| [0028](0028-cppstructureplot-structureview-return-wrapper.md) | `CPPStructurePlot` returns a `StructureView` wrapper, not a matplotlib `Axes` | Accepted | 2026-06-11 |  |
+| [0028](0028-cppstructureplot-structureview-return-wrapper.md) | `CPPStructurePlot` returns a `StructureView` wrapper, not a matplotlib `Axes` | Accepted | 2026-06-11 | amended 2026-06-28: matplotlib backend removed |
 | [0029](0029-fetch-embeddings.md) | EmbeddingPreprocessor.fetch_embeddings + fetch_* covers model-weight acquisition | Accepted | 2026-06-12 |  |
 | [0030](0030-changelog-and-deprecation-policy.md) | Strict-semver deprecation policy, `deprecated` decorator, and a two-file changelog | Accepted | 2026-06-13 |  |
 | [0031](0031-integration-e2e-test-policy.md) | Integration & e2e test tiers: scope, taxonomy, and merge-gating | Accepted | 2026-06-13 |  |

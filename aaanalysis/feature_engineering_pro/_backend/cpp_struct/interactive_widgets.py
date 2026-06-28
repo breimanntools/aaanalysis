@@ -7,7 +7,7 @@ frontend, since interactive is a notebook-only pro feature.
 import asyncio
 
 from .mapping import compute_residue_impact
-from .render import render_py3dmol, render_mpl, py3dmol_available
+from .render import render_py3dmol
 
 
 # I Helper Functions
@@ -154,22 +154,14 @@ class InteractivePanel:
                          df_feat=df_feat, dict_impact=dict_impact, max_abs=max_abs)
 
     def _paint_structure(self, dict_impact, max_abs, mode, focus, window_resis):
-        """Render the structure into the structure output (in place)."""
-        if py3dmol_available():
-            view = render_py3dmol(pdb_path=self._pdb_path, records=self._records,
-                                  dict_impact=dict_impact, max_abs=max_abs, mode=mode,
-                                  focus=focus, window_resis=window_resis,
-                                  size_by_impact=self._size_by_impact, chain_id=self._chain_id)
-        else:
-            view = render_mpl(records=self._records, dict_impact=dict_impact, max_abs=max_abs,
-                              mode=mode, focus=focus, window_resis=window_resis,
-                              size_by_impact=self._size_by_impact)
+        """Render the py3Dmol structure into the structure output (in place)."""
+        view = render_py3dmol(pdb_path=self._pdb_path, records=self._records,
+                              dict_impact=dict_impact, max_abs=max_abs, mode=mode,
+                              focus=focus, window_resis=window_resis,
+                              size_by_impact=self._size_by_impact, chain_id=self._chain_id)
         self.out_struct.clear_output(wait=True)
         with self.out_struct:
             self._display(view)
-        if view.backend == "mpl":
-            import matplotlib.pyplot as plt
-            plt.close(view.fig)
 
     def _paint_map(self, df_feat, start):
         """Render the feature map (frontend-supplied) into the map output (in place)."""

@@ -18,7 +18,9 @@ paths:
   underscore attribute (`self.df_components_`), **not** a third tuple element.
   numpydoc `Returns` names `fig` then `ax`. Enforced by
   `tests/unit/api_tests/test_plot_return_contract.py`. The sole exception is
-  `CPPStructurePlot`, which returns a `StructureView` wrapper (see ADR-0028).
+  `CPPStructurePlot` (excluded as a class): its outputs are 3D / HTML, not a matplotlib
+  `Axes` — `map_structure` returns a py3Dmol `StructureView`, `plot_combined` a `CombinedView`
+  (cartoon + feature-map image), and `interactive` an ipywidgets panel (see ADR-0028).
 - Library code **never** calls `plt.show()`. Return the `(fig, ax)` pair or
   mutate the passed `ax`.
 - Colors come from `ut.COLOR_*` and `ut.DICT_COLOR*`. Do not hardcode hex

@@ -7,7 +7,6 @@ import tempfile
 import warnings
 from typing import Optional, List, Tuple, Union, Literal, Callable, TYPE_CHECKING
 
-import numpy as np
 import pandas as pd
 
 import aaanalysis.utils as ut
@@ -18,13 +17,11 @@ if TYPE_CHECKING:   # annotation-only; ipywidgets stays lazy-imported at runtime
 from ._backend.cpp_struct.mapping import compute_residue_impact
 from ._backend.cpp_struct.structure import (load_structure, extract_chain_residues,
                                             residue_numbers)
-from ._backend.cpp_struct.render import (render_py3dmol, render_mpl,
-                                         draw_structure_mpl, py3dmol_available)
-from ._backend.cpp_struct.view import StructureView
+from ._backend.cpp_struct.render import render_py3dmol, py3dmol_available
+from ._backend.cpp_struct.view import StructureView, CombinedView
 
 LIST_MODES = ["impact", "plddt"]
 LIST_FOCUS = ["whole", "fade", "zoom"]
-LIST_BACKENDS = ["py3dmol", "mpl"]
 
 
 # I Helper Functions
@@ -82,15 +79,12 @@ def _require_ipywidgets():
                            "plot_combined work without it.") from e
 
 
-def _resolve_backend(backend):
-    """Resolve the render backend; raise a friendly hint if py3Dmol is forced but absent."""
-    if backend == "py3dmol" and not py3dmol_available():
-        raise RuntimeError("backend='py3dmol' requires the optional 'py3Dmol' package; "
-                           "install it via \"pip install 'aaanalysis[pro]'\" (or "
-                           "\"pip install py3Dmol\"), or use backend='mpl'")
-    if backend is not None:
-        return backend
-    return "py3dmol" if py3dmol_available() else "mpl"
+def _require_py3dmol():
+    """Raise the friendly pro-install hint if py3Dmol (the structure renderer) is absent."""
+    if not py3dmol_available():
+        raise RuntimeError("CPPStructurePlot structure rendering requires the optional "
+                           "'py3Dmol' package; install it via \"pip install 'aaanalysis[pro]'\" "
+                           "(or \"pip install py3Dmol\").")
 
 
 # II Main Functions
@@ -99,25 +93,27 @@ class CPPStructurePlot:
     Plotting class for painting :class:`CPP` feature impact onto a 3D protein structure
     (**[pro]**, requires ``aaanalysis[pro]``) [Breimann25]_.
 
-    The per-residue impact is the same normalized-sum that the :meth:`CPPPlot.profile` and
-    :meth:`CPPPlot.feature_map` show: each feature's signed impact is spread over the residue
-    positions it spans and summed per position, then painted residue-by-residue onto the protein
-    cartoon. A red-white-blue ramp shows where features raise (red) or lower (blue) the prediction;
-    an AlphaFold pLDDT mode shows per-residue model confidence instead.
+    Each feature's signed impact is mapped to the residue positions it spans and painted
+    residue-by-residue onto the protein cartoon, rendered with the interactive
+    `py3Dmol <https://pypi.org/project/py3Dmol/>`_ viewer. A red-white-blue ramp shows where
+    features raise (red) or lower (blue) the prediction; an AlphaFold pLDDT mode shows
+    per-residue model confidence instead.
 
-    The single method :meth:`CPPStructurePlot.map_structure` returns a ``StructureView`` — a
-    thin wrapper exposing a uniform ``show`` / ``write_html`` / ``savefig`` surface over the
-    interactive `py3Dmol <https://pypi.org/project/py3Dmol/>`_ backend and the static matplotlib
-    fallback (which is used automatically when py3Dmol is absent or ``backend="mpl"``).
+    Three methods drive it: :meth:`map_structure` returns a ``StructureView`` (the interactive
+    3D cartoon), :meth:`plot_combined` returns a ``CombinedView`` (the cartoon next to the
+    :meth:`CPPPlot.feature_map` image, the deployed app's layout), and :meth:`interactive`
+    returns a live ipywidgets explorer. All render real 3D structures via py3Dmol — there is no
+    matplotlib structure fallback.
 
     .. versionadded:: 1.1.0
 
     Notes
     -----
     * The ``jmd_n_len`` and ``jmd_c_len`` values supplied at construction are stored as
-      ``_jmd_n_len`` and ``_jmd_c_len`` and reused by :meth:`map_structure`, mirroring
+      ``_jmd_n_len`` and ``_jmd_c_len`` and reused by the plot methods, mirroring
       :class:`CPPPlot` so juxta-membrane domain (JMD) lengths stay consistent.
-    * This is a ``pro`` feature (needs ``biopython``; ``py3Dmol`` for the interactive backend).
+    * This is a ``pro`` feature: ``biopython`` parses structures, ``py3Dmol`` renders them, and
+      ``ipywidgets`` powers :meth:`interactive` — all in the ``pro`` extra.
 
     """
     def __init__(self,
@@ -182,10 +178,9 @@ class CPPStructurePlot:
                       focus_region: Optional[Union[Tuple[int, int], List[Tuple[int, int]]]] = None,
                       size_by_impact: bool = True,
                       normalize_by_span: bool = False,
-                      backend: Optional[Literal["py3dmol", "mpl"]] = None,
                       ) -> StructureView:
         """
-        Paint per-residue CPP feature impact onto a protein structure.
+        Paint per-residue CPP feature impact onto an interactive 3D protein structure.
 
         Each feature in ``df_feat`` is mapped to the residue positions it spans (shifted to
         absolute residue numbers by ``start``) and its ``col_imp`` value is aggregated per
@@ -229,23 +224,19 @@ class CPPStructurePlot:
             ``(start, stop)`` residue range (or list of ranges) defining the focus window.
             Default derives the window from the union of ``df_feat`` positions.
         size_by_impact : bool, default=True
-            If ``True``, draw a stick whose radius (or marker size) is proportional to
-            ``|impact|`` (impact mode only).
+            If ``True``, draw a stick whose radius is proportional to ``|impact|`` (impact mode only).
         normalize_by_span : bool, default=False
             If ``False`` (default), add each feature's full impact to every residue it spans
             (app-fidelity colouring). If ``True``, divide each feature's impact by its span
             count first (the span-normalized sum of :meth:`CPPPlot.profile` and the
             :meth:`CPPPlot.feature_map` top per-position bar).
-        backend : {'py3dmol', 'mpl'}, optional
-            ``'py3dmol'`` (interactive) or ``'mpl'`` (static). Default uses py3Dmol when
-            available, otherwise matplotlib.
 
         Returns
         -------
         view : StructureView
-            A thin wrapper over the rendered view exposing ``show()``, ``write_html(path)``,
-            ``savefig(path)`` (matplotlib backend), and ``_repr_html_`` for inline display, plus
-            the mapped ``dict_impact`` / ``max_abs`` for inspection.
+            A thin wrapper over the interactive py3Dmol view exposing ``show()``,
+            ``write_html(path)``, and ``_repr_html_`` for inline display, plus the mapped
+            ``dict_impact`` / ``max_abs`` for inspection.
 
         Notes
         -----
@@ -255,11 +246,10 @@ class CPPStructurePlot:
         Raises
         ------
         ValueError
-            On invalid arguments (e.g. an unknown ``mode`` / ``focus`` / ``backend``, neither or
-            both of ``pdb`` / ``uniprot``, a ``df_feat`` missing ``col_imp``, or an unknown ``chain``).
+            On invalid arguments (e.g. an unknown ``mode`` / ``focus``, neither or both of
+            ``pdb`` / ``uniprot``, a ``df_feat`` missing ``col_imp``, or an unknown ``chain``).
         RuntimeError
-            If ``backend='py3dmol'`` is forced without py3Dmol installed, or an AlphaFold model
-            for ``uniprot`` cannot be fetched.
+            If py3Dmol is not installed, or an AlphaFold model for ``uniprot`` cannot be fetched.
 
         Examples
         --------
@@ -274,8 +264,6 @@ class CPPStructurePlot:
         jmd_c_len = ut.check_jmd_c_len(jmd_c_len=self._jmd_c_len)
         ut.check_str_options(name="mode", val=mode, list_str_options=LIST_MODES)
         ut.check_str_options(name="focus", val=focus, list_str_options=LIST_FOCUS)
-        ut.check_str_options(name="backend", val=backend, list_str_options=LIST_BACKENDS,
-                             accept_none=True)
         ut.check_bool(name="size_by_impact", val=size_by_impact)
         ut.check_bool(name="normalize_by_span", val=normalize_by_span)
         if chain is not None:
@@ -286,13 +274,13 @@ class CPPStructurePlot:
         if (pdb is None) == (uniprot is None):
             raise ValueError("Exactly one of 'pdb' or 'uniprot' should be given "
                              f"(got pdb={pdb}, uniprot={uniprot})")
+        _require_py3dmol()
 
         # Compute per-residue impact (shared CPP feature-position backend)
         dict_impact, max_abs, positions_union = compute_residue_impact(
             df_feat=df_feat, col_imp=col_imp, start=start, tmd_len=tmd_len,
             jmd_n_len=jmd_n_len, jmd_c_len=jmd_c_len,
             normalize_by_span=normalize_by_span)
-        resolved_backend = _resolve_backend(backend)
         window_resis = _resolve_window_resis(focus, focus_region, positions_union)
 
         # Resolve the structure file, parse it, and render inside one temp context
@@ -302,15 +290,17 @@ class CPPStructurePlot:
             records, identity, chain_id = extract_chain_residues(
                 structure, chain=chain, sequence=sequence)
             self._check_start_alignment(records, positions_union, identity, sequence)
-            view = self._render(resolved_backend, pdb_path, records, dict_impact, max_abs,
-                                mode, focus, window_resis, size_by_impact, chain_id)
+            view = render_py3dmol(pdb_path=pdb_path, records=records, dict_impact=dict_impact,
+                                  max_abs=max_abs, mode=mode, focus=focus,
+                                  window_resis=window_resis, size_by_impact=size_by_impact,
+                                  chain_id=chain_id)
 
         if self._verbose:
             struct_resis = residue_numbers(records)
             n_painted = sum(1 for r in struct_resis if abs(dict_impact.get(r, 0.0)) > 0)
             ut.print_out(f"CPPStructurePlot: mapped {len(df_feat)} features onto "
                          f"{len(records)} residues ({n_painted} carry non-zero impact), "
-                         f"mode='{mode}', backend='{resolved_backend}'.")
+                         f"mode='{mode}'.")
         return view
 
     def plot_combined(self,
@@ -332,23 +322,18 @@ class CPPStructurePlot:
                       tmd_seq: Optional[str] = None,
                       jmd_n_seq: Optional[str] = None,
                       jmd_c_seq: Optional[str] = None,
-                      figsize: Tuple[Union[int, float], Union[int, float]] = (15, 8),
-                      width_ratios: Tuple[Union[int, float], Union[int, float]] = (1.0, 1.6),
                       feature_map_dpi: int = 200,
                       feature_map_kws: Optional[dict] = None,
-                      ) -> ut.FigAxResult:
+                      ) -> CombinedView:
         """
-        Plot the structure and the CPP feature map side by side in one static figure.
+        Show the 3D structure and the CPP feature map side by side.
 
-        Reproduces the deployed app's signature layout: the **left** panel paints per-residue
-        CPP feature impact onto the protein (matplotlib ``mplot3d``, zoomed to the feature
-        window), the **right** panel is the :meth:`CPPPlot.feature_map` of the same ``df_feat``.
-        Both panels read the same per-residue impact, so the structure colours and the feature
-        map tell one consistent story. The figure is a single matplotlib :class:`~matplotlib.figure.Figure`
-        that ``savefig`` exports to PNG / PDF (the feature-map panel is embedded as a
-        high-resolution raster at ``feature_map_dpi``).
-
-        For an interactive, rotatable 3D view use :meth:`map_structure` with the py3Dmol backend.
+        Reproduces the deployed app's signature layout: the **left** panel is the interactive
+        py3Dmol cartoon painted with per-residue CPP feature impact (zoomed to the feature
+        window), the **right** panel is the :meth:`CPPPlot.feature_map` of the same ``df_feat``
+        (a high-resolution image). Both read the same per-residue impact, so the structure
+        colours and the feature map tell one consistent story. Returns a ``CombinedView`` that
+        renders inline and exports the pair with ``write_html(path)``.
 
         .. versionadded:: 1.1.0
 
@@ -391,17 +376,13 @@ class CPPStructurePlot:
             ``(start, stop)`` residue range (or list of ranges) defining the focus window.
             Default derives the window from the union of ``df_feat`` positions.
         size_by_impact : bool, default=True
-            If ``True``, scale each impact residue's marker by ``|impact|`` (impact mode only).
+            If ``True``, draw each impact residue's stick scaled by ``|impact|`` (impact mode only).
         normalize_by_span : bool, default=False
             Per-residue aggregation for the structure colouring; see :meth:`map_structure`.
         tmd_seq, jmd_n_seq, jmd_c_seq : str, optional
             TMD / JMD-N / JMD-C sequences shown along the feature-map x-axis.
-        figsize : tuple, default=(15, 8)
-            Size of the combined figure in inches.
-        width_ratios : tuple, default=(1.0, 1.6)
-            Width ratio of the (structure, feature-map) panels.
         feature_map_dpi : int, default=200
-            Resolution of the embedded feature-map raster (>=50).
+            Resolution of the feature-map image shown beside the structure (>=50).
         feature_map_kws : dict, optional
             Extra keyword arguments forwarded to :meth:`CPPPlot.feature_map`. Keys already
             controlled by this method (e.g. ``df_feat``, ``col_val``, ``col_imp``, ``tmd_len``,
@@ -409,10 +390,10 @@ class CPPStructurePlot:
 
         Returns
         -------
-        fig : matplotlib.figure.Figure
-            The combined figure.
-        ax : numpy.ndarray of matplotlib.axes.Axes
-            The ``(ax_structure, ax_feature_map)`` pair.
+        view : CombinedView
+            A wrapper showing the py3Dmol cartoon next to the feature-map image, exposing
+            ``show()``, ``write_html(path)``, and ``_repr_html_``, plus the mapped
+            ``dict_impact`` / ``max_abs``.
 
         Raises
         ------
@@ -420,6 +401,8 @@ class CPPStructurePlot:
             On invalid arguments (e.g. an unknown ``mode`` / ``focus``, neither or both of
             ``pdb`` / ``uniprot``, a ``df_feat`` missing ``col_imp``, or a colliding
             ``feature_map_kws`` key).
+        RuntimeError
+            If py3Dmol is not installed, or an AlphaFold model for ``uniprot`` cannot be fetched.
 
         Examples
         --------
@@ -438,8 +421,6 @@ class CPPStructurePlot:
         ut.check_str_options(name="focus", val=focus, list_str_options=LIST_FOCUS)
         ut.check_bool(name="size_by_impact", val=size_by_impact)
         ut.check_bool(name="normalize_by_span", val=normalize_by_span)
-        ut.check_tuple(name="figsize", val=figsize, n=2, check_number=True)
-        ut.check_tuple(name="width_ratios", val=width_ratios, n=2, check_number=True)
         ut.check_number_range(name="feature_map_dpi", val=feature_map_dpi, min_val=50,
                               just_int=True)
         if chain is not None:
@@ -451,58 +432,46 @@ class CPPStructurePlot:
             raise ValueError("Exactly one of 'pdb' or 'uniprot' should be given "
                              f"(got pdb={pdb}, uniprot={uniprot})")
         feature_map_kws = _check_feature_map_kws(feature_map_kws)
+        _require_py3dmol()
 
-        # Compute per-residue impact (shared CPP backend) and resolve the structure
+        # Compute per-residue impact (shared CPP backend)
         dict_impact, max_abs, positions_union = compute_residue_impact(
             df_feat=df_feat, col_imp=col_imp, start=start, tmd_len=tmd_len,
             jmd_n_len=jmd_n_len, jmd_c_len=jmd_c_len,
             normalize_by_span=normalize_by_span)
         window_resis = _resolve_window_resis(focus, focus_region, positions_union)
-        records, _chain_id = self._prepare_records(pdb, uniprot, chain, sequence,
-                                                   positions_union)
 
-        # Render the feature map first (its own figure -> raster); building it before the
-        # combined figure means a feature_map error leaves no half-built figure leaking.
-        image = self._feature_map_image(df_feat=df_feat, col_val=col_val, col_imp=col_imp,
-                                        shap_plot=shap_plot, tmd_len=tmd_len, start=start,
-                                        tmd_seq=tmd_seq, jmd_n_seq=jmd_n_seq,
-                                        jmd_c_seq=jmd_c_seq, dpi=feature_map_dpi,
-                                        feature_map_kws=feature_map_kws)
-        # Build the combined figure: structure (left) + feature_map raster (right)
-        import matplotlib.pyplot as plt
-        fig = plt.figure(figsize=figsize)
-        gs = fig.add_gridspec(1, 2, width_ratios=list(width_ratios), wspace=0.02)
-        ax_struct = fig.add_subplot(gs[0, 0], projection="3d")
-        ax_map = fig.add_subplot(gs[0, 1])
-        draw_structure_mpl(ax=ax_struct, records=records, dict_impact=dict_impact,
-                           max_abs=max_abs, mode=mode, focus=focus,
-                           window_resis=window_resis, size_by_impact=size_by_impact)
-        ax_map.imshow(image)
-        ax_map.axis("off")
-
-        if self._verbose:
-            ut.print_out(f"CPPStructurePlot: combined view of {len(df_feat)} features on "
-                         f"{len(records)} residues, mode='{mode}'.")
-        return ut.FigAxResult(fig, np.array([ax_struct, ax_map], dtype=object))
-
-    # Internal orchestration helpers
-    def _prepare_records(self, pdb, uniprot, chain, sequence, positions_union):
-        """Resolve / parse the structure and return its (records, chain_id) for mpl drawing."""
+        # Feature-map image (built first so an error leaves no structure view dangling)
+        png_b64 = self._feature_map_png_b64(df_feat=df_feat, col_val=col_val, col_imp=col_imp,
+                                            shap_plot=shap_plot, tmd_len=tmd_len, start=start,
+                                            tmd_seq=tmd_seq, jmd_n_seq=jmd_n_seq,
+                                            jmd_c_seq=jmd_c_seq, dpi=feature_map_dpi,
+                                            feature_map_kws=feature_map_kws)
+        # py3Dmol cartoon (left panel), rendered inside the structure temp context
         with tempfile.TemporaryDirectory() as tmp_dir:
             pdb_path = pdb if uniprot is None else self._fetch_alphafold(uniprot, sequence, tmp_dir)
             structure = load_structure(pdb_path)
             records, identity, chain_id = extract_chain_residues(
                 structure, chain=chain, sequence=sequence)
-        # records hold plain coordinates/pLDDT, safe to use after the temp dir is gone.
-        self._check_start_alignment(records, positions_union, identity, sequence)
-        return records, chain_id
+            self._check_start_alignment(records, positions_union, identity, sequence)
+            view = render_py3dmol(pdb_path=pdb_path, records=records, dict_impact=dict_impact,
+                                  max_abs=max_abs, mode=mode, focus=focus,
+                                  window_resis=window_resis, size_by_impact=size_by_impact,
+                                  chain_id=chain_id)
 
-    def _feature_map_image(self, df_feat, col_val, col_imp, shap_plot, tmd_len, start,
-                           tmd_seq, jmd_n_seq, jmd_c_seq, dpi, feature_map_kws):
-        """Render CPPPlot.feature_map to its own figure and return it as an RGBA image array."""
+        if self._verbose:
+            ut.print_out(f"CPPStructurePlot: combined view of {len(df_feat)} features on "
+                         f"{len(records)} residues, mode='{mode}'.")
+        return CombinedView(view=view.view, feature_map_png_b64=png_b64,
+                            dict_impact=dict_impact, max_abs=max_abs, mode=mode)
+
+    # Internal orchestration helpers
+    def _feature_map_png_b64(self, df_feat, col_val, col_imp, shap_plot, tmd_len, start,
+                             tmd_seq, jmd_n_seq, jmd_c_seq, dpi, feature_map_kws):
+        """Render CPPPlot.feature_map to its own figure and return it as a base64 PNG string."""
         import io
+        import base64
         import matplotlib.pyplot as plt
-        import matplotlib.image as mpimg
         from aaanalysis import CPPPlot
         cpp_plot = CPPPlot(df_scales=self._df_scales, df_cat=self._df_cat,
                            jmd_n_len=self._jmd_n_len, jmd_c_len=self._jmd_c_len,
@@ -516,8 +485,7 @@ class CPPStructurePlot:
             fig_fm.savefig(buffer, format="png", dpi=dpi, bbox_inches="tight")
         finally:
             plt.close(fig_fm)
-        buffer.seek(0)
-        return mpimg.imread(buffer)
+        return base64.b64encode(buffer.getvalue()).decode("ascii")
 
     def interactive(self,
                     predictor: Callable,
@@ -652,6 +620,7 @@ class CPPStructurePlot:
         ut.check_number_range(name="init_site", val=init_site, min_val=1, max_val=n_res,
                               just_int=True)
 
+        _require_py3dmol()
         ipw = _require_ipywidgets()
         if site_to_start is None:
             site_to_start = lambda p1: p1 - jmd_n_len   # noqa: E731 (site = first TMD residue)
@@ -744,18 +713,3 @@ class CPPStructurePlot:
                 f"The selected chain matches 'sequence' with low identity ({identity:.2f}); "
                 f"the painted residues may be misaligned.",
                 UserWarning, stacklevel=2)
-
-    @staticmethod
-    def _render(resolved_backend, pdb_path, records, dict_impact, max_abs, mode,
-                focus, window_resis, size_by_impact, chain_id):
-        """Dispatch to the resolved render backend and return the StructureView."""
-        if resolved_backend == "py3dmol":
-            return render_py3dmol(pdb_path=pdb_path, records=records,
-                                  dict_impact=dict_impact, max_abs=max_abs, mode=mode,
-                                  focus=focus, window_resis=window_resis,
-                                  size_by_impact=size_by_impact, chain_id=chain_id)
-        # The mpl backend only scatters the selected chain's records, so it never
-        # leaks onto other chains and needs no chain qualifier.
-        return render_mpl(records=records, dict_impact=dict_impact, max_abs=max_abs,
-                          mode=mode, focus=focus, window_resis=window_resis,
-                          size_by_impact=size_by_impact)
