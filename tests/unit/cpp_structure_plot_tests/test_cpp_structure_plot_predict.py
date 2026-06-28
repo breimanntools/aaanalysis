@@ -207,3 +207,21 @@ class TestResolveEstimators:
     def test_bad_type_raises(self):
         with pytest.raises(ValueError):
             resolve_estimators(123)
+
+
+# --- builder guards ----------------------------------------------------------
+class TestBuilderGuards:
+    """Build-time validation in build_builtin_predictor."""
+
+    def test_label_target_class_absent(self, df_feat, df_seq, df_scales):
+        with pytest.raises(ValueError, match="label_target_class"):
+            build_builtin_predictor(df_feat=df_feat, df_seq=df_seq, labels=[0] * len(df_seq),
+                                    tmd_len=20, jmd_n_len=10, jmd_c_len=10, df_scales=df_scales,
+                                    label_target_class=1)
+
+    def test_reserved_query_entry(self, df_feat, df_seq, labels, df_scales):
+        bad = df_seq.copy()
+        bad.loc[0, ut.COL_ENTRY] = "__QUERY__"
+        with pytest.raises(ValueError, match="reserved"):
+            build_builtin_predictor(df_feat=df_feat, df_seq=bad, labels=labels, tmd_len=20,
+                                    jmd_n_len=10, jmd_c_len=10, df_scales=df_scales)

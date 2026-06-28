@@ -101,6 +101,12 @@ def build_builtin_predictor(df_feat: pd.DataFrame,
     and the predicted ``label_target_class`` probability in ``df.attrs['proba']``.
     """
     labels = np.asarray(labels)
+    if label_target_class not in set(labels.tolist()):
+        raise ValueError(f"'label_target_class' ({label_target_class}) is not present in 'labels' "
+                         f"(classes: {sorted(set(labels.tolist()))})")
+    if _QUERY_ENTRY in set(df_seq[ut.COL_ENTRY]):
+        raise ValueError(f"'df_seq' must not contain the reserved entry name '{_QUERY_ENTRY}' "
+                         f"(used internally for the query window)")
     features = df_feat[ut.COL_FEATURE]
     # Parts actually referenced by the fixed feature set (the 'PART' of each PART-SPLIT-SCALE id),
     # so get_df_parts builds exactly the part columns feature_matrix needs for any df_feat.

@@ -965,10 +965,10 @@ class CPPStructurePlot:
             predictor.
         model : str, estimator, or list, default='rf'
             Prediction model for the per-site probability: a name (``'rf'``, ``'svm'``,
-            ``'log_reg'``), a scikit-learn estimator, or a list of those (probabilities averaged).
-            The :class:`ShapModel` that computes the impact always uses its own defaults
-            (``TreeExplainer`` + RandomForest / ExtraTrees), so the prediction model and the
-            explanation model may differ.
+            ``'log_reg'``, ``'extra_trees'``), a scikit-learn estimator, or a list of those
+            (probabilities averaged). The :class:`ShapModel` that computes the impact always uses
+            its own defaults (``TreeExplainer`` + RandomForest / ExtraTrees), so the prediction
+            model and the explanation model may differ.
         predictor : callable, optional
             Escape hatch: a custom ``(sequence, p1) -> df_feat`` callable. When given, the built-in
             predictor is not built and ``df_seq`` / ``labels`` / ``model`` are ignored.
@@ -977,7 +977,9 @@ class CPPStructurePlot:
         path : str, optional
             For ``output='html'``, write the self-contained page to this path.
         col_imp : str, default='feat_impact'
-            Column the per-site signed impact is written to (and painted from).
+            Column the per-site signed impact is written to (and painted from). With
+            ``shap_plot=True`` it must be ``'feat_impact'`` or follow ``'feat_impact_<name>'`` (the
+            SHAP feature map's requirement).
         col_val : str, default='mean_dif'
             Column shown in the feature-map heatmap cells.
         shap_plot : bool, default=True
@@ -1028,14 +1030,26 @@ class CPPStructurePlot:
         --------
         .. include:: examples/csp_explore.rst
         """
-        # Validate
+        # Validate (cheap checks first, so an invalid argument fails before the predictor is built)
         ut.check_df(name="df_feat", df=df_feat, cols_required=[ut.COL_FEATURE])
         ut.check_str(name="sequence", val=sequence, accept_none=False)
         ut.check_str_options(name="output", val=output, list_str_options=LIST_OUTPUTS)
         ut.check_str(name="col_imp", val=col_imp)
+        ut.check_str(name="col_val", val=col_val)
+        ut.check_bool(name="shap_plot", val=shap_plot)
+        ut.check_bool(name="size_by_impact", val=size_by_impact)
+        ut.check_bool(name="normalize_by_span", val=normalize_by_span)
+        ut.check_str_options(name="mode", val=mode, list_str_options=LIST_MODES)
+        ut.check_str_options(name="focus", val=focus, list_str_options=LIST_FOCUS)
+        focus_region = check_focus_region(focus_region=focus_region)
         ut.check_number_range(name="tmd_len", val=tmd_len, min_val=1, just_int=True)
         ut.check_number_range(name="label_target_class", val=label_target_class, min_val=0,
                               just_int=True)
+        # The SHAP feature map (shap_plot=True) requires col_imp in the feat_impact family; fail
+        # here with a clear message instead of deep inside CPPPlot.feature_map after a full refit.
+        if shap_plot and ut.COL_FEAT_IMPACT not in col_imp:
+            raise ValueError(f"With 'shap_plot=True', 'col_imp' ('{col_imp}') must be "
+                             f"'{ut.COL_FEAT_IMPACT}' or follow '{ut.COL_FEAT_IMPACT}_<name>'")
         if (pdb is None) == (uniprot is None):
             raise ValueError("Exactly one of 'pdb' or 'uniprot' should be given "
                              f"(got pdb={pdb}, uniprot={uniprot})")
@@ -1044,6 +1058,11 @@ class CPPStructurePlot:
                              f"-> df_feat")
         jmd_n_len = ut.check_jmd_n_len(jmd_n_len=self._jmd_n_len)
         n_res = len(sequence)
+        # The site geometry needs jmd_n_len residues before p1, so the first JMD-N residue (start =
+        # p1 - jmd_n_len) is valid; validate init_site here (naming init_site, not 'start').
+        if init_site is not None:
+            ut.check_number_range(name="init_site", val=init_site, min_val=jmd_n_len + 1,
+                                  max_val=n_res, just_int=True)
 
         # Resolve the per-site predictor (built-in unless the escape hatch is given)
         if predictor is None:
@@ -1072,8 +1091,8 @@ class CPPStructurePlot:
         # One-shot bake (no live kernel): predict the chosen site once and render it
         if init_site is None:
             init_site = max(jmd_n_len + 1, n_res // 2)
-        ut.check_number_range(name="init_site", val=init_site, min_val=1, max_val=n_res,
-                              just_int=True)
+            ut.check_number_range(name="init_site", val=init_site, min_val=jmd_n_len + 1,
+                                  max_val=n_res, just_int=True)  # guards a very short 'sequence'
         df_feat_site = predictor(sequence, init_site)
         start = init_site - jmd_n_len
         if output == "static":

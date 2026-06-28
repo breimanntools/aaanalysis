@@ -212,3 +212,21 @@ class TestExploreErrors:
         with pytest.raises(ValueError):
             _explore(_csp(), df_feat, query_seq, df_seq, labels, pdb_path, output="static",
                      model="not_a_model")
+
+    def test_col_imp_out_of_family_with_shap(self, df_feat, query_seq, df_seq, labels, pdb_path):
+        # col_imp must be feat_impact-family when shap_plot=True; caught early, not deep in render
+        with pytest.raises(ValueError):
+            _explore(_csp(), df_feat, query_seq, df_seq, labels, pdb_path, output="static",
+                     col_imp="impact")
+
+    def test_init_site_too_small(self, df_feat, query_seq, df_seq, labels, pdb_path):
+        # init_site < jmd_n_len + 1 would push the window start below residue 1
+        with pytest.raises(ValueError, match="init_site"):
+            _csp().explore(df_feat=df_feat, sequence=query_seq, pdb=pdb_path, df_seq=df_seq,
+                          labels=labels, output="static", tmd_len=10, init_site=3)
+
+    @pytest.mark.parametrize("bad", ["x", "movie"])
+    def test_unknown_mode(self, df_feat, query_seq, df_seq, labels, pdb_path, bad):
+        with pytest.raises(ValueError):
+            _explore(_csp(), df_feat, query_seq, df_seq, labels, pdb_path, output="static",
+                     mode=bad)
