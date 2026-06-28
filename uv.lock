@@ -64,6 +64,7 @@ dev = [
     { name = "afragmenter" },
     { name = "biopython" },
     { name = "black" },
+    { name = "deap" },
     { name = "docutils" },
     { name = "hypothesis" },
     { name = "ipykernel" },
@@ -77,6 +78,7 @@ dev = [
     { name = "numpydoc" },
     { name = "pandoc" },
     { name = "poetry" },
+    { name = "py3dmol" },
     { name = "pyright" },
     { name = "pytest" },
     { name = "pytest-cov" },
@@ -104,6 +106,7 @@ docs = [
     { name = "nbformat" },
     { name = "nbsphinx" },
     { name = "numpydoc" },
+    { name = "py3dmol" },
     { name = "requests" },
     { name = "shap", version = "0.49.1", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version < '3.11'" },
     { name = "shap", version = "0.51.0", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version == '3.11.*'" },
@@ -126,6 +129,8 @@ embed = [
 pro = [
     { name = "afragmenter" },
     { name = "biopython" },
+    { name = "ipywidgets" },
+    { name = "py3dmol" },
     { name = "requests" },
     { name = "shap", version = "0.49.1", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version < '3.11'" },
     { name = "shap", version = "0.51.0", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version == '3.11.*'" },
@@ -141,6 +146,7 @@ requires-dist = [
     { name = "biopython", marker = "extra == 'pro'", specifier = ">=1.87" },
     { name = "black", marker = "extra == 'dev'", specifier = ">=26.3.1" },
     { name = "cycler", specifier = ">=0.12.1" },
+    { name = "deap", marker = "extra == 'dev'", specifier = ">=1.4" },
     { name = "docutils", marker = "extra == 'docs'", specifier = "==0.21.2" },
     { name = "et-xmlfile", specifier = ">=2.0.0" },
     { name = "fonttools", specifier = ">=4.56.0" },
@@ -149,6 +155,7 @@ requires-dist = [
     { name = "ipykernel", marker = "extra == 'dev'", specifier = "==6.29.5" },
     { name = "ipython", marker = "extra == 'dev'", specifier = ">=8.18.1" },
     { name = "ipywidgets", marker = "extra == 'docs'", specifier = ">=8.0.0" },
+    { name = "ipywidgets", marker = "extra == 'pro'", specifier = ">=8.0.0" },
     { name = "jinja2", specifier = ">=3.1.6" },
     { name = "joblib", specifier = ">=1.4.2" },
     { name = "kiwisolver", specifier = ">=1.4.7" },
@@ -167,6 +174,7 @@ requires-dist = [
     { name = "patsy", specifier = ">=1.0.1" },
     { name = "pillow", specifier = ">=12.0.0" },
     { name = "poetry", marker = "extra == 'dev'", specifier = ">=2.0.1" },
+    { name = "py3dmol", marker = "extra == 'pro'", specifier = ">=2.0" },
     { name = "pyparsing", specifier = ">=3.2.1" },
     { name = "pyright", marker = "extra == 'dev'", specifier = ">=1.1.400" },
     { name = "pytest", marker = "extra == 'dev'", specifier = ">=9.0.3" },
@@ -1193,6 +1201,20 @@ source = { registry = "https://pypi.org/simple" }
 sdist = { url = "https://files.pythonhosted.org/packages/a9/95/a3dbbb5028f35eafb79008e7522a75244477d2838f38cbb722248dabc2a8/cycler-0.12.1.tar.gz", hash = "sha256:88bb128f02ba341da8ef447245a9e138fae777f6a23943da4540077d3601eb1c", size = 7615, upload-time = "2023-10-07T05:32:18.335Z" }
 wheels = [
     { url = "https://files.pythonhosted.org/packages/e7/05/c19819d5e3d95294a6f5947fb9b9629efb316b96de511b418c53d245aae6/cycler-0.12.1-py3-none-any.whl", hash = "sha256:85cef7cff222d8644161529808465972e51340599459b8ac3ccbac5a854e0d30", size = 8321, upload-time = "2023-10-07T05:32:16.783Z" },
+]
+
+[[package]]
+name = "deap"
+version = "1.4.4"
+source = { registry = "https://pypi.org/simple" }
+dependencies = [
+    { name = "moocore" },
+    { name = "numpy", version = "2.2.6", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version < '3.11'" },
+    { name = "numpy", version = "2.4.4", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version >= '3.11'" },
+]
+sdist = { url = "https://files.pythonhosted.org/packages/0c/74/31d2dc3bfcf36257ef4ef2d00a9451696d43d10284bf1495340b2e62aecc/deap-1.4.4.tar.gz", hash = "sha256:50d4bd924fca5a16a3dba8bfdb1140a55e9c24ce50816ab4f5683d2f31c2d734", size = 1053722, upload-time = "2026-04-17T21:03:12.548Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/7d/6e/4ba2e2e45fde8483b67e7bee7401a7f132e02c4058d31b6db301f546089a/deap-1.4.4-py3-none-any.whl", hash = "sha256:06c2fcf2e9f870da035c1372c9156ee817c2c31659ee70aae2dcc0849d2c8c49", size = 93078, upload-time = "2026-04-17T21:03:10.952Z" },
 ]
 
 [[package]]
@@ -2515,6 +2537,27 @@ wheels = [
 ]
 
 [[package]]
+name = "moocore"
+version = "0.3.1"
+source = { registry = "https://pypi.org/simple" }
+dependencies = [
+    { name = "cffi" },
+    { name = "numpy", version = "2.2.6", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version < '3.11'" },
+    { name = "numpy", version = "2.4.4", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version >= '3.11'" },
+    { name = "platformdirs" },
+]
+sdist = { url = "https://files.pythonhosted.org/packages/9c/95/0e36dbb8f44690a3540ca3c8c08f9000799d95a5eeec2a49abc7c76a8a0f/moocore-0.3.1.tar.gz", hash = "sha256:a8f83cfbc0aa81c1c9dd33e473adbc9b638dc3b1a6943753f8146770bb76bae4", size = 424672, upload-time = "2026-05-04T21:39:12.77Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/76/fd/da7e96fca6a05f5a80b682aa75f301e2ce870836fc444973a2c717beb945/moocore-0.3.1-cp310-abi3-macosx_10_9_universal2.whl", hash = "sha256:cf22852e951e66cb1145858ff1e4fabcb2810dfc2c19d8df99bdc1a52b28c591", size = 631735, upload-time = "2026-05-04T21:39:01.39Z" },
+    { url = "https://files.pythonhosted.org/packages/40/df/c4715242db5a0d0e17578c5e643334c17d7760cd9f66c17b76a3b8267fb5/moocore-0.3.1-cp310-abi3-manylinux2014_aarch64.manylinux_2_17_aarch64.manylinux_2_28_aarch64.whl", hash = "sha256:14af334b83ddf6fbdec8e5ab6e3246e85ad6b34b0f1b2c44a52e3c5561ff5530", size = 882475, upload-time = "2026-05-04T21:39:03.675Z" },
+    { url = "https://files.pythonhosted.org/packages/34/74/6230c8c2865586ce4c4b0eea994bccadd9e3e28f6acd9cade123ba8516fa/moocore-0.3.1-cp310-abi3-manylinux2014_x86_64.manylinux_2_17_x86_64.manylinux_2_28_x86_64.whl", hash = "sha256:bd0a65e501e704e5270d564c3b32438ddac34d22d3c5c54b01b8c897f4d949aa", size = 866948, upload-time = "2026-05-04T21:39:05.2Z" },
+    { url = "https://files.pythonhosted.org/packages/23/10/6cbbc1039ce33a862d6fa7e24d381635ffd183a3e5a2036bad8477cb9c62/moocore-0.3.1-cp310-abi3-musllinux_1_2_aarch64.whl", hash = "sha256:3fd980c39e8ad4ba12147ac01f700ec402fb25d452beeccc1a7dc2e0b61e95ca", size = 875147, upload-time = "2026-05-04T21:39:06.846Z" },
+    { url = "https://files.pythonhosted.org/packages/14/17/0ead0e1ea08fdc9a980c2525c61e034d5161675cbb320eae61028e93868d/moocore-0.3.1-cp310-abi3-musllinux_1_2_x86_64.whl", hash = "sha256:7b9ddc86e6949d5b5466e805d474b5ae2dbb866ae218dfe7b53cee9eed0151ff", size = 862014, upload-time = "2026-05-04T21:39:08.232Z" },
+    { url = "https://files.pythonhosted.org/packages/09/93/a21b67ddaddb89843869b78e7691d20eab5c5b869a2908cda86fd0d8f663/moocore-0.3.1-cp310-abi3-win_amd64.whl", hash = "sha256:0d5b666bf80bc972816ba8586de77ac6eeaf2b55ab493310487c14e90d491650", size = 517463, upload-time = "2026-05-04T21:39:09.574Z" },
+    { url = "https://files.pythonhosted.org/packages/c5/dc/cd6f4a8977011db9a62c7981462e1820593ee44720a1f3c9a7abe8a94421/moocore-0.3.1-cp310-abi3-win_arm64.whl", hash = "sha256:52178eaaa12babe9532c5494d619cb44c791660adc7ae70dbd2daccf37b7990f", size = 505777, upload-time = "2026-05-04T21:39:11.206Z" },
+]
+
+[[package]]
 name = "more-itertools"
 version = "11.1.0"
 source = { registry = "https://pypi.org/simple" }
@@ -3662,6 +3705,15 @@ source = { registry = "https://pypi.org/simple" }
 sdist = { url = "https://files.pythonhosted.org/packages/37/a8/d832f7293ebb21690860d2e01d8115e5ff6f2ae8bbdc953f0eb0fa4bd2c7/py-cpuinfo-9.0.0.tar.gz", hash = "sha256:3cdbbf3fac90dc6f118bfd64384f309edeadd902d7c8fb17f02ffa1fc3f49690", size = 104716, upload-time = "2022-10-25T20:38:06.303Z" }
 wheels = [
     { url = "https://files.pythonhosted.org/packages/e0/a9/023730ba63db1e494a271cb018dcd361bd2c917ba7004c3e49d5daf795a2/py_cpuinfo-9.0.0-py3-none-any.whl", hash = "sha256:859625bc251f64e21f077d099d4162689c762b5d6a4c3c97553d56241c9674d5", size = 22335, upload-time = "2022-10-25T20:38:27.636Z" },
+]
+
+[[package]]
+name = "py3dmol"
+version = "2.5.5"
+source = { registry = "https://pypi.org/simple" }
+sdist = { url = "https://files.pythonhosted.org/packages/8f/ce/8fa27aa0fcf37a99df16f72d59300040dec61f3a5126c28d6b625bcb7f9e/py3dmol-2.5.5.tar.gz", hash = "sha256:cb102cc3370800a9ca7679774759f008e34a0f3a283778d85b0410849d370298", size = 7832, upload-time = "2026-05-23T14:08:08.553Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/8e/5a/7fd1b784a87e96e0078f49a0a13a98b4c5f644ba5597a4a3b70a2ba3e613/py3dmol-2.5.5-py2.py3-none-any.whl", hash = "sha256:9717ea9a899ec641b458f53de538e5bae758281f5053be78bc2db0706ae60bcb", size = 7153, upload-time = "2026-05-23T14:08:07.733Z" },
 ]
 
 [[package]]

@@ -1,6 +1,6 @@
 ---
 name: github-issues
-description: Audit all open GitHub issues for the aaanalysis package against its scope and coding standards (CLAUDE.md + .claude/rules/sharp-edges.md), flagging each as ready / needs-revision / conflicts / already-addressed, detecting overlaps that must not be developed in parallel, and writing a prioritized step-by-step implementation plan to docs/guides/handoff_github_issues.md. Issues are the primary lens; pull requests are mapped in as secondary context — an "Issue ↔ PR activity" table (issues on the left, their PR(s) on the right, — when an issue has no PR) plus per-issue in-flight-PR notes so each issue and its PR are shown together. Use when the user wants to review, triage, audit, or scope GitHub issues or PRs, refresh the issue handoff, see what work is in flight, decide what to implement next, or plan parallel work across issues.
+description: Audit all open GitHub issues for the aaanalysis package against its scope and coding standards (CLAUDE.md + .claude/rules/sharp-edges.md), flagging each as ready / needs-revision / conflicts / already-addressed, detecting overlaps that must not be developed in parallel, and writing a prioritized step-by-step implementation plan to docs/guides/handoff_github_issues.md. Issues are the primary lens; pull requests are mapped in as secondary context — an "Issue ↔ PR activity" table (issues on the left, their PR(s) on the right, — when an issue has no PR) plus per-issue in-flight-PR notes so each issue and its PR are shown together. Use when the user wants to review, triage, audit, or scope GitHub issues or PRs, refresh the issue handoff, see what work is in flight, decide what to implement next, or plan parallel work across issues. Also use when the user wants to create a new GitHub issue to the house style guide — newly created issues are written to docs/guides/issue_style_guide.md and then added to the Kanban Project board (Project #1 "AAanalysis").
 ---
 
 # GitHub issue handoff
@@ -47,6 +47,30 @@ a *handoff* — another session (or a parallel one) should be able to pick any l
 7. **Write `docs/guides/handoff_github_issues.md`** using the template in REFERENCE.md — including the
    secondary **Issue ↔ PR activity** table (issues on the left, their PR(s) on the right, **—** when an
    issue has no PR). If it exists, update in place (preserve any human-added notes; refresh counts).
+
+## Creating a new issue
+
+When the user asks you to *create* (not just audit) an issue:
+
+1. Write it to the house contract — `docs/guides/issue_style_guide.md`
+   (Title · Labels `prio:`/`topic:`/`type:` · Problem · Goal · Requirements ·
+   measurable KPIs · Scope · Standards checklist). Ground it in the actual code,
+   and check it isn't a duplicate of an existing open issue first.
+2. Create it: `gh issue create --title ... --body-file ... --label prio:N --label topic:X --label type:Y`.
+3. **Always add the new issue to the Kanban Project board** right after creating
+   it (a milestone is *not* the board — an issue only shows on the Kanban once
+   it's a project item):
+
+   ```bash
+   gh project item-add 1 --owner breimanntools --url <issue-url>
+   ```
+
+   The board is **Project #1 "AAanalysis"** (`PVT_kwHOBjZJoM4AxCXn`), owner
+   `breimanntools`; needs the `project` token scope. Then set the milestone /
+   status fields if the user specified them. To backfill the board, diff open
+   issues (`gh issue list --state open --json number`) against
+   `gh project item-list 1 --owner breimanntools --format json` and `item-add`
+   whatever's missing.
 
 ## Rules
 
