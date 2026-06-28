@@ -20,7 +20,7 @@ def _ipympl_active():
     try:
         import matplotlib
         return "ipympl" in matplotlib.get_backend().lower()
-    except Exception:
+    except Exception:   # pragma: no cover - defensive; matplotlib is always importable here
         return False
 
 
@@ -252,18 +252,18 @@ class InteractivePanel:
         fig, heat_ax = self._feature_map_renderer(df_feat, start, highlight_resi)
         self._click_ctx = dict(start=int(start), heat_ax=heat_ax)  # for the ipympl click mapping
         self.out_map.clear_output(wait=True)
-        if self._ipympl and heat_ax is not None:
+        if self._ipympl and heat_ax is not None:   # pragma: no cover - needs the live ipympl backend
             fig.canvas.mpl_connect("button_press_event", self._on_map_click)
             self._open_fig = fig
             with self.out_map:
                 self._display(fig.canvas)
+            if prev_fig is not None and prev_fig is not fig:
+                plt.close(prev_fig)         # release the previous interactive figure
         else:
             self._open_fig = None
             with self.out_map:
                 self._display(fig)
             plt.close(fig)
-        if prev_fig is not None and prev_fig is not fig:
-            plt.close(prev_fig)             # release the previous interactive figure
 
     def _on_map_click(self, event):
         """ipympl click handler: map a click on the heatmap column to a residue and highlight it."""
