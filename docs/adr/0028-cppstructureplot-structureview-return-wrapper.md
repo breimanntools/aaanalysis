@@ -15,8 +15,10 @@ rendering is py3Dmol (a real interactive cartoon); the methods now *require* py3
 friendly install hint is raised otherwise). The `backend` argument of `map_structure` is
 gone. `plot_combined` no longer returns a matplotlib `(fig, ax)` — it returns a
 `CombinedView` (py3Dmol cartoon + the `CPPPlot.feature_map` image side by side, HTML).
-`interactive` returns an ipywidgets panel. The wrapper rationale below still holds: none of
-these are a matplotlib `Axes`, so `CPPStructurePlot` remains the documented exception to the
+`plot_linked` returns a `LinkedView` (a self-contained HTML where hovering a feature-map column
+highlights the residue in the 3Dmol cartoon), and `interactive` returns an ipywidgets panel.
+The wrapper rationale below still holds: none of these are a matplotlib `Axes`, so
+`CPPStructurePlot` remains the documented exception to the
 "return `(fig, ax)`" rule — now because the outputs are genuinely 3D / HTML, not because two
 backends disagree. `StructureView` is a pure py3Dmol delegator (`show` / `write_html` /
 `_repr_html_`); `savefig` is gone (use `write_html`). The original 2026-06-11 context (which

@@ -3,10 +3,12 @@ This is a script for the frontend of the CPPStructurePlot class, painting
 per-residue CPP / CPP-SHAP feature impact onto a 3D protein structure.
 """
 import os
+import itertools
 import tempfile
 import warnings
 from typing import Optional, List, Tuple, Union, Literal, Callable
 
+import numpy as np
 import pandas as pd
 
 import aaanalysis.utils as ut
@@ -14,11 +16,17 @@ import aaanalysis.utils as ut
 from ._backend.cpp_struct.mapping import compute_residue_impact
 from ._backend.cpp_struct.structure import (load_structure, extract_chain_residues,
                                             residue_numbers)
-from ._backend.cpp_struct.render import render_py3dmol, py3dmol_available
-from ._backend.cpp_struct.view import StructureView, CombinedView
+from ._backend.cpp_struct.render import (render_py3dmol, py3dmol_available,
+                                         _stick_radius, _read_structure_text)
+from ._backend.cpp_struct.colors import impact_to_hex, plddt_to_hex
+from ._backend.cpp_struct.view import StructureView, CombinedView, LinkedView
+from ._backend.cpp_struct.linked_html import build_linked_html, _columns
 
 LIST_MODES = ["impact", "plddt"]
 LIST_FOCUS = ["whole", "fade", "zoom"]
+# Per-call counter for unique linked-view DOM ids (deterministic within a kernel session,
+# so committed notebook outputs are stable, but unique across views on one page).
+_LINKED_UID = itertools.count(1)
 
 
 # I Helper Functions
@@ -483,6 +491,230 @@ class CPPStructurePlot:
         finally:
             plt.close(fig_fm)
         return base64.b64encode(buffer.getvalue()).decode("ascii")
+
+    def plot_linked(self,
+                    df_feat: pd.DataFrame,
+                    pdb: Optional[str] = None,
+                    uniprot: Optional[str] = None,
+                    col_imp: str = ut.COL_FEAT_IMPACT,
+                    col_val: str = "mean_dif",
+                    shap_plot: bool = True,
+                    tmd_len: int = 20,
+                    start: int = 1,
+                    chain: Optional[str] = None,
+                    sequence: Optional[str] = None,
+                    mode: Literal["impact", "plddt"] = "impact",
+                    focus: Literal["whole", "fade", "zoom"] = "zoom",
+                    focus_region: Optional[Union[Tuple[int, int], List[Tuple[int, int]]]] = None,
+                    size_by_impact: bool = True,
+                    normalize_by_span: bool = False,
+                    tmd_seq: Optional[str] = None,
+                    jmd_n_seq: Optional[str] = None,
+                    jmd_c_seq: Optional[str] = None,
+                    feature_map_dpi: int = 150,
+                    feature_map_kws: Optional[dict] = None,
+                    width: int = 520,
+                    height: int = 460,
+                    ) -> LinkedView:
+        """
+        Build a self-contained HTML view with the feature map and structure **linked**.
+
+        Reproduces the deployed app's signature interaction: the :meth:`CPPPlot.feature_map`
+        is shown beside an interactive 3Dmol cartoon, and **hovering a feature-map column
+        highlights the corresponding residue in the structure** (the column's position maps to
+        the absolute residue via ``start``). Returns a ``LinkedView`` that renders inline where
+        embedded scripts run (classic Notebook, nbviewer, Read the Docs) and exports a
+        standalone, shareable ``.html`` via ``write_html(path)`` — ideal for exploring a site and
+        as a publication-figure source. In JupyterLab (which sandboxes output scripts), use
+        ``write_html`` and open the page in a browser.
+
+        .. versionadded:: 1.1.0
+
+        Parameters
+        ----------
+        df_feat : pd.DataFrame, shape (n_features, n_feature_info)
+            Feature DataFrame with ``feature``, the signed impact column ``col_imp``, and the
+            scale-information columns the feature map needs.
+        pdb : str, optional
+            Path to a ``.pdb`` / ``.cif`` file. Exactly one of ``pdb`` or ``uniprot`` is required.
+        uniprot : str, optional
+            UniProt accession; the AlphaFold model is fetched automatically. Exactly one of
+            ``pdb`` or ``uniprot`` is required.
+        col_imp : str, default='feat_impact'
+            Column holding the signed per-feature impact (painted on the structure + feature map).
+        col_val : str, default='mean_dif'
+            Column shown in the feature-map heatmap cells.
+        shap_plot : bool, default=True
+            Passed to :meth:`CPPPlot.feature_map`.
+        tmd_len : int, default=20
+            Length of the TMD (>=1). Must match the geometry the features were generated with.
+        start : int, default=1
+            Absolute residue number of the first JMD-N residue; maps feature-map columns to residues.
+        chain : str, optional
+            Chain id to render (default best-matching / first amino-acid chain).
+        sequence : str, optional
+            Full protein sequence; enables best-matching-chain selection + a ``start`` check.
+        mode : {'impact', 'plddt'}, default='impact'
+            Structure colouring: the feature-impact ramp or the AlphaFold pLDDT palette.
+        focus : {'whole', 'fade', 'zoom'}, default='zoom'
+            Structure framing: ``'zoom'`` frames the feature window, ``'fade'`` ghosts the rest.
+        focus_region : tuple or list of tuples, optional
+            ``(start, stop)`` focus window; default from the union of ``df_feat`` positions.
+        size_by_impact : bool, default=True
+            Scale each impact residue's stick by ``|impact|`` (impact mode).
+        normalize_by_span : bool, default=False
+            Per-residue aggregation for the structure colouring; see :meth:`map_structure`.
+        tmd_seq, jmd_n_seq, jmd_c_seq : str, optional
+            Part sequences shown along the feature-map x-axis.
+        feature_map_dpi : int, default=150
+            Resolution of the embedded feature-map image (>=50).
+        feature_map_kws : dict, optional
+            Extra keyword arguments forwarded to :meth:`CPPPlot.feature_map` (keys this method
+            already controls are rejected).
+        width, height : int, default 520, 460
+            Pixel size of the 3D viewer panel.
+
+        Returns
+        -------
+        view : LinkedView
+            A wrapper exposing ``show()``, ``write_html(path)``, and ``_repr_html_`` over the
+            linked feature-map + structure HTML, plus ``dict_impact`` / ``max_abs``.
+
+        Raises
+        ------
+        ValueError
+            On invalid arguments (unknown ``mode`` / ``focus``, neither/both of ``pdb`` /
+            ``uniprot``, ``df_feat`` missing ``col_imp``, or a colliding ``feature_map_kws`` key).
+        RuntimeError
+            If py3Dmol is not installed, or an AlphaFold model for ``uniprot`` cannot be fetched.
+
+        Examples
+        --------
+        .. include:: examples/csp_plot_linked.rst
+        """
+        # Validate (same contract as plot_combined)
+        ut.check_df(name="df_feat", df=df_feat, cols_required=[ut.COL_FEATURE, col_imp])
+        ut.check_str(name="col_imp", val=col_imp)
+        ut.check_str(name="col_val", val=col_val)
+        ut.check_bool(name="shap_plot", val=shap_plot)
+        ut.check_number_range(name="tmd_len", val=tmd_len, min_val=1, just_int=True)
+        ut.check_number_range(name="start", val=start, min_val=0, just_int=True)
+        jmd_n_len = ut.check_jmd_n_len(jmd_n_len=self._jmd_n_len)
+        jmd_c_len = ut.check_jmd_c_len(jmd_c_len=self._jmd_c_len)
+        ut.check_str_options(name="mode", val=mode, list_str_options=LIST_MODES)
+        ut.check_str_options(name="focus", val=focus, list_str_options=LIST_FOCUS)
+        ut.check_bool(name="size_by_impact", val=size_by_impact)
+        ut.check_bool(name="normalize_by_span", val=normalize_by_span)
+        ut.check_number_range(name="feature_map_dpi", val=feature_map_dpi, min_val=50, just_int=True)
+        ut.check_number_range(name="width", val=width, min_val=100, just_int=True)
+        ut.check_number_range(name="height", val=height, min_val=100, just_int=True)
+        if chain is not None:
+            ut.check_str(name="chain", val=chain)
+        if sequence is not None:
+            ut.check_str(name="sequence", val=sequence)
+        focus_region = check_focus_region(focus_region=focus_region)
+        if (pdb is None) == (uniprot is None):
+            raise ValueError("Exactly one of 'pdb' or 'uniprot' should be given "
+                             f"(got pdb={pdb}, uniprot={uniprot})")
+        feature_map_kws = _check_feature_map_kws(feature_map_kws)
+        _require_py3dmol()
+
+        # Per-residue impact + the feature window
+        dict_impact, max_abs, positions_union = compute_residue_impact(
+            df_feat=df_feat, col_imp=col_imp, start=start, tmd_len=tmd_len,
+            jmd_n_len=jmd_n_len, jmd_c_len=jmd_c_len, normalize_by_span=normalize_by_span)
+        window_resis = _resolve_window_resis(focus, focus_region, positions_union)
+        n_pos = jmd_n_len + tmd_len + jmd_c_len
+
+        # Feature map image + per-column geometry (columns -> residues)
+        png_b64, columns, band_top, band_height = self._feature_map_png_and_columns(
+            df_feat=df_feat, col_val=col_val, col_imp=col_imp, shap_plot=shap_plot,
+            tmd_len=tmd_len, start=start, tmd_seq=tmd_seq, jmd_n_seq=jmd_n_seq,
+            jmd_c_seq=jmd_c_seq, dpi=feature_map_dpi, feature_map_kws=feature_map_kws, n_pos=n_pos)
+
+        # Structure: parse, read text (embedded in the HTML), compute per-residue JS styles
+        with tempfile.TemporaryDirectory() as tmp_dir:
+            pdb_path = pdb if uniprot is None else self._fetch_alphafold(uniprot, sequence, tmp_dir)
+            structure = load_structure(pdb_path)
+            records, identity, chain_id = extract_chain_residues(
+                structure, chain=chain, sequence=sequence)
+            self._check_start_alignment(records, positions_union, identity, sequence)
+            pdb_text, fmt = _read_structure_text(pdb_path)
+
+        present = {r["resi"] for r in records}
+        in_focus = present if window_resis is None else (set(window_resis) & present)
+        faded = focus != "whole" and bool(in_focus)
+        residue_styles = self._linked_residue_styles(records, dict_impact, max_abs, mode,
+                                                     size_by_impact, faded, in_focus)
+        zoom_resis = sorted(in_focus) if (focus == "zoom" and in_focus) else None
+
+        uid = "%04d" % next(_LINKED_UID)
+        html_body = build_linked_html(
+            uid=uid, pdb_text=pdb_text, fmt=fmt, chain_id=chain_id,
+            residue_styles=residue_styles, base_color=ut.COLOR_STRUCT_MISSING,
+            faded=faded, fade_opacity=0.45, zoom_resis=zoom_resis, fmap_png_b64=png_b64,
+            columns=columns, band_top=band_top, band_height=band_height,
+            width=width, height=height)
+        if self._verbose:
+            ut.print_out(f"CPPStructurePlot: linked view of {len(df_feat)} features on "
+                         f"{len(records)} residues, mode='{mode}'.")
+        return LinkedView(html_body=html_body, dict_impact=dict_impact, max_abs=max_abs, mode=mode)
+
+    def _feature_map_png_and_columns(self, df_feat, col_val, col_imp, shap_plot, tmd_len,
+                                     start, tmd_seq, jmd_n_seq, jmd_c_seq, dpi,
+                                     feature_map_kws, n_pos):
+        """Render CPPPlot.feature_map (no tight bbox) -> base64 PNG + per-column geometry.
+
+        Without ``bbox_inches='tight'`` the figure fractions map directly onto the saved PNG,
+        so the heatmap column x-positions (computed from the heatmap axes) line up with the
+        image — the same mapping the deployed app uses to box a residue.
+        """
+        import io
+        import base64
+        import matplotlib.pyplot as plt
+        from aaanalysis import CPPPlot
+        cpp_plot = CPPPlot(df_scales=self._df_scales, df_cat=self._df_cat,
+                           jmd_n_len=self._jmd_n_len, jmd_c_len=self._jmd_c_len,
+                           accept_gaps=True, verbose=False)
+        fig_fm, ax_fm = cpp_plot.feature_map(
+            df_feat=df_feat, shap_plot=shap_plot, col_val=col_val, col_imp=col_imp,
+            tmd_len=tmd_len, start=start, tmd_seq=tmd_seq, jmd_n_seq=jmd_n_seq,
+            jmd_c_seq=jmd_c_seq, **feature_map_kws)
+        try:
+            fig_fm.canvas.draw()
+            # The heatmap axes span all n_pos columns; pick the tallest such axes (not the
+            # short top impact-bar that shares the x-range).
+            cands = [a for a in fig_fm.get_axes()
+                     if abs((a.get_xlim()[1] - a.get_xlim()[0]) - n_pos) < 1e-6]
+            heat_ax = max(cands, key=lambda a: a.get_position().height) if cands else ax_fm
+            columns, band_top, band_height = _columns(heat_ax, n_pos, start)
+            buffer = io.BytesIO()
+            fig_fm.savefig(buffer, format="png", dpi=dpi)  # no tight: fractions map to pixels
+        finally:
+            plt.close(fig_fm)
+        png_b64 = base64.b64encode(buffer.getvalue()).decode("ascii")
+        return png_b64, columns, band_top, band_height
+
+    @staticmethod
+    def _linked_residue_styles(records, dict_impact, max_abs, mode, size_by_impact,
+                               faded, in_focus):
+        """Per-residue ``[resi, color_hex, stick_radius]`` for the linked HTML's base styling."""
+        styles = []
+        if mode == "plddt":
+            for res in records:
+                if faded and res["resi"] not in in_focus:
+                    continue
+                styles.append([res["resi"], plddt_to_hex(res["plddt"]), 0.0])
+            return styles
+        for res in records:
+            resi = res["resi"]
+            impact = dict_impact.get(resi, 0.0)
+            if not np.isfinite(impact) or impact == 0:
+                continue
+            color = impact_to_hex(impact, max_abs)
+            radius = _stick_radius(impact, max_abs, size_by_impact)
+            styles.append([resi, color, round(float(radius), 3)])
+        return styles
 
     def interactive(self,
                     predictor: Callable,

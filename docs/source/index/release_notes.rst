@@ -110,7 +110,10 @@ Added
   layout. ``interactive`` returns a live `ipywidgets <https://ipywidgets.readthedocs.io>`_
   explorer (added to the ``[pro]`` extra) where a site slider drives a user ``predictor`` and
   repaints the linked 3D structure and ``CPPPlot.feature_map`` together (debounced), the
-  notebook-native version of the app's per-site explore loop.
+  notebook-native version of the app's per-site explore loop. ``plot_linked`` returns a
+  ``LinkedView`` — a self-contained HTML where **hovering a feature-map column highlights the
+  corresponding residue** in the 3Dmol cartoon (the app's signature interaction); ``write_html``
+  exports it as a standalone, shareable page.
 
 **Sequence Analysis**
 

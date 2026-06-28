@@ -115,3 +115,45 @@ class CombinedView:
     def _repr_html_(self):
         """Notebook rich display: the side-by-side structure + feature-map HTML."""
         return self._body()
+
+
+class LinkedView:
+    """Feature-map ↔ structure linked view.
+
+    Returned by :meth:`CPPStructurePlot.plot_linked`. Holds a self-contained HTML body in
+    which hovering a feature-map column highlights the corresponding residue in the 3Dmol
+    cartoon (the deployed app's interaction). ``write_html`` exports it as a standalone page.
+
+    Attributes
+    ----------
+    dict_impact : dict
+        ``{resi: impact}`` painted onto the structure.
+    max_abs : float
+        Normalisation constant for the impact ramp.
+    mode : str
+        ``'impact'`` or ``'plddt'``.
+    """
+
+    def __init__(self, html_body=None, dict_impact=None, max_abs=None, mode=None):
+        """Store the linked HTML body and the mapped-impact metadata."""
+        self._html = html_body
+        self.dict_impact = dict_impact
+        self.max_abs = max_abs
+        self.mode = mode
+
+    def show(self):
+        """Display the linked view inline (Jupyter)."""
+        from IPython.display import HTML, display
+        return display(HTML(self._html))
+
+    def write_html(self, path):
+        """Write the linked structure + feature-map view as one self-contained HTML page."""
+        from .linked_html import page
+        path = str(path)
+        with open(path, "w", encoding="utf-8") as f:
+            f.write(page(self._html))
+        return path
+
+    def _repr_html_(self):
+        """Notebook rich display: the feature-map ↔ structure linked HTML."""
+        return self._html
