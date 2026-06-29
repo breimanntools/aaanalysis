@@ -607,6 +607,10 @@ _Avoid_: df_cat_int, subcat table (the object is `df_subcat`).
 The Pearson-correlation threshold (∈ {0.3,…,0.9} or `None`) for an optional `AAclust` redundancy reduction layered on a tier, served from **pre-computed** per-tier selections (AAclust default settings, fixed seed). `None` = no reduction. Reduction is computed **per tier** (medoids are not nested across tiers) and on **dual grids** (with / without AAindex) so `just_aaindex` stays correct. May leave a subcategory with no representative — the reduced set need not cover every tier subcategory. See ADR-0025.
 _Avoid_: min_corr, redundancy threshold (use the AAclust term `min_th`).
 
+**scale pre-selection** (`AAclust.pre_select_scales`):
+The metadata-only step (no clustering) that drops scales by AAontology category / subcategory (`cat_out` / `subcat_out`, via `df_cat`), `df_scales` in / `df_scales` out. The preparation step before a redundancy reduction with `select_scales` (threshold) or `filter_coverage` (coverage) — kept separate from both by design (separation of concerns). See ADR-0048.
+_Avoid_: filter_scales (the verb is `pre_select_scales`); cat_remove / subcat_remove (the params are `cat_out` / `subcat_out`).
+
 **feature simplification** (`CPP.simplify`):
 The post-hoc rewriting of a fitted [[df_feat]] into a **more interpretable, and ideally
 smaller** one: each feature's scale is swapped for a *correlated* scale drawn from a
