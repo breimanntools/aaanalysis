@@ -101,6 +101,12 @@ class CPPStructurePlot:
     Plotting class for painting :class:`CPP` feature impact onto a 3D protein structure
     (**[pro]**, requires ``aaanalysis[pro]``) [Breimann25]_.
 
+    .. warning::
+
+        **Experimental.** This class and its methods are under active development; their API
+        (signatures, defaults, return objects) may change between minor releases without the
+        usual deprecation cycle. Pin a version if you depend on the current behaviour.
+
     Each feature's signed impact is mapped to the residue positions it spans and painted
     residue-by-residue onto the protein cartoon, rendered with the interactive
     `py3Dmol <https://pypi.org/project/py3Dmol/>`_ viewer. A red-white-blue ramp shows where
