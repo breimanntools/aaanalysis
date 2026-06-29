@@ -107,6 +107,8 @@ classes grouped by capability, the prediction levels (residue / domain / protein
    index/docstring_guide.rst
    index/release_notes.rst
 
+.. _ecosystem:
+
 The AAanalysis Ecosystem
 ========================
 AAanalysis is the interpretable middle layer between bioinformatics I/O and the downstream machine
@@ -118,12 +120,11 @@ wrappers or native implementations — for example SHAP via ``ShapModel``, or ma
 such as random forests via ``TreeModel`` — so the resulting features, explanations, and design
 objectives feed straight into the standard ML / XAI / optimization tools.
 
-Click the diagram to view and download the full map, or open the
-`ecosystem positioning page <https://aaanalysis.readthedocs.io/en/latest/_static/aaanalysis_ecosystem.html>`_
-— a self-contained walkthrough with the map, its introduction, and further background.
+Click the diagram to open the full interactive map full-screen
+(`Ecosystem Map <_static/aaanalysis_ecosystem.html>`_).
 
 .. figure:: _artwork/diagrams/aaanalysis_ecosystem.svg
-   :target: https://raw.githubusercontent.com/breimanntools/aaanalysis/master/docs/source/_artwork/diagrams/aaanalysis_ecosystem.svg
+   :target: _static/aaanalysis_ecosystem.html
    :alt: The AAanalysis ecosystem — where AAanalysis fits in the protein-ML stack
    :width: 100%
    :align: center

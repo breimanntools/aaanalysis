@@ -29,29 +29,37 @@ For enhanced interpretability, AAanalysis integrates with the SHapley Additive e
 (`SHAP <https://shap.readthedocs.io/en/latest/index.html>`_) framework to provide detailed explanations of prediction
 results for individual sequences at single-residue resolution.
 
-.. figure:: /_artwork/diagrams/connections.png
-   :align: center
-   :alt: AAanalysis workflow
-
-   General pipeline for sequence-based protein prediction in Python with AAanalysis.
-   Either amino acid scales or protein embeddings can be used as numerical representation of amino acids
-   (indicated by dashed lines). Protein embeddings can be created
-   via `Google Colab <https://colab.research.google.com/drive/1N3Sf5EDwqHEN2lyPNcW5w6Mct5FZ2-W2?usp=sharing>`_
-   and are currently integrated with CPP.
+For a bird's-eye view of how AAanalysis fits between upstream bioinformatics I/O
+(UniProt, Biopython, protein-language-model embeddings, structures) and the downstream
+machine-learning, explainable-AI, and protein-design stack, see
+:ref:`The AAanalysis Ecosystem <ecosystem>`. Either amino acid scales or protein
+embeddings can serve as the numerical representation of amino acids; embeddings can be
+created via
+`Google Colab <https://colab.research.google.com/drive/1N3Sf5EDwqHEN2lyPNcW5w6Mct5FZ2-W2?usp=sharing>`_
+and are integrated with CPP through ``CPP.run_num``.
 
 AAanalysis provides a handful of DataFrames for seamless data management. Starting with amino acid scale information
 (**df_scales**, **df_cat**) and protein sequences (**df_seq**), it enables segmentation into parts (**df_parts**)
 and accommodates user-defined splitting (**split_kws**). Our CPP algorithm then utilizes these to generate
 physicochemical features (**df_feat**) by comparing protein sequence sets.
 
-See the primary analysis pipeline of the AAanalysis framework in this diagram:
+See the primary analysis pipeline of the AAanalysis framework in the **Data Flow Map**
+below — from the external data sources through the two CPP entry points (``CPP.run`` for
+amino acid scales, ``CPP.run_num`` for numeric values) to the feature matrix ``X`` and the
+model, explanation, and design wrappers
+(`open the interactive version <../_static/dataflow_map.html>`_):
 
-.. figure:: /_artwork/diagrams/components.png
+.. figure:: /_artwork/diagrams/dataflow_map.png
    :align: center
-   :alt: AAanalysis dataflow
+   :alt: AAanalysis Data Flow Map
+   :width: 100%
 
-   AAanalysis pipeline illustrating the typical data flow, represented as data frames, with key
-   methods (Python classes) highlighted by black squares.
+   The AAanalysis Data Flow Map. External data (gray) feeds the CPP core (blue):
+   ``df_seq`` → ``df_parts`` with ``split_kws`` and ``df_scales`` (and the numeric
+   ``dict_num`` → ``dict_num_parts`` path) → ``CPP.run`` / ``CPP.run_num`` → ``df_feat``
+   → ``X``. The wrapper classes (amber) then predict (``TreeModel``), explain
+   (``TreeModel`` global importance, ``ShapModel`` local impact), and design
+   (``SeqMut`` · ``SeqOpt``) from ``X``.
 
 New here? Start with **Prediction tasks**, the concept-overview page that maps a
 biological question to the right AAanalysis workflow — by *unit of comparison* and
