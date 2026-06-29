@@ -289,3 +289,19 @@ class TestExploreMultiSite:
             _csp().explore(df_feat=df_feat, sequence=long_seq, pdb=pdb_path,
                           predictor=_stub_predictor(df_feat), output="html",
                           sites=list(range(11, 212)), tmd_len=10)   # 201 sites > cap, raises pre-bake
+
+    def test_verbose_and_zoom(self, df_feat, query_seq, df_seq, labels, pdb_path):
+        # verbose=True + focus='zoom' exercise the progress prints and the zoom-baking branch
+        csp = aa.CPPStructurePlot(jmd_n_len=10, jmd_c_len=10, verbose=True)
+        view = csp.explore(df_feat=df_feat, sequence=query_seq, pdb=pdb_path, df_seq=df_seq,
+                           labels=labels, model="rf", output="html", sites=[12, 16],
+                           tmd_len=10, focus="zoom", random_state=42)
+        assert isinstance(view, LinkedView)
+
+    def test_soft_warn_past_threshold(self, df_feat, query_seq, pdb_path):
+        # > _WARN_SITES (40) emits a UserWarning (stub predictor keeps the bake cheap)
+        long_seq = "".join(np.random.default_rng(3).choice(list(_AAS), size=70))
+        with pytest.warns(UserWarning, match="large file"):
+            _csp().explore(df_feat=df_feat, sequence=long_seq, pdb=pdb_path,
+                          predictor=_stub_predictor(df_feat), output="html",
+                          sites=list(range(11, 53)), tmd_len=10)   # 42 sites > warn threshold
