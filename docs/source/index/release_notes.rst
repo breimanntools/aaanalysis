@@ -123,7 +123,10 @@ Added
   impact via a default ``ShapModel`` refit — no ``CPP.run`` rediscovery) and dispatches to a
   selectable ``output`` (``'widget'`` / ``'html'`` / ``'static'``); ``model`` takes a name
   (``'rf'`` / ``'svm'`` / ``'log_reg'``), an estimator, or a list, and a custom
-  ``predictor=(sequence, p1) -> df_feat`` remains the escape hatch.
+  ``predictor=(sequence, p1) -> df_feat`` remains the escape hatch. With ``output='html'``,
+  passing ``sites=[...]`` bakes a **multi-site live** standalone page: a client-side JS slider
+  switches the pre-computed prediction per P1 (feature map + structure restyle) with no kernel,
+  keeping the column-residue linking (warned past 40 sites, hard-capped at 200).
 
 **Sequence Analysis**
 

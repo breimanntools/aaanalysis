@@ -230,3 +230,78 @@ class TestExploreErrors:
         with pytest.raises(ValueError):
             _explore(_csp(), df_feat, query_seq, df_seq, labels, pdb_path, output="static",
                      mode=bad)
+
+
+# --- Stage C: multi-site live HTML (sites=) ----------------------------------
+def _stub_predictor(df_feat):
+    def predictor(sequence, p1):
+        out = df_feat.copy()
+        out[ut.COL_FEAT_IMPACT] = [0.8, -0.5, 1.2, -0.3]
+        return out
+    return predictor
+
+
+class TestExploreMultiSite:
+    """output='html' with sites=[...] bakes one app-like, client-side-switchable HTML."""
+
+    def test_returns_linked_view(self, df_feat, query_seq, df_seq, labels, pdb_path):
+        view = _csp().explore(df_feat=df_feat, sequence=query_seq, pdb=pdb_path, df_seq=df_seq,
+                              labels=labels, model="rf", output="html", sites=[12, 16, 20],
+                              tmd_len=10, random_state=42)
+        assert isinstance(view, LinkedView)
+
+    def test_bakes_all_sites_with_slider(self, df_feat, query_seq, df_seq, labels, pdb_path,
+                                         tmp_path):
+        out = tmp_path / "live.html"
+        _csp().explore(df_feat=df_feat, sequence=query_seq, pdb=pdb_path, df_seq=df_seq,
+                       labels=labels, model="rf", output="html", sites=[12, 16, 20, 24],
+                       tmd_len=10, path=str(out), random_state=42)
+        txt = out.read_text()
+        assert "var SITES =" in txt and 'type="range"' in txt and "function showSite" in txt
+        assert txt.count('"p1":') == 4
+
+    def test_custom_predictor_multisite(self, df_feat, query_seq, pdb_path):
+        view = _csp().explore(df_feat=df_feat, sequence=query_seq, pdb=pdb_path,
+                              predictor=_stub_predictor(df_feat), output="html",
+                              sites=[12, 18], tmd_len=10)
+        assert isinstance(view, LinkedView)
+
+    # negative
+    def test_sites_with_non_html_raises(self, df_feat, query_seq, df_seq, labels, pdb_path):
+        with pytest.raises(ValueError, match="only valid with output='html'"):
+            _csp().explore(df_feat=df_feat, sequence=query_seq, pdb=pdb_path, df_seq=df_seq,
+                          labels=labels, output="static", sites=[12, 16], tmd_len=10)
+
+    def test_empty_sites_raises(self, df_feat, query_seq, pdb_path):
+        with pytest.raises(ValueError):
+            _csp().explore(df_feat=df_feat, sequence=query_seq, pdb=pdb_path,
+                          predictor=_stub_predictor(df_feat), output="html", sites=[], tmd_len=10)
+
+    def test_site_out_of_range_raises(self, df_feat, query_seq, pdb_path):
+        with pytest.raises(ValueError):
+            _csp().explore(df_feat=df_feat, sequence=query_seq, pdb=pdb_path,
+                          predictor=_stub_predictor(df_feat), output="html",
+                          sites=[3], tmd_len=10)   # 3 < jmd_n_len+1
+
+    def test_hard_cap_raises(self, df_feat, pdb_path):
+        long_seq = "".join(np.random.default_rng(2).choice(list(_AAS), size=230))
+        with pytest.raises(ValueError, match="caps at"):
+            _csp().explore(df_feat=df_feat, sequence=long_seq, pdb=pdb_path,
+                          predictor=_stub_predictor(df_feat), output="html",
+                          sites=list(range(11, 212)), tmd_len=10)   # 201 sites > cap, raises pre-bake
+
+    def test_verbose_and_zoom(self, df_feat, query_seq, df_seq, labels, pdb_path):
+        # verbose=True + focus='zoom' exercise the progress prints and the zoom-baking branch
+        csp = aa.CPPStructurePlot(jmd_n_len=10, jmd_c_len=10, verbose=True)
+        view = csp.explore(df_feat=df_feat, sequence=query_seq, pdb=pdb_path, df_seq=df_seq,
+                           labels=labels, model="rf", output="html", sites=[12, 16],
+                           tmd_len=10, focus="zoom", random_state=42)
+        assert isinstance(view, LinkedView)
+
+    def test_soft_warn_past_threshold(self, df_feat, query_seq, pdb_path):
+        # > _WARN_SITES (40) emits a UserWarning (stub predictor keeps the bake cheap)
+        long_seq = "".join(np.random.default_rng(3).choice(list(_AAS), size=70))
+        with pytest.warns(UserWarning, match="large file"):
+            _csp().explore(df_feat=df_feat, sequence=long_seq, pdb=pdb_path,
+                          predictor=_stub_predictor(df_feat), output="html",
+                          sites=list(range(11, 53)), tmd_len=10)   # 42 sites > warn threshold

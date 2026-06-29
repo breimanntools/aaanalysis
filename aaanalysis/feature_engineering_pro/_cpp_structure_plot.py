@@ -22,11 +22,16 @@ from ._backend.cpp_struct.render import (render_py3dmol, py3dmol_available,
                                          _stick_radius, _read_structure_text)
 from ._backend.cpp_struct.colors import impact_to_hex, plddt_to_hex
 from ._backend.cpp_struct.view import StructureView, CombinedView, LinkedView
-from ._backend.cpp_struct.linked_html import build_linked_html, _columns
+from ._backend.cpp_struct.linked_html import (build_linked_html, build_linked_html_multi,
+                                              _columns)
 
 LIST_MODES = ["impact", "plddt"]
 LIST_FOCUS = ["whole", "fade", "zoom"]
 LIST_OUTPUTS = ["widget", "html", "static"]
+# Multi-site live HTML (explore(output="html", sites=...)): each baked site embeds a feature-map
+# image and costs one predictor refit, so warn past _WARN and hard-cap at _MAX (runaway guard).
+_WARN_SITES = 40
+_MAX_SITES = 200
 # Per-call counter for unique linked-view DOM ids (deterministic within a kernel session,
 # so committed notebook outputs are stable, but unique across views on one page).
 _LINKED_UID = itertools.count(1)
@@ -725,6 +730,68 @@ class CPPStructurePlot:
             styles.append([resi, color, round(float(radius), 3)])
         return styles
 
+    def _linked_multi_view(self, *, predictor, sequence, sites, pdb, uniprot, col_imp, col_val,
+                           shap_plot, tmd_len, jmd_n_len, jmd_c_len, mode, focus, focus_region,
+                           size_by_impact, normalize_by_span, feature_map_dpi, width, height,
+                           chain):
+        """Build the app-like multi-site live HTML: predict each P1 once and bake them all in.
+
+        The structure is parsed once and reused; for each P1 the predictor is run, the per-residue
+        impact / feature-map image / column geometry / styles are computed (the same way as
+        :meth:`plot_linked`), and the set is handed to :func:`build_linked_html_multi`, whose JS
+        slider switches sites client-side (no kernel). Returns a ``LinkedView``.
+        """
+        n_pos = jmd_n_len + tmd_len + jmd_c_len
+        # Resolve the structure once (the PDB is the same across sites).
+        with tempfile.TemporaryDirectory() as tmp_dir:
+            pdb_path = pdb if uniprot is None else self._fetch_alphafold(uniprot, sequence, tmp_dir)
+            structure = load_structure(pdb_path)
+            records, identity, chain_id = extract_chain_residues(
+                structure, chain=chain, sequence=sequence)
+            pdb_text, fmt = _read_structure_text(pdb_path)
+        present = {r["resi"] for r in records}
+        # Chain-identity is site-independent, so warn once here (the per-site positions checks
+        # would be noisy across many sites).
+        if sequence is not None and identity < 0.5:
+            warnings.warn(
+                f"The selected chain matches 'sequence' with low identity ({identity:.2f}); "
+                f"the painted residues may be misaligned.", UserWarning, stacklevel=2)
+
+        baked = []
+        last_dict_impact, last_max_abs = {}, 0.0
+        for p1 in sites:
+            start = int(p1) - jmd_n_len
+            df_feat_p1 = predictor(sequence, int(p1))
+            dict_impact, max_abs, positions_union = compute_residue_impact(
+                df_feat=df_feat_p1, col_imp=col_imp, start=start, tmd_len=tmd_len,
+                jmd_n_len=jmd_n_len, jmd_c_len=jmd_c_len, normalize_by_span=normalize_by_span)
+            window_resis = _resolve_window_resis(focus, focus_region, positions_union)
+            in_focus = present if window_resis is None else (set(window_resis) & present)
+            faded = focus != "whole" and bool(in_focus)
+            png_b64, columns, band_top, band_height = self._feature_map_png_and_columns(
+                df_feat=df_feat_p1, col_val=col_val, col_imp=col_imp, shap_plot=shap_plot,
+                tmd_len=tmd_len, start=start, tmd_seq=None, jmd_n_seq=None, jmd_c_seq=None,
+                dpi=feature_map_dpi, feature_map_kws={}, n_pos=n_pos)
+            styles = self._linked_residue_styles(records, dict_impact, max_abs, mode,
+                                                 size_by_impact, faded, in_focus)
+            baked.append(dict(p1=int(p1), styles=styles, fmap=png_b64, columns=columns,
+                              band_top=band_top, band_height=band_height,
+                              zoom=(sorted(in_focus) if (focus == "zoom" and in_focus) else None),
+                              faded=faded))
+            last_dict_impact, last_max_abs = dict_impact, max_abs
+            if self._verbose:
+                ut.print_out(f"CPPStructurePlot.explore: baked site P1={int(p1)} "
+                             f"({len(baked)}/{len(sites)})")
+        uid = "%04d" % next(_LINKED_UID)
+        html_body = build_linked_html_multi(
+            uid=uid, pdb_text=pdb_text, fmt=fmt, chain_id=chain_id, sites=baked,
+            base_color=ut.COLOR_STRUCT_MISSING, fade_opacity=0.45, width=width, height=height)
+        if self._verbose:
+            ut.print_out(f"CPPStructurePlot: live linked view over {len(baked)} sites on "
+                         f"{len(records)} residues, mode='{mode}'.")
+        return LinkedView(html_body=html_body, dict_impact=last_dict_impact,
+                          max_abs=last_max_abs, mode=mode)
+
     def interactive(self,
                     predictor: Callable,
                     sequence: str,
@@ -931,6 +998,7 @@ class CPPStructurePlot:
                 shap_plot: bool = True,
                 tmd_len: int = 20,
                 init_site: Optional[int] = None,
+                sites: Optional[List[int]] = None,
                 label_target_class: int = 1,
                 mode: Literal["impact", "plddt"] = "impact",
                 focus: Literal["whole", "fade", "zoom"] = "fade",
@@ -954,8 +1022,9 @@ class CPPStructurePlot:
 
         - ``'widget'`` -> :meth:`interactive` (a live ipywidgets explorer; the P1 slider re-predicts
           and repaints per site; needs a kernel + ``ipywidgets``).
-        - ``'html'`` -> :meth:`plot_linked` (a self-contained linked HTML, written to ``path`` if
-          given). Baked for the single ``init_site`` (no live kernel; live multi-site is out of scope).
+        - ``'html'`` -> a self-contained linked HTML, written to ``path`` if given. Baked for the
+          single ``init_site`` by default; pass ``sites=[...]`` to bake a **multi-site live** page
+          whose JS slider switches the pre-computed per-site prediction client-side (no kernel).
         - ``'static'`` -> :meth:`plot_combined` (the structure beside the feature map, baked for
           ``init_site``).
 
@@ -1015,6 +1084,13 @@ class CPPStructurePlot:
         init_site : int, optional
             The P1 site to bake for ``output`` in {``'html'``, ``'static'``} and the initial slider
             site for ``'widget'`` (default near the middle of ``sequence``).
+        sites : list of int, optional
+            Only for ``output='html'``: a list of P1 positions to bake into one **multi-site live**
+            HTML. The page gets a client-side JS site slider that switches the pre-computed
+            prediction per site (feature map + structure restyle) with no kernel, keeping the
+            column-residue linking. ``None`` (default) bakes only the single ``init_site``. Each
+            site embeds a feature-map image and runs one predictor refit, so a warning is emitted
+            past 40 sites and a hard cap applies at 200.
         label_target_class : int, default=1
             Class whose probability is predicted and explained.
         mode : {'impact', 'plddt'}, default='impact'
@@ -1083,12 +1159,34 @@ class CPPStructurePlot:
             raise ValueError(f"'predictor' ({predictor}) should be a callable (sequence, p1) "
                              f"-> df_feat")
         jmd_n_len = ut.check_jmd_n_len(jmd_n_len=self._jmd_n_len)
+        jmd_c_len = ut.check_jmd_c_len(jmd_c_len=self._jmd_c_len)
         n_res = len(sequence)
         # The site geometry needs jmd_n_len residues before p1, so the first JMD-N residue (start =
         # p1 - jmd_n_len) is valid; validate init_site here (naming init_site, not 'start').
         if init_site is not None:
             ut.check_number_range(name="init_site", val=init_site, min_val=jmd_n_len + 1,
                                   max_val=n_res, just_int=True)
+        # Validate `sites` (the multi-site live HTML) BEFORE the predictor is built, so a bad
+        # argument fails fast (cheap checks first), consistent with the rest of this method.
+        if sites is not None:
+            if output != "html":
+                raise ValueError(f"'sites' is only valid with output='html' (got output={output!r})")
+            sites = [int(s) for s in sites]
+            if len(sites) == 0:
+                raise ValueError("'sites' should be a non-empty list of P1 positions (or None)")
+            for s in sites:
+                ut.check_number_range(name="sites", val=s, min_val=jmd_n_len + 1, max_val=n_res,
+                                      just_int=True)
+            if len(sites) > _MAX_SITES:
+                raise ValueError(
+                    f"'sites' has {len(sites)} positions; the live HTML caps at {_MAX_SITES} "
+                    f"(each site bakes a feature-map image and runs one predictor refit). Pass "
+                    f"fewer / coarser sites.")
+            if len(sites) > _WARN_SITES:
+                warnings.warn(
+                    f"Baking {len(sites)} sites into the live HTML embeds {len(sites)} feature-map "
+                    f"images and runs {len(sites)} predictor refits; expect a large file and a "
+                    f"longer build.", UserWarning, stacklevel=2)
 
         # Resolve the per-site predictor (built-in unless the escape hatch is given)
         if predictor is None:
@@ -1104,6 +1202,20 @@ class CPPStructurePlot:
                 col_imp=col_imp, df_scales=self._df_scales,
                 label_target_class=label_target_class, random_state=random_state,
                 n_jobs=n_jobs, verbose=self._verbose)
+
+        # Multi-site live HTML: bake a JS site slider over `sites` (re-prediction is precomputed,
+        # so the standalone page switches sites client-side with no kernel). Already validated above.
+        if sites is not None:
+            view = self._linked_multi_view(
+                predictor=predictor, sequence=sequence, sites=sites, pdb=pdb, uniprot=uniprot,
+                col_imp=col_imp, col_val=col_val, shap_plot=shap_plot, tmd_len=tmd_len,
+                jmd_n_len=jmd_n_len, jmd_c_len=jmd_c_len, mode=mode, focus=focus,
+                focus_region=focus_region, size_by_impact=size_by_impact,
+                normalize_by_span=normalize_by_span, feature_map_dpi=150, width=520, height=460,
+                chain=chain)
+            if path is not None:
+                view.write_html(path)
+            return view
 
         # Dispatch on the selected output
         if output == "widget":
