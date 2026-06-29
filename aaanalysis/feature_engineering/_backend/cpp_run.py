@@ -88,22 +88,24 @@ def _get_n_pre_filter(n_pre_filter=None, n_filter=None, n_feat=None, pct_pre_fil
 
 
 def _attach_filter_stats(df_feat=None, n_candidates=None, n_after_prefilter=None,
-                         n_after_redundancy=None, n_requested=None):
-    """Attach the CPP filter-funnel counts to ``df_feat.attrs`` and warn on a
+                         n_after_redundancy=None, n_requested=None, verbose=False):
+    """Attach the CPP filter-funnel counts to ``df_feat.attrs`` and surface a
     feature shortfall.
 
     ``n_requested`` is the user's pre-cap ``n_filter`` (before it is clipped to
     ``n_candidates``). Two distinct shortfalls are surfaced, mutually exclusive
-    so the run never double-warns:
+    so the run never double-reports:
 
     * **D5b — sparse config (``UserWarning``):** when ``n_candidates`` itself is
       below ``n_filter``, the ``split_kws`` × parts × scales expansion cannot
       generate enough features *regardless of filtering* (the small-``n_jmd`` /
       narrow-``split_kws`` footgun). This is an input-shaped issue the user can
-      fix, so it points at ``split_kws`` / part lengths.
-    * **D7 — filter shortfall (``RuntimeWarning``):** enough candidates existed,
-      but the pre-filter / redundancy steps removed too many; points at the
-      filter strictness.
+      fix, so it stays a warning and points at ``split_kws`` / part lengths.
+    * **D7 — filter shortfall (info, ``verbose``-gated):** enough candidates
+      existed, but the pre-filter / redundancy steps trimmed to fewer than
+      requested. This is normal filter behaviour, not a fault, so it is plain
+      user-facing information printed via ``print_out`` only when ``verbose``
+      — never a warning.
 
     The stats are a plain dict — no typed record, per the backend house style.
     """
@@ -128,14 +130,13 @@ def _attach_filter_stats(df_feat=None, n_candidates=None, n_after_prefilter=None
             f"the parts, or lower 'n_filter'.",
             UserWarning,
         )
-    elif n_requested is not None and n_final < n_requested:
-        warnings.warn(
-            f"'n_filter' ({n_requested}) should be <= the number of features the "
-            f"filter could deliver ({n_final}); returning fewer features than "
-            f"requested. Inspect ``df_feat.attrs['last_filter_stats']`` and "
-            f"consider a larger 'df_scales' / 'n_jmd' / less strict "
-            f"'max_overlap'/'max_cor'.",
-            RuntimeWarning,
+    elif verbose and n_requested is not None and n_final < n_requested:
+        ut.print_out(
+            f"Note: returning {n_final} features, fewer than the requested "
+            f"'n_filter' ({n_requested}); the redundancy filter trimmed the rest. "
+            f"Inspect df_feat.attrs['last_filter_stats'], or relax "
+            f"'max_overlap'/'max_cor' (or enlarge 'df_scales' / 'n_jmd') to keep "
+            f"more."
         )
     return df_feat
 
@@ -301,7 +302,7 @@ def cpp_run_single(df_parts=None, split_kws=None, df_scales=None, df_cat=None, v
     df_feat[ut.COL_FEATURE] = df_feat[ut.COL_FEATURE].astype(str)
     df_feat = _attach_filter_stats(
         df_feat=df_feat, n_candidates=n_feat, n_after_prefilter=len(df),
-        n_after_redundancy=len(df_feat), n_requested=n_requested,
+        n_after_redundancy=len(df_feat), n_requested=n_requested, verbose=verbose,
     )
     if verbose:
         ut.print_out(f"4. CPP returns df of {len(df_feat)} unique features with general information and statistics")
@@ -422,7 +423,7 @@ def cpp_run_batch(df_parts=None, split_kws=None, df_scales=None, df_cat=None, ve
     df_feat[ut.COL_FEATURE] = df_feat[ut.COL_FEATURE].astype(str)
     df_feat = _attach_filter_stats(
         df_feat=df_feat, n_candidates=n_feat, n_after_prefilter=len(df),
-        n_after_redundancy=len(df_feat), n_requested=n_requested,
+        n_after_redundancy=len(df_feat), n_requested=n_requested, verbose=verbose,
     )
     if verbose:
         ut.print_out(f"4. CPP returns df of {len(df_feat)} unique features with general information and statistics")
@@ -518,7 +519,7 @@ def cpp_run_batch_num(df_parts=None, split_kws=None, df_scales=None, df_cat=None
     df_feat[ut.COL_FEATURE] = df_feat[ut.COL_FEATURE].astype(str)
     df_feat = _attach_filter_stats(
         df_feat=df_feat, n_candidates=n_feat, n_after_prefilter=len(df),
-        n_after_redundancy=len(df_feat), n_requested=n_requested,
+        n_after_redundancy=len(df_feat), n_requested=n_requested, verbose=verbose,
     )
     if verbose:
         ut.print_out(f"4. CPP returns df of {len(df_feat)} unique features with general information and statistics")
@@ -688,7 +689,7 @@ def cpp_run_sample_batched(df_parts=None, split_kws=None, df_scales=None, df_cat
     df_feat[ut.COL_FEATURE] = df_feat[ut.COL_FEATURE].astype(str)
     df_feat = _attach_filter_stats(
         df_feat=df_feat, n_candidates=n_feat_total, n_after_prefilter=len(df),
-        n_after_redundancy=len(df_feat), n_requested=n_requested,
+        n_after_redundancy=len(df_feat), n_requested=n_requested, verbose=verbose,
     )
     if verbose:
         ut.print_out(

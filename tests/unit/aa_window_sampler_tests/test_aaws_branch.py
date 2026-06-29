@@ -172,13 +172,13 @@ class TestSameProteinNoWindows:
             df_seq=df, n=5, window_size=9, pos_col="pos", seed=0)
         assert len(out) == 0
 
-    def test_no_window_warns(self):
-        # sample_same_protein.py L114-119: RuntimeWarning when a protein supplies no
-        # valid centers (verbose=True).
+    def test_no_window_prints_info(self, capsys):
+        # sample_same_protein.py: verbose-gated info note (printed via print_out, not a
+        # warning) when a protein supplies no valid centers.
         df = pd.DataFrame({"entry": ["P1"], "sequence": ["ACDEF"], "pos": [[3]]})
-        with pytest.warns(RuntimeWarning, match="No valid windows for entry"):
-            aa.AAWindowSampler(verbose=True).sample_same_protein(
-                df_seq=df, n=5, window_size=9, pos_col="pos", seed=0)
+        aa.AAWindowSampler(verbose=True).sample_same_protein(
+            df_seq=df, n=5, window_size=9, pos_col="pos", seed=0)
+        assert "valid windows for entry" in capsys.readouterr().out
 
 
 class TestSameProteinRoundRobin:
@@ -247,18 +247,18 @@ class TestMotifMatchedEdgeArms:
         # cannot reach the 2.5 threshold, so none survive.
         assert all("X" not in w for w in out["window"])
 
-    def test_empty_pool_warns(self):
-        # sample_motif_matched.py L114-118: RuntimeWarning when no candidate window
-        # meets the threshold (verbose=True).
+    def test_empty_pool_prints_info(self, capsys):
+        # sample_motif_matched.py: verbose-gated info note (printed via print_out, not a
+        # warning) when no candidate window meets the threshold.
         df = pd.DataFrame({
             "entry": ["P1", "P2"],
             "sequence": ["CDEFGH", "CDEFGH"],
             "pos": [[3], []],
         })
-        with pytest.warns(RuntimeWarning, match="No candidate windows met the motif"):
-            aa.AAWindowSampler(verbose=True).sample_motif_matched(
-                df_seq=df, n=5, window_size=3, motif_pwm=_pwm_for_a(3),
-                motif_score_threshold=2.5, pos_col="pos", seed=0)
+        aa.AAWindowSampler(verbose=True).sample_motif_matched(
+            df_seq=df, n=5, window_size=3, motif_pwm=_pwm_for_a(3),
+            motif_score_threshold=2.5, pos_col="pos", seed=0)
+        assert "candidate windows met the motif" in capsys.readouterr().out
 
 
 class TestSyntheticEdgeArms:
@@ -282,15 +282,14 @@ class TestSyntheticEdgeArms:
                 df_seq=df, n=3, window_size=4, generator="position_specific",
                 pos_col="pos", seed=0)
 
-    def test_synthetic_shortfall_warns(self):
-        # sample_synthetic.py L254-255: RuntimeWarning when filtering keeps fewer
-        # than n synthetic windows. A custom_filter that rejects everything forces
-        # the shortfall with verbose=True.
+    def test_synthetic_shortfall_prints_info(self, capsys):
+        # sample_synthetic.py: verbose-gated info note (printed via print_out, not a
+        # warning) when filtering keeps fewer than n synthetic windows. A custom_filter
+        # that rejects everything forces the shortfall with verbose=True.
         df = _df_pos_cand("ACDEFGHIKLMNP")
         aaws = aa.AAWindowSampler(verbose=True, custom_filter=lambda w, e, p: False)
-        with pytest.warns(RuntimeWarning, match="synthetic windows kept after"):
-            aaws.sample_synthetic(df_seq=df, n=5, window_size=4,
-                                  generator="uniform", seed=0)
+        aaws.sample_synthetic(df_seq=df, n=5, window_size=4, generator="uniform", seed=0)
+        assert "synthetic windows kept after" in capsys.readouterr().out
 
 
 class TestBuildOutputSequencesArms:

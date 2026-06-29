@@ -6,9 +6,10 @@ Covers Stage-1 decisions D6 and D7:
   ``run_num`` with keys ``n_candidates``, ``n_after_prefilter``,
   ``n_after_redundancy``, ``n_final``; ``return_stats=True`` returns
   ``(df_feat, stats)`` without changing the default single-DataFrame return.
-* D7 — a ``RuntimeWarning`` fires when the filter removed too many features to
-  reach ``n_filter`` (enough candidates existed), and a ``UserWarning`` fires
-  when ``accept_gaps=True`` actually encounters a gap in ``df_parts``.
+* D7 — when the filter removed too many features to reach ``n_filter`` (enough
+  candidates existed), a plain ``verbose``-gated note is printed (information,
+  not a warning). A ``UserWarning`` still fires when ``accept_gaps=True``
+  actually encounters a gap in ``df_parts``.
 * D5b — a ``UserWarning`` fires when the configuration itself is too sparse to
   generate ``n_filter`` candidate features (``n_candidates < n_filter``); it is
   mutually exclusive with the D7 ``RuntimeWarning``.
@@ -161,14 +162,25 @@ class TestFilterStatsRunNum:
 
 
 class TestFilterWarnings:
-    """Normal-case tests for the D5b + D7 warnings."""
+    """Normal-case tests for the D5b warning + the D7 shortfall notice."""
 
-    def test_shortfall_runtimewarning(self):
+    def test_shortfall_prints_info_when_verbose(self, capsys):
         # Enough candidates (45540) exist, but redundancy filtering leaves far
-        # fewer than n_filter=5000 -> D7 RuntimeWarning (not the D5b sparse case).
-        cpp = aa.CPP(df_parts=_get_df_parts(), df_scales=aa.load_scales(top60_n=38))
-        with pytest.warns(RuntimeWarning, match="n_filter"):
+        # fewer than n_filter=5000 -> D7 is plain verbose-gated info, never a
+        # RuntimeWarning (not the D5b sparse case).
+        cpp = aa.CPP(df_parts=_get_df_parts(), df_scales=aa.load_scales(top60_n=38),
+                     verbose=True)
+        with warnings.catch_warnings():
+            warnings.simplefilter("error", RuntimeWarning)
             cpp.run(labels=_labels(), n_filter=5000, n_jobs=1)
+        assert "fewer than the requested" in capsys.readouterr().out
+
+    def test_shortfall_silent_when_not_verbose(self, capsys):
+        # verbose=False suppresses the D7 shortfall notice entirely.
+        cpp = aa.CPP(df_parts=_get_df_parts(), df_scales=aa.load_scales(top60_n=38),
+                     verbose=False)
+        cpp.run(labels=_labels(), n_filter=5000, n_jobs=1)
+        assert "fewer than the requested" not in capsys.readouterr().out
 
     def test_sparse_config_userwarning(self):
         # n_filter beyond what the config can ever generate -> D5b UserWarning.
@@ -213,9 +225,12 @@ class TestFilterStatsComplex:
         s2 = cpp.run(labels=_labels(), n_filter=15, n_jobs=1, return_stats=True)[1]
         assert s1 == s2
 
-    def test_shortfall_warning_still_attaches_stats(self):
+    def test_shortfall_still_attaches_stats(self):
+        # The D7 shortfall is no longer a RuntimeWarning, but the funnel stats
+        # must still be attached on an under-delivering run.
         cpp = aa.CPP(df_parts=_get_df_parts(), df_scales=aa.load_scales(top60_n=38))
-        with pytest.warns(RuntimeWarning):
+        with warnings.catch_warnings():
+            warnings.simplefilter("error", RuntimeWarning)
             df_feat, stats = cpp.run(labels=_labels(), n_filter=5000, n_jobs=1, return_stats=True)
         assert set(stats) == _STATS_KEYS
         assert stats["n_final"] == len(df_feat)
@@ -269,12 +284,15 @@ class TestFilterStatsSampleBatched:
         df_feat = cpp.run(labels=_labels(), n_filter=15, n_jobs=1, n_sample_batches=2)
         assert cpp.last_filter_stats_["n_final"] == len(df_feat)
 
-    def test_sample_batched_shortfall_runtimewarning(self):
+    def test_sample_batched_shortfall_prints_info_when_verbose(self, capsys):
         # Enough candidates exist, but redundancy leaves far fewer than
-        # n_filter=5000 -> D7 RuntimeWarning, same as the single-pass path.
-        cpp = aa.CPP(df_parts=_get_df_parts(), df_scales=aa.load_scales(top60_n=38))
-        with pytest.warns(RuntimeWarning, match="n_filter"):
+        # n_filter=5000 -> D7 verbose-gated info, same as the single-pass path.
+        cpp = aa.CPP(df_parts=_get_df_parts(), df_scales=aa.load_scales(top60_n=38),
+                     verbose=True)
+        with warnings.catch_warnings():
+            warnings.simplefilter("error", RuntimeWarning)
             cpp.run(labels=_labels(), n_filter=5000, n_jobs=1, n_sample_batches=2)
+        assert "fewer than the requested" in capsys.readouterr().out
 
     def test_sample_batched_no_shortfall_warning_when_enough(self):
         cpp = aa.CPP(df_parts=_get_df_parts(), df_scales=aa.load_scales(top60_n=38))

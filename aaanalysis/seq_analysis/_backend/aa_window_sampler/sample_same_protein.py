@@ -12,8 +12,6 @@ shuffled iteration order get one extra). If a protein cannot supply its quota
 (small candidate pool or aggressive filtering), the shortfall is redistributed
 via a round-robin top-up over proteins with remaining capacity.
 """
-import warnings
-
 import aaanalysis.utils as ut
 from ._utils import (candidate_centers_,
                      make_safe_custom_predicate_,
@@ -112,11 +110,10 @@ def sample_same_protein(*, df_seq, positions, n, window_size,
             centers = [c for c in centers if c in allowed_centers]
         if not centers:
             if verbose:
-                warnings.warn(f"No valid windows for entry '{entries[i]}' "
-                              f"(seq_len={len(seq)}, window_size={window_size}, "
-                              f"min_distance_to_pos={min_distance_to_pos}, "
-                              f"max_distance_to_pos={max_distance_to_pos})",
-                              RuntimeWarning)
+                ut.print_out(f"Note: no valid windows for entry '{entries[i]}' "
+                             f"(seq_len={len(seq)}, window_size={window_size}, "
+                             f"min_distance_to_pos={min_distance_to_pos}, "
+                             f"max_distance_to_pos={max_distance_to_pos}).")
             continue
         rng.shuffle(centers)
         draw_batch = _draw_batch_from_centers(centers, seq, half_left, window_size)
@@ -171,9 +168,8 @@ def sample_same_protein(*, df_seq, positions, n, window_size,
             break  # every protein is exhausted
 
     if total_accepted < n and verbose:
-        warnings.warn(f"Only {total_accepted}/{n} windows kept across eligible "
-                      f"proteins after filtering.",
-                      RuntimeWarning)
+        ut.print_out(f"Note: only {total_accepted}/{n} windows kept across eligible "
+                     f"proteins after filtering.")
     # Build output rows in shuffled-protein iteration order, matching the
     # behavior before the quota refactor.
     rows, source_indices = [], []

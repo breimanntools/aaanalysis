@@ -587,7 +587,7 @@ class TreeModel(Wrapper):
         -----
         * :meth:`TreeModel.fit` must be called before using this method.
         * ``'frequency'`` without ``fit(use_rfe=True)`` selects every feature (a trivial no-op) and
-          triggers a ``RuntimeWarning``.
+          triggers a ``UserWarning``.
         * A selection that retains no features (e.g. a ``'threshold'`` above every importance) raises
           a ``ValueError`` rather than returning an empty DataFrame.
 
@@ -611,7 +611,7 @@ class TreeModel(Wrapper):
         if strategy == ut.STRATEGY_FREQUENCY and np.all(self.is_selected_):
             warnings.warn("'frequency' selection is trivial without recursive feature elimination: every "
                           "feature was selected in every round. Enable 'use_rfe=True' in 'TreeModel.fit'.",
-                          RuntimeWarning)
+                          UserWarning)
         # Select features
         is_selected = get_feature_selection_mask(strategy=strategy, param=param,
                                                  feat_importance=self.feat_importance,

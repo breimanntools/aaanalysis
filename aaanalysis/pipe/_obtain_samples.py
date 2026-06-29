@@ -152,10 +152,10 @@ def _reliable_negatives(df_pos, df_unl, df_feat, window_size, n_neg,
     labels = [1] * len(df_pos_fit) + [2] * len(df_unl_fit)
     # Cannot identify more reliable negatives than the featurizable unlabeled pool holds.
     n_to_identify = min(n_neg, len(df_unl_fit))
-    if n_to_identify < n_neg:
-        warnings.warn(f"only {n_to_identify} featurizable unlabeled window(s) available; "
-                      f"identifying {n_to_identify} reliable negatives instead of {n_neg}.",
-                      RuntimeWarning)
+    if verbose and n_to_identify < n_neg:
+        ut.print_out(f"Note: only {n_to_identify} featurizable unlabeled window(s) "
+                     f"available; identifying {n_to_identify} reliable negatives "
+                     f"instead of {n_neg}.")
     dpul = dPULearn(verbose=verbose, random_state=seed)
     dpul.fit(X, labels=labels, label_pos=1, label_unl=2, n_unl_to_neg=n_to_identify)
     is_neg = np.asarray(dpul.labels_[len(df_pos_fit):]) == 0

@@ -15,7 +15,6 @@ Synthetic windows are produced by a ``generator`` that selects one of:
 7. A user-supplied frequency table over an arbitrary single-character alphabet
    (dict[str, float]).
 """
-import warnings
 import numpy as np
 
 import aaanalysis.utils as ut
@@ -252,6 +251,6 @@ def sample_synthetic(*, df_seq, n, window_size, generator, pos_col,
         custom_predicate=predicate,
     )
     if len(accepted) < n and verbose:
-        warnings.warn(f"Only {len(accepted)}/{n} synthetic windows kept after filtering.",
-                      RuntimeWarning)
+        ut.print_out(f"Note: only {len(accepted)}/{n} synthetic windows kept after "
+                     f"filtering.")
     return [w for w, _ in accepted]

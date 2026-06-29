@@ -6,7 +6,6 @@ Walks every position of every candidate row in ``df_seq``, scores each window of
 returns the hits whose score meets the user-supplied threshold. Equivalent to a
 FIMO scan with a score-based threshold; no external CLI dependencies.
 """
-import warnings
 import numpy as np
 
 import aaanalysis.utils as ut
@@ -117,9 +116,8 @@ def sample_motif_matched(*, df_seq, positions, n, window_size,
             pool.append((score, entry_i, i, c))
     if not pool:
         if verbose:
-            warnings.warn(f"No candidate windows met the motif score threshold "
-                          f"({motif_score_threshold}); returning empty result.",
-                          RuntimeWarning)
+            ut.print_out(f"Note: no candidate windows met the motif score threshold "
+                         f"({motif_score_threshold}); returning empty result.")
         return [], [], [[] for _ in entries], []
     # Rank by descending score; deterministic tiebreak by entry name then
     # 0-based center. The same key is used by the FIMO wrapper, so the two
@@ -142,9 +140,8 @@ def sample_motif_matched(*, df_seq, positions, n, window_size,
         custom_predicate=predicate,
     )
     if len(accepted) < n and verbose:
-        warnings.warn(f"Only {len(accepted)}/{n} motif-matched windows kept "
-                      f"after filtering.",
-                      RuntimeWarning)
+        ut.print_out(f"Note: only {len(accepted)}/{n} motif-matched windows kept "
+                     f"after filtering.")
     rows, source_indices, sampled_scores = [], [], []
     sampled_centers = [[] for _ in entries]
     for window, (i, c, score) in accepted:

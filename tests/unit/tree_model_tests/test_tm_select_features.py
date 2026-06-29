@@ -89,7 +89,8 @@ class TestSelectFeatures:
         assert 0 < len(result) <= N_FEAT
 
     def test_frequency_without_rfe_warns_and_keeps_all(self):
-        with pytest.warns(RuntimeWarning):
+        # Misconfiguration advisory (input the user can fix) -> UserWarning, not RuntimeWarning.
+        with pytest.warns(UserWarning):
             result = TM.select_features(df_feat=get_df_feat(), strategy="frequency", param=0.5)
         assert len(result) == N_FEAT
 

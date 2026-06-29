@@ -97,9 +97,8 @@ def sample_different_protein(*, df_seq, positions, n, window_size,
         custom_predicate=predicate,
     )
     if len(accepted) < n and verbose:
-        warnings.warn(f"Only {len(accepted)}/{n} windows kept across eligible proteins "
-                      f"after filtering.",
-                      RuntimeWarning)
+        ut.print_out(f"Note: only {len(accepted)}/{n} windows kept across eligible "
+                     f"proteins after filtering.")
     rows, source_indices = [], []
     sampled_centers = [[] for _ in entries]
     for window, (i, c) in accepted:
