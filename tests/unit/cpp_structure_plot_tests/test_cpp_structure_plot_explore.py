@@ -108,6 +108,13 @@ class TestExplore:
         panel = _explore(_csp(), df_feat, query_seq, df_seq, labels, pdb_path, output="widget")
         assert panel is not None
 
+    def test_static_writes_path(self, df_feat, query_seq, df_seq, labels, pdb_path, tmp_path):
+        # output='static' + path saves the feature-map panel image (Stage D capture)
+        out = tmp_path / "static.png"
+        _explore(_csp(), df_feat, query_seq, df_seq, labels, pdb_path, output="static",
+                 path=str(out))
+        assert out.is_file() and out.read_bytes()[:4] == b"\x89PNG"
+
     @pytest.mark.parametrize("model", [ut.MODEL_RF, ut.MODEL_SVM, ut.MODEL_LOG_REG])
     def test_model_names(self, df_feat, query_seq, df_seq, labels, pdb_path, model):
         view = _explore(_csp(), df_feat, query_seq, df_seq, labels, pdb_path, output="static",

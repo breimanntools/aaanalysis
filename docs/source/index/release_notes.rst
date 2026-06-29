@@ -106,8 +106,9 @@ Added
   (app-fidelity colouring); ``normalize_by_span=True`` switches to the span-normalized sum used
   by ``CPPPlot.profile`` and the ``CPPPlot.feature_map`` top per-position bar. ``plot_combined``
   returns a ``CombinedView`` showing the py3Dmol cartoon next to the ``CPPPlot.feature_map``
-  image (``write_html`` exports the pair), reproducing the deployed cleavage app's signature
-  layout. ``interactive`` returns a live `ipywidgets <https://ipywidgets.readthedocs.io>`_
+  image (``write_html`` exports the pair; ``savefig(path)`` saves the feature-map panel as a static
+  PNG / PDF for papers — the 3D cartoon is interactive and has no headless image), reproducing the
+  deployed cleavage app's signature layout. ``interactive`` returns a live `ipywidgets <https://ipywidgets.readthedocs.io>`_
   explorer (added to the ``[pro]`` extra) where a site slider drives a user ``predictor`` and
   repaints the linked 3D structure and ``CPPPlot.feature_map`` together (debounced), the
   notebook-native version of the app's per-site explore loop. A **highlight (position) slider**

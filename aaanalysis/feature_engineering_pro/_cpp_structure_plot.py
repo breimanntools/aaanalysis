@@ -1026,7 +1026,8 @@ class CPPStructurePlot:
           single ``init_site`` by default; pass ``sites=[...]`` to bake a **multi-site live** page
           whose JS slider switches the pre-computed per-site prediction client-side (no kernel).
         - ``'static'`` -> :meth:`plot_combined` (the structure beside the feature map, baked for
-          ``init_site``).
+          ``init_site``). With ``path`` given, the feature-map panel is saved (``CombinedView.savefig``,
+          format from the extension, e.g. PNG/PDF); the 3D structure stays interactive.
 
         The site geometry follows the package convention: ``p1`` is the first TMD residue, so the
         TMD spans ``[p1, p1 + tmd_len - 1]`` and ``start = p1 - jmd_n_len`` (the construction
@@ -1070,7 +1071,9 @@ class CPPStructurePlot:
         output : {'widget', 'html', 'static'}, default='widget'
             Which output to produce (see the method summary).
         path : str, optional
-            For ``output='html'``, write the self-contained page to this path.
+            Output file path. For ``output='html'`` writes the self-contained page; for
+            ``output='static'`` saves the feature-map panel as an image (PNG/PDF/..., format from
+            the extension). Ignored for ``output='widget'``.
         col_imp : str, default='feat_impact'
             Column the per-site signed impact is written to (and painted from). With
             ``shap_plot=True`` it must be ``'feat_impact'`` or follow ``'feat_impact_<name>'`` (the
@@ -1234,11 +1237,14 @@ class CPPStructurePlot:
         df_feat_site = predictor(sequence, init_site)
         start = init_site - jmd_n_len
         if output == "static":
-            return self.plot_combined(
+            view = self.plot_combined(
                 df_feat=df_feat_site, pdb=pdb, uniprot=uniprot, col_imp=col_imp, col_val=col_val,
                 shap_plot=shap_plot, tmd_len=tmd_len, start=start, chain=chain, sequence=sequence,
                 mode=mode, focus=focus, focus_region=focus_region, size_by_impact=size_by_impact,
                 normalize_by_span=normalize_by_span)
+            if path is not None:
+                view.savefig(path)   # PNG/PDF/... of the feature-map panel (structure is interactive)
+            return view
         # output == "html"
         view = self.plot_linked(
             df_feat=df_feat_site, pdb=pdb, uniprot=uniprot, col_imp=col_imp, col_val=col_val,

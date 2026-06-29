@@ -66,7 +66,9 @@ class CombinedView:
 
     Returned by :meth:`CPPStructurePlot.plot_combined`. Lays the interactive py3Dmol cartoon
     next to the rendered :meth:`CPPPlot.feature_map` image, reproducing the deployed app's
-    layout. ``write_html`` exports the pair as one self-contained page.
+    layout. ``write_html`` exports the pair as one self-contained page; ``savefig`` saves the
+    feature-map panel as a static image (PNG/PDF/...) - the 3D cartoon is interactive and has no
+    headless image, so it is captured via ``write_html`` or the viewer's screenshot button.
 
     Attributes
     ----------
@@ -110,6 +112,40 @@ class CombinedView:
         path = str(path)
         with open(path, "w", encoding="utf-8") as f:
             f.write(_html_page(self._body()))
+        return path
+
+    def savefig(self, path, dpi=None):
+        """Save the **feature-map** panel as a static image (format inferred from ``path``).
+
+        The 3D structure panel is interactive: py3Dmol renders it client-side and cannot be
+        rasterized from Python (even in a notebook), so there is no headless image of the cartoon.
+        ``savefig`` therefore captures the feature-map panel - the quantitative, paper-ready
+        figure - in the format given by ``path``'s extension (e.g. ``.png``, ``.pdf``, ``.jpg``,
+        ``.tiff``). For the 3D structure use :meth:`write_html` (the interactive viewer, which also
+        has a built-in screenshot button) or compose the two panels yourself. The pixels are
+        already rendered at the ``feature_map_dpi`` passed to :meth:`plot_combined`; ``dpi`` only
+        sets the saved file's resolution metadata.
+
+        Raises
+        ------
+        RuntimeError
+            If this view has no feature-map panel (``feature_map`` was disabled).
+        """
+        if not self._png_b64:
+            raise RuntimeError("This CombinedView has no feature-map panel to save.")
+        import io
+        import base64
+        from PIL import Image
+        path = str(path)
+        save_kwargs = {"dpi": (dpi, dpi)} if dpi is not None else {}
+        with Image.open(io.BytesIO(base64.b64decode(self._png_b64))) as img:
+            # PDF / JPEG have no alpha channel; flatten RGBA onto white before saving to those.
+            if path.lower().endswith((".pdf", ".jpg", ".jpeg")) and img.mode == "RGBA":
+                bg = Image.new("RGB", img.size, "white")
+                bg.paste(img, mask=img.split()[-1])
+                bg.save(path, **save_kwargs)
+            else:
+                img.save(path, **save_kwargs)
         return path
 
     def _repr_html_(self):

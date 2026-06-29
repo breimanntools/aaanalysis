@@ -217,3 +217,37 @@ class TestPlotCombinedComplex:
 
 def test_plot_combined_in_public_api():
     assert hasattr(aa.CPPStructurePlot, "plot_combined")
+
+
+# --- Stage D: static capture (CombinedView.savefig) --------------------------
+class TestSavefig:
+    """CombinedView.savefig writes the feature-map panel as a static image."""
+
+    @pytest.mark.parametrize("ext,magic", [("png", b"\x89PNG"), ("pdf", b"%PDF-")])
+    def test_savefig_formats(self, pdb_path, df_feat, tmp_path, ext, magic):
+        view = _csp().plot_combined(df_feat=df_feat, pdb=pdb_path, tmd_len=10, col_imp="feat_impact")
+        out = tmp_path / f"fig.{ext}"
+        ret = view.savefig(str(out))
+        assert ret == str(out)
+        assert out.is_file() and out.read_bytes()[:5].startswith(magic)
+
+    def test_savefig_jpg_flattens_alpha(self, pdb_path, df_feat, tmp_path):
+        view = _csp().plot_combined(df_feat=df_feat, pdb=pdb_path, tmd_len=10, col_imp="feat_impact")
+        out = tmp_path / "fig.jpg"
+        view.savefig(str(out))
+        assert out.is_file() and out.stat().st_size > 0
+
+    def test_savefig_dpi(self, pdb_path, df_feat, tmp_path):
+        view = _csp().plot_combined(df_feat=df_feat, pdb=pdb_path, tmd_len=10, col_imp="feat_impact")
+        out = tmp_path / "fig_dpi.png"
+        view.savefig(str(out), dpi=300)
+        from PIL import Image
+        # PNG stores DPI as pixels/metre, so it round-trips with sub-unit rounding (~299.999)
+        assert round(Image.open(str(out)).info.get("dpi", (0,))[0]) == 300
+
+    def test_savefig_no_feature_map_raises(self, pdb_path, df_feat, tmp_path):
+        from aaanalysis.feature_engineering_pro._backend.cpp_struct.view import CombinedView
+        view = _csp().plot_combined(df_feat=df_feat, pdb=pdb_path, tmd_len=10, col_imp="feat_impact")
+        empty = CombinedView(view=view.view, feature_map_png_b64=None)
+        with pytest.raises(RuntimeError, match="no feature-map"):
+            empty.savefig(str(tmp_path / "x.png"))
