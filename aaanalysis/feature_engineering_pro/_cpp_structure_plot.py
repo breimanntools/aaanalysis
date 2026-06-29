@@ -750,6 +750,12 @@ class CPPStructurePlot:
                 structure, chain=chain, sequence=sequence)
             pdb_text, fmt = _read_structure_text(pdb_path)
         present = {r["resi"] for r in records}
+        # Chain-identity is site-independent, so warn once here (the per-site positions checks
+        # would be noisy across many sites).
+        if sequence is not None and identity < 0.5:
+            warnings.warn(
+                f"The selected chain matches 'sequence' with low identity ({identity:.2f}); "
+                f"the painted residues may be misaligned.", UserWarning, stacklevel=2)
 
         baked = []
         last_dict_impact, last_max_abs = {}, 0.0
@@ -1153,30 +1159,15 @@ class CPPStructurePlot:
             raise ValueError(f"'predictor' ({predictor}) should be a callable (sequence, p1) "
                              f"-> df_feat")
         jmd_n_len = ut.check_jmd_n_len(jmd_n_len=self._jmd_n_len)
+        jmd_c_len = ut.check_jmd_c_len(jmd_c_len=self._jmd_c_len)
         n_res = len(sequence)
         # The site geometry needs jmd_n_len residues before p1, so the first JMD-N residue (start =
         # p1 - jmd_n_len) is valid; validate init_site here (naming init_site, not 'start').
         if init_site is not None:
             ut.check_number_range(name="init_site", val=init_site, min_val=jmd_n_len + 1,
                                   max_val=n_res, just_int=True)
-
-        # Resolve the per-site predictor (built-in unless the escape hatch is given)
-        if predictor is None:
-            if df_seq is None or labels is None:
-                raise ValueError("The built-in predictor needs 'df_seq' and 'labels' (or pass a "
-                                 "custom 'predictor'); got "
-                                 f"df_seq={'set' if df_seq is not None else None}, "
-                                 f"labels={'set' if labels is not None else None}")
-            ut.check_df_seq(df_seq=df_seq)
-            predictor = build_builtin_predictor(
-                df_feat=df_feat, df_seq=df_seq, labels=labels, tmd_len=tmd_len,
-                jmd_n_len=self._jmd_n_len, jmd_c_len=self._jmd_c_len, model=model,
-                col_imp=col_imp, df_scales=self._df_scales,
-                label_target_class=label_target_class, random_state=random_state,
-                n_jobs=n_jobs, verbose=self._verbose)
-
-        # Multi-site live HTML: bake a JS site slider over `sites` (re-prediction is precomputed,
-        # so the standalone page switches sites client-side with no kernel).
+        # Validate `sites` (the multi-site live HTML) BEFORE the predictor is built, so a bad
+        # argument fails fast (cheap checks first), consistent with the rest of this method.
         if sites is not None:
             if output != "html":
                 raise ValueError(f"'sites' is only valid with output='html' (got output={output!r})")
@@ -1196,10 +1187,29 @@ class CPPStructurePlot:
                     f"Baking {len(sites)} sites into the live HTML embeds {len(sites)} feature-map "
                     f"images and runs {len(sites)} predictor refits; expect a large file and a "
                     f"longer build.", UserWarning, stacklevel=2)
+
+        # Resolve the per-site predictor (built-in unless the escape hatch is given)
+        if predictor is None:
+            if df_seq is None or labels is None:
+                raise ValueError("The built-in predictor needs 'df_seq' and 'labels' (or pass a "
+                                 "custom 'predictor'); got "
+                                 f"df_seq={'set' if df_seq is not None else None}, "
+                                 f"labels={'set' if labels is not None else None}")
+            ut.check_df_seq(df_seq=df_seq)
+            predictor = build_builtin_predictor(
+                df_feat=df_feat, df_seq=df_seq, labels=labels, tmd_len=tmd_len,
+                jmd_n_len=self._jmd_n_len, jmd_c_len=self._jmd_c_len, model=model,
+                col_imp=col_imp, df_scales=self._df_scales,
+                label_target_class=label_target_class, random_state=random_state,
+                n_jobs=n_jobs, verbose=self._verbose)
+
+        # Multi-site live HTML: bake a JS site slider over `sites` (re-prediction is precomputed,
+        # so the standalone page switches sites client-side with no kernel). Already validated above.
+        if sites is not None:
             view = self._linked_multi_view(
                 predictor=predictor, sequence=sequence, sites=sites, pdb=pdb, uniprot=uniprot,
                 col_imp=col_imp, col_val=col_val, shap_plot=shap_plot, tmd_len=tmd_len,
-                jmd_n_len=jmd_n_len, jmd_c_len=self._jmd_c_len, mode=mode, focus=focus,
+                jmd_n_len=jmd_n_len, jmd_c_len=jmd_c_len, mode=mode, focus=focus,
                 focus_region=focus_region, size_by_impact=size_by_impact,
                 normalize_by_span=normalize_by_span, feature_map_dpi=150, width=520, height=460,
                 chain=chain)
