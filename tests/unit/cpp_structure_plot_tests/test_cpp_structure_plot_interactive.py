@@ -412,3 +412,20 @@ class TestRenderHighlight:
                               mode="impact", focus="whole", window_resis=None,
                               size_by_impact=True, chain_id=chain_id, highlight_resi=9999)
         assert view is not None
+
+
+class TestInteractiveParams:
+    """Positive coverage for interactive parameters beyond the defaults."""
+
+    def test_size_by_impact_true(self, pdb_path):
+        container, p = _panel(pdb_path, init_site=20, size_by_impact=True)
+        assert p.last["highlight_resi"] == 20
+
+    def test_custom_site_to_start(self, pdb_path):
+        # A custom geometry: p1 -> start mapping other than the default (p1 - jmd_n_len)
+        _, p = _panel(pdb_path, init_site=20, site_to_start=lambda p1: p1 - 5)
+        assert p.last["start"] == 15   # 20 - 5, not 20 - jmd_n_len(10)
+
+    def test_normalize_by_span(self, pdb_path):
+        container, p = _panel(pdb_path, init_site=20, normalize_by_span=True)
+        assert p.last is not None

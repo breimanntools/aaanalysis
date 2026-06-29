@@ -126,6 +126,11 @@ class CombinedView:
         already rendered at the ``feature_map_dpi`` passed to :meth:`plot_combined`; ``dpi`` only
         sets the saved file's resolution metadata.
 
+        Notes
+        -----
+        * PDF and JPEG have no alpha channel, so an RGBA feature map is flattened onto a white
+          background before saving to those formats; PNG / TIFF keep transparency.
+
         Raises
         ------
         RuntimeError

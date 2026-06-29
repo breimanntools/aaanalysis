@@ -109,6 +109,11 @@ class TestPlotCombined:
                                     col_imp="feat_impact", focus="zoom", focus_region=(11, 20))
         assert isinstance(view, CombinedView)
 
+    def test_focus_region_negative(self, pdb_path, df_feat):
+        with pytest.raises(ValueError):
+            _csp().plot_combined(df_feat=df_feat, pdb=pdb_path, tmd_len=10,
+                                 col_imp="feat_impact", focus_region=(20, 11))  # start > stop
+
     def test_part_sequences_positive(self, pdb_path, df_feat):
         view = _csp().plot_combined(df_feat=df_feat, pdb=pdb_path, tmd_len=10,
                                     col_imp="feat_impact", tmd_seq="A" * 10,

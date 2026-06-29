@@ -71,6 +71,12 @@ class TestPlotLinked:
         assert isinstance(view, LinkedView)
         assert isinstance(view._repr_html_(), str)
 
+    def test_width_height(self, pdb_path, df_feat):
+        # the viewer panel size is configurable; the chosen px size reaches the rendered HTML
+        view = _csp().plot_linked(df_feat=df_feat, pdb=pdb_path, tmd_len=10, col_imp="feat_impact",
+                                  width=600, height=500)
+        assert "width:600px" in view._repr_html_() and "height:500px" in view._repr_html_()
+
     def test_html_has_viewer_and_link(self, pdb_path, df_feat):
         h = _csp().plot_linked(df_feat=df_feat, pdb=pdb_path, tmd_len=10,
                                col_imp="feat_impact")._repr_html_()

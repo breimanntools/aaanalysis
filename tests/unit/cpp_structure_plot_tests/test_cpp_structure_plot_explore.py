@@ -312,3 +312,68 @@ class TestExploreMultiSite:
             _csp().explore(df_feat=df_feat, sequence=long_seq, pdb=pdb_path,
                           predictor=_stub_predictor(df_feat), output="html",
                           sites=list(range(11, 53)), tmd_len=10)   # 42 sites > warn threshold
+
+    def test_single_site_list(self, df_feat, query_seq, df_seq, labels, pdb_path):
+        view = _csp().explore(df_feat=df_feat, sequence=query_seq, pdb=pdb_path, df_seq=df_seq,
+                              labels=labels, model="rf", output="html", sites=[16], tmd_len=10,
+                              random_state=42)
+        assert isinstance(view, LinkedView)
+
+    def test_unordered_sites(self, df_feat, query_seq, df_seq, labels, pdb_path, tmp_path):
+        # An out-of-order sites list is baked in the given order (slider index = list index)
+        out = tmp_path / "unordered.html"
+        _csp().explore(df_feat=df_feat, sequence=query_seq, pdb=pdb_path, df_seq=df_seq,
+                       labels=labels, model="rf", output="html", sites=[24, 12, 18],
+                       tmd_len=10, path=str(out), random_state=42)
+        txt = out.read_text()
+        assert txt.index('"p1": 24') < txt.index('"p1": 12') < txt.index('"p1": 18')
+
+
+# --- additional parameter coverage -------------------------------------------
+class TestExploreParams:
+    """Positive coverage for parameters the dispatch forwards to the render paths."""
+
+    def test_shap_plot_false_builtin_raises(self, df_feat, query_seq, df_seq, labels, pdb_path):
+        # The built-in predictor yields SHAP feat_impact; shap_plot=False is rejected early
+        # (it would otherwise fail deep in CPPPlot.feature_map, which expects feat_importance).
+        with pytest.raises(ValueError, match="shap_plot"):
+            _explore(_csp(), df_feat, query_seq, df_seq, labels, pdb_path, output="static",
+                     shap_plot=False)
+
+    def test_focus_region(self, df_feat, query_seq, df_seq, labels, pdb_path):
+        view = _explore(_csp(), df_feat, query_seq, df_seq, labels, pdb_path, output="static",
+                        focus="zoom", focus_region=(8, 28))
+        assert isinstance(view, CombinedView)
+
+    def test_label_target_class_0(self, df_feat, query_seq, df_seq, labels, pdb_path):
+        # labels carry both classes; explaining class 0 must work like class 1
+        view = _explore(_csp(), df_feat, query_seq, df_seq, labels, pdb_path, output="static",
+                        label_target_class=0)
+        assert isinstance(view, CombinedView)
+
+    @pytest.mark.parametrize("ext,magic", [("pdf", b"%PDF-"), ("jpg", b"\xff\xd8\xff")])
+    def test_static_path_formats(self, df_feat, query_seq, df_seq, labels, pdb_path, tmp_path,
+                                 ext, magic):
+        out = tmp_path / f"static.{ext}"
+        _explore(_csp(), df_feat, query_seq, df_seq, labels, pdb_path, output="static",
+                 path=str(out))
+        assert out.is_file() and out.read_bytes()[:len(magic)] == magic
+
+
+# --- reproducibility ---------------------------------------------------------
+class TestExploreReproducibility:
+    """The random_state contract: same seed -> same prediction, different seed -> different."""
+
+    def test_same_seed_same_impact(self, df_feat, query_seq, df_seq, labels, pdb_path):
+        a = _explore(_csp(), df_feat, query_seq, df_seq, labels, pdb_path, output="static",
+                     random_state=7)
+        b = _explore(_csp(), df_feat, query_seq, df_seq, labels, pdb_path, output="static",
+                     random_state=7)
+        assert a.dict_impact == b.dict_impact
+
+    def test_different_seed_differs(self, df_feat, query_seq, df_seq, labels, pdb_path):
+        a = _explore(_csp(), df_feat, query_seq, df_seq, labels, pdb_path, output="static",
+                     random_state=7)
+        b = _explore(_csp(), df_feat, query_seq, df_seq, labels, pdb_path, output="static",
+                     random_state=123)
+        assert a.dict_impact != b.dict_impact
