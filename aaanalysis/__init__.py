@@ -9,7 +9,8 @@ from .pu_learning import dPULearn, dPULearnPlot
 from .explainable_ai import TreeModel
 from .protein_design import AAMut, AAMutPlot, SeqMut, SeqMutPlot, SeqOpt, SeqOptPlot
 from .plotting import (plot_get_clist, plot_get_cmap, plot_get_cdict,
-                       plot_settings, plot_legend, plot_gcfs, plot_rank)
+                       plot_settings, plot_legend, plot_gcfs, plot_rank,
+                       plot_eval_heatmap)
 from .metrics import (comp_auc_adjusted, comp_bic_score, comp_kld,
                       comp_per_protein_ap, comp_detection_metrics,
                       comp_bootstrap_ci, comp_smooth_scores)
@@ -65,6 +66,7 @@ __all__ = [
     "plot_legend",
     "plot_gcfs",
     "plot_rank",
+    "plot_eval_heatmap",
     "comp_auc_adjusted",
     "comp_bic_score",
     "comp_kld",

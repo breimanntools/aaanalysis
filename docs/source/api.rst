@@ -124,6 +124,7 @@ Utility Functions
     comp_smooth_scores
     display_df
     options
+    plot_eval_heatmap
     plot_gcfs
     plot_get_cdict
     plot_get_clist

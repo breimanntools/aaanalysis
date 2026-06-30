@@ -191,6 +191,10 @@ Added
 
 - **plot_rank**: Standalone per-protein max-score-vs-rank scatter with group coloring and
   optional threshold lines (pairs with the new ``aa.metrics`` functions).
+- **plot_eval_heatmap**: House-preset annotated evaluation heatmap (``viridis``, fixed
+  ``[vmin, vmax]`` color limits, integer annotations, labeled colorbar) for a static score
+  grid. Collapses the hand-built seaborn block previously copied for every sweep result
+  into one call; the simple static sibling of the adaptive ``aap.plot_eval``.
 
 **Golden Pipelines**
 
