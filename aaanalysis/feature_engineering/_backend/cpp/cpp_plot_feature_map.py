@@ -69,20 +69,19 @@ def plot_feat_importance_bars_subcat(ax=None,
                   ha=ha, position=position, multialignment=multialignment)
     ax.xaxis.set_label_position("top")
     # Add annotations (only for non-signed cumulative importance bars). Anchor the
-    # label just outside each bar tip (ha="left", clip_on=False) so it is never cut
-    # by the axes spine (which previously turned e.g. "9.6%" into "6%") and never
-    # spills back over the heatmap.
+    # label inside each bar at its tip (ha="right", white text) so the high-impact
+    # bars stand out and read immediately. Only bars at/above the threshold are
+    # annotated, so they are long enough for the label to sit inside the bar.
     if not shap_plot:
         v_max = int(np.ceil(max(list_imp)))
         annotation_th = v_max / 2 if annotation_th is None else annotation_th
         for i, val in enumerate(list_imp):
             if val >= annotation_th:
-                ax.text(val, i + 0.45, f" {round(val, 1)}%",
-                        va="center", ha="left",
+                ax.text(val, i + 0.45, f"{round(val, 1)}% ",
+                        va="center", ha="right",
                         weight=weight_annotation,
-                        color=ut.COLOR_FEAT_IMP,
-                        size=fontsize_imp_bar,
-                        clip_on=False)
+                        color="white",
+                        size=fontsize_imp_bar)
 
     # Adjust ticks
     ax.tick_params(axis='y', which='both', length=0, labelsize=0)
