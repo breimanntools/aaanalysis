@@ -58,6 +58,11 @@ Added
 - **SequenceFeature.get_labels_quantile / get_labels_tiered**: Discretize a continuous
   target into binary ``labels`` — a single quantile cut, or a fixed positive set swept
   against stepwise-lowered negative cuts (each tier row-matched).
+- **SequenceFeature.scale_mean**: Scale-average baseline featurizer that turns sequences
+  + scales into a ``(n_seq, n_scales)`` matrix by averaging each scale over a sequence
+  span (``list_parts=None`` → whole ``jmd_n`` + ``tmd`` + ``jmd_c``), dropping missing /
+  non-canonical residues. The no-positional-split counterpart to ``feature_matrix`` for
+  the standard scale-vs-CPP baseline; optional ``return_df=True`` for a labeled frame.
 - **SequenceFeature.get_df_parts_from_windows**: Assemble a reference ``df_parts`` from
   per-part window sets (e.g. ``AAWindowSampler.sample_synthetic`` output).
 - **SequenceFeature.get_seq_kws**: Return one protein's ``{jmd_n_seq, tmd_seq, jmd_c_seq}``

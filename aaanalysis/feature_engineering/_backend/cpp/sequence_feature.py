@@ -136,6 +136,32 @@ def get_df_feat_(features=None, df_parts=None, labels=None,
     return df
 
 
+# Scale-average baseline featurization
+def get_scale_mean_(df_parts=None, df_scales=None):
+    """Per-sequence scale average over the concatenated sequence parts.
+
+    For each row of ``df_parts`` the part strings are concatenated into one span; every
+    residue that is **not** an index label of ``df_scales`` (gaps ``'-'`` and any other
+    non-canonical symbol) is dropped, and the remaining residues' scale rows are averaged
+    column-wise into one value per scale. The result is the ``(n_seq, n_scales)`` matrix.
+    A row whose span has no scored residue (empty / all-non-canonical) becomes all-``NaN``;
+    ``n_kept`` reports the number of averaged residues per row so the frontend can warn.
+    """
+    idx = df_scales.index
+    n_scales = df_scales.shape[1]
+    spans = df_parts.astype(str).agg("".join, axis=1).to_list()
+    rows, n_kept = [], []
+    for span in spans:
+        kept = [aa for aa in span if aa in idx]
+        n_kept.append(len(kept))
+        if kept:
+            rows.append(df_scales.loc[kept].mean(axis=0).to_numpy(dtype=float))
+        else:
+            rows.append(np.full(n_scales, np.nan))
+    X = np.asarray(rows, dtype=float).reshape(len(spans), n_scales)
+    return X, np.asarray(n_kept, dtype=int)
+
+
 # Multi-class / regression label conversion
 def get_labels_ovr_(labels=None, label_test=1, label_ref=0):
     """One-vs-rest: per class, a full-length binary array (class -> test, rest -> ref)."""
