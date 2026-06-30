@@ -5,11 +5,11 @@ such as scikit-learn, scipy, or statsmodels.
 Developer note: Measures are implemented in aanalysis.utils.metrics to access them within the aanalysis package.
 """
 import numpy as np
-from typing import Optional, Literal
+from typing import Optional, Literal, Union, Any
 
 from aaanalysis.utils import (auc_adjusted_, kullback_leibler_divergence_, bic_score_,
                               per_protein_ap_, detection_metrics_, bootstrap_ci_,
-                              smooth_scores_)
+                              smooth_scores_, eval_features_, LIST_METRICS_EVAL)
 import aaanalysis.utils as ut
 
 
@@ -215,6 +215,133 @@ def _check_list_scores_positions(list_scores=None, list_positions=None) -> "tupl
     if len(list_scores) == 0:
         raise ValueError("'list_scores' should not be empty.")
     return list_scores, list_positions
+
+
+# Helper functions (feature-set evaluation)
+def _check_model(model=None):
+    """Validate that ``model`` is an sklearn-style classifier (``fit`` + ``predict``)."""
+    if model is None:
+        return None
+    if not (hasattr(model, "fit") and hasattr(model, "predict")):
+        raise ValueError(f"'model' ('{model}') must be an sklearn-style estimator "
+                         f"with 'fit' and 'predict' methods, or None for the default linear SVM.")
+
+
+def _check_cv(cv=None):
+    """Validate that ``cv`` is None, an int (>=2), or a CV splitter with a ``split`` method."""
+    if cv is None:
+        return None
+    if isinstance(cv, bool):  # bool is an int subclass; reject explicitly
+        raise ValueError(f"'cv' ('{cv}') must be None, an int >= 2, or a CV splitter, not a bool.")
+    if isinstance(cv, int):
+        ut.check_number_range(name="cv", val=cv, min_val=2, just_int=True)
+        return None
+    if not hasattr(cv, "split"):
+        raise ValueError(f"'cv' ('{cv}') must be None, an int >= 2, or a CV splitter with a "
+                         f"'split' method (e.g. LeaveOneOut, StratifiedKFold).")
+
+
+def _check_mask_known_pos(mask_known_pos=None, n_samples=None):
+    """Validate the PU mask-known-positives boolean array."""
+    if mask_known_pos is None:
+        return None
+    mask = ut.check_array_like(name="mask_known_pos", val=mask_known_pos)
+    mask = np.asarray(mask)
+    if mask.ndim != 1 or len(mask) != n_samples:
+        raise ValueError(f"'mask_known_pos' should be a 1D boolean array of length n_samples "
+                         f"({n_samples}); got shape {mask.shape}.")
+    if not np.all(np.isin(mask, [0, 1])):
+        raise ValueError("'mask_known_pos' should contain only boolean (0/1) values.")
+
+
+# Feature-set evaluation (model + CV + metric scorer; incl. PU mask-known-positives CV)
+def eval_features(X: ut.ArrayLike2D,
+                  labels: ut.ArrayLike1D,
+                  model: Optional[Any] = None,
+                  cv: Optional[Union[int, Any]] = None,
+                  metric: str = "balanced_accuracy",
+                  mask_known_pos: Optional[ut.ArrayLike1D] = None,
+                  random_state: Optional[int] = None,
+                  ) -> float:
+    """
+    Score a feature set by cross-validated classification performance.
+
+    Benchmarking a feature set is the recurring spine of sequence-based protein
+    prediction: train a classifier on the feature matrix ``X`` and score its
+    cross-validated agreement with ``labels``. The default reproduces the linear-SVM,
+    leave-one-out, balanced-accuracy recipe used throughout the γ-secretase analysis
+    (``balanced_accuracy_score(y, cross_val_predict(SVC(kernel='linear'), X, y,
+    cv=LeaveOneOut())) * 100``), while any scikit-learn estimator, CV splitter, and
+    classification metric can be swapped in without leaving the API.
+
+    Setting ``mask_known_pos`` selects the Positive-Unlabeled (PU) mask-known-positives
+    CV variant: the masked known positives still inform every training fold but are
+    never scored as test points, so the reported score reflects only the held-out,
+    non-trivial samples.
+
+    .. versionadded:: 1.1.0
+
+    Parameters
+    ----------
+    X : array-like, shape (n_samples, n_features)
+        Feature matrix. 'Rows' typically correspond to proteins and 'columns' to features.
+    labels : array-like, shape (n_samples,)
+        Class labels for each sample in ``X`` (typically 1 for the test/positive class
+        and 0 for the reference/negative class).
+    model : object, optional
+        A scikit-learn-style classifier exposing ``fit`` and ``predict``. If ``None``,
+        a linear-kernel Support Vector Machine (``SVC(kernel='linear')``) is used.
+    cv : int or cross-validation splitter, optional
+        Cross-validation strategy. An ``int`` (``>= 2``) selects k-fold CV; a splitter
+        object (e.g. :class:`sklearn.model_selection.StratifiedKFold`) is used directly.
+        If ``None``, leave-one-out cross-validation is used.
+    metric : str, default='balanced_accuracy'
+        Classification metric name. One of ``'balanced_accuracy'``, ``'accuracy'``,
+        ``'f1'``, ``'precision'``, ``'recall'``, ``'matthews_corrcoef'``.
+    mask_known_pos : array-like of bool, shape (n_samples,), optional
+        PU mask of known positives. Masked samples are kept in every training fold but
+        excluded from scoring. If ``None``, all samples are scored.
+    random_state : int, optional
+        Random seed forwarded to ``model`` when it accepts a ``random_state``
+        parameter, ensuring reproducible scores for stochastic estimators.
+
+    Returns
+    -------
+    score : float
+        Cross-validated ``metric`` score scaled to a percentage (the bounded metric
+        value multiplied by 100).
+
+    Notes
+    -----
+    * The default (linear SVM + leave-one-out + balanced accuracy) reproduces the
+      γ-secretase benchmark numbers within numerical tolerance on the same feature
+      matrix.
+    * Given a fixed ``random_state`` (and a deterministic ``cv``), repeated calls
+      return an identical score.
+
+    See Also
+    --------
+    * :func:`comp_auc_adjusted` for a per-feature class-separation score.
+    * :class:`sklearn.model_selection.cross_val_predict` underlies the default path.
+
+    Examples
+    --------
+    .. include:: examples/eval_features.rst
+    """
+    # Check input
+    X = ut.check_X(X=X, min_n_features=1)
+    ut.check_X_unique_samples(X=X, min_n_unique_samples=2)
+    labels = ut.check_labels(labels=labels)
+    ut.check_match_X_labels(X=X, labels=labels)
+    _check_model(model=model)
+    _check_cv(cv=cv)
+    ut.check_str_options(name="metric", val=metric, list_str_options=LIST_METRICS_EVAL)
+    _check_mask_known_pos(mask_known_pos=mask_known_pos, n_samples=X.shape[0])
+    random_state = ut.check_random_state(random_state=random_state)
+    # Compute cross-validated feature-set score
+    score = eval_features_(X=X, labels=labels, model=model, cv=cv, metric=metric,
+                           mask_known_pos=mask_known_pos, random_state=random_state)
+    return score
 
 
 # Per-protein average precision (site localization)

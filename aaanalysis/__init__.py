@@ -12,7 +12,7 @@ from .plotting import (plot_get_clist, plot_get_cmap, plot_get_cdict,
                        plot_settings, plot_legend, plot_gcfs, plot_rank)
 from .metrics import (comp_auc_adjusted, comp_bic_score, comp_kld,
                       comp_per_protein_ap, comp_detection_metrics,
-                      comp_bootstrap_ci, comp_smooth_scores)
+                      comp_bootstrap_ci, comp_smooth_scores, eval_features)
 from .config import options
 
 from importlib.metadata import version as _version, PackageNotFoundError
@@ -72,6 +72,7 @@ __all__ = [
     "comp_detection_metrics",
     "comp_bootstrap_ci",
     "comp_smooth_scores",
+    "eval_features",
     "options"
 ]
 

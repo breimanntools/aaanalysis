@@ -105,7 +105,10 @@ from ._utils.metrics import (auc_adjusted_,
                              per_protein_ap_,
                              detection_metrics_,
                              bootstrap_ci_,
-                             smooth_scores_)
+                             smooth_scores_,
+                             eval_features_,
+                             get_default_eval_model_,
+                             LIST_METRICS_EVAL)
 
 
 # Constants, column names, colours, and option vocabularies live in a sibling module

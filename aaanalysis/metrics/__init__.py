@@ -2,7 +2,7 @@
 Metrics: scoring helpers for clustering, ranking, and site-localization quality.
 
 Public objects: comp_auc_adjusted, comp_bic_score, comp_kld, comp_per_protein_ap,
-comp_detection_metrics, comp_bootstrap_ci, comp_smooth_scores.
+comp_detection_metrics, comp_bootstrap_ci, comp_smooth_scores, eval_features.
 A cross-cutting subpackage (not a pipeline stage): the ``comp_*`` functions score the
 outputs of ``feature_engineering.AAclust`` (BIC), model rankings from ``explainable_ai``,
 and per-protein site detection.
@@ -12,11 +12,12 @@ terms (scoring vocabulary, site-localization metrics vocabulary).
 """
 from ._metrics import (comp_auc_adjusted, comp_bic_score, comp_kld,
                        comp_per_protein_ap, comp_detection_metrics,
-                       comp_bootstrap_ci, comp_smooth_scores)
+                       comp_bootstrap_ci, comp_smooth_scores, eval_features)
 
 __all__ = [
     "comp_auc_adjusted",
     "comp_bic_score", "comp_kld",
     "comp_per_protein_ap", "comp_detection_metrics",
     "comp_bootstrap_ci", "comp_smooth_scores",
+    "eval_features",
 ]

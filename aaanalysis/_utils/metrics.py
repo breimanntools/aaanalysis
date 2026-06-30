@@ -309,3 +309,77 @@ def smooth_scores_(scores=None, method="triangular", window=2, sigma=None,
         out = np.where(np.isnan(out), scores,
                        np.where(np.isnan(scores), out, np.maximum(out, scores)))
     return out
+
+
+# Feature-set evaluation (model + CV + metric scorer; incl. PU mask-known-positives CV)
+from sklearn.base import clone
+from sklearn.svm import SVC
+from sklearn.model_selection import LeaveOneOut, cross_val_predict
+from sklearn.metrics import (accuracy_score, balanced_accuracy_score, f1_score,
+                             matthews_corrcoef, precision_score, recall_score)
+
+# Registry of supported (y_true, y_pred) -> score classification metrics. Each is a
+# bounded score scaled by 100 in the frontend so the default reproduces the
+# notebook's ``balanced_accuracy_score(y, y_pred) * 100`` recipe.
+DICT_METRICS_EVAL = {
+    "balanced_accuracy": balanced_accuracy_score,
+    "accuracy": accuracy_score,
+    "f1": f1_score,
+    "precision": precision_score,
+    "recall": recall_score,
+    "matthews_corrcoef": matthews_corrcoef,
+}
+LIST_METRICS_EVAL = list(DICT_METRICS_EVAL)
+
+
+def get_default_eval_model_():
+    """Return the default feature-set evaluator: a linear-kernel SVM (matches the
+    γ-secretase notebook's ``SVC(kernel='linear')`` benchmark estimator)."""
+    return SVC(kernel="linear")
+
+
+def _masked_cv_score(X, y, model=None, cv=None, f_score=None, mask=None):
+    """PU mask-known-positives CV: known positives stay in every training fold but
+    are never scored as test points (port of ``cv_leave_one_out_masked``).
+
+    Generalized to any CV splitter: for each fold the masked test indices are dropped
+    from scoring while the training set is left untouched (so the masked known
+    positives still inform the model)."""
+    mask = np.asarray(mask, dtype=bool)
+    y_true, y_pred = [], []
+    for train_index, test_index in cv.split(X, y):
+        keep = [i for i in test_index if not mask[i]]
+        if len(keep) == 0:
+            continue
+        est = clone(model)
+        est.fit(X[train_index], y[train_index])
+        preds = est.predict(X[keep])
+        y_true.extend(np.asarray(y)[keep].tolist())
+        y_pred.extend(np.asarray(preds).tolist())
+    if len(y_true) == 0:
+        raise ValueError("'mask_known_pos' masks every sample; no test points remain to score.")
+    return f_score(np.array(y_true), np.array(y_pred))
+
+
+def eval_features_(X=None, labels=None, model=None, cv=None, metric="balanced_accuracy",
+                   mask_known_pos=None, random_state=None):
+    """Score a feature set by cross-validated classification performance.
+
+    Reproduces the notebook recipe when ``model``/``cv`` default to a linear SVM and
+    leave-one-out: ``balanced_accuracy_score(y, cross_val_predict(...)) * 100``. When
+    ``mask_known_pos`` is given, the PU mask-known-positives CV variant is used."""
+    X = np.asarray(X)
+    y = np.asarray(labels)
+    f_score = DICT_METRICS_EVAL[metric]
+    model = get_default_eval_model_() if model is None else clone(model)
+    # Honor the random_state contract for stochastic estimators (e.g. RandomForest)
+    if random_state is not None and "random_state" in model.get_params():
+        model.set_params(random_state=random_state)
+    if cv is None:
+        cv = LeaveOneOut()
+    if mask_known_pos is None:
+        y_pred = cross_val_predict(model, X, y, cv=cv)
+        score = f_score(y, y_pred)
+    else:
+        score = _masked_cv_score(X, y, model=model, cv=cv, f_score=f_score, mask=mask_known_pos)
+    return float(score) * 100
