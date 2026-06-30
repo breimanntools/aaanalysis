@@ -276,6 +276,10 @@ Changed
   the one-time notice is now a ``UserWarning`` (visible even with ``verbose=False``).
 - **SequenceFeature.feature_matrix**: New ``batch=`` parameter accepts a list of
   ``df_parts`` built in a single Cython pass (faster for many small part tables).
+- **SequenceFeature.feature_matrix**: New ``df_seq=`` / ``list_parts=`` parameters build
+  ``df_parts`` internally (via ``get_df_parts``), collapsing the ``get_df_parts`` →
+  ``feature_matrix`` two-step into one call. Exactly one of ``df_parts`` / ``df_seq`` is
+  required; the existing ``df_parts=`` path is unchanged (byte-identical).
 - **get_df_parts / NumericalFeature.get_parts**: New ``pos``-anchor mode (``tmd_len=``)
   explodes each 1-based anchor into one ``jmd_n`` / ``tmd`` / ``jmd_c`` row
   (``entry_win``). ``get_df_parts`` is also several-fold faster (vectorized; output

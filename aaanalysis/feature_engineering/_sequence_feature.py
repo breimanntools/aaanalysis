@@ -699,11 +699,13 @@ class SequenceFeature:
 
     def feature_matrix(self,
                        features: Union[ut.ArrayLike1D, pd.DataFrame],
-                       df_parts: Union[pd.DataFrame, List[pd.DataFrame]],
+                       df_parts: Optional[Union[pd.DataFrame, List[pd.DataFrame]]] = None,
                        df_scales: Optional[pd.DataFrame] = None,
                        accept_gaps: bool = False,
                        n_jobs: Union[int, None] = 1,
                        batch: bool = False,
+                       df_seq: Optional[pd.DataFrame] = None,
+                       list_parts: Optional[Union[str, List[str]]] = None,
                        ) -> Union[ut.ArrayLike2D, List[ut.ArrayLike2D]]:
         """
         Create feature matrix for given feature ids and sequence parts.
@@ -719,14 +721,19 @@ class SequenceFeature:
         .. versionchanged:: 1.1.0
             Added the ``batch`` parameter for building a list of ``df_parts`` in a single pass.
 
+        .. versionchanged:: 1.1.0
+            Added the ``df_seq`` and ``list_parts`` parameters to build ``df_parts`` internally, so the
+            sequence-to-matrix step no longer requires a separate :meth:`get_df_parts` call.
+
         Parameters
         ----------
         features : array-like, shape (n_features,) or pd.DataFrame
             Ids of features (``'PART-SPLIT-SCALE'``) for which matrix of feature values should be created.
             Alternatively, a ``df_feat`` DataFrame, in which case its ``'feature'`` column is used.
-        df_parts : pd.DataFrame, shape (n_samples, n_parts)
+        df_parts : pd.DataFrame, shape (n_samples, n_parts), optional
             DataFrame with sequence parts. If ``batch=True``, instead a **list of such
-            DataFrames** (one per batch; all must share the same part columns).
+            DataFrames** (one per batch; all must share the same part columns). Provide exactly one of
+            ``df_parts`` or ``df_seq``.
         df_scales : pd.DataFrame, shape (n_letters, n_scales), optional
             DataFrame of scales with letters typically representing amino acids. Default from :meth:`load_scales`
             unless specified in ``options['df_scales']``.
@@ -740,6 +747,15 @@ class SequenceFeature:
             (concatenated → Cython builder runs **once** → split back), returning one matrix per batch.
             Use for per-protein sliding scoring where the same ``features`` are applied to many small
             ``df_parts`` in a tight loop; the result is **byte-identical** to calling this per batch.
+            Not supported together with ``df_seq``.
+        df_seq : pd.DataFrame, shape (n_samples, n_seq_info), optional
+            DataFrame containing an ``entry`` column with unique protein identifiers and sequence information
+            in a distinct format: **Position-based**, **Part-based**, **Sequence-based**, or **Sequence-TMD-based**.
+            If given, ``df_parts`` is built internally via :meth:`get_df_parts` (using ``list_parts``), as an
+            alternative to passing ``df_parts`` directly. Provide exactly one of ``df_parts`` or ``df_seq``.
+        list_parts : list of str, optional
+            Names of sequence parts to obtain from ``df_seq`` (passed through to :meth:`get_df_parts`).
+            Only used together with ``df_seq``; if ``None``, the :meth:`get_df_parts` default parts are used.
 
         Returns
         -------
@@ -757,6 +773,18 @@ class SequenceFeature:
         --------
         .. include:: examples/sf_feature_matrix.rst
         """
+        # Resolve sequence input: exactly one of 'df_parts' / 'df_seq' (mutually exclusive)
+        if (df_parts is None) == (df_seq is None):
+            raise ValueError("Exactly one of 'df_parts' or 'df_seq' should be given (not both, not neither).")
+        if df_seq is not None:
+            if batch:
+                raise ValueError("'batch=True' is not supported together with 'df_seq'; "
+                                 "build the part DataFrames yourself and pass them as a list via 'df_parts'.")
+            # Build df_parts internally via the existing get_df_parts logic (same result as the two-step call)
+            df_parts = self.get_df_parts(df_seq=df_seq, list_parts=list_parts)
+        elif list_parts is not None:
+            raise ValueError("'list_parts' is only used together with 'df_seq'; with 'df_parts' the parts "
+                             "are taken directly from its columns.")
         # Load defaults
         if df_scales is None:
             df_scales = ut.load_default_scales()
