@@ -229,6 +229,7 @@ CAPABILITY_FAMILIES = [
          ("Adjusted AUC (class imbalance)", "comp_auc_adjusted(X, labels)", None),
          ("BIC score · KL divergence", "comp_bic_score(X, labels) · comp_kld", None),
          ("Per-protein / detection (v1.1)", "comp_per_protein_ap · comp_detection_metrics", None),
+         ("Feature-set CV score (v1.1)", "eval_features(X, labels, model, cv, metric)", None),
          ("Plot style, fonts & standalone legend", "plot_settings(font_scale) · plot_legend(ax)", None),
      ]},
     {"name": "Protein Design", "tag": "mutations · design",

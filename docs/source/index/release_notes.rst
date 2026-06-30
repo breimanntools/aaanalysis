@@ -186,6 +186,10 @@ Added
   vector (returns ``{'mean', 'ci_low', 'ci_high'}``).
 - **comp_smooth_scores**: Peak-preserving (``max(smoothed, raw)``), NaN-aware smoothing
   of per-residue score tracks.
+- **eval_features**: Cross-validated feature-set scorer (model + CV + metric). The default
+  reproduces the linear-SVM / leave-one-out / balanced-accuracy benchmark; accepts any
+  scikit-learn estimator, CV splitter, and metric name, plus a Positive-Unlabeled (PU)
+  ``mask_known_pos`` CV variant. Deterministic given ``random_state``.
 
 **Plotting**
 
