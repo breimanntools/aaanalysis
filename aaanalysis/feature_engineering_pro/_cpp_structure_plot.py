@@ -118,11 +118,15 @@ class CPPStructurePlot:
     features raise (red) or lower (blue) the prediction; an AlphaFold pLDDT mode shows
     per-residue model confidence instead.
 
-    Three methods drive it: :meth:`map_structure` returns a ``StructureView`` (the interactive
-    3D cartoon), :meth:`plot_combined` returns a ``CombinedView`` (the cartoon next to the
-    :meth:`CPPPlot.feature_map` image, the deployed app's layout), and :meth:`interactive`
-    returns a live ipywidgets explorer. All render real 3D structures via py3Dmol — there is no
-    matplotlib structure fallback.
+    Five methods drive it: :meth:`map_structure` returns a ``StructureView`` (the interactive
+    3D cartoon); :meth:`plot_combined` returns a ``CombinedView`` (the cartoon next to the
+    :meth:`CPPPlot.feature_map` image, the deployed app's layout); :meth:`plot_linked` returns a
+    ``LinkedView`` (a self-contained HTML where hovering a feature-map column highlights the
+    matching residue); :meth:`interactive` returns a live ipywidgets explorer (a site slider that
+    re-predicts and a feature-map-to-structure highlight link); and :meth:`explore` is the
+    integrated one call (a built-in per-site predictor plus a selectable ``output`` of widget /
+    HTML / static). All render real 3D structures via py3Dmol — there is no matplotlib structure
+    fallback.
 
     .. versionadded:: 1.1.0
 
@@ -423,6 +427,11 @@ class CPPStructurePlot:
         RuntimeError
             If py3Dmol is not installed, or an AlphaFold model for ``uniprot`` cannot be fetched.
 
+        See Also
+        --------
+        * :meth:`plot_linked`: the same two panels with live hover linking (column to residue).
+        * :meth:`explore`: build the per-site prediction and pick the output in one call.
+
         Examples
         --------
         .. include:: examples/csp_plot_combined.rst
@@ -601,6 +610,11 @@ class CPPStructurePlot:
             ``uniprot``, ``df_feat`` missing ``col_imp``, or a colliding ``feature_map_kws`` key).
         RuntimeError
             If py3Dmol is not installed, or an AlphaFold model for ``uniprot`` cannot be fetched.
+
+        See Also
+        --------
+        * :meth:`plot_combined`: the same two panels as a static side-by-side (no live linking).
+        * :meth:`explore`: pass ``sites=[...]`` to bake a multi-site *live* linked HTML.
 
         Examples
         --------
@@ -1131,6 +1145,21 @@ class CPPStructurePlot:
             If a required optional package (py3Dmol, or ``ipywidgets`` for the widget) is missing, or
             an AlphaFold model cannot be fetched.
 
+        Notes
+        -----
+        * **Per-site cost.** The built-in predictor refits a :class:`ShapModel` per site
+          (the predicted probability is fit once; only the SHAP impact refits). For
+          ``output='html'`` with ``sites=[...]`` every site additionally embeds a feature-map
+          image, so file size and build time scale linearly with ``len(sites)`` — a warning is
+          emitted past 40 sites and a hard cap applies at 200.
+        * **Static capture.** ``output='static'`` with ``path`` saves the feature-map panel only
+          (``CombinedView.savefig``); the 3D structure is interactive and has no headless image.
+
+        See Also
+        --------
+        * :meth:`plot_combined` / :meth:`plot_linked` / :meth:`interactive`: the lower-level
+          render surfaces this dispatches to.
+
         Examples
         --------
         .. include:: examples/csp_explore.rst
@@ -1155,6 +1184,12 @@ class CPPStructurePlot:
         if shap_plot and ut.COL_FEAT_IMPACT not in col_imp:
             raise ValueError(f"With 'shap_plot=True', 'col_imp' ('{col_imp}') must be "
                              f"'{ut.COL_FEAT_IMPACT}' or follow '{ut.COL_FEAT_IMPACT}_<name>'")
+        # The built-in predictor produces SHAP feature impact, so it needs the SHAP feature map.
+        # shap_plot=False (the feature-importance layout) is only meaningful with a custom predictor.
+        if predictor is None and not shap_plot:
+            raise ValueError("The built-in predictor produces SHAP feature impact, so "
+                             "'shap_plot' must be True; pass a custom 'predictor' that yields a "
+                             "feature-importance 'col_imp' to use 'shap_plot=False'.")
         if (pdb is None) == (uniprot is None):
             raise ValueError("Exactly one of 'pdb' or 'uniprot' should be given "
                              f"(got pdb={pdb}, uniprot={uniprot})")

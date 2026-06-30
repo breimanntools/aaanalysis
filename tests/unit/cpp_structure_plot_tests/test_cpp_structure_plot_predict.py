@@ -225,3 +225,12 @@ class TestBuilderGuards:
         with pytest.raises(ValueError, match="reserved"):
             build_builtin_predictor(df_feat=df_feat, df_seq=bad, labels=labels, tmd_len=20,
                                     jmd_n_len=10, jmd_c_len=10, df_scales=df_scales)
+
+    def test_col_imp_collision_overwritten(self, df_feat, df_seq, labels, df_scales, query_seq):
+        # A df_feat that already carries the col_imp column gets the fresh per-site impact, not a
+        # stale value; the template itself is never mutated (the predictor returns a copy).
+        templ = df_feat.copy()
+        templ[ut.COL_FEAT_IMPACT] = 999.0
+        out = _predictor(templ, df_seq, labels, df_scales)(query_seq, 50)
+        assert (out[ut.COL_FEAT_IMPACT] != 999.0).all()
+        assert (templ[ut.COL_FEAT_IMPACT] == 999.0).all()   # template untouched
