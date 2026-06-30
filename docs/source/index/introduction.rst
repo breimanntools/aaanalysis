@@ -72,7 +72,8 @@ you work:
   capability, and the *Part × Split × Scale* feature ontology on three pages.
 - `Decision Map <../_static/decision_map.html>`_ — a flowchart from your goal (*explore*, *predict*,
   or *optimize*) to the exact AAanalysis class or function to call.
-- `Ecosystem Map <../_static/aaanalysis_ecosystem.html>`_ — where AAanalysis fits among related
-  bioinformatics, machine-learning, and explainability tools.
+- `Ecosystem Map <../_static/ecosystem_map.html>`_ — where AAanalysis fits among related
+  bioinformatics, machine-learning, and explainability tools (or read the full
+  `positioning article <../_static/aaanalysis_ecosystem.html>`_ with the map plus background).
 - `Data Flow Map <../_static/dataflow_map.html>`_ — how data flows from sequences and scales through
   CPP to features, models, and explanations.
