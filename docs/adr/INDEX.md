@@ -55,4 +55,5 @@ Regenerate this table with:
 | [0045](0045-seqopt-deap-parity-and-pure-python-operators.md) | SeqOpt: full pure-Python EA operator set + DEAP parity (ship ours) | Accepted | 2026-06-25 |  |
 | [0046](0046-predict-samples-multi-model-harness.md) | `predict_samples` multi-model comparison harness; paper-fidelity training engine deferred | Accepted | 2026-06-25 |  |
 | [0047](0047-cpp-structure-explore-integrated-predictor.md) | `CPPStructurePlot.explore`: integrated per-site predictor with `output=` dispatch | Accepted | 2026-06-28 |  |
+| [0048](0048-select-scales-curation-surface.md) | `AAclust.pre_select_scales` for metadata-only scale exclusion | Accepted | 2026-06-29 |  |
 <!-- ADR-INDEX:END -->

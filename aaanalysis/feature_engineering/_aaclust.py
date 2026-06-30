@@ -111,6 +111,17 @@ def check_match_scale_ids_names(scale_ids=None, names=None, df_cat=None, col_nam
                              superset=names)
 
 
+def check_match_df_cat_cat_out(df_cat=None, cat_out=None, subcat_out=None) -> None:
+    """Verify that 'cat_out' / 'subcat_out' names exist in the matching 'df_cat' column."""
+    for name, col, vals in [("cat_out", ut.COL_CAT, cat_out), ("subcat_out", ut.COL_SUBCAT, subcat_out)]:
+        if vals is None:
+            continue
+        valid = set(df_cat[col])
+        unknown = [v for v in vals if v not in valid]
+        if len(unknown) > 0:
+            raise ValueError(f"'{name}' ({unknown}) should be names from the df_cat '{col}' column.")
+
+
 # II Main Functions
 class AAclust(Wrapper):
     """
@@ -661,6 +672,66 @@ class AAclust(Wrapper):
         n_unique_ref = len(set(names_ref))
         coverage = round(n_unique_intersect/n_unique_ref*100, 2)
         return coverage
+
+    def pre_select_scales(self,
+                          df_scales: pd.DataFrame,
+                          df_cat: Optional[pd.DataFrame] = None,
+                          cat_out: Optional[List[str]] = None,
+                          subcat_out: Optional[List[str]] = None,
+                          ) -> pd.DataFrame:
+        """
+        Pre-select scales by excluding AAontology categories and subcategories.
+
+        Metadata-only pre-filter (no clustering): drops the columns of ``df_scales`` whose
+        AAontology ``category`` is in ``cat_out`` or whose ``subcategory`` is in ``subcat_out``,
+        based on ``df_cat``. Intended as a preparation step before a redundancy reduction with
+        :meth:`AAclust.select_scales` or :meth:`AAclust.filter_coverage`.
+
+        .. versionadded:: 1.1.0
+
+        Parameters
+        ----------
+        df_scales : pd.DataFrame, shape (n_letters, n_scales)
+            DataFrame with amino acid scales. `Rows` correspond to amino acids (one-letter codes)
+            and `columns` to scale IDs.
+        df_cat : pd.DataFrame, optional
+            DataFrame with the categorical information for each scale (columns 'scale_id',
+            'category', 'subcategory', 'scale_name'). Defaults to the bundled scale categories.
+        cat_out : list of str, optional
+            AAontology categories to exclude. Names must exist in the ``df_cat`` 'category' column.
+        subcat_out : list of str, optional
+            AAontology subcategories to exclude. Names must exist in the ``df_cat`` 'subcategory' column.
+
+        Returns
+        -------
+        df_scales_pre : pd.DataFrame, shape (n_letters, n_scales_kept)
+            Subset of ``df_scales`` with the excluded categories/subcategories removed.
+
+        See Also
+        --------
+        * :meth:`AAclust.select_scales`: Redundancy reduction by correlation threshold.
+        * :meth:`AAclust.filter_coverage`: Redundancy reduction guaranteeing subcategory coverage.
+
+        Examples
+        --------
+        .. include:: examples/aac_pre_select_scales.rst
+        """
+        # Check input
+        check_df_scales(df_scales=df_scales, accept_none=False)
+        cat_out = ut.check_list_like(name="cat_out", val=cat_out, accept_none=True, accept_str=True)
+        subcat_out = ut.check_list_like(name="subcat_out", val=subcat_out, accept_none=True, accept_str=True)
+        if df_cat is None:
+            df_cat = ut.load_default_scales(scale_cat=True)
+        check_df_cat(df_cat=df_cat, accept_none=False)
+        check_match_df_cat_cat_out(df_cat=df_cat, cat_out=cat_out, subcat_out=subcat_out)
+        # Exclude scales by AAontology category / subcategory (no clustering)
+        ids_out = set()
+        if cat_out is not None:
+            ids_out |= set(df_cat[df_cat[ut.COL_CAT].isin(cat_out)][ut.COL_SCALE_ID])
+        if subcat_out is not None:
+            ids_out |= set(df_cat[df_cat[ut.COL_SUBCAT].isin(subcat_out)][ut.COL_SCALE_ID])
+        df_scales_pre = df_scales[[s for s in df_scales.columns if s not in ids_out]]
+        return df_scales_pre
 
     def select_scales(self,
                       df_scales: pd.DataFrame,

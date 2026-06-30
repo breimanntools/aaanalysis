@@ -69,6 +69,9 @@ Added
   sentence per ``PART-SPLIT-SCALE`` feature id (region + split + AAontology scale name /
   category). Additive (the ``'feature'`` id is unchanged); fills an optional
   ``'feature_description'`` column.
+- **AAclust.pre_select_scales**: Metadata-only pre-filter that drops scales by AAontology
+  ``category`` (``cat_out``) / ``subcategory`` (``subcat_out``) via ``df_cat`` — the
+  preparation step before ``select_scales`` or ``filter_coverage`` (no clustering).
 - **AAclust.select_scales**: Wrapper around ``AAclust.fit`` that returns the
   redundancy-reduced scale subset (one medoid per cluster) directly, ready for ``CPP``.
 - **AAclust.select_proteins**: Protein-level redundancy reduction over a per-protein
