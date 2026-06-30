@@ -230,6 +230,7 @@ CAPABILITY_FAMILIES = [
          ("BIC score · KL divergence", "comp_bic_score(X, labels) · comp_kld", None),
          ("Per-protein / detection (v1.1)", "comp_per_protein_ap · comp_detection_metrics", None),
          ("Plot style, fonts & standalone legend", "plot_settings(font_scale) · plot_legend(ax)", None),
+         ("Grouped comparison barplot + chance line", "plot_comparison(df_eval, baseline=50)", None, "v1.1"),
      ]},
     {"name": "Protein Design", "tag": "mutations · design",
      "under_construction": True,

@@ -191,6 +191,10 @@ Added
 
 - **plot_rank**: Standalone per-protein max-score-vs-rank scatter with group coloring and
   optional threshold lines (pairs with the new ``aa.metrics`` functions).
+- **plot_comparison**: Grouped method × condition comparison barplot from a tidy eval
+  frame, with automatic bar offsets / widths for *N* groups, optional per-bar value
+  labels, and an optional dashed chance / baseline line (replaces hand-built grouped
+  barplots with manual offsets, ``ax.text`` loops, and ``axhline``).
 
 **Golden Pipelines**
 
