@@ -190,7 +190,13 @@ Added
 **Plotting**
 
 - **plot_rank**: Standalone per-protein max-score-vs-rank scatter with group coloring and
-  optional threshold lines (pairs with the new ``aa.metrics`` functions).
+  optional threshold lines (pairs with the new ``aa.metrics`` functions). Additively extended
+  with a ranked-candidates variant (``col_class`` / ``col_std``): named candidates as
+  horizontal bars colored by class, with optional per-item error bars and vertical cutoff
+  lines. The default scatter output is unchanged.
+- **plot_prediction_hist** (internal): Class-separated histogram of a 0-100 model prediction
+  score (substrate / non-substrate / unknown separation), with ``[0, 1]`` probabilities
+  auto-rescaled to a percent axis. Currently internal; a public re-export is pending review.
 
 **Golden Pipelines**
 

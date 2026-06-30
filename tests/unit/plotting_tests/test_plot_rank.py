@@ -212,3 +212,112 @@ class TestPlotRankComplex:
     def test_group_order_wrong_type_raises(self):
         with pytest.raises(ValueError):
             plot_rank(df_rank=_df(), group_order="substrate")
+
+
+# Helper for the additive ranked-candidates (bar) mode
+def _df_cand(n_sub=3, n_non=3, seed=0):
+    rng = np.random.default_rng(seed)
+    n = n_sub + n_non
+    names = [f"GENE{i}" for i in range(n)]
+    return pd.DataFrame(
+        {"score": rng.uniform(0, 100, n),
+         "std": rng.uniform(1, 10, n),
+         "class": ["substrate"] * n_sub + ["non-substrate"] * n_non},
+        index=names,
+    )
+
+
+class TestPlotRankCandidatesMode:
+    """The additive col_class / col_std ranked-candidates (horizontal-bar) variant."""
+
+    def test_col_class_switches_to_bars(self):
+        fig, ax = plot_rank(df_rank=_df_cand(), col_score="score", col_class="class")
+        # barh produces a BarContainer (no scatter collections in this mode)
+        assert len(ax.containers) >= 1 and len(ax.collections) == 0
+
+    def test_yticklabels_are_candidate_names(self):
+        df = _df_cand()
+        fig, ax = plot_rank(df_rank=df, col_score="score", col_class="class")
+        labels = {t.get_text() for t in ax.get_yticklabels()}
+        assert labels == set(df.index.astype(str))
+
+    def test_col_std_draws_error_bars(self):
+        df = _df_cand()
+        fig, ax = plot_rank(df_rank=df, col_score="score", col_class="class", col_std="std")
+        # errorbar adds an extra container beyond the BarContainer
+        assert len(ax.containers) >= 2
+
+    def test_threshold_draws_vertical_line(self):
+        fig, ax = plot_rank(df_rank=_df_cand(), col_score="score", col_class="class",
+                            threshold=50)
+        dashed = [ln for ln in ax.get_lines() if ln.get_linestyle() == "--"]
+        assert len(dashed) == 1
+
+    def test_bar_colors_follow_class(self):
+        df = _df_cand(n_sub=2, n_non=2)
+        fig, ax = plot_rank(df_rank=df, col_score="score", col_class="class",
+                            group_order=["substrate", "non-substrate"])
+        green = matplotlib.colors.to_rgb(ut.COLOR_POS)
+        facecolors = {tuple(np.round(p.get_facecolor()[:3], 4)) for p in ax.patches}
+        assert tuple(np.round(green, 4)) in facecolors
+
+    def test_default_labels_substituted_in_bar_mode(self):
+        # scatter defaults ("Protein rank") must not leak onto the score axis
+        fig, ax = plot_rank(df_rank=_df_cand(), col_score="score", col_class="class")
+        assert ax.get_xlabel() == "Prediction score" and ax.get_ylabel() == ""
+
+    def test_explicit_labels_respected_in_bar_mode(self):
+        fig, ax = plot_rank(df_rank=_df_cand(), col_score="score", col_class="class",
+                            xlabel="My score", ylabel="My genes")
+        assert ax.get_xlabel() == "My score" and ax.get_ylabel() == "My genes"
+
+    def test_col_std_without_col_class_raises(self):
+        with pytest.raises(ValueError):
+            plot_rank(df_rank=_df_cand(), col_score="score", col_std="std")
+
+    def test_missing_col_class_col_raises(self):
+        with pytest.raises(ValueError):
+            plot_rank(df_rank=_df_cand(), col_score="score", col_class="nope")
+
+    def test_missing_col_std_col_raises(self):
+        with pytest.raises(ValueError):
+            plot_rank(df_rank=_df_cand(), col_score="score", col_class="class", col_std="nope")
+
+    def test_col_class_wrong_type_raises(self):
+        with pytest.raises(ValueError):
+            plot_rank(df_rank=_df_cand(), col_score="score", col_class=123)
+
+    def test_col_std_wrong_type_raises(self):
+        with pytest.raises(ValueError):
+            plot_rank(df_rank=_df_cand(), col_score="score", col_class="class", col_std=123)
+
+    def test_draws_on_passed_ax_bar_mode(self):
+        fig0, ax0 = plt.subplots()
+        fig, ax = plot_rank(df_rank=_df_cand(), col_score="score", col_class="class", ax=ax0)
+        assert ax is ax0 and fig is fig0
+
+
+class TestPlotRankDefaultRegression:
+    """Guard: the default scatter path is byte-identical with the new args at their defaults."""
+
+    def _scatter_state(self, ax):
+        offsets = [tuple(map(tuple, np.round(c.get_offsets(), 8))) for c in ax.collections]
+        colors = [tuple(np.round(c.get_facecolor()[0][:3], 8)) for c in ax.collections]
+        labels = [t.get_text() for t in ax.get_legend().get_texts()]
+        lines = [(round(ln.get_ydata()[0], 8), ln.get_linestyle()) for ln in ax.get_lines()]
+        return offsets, colors, labels, lines
+
+    def test_new_args_none_match_legacy_call(self):
+        df = _df()
+        fig1, ax1 = plot_rank(df_rank=df, threshold=[0.5, 0.8])
+        fig2, ax2 = plot_rank(df_rank=df, threshold=[0.5, 0.8], col_std=None, col_class=None)
+        assert self._scatter_state(ax1) == self._scatter_state(ax2)
+
+    def test_default_scatter_unchanged_shape(self):
+        # The default mode still yields one collection per group and no bars.
+        fig, ax = plot_rank(df_rank=_df())
+        assert len(ax.collections) == 3 and len(ax.patches) == 0
+
+    def test_default_axis_labels_unchanged(self):
+        fig, ax = plot_rank(df_rank=_df())
+        assert ax.get_xlabel() == "Protein rank" and ax.get_ylabel() == "Max score per protein"
