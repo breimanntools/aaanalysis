@@ -15,7 +15,7 @@ and where its own classes (*Part × Split × Scale* · AAontology · CPP · ``Tr
 .. raw:: html
 
    <p>
-     <a href="../_static/aaanalysis_ecosystem.html" target="_blank" rel="noopener">Open the interactive ecosystem map full-screen</a>.
+     <a href="../_static/aaanalysis_ecosystem.html" target="_blank" rel="noopener">Open the full ecosystem map full-screen</a>.
    </p>
    <iframe src="../_static/aaanalysis_ecosystem.html" title="The AAanalysis Ecosystem map"
            style="width:100%; height:80vh; border:1px solid #e3e7ec; border-radius:4px;"
@@ -23,4 +23,4 @@ and where its own classes (*Part × Split × Scale* · AAontology · CPP · ``Tr
 
 .. only:: latex
 
-   The interactive ecosystem map is available in the HTML documentation.
+   The ecosystem map is available in the HTML documentation.

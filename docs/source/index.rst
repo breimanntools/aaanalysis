@@ -120,8 +120,9 @@ wrappers or native implementations — for example SHAP via ``ShapModel``, or ma
 such as random forests via ``TreeModel`` — so the resulting features, explanations, and design
 objectives feed straight into the standard ML / XAI / optimization tools.
 
-Click the diagram to open the full interactive map full-screen
-(`Ecosystem Map <_static/aaanalysis_ecosystem.html>`_).
+Click the diagram to open the full map, or read the
+`ecosystem positioning article <_static/aaanalysis_ecosystem.html>`_ — a self-contained
+page with the map, its positioning brief, and further background.
 
 .. figure:: _artwork/diagrams/aaanalysis_ecosystem.svg
    :target: _static/aaanalysis_ecosystem.html

@@ -20,20 +20,22 @@ introduction, our **Quick start** and **Slow start** tutorials share the same
 examples, the latter adding the conceptual background, and the
 **Plotting Prelude** tutorial helps you create publication-ready plots.
 
-.. admonition:: Not sure where to start? Follow the Decision Map
-   :class: tip
-
-   The **Decision Map** turns *"what do I want to do?"* into a concrete path through
-   the AAanalysis API — **explore** sequences and groups, **build** features to predict
-   and explain, or **optimize** for protein design. It is the fastest way to find the
-   right tool for your question; click it to open the full interactive version.
+Not sure which tool fits your question? The **Decision Map** turns
+*"what do I want to do?"* into a concrete path through the AAanalysis API —
+**explore** sequences and groups, **build** features to predict and explain, or
+**optimize** for protein design. It is the fastest way to find the right starting
+point; click the map to open it full-size.
 
 .. raw:: html
 
-   <a href="_static/decision_map.html" target="_blank" rel="noopener" title="Open the interactive Decision Map">
+   <a href="_static/decision_map.html" target="_blank" rel="noopener" title="Open the Decision Map">
      <img src="_static/decision_map.png" alt="AAanalysis Decision Map"
           style="width:100%; display:block; margin:0 auto; border:1px solid #e3e7ec; border-radius:4px;">
    </a>
+
+These short notebooks walk through that first loop step by step — start with
+**A minimal CPP analysis**, compare the two interfaces in **Quick start** and
+**Slow start**, then make publication-ready figures with **Plotting Prelude**:
 
 .. toctree::
    :maxdepth: 1
