@@ -68,12 +68,12 @@ docstring style, and the :ref:`Release Notes <release_notes>` track changes acro
 Finally, four at-a-glance reference documents summarise the whole framework — keep them open while
 you work:
 
-- `Cheat Sheet <../_static/cheat_sheet.html>`_ — the canonical workflow, the main classes by
+- `Cheat Sheet <../_static/cheat_sheet.html>`_: the canonical workflow, the main classes by
   capability, and the *Part × Split × Scale* feature ontology on three pages.
-- `Decision Map <../_static/decision_map.html>`_ — a flowchart from your goal (*explore*, *predict*,
+- `Decision Map <../_static/decision_map.html>`_: a flowchart from your goal (*explore*, *predict*,
   or *optimize*) to the exact AAanalysis class or function to call.
-- `Ecosystem Map <../_static/ecosystem_map.html>`_ — where AAanalysis fits among related
+- `Ecosystem Map <../_static/ecosystem_map.html>`_: where AAanalysis fits among related
   bioinformatics, machine-learning, and explainability tools (or read the full
   `positioning article <../_static/aaanalysis_ecosystem.html>`_ with the map plus background).
-- `Data Flow Map <../_static/dataflow_map.html>`_ — how data flows from sequences and scales through
+- `Data Flow Map <../_static/dataflow_map.html>`_: how data flows from sequences and scales through
   CPP to features, models, and explanations.
