@@ -47,19 +47,18 @@ See the primary analysis pipeline of the AAanalysis framework in the **Data Flow
 below — from the external data sources through the two CPP entry points (``CPP.run`` for
 amino acid scales, ``CPP.run_num`` for numeric values) to the feature matrix ``X`` and the
 model, explanation, and design wrappers
-(`open the interactive version <../_static/dataflow_map.html>`_):
+(`open the full map <../_static/dataflow_map.html>`_):
 
 .. figure:: /_artwork/diagrams/dataflow_map.png
    :align: center
    :alt: AAanalysis Data Flow Map
    :width: 100%
 
-   The AAanalysis Data Flow Map. External data (gray) feeds the CPP core (blue):
-   ``df_seq`` → ``df_parts`` with ``split_kws`` and ``df_scales`` (and the numeric
-   ``dict_num`` → ``dict_num_parts`` path) → ``CPP.run`` / ``CPP.run_num`` → ``df_feat``
-   → ``X``. The wrapper classes (amber) then predict (``TreeModel``), explain
-   (``TreeModel`` global importance, ``ShapModel`` local impact), and design
-   (``SeqMut`` · ``SeqOpt``) from ``X``.
+   The AAanalysis Data Flow Map. External data sources (gray) — protein sequences,
+   embeddings, structures, and annotations — feed the interpretable CPP core (blue),
+   which turns them into the feature signature ``df_feat`` and the feature matrix
+   ``X``. The wrapper classes (amber) then predict, explain, and design from ``X``.
+   The map itself spells out every intermediate step.
 
 New here? Start with **Prediction tasks**, the concept-overview page that maps a
 biological question to the right AAanalysis workflow — by *unit of comparison* and
