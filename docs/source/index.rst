@@ -120,12 +120,12 @@ wrappers or native implementations — for example SHAP via ``ShapModel``, or ma
 such as random forests via ``TreeModel`` — so the resulting features, explanations, and design
 objectives feed straight into the standard ML / XAI / optimization tools.
 
-Click the diagram to open the full map, or read the
-`ecosystem positioning article <_static/aaanalysis_ecosystem.html>`_ — a self-contained
+Click the diagram to open the full map (with PNG / PDF / HTML download options), or read
+the `ecosystem positioning article <_static/aaanalysis_ecosystem.html>`_: a self-contained
 page with the map, its positioning brief, and further background.
 
 .. figure:: _artwork/diagrams/aaanalysis_ecosystem.svg
-   :target: _static/aaanalysis_ecosystem.html
+   :target: _static/ecosystem_map.html
    :alt: The AAanalysis ecosystem — where AAanalysis fits in the protein-ML stack
    :width: 100%
    :align: center
