@@ -45,6 +45,11 @@ FOLDER_IMAGE = FOLDER_GENERATED_RST + "images" + SEP
 # require GPU/external services and cannot be executed or rendered meaningfully).
 LIST_EXCLUDE = []
 
+# Getting-Started notebooks: linked from getting_started.rst by ``:doc:`` in the body,
+# but marked ``:orphan:`` so they do NOT appear as sub-chapters in the RTD sidebar.
+ORPHAN_TUTORIALS = {"tutorial0_minimal", "tutorial1_quick_start",
+                    "tutorial1_slow_start", "plotting_prelude"}
+
 
 # Helper functions
 class CustomPreprocessor(Preprocessor):
@@ -95,6 +100,9 @@ def export_tutorial_notebooks_to_rst():
             custom_preprocessor = CustomPreprocessor(notebook_name=notebook_name)
             rst_exporter = nbconvert.RSTExporter(preprocessors=[custom_preprocessor])
             output, resources = rst_exporter.from_notebook_node(notebook)
+            # Keep Getting-Started notebooks out of the sidebar nav (linked via :doc: instead)
+            if notebook_name in ORPHAN_TUTORIALS:
+                output = ":orphan:\n\n" + output
             # Write the RST and any accompanying files (like images)
             writer = FilesWriter(build_directory=FOLDER_GENERATED_RST)
             writer.write(output, resources, notebook_name=filename.replace('.ipynb', ''))
