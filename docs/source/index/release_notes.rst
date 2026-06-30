@@ -37,6 +37,9 @@ Added
   ``build_cat``, ``to_df_seq``).
 - **combine_dict_nums**: Concatenates per-residue tensors (embedding / structure /
   annotation) along the feature axis into one combined ``CPP.run_num`` input.
+- **get_labels**: Derives a binary ``int`` label vector from a sequence DataFrame's
+  label column (``positive_label`` mapped to ``1``, everything else to ``0``) — the
+  single-call form of the recurring ``(df[col] == x).astype(int).to_numpy()`` expression.
 
 **Feature Engineering**
 
@@ -132,6 +135,16 @@ Added
   switches the pre-computed prediction per P1 (feature map + structure restyle) with no kernel,
   keeping the column-residue linking (warned past 40 sites, hard-capped at 200).
 
+**PU Learning**
+
+- **dPULearn.mine_negatives**: One-call convenience over ``dPULearn.fit`` for the common
+  positive / unlabeled setup. Pass ``X_pos`` and ``X_unlabelled`` separately instead of
+  stacking them by hand, building a ``1`` / ``2`` label vector, fitting, and slicing the
+  mined rows back out; it returns the **boolean mask over the rows of** ``X_unlabelled``
+  flagging the identified reliable negatives (equal to the manual ``labels_[len(X_pos):]
+  == 0`` result exactly). The instance is left fitted (``labels_`` / ``df_pu_`` set, so
+  ``dPULearnPlot`` works), and the existing ``fit(X, labels=...)`` path is unchanged.
+
 **Sequence Analysis**
 
 - **AAWindowSampler**: Samples fixed-length sequence windows for PU-learning and
@@ -191,6 +204,10 @@ Added
 
 - **plot_rank**: Standalone per-protein max-score-vs-rank scatter with group coloring and
   optional threshold lines (pairs with the new ``aa.metrics`` functions).
+- **COLOR_SAMPLES_POS / COLOR_SAMPLES_NEG / COLOR_SAMPLES_UNL / COLOR_SAMPLES_REL_NEG**:
+  Public, named constants for the canonical sample-group colors (positive / negative /
+  unlabeled / reliable-negative). They equal the ``plot_get_cdict("DICT_COLOR")["SAMPLES_*"]``
+  values exactly, so a named constant replaces indexing the color dict by string key.
 
 **Golden Pipelines**
 

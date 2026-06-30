@@ -133,6 +133,15 @@ def check_match_X_X_neg(X=None, X_neg=None) -> None:
         raise ValueError(f"'n_features' does not match between 'X' (n={n_features}) and 'X_neg' (n={n_features_neg})")
 
 
+def check_match_X_pos_X_unlabelled(X_pos=None, X_unlabelled=None) -> None:
+    """Check that positive and unlabeled feature matrices share the same feature dimension."""
+    n_features_pos = X_pos.shape[1]
+    n_features_unl = X_unlabelled.shape[1]
+    if n_features_pos != n_features_unl:
+        raise ValueError(f"'n_features' does not match between 'X_pos' (n={n_features_pos}) and "
+                         f"'X_unlabelled' (n={n_features_unl})")
+
+
 # II Main Functions
 class dPULearn(Wrapper):
     """
@@ -357,6 +366,88 @@ class dPULearn(Wrapper):
         self.labels_ = np.asarray(new_labels)
         self.df_pu_ = df_pu
         return self
+
+    def mine_negatives(self,
+                       X_pos: ut.ArrayLike2D,
+                       X_unlabelled: ut.ArrayLike2D,
+                       n_neg: Optional[int] = None,
+                       n_unl_to_neg: Optional[int] = None,
+                       metric: Optional[Literal["euclidean", "manhattan", "cosine"]] = None,
+                       n_components: Union[float, int] = 0.80,
+                       ) -> np.ndarray:
+        """
+        Mine reliable negatives from an unlabeled pool given the positives, in one call.
+
+        Convenience wrapper around :meth:`dPULearn.fit` for the common positive/unlabeled
+        setup: instead of stacking ``X_pos`` and ``X_unlabelled`` by hand, building a
+        ``1`` (positive) / ``2`` (unlabeled) label vector, fitting, and slicing the mined
+        rows back out by index, pass the two feature matrices separately and receive a
+        **boolean mask over the rows of** ``X_unlabelled`` flagging the identified reliable
+        negatives. The mask equals ``labels_[len(X_pos):] == 0`` from the manual stacking
+        path exactly.
+
+        After the call the instance is fitted: :attr:`dPULearn.labels_` (over the stacked
+        ``X_pos`` then ``X_unlabelled``) and :attr:`dPULearn.df_pu_` are set, so the
+        :class:`dPULearnPlot` methods work as usual.
+
+        .. versionadded:: 1.1.0
+
+        Parameters
+        ----------
+        X_pos : array-like, shape (n_pos, n_features)
+            Feature matrix of the positive samples.
+        X_unlabelled : array-like, shape (n_unl, n_features)
+            Feature matrix of the unlabeled samples (the candidate pool). Must have the
+            same number of features as ``X_pos``.
+        n_neg : int, optional
+            Total number of reliable negatives to identify from the unlabeled pool.
+            Provide **exactly one** of ``n_neg`` or ``n_unl_to_neg`` (with no pre-labeled
+            negatives the two are equivalent).
+        n_unl_to_neg : int, optional
+            Number of reliable negatives to identify directly from the unlabeled pool.
+            Provide **exactly one** of ``n_neg`` or ``n_unl_to_neg``.
+        metric : str or None, optional
+            Distance metric for distance-based identification (``euclidean``,
+            ``manhattan``, ``cosine``). If ``None``, PCA-based identification is performed.
+        n_components : int or float, default=0.80
+            Number of principal components (int >= 1) or fraction of variance covered
+            (float in ``(0.0, 1.0)``) when PCA is applied.
+
+        Returns
+        -------
+        mask_neg : array-like, shape (n_unl,)
+            Boolean mask over the rows of ``X_unlabelled``: ``True`` marks an identified
+            reliable negative. ``X_unlabelled[mask_neg]`` are the mined negatives.
+
+        Notes
+        -----
+        * This is purely additive sugar: it stacks the inputs and calls
+          :meth:`dPULearn.fit` with ``label_pos=1`` / ``label_unl=2`` internally, so the
+          identification result is identical to the manual path.
+
+        See Also
+        --------
+        * :meth:`dPULearn.fit`: the underlying fit on a stacked matrix and label vector.
+        * :func:`get_labels`: derive a binary label vector from a sequence DataFrame.
+
+        Examples
+        --------
+        .. include:: examples/dpul_mine_negatives.rst
+        """
+        # Check input
+        X_pos = ut.check_X(X=X_pos, X_name="X_pos")
+        X_unlabelled = ut.check_X(X=X_unlabelled, X_name="X_unlabelled")
+        check_match_X_pos_X_unlabelled(X_pos=X_pos, X_unlabelled=X_unlabelled)
+        # Stack positives over the unlabeled pool and fit with the package PU markers
+        n_pos = X_pos.shape[0]
+        X = np.vstack([X_pos, X_unlabelled])
+        labels = np.array([1] * n_pos + [2] * X_unlabelled.shape[0])
+        self.fit(X=X, labels=labels, label_pos=1, label_unl=2,
+                 n_neg=n_neg, n_unl_to_neg=n_unl_to_neg,
+                 metric=metric, n_components=n_components)
+        # Slice the mined reliable negatives (label 0) back out of the unlabeled block
+        mask_neg = np.asarray(self.labels_)[n_pos:] == 0
+        return mask_neg
 
     @staticmethod
     def eval(X: ut.ArrayLike2D,

@@ -1,4 +1,4 @@
-from .data_handling import (load_dataset, load_scales, load_features,
+from .data_handling import (load_dataset, load_scales, load_features, get_labels,
                             read_fasta, to_fasta,
                             SequencePreprocessor,
                             EmbeddingPreprocessor,
@@ -14,6 +14,8 @@ from .metrics import (comp_auc_adjusted, comp_bic_score, comp_kld,
                       comp_per_protein_ap, comp_detection_metrics,
                       comp_bootstrap_ci, comp_smooth_scores)
 from .config import options
+from ._constants import (COLOR_SAMPLES_POS, COLOR_SAMPLES_NEG,
+                        COLOR_SAMPLES_UNL, COLOR_SAMPLES_REL_NEG)
 
 from importlib.metadata import version as _version, PackageNotFoundError
 
@@ -28,6 +30,7 @@ __all__ = [
     "load_dataset",
     "load_scales",
     "load_features",
+    "get_labels",
     "read_fasta",
     "to_fasta",
     "SequencePreprocessor",
@@ -72,6 +75,10 @@ __all__ = [
     "comp_detection_metrics",
     "comp_bootstrap_ci",
     "comp_smooth_scores",
+    "COLOR_SAMPLES_POS",
+    "COLOR_SAMPLES_NEG",
+    "COLOR_SAMPLES_UNL",
+    "COLOR_SAMPLES_REL_NEG",
     "options"
 ]
 
