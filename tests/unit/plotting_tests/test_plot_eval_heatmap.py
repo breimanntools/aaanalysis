@@ -91,6 +91,19 @@ class TestPlotEvalHeatmap:
         ax = plot_eval_heatmap(df_eval=pd.DataFrame([[88.0]]))
         assert isinstance(ax, plt.Axes) and len(ax.texts) == 1
 
+    def test_xtick_rotation(self):
+        ax = plot_eval_heatmap(df_eval=_df(), xtick_rotation=45)
+        assert all(t.get_rotation() == 45 for t in ax.get_xticklabels())
+        assert all(t.get_ha() == "right" for t in ax.get_xticklabels())
+
+    def test_ytick_rotation(self):
+        ax = plot_eval_heatmap(df_eval=_df(), ytick_rotation=90)
+        assert all(t.get_rotation() == 90 for t in ax.get_yticklabels())
+
+    def test_figsize_respected(self):
+        ax = plot_eval_heatmap(df_eval=_df(), figsize=(8, 3))
+        assert tuple(ax.figure.get_size_inches()) == (8.0, 3.0)
+
 
 class TestPlotEvalHeatmapEquivalence:
     """KPI #310: equivalent to the hand-built seaborn block it consolidates."""
@@ -142,3 +155,11 @@ class TestPlotEvalHeatmapErrors:
     def test_bad_ax_type(self):
         with pytest.raises(ValueError):
             plot_eval_heatmap(df_eval=_df(), ax="not an ax")
+
+    def test_bad_xtick_rotation_type(self):
+        with pytest.raises(ValueError):
+            plot_eval_heatmap(df_eval=_df(), xtick_rotation="sideways")
+
+    def test_bad_figsize_type(self):
+        with pytest.raises(ValueError):
+            plot_eval_heatmap(df_eval=_df(), figsize="wide")
