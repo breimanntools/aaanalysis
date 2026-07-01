@@ -107,7 +107,8 @@ row closest to your biological question:
    * - **Protein**
 
        (the whole chain)
-     - The whole chain as a single part
+     - The whole chain as a single part, or fixed-size N- and C-terminal parts via
+       ``jmd_n`` / ``jmd_c`` (multi-part support arrives after v2.0)
      - Labeled A-vs-B groups of proteins
      - ``SEQ_``
      - :class:`~aaanalysis.CPP`, :class:`~aaanalysis.TreeModel`
