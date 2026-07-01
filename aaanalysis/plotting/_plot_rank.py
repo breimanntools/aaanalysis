@@ -83,7 +83,9 @@ def _plot_ranked_candidates(ax, df_rank, col_score, col_class, col_std, group_or
     present = set(df[col_class])
     handles = [Patch(color=dict_group_color[g], label=str(g))
                for g in group_order if g in present]
-    ax.legend(handles=handles)
+    # Horizontal bars fill the axes; keep the class legend outside (right) so it never
+    # overlaps the top candidate bars.
+    ax.legend(handles=handles, loc="upper left", bbox_to_anchor=(1.01, 1.0), frameon=False)
     sns.despine(ax=ax)
 
 

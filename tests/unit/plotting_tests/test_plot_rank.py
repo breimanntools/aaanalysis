@@ -314,6 +314,16 @@ class TestPlotRankCandidatesMode:
         fig, ax = plot_rank(df_rank=_df_cand(), col_score="score", col_class="class", ax=ax0)
         assert ax is ax0 and fig is fig0
 
+    def test_bar_legend_placed_outside_axes(self):
+        # The class legend must sit outside the plot area (right) so it never overlaps bars.
+        fig, ax = plot_rank(df_rank=_df_cand(), col_score="score", col_class="class")
+        fig.canvas.draw()
+        leg = ax.get_legend()
+        assert leg is not None and not leg.get_frame_on()
+        leg_left = leg.get_window_extent().x0
+        ax_right = ax.get_window_extent().x1
+        assert leg_left >= ax_right  # legend starts at/after the axes' right edge
+
 
 class TestPlotRankDefaultRegression:
     """Guard: the default scatter path stays byte-identical to the pre-``col_class`` output.
