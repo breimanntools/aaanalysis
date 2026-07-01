@@ -165,6 +165,18 @@ class TestPlotEvalHeatmapErrors:
         with pytest.raises(ValueError):
             plot_eval_heatmap(df_eval=_df(), xlabel=123)
 
+    def test_bad_ylabel_type(self):
+        with pytest.raises(ValueError):
+            plot_eval_heatmap(df_eval=_df(), ylabel=123)
+
+    def test_bad_cbar_label_type(self):
+        with pytest.raises(ValueError):
+            plot_eval_heatmap(df_eval=_df(), cbar_label=123)
+
+    def test_bad_ytick_rotation_type(self):
+        with pytest.raises(ValueError):
+            plot_eval_heatmap(df_eval=_df(), ytick_rotation="sideways")
+
     def test_bad_ax_type(self):
         with pytest.raises(ValueError):
             plot_eval_heatmap(df_eval=_df(), ax="not an ax")
