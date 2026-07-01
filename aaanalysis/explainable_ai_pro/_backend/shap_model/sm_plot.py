@@ -52,6 +52,9 @@ def plot_shap_clustermap(df_cor=None, dict_color=None, row_colors=None, col_colo
                           tree_kws=dict(linewidth=tree_linewidth),
                           cbar_pos=(0.04, 0.85, 0.18, 0.03),
                           cbar_kws=dict(orientation="horizontal"))
+    # Reserve a right margin so the class legend fits inside the figure canvas (otherwise it
+    # overflows the right edge and is clipped on a plain savefig without bbox_inches="tight").
+    grid.gs.update(right=0.80)
     # Sample names are the tick labels; an axis title would be redundant/misleading
     grid.ax_heatmap.set_xlabel("")
     grid.ax_heatmap.set_ylabel("")

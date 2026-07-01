@@ -119,6 +119,19 @@ class TestClustermap:
         assert np.array_equal(link1, g2.dendrogram_row.linkage)
         plt.close("all")
 
+    def test_legend_within_figure_bounds(self):
+        # The class legend must stay inside the canvas so it is not clipped on a plain
+        # savefig (no bbox_inches="tight"); default Matplotlib rcParams (no plot_settings).
+        import matplotlib as mpl
+        with mpl.rc_context(rc=mpl.rcParamsDefault):
+            sv, labels = _shap_matrix(n_pos=7, n_neg=9)
+            grid = ShapModelPlot.clustermap(sv, labels=labels)
+            grid.fig.canvas.draw()
+            fig_right = grid.fig.get_window_extent().x1
+            legend_right = grid.ax_col_dendrogram.get_legend().get_window_extent().x1
+            assert legend_right <= fig_right
+        plt.close("all")
+
 
 class TestClustermapErrors:
     """Negative cases, one wrong parameter per test."""
