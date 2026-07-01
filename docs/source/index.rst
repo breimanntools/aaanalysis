@@ -126,7 +126,7 @@ page with the map, its positioning brief, and further background.
 
 .. figure:: _artwork/diagrams/aaanalysis_ecosystem.svg
    :target: _static/ecosystem_map.html
-   :alt: The AAanalysis ecosystem — where AAanalysis fits in the protein-ML stack
+   :alt: The AAanalysis ecosystem: where AAanalysis fits in the protein-ML stack
    :width: 100%
    :align: center
    :figclass: ecosystem-figure
