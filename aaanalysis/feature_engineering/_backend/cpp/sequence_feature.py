@@ -162,7 +162,8 @@ def get_scale_mean_(df_parts=None, df_scales=None):
         if len(aa) == 1 and ord(aa) < 256:
             lut[ord(aa)] = row
     # Flatten every residue of every span, tracking its owning sequence
-    spans = df_parts.astype(str).agg("".join, axis=1).to_list()
+    # (df_parts columns are guaranteed str by the frontend's get_df_parts)
+    spans = df_parts.agg("".join, axis=1).to_list()
     lengths = np.fromiter((len(s) for s in spans), dtype=np.intp, count=n_seq)
     codes = np.frombuffer("".join(spans).encode("latin-1", "replace"), dtype=np.uint8)
     seq_ids = np.repeat(np.arange(n_seq), lengths)
