@@ -1,3 +1,5 @@
+.. _usage_principles_feature_identification:
+
 CPP: Identifying Physicochemical Signatures
 ===========================================
 
@@ -5,6 +7,14 @@ The central algorithm of the AAanalysis framework is Comparative Physicochemical
 feature engineering algorithm for interpretable protein prediction [Breimann25]_. CPP enables the identification
 of physicochemical signatures underlying biological recognition processes. It thereby extends rational protein
 biology beyond mere sequence motifs.
+
+.. admonition:: Provided by
+   :class: note
+
+   In AAanalysis this is the :class:`~aaanalysis.CPP` class, with
+   :class:`~aaanalysis.SequenceFeature` for building parts and splits and
+   :class:`~aaanalysis.CPPPlot` for the figures. See the :ref:`API reference <api>`
+   and the :ref:`tutorials <tutorials>`.
 
 The core idea of CPP is its feature concept:
 

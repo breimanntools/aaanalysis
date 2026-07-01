@@ -20,20 +20,29 @@ and the classes that carry it out. Use it as the front door to the
 :ref:`tutorials <tutorials>` (which teach one function at a time) and the
 :ref:`protocols <protocols>` (which walk an end-to-end workflow).
 
+.. admonition:: Provided by
+   :class: note
+
+   The tasks on this page are carried out by :func:`~aaanalysis.load_dataset`
+   (benchmark data), :class:`~aaanalysis.CPP` (features), the samplers and label
+   helpers (:class:`~aaanalysis.AAWindowSampler`, :class:`~aaanalysis.dPULearn`), and
+   the models (:class:`~aaanalysis.TreeModel`, :class:`~aaanalysis.ShapModel`). See
+   the :ref:`API reference <api>` for signatures.
+
 The two axes that actually define a task
 ----------------------------------------
 
-It is tempting to organize tasks by *biological scale* alone — residue, domain,
-protein. That label is useful shorthand, and AAanalysis encodes it directly in the
+It is tempting to organize tasks by *biological scale* alone (residue, domain,
+protein). That label is useful shorthand, and AAanalysis encodes it directly in the
 dataset name prefixes (``AA_*``, ``DOM_*``, ``SEQ_*``; see ``load_dataset``).
 But the scale is only a **proxy**. What genuinely
 determines how you set CPP up are two axes:
 
-- **Unit of comparison** — the part CPP profiles. A fixed-length
+- **Unit of comparison**: the part CPP profiles. A fixed-length
   :term:`window` (residue level), a :term:`part`-set such as
   ``jmd_n`` / ``tmd`` / ``jmd_c`` (domain level), or the whole chain
   (protein level).
-- **Reference construction** — how the contrasting set is built. Labeled
+- **Reference construction**: how the contrasting set is built. Labeled
   A-vs-B groups, non-site / non-cleaved windows, an unlabeled pool, or a
   composition-matched shuffled background. CPP always reads out a
   :term:`test group` against a :term:`reference group`, so a feature's effect
@@ -42,19 +51,36 @@ determines how you set CPP up are two axes:
 The :term:`prediction level` is the convenient label; these two axes are the
 substance. The table below leads with them.
 
+Compositional or positional
+---------------------------
+
+One choice cuts across every task before you even pick a row: whether CPP reads each
+part *compositionally* or *positionally*. It is not a separate parameter but emerges
+from ``split_kws`` (the CPP argument that controls how each part is read). A single
+whole-part average (``n_split_max=1`` with no patterns) is **compositional**
+(composition-like, position-agnostic); **sub-segments** (``n_split_max>1``),
+``Pattern``, or ``PeriodicPattern`` are **positional** (resolved to specific
+positions). You can always try either; it is a free choice for any task. In practice
+the strategy tracks the level: compositional suits the protein level, positional suits
+the residue level, and the domain level uses both. The deeper recipes live in the
+dedicated CPP-strategies guide.
+
 The prediction-task table
 --------------------------
 
-.. list-table:: AAanalysis prediction tasks — by unit of comparison and reference construction
+The table sorts the common protein-prediction tasks by the two axes above and, for
+each, gives the dataset prefix and the classes that typically carry it out. Find the
+row closest to your biological question:
+
+.. list-table:: AAanalysis prediction tasks: by unit of comparison and reference construction
    :header-rows: 1
-   :widths: 16 20 24 10 14 16
+   :widths: 18 22 28 12 20
    :class: longtable
 
    * - Task
      - Unit of comparison
      - Reference construction
      - Dataset prefix
-     - CPP strategy
      - Typical classes
    * - **Residue · single-residue**
 
@@ -62,7 +88,6 @@ The prediction-task table
      - One :term:`window` centered *on* a residue (odd ``aa_window_size``)
      - Site windows vs non-site windows (or an unlabeled residue pool)
      - ``AA_``
-     - Positional
      - ``AAWindowSampler``, ``CPP``, ``TreeModel``
    * - **Residue · between-residues**
 
@@ -70,7 +95,6 @@ The prediction-task table
      - One :term:`window` spanning a bond ``P1│P1′`` (even ``aa_window_size``)
      - Cleaved windows vs non-cleaved windows
      - ``AA_``
-     - Positional
      - ``AAWindowSampler``, ``CPP``, ``TreeModel``
    * - **Domain**
 
@@ -79,7 +103,6 @@ The prediction-task table
        (``jmd_n`` / ``tmd`` / ``jmd_c``)
      - Labeled A-vs-B groups (e.g. substrate vs non-substrate)
      - ``DOM_``
-     - Compositional **and** positional
      - ``SequenceFeature``, ``CPP``, ``TreeModel``
    * - **Protein**
 
@@ -87,16 +110,14 @@ The prediction-task table
      - The whole chain as a single part
      - Labeled A-vs-B groups of proteins
      - ``SEQ_``
-     - Compositional
      - ``CPP``, ``TreeModel``
    * - **Determinant discovery**
 
        (cross-cutting; no prediction target)
-     - Any unit — window, part-set, or chain
+     - Any unit (window, part-set, or chain)
      - Two groups contrasted to surface *what distinguishes them*
        (interpreted via :term:`AAontology`)
      - ``AA_`` / ``DOM_`` / ``SEQ_``
-     - Compositional or positional
      - ``CPP``, ``CPPPlot``
    * - **Design / engineering**
 
@@ -104,15 +125,13 @@ The prediction-task table
      - A sequence profiled against a target CPP profile
      - A target / reference profile the sequence is moved toward (``ΔCPP``)
      - ``AA_`` / ``DOM_`` / ``SEQ_``
-     - Compositional or positional
      - ``AAMut``, ``SeqMut``
    * - **Relational / interaction**
 
-       (scope boundary — not a level)
+       (scope boundary, not a level)
      - Interface **segments** only (a part-set on each partner)
      - In scope for interface segments only; pairwise contacts hand off
      - Interface segments via ``DOM_`` / ``AA_``
-     - Positional (segments)
      - Out of scope: structure / PLM tooling
 
 Reading the table
@@ -128,7 +147,7 @@ window, a bond between two residues). They share the windowing machinery, so the
 are sub-modes of one level rather than two levels.
 
 **The two cross-cutting rows.** :term:`Determinant discovery` and
-:term:`design / engineering` are not levels — they apply *at any level* and run
+:term:`design / engineering` are not levels; they apply *at any level* and run
 in opposite directions. Determinant discovery asks *what physicochemically
 distinguishes two groups* (CPP's purest, most interpretable use, with no
 prediction target). Design / engineering inverts that: it measures how a mutation
@@ -136,22 +155,10 @@ shifts a sequence's CPP profile (:term:`ΔCPP`) and steers a sequence toward a
 target. Both showcase the interpretability edge, so they are first-class rows.
 
 **The boundary row.** :term:`Relational / interaction <relational / interaction>`
-tasks — PPI interfaces and residue–residue contacts — are listed to be honest
+tasks (PPI interfaces and residue–residue contacts) are listed to be honest
 about the taxonomy's edge. AAanalysis profiles interface **segments**; long-range
 pairwise contacts and PPI-pair prediction are **out of scope** and hand off to
 structure / PLM tooling. It is a documented boundary, **not** a fourth level.
-
-CPP strategy in one line
-------------------------
-
-The **CPP strategy** column is :term:`compositional vs positional`, and it is not
-a parameter — it *emerges* from ``split_kws`` (the CPP argument that controls how
-each part is read). A single whole-part average
-(``Segment(1,1)``) is **compositional** (composition-like, position-agnostic);
-sub-segments, ``Pattern``, or ``PeriodicPattern`` are **positional**. The strategy
-tracks the level: compositional suits the protein level, positional suits the
-residue level, and the domain level uses both. The deeper recipes live in the
-dedicated CPP-strategies guide.
 
 Where to go next
 ----------------
