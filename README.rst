@@ -158,7 +158,7 @@ task (residue, domain, or protein level, plus determinant discovery and design) 
 right AAanalysis workflow and classes. Click the map to open the full, downloadable
 version (PNG / PDF / HTML).
 
-.. image:: https://raw.githubusercontent.com/breimanntools/aaanalysis/master/docs/source/_artwork/diagrams/decision_map.png
+.. figure:: https://raw.githubusercontent.com/breimanntools/aaanalysis/master/docs/source/_artwork/diagrams/decision_map.png
    :alt: AAanalysis Decision Map: which tool for which task
    :target: https://aaanalysis.readthedocs.io/en/latest/_static/decision_map.html
    :width: 70%
