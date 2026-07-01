@@ -370,8 +370,7 @@ class dPULearn(Wrapper):
     def mine_negatives(self,
                        X_pos: ut.ArrayLike2D,
                        X_unlabeled: ut.ArrayLike2D,
-                       n_neg: Optional[int] = None,
-                       n_unl_to_neg: Optional[int] = None,
+                       n_neg: int,
                        metric: Optional[Literal["euclidean", "manhattan", "cosine"]] = None,
                        n_components: Union[float, int] = 0.80,
                        ) -> np.ndarray:
@@ -399,13 +398,9 @@ class dPULearn(Wrapper):
         X_unlabeled : array-like, shape (n_unl, n_features)
             Feature matrix of the unlabeled samples (the candidate pool). Must have the
             same number of features as ``X_pos``.
-        n_neg : int, optional
-            Total number of reliable negatives to identify from the unlabeled pool.
-            Provide **exactly one** of ``n_neg`` or ``n_unl_to_neg`` (with no pre-labeled
-            negatives the two are equivalent).
-        n_unl_to_neg : int, optional
-            Number of reliable negatives to identify directly from the unlabeled pool.
-            Provide **exactly one** of ``n_neg`` or ``n_unl_to_neg``.
+        n_neg : int
+            Number of reliable negatives to identify from the unlabeled pool. Must not
+            exceed the number of unlabeled samples.
         metric : str or None, optional
             Distance metric for distance-based identification (``euclidean``,
             ``manhattan``, ``cosine``). If ``None``, PCA-based identification is performed.
@@ -444,9 +439,9 @@ class dPULearn(Wrapper):
         n_pos = X_pos.shape[0]
         X = np.vstack([X_pos, X_unlabeled])
         labels = np.array([1] * n_pos + [2] * X_unlabeled.shape[0])
+        # No pre-labeled negatives here, so n_neg is exactly the count to draw from the pool
         self.fit(X=X, labels=labels, label_pos=1, label_unl=2,
-                 n_neg=n_neg, n_unl_to_neg=n_unl_to_neg,
-                 metric=metric, n_components=n_components)
+                 n_unl_to_neg=n_neg, metric=metric, n_components=n_components)
         # Slice the mined reliable negatives (label 0) back out of the unlabeled block
         mask_neg = np.asarray(self.labels_)[n_pos:] == 0
         return mask_neg
