@@ -184,3 +184,12 @@ class TestAutoFontFeatureMap:
         aa.options["auto_font"] = True
         fig, ax = aa.CPPPlot().feature_map(df_feat, figsize=(10, 6))
         assert tuple(round(float(v), 2) for v in fig.get_size_inches()) == (10.0, 6.0)
+
+    def test_figsize_none_is_auto_derived_when_on(self):
+        # figsize=None with auto_font on must not crash and should derive a size.
+        df_feat = make_dense_df_feat(74)
+        aa.options["auto_font"] = True
+        fig, ax = aa.CPPPlot().feature_map(df_feat, figsize=None)
+        _, h = (float(v) for v in fig.get_size_inches())
+        assert h > 8.0
+        assert get_label_overlaps(fig, list(dict.fromkeys(df_feat["subcategory"]))) == []

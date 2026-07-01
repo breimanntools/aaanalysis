@@ -114,10 +114,20 @@ class PlotElements:
         """
         if not label_artists or len(label_artists) < 2:
             return
+        fs = label_artists[0].get_fontsize()
+        # Cheap pre-check to avoid an expensive forced render on the common sparse
+        # map. Estimate how many rows fit before labels could touch, using a
+        # deliberately conservative axes-height fraction (0.6, below the real
+        # ~0.75) so we only *skip* when overlap is impossible and always render
+        # when it is even plausible. A wrong skip would reintroduce overlap; a
+        # wrong render just costs one draw.
+        fig_height_in = fig.get_size_inches()[1]
+        rows_capacity = (fig_height_in * 0.6 * 72.0) / max(fs * 1.1, 1e-6)
+        if len(label_artists) <= rows_capacity:
+            return
         renderer = _force_render(fig)
         if not _row_labels_overlap(label_artists, renderer):
             return
-        fs = label_artists[0].get_fontsize()
         while fs > floor and _row_labels_overlap(label_artists, renderer):
             fs = max(floor, fs - fs_step)
             for t in label_artists:

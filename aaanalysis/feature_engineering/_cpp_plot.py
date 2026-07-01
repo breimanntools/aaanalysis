@@ -1495,9 +1495,11 @@ class CPPPlot:
         args_xtick = check_args_xtick(xtick_size=xtick_size, xtick_width=xtick_width, xtick_length=xtick_length)
 
         # Auto-size the (n_subcat x n_positions) grid when the global auto_font option
-        # is on and the user kept the default figsize. An explicit figsize always wins;
-        # with auto_font off (default) figsize is untouched -> output is byte-identical.
-        if ut.check_auto_font() and tuple(figsize) == (8, 8):
+        # is on and the user did not customize figsize (default (8, 8) or None=auto).
+        # An explicit figsize always wins; with auto_font off (default) figsize is
+        # untouched -> output is byte-identical.
+        figsize_is_default = figsize is None or tuple(figsize) == (8, 8)
+        if ut.check_auto_font() and figsize_is_default:
             figsize = derive_feature_map_figsize(n_subcat=df_feat[col_cat].nunique(),
                                                  n_positions=jmd_n_len + tmd_len + jmd_c_len)
 
