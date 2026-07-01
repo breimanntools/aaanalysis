@@ -85,12 +85,11 @@ def plot_eval_heatmap(df_eval: pd.DataFrame,
     """
     # Check input
     ut.check_df(name="df_eval", df=df_eval, accept_none=False)
-    if len(df_eval) == 0 or df_eval.shape[1] == 0:
+    if df_eval.empty:
         raise ValueError(f"'df_eval' (shape {df_eval.shape}) should contain at least one "
                          f"row and one column.")
-    num_cols = df_eval.select_dtypes(include="number").columns
-    if len(num_cols) != df_eval.shape[1]:
-        non_numeric = [c for c in df_eval.columns if c not in num_cols]
+    non_numeric = df_eval.select_dtypes(exclude="number").columns.tolist()
+    if non_numeric:
         raise ValueError(f"'df_eval' should be all-numeric; non-numeric columns: {non_numeric}.")
     ut.check_str(name="xlabel", val=xlabel, accept_none=True)
     ut.check_str(name="ylabel", val=ylabel, accept_none=True)
