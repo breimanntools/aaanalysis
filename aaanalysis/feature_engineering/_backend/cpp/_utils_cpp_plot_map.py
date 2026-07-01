@@ -200,7 +200,7 @@ def plot_heatmap_(df_feat=None, df_cat=None,
                   cmap=None, cmap_n_colors=101,
                   cbar_ax=None, cbar_pct=True, cbar_kws=None,
                   dict_color=None, legend_kws=None,
-                  xtick_size=11.0, xtick_width=2.0, xtick_length=5.0):
+                  xtick_size=11.0, xtick_width=2.0, xtick_length=5.0, fill=False):
     """Main function to plot heatmap for feature value per categories/subcategories per position."""
     df_feat = _adjust_df_feat(df_feat=df_feat, col_val=col_val, cbar_pct=cbar_pct)
 
@@ -246,7 +246,7 @@ def plot_heatmap_(df_feat=None, df_cat=None,
                                 weight_tmd_jmd=weight_tmd_jmd,
                                 **args_seq, **args_part_color, **args_seq_color,
                                 add_xticks_pos=add_xticks_pos, heatmap=True,
-                                x_shift=0.5, xtick_size=xtick_size)
+                                x_shift=0.5, xtick_size=xtick_size, fill=fill)
     # Add tmd_jmd bar
     else:
         pp.add_tmd_jmd_bar(ax=ax, **args_part_color)

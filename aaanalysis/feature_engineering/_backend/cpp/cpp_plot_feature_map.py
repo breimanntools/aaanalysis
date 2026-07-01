@@ -248,7 +248,8 @@ def plot_feature_map(df_feat=None, df_cat=None,
                      cbar_pct=True, cbar_kws=None, cbar_xywh=(0.5, None, 0.2, None),
                      dict_color=None, legend_kws=None, legend_xy=(-0.1, -0.01),
                      legend_imp_xy=(1.25, 0),
-                     xtick_size=11.0, xtick_width=2.0, xtick_length=5.0):
+                     xtick_size=11.0, xtick_width=2.0, xtick_length=5.0,
+                     seq_char_fill=False):
     """Create a comprehensive feature map with a heatmap, feature importance bars, and custom legends."""
     # Get fontsize
     pe = PlotElements()
@@ -362,7 +363,7 @@ def plot_feature_map(df_feat=None, df_cat=None,
     # Plot heatmap
     plot_heatmap_(df_feat=df_feat.copy(), df_cat=df_cat,
                   col_cat=col_cat, col_val=col_val,
-                  ax=ax_hm, figsize=figsize,
+                  ax=ax_hm, figsize=figsize, fill=seq_char_fill,
                   start=start, **args_len, **args_seq,
                   **args_part_color, **args_seq_color,
                   **args_fs, weight_tmd_jmd=weight_tmd_jmd,

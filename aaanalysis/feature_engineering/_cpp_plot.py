@@ -1261,6 +1261,7 @@ class CPPPlot:
                     xtick_size: Union[int, float] = 11.0,
                     xtick_width: Union[int, float] = 2.0,
                     xtick_length: Union[int, float] = 5.0,
+                    seq_char_fill: bool = False,
                     ) -> Tuple[Figure, Axes]:
         """
         Plot Comparative Physicochemical Profiling (CPP) feature map showing feature value mean
@@ -1408,6 +1409,10 @@ class CPPPlot:
             Width of the x-ticks (>0).
         xtick_length : int or float, default=5.0
             Length of the x-ticks (>0).
+        seq_char_fill : bool, default=False
+            If ``True`` and ``seq_size`` is auto-optimized (``None``), grow the sequence
+            characters until adjacent residues touch (no whitespace between them) while
+            still never overlapping. If ``False``, keep the default no-overlap spacing.
 
         Returns
         -------
@@ -1496,6 +1501,7 @@ class CPPPlot:
                        check_number=True, accept_none_number=True)
         ut.check_tuple(name="legend_imp_xy", val=legend_imp_xy, n=2, accept_none=False,
                        check_number=True, accept_none_number=True)
+        ut.check_bool(name="seq_char_fill", val=seq_char_fill)
         args_xtick = check_args_xtick(xtick_size=xtick_size, xtick_width=xtick_width, xtick_length=xtick_length)
 
         # Auto-size the (n_subcat x n_positions) grid when the global auto_font option
@@ -1529,7 +1535,7 @@ class CPPPlot:
                                    cmap=cmap, cmap_n_colors=cmap_n_colors,
                                    cbar_pct=cbar_pct, cbar_kws=cbar_kws, cbar_xywh=cbar_xywh,
                                    dict_color=dict_color, legend_kws=legend_kws, legend_xy=legend_xy,
-                                   legend_imp_xy=legend_imp_xy,
+                                   legend_imp_xy=legend_imp_xy, seq_char_fill=seq_char_fill,
                                    **args_xtick)
 
         # Adjust plot. Leave a little more room on the right than the heatmap needs
@@ -1552,7 +1558,8 @@ class CPPPlot:
         if cat_legend is not None and tuple(legend_xy) == (-0.1, -0.01):
             cat_legend.set_bbox_to_anchor((0.23, 0.183), transform=fig.transFigure)
         if tmd_seq is not None and seq_size is None:
-            ax, seq_size = update_seq_size_(ax=ax, **args_seq, **args_part_color, **args_seq_color)
+            ax, seq_size = update_seq_size_(ax=ax, **args_seq, **args_part_color, **args_seq_color,
+                                            fill=seq_char_fill)
             if self._verbose:
                 ut.print_out(f"Optimized sequence character fontsize is: {seq_size}")
         return ut.FigAxResult(fig, ax)

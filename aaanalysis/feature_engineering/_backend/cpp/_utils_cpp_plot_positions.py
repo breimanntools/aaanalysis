@@ -12,8 +12,15 @@ from ._utils_cpp_plot import get_sorted_list_cat_
 
 # I Helper Functions
 # Optimize fontsize
-def _get_optimal_fontsize(ax=None, labels=None, max_x_dist=0.1):
-    """Optimize font size of sequence characters"""
+def _get_optimal_fontsize(ax=None, labels=None, max_x_dist=0.1, fill=False):
+    """Optimize font size of sequence characters.
+
+    With ``fill=True`` the required inter-character gap is dropped to 0, so the
+    font grows until adjacent characters just touch (no whitespace between them)
+    while still never overlapping. ``fill=False`` keeps the default spacing.
+    """
+    if fill:
+        max_x_dist = 0.0
     min_fontsize, max_fontsize = 1, 60
     th_binary_search = 0.01
     fs_reduction = 0.05
@@ -95,7 +102,8 @@ def _adjust_xticks_labels(xticks=None, xtick_labels=None, add_xtick_pos=True,
 
 
 def _add_part_seq(ax=None, jmd_n_seq=None, tmd_seq=None, jmd_c_seq=None, x_shift=0.0, seq_size=None,
-                  tmd_color="mediumspringgreen", jmd_color="blue", tmd_seq_color="black", jmd_seq_color="white"):
+                  tmd_color="mediumspringgreen", jmd_color="blue", tmd_seq_color="black", jmd_seq_color="white",
+                  fill=False):
     """Add colored boxes for TMD and JMD sequences."""
     tmd_jmd = jmd_n_seq + tmd_seq + jmd_c_seq
     colors = [jmd_color] * len(jmd_n_seq) + [tmd_color] * len(tmd_seq) + [jmd_color] * len(jmd_c_seq)
@@ -117,7 +125,7 @@ def _add_part_seq(ax=None, jmd_n_seq=None, tmd_seq=None, jmd_c_seq=None, x_shift
     labels = list(dict(sorted(dict_pos_label.items(), key=lambda item: item[0])).values())
     # Adjust font size to prevent overlap
     if seq_size is None:
-        seq_size = _get_optimal_fontsize(ax=ax, labels=labels)
+        seq_size = _get_optimal_fontsize(ax=ax, labels=labels, fill=fill)
     # Set colored box around sequence to indicate TMD, JMD
     lw = plt.gcf().get_size_inches()[0]/5
     for l, c in zip(labels, colors):
@@ -231,9 +239,9 @@ class PlotPartPositions:
 
     # Add TMD-JMD sequence
     @staticmethod
-    def get_optimal_fontsize(ax, labels, max_x_dist=0.1):
-        """Get sequence fontsize optimized to not overlap"""
-        opt_fs = _get_optimal_fontsize(ax=ax, labels=labels, max_x_dist=max_x_dist)
+    def get_optimal_fontsize(ax, labels, max_x_dist=0.1, fill=False):
+        """Get sequence fontsize optimized to not overlap (``fill=True`` also removes whitespace)"""
+        opt_fs = _get_optimal_fontsize(ax=ax, labels=labels, max_x_dist=max_x_dist, fill=fill)
         return round(opt_fs, 2)
 
     def add_tmd_jmd_seq(self, ax=None, jmd_n_seq=None, tmd_seq=None, jmd_c_seq=None,
@@ -241,11 +249,11 @@ class PlotPartPositions:
                         tmd_seq_color="black", jmd_seq_color="white",
                         add_xticks_pos=False, heatmap=True,
                         x_shift=0, xtick_size=11, seq_size=None,
-                        fontsize_tmd_jmd=None, weight_tmd_jmd="normal"):
+                        fontsize_tmd_jmd=None, weight_tmd_jmd="normal", fill=False):
         """Add sequences and corresponding x-ticks for TMD and JMD regions."""
         seq_size = _add_part_seq(ax=ax, jmd_n_seq=jmd_n_seq, tmd_seq=tmd_seq, jmd_c_seq=jmd_c_seq, x_shift=x_shift,
                                  seq_size=seq_size, tmd_color=tmd_color, jmd_color=jmd_color,
-                                 tmd_seq_color=tmd_seq_color, jmd_seq_color=jmd_seq_color)
+                                 tmd_seq_color=tmd_seq_color, jmd_seq_color=jmd_seq_color, fill=fill)
         fontsize_tmd_jmd = seq_size if fontsize_tmd_jmd is None else fontsize_tmd_jmd
         # Set second axis (with ticks and part annotations)
         name_tmd = ut.options["name_tmd"]
