@@ -24,7 +24,7 @@ Sequences & data objects
 
    df_parts
       Wide table with one column per :term:`part` (``tmd``, ``jmd_n``,
-      ``jmd_c``, …), produced by ``SequenceFeature.get_df_parts``.
+      ``jmd_c``, …), produced by :meth:`~aaanalysis.SequenceFeature.get_df_parts`.
 
    df_feat
       Ranked feature table: ``feature`` id, ``abs_auc``, ``mean_dif``,
@@ -87,7 +87,7 @@ Prediction tasks
    residue level
       Per-residue / windowed prediction (datasets ``AA_*``); the
       :term:`unit of comparison` is a fixed-length :term:`window`
-      (``AAWindowSampler``). Two **sub-modes**, differing only by window parity:
+      (:class:`~aaanalysis.AAWindowSampler`). Two **sub-modes**, differing only by window parity:
       *single-residue* (odd window — a site *on* a residue, e.g. a PTM) and
       *between-residues* (even window — a bond ``P1│P1′``, e.g. cleavage).
 
@@ -143,7 +143,7 @@ CPP modes
    design / engineering
       Inverting prediction: measure how a mutation shifts a sequence's CPP
       feature profile (:term:`ΔCPP`) and use that to steer a sequence toward a
-      target profile (``AAMut`` / ``SeqMut``). Deliberately model-free.
+      target profile (:class:`~aaanalysis.AAMut` / :class:`~aaanalysis.SeqMut`). Deliberately model-free.
 
    ΔCPP
       The change in a sequence's CPP feature values caused by a mutation — the
@@ -165,7 +165,7 @@ Numerical features
       amino-acid scales.
 
    numerical CPP
-      ``CPP.run_num`` — the numerical-mode pipeline that profiles
+      :meth:`~aaanalysis.CPP.run_num` — the numerical-mode pipeline that profiles
       :term:`dict_num` inputs (sliced to :term:`part`-sets) instead of
       amino-acid scale look-ups. Generalizes CPP beyond physicochemical scales.
 
@@ -176,11 +176,11 @@ Models & explainability
 
    feature importance
       An **unsigned, group-level** ranking of how much each :term:`feature`
-      contributes to a model (e.g. ``TreeModel`` Monte-Carlo importance).
+      contributes to a model (e.g. :class:`~aaanalysis.TreeModel` Monte-Carlo importance).
 
    feature impact
       A **signed, per-sample** attribution of how each :term:`feature` pushes a
-      single prediction (e.g. ``ShapModel``; visualized via ``shap_plot``).
+      single prediction (e.g. :class:`~aaanalysis.ShapModel`; visualized via ``shap_plot``).
 
 Reducing features
 -----------------
@@ -189,22 +189,22 @@ Reducing features
 
    redundancy reduction
       Clustering correlated amino-acid scales and keeping one representative per
-      cluster (``AAclust``) to obtain a redundancy-reduced scale set.
+      cluster (:class:`~aaanalysis.AAclust`) to obtain a redundancy-reduced scale set.
 
    medoid
-      The representative scale of an ``AAclust`` cluster; the
+      The representative scale of an :class:`~aaanalysis.AAclust` cluster; the
       redundancy-reduced set is the set of medoids.
 
    feature selection
       Choosing an informative subset of features — e.g. recursive feature
-      elimination (RFE) inside ``TreeModel``.
+      elimination (RFE) inside :class:`~aaanalysis.TreeModel`.
 
    feature pruning
       Dropping correlated or uninformative features before modeling
-      (``NumericalFeature.filter_correlation``).
+      (:meth:`~aaanalysis.NumericalFeature.filter_correlation`).
 
    feature simplification
-      ``CPP.simplify`` — swapping features onto fewer, more interpretable scales
+      :meth:`~aaanalysis.CPP.simplify` — swapping features onto fewer, more interpretable scales
       without retraining.
 
 PU learning
@@ -213,11 +213,11 @@ PU learning
 .. glossary::
 
    PU labels
-      ``dPULearn`` input labels: ``1`` = positive, ``2`` = unlabeled. The output
+      :class:`~aaanalysis.dPULearn` input labels: ``1`` = positive, ``2`` = unlabeled. The output
       adds ``0`` = :term:`reliable negative`.
 
    reliable negative
-      An unlabeled sample that ``dPULearn`` identifies as confidently negative
+      An unlabeled sample that :class:`~aaanalysis.dPULearn` identifies as confidently negative
       (output label ``0``), drawn from the unlabeled pool.
 
 Window sampling
@@ -251,4 +251,4 @@ Class conventions
 
    Plot class
       A ``*Plot`` mirror of an analytical class — same arguments, visualization
-      only (e.g. ``CPPPlot`` mirrors ``CPP``).
+      only (e.g. :class:`~aaanalysis.CPPPlot` mirrors :class:`~aaanalysis.CPP`).
