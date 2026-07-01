@@ -21,8 +21,8 @@ Added
 
 - **EmbeddingPreprocessor**: Per-residue protein language model (PLM) embeddings.
   ``encode`` normalizes raw embeddings into a ``[0, 1]`` per-residue ``dict_num``
-  (``minmax`` / ``quantile`` / ``sigmoid``) for ``CPP.run_num``; ``build_scales`` /
-  ``build_cat`` collapse them into pseudo-scales for ``CPP.run``. ``fetch_embeddings``
+  (``minmax`` / ``quantile`` / ``sigmoid``) for :meth:`~aaanalysis.CPP.run_num`; ``build_scales`` /
+  ``build_cat`` collapse them into pseudo-scales for :meth:`~aaanalysis.CPP.run`. ``fetch_embeddings``
   (``[embed]`` extra) downloads a curated PLM (ESM-2, ESM-1b, ProtT5, ProstT5) from the
   Hugging Face Hub and computes per-protein (mean/max/cls pooling) or per-residue
   embeddings; ``pool_embeddings`` reduces per-residue arrays to per-protein vectors. The
@@ -36,34 +36,34 @@ Added
   (``fetch_uniprot``, ``ingest``, ``register_feature``, ``encode``, ``build_scales``,
   ``build_cat``, ``to_df_seq``).
 - **combine_dict_nums**: Concatenates per-residue tensors (embedding / structure /
-  annotation) along the feature axis into one combined ``CPP.run_num`` input.
+  annotation) along the feature axis into one combined :meth:`~aaanalysis.CPP.run_num` input.
 
 **Feature Engineering**
 
 - **CPPGrid**: ``Tool``-style wrapper (``run`` + ``eval``) that runs a parallel grid
-  sweep of ``CPP`` configurations in one call; configurations differing only in
+  sweep of :class:`~aaanalysis.CPP` configurations in one call; configurations differing only in
   ``n_filter`` collapse into a single run. ``eval(sort_by=...)`` scores the
   configurations (``avg_ABS_AUC`` by default) best-first.
 - **CPP.run_num**: Numerical mode sourcing per-residue values from a pre-sliced tensor
   (``dict_num_parts``) instead of an amino-acid → scale lookup — embedding / structure /
-  annotation features through the same pipeline and output schema as ``CPP.run``.
+  annotation features through the same pipeline and output schema as :meth:`~aaanalysis.CPP.run`.
 - **CPP.simplify ``candidate_search='fast'``**: Opt-in heuristic capping the candidate
   scales evaluated per feature, for a large speed-up on big scale pools (mainly
   ``greedy``). The default ``'exact'`` reproduces the previous result; ``'fast'`` is
   statistically equivalent (kept-feature Jaccard ≥ 0.95, ΔavgABS_AUC ≤ 0.005 on the
   canonical data).
 - **SequenceFeature.get_labels_ovr / get_labels_ovo**: Convert multi-class ``labels``
-  into binary sets for ``CPP`` — one-vs-rest (all samples kept) or one-vs-one (per
+  into binary sets for :class:`~aaanalysis.CPP` — one-vs-rest (all samples kept) or one-vs-one (per
   class-pair, each pair's value source row-matched).
 - **SequenceFeature.get_labels_quantile / get_labels_tiered**: Discretize a continuous
   target into binary ``labels`` — a single quantile cut, or a fixed positive set swept
   against stepwise-lowered negative cuts (each tier row-matched).
 - **SequenceFeature.get_df_parts_from_windows**: Assemble a reference ``df_parts`` from
-  per-part window sets (e.g. ``AAWindowSampler.sample_synthetic`` output).
+  per-part window sets (e.g. :meth:`~aaanalysis.AAWindowSampler.sample_synthetic` output).
 - **SequenceFeature.get_seq_kws**: Return one protein's ``{jmd_n_seq, tmd_seq, jmd_c_seq}``
   as a ready-to-splat ``seq_kws`` dict (by entry or position), parts taken from
   ``df_parts`` so the residues stay bound to the feature geometry — removing the manual
-  slicing glue when feeding ``CPPPlot.profile`` / ``feature_map`` (e.g. sample-level SHAP
+  slicing glue when feeding :meth:`~aaanalysis.CPPPlot.profile` / ``feature_map`` (e.g. sample-level SHAP
   plots).
 - **SequenceFeature.get_feature_descriptions**: One standardized, human-readable
   sentence per ``PART-SPLIT-SCALE`` feature id (region + split + AAontology scale name /
@@ -72,12 +72,12 @@ Added
 - **AAclust.pre_select_scales**: Metadata-only pre-filter that drops scales by AAontology
   ``category`` (``cat_out``) / ``subcategory`` (``subcat_out``) via ``df_cat`` — the
   preparation step before ``select_scales`` or ``filter_coverage`` (no clustering).
-- **AAclust.select_scales**: Wrapper around ``AAclust.fit`` that returns the
-  redundancy-reduced scale subset (one medoid per cluster) directly, ready for ``CPP``.
+- **AAclust.select_scales**: Wrapper around :meth:`~aaanalysis.AAclust.fit` that returns the
+  redundancy-reduced scale subset (one medoid per cluster) directly, ready for :class:`~aaanalysis.CPP`.
 - **AAclust.select_proteins**: Protein-level redundancy reduction over a per-protein
   feature matrix ``X`` — clusters proteins, selects one medoid per cluster, annotates
   ``df_seq`` with ``cluster`` / ``is_representative`` / ``dist_to_rep`` — the numerical
-  counterpart to ``filter_seq``.
+  counterpart to :func:`~aaanalysis.filter_seq`.
 - **AAclustPlot.centers / medoids accept ``df_scales``**: Pass scales via ``df_scales``
   (transposed internally) instead of ``centers(np.array(df_scales).T, ...)``; pass
   proteins / embeddings / CPP features via ``X`` (used as-is). The explicit ``X``
@@ -107,13 +107,13 @@ Added
   red-white-blue ramp and a ``'plddt'`` AlphaFold-confidence mode, with ``whole`` / ``fade`` /
   ``zoom`` focus. By default each feature's full impact is painted on every residue it spans
   (app-fidelity colouring); ``normalize_by_span=True`` switches to the span-normalized sum used
-  by ``CPPPlot.profile`` and the ``CPPPlot.feature_map`` top per-position bar. ``plot_combined``
-  returns a ``CombinedView`` showing the py3Dmol cartoon next to the ``CPPPlot.feature_map``
+  by :meth:`~aaanalysis.CPPPlot.profile` and the :meth:`~aaanalysis.CPPPlot.feature_map` top per-position bar. ``plot_combined``
+  returns a ``CombinedView`` showing the py3Dmol cartoon next to the :meth:`~aaanalysis.CPPPlot.feature_map`
   image (``write_html`` exports the pair; ``savefig(path)`` saves the feature-map panel as a static
   PNG / PDF for papers — the 3D cartoon is interactive and has no headless image), reproducing the
   deployed cleavage app's signature layout. ``interactive`` returns a live `ipywidgets <https://ipywidgets.readthedocs.io>`_
   explorer (added to the ``[pro]`` extra) where a site slider drives a user ``predictor`` and
-  repaints the linked 3D structure and ``CPPPlot.feature_map`` together (debounced), the
+  repaints the linked 3D structure and :meth:`~aaanalysis.CPPPlot.feature_map` together (debounced), the
   notebook-native version of the app's per-site explore loop. A **highlight (position) slider**
   links the two panels live: picking a residue lights it up in the 3D cartoon and marks its
   feature-map column without re-predicting, and with the ``ipympl`` (``%matplotlib widget``)
@@ -124,7 +124,7 @@ Added
   exports it as a standalone, shareable page. ``explore(df_feat, sequence, df_seq=..., labels=...,
   model=...)`` is the integrated one call: it builds a **built-in per-site predictor** (compute the
   query window's values for the fixed feature set, predict the probability, attach the per-site SHAP
-  impact via a default ``ShapModel`` refit — no ``CPP.run`` rediscovery) and dispatches to a
+  impact via a default :class:`~aaanalysis.ShapModel` refit — no :meth:`~aaanalysis.CPP.run` rediscovery) and dispatches to a
   selectable ``output`` (``'widget'`` / ``'html'`` / ``'static'``); ``model`` takes a name
   (``'rf'`` / ``'svm'`` / ``'log_reg'``), an estimator, or a list, and a custom
   ``predictor=(sequence, p1) -> df_feat`` remains the escape hatch. With ``output='html'``,
@@ -139,17 +139,17 @@ Added
   ``sample_motif_matched``, ``sample_synthetic``).
 - **scan_motif** (``[pro]``): Scans candidate proteins for statistically significant PWM
   occurrences via MEME/FIMO, complementing the pure-Python
-  ``AAWindowSampler.sample_motif_matched`` sampler.
+  :meth:`~aaanalysis.AAWindowSampler.sample_motif_matched` sampler.
 
 **Protein Design**
 
 - **SeqOpt — multi-objective protein engineering** (**core**; only ``mode="impact"`` needs
-  ``aaanalysis[pro]``): A new ``SeqOpt`` optimizer
-  (with ``SeqOptPlot``) performs **machine-learning-guided directed evolution** of one
+  ``aaanalysis[pro]``): A new :class:`~aaanalysis.SeqOpt` optimizer
+  (with :class:`~aaanalysis.SeqOptPlot`) performs **machine-learning-guided directed evolution** of one
   wild-type — searching the Pareto front across several objectives at once, with a
-  model-bound ``SeqMut`` as the fitness engine and a re-implementation of NSGA-II for
+  model-bound :class:`~aaanalysis.SeqMut` as the fitness engine and a re-implementation of NSGA-II for
   selection (this is protein *engineering*, not *de novo design*). Two guidance modes:
-  ``mode="impact"`` refits ``ShapModel`` each generation under fuzzy labeling to target the
+  ``mode="impact"`` refits :class:`~aaanalysis.ShapModel` each generation under fuzzy labeling to target the
   strongest-``feat_impact`` residues; ``mode="importance"`` walks positions by static
   ``feat_importance``. The evolutionary toolbox is a complete pure-Python re-implementation
   (DEAP is a dev/test-only parity oracle; runtime stays DEAP-free): ``crossover`` (uniform /
@@ -160,16 +160,16 @@ Added
   ``callable(sequence) -> float`` (an external scikit / torch model or sequence-level
   tool / web API), cached per variant. ``run`` returns ``df_pareto`` (objective columns +
   ``rank`` + ``crowding``) backed by a cumulative Pareto archive; ``eval`` reports
-  hypervolume / front size / spread / convergence. **Visualization**: ``SeqOptPlot`` covers
+  hypervolume / front size / spread / convergence. **Visualization**: :class:`~aaanalysis.SeqOptPlot` covers
   ``pareto_front`` (2-D / 3-D), ``parallel_coordinates``, ``convergence`` (hypervolume +
   spread + per-objective best/mean/worst band), ``hypervolume``, ``mutation_map`` (front
   substitution-enrichment heatmap) and ``genealogy`` (mutational-lineage tree). Reproducible
   via ``random_state`` / ``seed``.
-- **SeqMut model-guided mode (ML-guided directed evolution)**: ``SeqMut`` is optionally
+- **SeqMut model-guided mode (ML-guided directed evolution)**: :class:`~aaanalysis.SeqMut` is optionally
   model-aware — binding a fitted classifier (``SeqMut(model=..., target_class=...)``, any
   object with ``predict_proba``) makes ``scan`` / ``suggest`` / ``mutate`` report
   ``delta_pred`` (the prediction-score shift in percentage points) and ``suggest`` rank
-  by it. Without a model, ``SeqMut`` stays the deterministic, model-free ΔCPP tool.
+  by it. Without a model, :class:`~aaanalysis.SeqMut` stays the deterministic, model-free ΔCPP tool.
 - **SeqMut.combine**: Scores combined multi-mutation variants — several point mutations
   applied to one sequence and evaluated as a single design.
 - **SeqMutPlot**: ``mutation_landscape`` renders the ``delta_pred`` prediction-shift
@@ -199,7 +199,7 @@ Added
 - **aap.find_features**: Staged, interpretable CPP AutoML search. Stage 1
   cross-validates the full Cartesian Part × Split × Scale grid and ranks each axis by
   its marginal-mean impact; Stage 2 refines the single highest-impact axis against
-  ``n_filter``; Stage 3 refines the winning feature set (``CPP.simplify`` + recursive
+  ``n_filter``; Stage 3 refines the winning feature set (:meth:`~aaanalysis.CPP.simplify` + recursive
   feature elimination, each kept only if it is not Pareto-dominated). Selection is
   multi-objective: within each stage the Pareto-optimal-then-simplest configuration
   across all ``metric`` wins, scored by the averaged cross-validated performance of one
@@ -267,7 +267,7 @@ Changed
   ``(fig, ax)`` pair (forwarding attribute access to ``ax``, so existing
   ``ax = plot(...); ax.set_title(...)`` code keeps working), replacing the previous mix
   of shapes. **Breaking change, scheduled for the next major release:**
-  ``AAclustPlot.centers`` / ``medoids`` return ``(fig, ax)`` and expose the PCA-component
+  :meth:`~aaanalysis.AAclustPlot.centers` / ``medoids`` return ``(fig, ax)`` and expose the PCA-component
   DataFrame on the ``df_components_`` attribute instead of as the second return value.
 - **CPP performance**: The Cython feature-matrix kernel, macOS-safe threaded ``n_jobs``,
   scale / AA-index caching, and scale / sample batching land in this release, replacing
@@ -280,7 +280,7 @@ Changed
   explodes each 1-based anchor into one ``jmd_n`` / ``tmd`` / ``jmd_c`` row
   (``entry_win``). ``get_df_parts`` is also several-fold faster (vectorized; output
   unchanged).
-- **n_jobs**: Unified parallelism convention across ``CPP`` / ``CPPGrid`` (``1`` serial,
+- **n_jobs**: Unified parallelism convention across :class:`~aaanalysis.CPP` / :class:`~aaanalysis.CPPGrid` (``1`` serial,
   ``-1`` all cores, ``N>1`` exactly N, ``None`` optimized), with an ``options['n_jobs']``
   global override.
 - **CPPPlot.feature**: Titles the plot with the feature's human-readable description,
@@ -305,10 +305,10 @@ Changed
   parameter. Concurrency is off by default (parallel requests risk HTTP-429 throttling);
   when enabled, results reassemble in input order, so output is byte-identical.
 - **Performance (same output)**: Many internal hotspots were vectorized or parallelized
-  with byte-identical results — ``AAWindowSampler`` filtering / sampling, ``AAclust``
-  medoid distances, the per-feature KLD path in ``dPULearn.eval``, ``encode_one_hot``,
-  ``AAMut.comp_substitution_impact``, ``get_sliding_aa_window``, and several
-  ``StructurePreprocessor`` encoders (``encode_pdb`` contact / disulfide / pLDDT, a shared
+  with byte-identical results — :class:`~aaanalysis.AAWindowSampler` filtering / sampling, :class:`~aaanalysis.AAclust`
+  medoid distances, the per-feature KLD path in :meth:`~aaanalysis.dPULearn.eval`, ``encode_one_hot``,
+  :meth:`~aaanalysis.AAMut.comp_substitution_impact`, ``get_sliding_aa_window``, and several
+  :class:`~aaanalysis.StructurePreprocessor` encoders (``encode_pdb`` contact / disulfide / pLDDT, a shared
   per-entry chain-pick and alignment cache, ``get_dssp``). Public APIs and outputs are
   unchanged.
 - **Developer tooling**: A committed ``pytest-benchmark`` suite (``tests/benchmarks/``,

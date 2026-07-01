@@ -34,7 +34,7 @@ The two axes that actually define a task
 
 It is tempting to organize tasks by *biological scale* alone (residue, domain,
 protein). That label is useful shorthand, and AAanalysis encodes it directly in the
-dataset name prefixes (``AA_*``, ``DOM_*``, ``SEQ_*``; see ``load_dataset``).
+dataset name prefixes (``AA_*``, ``DOM_*``, ``SEQ_*``; see :func:`~aaanalysis.load_dataset`).
 But the scale is only a **proxy**. What genuinely
 determines how you set CPP up are two axes:
 
@@ -88,14 +88,14 @@ row closest to your biological question:
      - One :term:`window` centered *on* a residue (odd ``aa_window_size``)
      - Site windows vs non-site windows (or an unlabeled residue pool)
      - ``AA_``
-     - ``AAWindowSampler``, ``CPP``, ``TreeModel``
+     - :class:`~aaanalysis.AAWindowSampler`, :class:`~aaanalysis.CPP`, :class:`~aaanalysis.TreeModel`
    * - **Residue · between-residues**
 
        (e.g. a cleavage / scissile bond)
      - One :term:`window` spanning a bond ``P1│P1′`` (even ``aa_window_size``)
      - Cleaved windows vs non-cleaved windows
      - ``AA_``
-     - ``AAWindowSampler``, ``CPP``, ``TreeModel``
+     - :class:`~aaanalysis.AAWindowSampler`, :class:`~aaanalysis.CPP`, :class:`~aaanalysis.TreeModel`
    * - **Domain**
 
        (a defined sub-region)
@@ -103,14 +103,14 @@ row closest to your biological question:
        (``jmd_n`` / ``tmd`` / ``jmd_c``)
      - Labeled A-vs-B groups (e.g. substrate vs non-substrate)
      - ``DOM_``
-     - ``SequenceFeature``, ``CPP``, ``TreeModel``
+     - :class:`~aaanalysis.SequenceFeature`, :class:`~aaanalysis.CPP`, :class:`~aaanalysis.TreeModel`
    * - **Protein**
 
        (the whole chain)
      - The whole chain as a single part
      - Labeled A-vs-B groups of proteins
      - ``SEQ_``
-     - ``CPP``, ``TreeModel``
+     - :class:`~aaanalysis.CPP`, :class:`~aaanalysis.TreeModel`
    * - **Determinant discovery**
 
        (cross-cutting; no prediction target)
@@ -118,14 +118,14 @@ row closest to your biological question:
      - Two groups contrasted to surface *what distinguishes them*
        (interpreted via :term:`AAontology`)
      - ``AA_`` / ``DOM_`` / ``SEQ_``
-     - ``CPP``, ``CPPPlot``
+     - :class:`~aaanalysis.CPP`, :class:`~aaanalysis.CPPPlot`
    * - **Design / engineering**
 
        (cross-cutting; inverts prediction)
      - A sequence profiled against a target CPP profile
      - A target / reference profile the sequence is moved toward (``ΔCPP``)
      - ``AA_`` / ``DOM_`` / ``SEQ_``
-     - ``AAMut``, ``SeqMut``
+     - :class:`~aaanalysis.AAMut`, :class:`~aaanalysis.SeqMut`
    * - **Relational / interaction**
 
        (scope boundary, not a level)
@@ -171,7 +171,7 @@ Where to go next
    - **Workflows:** the :ref:`protocols <protocols>` catalog turns each task in
      this table into a start-to-finish workflow.
    - **Mechanics:** the per-function :ref:`tutorials <tutorials>` cover
-     ``CPP``, ``SequenceFeature``, ``AAclust``, and the rest.
+     :class:`~aaanalysis.CPP`, :class:`~aaanalysis.SequenceFeature`, :class:`~aaanalysis.AAclust`, and the rest.
    - **Full case studies:** the :ref:`use cases <use_cases>` showcase a
      published study end to end, as a template to adapt to your own data.
    - **Vocabulary:** every term used here is defined in the

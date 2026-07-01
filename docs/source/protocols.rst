@@ -14,7 +14,7 @@ Protocols
 =========
 
 **Tutorials and protocols are different things.** A :ref:`tutorial <tutorials>`
-teaches you *one function* (what ``CPP`` or ``ShapModel`` does and how to call it).
+teaches you *one function* (what :class:`~aaanalysis.CPP` or :class:`~aaanalysis.ShapModel` does and how to call it).
 A **protocol** teaches you a *workflow*: it answers a single biological question
 from start to finish and, above all, builds the mental model for **when and why**
 to reach for each tool. Where a protocol uses a function, it links to that
