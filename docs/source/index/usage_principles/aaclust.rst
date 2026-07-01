@@ -7,6 +7,14 @@ AAclust: Selecting Redundancy-Reduced Scale Sets
 of amino acid scales, introduced in [Breimann24a]_. Using Pearson correlation, AAclust optimizes the number of clusters
 (*k*) and selects one representative scale per cluster, as illustrated in the figure below:
 
+.. admonition:: Provided by
+   :class: note
+
+   In AAanalysis this is the :class:`~aaanalysis.AAclust` class. See the
+   :ref:`API reference <api>` for signatures, the
+   :doc:`AAclust tutorial </generated/tutorial3a_aaclust>` for hands-on use, and the
+   :ref:`Evaluating Clustering <eval_aaclust>` chapter for assessment.
+
 
 .. figure:: /_artwork/schemes/scheme_AAclust1.png
    :align: center

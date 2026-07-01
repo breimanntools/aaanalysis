@@ -3,7 +3,7 @@
 df_feat: the CPP Output Contract
 ================================
 
-The feature DataFrame ``df_feat`` returned by ``CPP.run`` is the primary
+The feature DataFrame ``df_feat`` returned by :meth:`~aaanalysis.CPP.run` is the primary
 output other tools build on. To make that boundary safe to depend on, its schema
 is a **documented, test-guarded contract**: each consumer reads columns by their
 documented name and type, and a schema-stability test fails if a contracted column
@@ -11,9 +11,9 @@ is renamed or removed, a dtype changes, or the feature-id format changes.
 
 ``df_feat`` follows a **standardized, deterministic column order**. The columns listed
 in the :ref:`Data Schemas <df_schemas>` are the *canonical lower bound* — every
-``CPP.run`` output carries them, always in this order. Optional and dynamic columns (a
+:meth:`~aaanalysis.CPP.run` output carries them, always in this order. Optional and dynamic columns (a
 test-dependent p-value variant, diagnostic residue columns, and the explainable-AI
-columns appended by ``TreeModel`` / ``ShapModel``) are appended after ``positions`` in a
+columns appended by :class:`~aaanalysis.TreeModel` / :class:`~aaanalysis.ShapModel`) are appended after ``positions`` in a
 stable order, so the canonical order is a lower bound, never a restriction.
 
 Feature id grammar
