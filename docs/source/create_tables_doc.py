@@ -27,6 +27,31 @@ STR_ADD_TABLE = "ADD-TABLE"
 
 EXCLUDE_FROM_REF_CHECK = ["t3a_aaontology_categories",
                           "t3b_aaontology_subcategories"]
+COL_SEE_ALSO = "See Also"
+
+# Public-API names, for turning ``aa.<name>`` loader references in the "See Also"
+# column of the generated tables into clickable :func: / :class: cross-references.
+_API_ROLES = None
+
+
+def _linkify_see_also(val):
+    """Turn ``aa.<name>`` loader references into :func: / :class: cross-reference roles."""
+    global _API_ROLES
+    if _API_ROLES is None:
+        import inspect
+        import aaanalysis as aa
+        _API_ROLES = ({n for n in aa.__all__ if inspect.isclass(getattr(aa, n))},
+                      {n for n in aa.__all__ if not inspect.isclass(getattr(aa, n)) and n != "options"})
+    classes, funcs = _API_ROLES
+
+    def repl(m):
+        name = m.group(1)
+        if name in classes:
+            return f":class:`~aaanalysis.{name}`"
+        if name in funcs:
+            return f":func:`~aaanalysis.{name}`"
+        return m.group(0)
+    return re.sub(r'aa\.([A-Za-z_]\w*)', repl, str(val))
 
 
 # Helper Functions
@@ -72,6 +97,8 @@ def _convert_excel_to_rst(df):
         for col, val in zip(header, row):
             if col == "Reference":  # Special handling for the 'Reference' column
                 new_row.append(f":ref:`{val} <{val}>`")
+            elif col == COL_SEE_ALSO:  # loader references -> clickable API cross-refs
+                new_row.append(_linkify_see_also(val))
             else:
                 new_row.append(str(val))
         rst_output += "   * - " + "\n     - ".join(new_row) + "\n"

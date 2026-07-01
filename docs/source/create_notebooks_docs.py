@@ -50,15 +50,17 @@ LIST_EXCLUDE = []
 ORPHAN_TUTORIALS = {"tutorial0_minimal", "tutorial1_quick_start",
                     "tutorial1_slow_start", "plotting_prelude"}
 
-# Turn public-API code literals (``CPP`` / ``CPP.run``) in the exported notebook RST into
-# cross-reference roles, so class / method / function names link to the API (version-aware),
-# exactly like the hand-written .rst pages. Data objects and parameters (``df_seq``,
-# ``jmd_n``, ...) are not in ``aaanalysis.__all__`` and are left as plain literals.
+# Turn public-API references in the exported notebook RST into cross-reference roles, so
+# class / method / function names link to the API (version-aware), exactly like the
+# hand-written .rst pages. Every written form is covered: code literals (``CPP``), bold
+# (**CPP**), an optional ``aa.`` import prefix (``aa.load_scales``), and ``Class.method``.
+# Data objects and parameters (``df_seq``, ``jmd_n``, ...) are not in ``aaanalysis.__all__``
+# and are left untouched; multi-word emphasis (**protein engineering**) never matches.
 _API_ROLES = None
 
 
 def _linkify_api(rst):
-    """Convert ``Name`` / ``Class.method`` literals of the public API to Sphinx roles."""
+    """Convert public-API names (``Name`` / ``aa.Name`` / **Name**, incl. .method) to roles."""
     global _API_ROLES
     if _API_ROLES is None:
         import inspect
@@ -68,11 +70,15 @@ def _linkify_api(rst):
                      key=len, reverse=True)
         _API_ROLES = (cls, fun)
     cls, fun = _API_ROLES
-    for n in cls:
-        rst = re.sub(r'``' + re.escape(n) + r'\.(\w+)``', r':meth:`~aaanalysis.' + n + r'.\1`', rst)
-        rst = re.sub(r'``' + re.escape(n) + r'``', ':class:`~aaanalysis.' + n + '`', rst)
-    for n in fun:
-        rst = re.sub(r'``' + re.escape(n) + r'``', ':func:`~aaanalysis.' + n + '`', rst)
+    for w in (r'``', r'\*\*'):  # code literals and bold, each optionally with an ``aa.`` prefix
+        for n in cls:
+            rst = re.sub(w + r'(?:aa\.)?' + re.escape(n) + r'\.(\w+)' + w,
+                         r':meth:`~aaanalysis.' + n + r'.\1`', rst)
+            rst = re.sub(w + r'(?:aa\.)?' + re.escape(n) + w,
+                         ':class:`~aaanalysis.' + n + '`', rst)
+        for n in fun:
+            rst = re.sub(w + r'(?:aa\.)?' + re.escape(n) + w,
+                         ':func:`~aaanalysis.' + n + '`', rst)
     return rst
 
 
