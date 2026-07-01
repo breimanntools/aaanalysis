@@ -774,6 +774,7 @@ class SequenceFeature:
         .. include:: examples/sf_feature_matrix.rst
         """
         # Resolve sequence input: exactly one of 'df_parts' / 'df_seq' (mutually exclusive)
+        ut.check_bool(name="batch", val=batch)
         if (df_parts is None) == (df_seq is None):
             raise ValueError("Exactly one of 'df_parts' or 'df_seq' should be given (not both, not neither).")
         if df_seq is not None:
@@ -791,7 +792,6 @@ class SequenceFeature:
         # Check input
         check_df_scales(df_scales=df_scales)
         ut.check_bool(name="accept_gaps", val=accept_gaps)
-        ut.check_bool(name="batch", val=batch)
         n_jobs = ut.check_n_jobs(n_jobs=n_jobs)
         # Normalize to a list of df_parts; remember whether to unwrap the single result.
         if batch:

@@ -306,6 +306,13 @@ class TestFeatureMatrixDfSeq:
         with pytest.raises(ValueError):
             sf.feature_matrix(features=features, df_seq=df_seq, batch=True)
 
+    def test_invalid_batch_type_with_df_seq(self):
+        """A non-bool 'batch' is rejected as a type error (not silently read as truthy)."""
+        features, df_seq = _get_df_seq_input(n_feat=6, n_samples=10)
+        sf = aa.SequenceFeature()
+        with pytest.raises(ValueError, match="bool"):
+            sf.feature_matrix(features=features, df_seq=df_seq, batch=1)
+
     def test_invalid_df_seq_type(self):
         """A non-DataFrame 'df_seq' raises ValueError (via get_df_parts validation)."""
         features, _ = _get_df_seq_input(n_feat=6, n_samples=10)
