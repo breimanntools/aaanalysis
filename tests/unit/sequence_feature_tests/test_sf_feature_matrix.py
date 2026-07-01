@@ -205,6 +205,23 @@ class TestFeatureMatrixGoldenValues:
                               df_scales=self._scales())
         assert float(np.asarray(X)[0, 0]) == 3.5
 
+    def test_property_shape_rows_cols(self):
+        """Invariant: result is (n_samples, n_features) for every input size."""
+        for n_feat, n_samples in [(5, 10), (20, 8), (1, 30)]:
+            features, df_parts, _ = _get_df_feat_input(n_feat=n_feat, n_samples=n_samples)
+            sf = aa.SequenceFeature()
+            X = np.asarray(sf.feature_matrix(features=features, df_parts=df_parts))
+            # DOM_GSEC returns 2*n rows (n per class); assert against df_parts length.
+            assert X.shape == (len(df_parts), len(features))
+
+    def test_property_parallel_equals_serial(self):
+        """Invariant: n_jobs must not change the values (only the schedule)."""
+        features, df_parts, _ = _get_df_feat_input(n_feat=15, n_samples=20)
+        sf = aa.SequenceFeature()
+        X1 = np.asarray(sf.feature_matrix(features=features, df_parts=df_parts, n_jobs=1))
+        X2 = np.asarray(sf.feature_matrix(features=features, df_parts=df_parts, n_jobs=2))
+        assert np.allclose(X1, X2, equal_nan=True)
+
 
 def _get_df_seq_input(n_feat=10, n_samples=20):
     """Create (features, df_seq) for the df_seq path; features use the default parts."""
@@ -325,20 +342,3 @@ class TestFeatureMatrixRegression:
         assert float(np.round(np.nansum(X), 6)) == pytest.approx(329.66268, abs=1e-5)
         assert float(np.round(X[0, 0], 6)) == pytest.approx(0.7, abs=1e-6)
         assert float(np.round(X[-1, -1], 6)) == pytest.approx(0.16033, abs=1e-5)
-
-    def test_property_shape_rows_cols(self):
-        """Invariant: result is (n_samples, n_features) for every input size."""
-        for n_feat, n_samples in [(5, 10), (20, 8), (1, 30)]:
-            features, df_parts, _ = _get_df_feat_input(n_feat=n_feat, n_samples=n_samples)
-            sf = aa.SequenceFeature()
-            X = np.asarray(sf.feature_matrix(features=features, df_parts=df_parts))
-            # DOM_GSEC returns 2*n rows (n per class); assert against df_parts length.
-            assert X.shape == (len(df_parts), len(features))
-
-    def test_property_parallel_equals_serial(self):
-        """Invariant: n_jobs must not change the values (only the schedule)."""
-        features, df_parts, _ = _get_df_feat_input(n_feat=15, n_samples=20)
-        sf = aa.SequenceFeature()
-        X1 = np.asarray(sf.feature_matrix(features=features, df_parts=df_parts, n_jobs=1))
-        X2 = np.asarray(sf.feature_matrix(features=features, df_parts=df_parts, n_jobs=2))
-        assert np.allclose(X1, X2, equal_nan=True)
