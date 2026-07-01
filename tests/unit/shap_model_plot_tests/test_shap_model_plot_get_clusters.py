@@ -88,3 +88,28 @@ class TestGetClustersErrors:
     def test_negative_color_threshold_raises(self):
         with pytest.raises(ValueError):
             ShapModelPlot.get_clusters(_shap_matrix(), color_threshold=-1)
+
+    def test_constant_shap_vector_raises_clear_error(self):
+        sv = _shap_matrix()
+        sv[0, :] = 1.0
+        with pytest.raises(ValueError, match="constant"):
+            ShapModelPlot.get_clusters(sv)
+
+
+class TestGetClustersConsistency:
+    """get_clusters must use the SAME linkage the clustermap dendrogram draws."""
+
+    def test_linkage_matches_clustermap(self):
+        import matplotlib
+        matplotlib.use("Agg")
+        import matplotlib.pyplot as plt
+        from scipy.cluster.hierarchy import linkage
+        from aaanalysis.explainable_ai_pro._backend.shap_model.sm_plot import comp_shap_correlation
+        sv = _shap_matrix(n_pos=5, n_neg=6)
+        labels = [1] * 5 + [0] * 6
+        grid = ShapModelPlot.clustermap(sv, labels=labels)
+        link_cm = grid.dendrogram_row.linkage
+        plt.close("all")
+        names = [f"Protein{i}" for i in range(sv.shape[0])]
+        link_gc = linkage(comp_shap_correlation(shap_values=sv, names=names).values, method="complete")
+        assert np.allclose(link_cm, link_gc)

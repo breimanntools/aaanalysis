@@ -105,6 +105,8 @@ def shap_to_feat_imp(shap_values: ut.ArrayLike1D,
     shap_values = ut.check_array_like(name="shap_values", val=shap_values,
                                       dtype="numeric", expected_dim=1)
     ut.check_bool(name="impact", val=impact)
+    if np.nansum(np.abs(shap_values)) == 0:
+        raise ValueError("'shap_values' are all zero; feature impact/importance is undefined.")
     if impact:
         # Re-use the per-sample backend used by ShapModel.add_feat_impact (no divergence)
         feat_imp = _comp_sample_shap_feat_impact(shap_values=shap_values.reshape(1, -1),

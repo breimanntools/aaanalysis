@@ -160,3 +160,12 @@ class TestClustermapErrors:
         sv, labels = _shap_matrix()
         with pytest.raises(ValueError):
             ShapModelPlot.clustermap(sv, labels=labels, tree_linewidth=-1)
+
+    def test_constant_shap_vector_raises_clear_error(self):
+        # A zero-variance (constant) SHAP row gives an undefined correlation; the message
+        # must name the offending sample rather than surface an opaque scipy distance error.
+        sv, labels = _shap_matrix()
+        sv[0, :] = 3.0
+        names = [f"P{i}" for i in range(len(labels))]
+        with pytest.raises(ValueError, match="constant"):
+            ShapModelPlot.clustermap(sv, labels=labels, names=names)

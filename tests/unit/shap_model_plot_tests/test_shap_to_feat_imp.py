@@ -69,3 +69,8 @@ class TestShapToFeatImpErrors:
     def test_impact_not_bool_raises(self):
         with pytest.raises(ValueError):
             shap_to_feat_imp(RNG.normal(size=5), impact="yes")
+
+    def test_all_zero_raises(self):
+        # An all-zero SHAP vector has an undefined normalization; must error, not return nan.
+        with pytest.raises(ValueError, match="undefined"):
+            shap_to_feat_imp(np.zeros(5))

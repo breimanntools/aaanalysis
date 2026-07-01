@@ -4,6 +4,7 @@ This is a script for the backend of the ShapModelPlot.clustermap() method.
 Clusters samples by *explanation similarity*: the pairwise Pearson correlation of their
 per-sample SHAP-value vectors, so proteins group by *why* the model scores them.
 """
+import numpy as np
 import pandas as pd
 import seaborn as sns
 
@@ -16,8 +17,16 @@ def comp_shap_correlation(shap_values=None, names=None):
 
     Rows of ``shap_values`` are samples and columns are features, so transposing and
     correlating yields an (n_samples, n_samples) matrix of explanation similarity.
+    A sample whose SHAP vector has zero variance (e.g. an all-constant or all-zero
+    vector) has an undefined correlation; this is reported clearly rather than left
+    to surface as an opaque non-finite-distance error inside the clustering.
     """
     df_cor = pd.DataFrame(shap_values, index=names).T.corr()
+    diag = pd.Series(np.diag(df_cor.to_numpy()), index=df_cor.index)
+    bad = list(diag.index[diag.isna()])
+    if len(bad) > 0:
+        raise ValueError(f"Explanation similarity is undefined for samples with a constant "
+                         f"(zero-variance) SHAP vector: {bad}. Remove or perturb these samples.")
     return df_cor
 
 
