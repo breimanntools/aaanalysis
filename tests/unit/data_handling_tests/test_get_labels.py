@@ -72,6 +72,19 @@ class TestGetLabelsEquivalence:
         assert np.array_equal(aa.get_labels(df=df, positive_label="sub"),
                               _manual(df, "sub"))
 
+    def test_single_class_column_maps_all_ones(self):
+        # Pure mapping: unlike dPULearn.fit, get_labels does not require >1 distinct value,
+        # so an all-positive column maps to all ones rather than raising.
+        df = pd.DataFrame({"label": [1, 1, 1]})
+        assert np.array_equal(aa.get_labels(df=df, positive_label=1),
+                              np.array([1, 1, 1]))
+
+    def test_nan_maps_to_zero(self):
+        # NaN never equals positive_label, so it becomes 0.
+        df = pd.DataFrame({"label": [1.0, np.nan, 1.0]})
+        assert np.array_equal(aa.get_labels(df=df, positive_label=1.0),
+                              np.array([1, 0, 1]))
+
 
 # Negative Cases Test Class
 class TestGetLabelsNegative:

@@ -434,9 +434,11 @@ class dPULearn(Wrapper):
         --------
         .. include:: examples/dpul_mine_negatives.rst
         """
-        # Check input
-        X_pos = ut.check_X(X=X_pos, X_name="X_pos")
-        X_unlabelled = ut.check_X(X=X_unlabelled, X_name="X_unlabelled")
+        # Check input (the >=3 sample floor applies to the stacked matrix, enforced by
+        # 'fit' below, so per-matrix validation only coerces + checks the feature dimension;
+        # this keeps mine_negatives accepting exactly what the manual stacking path accepts)
+        X_pos = ut.check_X(X=X_pos, X_name="X_pos", min_n_samples=1)
+        X_unlabelled = ut.check_X(X=X_unlabelled, X_name="X_unlabelled", min_n_samples=1)
         check_match_X_pos_X_unlabelled(X_pos=X_pos, X_unlabelled=X_unlabelled)
         # Stack positives over the unlabeled pool and fit with the package PU markers
         n_pos = X_pos.shape[0]

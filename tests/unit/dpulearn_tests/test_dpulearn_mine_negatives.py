@@ -116,6 +116,15 @@ class TestMineNegativesEquivalence:
                                    n_unl_to_neg=8, metric="cosine")
         assert np.array_equal(mask, manual_mask)
 
+    def test_mask_equals_manual_few_positives(self):
+        # n_pos < 3: the manual stacked path accepts it (the >=3 floor applies to the
+        # stacked matrix), so mine_negatives must match it, not reject the small pos set.
+        X_pos, X_unl = _make_data(n_pos=1, seed=5)
+        manual_mask, _ = _manual_mask(X_pos, X_unl, n_unl_to_neg=6)
+        dpul = aa.dPULearn(random_state=42, verbose=False)
+        mask = dpul.mine_negatives(X_pos=X_pos, X_unlabelled=X_unl, n_unl_to_neg=6)
+        assert np.array_equal(mask, manual_mask)
+
     def test_n_neg_equivalent_to_n_unl_to_neg_without_pre_neg(self):
         X_pos, X_unl = _make_data()
         dpul_a = aa.dPULearn(random_state=42, verbose=False)
