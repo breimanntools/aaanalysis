@@ -121,9 +121,6 @@ def plot_rank(df_rank: pd.DataFrame,
 
     .. versionadded:: 1.1.0
 
-    .. versionchanged:: 1.1.0
-       Added the additive ``col_std`` / ``col_class`` ranked-candidates (error-bar) mode.
-
     Parameters
     ----------
     df_rank : pd.DataFrame, shape (n_proteins, n_info)
