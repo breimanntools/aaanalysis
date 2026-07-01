@@ -84,6 +84,6 @@ your question; click it to open the full-size version.
 .. raw:: html
 
    <a href="_static/decision_map.html" target="_blank" rel="noopener" title="Open the Decision Map">
-     <img src="_static/decision_map.png" alt="AAanalysis Decision Map"
+     <img src="_static/decision_map.png" alt="AAanalysis Decision Map (click to open the full map)"
           style="width:70%; display:block; margin:0 auto; border:1px solid #e3e7ec; border-radius:4px;">
    </a>
