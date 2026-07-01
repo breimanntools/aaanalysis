@@ -44,7 +44,7 @@ and accommodates user-defined splitting (**split_kws**). Our CPP algorithm then 
 physicochemical features (**df_feat**) by comparing protein sequence sets.
 
 See the primary analysis pipeline of the AAanalysis framework in the **Data Flow Map**
-below — from the external data sources through the two CPP entry points (``CPP.run`` for
+below: it runs from the external data sources through the two CPP entry points (``CPP.run`` for
 amino acid scales, ``CPP.run_num`` for numeric values) to the feature matrix ``X`` and the
 model, explanation, and design wrappers
 (`open the full map <../_static/dataflow_map.html>`_):
@@ -54,8 +54,8 @@ model, explanation, and design wrappers
    :alt: AAanalysis Data Flow Map
    :width: 100%
 
-   The AAanalysis Data Flow Map. External data sources (gray) — protein sequences,
-   embeddings, structures, and annotations — feed the interpretable CPP core (blue),
+   The AAanalysis Data Flow Map. External data sources (gray; protein sequences,
+   embeddings, structures, and annotations) feed the interpretable CPP core (blue),
    which turns them into the feature signature ``df_feat`` and the feature matrix
    ``X``. The wrapper classes (amber) then predict, explain, and design from ``X``.
    The map itself spells out every intermediate step.

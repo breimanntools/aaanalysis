@@ -23,9 +23,9 @@ examples, the latter adding the conceptual background, and the
 .. admonition:: Not sure where to start? Follow the Decision Map
    :class: tip
 
-   Skim the :ref:`Decision Map <gs_decision_map>` at the bottom of this page — it maps
+   Skim the :ref:`Decision Map <gs_decision_map>` at the bottom of this page: it maps
    your goal (*explore*, *predict*, or *optimize*) to the exact AAanalysis class or
-   function — then run the notebooks below for your first result.
+   function. Then run the notebooks below for your first result.
 
 The fastest way in is the short notebooks below: start with **A minimal CPP analysis**,
 compare the two interfaces in **Quick start** and **Slow start**, then make
@@ -61,9 +61,9 @@ The two APIs
 ------------
 AAanalysis offers the same analysis two ways, both documented in the Reference:
 
-- **Building blocks** (``import aaanalysis as aa``) — the individual objects and
+- **Building blocks** (``import aaanalysis as aa``): the individual objects and
   functions you compose, for full control over each step. See :ref:`API <api>`.
-- **Golden pipelines** (``import aaanalysis.pipe as aap``) — stateless one-call
+- **Golden pipelines** (``import aaanalysis.pipe as aap``): stateless one-call
   wrappers that chain those building blocks into a sensible default workflow.
   See :ref:`API (Pipelines) <api_pipe>`.
 

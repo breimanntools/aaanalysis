@@ -65,7 +65,7 @@ datasets) and the :ref:`DataFrame schemas <df_schemas>` that define every ``df_*
 :ref:`Contributing <contributing>` guide, the :ref:`Docstring Guide <docstring_guide>` documents the
 docstring style, and the :ref:`Release Notes <release_notes>` track changes across versions.
 
-Finally, four at-a-glance reference documents summarise the whole framework — keep them open while
+Finally, four at-a-glance reference documents summarise the whole framework. Keep them open while
 you work:
 
 - `Cheat Sheet <../_static/cheat_sheet.html>`_: the canonical workflow, the main classes by
