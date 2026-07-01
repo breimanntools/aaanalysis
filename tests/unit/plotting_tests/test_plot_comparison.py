@@ -142,6 +142,27 @@ class TestPlotComparison:
         assert ax.get_ylabel() == "Balanced accuracy [%]"
         assert ax.get_title() == "Bench"
 
+    def test_duplicate_group_order_deduped(self):
+        # A repeated entry in the explicit order must not create a duplicate bar row.
+        fig, ax = plot_comparison(df_eval=_df(), group_order=["Scale-based", "Scale-based", "CPP"])
+        assert len(ax.patches) == 6
+        labels = [t.get_text() for t in ax.get_legend().get_texts()]
+        assert labels == ["Scale-based", "CPP"]
+
+    def test_duplicate_condition_order_deduped(self):
+        fig, ax = plot_comparison(df_eval=_df(),
+                                  condition_order=["No expansion", "No expansion", "Random", "dPULearn"])
+        assert len(ax.patches) == 6
+        assert [t.get_text() for t in ax.get_xticklabels()] == ["No expansion", "Random", "dPULearn"]
+
+    def test_missing_cell_partial_grid(self):
+        # A (group, condition) combination absent from df_eval leaves a gap, no crash / label.
+        df = pd.DataFrame([{"group": "A", "condition": "x", "value": 60},
+                           {"group": "B", "condition": "y", "value": 70}])
+        fig, ax = plot_comparison(df_eval=df, baseline=None)
+        assert len(ax.patches) == 4  # 2 groups x 2 conditions
+        assert len(ax.texts) == 2    # only the 2 present cells are labelled
+
     def test_ylim_respected(self):
         fig, ax = plot_comparison(df_eval=_df(), ylim=(0, 108))
         assert ax.get_ylim() == (0, 108)
@@ -211,3 +232,9 @@ class TestPlotComparisonErrors:
     def test_bad_ylim_raises(self):
         with pytest.raises(ValueError):
             plot_comparison(df_eval=_df(), ylim=(10,))
+
+    def test_non_numeric_value_column_raises(self):
+        df = _df()
+        df["value"] = df["value"].astype(str)
+        with pytest.raises(ValueError):
+            plot_comparison(df_eval=df)

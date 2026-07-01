@@ -21,11 +21,13 @@ def _resolve_order(values: List, order: Optional[List], name: str) -> List:
     if order is None:
         return seen
     ut.check_list_like(name=name, val=order)
-    missing = set(seen) - set(order)
+    seen_set = set(seen)
+    missing = seen_set - set(order)
     if missing:
         raise ValueError(f"'{name}' is missing values present in the data: {sorted(map(str, missing))}")
-    # Keep only the groups that actually occur, in the requested order.
-    return [g for g in order if g in set(seen)]
+    # Keep only the values that actually occur, in the requested order, de-duplicated
+    # (a repeated entry would otherwise create a duplicate grid axis label).
+    return [g for g in dict.fromkeys(order) if g in seen_set]
 
 
 def _resolve_colors(group_order: List, colors: Optional[Union[List, Dict]]) -> Dict:
@@ -165,6 +167,9 @@ def plot_comparison(df_eval: pd.DataFrame,
     ut.check_df(name="df_eval", df=df_eval, cols_required=[group, condition, value])
     if len(df_eval) == 0:
         raise ValueError("'df_eval' (0 rows) should contain at least one row.")
+    if not pd.api.types.is_numeric_dtype(df_eval[value]):
+        raise ValueError(f"'{value}' column of 'df_eval' should be numeric "
+                         f"(the bar heights), got dtype '{df_eval[value].dtype}'.")
     ut.check_number_val(name="baseline", val=baseline, accept_none=True, just_int=False)
     ut.check_str(name="baseline_label", val=baseline_label, accept_none=True)
     ut.check_bool(name="annotate", val=annotate)
