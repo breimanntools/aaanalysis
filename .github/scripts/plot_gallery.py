@@ -61,6 +61,13 @@ TIER_SCALES = {
     "simple": ["normal"],
 }
 
+# TMD sequence lengths (aa) for the sequence-rendering sweep: short sequences must
+# grow the residue letters (seq_char_fill), long ones must shrink-to-fit without
+# overlap. The most layout-sensitive path, so it is swept in both plain and CPP-SHAP
+# modes for feature_map and heatmap.
+SEQ_LENS = [5, 10, 20, 40, 80, 100]
+_AA_CYCLE = "ACDEFGHIKLMNPQRSTVWY"
+
 
 def _tight_png_bytes(fig):
     """PNG bytes as a notebook/publication would save it (tight bbox)."""
@@ -101,6 +108,44 @@ def _aaclust_fig(method):
     return getattr(aa.AAclustPlot(), method)(X, labels=labels)[0]
 
 
+def _seq_df_feat(tmd_len, n_subcat=8):
+    """A df_feat valid for a given TMD length, with SHAP (feat_impact/mean_dif)
+    columns so both plain and shap_plot renders work. Whole-TMD segment features
+    keep it valid at any ``tmd_len`` (5..100)."""
+    dcat = aa.CPPPlot()._df_cat
+    subs = list(dict.fromkeys(dcat["subcategory"]))[:n_subcat]
+    rows = []
+    for s in subs:
+        r = dcat[dcat["subcategory"] == s].iloc[0]
+        rows.append(dict(feature=f"TMD-Segment(1,1)-{r['scale_id']}", category=r["category"],
+            subcategory=s, scale_name=r["scale_name"], scale_description=r["scale_description"],
+            abs_auc=0.2, abs_mean_dif=0.3, mean_dif=0.3, std_test=0.1, std_ref=0.1,
+            p_val_mann_whitney=0.01, p_val_fdr_bh=0.02,
+            positions=",".join(str(p) for p in range(11, 11 + tmd_len)),
+            feat_importance=1.0, feat_importance_std=0.1,
+            feat_impact_test=2.0, mean_dif_test=1.0))
+    return pd.DataFrame(rows)
+
+
+def _seqs(tmd_len):
+    """JMD-N (10) + TMD (tmd_len) + JMD-C (10) sequences, varied residues."""
+    def take(n, off=0):
+        return "".join(_AA_CYCLE[(off + i) % len(_AA_CYCLE)] for i in range(n))
+    return dict(jmd_n_seq=take(10), tmd_seq=take(tmd_len, 3), jmd_c_seq=take(10, 7))
+
+
+def _seq_fig(method, tmd_len, shap):
+    """feature_map/heatmap with a TMD-JMD sequence of length tmd_len; SHAP or plain."""
+    df = _seq_df_feat(tmd_len)
+    cpp = aa.CPPPlot(df_scales=aa.load_scales())
+    kws = dict(tmd_len=tmd_len, figsize=(8, 8), **_seqs(tmd_len))
+    if shap:
+        kws.update(shap_plot=True, col_val="feat_impact_test")
+        if method == "feature_map":  # only feature_map has the importance bars needing col_imp
+            kws["col_imp"] = "feat_impact_test"
+    return getattr(cpp, method)(df_feat=df, **kws)[0]
+
+
 # (name, tier, render_fn(scale_label)) -> Figure. render_fn ignores scale for simple plots.
 PLOTS = [
     ("feature_map", "key", lambda s: _cpp_composite("feature_map", SCALE_DIMS[s])),
@@ -120,21 +165,33 @@ def render(label, outdir):
                 "aaanalysis_file": aa.__file__, "matplotlib": matplotlib.__version__,
                 "plots": {}}
     aa.options["verbose"] = False
+
+    def _emit(key, thunk, tag):
+        try:
+            fig = thunk()
+            png = _tight_png_bytes(fig)
+            manifest["plots"][key] = hashlib.sha256(png).hexdigest()
+            with open(os.path.join(dest, f"{key}.png"), "wb") as fh:
+                fh.write(png)
+            print(f"  rendered {key}  ({tag})")
+        except Exception as exc:
+            manifest["plots"][key] = f"ERROR: {type(exc).__name__}: {exc}"
+            print(f"  FAILED  {key}: {exc}")
+        finally:
+            plt.close("all")
+
+    # Data-scale sweep (n_subcat x n_features), tiered by figure complexity.
     for name, tier, fn in PLOTS:
         for sname in TIER_SCALES[tier]:
-            key = f"{name}__{sname}"
-            try:
-                fig = fn(sname)
-                png = _tight_png_bytes(fig)
-                manifest["plots"][key] = hashlib.sha256(png).hexdigest()
-                with open(os.path.join(dest, f"{key}.png"), "wb") as fh:
-                    fh.write(png)
-                print(f"  rendered {key}  ({tier})")
-            except Exception as exc:
-                manifest["plots"][key] = f"ERROR: {type(exc).__name__}: {exc}"
-                print(f"  FAILED  {key}: {exc}")
-            finally:
-                plt.close("all")
+            _emit(f"{name}__{sname}", lambda fn=fn, s=sname: fn(s), tier)
+
+    # Sequence-length sweep (5..100 aa), plain and CPP-SHAP, for feature_map + heatmap.
+    for method in ("feature_map", "heatmap"):
+        for shap in (False, True):
+            mode = "shap" if shap else "plain"
+            for L in SEQ_LENS:
+                key = f"{method}_seq_{mode}__L{L:03d}"
+                _emit(key, lambda m=method, L=L, sh=shap: _seq_fig(m, L, sh), f"seq/{mode}")
     with open(os.path.join(dest, "manifest.json"), "w") as fh:
         json.dump(manifest, fh, indent=2)
     n_ok = sum(1 for v in manifest["plots"].values() if not str(v).startswith("ERROR"))
