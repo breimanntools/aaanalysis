@@ -93,6 +93,14 @@ class TestEvalFeatures:
         score = aa.eval_features(X, y, metric=metric, cv=5)
         assert np.isfinite(score) and 0.0 <= score <= 100.0
 
+    @pytest.mark.parametrize("metric", ["balanced_accuracy", "accuracy"])
+    def test_multiclass_labels_supported_metrics(self, metric):
+        """balanced_accuracy / accuracy accept multi-class labels and stay in [0, 100]."""
+        X, y = make_classification(n_samples=45, n_features=6, n_informative=4,
+                                   n_classes=3, n_clusters_per_class=1, random_state=0)
+        score = aa.eval_features(X, y, metric=metric, cv=5)
+        assert 0.0 <= score <= 100.0
+
     def test_mask_known_pos_param(self):
         """The PU mask excludes masked positives from scoring (different score)."""
         X, y = _toy_data()

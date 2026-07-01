@@ -301,7 +301,9 @@ def eval_features(X: ut.ArrayLike2D,
     metric : str, default='balanced_accuracy'
         Classification metric name. One of ``'balanced_accuracy'``, ``'accuracy'``,
         ``'f1'``, ``'precision'``, ``'recall'``. All are bounded in ``[0, 1]``, so the
-        returned score is a genuine percentage in ``[0, 100]``.
+        returned score is a genuine percentage in ``[0, 100]``. ``'balanced_accuracy'``
+        and ``'accuracy'`` also support multi-class ``labels``; ``'f1'``, ``'precision'``,
+        and ``'recall'`` are binary metrics (two-class ``labels``, positive class ``1``).
     mask_known_pos : array-like of bool, shape (n_samples,), optional
         PU mask of known positives. Masked samples are kept in every training fold but
         excluded from scoring. If ``None``, all samples are scored.
