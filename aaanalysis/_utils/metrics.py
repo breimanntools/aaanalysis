@@ -344,16 +344,20 @@ def _masked_cv_score(X, y, model=None, cv=None, f_score=None, mask=None):
     are never scored as test points (port of ``cv_leave_one_out_masked``).
 
     Generalized to any CV splitter: for each fold the masked test indices are dropped
-    from scoring while the training set is left untouched (so the masked known
-    positives still inform the model)."""
+    from scoring but folded back into the training set, so the masked known positives
+    still inform every scored fold (for leave-one-out this is a no-op — a masked
+    single-sample test fold is skipped outright — so the default path is unchanged)."""
     mask = np.asarray(mask, dtype=bool)
     y_true, y_pred = [], []
     for train_index, test_index in cv.split(X, y):
-        keep = [i for i in test_index if not mask[i]]
+        keep = test_index[~mask[test_index]]
         if len(keep) == 0:
             continue
+        # Masked known positives in this test fold are never scored but stay in training.
+        masked_in_test = test_index[mask[test_index]]
+        train_full = np.concatenate([train_index, masked_in_test]).astype(int)
         est = clone(model)
-        est.fit(X[train_index], y[train_index])
+        est.fit(X[train_full], y[train_full])
         preds = est.predict(X[keep])
         y_true.extend(np.asarray(y)[keep].tolist())
         y_pred.extend(np.asarray(preds).tolist())

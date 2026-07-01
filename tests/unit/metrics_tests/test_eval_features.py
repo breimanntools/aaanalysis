@@ -161,6 +161,27 @@ class TestEvalFeaturesPUMask:
         scored = {row for fold in _RecordingSVC.test_rows for row in fold}
         assert masked_rows.isdisjoint(scored)
 
+    def test_masked_positives_train_every_fold_with_kfold_cv(self):
+        """Same invariant under a non-LOO splitter: a masked positive that lands in a
+        k-fold test partition must be folded back into that fold's training set (never
+        dropped from both), and must never be scored."""
+        X, y = _toy_data(n_samples=24)
+        pos_idx = np.where(y == 1)[0][:4]
+        mask = np.zeros(len(y), dtype=bool)
+        mask[pos_idx] = True
+        masked_rows = {tuple(np.round(X[i], 6)) for i in pos_idx}
+
+        _RecordingSVC.train_rows.clear()
+        _RecordingSVC.test_rows.clear()
+        cv = StratifiedKFold(n_splits=4, shuffle=True, random_state=0)
+        aa.eval_features(X, y, model=_RecordingSVC(), cv=cv, mask_known_pos=mask)
+
+        assert len(_RecordingSVC.train_rows) == 4
+        for train in _RecordingSVC.train_rows:
+            assert masked_rows.issubset(train)
+        scored = {row for fold in _RecordingSVC.test_rows for row in fold}
+        assert masked_rows.isdisjoint(scored)
+
     def test_random_state_param(self):
         """random_state is forwarded to a stochastic estimator without error."""
         X, y = _toy_data()
