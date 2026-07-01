@@ -1317,8 +1317,12 @@ class CPPPlot:
         figsize : tuple, default=(8, 8)
             Figure dimensions (width, height) in inches. When the global ``auto_font``
             option is enabled (see :class:`aaanalysis.options`) and ``figsize`` is left at
-            its default, the size is derived automatically from the grid shape (number of
-            scale subcategories and residue positions); an explicit ``figsize`` always wins.
+            its default (or ``None``), the size is derived automatically from the grid shape
+            (number of scale subcategories and residue positions); an explicit ``figsize``
+            always wins.
+
+            .. versionchanged:: 1.1.0
+                Auto-derived from the grid shape when the ``auto_font`` option is enabled.
         add_imp_bar_top : bool, default=True
             If ``True``, add bars for cumulative feature importance per position (top).
         imp_bar_th : int or float, optional
@@ -1500,8 +1504,10 @@ class CPPPlot:
         # untouched -> output is byte-identical.
         figsize_is_default = figsize is None or tuple(figsize) == (8, 8)
         if ut.check_auto_font() and figsize_is_default:
+            # jmd lengths are validated non-None above; `or 0` keeps the sum typed.
+            n_positions = tmd_len + (jmd_n_len or 0) + (jmd_c_len or 0)
             figsize = derive_feature_map_figsize(n_subcat=df_feat[col_cat].nunique(),
-                                                 n_positions=jmd_n_len + tmd_len + jmd_c_len)
+                                                 n_positions=n_positions)
 
         # Plot feature map
         fig, ax = plot_feature_map(df_feat=df_feat, df_cat=self._df_cat,
