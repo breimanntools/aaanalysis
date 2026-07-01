@@ -151,9 +151,13 @@ def test_registry_has_no_stale_or_duplicate_entries():
 
 def test_registry_documented_in_style_guide():
     text = GUIDE.read_text(encoding="utf-8")
+    # Classes are documented either as a ``ClassName`` literal or, preferably, via a
+    # cross-referenced :class:`~aaanalysis.ClassName` role (the trailing backtick pins the
+    # exact name, so ``AAlogo`` does not match ``AAlogoPlot``). The abbreviation is a literal.
     undocumented = [
         (cls, abbr) for cls, abbr in REGISTRY.items()
-        if f"``{cls}``" not in text or f"``{abbr}``" not in text
+        if (f"``{cls}``" not in text and f"aaanalysis.{cls}`" not in text)
+        or f"``{abbr}``" not in text
     ]
     assert not undocumented, (
         "Class abbreviations missing from docstring_guide.rst 'Class abbreviations' "
