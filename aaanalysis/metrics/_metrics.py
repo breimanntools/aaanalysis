@@ -9,7 +9,7 @@ from typing import Optional, Literal, Union, Any
 
 from aaanalysis.utils import (auc_adjusted_, kullback_leibler_divergence_, bic_score_,
                               per_protein_ap_, detection_metrics_, bootstrap_ci_,
-                              smooth_scores_, eval_features_, LIST_METRICS_EVAL)
+                              smooth_scores_, eval_features_)
 import aaanalysis.utils as ut
 
 
@@ -341,7 +341,7 @@ def eval_features(X: ut.ArrayLike2D,
     ut.check_match_X_labels(X=X, labels=labels)
     _check_model(model=model)
     _check_cv(cv=cv)
-    ut.check_str_options(name="metric", val=metric, list_str_options=LIST_METRICS_EVAL)
+    ut.check_str_options(name="metric", val=metric, list_str_options=ut.LIST_METRICS_EVAL)
     _check_mask_known_pos(mask_known_pos=mask_known_pos, n_samples=X.shape[0])
     random_state = ut.check_random_state(random_state=random_state)
     # Compute cross-validated feature-set score
