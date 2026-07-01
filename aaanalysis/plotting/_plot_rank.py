@@ -63,10 +63,11 @@ def _plot_ranked_candidates(ax, df_rank, col_score, col_class, col_std, group_or
     df["_sorter"] = df[col_class].map(order_map)
     df = df.sort_values(["_sorter", col_score], ascending=[False, True]).reset_index(drop=True)
     y_pos = np.arange(len(df))
+    scores = df[col_score].to_numpy()
     colors = [dict_group_color[c] for c in df[col_class]]
-    ax.barh(y_pos, df[col_score].to_numpy(), color=colors)
+    ax.barh(y_pos, scores, color=colors)
     if col_std is not None:
-        ax.errorbar(x=df[col_score].to_numpy(), y=y_pos, xerr=df[col_std].to_numpy(),
+        ax.errorbar(x=scores, y=y_pos, xerr=df[col_std].to_numpy(),
                     fmt="none", ecolor="black", capsize=3, capthick=1, elinewidth=1)
     ax.set_yticks(y_pos)
     ax.set_yticklabels(df["_name"].tolist())
