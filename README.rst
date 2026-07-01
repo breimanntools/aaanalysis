@@ -151,6 +151,33 @@ Click the diagram to view and download the full map, or open the
    :width: 100%
    :align: center
 
+Decision Map
+============
+Not sure which tool fits your question? The Decision Map routes you from your biological
+task (residue, domain, or protein level, plus determinant discovery and design) to the
+right AAanalysis workflow and classes. Click the map to open the full, downloadable
+version (PNG / PDF / HTML).
+
+.. image:: https://raw.githubusercontent.com/breimanntools/aaanalysis/master/docs/source/_artwork/diagrams/decision_map.png
+   :alt: AAanalysis Decision Map: which tool for which task
+   :target: https://aaanalysis.readthedocs.io/en/latest/_static/decision_map.html
+   :width: 70%
+   :align: center
+
+Data Flow Map
+=============
+The Data Flow Map shows how the pieces connect end to end: external inputs (sequences,
+embeddings, structures, annotations) feed the interpretable CPP core, which turns them
+into the feature signature ``df_feat`` and the feature matrix ``X`` that the wrapper
+classes use to predict, explain, and design. Click the map to open the full, downloadable
+version.
+
+.. image:: https://raw.githubusercontent.com/breimanntools/aaanalysis/master/docs/source/_artwork/diagrams/dataflow_map.png
+   :alt: AAanalysis Data Flow Map: how data moves from inputs through CPP to predictions
+   :target: https://aaanalysis.readthedocs.io/en/latest/_static/dataflow_map.html
+   :width: 100%
+   :align: center
+
 Citations
 =========
 If you use AAanalysis in your work, please cite the respective publication as follows:
