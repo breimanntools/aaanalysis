@@ -104,6 +104,19 @@ class TestPlotEvalHeatmap:
         ax = plot_eval_heatmap(df_eval=_df(), figsize=(8, 3))
         assert tuple(ax.figure.get_size_inches()) == (8.0, 3.0)
 
+    def test_nan_cells_render_gracefully(self):
+        # A sweep table can carry NaN for a config that failed; NaN cells stay blank
+        # (not annotated) and the call must not raise.
+        df = pd.DataFrame([[88.0, np.nan], [70.0, 62.0]],
+                          index=["a", "b"], columns=["x", "y"])
+        ax = plot_eval_heatmap(df_eval=df)
+        assert isinstance(ax, plt.Axes)
+        assert len(ax.texts) == 3  # only the three non-NaN cells are annotated
+
+    def test_integer_grid_accepted(self):
+        ax = plot_eval_heatmap(df_eval=pd.DataFrame([[88, 70], [60, 90]]))
+        assert isinstance(ax, plt.Axes) and len(ax.texts) == 4
+
 
 class TestPlotEvalHeatmapEquivalence:
     """KPI #310: equivalent to the hand-built seaborn block it consolidates."""
