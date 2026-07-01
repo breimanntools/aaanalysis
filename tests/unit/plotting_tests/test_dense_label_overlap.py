@@ -19,6 +19,7 @@ import pytest
 import aaanalysis as aa
 from aaanalysis.feature_engineering._backend.cpp.cpp_plot_feature_map import (
     derive_feature_map_figsize,
+    FEATURE_MAP_GRID_ASPECT,
 )
 
 from ._text_overlap import get_label_overlaps, make_dense_df_feat
@@ -223,13 +224,13 @@ class TestAutoFontFeatureMap:
         assert h > 8.0  # dense grid grew beyond the (8, 8) default
 
     def test_on_holds_consistent_grid_box_aspect(self):
-        # auto_font holds the heatmap grid at a constant 1:1.15 box regardless of
+        # auto_font holds the heatmap grid at a constant box aspect regardless of
         # how many subcategories the grid has -> consistent appearance.
         aa.options["auto_font"] = True
         _, ax_small = aa.CPPPlot().feature_map(make_dense_df_feat(20))
         _, ax_big = aa.CPPPlot().feature_map(make_dense_df_feat(74))
-        assert abs(ax_small.get_box_aspect() - 1.15) < 1e-6
-        assert abs(ax_big.get_box_aspect() - 1.15) < 1e-6
+        assert abs(ax_small.get_box_aspect() - FEATURE_MAP_GRID_ASPECT) < 1e-6
+        assert abs(ax_big.get_box_aspect() - FEATURE_MAP_GRID_ASPECT) < 1e-6
 
     def test_off_leaves_grid_box_aspect_untouched(self):
         aa.options["auto_font"] = False

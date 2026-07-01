@@ -352,5 +352,8 @@ class PlotPartPositions:
         xticks, xticks_labels = self.get_xticks_with_labels(step=5)
         ax.set_xticks([x + x_shift for x in xticks])
         ax.set_xticklabels(xticks_labels, rotation=0, size=xtick_size)
-        ax.tick_params(axis="x", color="black", length=xtick_length, width=xtick_width)
+        # direction="out" so the tick marks point DOWN (below the TMD-JMD bar),
+        # not up into the heatmap cells.
+        ax.tick_params(axis="x", color="black", length=xtick_length, width=xtick_width,
+                       direction="out")
         ax.xaxis.set_ticks_position(xticks_position)

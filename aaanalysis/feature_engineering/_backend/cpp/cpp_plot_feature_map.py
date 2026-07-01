@@ -205,7 +205,7 @@ def add_feat_importance_legend(ax=None,
 
 
 #: Constant grid aspect (height : width) of the feature-map heatmap under ``auto_font``.
-FEATURE_MAP_GRID_ASPECT = 1.15
+FEATURE_MAP_GRID_ASPECT = 1.05
 
 #: Minimum on-figure width (inches) per residue for a shown TMD-JMD sequence, so the
 #: residue letters stay legible; for long sequences the figure grows wider (and drops
