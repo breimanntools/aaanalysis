@@ -24,11 +24,11 @@ for any sequence analysis representable by numerical values.
 
 Key Algorithms
 --------------
-- **CPP**: Comparative Physicochemical Profiling, an interpretable feature engineering algorithm comparing two sets of
+- :class:`~aaanalysis.CPP`: Comparative Physicochemical Profiling, an interpretable feature engineering algorithm comparing two sets of
   protein sequences to identify the set of most distinctive features.
-- **dPULearn**: A deterministic Positive-Unlabeled (PU) Learning algorithm tailored for training on unbalanced and
+- :class:`~aaanalysis.dPULearn`: A deterministic Positive-Unlabeled (PU) Learning algorithm tailored for training on unbalanced and
   small datasets, enhancing predictive accuracy.
-- **AAclust**: A k-optimized clustering wrapper that selects redundancy-reduced sets of numerical scales,
+- :class:`~aaanalysis.AAclust`: A k-optimized clustering wrapper that selects redundancy-reduced sets of numerical scales,
   such as amino acid scales.
 
 Purpose and Audience
@@ -65,7 +65,7 @@ datasets) and the :ref:`DataFrame schemas <df_schemas>` that define every ``df_*
 :ref:`Contributing <contributing>` guide, the :ref:`Docstring Guide <docstring_guide>` documents the
 docstring style, and the :ref:`Release Notes <release_notes>` track changes across versions.
 
-Finally, four at-a-glance reference documents summarise the whole framework — keep them open while
+Finally, four at-a-glance reference documents summarise the whole framework. Keep them open while
 you work:
 
 - `Cheat Sheet <../_static/cheat_sheet.html>`_: the canonical workflow, the main classes by

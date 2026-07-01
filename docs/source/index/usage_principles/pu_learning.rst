@@ -10,6 +10,13 @@ protein sequence prediction, where even minor alterations can lead to significan
 A practical solution is to harness the abundance of unlabeled data to identify negative samples, a strategy
 that becomes essential when obtaining a balanced dataset is challenging.
 
+.. admonition:: Provided by
+   :class: note
+
+   In AAanalysis this is the :class:`~aaanalysis.dPULearn` class. See the
+   :ref:`API reference <api>` and the :ref:`Evaluating PU Learning <eval_pu_learning>`
+   chapter for how the identified negatives are assessed.
+
 .. toctree::
    :hidden:
 
