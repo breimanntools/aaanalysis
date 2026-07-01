@@ -17,6 +17,9 @@ from matplotlib.transforms import Bbox
 import pytest
 
 import aaanalysis as aa
+from aaanalysis.feature_engineering._backend.cpp.cpp_plot_feature_map import (
+    derive_feature_map_figsize,
+)
 
 from ._text_overlap import get_label_overlaps, make_dense_df_feat
 
@@ -120,3 +123,64 @@ class TestFeatureMapLabelOverlap:
                  if t.get_text().strip() in subcats and t.get_visible()]
         assert sizes, "no row-label text artists found"
         assert min(sizes) >= 5.0, f"row-label font {min(sizes)}pt < 5pt floor"
+
+
+class TestAutoFontFeatureMap:
+    """The global auto_font option: off = unchanged size; on = grid-derived size."""
+
+    def setup_method(self):
+        aa.options["verbose"] = False
+
+    def teardown_method(self):
+        aa.options["auto_font"] = False
+        aa.options["verbose"] = "off"
+        plt.close("all")
+
+    def test_derive_figsize_monotonic_and_bounded(self):
+        f = derive_feature_map_figsize
+        # grows with rows and columns
+        assert f(n_subcat=74, n_positions=40)[1] > f(n_subcat=20, n_positions=40)[1]
+        assert f(n_subcat=40, n_positions=80)[0] > f(n_subcat=40, n_positions=20)[0]
+        # clamped to sane bounds
+        w, h = f(n_subcat=5000, n_positions=5000)
+        assert 6.0 <= w <= 20.0 and 4.0 <= h <= 20.0
+        w, h = f(n_subcat=1, n_positions=1)
+        assert 6.0 <= w <= 20.0 and 4.0 <= h <= 20.0
+
+    def test_off_keeps_default_figsize(self):
+        aa.options["auto_font"] = False
+        df_feat = make_dense_df_feat(74)
+        fig, ax = aa.CPPPlot().feature_map(df_feat)
+        assert tuple(round(float(v), 2) for v in fig.get_size_inches()) == (8.0, 8.0)
+
+    def test_on_derives_larger_figure_for_dense_grid(self):
+        df_feat = make_dense_df_feat(74)
+        aa.options["auto_font"] = True
+        fig, ax = aa.CPPPlot().feature_map(df_feat)
+        _, h = (float(v) for v in fig.get_size_inches())
+        assert h > 8.0  # dense grid grew beyond the (8, 8) default
+
+    def test_on_improves_legibility_no_overlap(self):
+        df_feat = make_dense_df_feat(74)
+        subcats = list(dict.fromkeys(df_feat["subcategory"]))
+
+        aa.options["auto_font"] = False
+        fig_off, _ = aa.CPPPlot().feature_map(df_feat)
+        fig_off.canvas.draw()
+        fs_off = min(t.get_fontsize() for a in fig_off.axes for t in a.texts
+                     if t.get_text().strip() in set(subcats))
+
+        aa.options["auto_font"] = True
+        fig_on, _ = aa.CPPPlot().feature_map(df_feat)
+        fig_on.canvas.draw()
+        fs_on = min(t.get_fontsize() for a in fig_on.axes for t in a.texts
+                    if t.get_text().strip() in set(subcats))
+
+        assert fs_on >= fs_off >= 5.0  # auto_font is at least as legible, never below floor
+        assert get_label_overlaps(fig_on, subcats) == []
+
+    def test_explicit_figsize_wins_over_auto_font(self):
+        df_feat = make_dense_df_feat(74)
+        aa.options["auto_font"] = True
+        fig, ax = aa.CPPPlot().feature_map(df_feat, figsize=(10, 6))
+        assert tuple(round(float(v), 2) for v in fig.get_size_inches()) == (10.0, 6.0)

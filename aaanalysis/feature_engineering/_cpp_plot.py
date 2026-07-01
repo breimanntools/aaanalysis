@@ -32,7 +32,7 @@ from ._backend.cpp.cpp_plot_feature import plot_feature
 from ._backend.cpp.cpp_plot_ranking import plot_ranking
 from ._backend.cpp.cpp_plot_profile import plot_profile
 from ._backend.cpp.cpp_plot_heatmap import plot_heatmap
-from ._backend.cpp.cpp_plot_feature_map import plot_feature_map
+from ._backend.cpp.cpp_plot_feature_map import plot_feature_map, derive_feature_map_figsize
 from ._backend.cpp.cpp_plot_update_seq_size import get_tmd_jmd_seq, update_seq_size_, update_tmd_jmd_labels
 
 
@@ -1315,7 +1315,10 @@ class CPPPlot:
         name_ref : str, default="REF"
             Name for the reference dataset.
         figsize : tuple, default=(8, 8)
-            Figure dimensions (width, height) in inches.
+            Figure dimensions (width, height) in inches. When the global ``auto_font``
+            option is enabled (see :class:`aaanalysis.options`) and ``figsize`` is left at
+            its default, the size is derived automatically from the grid shape (number of
+            scale subcategories and residue positions); an explicit ``figsize`` always wins.
         add_imp_bar_top : bool, default=True
             If ``True``, add bars for cumulative feature importance per position (top).
         imp_bar_th : int or float, optional
@@ -1490,6 +1493,13 @@ class CPPPlot:
         ut.check_tuple(name="legend_imp_xy", val=legend_imp_xy, n=2, accept_none=False,
                        check_number=True, accept_none_number=True)
         args_xtick = check_args_xtick(xtick_size=xtick_size, xtick_width=xtick_width, xtick_length=xtick_length)
+
+        # Auto-size the (n_subcat x n_positions) grid when the global auto_font option
+        # is on and the user kept the default figsize. An explicit figsize always wins;
+        # with auto_font off (default) figsize is untouched -> output is byte-identical.
+        if ut.check_auto_font() and tuple(figsize) == (8, 8):
+            figsize = derive_feature_map_figsize(n_subcat=df_feat[col_cat].nunique(),
+                                                 n_positions=jmd_n_len + tmd_len + jmd_c_len)
 
         # Plot feature map
         fig, ax = plot_feature_map(df_feat=df_feat, df_cat=self._df_cat,

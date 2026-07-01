@@ -204,6 +204,23 @@ def add_feat_importance_legend(ax=None,
               borderpad=0)
 
 
+def derive_feature_map_figsize(n_subcat=None, n_positions=None):
+    """Derive a feature-map figure size from the grid shape (for ``auto_font``).
+
+    Grows the figure with the number of scale subcategories (rows) and residue
+    positions (columns) so each heatmap cell stays roughly legible as the grid
+    grows, clamped to sensible bounds. Tuned so a canonical ~40x40 grid maps close
+    to the fixed ``(8, 8)`` default, keeping the enabled behaviour familiar.
+    """
+    cell_w, cell_h = 0.16, 0.13          # inches added per position / subcategory
+    w_overhead, h_overhead = 1.8, 2.6    # inches for labels, colorbar, legend, bars
+    width = cell_w * (n_positions or 0) + w_overhead
+    height = cell_h * (n_subcat or 0) + h_overhead
+    width = float(min(max(width, 6.0), 20.0))
+    height = float(min(max(height, 4.0), 20.0))
+    return round(width, 2), round(height, 2)
+
+
 # II Main Functions
 def plot_feature_map(df_feat=None, df_cat=None,
                      shap_plot=False,
