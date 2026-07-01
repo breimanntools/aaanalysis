@@ -204,19 +204,29 @@ def add_feat_importance_legend(ax=None,
               borderpad=0)
 
 
-def derive_feature_map_figsize(n_subcat=None, n_positions=None):
-    """Derive a feature-map figure size from the grid shape (for ``auto_font``).
+#: Constant grid aspect (height : width) of the feature-map heatmap under ``auto_font``.
+FEATURE_MAP_GRID_ASPECT = 1.15
 
-    Grows the figure with the number of scale subcategories (rows) and residue
-    positions (columns) so each heatmap cell stays roughly legible as the grid
-    grows, clamped to sensible bounds. Tuned so a canonical ~40x40 grid maps close
-    to the fixed ``(8, 8)`` default, keeping the enabled behaviour familiar.
+
+def derive_feature_map_figsize(n_subcat=None, n_positions=None, max_label_len=None):
+    """Derive a feature-map figure size for ``auto_font`` with a consistent grid shape.
+
+    The heatmap grid itself is held at a constant aspect (``FEATURE_MAP_GRID_ASPECT``,
+    height:width = 1:1.15) by ``set_box_aspect`` in the frontend, so the plot looks the
+    same regardless of how many subcategories/positions it has. This function only sizes
+    the surrounding *figure*: the grid width grows mildly with the number of residue
+    positions (column legibility), the figure height follows the grid (grid_width x 1.15
+    plus vertical overhead), and the figure *width* grows with the longest subcategory
+    row-label so the names are never clipped. All clamped to sensible bounds.
     """
-    cell_w, cell_h = 0.16, 0.13          # inches added per position / subcategory
-    w_overhead, h_overhead = 1.8, 2.6    # inches for labels, colorbar, legend, bars
-    width = cell_w * (n_positions or 0) + w_overhead
-    height = cell_h * (n_subcat or 0) + h_overhead
-    width = float(min(max(width, 6.0), 20.0))
+    grid_w = 0.12 * (n_positions or 0) + 3.0     # grid width grows mildly with positions
+    grid_w = min(max(grid_w, 4.0), 12.0)
+    left_margin = 0.085 * (max_label_len or 14)  # room for the subcategory row-labels
+    right_overhead = 1.8                         # colorbar, legends, importance bars
+    vert_overhead = 2.4                          # titles, sequence row, x-labels
+    width = grid_w + left_margin + right_overhead
+    height = grid_w * FEATURE_MAP_GRID_ASPECT + vert_overhead
+    width = float(min(max(width, 6.0), 24.0))
     height = float(min(max(height, 4.0), 20.0))
     return round(width, 2), round(height, 2)
 

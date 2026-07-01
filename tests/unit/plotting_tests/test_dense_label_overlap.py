@@ -193,16 +193,21 @@ class TestAutoFontFeatureMap:
         aa.options["verbose"] = "off"
         plt.close("all")
 
-    def test_derive_figsize_monotonic_and_bounded(self):
+    def test_derive_figsize_consistent_aspect_and_bounded(self):
         f = derive_feature_map_figsize
-        # grows with rows and columns
-        assert f(n_subcat=74, n_positions=40)[1] > f(n_subcat=20, n_positions=40)[1]
+        # Width grows with residue positions (grid) and with the subcategory name length,
+        # so long row-labels get more room.
         assert f(n_subcat=40, n_positions=80)[0] > f(n_subcat=40, n_positions=20)[0]
+        assert f(n_subcat=40, n_positions=40, max_label_len=40)[0] \
+            > f(n_subcat=40, n_positions=40, max_label_len=5)[0]
+        # The grid aspect is held constant (set_box_aspect in the frontend), so the figure
+        # height does NOT depend on the number of subcategories -> consistent appearance.
+        assert f(n_subcat=74, n_positions=40)[1] == f(n_subcat=20, n_positions=40)[1]
         # clamped to sane bounds
-        w, h = f(n_subcat=5000, n_positions=5000)
-        assert 6.0 <= w <= 20.0 and 4.0 <= h <= 20.0
+        w, h = f(n_subcat=5000, n_positions=5000, max_label_len=500)
+        assert 6.0 <= w <= 24.0 and 4.0 <= h <= 20.0
         w, h = f(n_subcat=1, n_positions=1)
-        assert 6.0 <= w <= 20.0 and 4.0 <= h <= 20.0
+        assert 6.0 <= w <= 24.0 and 4.0 <= h <= 20.0
 
     def test_off_keeps_default_figsize(self):
         aa.options["auto_font"] = False
@@ -216,6 +221,20 @@ class TestAutoFontFeatureMap:
         fig, ax = aa.CPPPlot().feature_map(df_feat)
         _, h = (float(v) for v in fig.get_size_inches())
         assert h > 8.0  # dense grid grew beyond the (8, 8) default
+
+    def test_on_holds_consistent_grid_box_aspect(self):
+        # auto_font holds the heatmap grid at a constant 1:1.15 box regardless of
+        # how many subcategories the grid has -> consistent appearance.
+        aa.options["auto_font"] = True
+        _, ax_small = aa.CPPPlot().feature_map(make_dense_df_feat(20))
+        _, ax_big = aa.CPPPlot().feature_map(make_dense_df_feat(74))
+        assert abs(ax_small.get_box_aspect() - 1.15) < 1e-6
+        assert abs(ax_big.get_box_aspect() - 1.15) < 1e-6
+
+    def test_off_leaves_grid_box_aspect_untouched(self):
+        aa.options["auto_font"] = False
+        _, ax = aa.CPPPlot().feature_map(make_dense_df_feat(74))
+        assert ax.get_box_aspect() is None  # default path untouched
 
     def test_on_improves_legibility_no_overlap(self):
         df_feat = make_dense_df_feat(74)

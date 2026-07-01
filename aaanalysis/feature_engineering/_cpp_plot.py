@@ -32,7 +32,8 @@ from ._backend.cpp.cpp_plot_feature import plot_feature
 from ._backend.cpp.cpp_plot_ranking import plot_ranking
 from ._backend.cpp.cpp_plot_profile import plot_profile
 from ._backend.cpp.cpp_plot_heatmap import plot_heatmap
-from ._backend.cpp.cpp_plot_feature_map import plot_feature_map, derive_feature_map_figsize
+from ._backend.cpp.cpp_plot_feature_map import (plot_feature_map, derive_feature_map_figsize,
+                                                FEATURE_MAP_GRID_ASPECT)
 from ._backend.cpp.cpp_plot_update_seq_size import get_tmd_jmd_seq, update_seq_size_, update_tmd_jmd_labels
 
 
@@ -1509,11 +1510,15 @@ class CPPPlot:
         # An explicit figsize always wins; with auto_font off (default) figsize is
         # untouched -> output is byte-identical.
         figsize_is_default = figsize is None or tuple(figsize) == (8, 8)
-        if ut.check_auto_font() and figsize_is_default:
+        auto_grid = ut.check_auto_font() and figsize_is_default
+        if auto_grid:
             # jmd lengths are validated non-None above; `or 0` keeps the sum typed.
             n_positions = tmd_len + (jmd_n_len or 0) + (jmd_c_len or 0)
+            subcats = df_feat[col_cat].astype(str)
+            max_label_len = int(subcats.str.len().max()) if len(subcats) else 0
             figsize = derive_feature_map_figsize(n_subcat=df_feat[col_cat].nunique(),
-                                                 n_positions=n_positions)
+                                                 n_positions=n_positions,
+                                                 max_label_len=max_label_len)
 
         # Plot feature map
         fig, ax = plot_feature_map(df_feat=df_feat, df_cat=self._df_cat,
@@ -1537,6 +1542,12 @@ class CPPPlot:
                                    dict_color=dict_color, legend_kws=legend_kws, legend_xy=legend_xy,
                                    legend_imp_xy=legend_imp_xy, seq_char_fill=seq_char_fill,
                                    **args_xtick)
+        # Hold the heatmap grid at a consistent 1:1.15 (width:height) box when the
+        # global auto_font option auto-sized the figure, so the feature map looks the
+        # same regardless of the number of subcategories/positions. With auto_font off
+        # (default) the grid is untouched -> output is byte-identical.
+        if auto_grid:
+            ax.set_box_aspect(FEATURE_MAP_GRID_ASPECT)
 
         # Adjust plot. Leave a little more room on the right than the heatmap needs
         # so the cumulative-importance bar column's label ("Cumulative feature
