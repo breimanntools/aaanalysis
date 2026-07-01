@@ -28,9 +28,9 @@ Learn how to load protein benchmarking datasets and amino acid scale sets in the
 
 Feature Engineering
 -------------------
-Explore interpretable feature engineering, the core of AAanalysis, with the **AAclust**, **SequenceFeature**,
-and **CPP** tutorials, then see how CPP turns different data representations (scales, embeddings, structure)
-into features. Because **SequenceFeature.feature_matrix** returns a plain numeric matrix, these features
+Explore interpretable feature engineering, the core of AAanalysis, with the :class:`~aaanalysis.AAclust`, :class:`~aaanalysis.SequenceFeature`,
+and :class:`~aaanalysis.CPP` tutorials, then see how CPP turns different data representations (scales, embeddings, structure)
+into features. Because :meth:`~aaanalysis.SequenceFeature.feature_matrix` returns a plain numeric matrix, these features
 drop directly into a stock ``scikit-learn`` ``Pipeline`` — the prediction protocol demonstrates this end to end.
 
 .. toctree::
@@ -43,7 +43,7 @@ drop directly into a stock ``scikit-learn`` ``Pipeline`` — the prediction prot
 
 PU Learning
 -----------
-Start positive-Unlabeled (PU) learning to tackle unbalanced and small data through our **dPULearn** tutorial.
+Start positive-Unlabeled (PU) learning to tackle unbalanced and small data through our :class:`~aaanalysis.dPULearn` tutorial.
 
 .. toctree::
    :maxdepth: 1
@@ -52,7 +52,7 @@ Start positive-Unlabeled (PU) learning to tackle unbalanced and small data throu
 
 Explainable AI
 --------------
-Explaining sample level predictions at single-residue resolution is introduced in our **ShapModel** tutorial.
+Explaining sample level predictions at single-residue resolution is introduced in our :class:`~aaanalysis.ShapModel` tutorial.
 
 .. toctree::
    :maxdepth: 1
@@ -61,9 +61,9 @@ Explaining sample level predictions at single-residue resolution is introduced i
 
 Evaluation & Comparison
 -----------------------
-Learn the evaluation tools — **CPPGrid** configuration sweeps, per-protein
+Learn the evaluation tools — :class:`~aaanalysis.CPPGrid` configuration sweeps, per-protein
 site-localization metrics, and fair ranking under cross-validation — in the
-**CPPGrid** tutorial. These are the mechanics that the *P10: Validation*
+:class:`~aaanalysis.CPPGrid` tutorial. These are the mechanics that the *P10: Validation*
 protocol puts to work end to end.
 
 .. toctree::
@@ -73,10 +73,10 @@ protocol puts to work end to end.
 
 Protein Engineering
 -------------------
-Optimize an existing sequence with **SeqOpt** — machine-learning-guided directed
-evolution — and read the results with **SeqOptPlot**. This is **protein engineering**
+Optimize an existing sequence with :class:`~aaanalysis.SeqOpt` — machine-learning-guided directed
+evolution — and read the results with :class:`~aaanalysis.SeqOptPlot`. This is **protein engineering**
 (mutating a known protein), distinct from **de novo protein design** (generating new
-proteins, e.g. RFdiffusion → ProteinMPNN → AlphaFold). The **SeqOpt**
+proteins, e.g. RFdiffusion → ProteinMPNN → AlphaFold). The :class:`~aaanalysis.SeqOpt`
 tutorial walks a complete case study: training a substrate classifier, engineering a
 "super substrate" for gamma-secretase, and visualizing the Pareto front, convergence,
 mutation map and lineage.

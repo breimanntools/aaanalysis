@@ -19,7 +19,7 @@ Added
 
 **Data Handling**
 
-- **EmbeddingPreprocessor**: Per-residue protein language model (PLM) embeddings.
+- :class:`~aaanalysis.EmbeddingPreprocessor`: Per-residue protein language model (PLM) embeddings.
   ``encode`` normalizes raw embeddings into a ``[0, 1]`` per-residue ``dict_num``
   (``minmax`` / ``quantile`` / ``sigmoid``) for :meth:`~aaanalysis.CPP.run_num`; ``build_scales`` /
   ``build_cat`` collapse them into pseudo-scales for :meth:`~aaanalysis.CPP.run`. ``fetch_embeddings``
@@ -27,24 +27,24 @@ Added
   Hugging Face Hub and computes per-protein (mean/max/cls pooling) or per-residue
   embeddings; ``pool_embeddings`` reduces per-residue arrays to per-protein vectors. The
   new ``[embed]`` extra isolates the heavy ``torch`` / ``transformers`` dependencies.
-- **StructurePreprocessor** (``[pro]``): Converts PDB / CIF / AlphaFold files (and PAE
+- :class:`~aaanalysis.StructurePreprocessor` (``[pro]``): Converts PDB / CIF / AlphaFold files (and PAE
   sidecars) into ``[0, 1]``-normalized per-residue tensors (``get_dssp``, ``encode_dssp``,
   ``encode_pdb``, ``encode_pae``, ``get_domains``, ``encode_domains``, ``build_scales``,
   ``build_cat``).
-- **AnnotationPreprocessor** (``[pro]``): Fetches UniProt (or ingests user / predictor)
+- :class:`~aaanalysis.AnnotationPreprocessor` (``[pro]``): Fetches UniProt (or ingests user / predictor)
   per-residue PTM and functional-site annotations and encodes them into tensors
   (``fetch_uniprot``, ``ingest``, ``register_feature``, ``encode``, ``build_scales``,
   ``build_cat``, ``to_df_seq``).
-- **combine_dict_nums**: Concatenates per-residue tensors (embedding / structure /
+- :func:`~aaanalysis.combine_dict_nums`: Concatenates per-residue tensors (embedding / structure /
   annotation) along the feature axis into one combined :meth:`~aaanalysis.CPP.run_num` input.
 
 **Feature Engineering**
 
-- **CPPGrid**: ``Tool``-style wrapper (``run`` + ``eval``) that runs a parallel grid
+- :class:`~aaanalysis.CPPGrid`: ``Tool``-style wrapper (``run`` + ``eval``) that runs a parallel grid
   sweep of :class:`~aaanalysis.CPP` configurations in one call; configurations differing only in
   ``n_filter`` collapse into a single run. ``eval(sort_by=...)`` scores the
   configurations (``avg_ABS_AUC`` by default) best-first.
-- **CPP.run_num**: Numerical mode sourcing per-residue values from a pre-sliced tensor
+- :meth:`~aaanalysis.CPP.run_num`: Numerical mode sourcing per-residue values from a pre-sliced tensor
   (``dict_num_parts``) instead of an amino-acid → scale lookup — embedding / structure /
   annotation features through the same pipeline and output schema as :meth:`~aaanalysis.CPP.run`.
 - **CPP.simplify ``candidate_search='fast'``**: Opt-in heuristic capping the candidate
@@ -58,23 +58,23 @@ Added
 - **SequenceFeature.get_labels_quantile / get_labels_tiered**: Discretize a continuous
   target into binary ``labels`` — a single quantile cut, or a fixed positive set swept
   against stepwise-lowered negative cuts (each tier row-matched).
-- **SequenceFeature.get_df_parts_from_windows**: Assemble a reference ``df_parts`` from
+- :meth:`~aaanalysis.SequenceFeature.get_df_parts_from_windows`: Assemble a reference ``df_parts`` from
   per-part window sets (e.g. :meth:`~aaanalysis.AAWindowSampler.sample_synthetic` output).
-- **SequenceFeature.get_seq_kws**: Return one protein's ``{jmd_n_seq, tmd_seq, jmd_c_seq}``
+- :meth:`~aaanalysis.SequenceFeature.get_seq_kws`: Return one protein's ``{jmd_n_seq, tmd_seq, jmd_c_seq}``
   as a ready-to-splat ``seq_kws`` dict (by entry or position), parts taken from
   ``df_parts`` so the residues stay bound to the feature geometry — removing the manual
   slicing glue when feeding :meth:`~aaanalysis.CPPPlot.profile` / ``feature_map`` (e.g. sample-level SHAP
   plots).
-- **SequenceFeature.get_feature_descriptions**: One standardized, human-readable
+- :meth:`~aaanalysis.SequenceFeature.get_feature_descriptions`: One standardized, human-readable
   sentence per ``PART-SPLIT-SCALE`` feature id (region + split + AAontology scale name /
   category). Additive (the ``'feature'`` id is unchanged); fills an optional
   ``'feature_description'`` column.
-- **AAclust.pre_select_scales**: Metadata-only pre-filter that drops scales by AAontology
+- :meth:`~aaanalysis.AAclust.pre_select_scales`: Metadata-only pre-filter that drops scales by AAontology
   ``category`` (``cat_out``) / ``subcategory`` (``subcat_out``) via ``df_cat`` — the
   preparation step before ``select_scales`` or ``filter_coverage`` (no clustering).
-- **AAclust.select_scales**: Wrapper around :meth:`~aaanalysis.AAclust.fit` that returns the
+- :meth:`~aaanalysis.AAclust.select_scales`: Wrapper around :meth:`~aaanalysis.AAclust.fit` that returns the
   redundancy-reduced scale subset (one medoid per cluster) directly, ready for :class:`~aaanalysis.CPP`.
-- **AAclust.select_proteins**: Protein-level redundancy reduction over a per-protein
+- :meth:`~aaanalysis.AAclust.select_proteins`: Protein-level redundancy reduction over a per-protein
   feature matrix ``X`` — clusters proteins, selects one medoid per cluster, annotates
   ``df_seq`` with ``cluster`` / ``is_representative`` / ``dist_to_rep`` — the numerical
   counterpart to :func:`~aaanalysis.filter_seq`.
@@ -99,7 +99,7 @@ Added
   exact two-fit estimate (~2x faster than the threshold default on the same cell), ``5`` adds
   light Monte-Carlo averaging, and the mean converges (run-to-run spread below ~5%) around
   ``n_rounds ≈ 15–20``; a fixed ``random_state`` keeps every run reproducible.
-- **CPPStructurePlot** (``[pro]``): Paints per-residue CPP / CPP-SHAP feature impact onto an
+- :class:`~aaanalysis.CPPStructurePlot` (``[pro]``): Paints per-residue CPP / CPP-SHAP feature impact onto an
   interactive 3D protein structure, rendered with `py3Dmol <https://pypi.org/project/py3Dmol/>`_
   (no matplotlib structure fallback — the cartoon is always a real 3D view). ``map_structure(
   df_feat, pdb=...)`` (or ``uniprot=...`` to auto-fetch the AlphaFold model) returns a
@@ -134,10 +134,10 @@ Added
 
 **Sequence Analysis**
 
-- **AAWindowSampler**: Samples fixed-length sequence windows for PU-learning and
+- :class:`~aaanalysis.AAWindowSampler`: Samples fixed-length sequence windows for PU-learning and
   hard-negative-mining workflows (``sample_same_protein``, ``sample_different_protein``,
   ``sample_motif_matched``, ``sample_synthetic``).
-- **scan_motif** (``[pro]``): Scans candidate proteins for statistically significant PWM
+- :func:`~aaanalysis.scan_motif` (``[pro]``): Scans candidate proteins for statistically significant PWM
   occurrences via MEME/FIMO, complementing the pure-Python
   :meth:`~aaanalysis.AAWindowSampler.sample_motif_matched` sampler.
 
@@ -170,26 +170,26 @@ Added
   object with ``predict_proba``) makes ``scan`` / ``suggest`` / ``mutate`` report
   ``delta_pred`` (the prediction-score shift in percentage points) and ``suggest`` rank
   by it. Without a model, :class:`~aaanalysis.SeqMut` stays the deterministic, model-free ΔCPP tool.
-- **SeqMut.combine**: Scores combined multi-mutation variants — several point mutations
+- :meth:`~aaanalysis.SeqMut.combine`: Scores combined multi-mutation variants — several point mutations
   applied to one sequence and evaluated as a single design.
-- **SeqMutPlot**: ``mutation_landscape`` renders the ``delta_pred`` prediction-shift
+- :class:`~aaanalysis.SeqMutPlot`: ``mutation_landscape`` renders the ``delta_pred`` prediction-shift
   mutation-scan heatmap; new ``variant_impact`` (ranked-variant bar) and ``epistasis``
   (pairwise non-additivity) plots.
 
 **Metrics**
 
-- **comp_per_protein_ap**: Per-protein average precision for site-localization ranking,
+- :func:`~aaanalysis.comp_per_protein_ap`: Per-protein average precision for site-localization ranking,
   with an optional ``tolerance=±k`` variant for positional jitter.
-- **comp_detection_metrics**: Recall / precision / F1 / MCC at a fixed score threshold,
+- :func:`~aaanalysis.comp_detection_metrics`: Recall / precision / F1 / MCC at a fixed score threshold,
   pooled across per-residue predictions.
-- **comp_bootstrap_ci**: Seeded percentile confidence interval over a per-protein metric
+- :func:`~aaanalysis.comp_bootstrap_ci`: Seeded percentile confidence interval over a per-protein metric
   vector (returns ``{'mean', 'ci_low', 'ci_high'}``).
-- **comp_smooth_scores**: Peak-preserving (``max(smoothed, raw)``), NaN-aware smoothing
+- :func:`~aaanalysis.comp_smooth_scores`: Peak-preserving (``max(smoothed, raw)``), NaN-aware smoothing
   of per-residue score tracks.
 
 **Plotting**
 
-- **plot_rank**: Standalone per-protein max-score-vs-rank scatter with group coloring and
+- :func:`~aaanalysis.plot_rank`: Standalone per-protein max-score-vs-rank scatter with group coloring and
   optional threshold lines (pairs with the new ``aa.metrics`` functions).
 
 **Golden Pipelines**
@@ -274,7 +274,7 @@ Changed
   the hour-long, low-CPU CPP runs of ``≤1.0.3`` — users on those versions should upgrade.
   When the compiled extension is missing and CPP falls back to the pure-Python kernel,
   the one-time notice is now a ``UserWarning`` (visible even with ``verbose=False``).
-- **SequenceFeature.feature_matrix**: New ``batch=`` parameter accepts a list of
+- :meth:`~aaanalysis.SequenceFeature.feature_matrix`: New ``batch=`` parameter accepts a list of
   ``df_parts`` built in a single Cython pass (faster for many small part tables).
 - **get_df_parts / NumericalFeature.get_parts**: New ``pos``-anchor mode (``tmd_len=``)
   explodes each 1-based anchor into one ``jmd_n`` / ``tmd`` / ``jmd_c`` row
@@ -283,7 +283,7 @@ Changed
 - **n_jobs**: Unified parallelism convention across :class:`~aaanalysis.CPP` / :class:`~aaanalysis.CPPGrid` (``1`` serial,
   ``-1`` all cores, ``N>1`` exactly N, ``None`` optimized), with an ``options['n_jobs']``
   global override.
-- **CPPPlot.feature**: Titles the plot with the feature's human-readable description,
+- :meth:`~aaanalysis.CPPPlot.feature`: Titles the plot with the feature's human-readable description,
   line-wrapped via ``show_title`` (default ``True``) and ``title_wrap_width`` (default
   ``45``).
 - **load_dataset verbose reporting**: New ``verbose`` parameter (default ``False``)
@@ -295,7 +295,7 @@ Changed
   docstrings users read (no behavior change) — the ``get_parts`` → ``run_num`` call order
   and ``[0, 1]`` normalization contract, and a ``[pro]`` install marker on the pro
   classes / functions.
-- **dPULearn.fit**: Flexible label handling via ``label_pos`` / ``label_unl`` /
+- :meth:`~aaanalysis.dPULearn.fit`: Flexible label handling via ``label_pos`` / ``label_unl`` /
   ``label_neg`` markers (only unlabeled samples are candidates; pre-labeled negatives are
   kept and never re-selected). The negative count is set by exactly one of ``n_neg`` (the
   total wanted) or ``n_unl_to_neg`` (drawn directly from the unlabeled pool); output uses
@@ -329,8 +329,8 @@ v1.0.3 (2026-04-06)
 
 Added
 ~~~~~
-- **AAlogo**: New class for amino acid logo visualization.
-- **AAlogoPlot**: New plotting class for AAlogo visualizations.
+- :class:`~aaanalysis.AAlogo`: New class for amino acid logo visualization.
+- :class:`~aaanalysis.AAlogoPlot`: New plotting class for AAlogo visualizations.
 
 Changed
 ~~~~~~~
@@ -364,7 +364,7 @@ Improved
 
 Fixed
 ~~~~~
-- **StructurePreprocessor.fetch_alphafold**: Resolve download URLs through the
+- :meth:`~aaanalysis.StructurePreprocessor.fetch_alphafold`: Resolve download URLs through the
   AlphaFold API instead of a hardcoded file version. AlphaFold DB renamed its
   files ``v4`` → ``v6``, which had silently broken every fetch (all entries
   returned ``alphafold_ok=False``); the fetch now tracks the current version
@@ -410,14 +410,14 @@ v1.0.0 (2024-07-01)
 
 Added
 ~~~~~
-- **SequencePreprocessor**: A utility data preprocessing class (data handling module).
-- **comp_seq_sim**: A function for computing pairwise sequence similarity (data handling module).
-- **filter_seq**: A function for redundancy-reduction of sequences (data handling module).
+- :class:`~aaanalysis.SequencePreprocessor`: A utility data preprocessing class (data handling module).
+- :func:`~aaanalysis.comp_seq_sim`: A function for computing pairwise sequence similarity (data handling module).
+- :func:`~aaanalysis.filter_seq`: A function for redundancy-reduction of sequences (data handling module).
 - **options**: Juxta Middle Domain (JMD) length can now be globally adjusted using the **jmd_n/c_len** options.
 
 Changed
 ~~~~~~~
-- **ShapModel**: The **ShapExplainer** class has been renamed to **ShapModel** for consistency with the **TreeModel**
+- :class:`~aaanalysis.ShapModel`: The **ShapExplainer** class has been renamed to :class:`~aaanalysis.ShapModel` for consistency with the :class:`~aaanalysis.TreeModel`
   class and to avoid confusion with the ShapExplainer models from the
   `SHAP <https://shap.readthedocs.io/en/latest/index.html>`_ package.
 - **Dependencies**: Biopython is now a required dependency only for the **aaanalysis[pro]** version.
@@ -449,7 +449,7 @@ Changed
 
 Fixed
 ~~~~~
-- **Multiprocessing**: Replaced native ``multiprocessing`` with the ``joblib`` module for **CPP** and
+- **Multiprocessing**: Replaced native ``multiprocessing`` with the ``joblib`` module for :class:`~aaanalysis.CPP` and
   **internal feature matrix** creation. This change prevents a ``RuntimeError`` that occurred when the main function
   is not explicitly used.
 
@@ -485,11 +485,11 @@ v0.1.3 (2024-02-09)
 
 Added
 ~~~~~
-- **TreeModel**: Wrapper class of tree-based models for Monte Carlo estimates of predictions and feature importance.
+- :class:`~aaanalysis.TreeModel`: Wrapper class of tree-based models for Monte Carlo estimates of predictions and feature importance.
   `See TreeModel <https://aaanalysis.readthedocs.io/en/latest/generated/aaanalysis.TreeModel.html>`_.
 - **ShapExplainer**: A wrapper for SHAP (SHapley Additive exPlanations) explainers to obtain Monte Carlo estimates for
   feature impact. `See ShapExplainer <https://aaanalysis.readthedocs.io/en/latest/generated/aaanalysis.ShapExplainer.html>`_.
-- **NumericalFeature**: Utility feature engineering class to process and filter numerical data structures.
+- :class:`~aaanalysis.NumericalFeature`: Utility feature engineering class to process and filter numerical data structures.
   `See NumericalFeature <https://aaanalysis.readthedocs.io/en/latest/generated/aaanalysis.NumericalFeature.html>`_.
 - **Load_feature**: Utility function to load feature sets for protein benchmarking datasets.
   `See load_features <https://aaanalysis.readthedocs.io/en/latest/generated/aaanalysis.load_features.html>`_.
@@ -509,11 +509,11 @@ v0.1.2 (2023-11-06)
 
 Added
 ~~~~~
-- **CPPPlot**: Plotting class for CPP features.
+- :class:`~aaanalysis.CPPPlot`: Plotting class for CPP features.
   `See CPPPlot <https://aaanalysis.readthedocs.io/en/latest/generated/aaanalysis.CPPPlot.html>`_.
-- **dPULearnPlot**: Plotting class for results of negative identifications by dPULearn.
+- :class:`~aaanalysis.dPULearnPlot`: Plotting class for results of negative identifications by dPULearn.
   `See dPULearnPlot <https://aaanalysis.readthedocs.io/en/latest/generated/aaanalysis.dPULearnPlot.html>`_.
-- **AAclustPlot**: Plotting class for AAclust clustering results.
+- :class:`~aaanalysis.AAclustPlot`: Plotting class for AAclust clustering results.
   `See AAclustPlot <https://aaanalysis.readthedocs.io/en/latest/generated/aaanalysis.AAclustPlot.html>`_.
 - **Options**: Set system-level settings by a dictionary-like interface (similar to pandas).
   `See options <https://aaanalysis.readthedocs.io/en/latest/generated/aaanalysis.options.html>`_.

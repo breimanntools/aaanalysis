@@ -3,7 +3,7 @@
 CPP: Identifying Physicochemical Signatures
 ===========================================
 
-The central algorithm of the AAanalysis framework is Comparative Physicochemical Profiling (**CPP**), a sequence-based
+The central algorithm of the AAanalysis framework is Comparative Physicochemical Profiling (:class:`~aaanalysis.CPP`), a sequence-based
 feature engineering algorithm for interpretable protein prediction [Breimann25]_. CPP enables the identification
 of physicochemical signatures underlying biological recognition processes. It thereby extends rational protein
 biology beyond mere sequence motifs.
@@ -47,5 +47,5 @@ CPP uses by default 120 continuous (segments) and 210 discontinuous (patterns an
    Overview of **Split** classification and their count using default CPP settings, from [Breimann25]_.
 
 Scales can be chosen from **AAontology**, our two-level scale classification, based on their category or subcategory
-classification. To then select a redundancy-reduced scale set, AAanalysis provides the **AAclust** clustering wrapper.
+classification. To then select a redundancy-reduced scale set, AAanalysis provides the :class:`~aaanalysis.AAclust` clustering wrapper.
 
