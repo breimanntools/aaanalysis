@@ -1,9 +1,9 @@
 """
 This script tests the dPULearn.mine_negatives() convenience method (issue #308).
 
-mine_negatives is additive sugar over dPULearn.fit: it stacks X_pos over X_unlabelled,
+mine_negatives is additive sugar over dPULearn.fit: it stacks X_pos over X_unlabeled,
 builds a 1 (positive) / 2 (unlabeled) label vector, fits, and returns the boolean mask of
-identified reliable negatives over the rows of X_unlabelled. The key contract is that the
+identified reliable negatives over the rows of X_unlabeled. The key contract is that the
 mask equals the manual ``labels_[len(X_pos):] == 0`` result exactly, and that the existing
 ``fit`` path stays byte-identical (no algorithm change).
 """
@@ -34,10 +34,10 @@ def _manual_mask(X_pos, X_unl, random_state=42, **fit_kwargs):
 class TestMineNegatives:
     """Test dPULearn.mine_negatives() for each parameter individually."""
 
-    def test_returns_boolean_mask_over_unlabelled(self):
+    def test_returns_boolean_mask_over_unlabeled(self):
         X_pos, X_unl = _make_data()
         dpul = aa.dPULearn(random_state=42, verbose=False)
-        mask = dpul.mine_negatives(X_pos=X_pos, X_unlabelled=X_unl, n_unl_to_neg=10)
+        mask = dpul.mine_negatives(X_pos=X_pos, X_unlabeled=X_unl, n_unl_to_neg=10)
         assert isinstance(mask, np.ndarray)
         assert mask.dtype == bool
         assert mask.shape == (X_unl.shape[0],)
@@ -46,13 +46,13 @@ class TestMineNegatives:
     def test_X_pos_parameter(self):
         X_pos, X_unl = _make_data(n_pos=30)
         dpul = aa.dPULearn(random_state=42, verbose=False)
-        mask = dpul.mine_negatives(X_pos=X_pos, X_unlabelled=X_unl, n_unl_to_neg=5)
+        mask = dpul.mine_negatives(X_pos=X_pos, X_unlabeled=X_unl, n_unl_to_neg=5)
         assert mask.shape[0] == X_unl.shape[0]
 
-    def test_X_unlabelled_parameter(self):
+    def test_X_unlabeled_parameter(self):
         X_pos, X_unl = _make_data(n_unl=70)
         dpul = aa.dPULearn(random_state=42, verbose=False)
-        mask = dpul.mine_negatives(X_pos=X_pos, X_unlabelled=X_unl, n_unl_to_neg=12)
+        mask = dpul.mine_negatives(X_pos=X_pos, X_unlabeled=X_unl, n_unl_to_neg=12)
         assert mask.shape[0] == 70
         assert mask.sum() == 12
 
@@ -60,20 +60,20 @@ class TestMineNegatives:
         X_pos, X_unl = _make_data()
         for n in (1, 5, 25):
             dpul = aa.dPULearn(random_state=42, verbose=False)
-            mask = dpul.mine_negatives(X_pos=X_pos, X_unlabelled=X_unl, n_unl_to_neg=n)
+            mask = dpul.mine_negatives(X_pos=X_pos, X_unlabeled=X_unl, n_unl_to_neg=n)
             assert mask.sum() == n
 
     def test_n_neg_parameter(self):
         X_pos, X_unl = _make_data()
         dpul = aa.dPULearn(random_state=42, verbose=False)
-        mask = dpul.mine_negatives(X_pos=X_pos, X_unlabelled=X_unl, n_neg=8)
+        mask = dpul.mine_negatives(X_pos=X_pos, X_unlabeled=X_unl, n_neg=8)
         assert mask.sum() == 8
 
     def test_metric_parameter(self):
         X_pos, X_unl = _make_data()
         for metric in ("euclidean", "manhattan", "cosine"):
             dpul = aa.dPULearn(random_state=42, verbose=False)
-            mask = dpul.mine_negatives(X_pos=X_pos, X_unlabelled=X_unl,
+            mask = dpul.mine_negatives(X_pos=X_pos, X_unlabeled=X_unl,
                                        n_unl_to_neg=10, metric=metric)
             assert mask.sum() == 10
 
@@ -81,7 +81,7 @@ class TestMineNegatives:
         X_pos, X_unl = _make_data()
         for n_components in (2, 3, 0.5):
             dpul = aa.dPULearn(random_state=42, verbose=False)
-            mask = dpul.mine_negatives(X_pos=X_pos, X_unlabelled=X_unl,
+            mask = dpul.mine_negatives(X_pos=X_pos, X_unlabeled=X_unl,
                                        n_unl_to_neg=10, n_components=n_components)
             assert mask.sum() == 10
 
@@ -89,7 +89,7 @@ class TestMineNegatives:
         """After mining, labels_ / df_pu_ are set so the plotting class works."""
         X_pos, X_unl = _make_data()
         dpul = aa.dPULearn(random_state=42, verbose=False)
-        dpul.mine_negatives(X_pos=X_pos, X_unlabelled=X_unl, n_unl_to_neg=10)
+        dpul.mine_negatives(X_pos=X_pos, X_unlabeled=X_unl, n_unl_to_neg=10)
         assert dpul.labels_ is not None
         assert dpul.labels_.shape[0] == X_pos.shape[0] + X_unl.shape[0]
         assert dpul.df_pu_ is not None
@@ -104,7 +104,7 @@ class TestMineNegativesEquivalence:
         X_pos, X_unl = _make_data(seed=seed)
         manual_mask, dpul_m = _manual_mask(X_pos, X_unl, n_unl_to_neg=10)
         dpul = aa.dPULearn(random_state=42, verbose=False)
-        mask = dpul.mine_negatives(X_pos=X_pos, X_unlabelled=X_unl, n_unl_to_neg=10)
+        mask = dpul.mine_negatives(X_pos=X_pos, X_unlabeled=X_unl, n_unl_to_neg=10)
         assert np.array_equal(mask, manual_mask)
         assert np.array_equal(np.asarray(dpul.labels_), np.asarray(dpul_m.labels_))
 
@@ -112,7 +112,7 @@ class TestMineNegativesEquivalence:
         X_pos, X_unl = _make_data(seed=3)
         manual_mask, _ = _manual_mask(X_pos, X_unl, n_unl_to_neg=8, metric="cosine")
         dpul = aa.dPULearn(random_state=42, verbose=False)
-        mask = dpul.mine_negatives(X_pos=X_pos, X_unlabelled=X_unl,
+        mask = dpul.mine_negatives(X_pos=X_pos, X_unlabeled=X_unl,
                                    n_unl_to_neg=8, metric="cosine")
         assert np.array_equal(mask, manual_mask)
 
@@ -122,15 +122,15 @@ class TestMineNegativesEquivalence:
         X_pos, X_unl = _make_data(n_pos=1, seed=5)
         manual_mask, _ = _manual_mask(X_pos, X_unl, n_unl_to_neg=6)
         dpul = aa.dPULearn(random_state=42, verbose=False)
-        mask = dpul.mine_negatives(X_pos=X_pos, X_unlabelled=X_unl, n_unl_to_neg=6)
+        mask = dpul.mine_negatives(X_pos=X_pos, X_unlabeled=X_unl, n_unl_to_neg=6)
         assert np.array_equal(mask, manual_mask)
 
     def test_n_neg_equivalent_to_n_unl_to_neg_without_pre_neg(self):
         X_pos, X_unl = _make_data()
         dpul_a = aa.dPULearn(random_state=42, verbose=False)
-        mask_a = dpul_a.mine_negatives(X_pos=X_pos, X_unlabelled=X_unl, n_unl_to_neg=10)
+        mask_a = dpul_a.mine_negatives(X_pos=X_pos, X_unlabeled=X_unl, n_unl_to_neg=10)
         dpul_b = aa.dPULearn(random_state=42, verbose=False)
-        mask_b = dpul_b.mine_negatives(X_pos=X_pos, X_unlabelled=X_unl, n_neg=10)
+        mask_b = dpul_b.mine_negatives(X_pos=X_pos, X_unlabeled=X_unl, n_neg=10)
         assert np.array_equal(mask_a, mask_b)
 
 
@@ -143,37 +143,37 @@ class TestMineNegativesNegative:
         _, X_unl = _make_data(n_features=6)
         dpul = aa.dPULearn(random_state=42, verbose=False)
         with pytest.raises(ValueError):
-            dpul.mine_negatives(X_pos=X_pos, X_unlabelled=X_unl, n_unl_to_neg=5)
+            dpul.mine_negatives(X_pos=X_pos, X_unlabeled=X_unl, n_unl_to_neg=5)
 
     def test_both_counts_given(self):
         X_pos, X_unl = _make_data()
         dpul = aa.dPULearn(random_state=42, verbose=False)
         with pytest.raises(ValueError):
-            dpul.mine_negatives(X_pos=X_pos, X_unlabelled=X_unl, n_neg=5, n_unl_to_neg=5)
+            dpul.mine_negatives(X_pos=X_pos, X_unlabeled=X_unl, n_neg=5, n_unl_to_neg=5)
 
     def test_neither_count_given(self):
         X_pos, X_unl = _make_data()
         dpul = aa.dPULearn(random_state=42, verbose=False)
         with pytest.raises(ValueError):
-            dpul.mine_negatives(X_pos=X_pos, X_unlabelled=X_unl)
+            dpul.mine_negatives(X_pos=X_pos, X_unlabeled=X_unl)
 
     def test_too_many_negatives_requested(self):
         X_pos, X_unl = _make_data(n_unl=10)
         dpul = aa.dPULearn(random_state=42, verbose=False)
         with pytest.raises(ValueError):
-            dpul.mine_negatives(X_pos=X_pos, X_unlabelled=X_unl, n_unl_to_neg=999)
+            dpul.mine_negatives(X_pos=X_pos, X_unlabeled=X_unl, n_unl_to_neg=999)
 
     def test_X_pos_none(self):
         _, X_unl = _make_data()
         dpul = aa.dPULearn(random_state=42, verbose=False)
         with pytest.raises(ValueError):
-            dpul.mine_negatives(X_pos=None, X_unlabelled=X_unl, n_unl_to_neg=5)
+            dpul.mine_negatives(X_pos=None, X_unlabeled=X_unl, n_unl_to_neg=5)
 
-    def test_X_unlabelled_none(self):
+    def test_X_unlabeled_none(self):
         X_pos, _ = _make_data()
         dpul = aa.dPULearn(random_state=42, verbose=False)
         with pytest.raises(ValueError):
-            dpul.mine_negatives(X_pos=X_pos, X_unlabelled=None, n_unl_to_neg=5)
+            dpul.mine_negatives(X_pos=X_pos, X_unlabeled=None, n_unl_to_neg=5)
 
 
 # Existing-fit byte-identical regression

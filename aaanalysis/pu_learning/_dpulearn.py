@@ -133,13 +133,13 @@ def check_match_X_X_neg(X=None, X_neg=None) -> None:
         raise ValueError(f"'n_features' does not match between 'X' (n={n_features}) and 'X_neg' (n={n_features_neg})")
 
 
-def check_match_X_pos_X_unlabelled(X_pos=None, X_unlabelled=None) -> None:
+def check_match_X_pos_X_unlabeled(X_pos=None, X_unlabeled=None) -> None:
     """Check that positive and unlabeled feature matrices share the same feature dimension."""
     n_features_pos = X_pos.shape[1]
-    n_features_unl = X_unlabelled.shape[1]
+    n_features_unl = X_unlabeled.shape[1]
     if n_features_pos != n_features_unl:
         raise ValueError(f"'n_features' does not match between 'X_pos' (n={n_features_pos}) and "
-                         f"'X_unlabelled' (n={n_features_unl})")
+                         f"'X_unlabeled' (n={n_features_unl})")
 
 
 # II Main Functions
@@ -369,7 +369,7 @@ class dPULearn(Wrapper):
 
     def mine_negatives(self,
                        X_pos: ut.ArrayLike2D,
-                       X_unlabelled: ut.ArrayLike2D,
+                       X_unlabeled: ut.ArrayLike2D,
                        n_neg: Optional[int] = None,
                        n_unl_to_neg: Optional[int] = None,
                        metric: Optional[Literal["euclidean", "manhattan", "cosine"]] = None,
@@ -379,15 +379,15 @@ class dPULearn(Wrapper):
         Mine reliable negatives from an unlabeled pool given the positives, in one call.
 
         Convenience wrapper around :meth:`dPULearn.fit` for the common positive/unlabeled
-        setup: instead of stacking ``X_pos`` and ``X_unlabelled`` by hand, building a
+        setup: instead of stacking ``X_pos`` and ``X_unlabeled`` by hand, building a
         ``1`` (positive) / ``2`` (unlabeled) label vector, fitting, and slicing the mined
         rows back out by index, pass the two feature matrices separately and receive a
-        **boolean mask over the rows of** ``X_unlabelled`` flagging the identified reliable
+        **boolean mask over the rows of** ``X_unlabeled`` flagging the identified reliable
         negatives. The mask equals ``labels_[len(X_pos):] == 0`` from the manual stacking
         path exactly.
 
         After the call the instance is fitted: :attr:`dPULearn.labels_` (over the stacked
-        ``X_pos`` then ``X_unlabelled``) and :attr:`dPULearn.df_pu_` are set, so the
+        ``X_pos`` then ``X_unlabeled``) and :attr:`dPULearn.df_pu_` are set, so the
         :class:`dPULearnPlot` methods work as usual.
 
         .. versionadded:: 1.1.0
@@ -396,7 +396,7 @@ class dPULearn(Wrapper):
         ----------
         X_pos : array-like, shape (n_pos, n_features)
             Feature matrix of the positive samples.
-        X_unlabelled : array-like, shape (n_unl, n_features)
+        X_unlabeled : array-like, shape (n_unl, n_features)
             Feature matrix of the unlabeled samples (the candidate pool). Must have the
             same number of features as ``X_pos``.
         n_neg : int, optional
@@ -416,8 +416,8 @@ class dPULearn(Wrapper):
         Returns
         -------
         mask_neg : array-like, shape (n_unl,)
-            Boolean mask over the rows of ``X_unlabelled``: ``True`` marks an identified
-            reliable negative. ``X_unlabelled[mask_neg]`` are the mined negatives.
+            Boolean mask over the rows of ``X_unlabeled``: ``True`` marks an identified
+            reliable negative. ``X_unlabeled[mask_neg]`` are the mined negatives.
 
         Notes
         -----
@@ -438,12 +438,12 @@ class dPULearn(Wrapper):
         # 'fit' below, so per-matrix validation only coerces + checks the feature dimension;
         # this keeps mine_negatives accepting exactly what the manual stacking path accepts)
         X_pos = ut.check_X(X=X_pos, X_name="X_pos", min_n_samples=1)
-        X_unlabelled = ut.check_X(X=X_unlabelled, X_name="X_unlabelled", min_n_samples=1)
-        check_match_X_pos_X_unlabelled(X_pos=X_pos, X_unlabelled=X_unlabelled)
+        X_unlabeled = ut.check_X(X=X_unlabeled, X_name="X_unlabeled", min_n_samples=1)
+        check_match_X_pos_X_unlabeled(X_pos=X_pos, X_unlabeled=X_unlabeled)
         # Stack positives over the unlabeled pool and fit with the package PU markers
         n_pos = X_pos.shape[0]
-        X = np.vstack([X_pos, X_unlabelled])
-        labels = np.array([1] * n_pos + [2] * X_unlabelled.shape[0])
+        X = np.vstack([X_pos, X_unlabeled])
+        labels = np.array([1] * n_pos + [2] * X_unlabeled.shape[0])
         self.fit(X=X, labels=labels, label_pos=1, label_unl=2,
                  n_neg=n_neg, n_unl_to_neg=n_unl_to_neg,
                  metric=metric, n_components=n_components)

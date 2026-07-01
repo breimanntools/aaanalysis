@@ -222,7 +222,7 @@ CAPABILITY_FAMILIES = [
     {"name": "Modeling & Explainability", "tag": "PU · classify · SHAP",
      "rows": [
          ("Train with positives + unlabeled data", "dPULearn().fit(X, labels)  [Wrapper]", None),
-         ("Mine reliable negatives (mask)", "dPULearn().mine_negatives(X_pos, X_unlabelled) → mask", None, "v1.1"),
+         ("Mine reliable negatives (mask)", "dPULearn().mine_negatives(X_pos, X_unlabeled) → mask", None, "v1.1"),
          ("Train + RFE + MC importance", "TreeModel().fit(X, labels)  [Wrapper]", None),
          ("Per-feature / sample SHAP impact", "ShapModel().fit(X, labels)  [pro]", None),
      ]},
