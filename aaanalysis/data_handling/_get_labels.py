@@ -62,8 +62,8 @@ def get_labels(df: pd.DataFrame,
     .. include:: examples/get_labels.rst
     """
     # Check input
-    ut.check_df(name="df", df=df, cols_required=col_label)
     ut.check_str(name="col_label", val=col_label, accept_none=False)
+    ut.check_df(name="df", df=df, cols_required=col_label)
     check_match_df_positive_label(df=df, col_label=col_label, positive_label=positive_label)
     # Derive binary int label vector
     labels = (df[col_label] == positive_label).astype(int).to_numpy()
