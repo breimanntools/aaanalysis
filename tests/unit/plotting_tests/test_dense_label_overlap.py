@@ -125,6 +125,33 @@ class TestFeatureMapLabelOverlap:
         assert min(sizes) >= 5.0, f"row-label font {min(sizes)}pt < 5pt floor"
 
 
+class TestHeatmapLabelOverlap:
+    """The same row-label gate applies to standalone heatmap (shared plot path)."""
+
+    def setup_method(self):
+        aa.options["verbose"] = False
+
+    def teardown_method(self):
+        aa.options["verbose"] = "off"
+        plt.close("all")
+
+    @pytest.mark.parametrize("n_subcat", [20, 74])
+    def test_no_row_label_overlap(self, n_subcat):
+        df_feat = make_dense_df_feat(n_subcat)
+        subcats = list(dict.fromkeys(df_feat["subcategory"]))
+        fig, ax = aa.CPPPlot().heatmap(df_feat)
+        assert get_label_overlaps(fig, subcats) == []
+
+
+class TestOptionIsolation:
+    """The autouse reset fixture must clear auto_font between tests (no leakage)."""
+
+    def test_auto_font_defaults_false_each_test(self):
+        # If a prior test left auto_font=True and the reset fixture missed it,
+        # this would fail. Guards that 'auto_font' is in the reset defaults.
+        assert aa.options["auto_font"] is False
+
+
 class TestAutoFontFeatureMap:
     """The global auto_font option: off = unchanged size; on = grid-derived size."""
 
