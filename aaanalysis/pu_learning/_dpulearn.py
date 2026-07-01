@@ -435,6 +435,8 @@ class dPULearn(Wrapper):
         X_pos = ut.check_X(X=X_pos, X_name="X_pos", min_n_samples=1)
         X_unlabeled = ut.check_X(X=X_unlabeled, X_name="X_unlabeled", min_n_samples=1)
         check_match_X_pos_X_unlabeled(X_pos=X_pos, X_unlabeled=X_unlabeled)
+        # Validate n_neg here so the message names 'n_neg' (fit sees it as 'n_unl_to_neg')
+        ut.check_number_range(name="n_neg", val=n_neg, min_val=1, just_int=True)
         # Stack positives over the unlabeled pool and fit with the package PU markers
         n_pos = X_pos.shape[0]
         X = np.vstack([X_pos, X_unlabeled])

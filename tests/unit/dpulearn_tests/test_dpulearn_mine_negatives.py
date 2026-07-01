@@ -134,7 +134,8 @@ class TestMineNegativesNegative:
     def test_n_neg_below_one(self):
         X_pos, X_unl = _make_data()
         dpul = aa.dPULearn(random_state=42, verbose=False)
-        with pytest.raises(ValueError):
+        # The error must name 'n_neg' (not the internal 'n_unl_to_neg' fit sees).
+        with pytest.raises(ValueError, match="n_neg"):
             dpul.mine_negatives(X_pos=X_pos, X_unlabeled=X_unl, n_neg=0)
 
     def test_too_many_negatives_requested(self):
