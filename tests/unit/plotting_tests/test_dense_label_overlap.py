@@ -261,6 +261,26 @@ class TestAutoFontFeatureMap:
         fig, ax = aa.CPPPlot().feature_map(df_feat, figsize=(10, 6))
         assert tuple(round(float(v), 2) for v in fig.get_size_inches()) == (10.0, 6.0)
 
+    def test_long_sequence_widens_figure(self):
+        # Under auto_font, a long TMD sequence must widen the figure more than a
+        # short one so residue letters stay legible.
+        df = make_dense_df_feat(8)
+        aa.options["auto_font"] = True
+
+        def width(tmd_len):
+            df2 = df.copy()
+            df2["feature"] = [f"TMD-Segment(1,1)-{f.split('-')[-1]}" for f in df2["feature"]]
+            df2["positions"] = ",".join(str(p) for p in range(11, 11 + tmd_len))
+            seq = ("ACDEFGHIKLMNPQRSTVWY" * 10)
+            fig, ax = aa.CPPPlot().feature_map(
+                df2, tmd_len=tmd_len, jmd_n_seq="A" * 10, jmd_c_seq="K" * 10,
+                tmd_seq=seq[:tmd_len])
+            w = float(fig.get_size_inches()[0])
+            plt.close(fig)
+            return w
+
+        assert width(100) > width(10)
+
     def test_figsize_none_is_auto_derived_when_on(self):
         # figsize=None with auto_font on must not crash and should derive a size.
         df_feat = make_dense_df_feat(74)

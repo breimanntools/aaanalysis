@@ -135,15 +135,23 @@ def _seqs(tmd_len):
 
 
 def _seq_fig(method, tmd_len, shap):
-    """feature_map/heatmap with a TMD-JMD sequence of length tmd_len; SHAP or plain."""
+    """feature_map/heatmap with a TMD-JMD sequence of length tmd_len; SHAP or plain.
+
+    Rendered under auto_font (no explicit figsize) so long sequences auto-widen the
+    figure and keep the residue letters legible.
+    """
     df = _seq_df_feat(tmd_len)
     cpp = aa.CPPPlot(df_scales=aa.load_scales())
-    kws = dict(tmd_len=tmd_len, figsize=(8, 8), **_seqs(tmd_len))
-    if shap:
-        kws.update(shap_plot=True, col_val="feat_impact_test")
-        if method == "feature_map":  # only feature_map has the importance bars needing col_imp
-            kws["col_imp"] = "feat_impact_test"
-    return getattr(cpp, method)(df_feat=df, **kws)[0]
+    aa.options["auto_font"] = True
+    try:
+        kws = dict(tmd_len=tmd_len, **_seqs(tmd_len))
+        if shap:
+            kws.update(shap_plot=True, col_val="feat_impact_test")
+            if method == "feature_map":  # only feature_map has the importance bars needing col_imp
+                kws["col_imp"] = "feat_impact_test"
+        return getattr(cpp, method)(df_feat=df, **kws)[0]
+    finally:
+        aa.options["auto_font"] = False
 
 
 # (name, tier, render_fn(scale_label)) -> Figure. render_fn ignores scale for simple plots.

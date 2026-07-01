@@ -207,6 +207,31 @@ def add_feat_importance_legend(ax=None,
 #: Constant grid aspect (height : width) of the feature-map heatmap under ``auto_font``.
 FEATURE_MAP_GRID_ASPECT = 1.15
 
+#: Minimum on-figure width (inches) per residue for a shown TMD-JMD sequence, so the
+#: residue letters stay legible; for long sequences the figure grows wider (and drops
+#: the constant grid aspect) instead of shrinking the letters toward nothing.
+SEQ_MIN_RESIDUE_WIDTH_IN = 0.12
+#: Non-grid width (inches) reserved for row labels, colorbar, legends, importance bars.
+SEQ_WIDTH_OVERHEAD_IN = 3.0
+#: Upper bound (inches) on the auto-widened figure for very long sequences.
+SEQ_MAX_WIDTH_IN = 30.0
+
+
+def adjust_figsize_for_sequence(figsize, n_positions):
+    """Widen the figure so a shown TMD-JMD sequence keeps legible residue letters.
+
+    Returns ``(figsize, keep_box_aspect)``. When the sequence is long enough that the
+    residue columns would fall below ``SEQ_MIN_RESIDUE_WIDTH_IN`` at the given width,
+    the figure width grows to restore that per-residue width (capped at
+    ``SEQ_MAX_WIDTH_IN``) and the constant grid aspect is dropped (it would otherwise
+    squeeze the wide sequence back into a square). Short sequences are unchanged and
+    keep the constant aspect.
+    """
+    min_width = n_positions * SEQ_MIN_RESIDUE_WIDTH_IN + SEQ_WIDTH_OVERHEAD_IN
+    if min_width > figsize[0]:
+        return (round(min(min_width, SEQ_MAX_WIDTH_IN), 2), figsize[1]), False
+    return figsize, True
+
 
 def derive_feature_map_figsize(n_subcat=None, n_positions=None, max_label_len=None):
     """Derive a feature-map figure size for ``auto_font`` with a consistent grid shape.
