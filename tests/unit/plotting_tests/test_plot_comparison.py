@@ -53,16 +53,16 @@ class TestPlotComparison:
 
     def test_baseline_label_default_text(self):
         fig, ax = plot_comparison(df_eval=_df(), baseline=50)
-        assert any("chance" in t.get_text() for t in ax.texts)
+        assert any("chance" in t.get_text() for t in ax.get_legend().get_texts())
 
     def test_baseline_label_custom(self):
         fig, ax = plot_comparison(df_eval=_df(), baseline=50, baseline_label="random (50%)")
-        assert any("random (50%)" == t.get_text() for t in ax.texts)
+        assert any("random (50%)" == t.get_text() for t in ax.get_legend().get_texts())
 
-    def test_baseline_label_empty_suppresses_text(self):
+    def test_baseline_label_empty_suppresses_legend_entry(self):
         fig, ax = plot_comparison(df_eval=_df(), baseline=50, baseline_label="")
-        # 6 value labels, no baseline text
-        assert len(ax.texts) == 6
+        # Only the groups appear in the legend, no baseline entry.
+        assert [t.get_text() for t in ax.get_legend().get_texts()] == ["Scale-based", "CPP"]
 
     def test_annotate_true_writes_value_labels(self):
         fig, ax = plot_comparison(df_eval=_df(), annotate=True, baseline=None)
@@ -91,12 +91,12 @@ class TestPlotComparison:
         assert any(t.get_text() == "60.0" for t in ax.texts)
 
     def test_legend_labels_are_groups(self):
-        fig, ax = plot_comparison(df_eval=_df())
+        fig, ax = plot_comparison(df_eval=_df(), baseline=None)
         labels = [t.get_text() for t in ax.get_legend().get_texts()]
         assert set(labels) == {"Scale-based", "CPP"}
 
     def test_group_order_controls_bar_order(self):
-        fig, ax = plot_comparison(df_eval=_df(), group_order=["CPP", "Scale-based"])
+        fig, ax = plot_comparison(df_eval=_df(), baseline=None, group_order=["CPP", "Scale-based"])
         labels = [t.get_text() for t in ax.get_legend().get_texts()]
         assert labels == ["CPP", "Scale-based"]
 
@@ -144,7 +144,8 @@ class TestPlotComparison:
 
     def test_duplicate_group_order_deduped(self):
         # A repeated entry in the explicit order must not create a duplicate bar row.
-        fig, ax = plot_comparison(df_eval=_df(), group_order=["Scale-based", "Scale-based", "CPP"])
+        fig, ax = plot_comparison(df_eval=_df(), baseline=None,
+                                  group_order=["Scale-based", "Scale-based", "CPP"])
         assert len(ax.patches) == 6
         labels = [t.get_text() for t in ax.get_legend().get_texts()]
         assert labels == ["Scale-based", "CPP"]
@@ -171,6 +172,14 @@ class TestPlotComparison:
         fig, ax = plot_comparison(df_eval=_df(), bar_width=0.6, figsize=(8, 5),
                                   fontsize_annotations=8)
         assert len(ax.patches) == 6
+
+    def test_xtick_rotation_applied(self):
+        fig, ax = plot_comparison(df_eval=_df(), xtick_rotation=30)
+        assert all(t.get_rotation() == 30 for t in ax.get_xticklabels())
+
+    def test_xtick_rotation_default_horizontal(self):
+        fig, ax = plot_comparison(df_eval=_df())
+        assert all(t.get_rotation() == 0 for t in ax.get_xticklabels())
 
 
 class TestPlotComparisonErrors:
@@ -238,3 +247,7 @@ class TestPlotComparisonErrors:
         df["value"] = df["value"].astype(str)
         with pytest.raises(ValueError):
             plot_comparison(df_eval=df)
+
+    def test_bad_xtick_rotation_type_raises(self):
+        with pytest.raises(ValueError):
+            plot_comparison(df_eval=_df(), xtick_rotation="45")

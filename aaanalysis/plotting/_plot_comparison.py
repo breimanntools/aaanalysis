@@ -79,6 +79,7 @@ def plot_comparison(df_eval: pd.DataFrame,
                     title: Optional[str] = None,
                     ylim: Optional[Tuple[Union[int, float], Union[int, float]]] = None,
                     fontsize_annotations: Union[int, float] = 10,
+                    xtick_rotation: Union[int, float] = 0,
                     ) -> Tuple[Figure, Axes]:
     """
     Plot a grouped method x condition comparison barplot with value labels and a baseline line.
@@ -107,8 +108,9 @@ def plot_comparison(df_eval: pd.DataFrame,
     baseline : int or float, optional
         y-value of a dashed horizontal chance / baseline line. If ``None``, no line is drawn.
     baseline_label : str, optional
-        Text label for the baseline line. If ``None`` and ``baseline`` is set, a label
-        ``"chance (<baseline>)"`` is generated; pass ``""`` to draw the line without a label.
+        Legend label for the baseline line. If ``None`` and ``baseline`` is set, a label
+        ``"chance (<baseline>)"`` is generated; pass ``""`` to draw the line without a
+        legend entry. Placing it in the legend keeps it from overlapping the bars.
     annotate : bool, default=True
         If ``True``, write each bar's value above it.
     annotation_fmt : str, optional
@@ -139,6 +141,9 @@ def plot_comparison(df_eval: pd.DataFrame,
         bar / baseline to leave room for the value labels.
     fontsize_annotations : int or float, default=10
         Font size of the per-bar value labels.
+    xtick_rotation : int or float, default=0
+        Rotation (degrees) of the x-axis cluster tick labels; use e.g. ``30`` to keep
+        long ``condition`` names from overlapping. Rotated labels are right-aligned.
 
     Returns
     -------
@@ -186,6 +191,7 @@ def plot_comparison(df_eval: pd.DataFrame,
     ut.check_str(name="title", val=title, accept_none=True)
     ut.check_number_range(name="fontsize_annotations", val=fontsize_annotations, min_val=0,
                           just_int=False)
+    ut.check_number_val(name="xtick_rotation", val=xtick_rotation, just_int=False)
     if ylim is not None:
         ut.check_lim(name="ylim", val=ylim)
 
@@ -223,19 +229,20 @@ def plot_comparison(df_eval: pd.DataFrame,
                         annotation_fmt.format(h), ha="center", va="bottom",
                         fontsize=fontsize_annotations, weight="bold")
 
-    # Baseline / chance line
+    # Baseline / chance line (labelled in the legend so it never overlaps the bars)
     if baseline is not None:
-        ax.axhline(baseline, ls="--", color="black", lw=1)
         if baseline_label is None:
             baseline_label = f"chance ({baseline:g})"
-        if baseline_label != "":
-            ax.text(n_cond - 1 + 0.5 * bar_width, baseline + 0.01 * max(heights_max, 1),
-                    baseline_label, ha="right", va="bottom",
-                    fontsize=max(fontsize_annotations - 1, 1))
+        ax.axhline(baseline, ls="--", color="black", lw=1,
+                   label=baseline_label if baseline_label != "" else "_nolegend_")
 
     # Cosmetics
     ax.set_xticks(x)
-    ax.set_xticklabels(condition_order)
+    if xtick_rotation:
+        ax.set_xticklabels(condition_order, rotation=xtick_rotation, ha="right",
+                           rotation_mode="anchor")
+    else:
+        ax.set_xticklabels(condition_order)
     if xlabel is not None:
         ax.set_xlabel(xlabel)
     ax.set_ylabel(ylabel)
