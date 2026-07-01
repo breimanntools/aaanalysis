@@ -213,7 +213,7 @@ def resolve_sample_kws(sample=None, df_seq=None, df_parts=None,
         from aaanalysis.feature_engineering._sequence_feature import SequenceFeature
         seq_kws = SequenceFeature().get_seq_kws(df_seq=df_seq, df_parts=df_parts, sample=sample)
         # get_seq_kws validated 'sample'; map an int position to its entry name for 'col_imp'.
-        name = sample if is_str else list(df_parts.index)[int(sample)]
+        name = sample if is_str else df_parts.index[int(sample)]
         if jmd_n_seq is None:
             jmd_n_seq = seq_kws[f"{ut.COL_JMD_N}_seq"]
         if tmd_seq is None:

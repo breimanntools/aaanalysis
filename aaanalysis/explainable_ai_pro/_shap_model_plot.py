@@ -6,6 +6,7 @@ clustermap and a stand-alone ``shap_to_feat_imp`` helper that turns a per-sample
 normalized signed feature impact / absolute importance.
 """
 from typing import Optional, List, Union, Tuple
+from collections import Counter
 import numpy as np
 import pandas as pd
 
@@ -19,7 +20,7 @@ def check_match_shap_values_labels(shap_values=None, labels=None, name="labels")
     """Check shap_values is a 2D numeric array and labels match its number of samples."""
     shap_values = ut.check_array_like(name="shap_values", val=shap_values,
                                       dtype="numeric", expected_dim=2)
-    n_samples, n_features = shap_values.shape
+    n_samples = shap_values.shape[0]
     if n_samples < 2:
         raise ValueError(f"'shap_values' should contain >= 2 samples (rows), got {n_samples}.")
     labels = ut.check_labels(labels=labels, len_required=n_samples, accept_float=True)
@@ -35,7 +36,7 @@ def check_match_names_shap_values(names=None, n_samples=None):
         raise ValueError(f"Length of 'names' (n={len(names)}) must match the number of "
                          f"samples in 'shap_values' (n={n_samples}).")
     if len(set(names)) != len(names):
-        duplicated = sorted({x for x in names if list(names).count(x) > 1})
+        duplicated = sorted(x for x, c in Counter(names).items() if c > 1)
         raise ValueError(f"'names' should not contain duplicates: {duplicated}")
     return list(names)
 
@@ -219,7 +220,7 @@ class ShapModelPlot:
         """
         # Check input
         shap_values, labels = check_match_shap_values_labels(shap_values=shap_values, labels=labels)
-        n_samples, n_features = shap_values.shape
+        n_samples = shap_values.shape[0]
         names = check_match_names_shap_values(names=names, n_samples=n_samples)
         if labels_pred is None:
             labels_pred = labels
@@ -289,7 +290,7 @@ class ShapModelPlot:
         from scipy.cluster.hierarchy import linkage, fcluster
         shap_values = ut.check_array_like(name="shap_values", val=shap_values,
                                           dtype="numeric", expected_dim=2)
-        n_samples, n_features = shap_values.shape
+        n_samples = shap_values.shape[0]
         names = check_match_names_shap_values(names=names, n_samples=n_samples)
         ut.check_str(name="method", val=method)
         ut.check_number_range(name="n_clusters", val=n_clusters, min_val=1,
