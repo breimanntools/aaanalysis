@@ -298,25 +298,57 @@ class TestPlotRankCandidatesMode:
 
 
 class TestPlotRankDefaultRegression:
-    """Guard: the default scatter path is byte-identical with the new args at their defaults."""
+    """Guard: the default scatter path stays byte-identical to the pre-``col_class`` output.
 
-    def _scatter_state(self, ax):
-        offsets = [tuple(map(tuple, np.round(c.get_offsets(), 8))) for c in ax.collections]
-        colors = [tuple(np.round(c.get_facecolor()[0][:3], 8)) for c in ax.collections]
+    The expected values below are FROZEN from the scatter implementation before the additive
+    ranked-candidates mode was added (``_df()`` seed=0, threshold=[0.5, 0.8]). They are NOT
+    recomputed from the current code, so any change to the scatter branch (sort order, ranking,
+    group->color mapping, or threshold drawing) makes these assertions fail.
+    """
+
+    # Golden snapshot of the first drawn group ("substrate") as (rank, score) pairs.
+    GOLDEN_SUBSTRATE_OFFSETS = [
+        (3.0, 0.935072), (4.0, 0.912756), (8.0, 0.81327), (10.0, 0.729497),
+        (15.0, 0.636962), (17.0, 0.606636), (18.0, 0.543625), (23.0, 0.269787),
+        (26.0, 0.040974), (29.0, 0.016528),
+    ]
+    GOLDEN_LABELS = ["substrate", "hold-out", "non-substrate"]
+    GOLDEN_SIZES = [10, 5, 15]
+
+    def test_scatter_offsets_frozen(self):
+        # Exact ranked (rank, score) coordinates of the substrate group must not drift.
+        fig, ax = plot_rank(df_rank=_df(), threshold=[0.5, 0.8])
+        offs = [tuple(np.round(xy, 6)) for xy in ax.collections[0].get_offsets()]
+        assert offs == [tuple(np.round(g, 6)) for g in self.GOLDEN_SUBSTRATE_OFFSETS]
+
+    def test_scatter_groups_labels_and_sizes_frozen(self):
+        fig, ax = plot_rank(df_rank=_df(), threshold=[0.5, 0.8])
         labels = [t.get_text() for t in ax.get_legend().get_texts()]
-        lines = [(round(ln.get_ydata()[0], 8), ln.get_linestyle()) for ln in ax.get_lines()]
-        return offsets, colors, labels, lines
+        sizes = [len(c.get_offsets()) for c in ax.collections]
+        assert labels == self.GOLDEN_LABELS and sizes == self.GOLDEN_SIZES
 
-    def test_new_args_none_match_legacy_call(self):
-        df = _df()
-        fig1, ax1 = plot_rank(df_rank=df, threshold=[0.5, 0.8])
-        fig2, ax2 = plot_rank(df_rank=df, threshold=[0.5, 0.8], col_std=None, col_class=None)
-        assert self._scatter_state(ax1) == self._scatter_state(ax2)
+    def test_scatter_group_colors_frozen(self):
+        fig, ax = plot_rank(df_rank=_df(),
+                            group_order=["substrate", "hold-out", "non-substrate"])
+        expected = [ut.COLOR_POS, ut.COLOR_REL_NEG, ut.COLOR_NEG]  # green / brown / magenta
+        for coll, col in zip(ax.collections, expected):
+            assert np.allclose(coll.get_facecolor()[0][:3], matplotlib.colors.to_rgb(col))
 
-    def test_default_scatter_unchanged_shape(self):
-        # The default mode still yields one collection per group and no bars.
-        fig, ax = plot_rank(df_rank=_df())
-        assert len(ax.collections) == 3 and len(ax.patches) == 0
+    def test_scatter_thresholds_are_horizontal_frozen(self):
+        # Scatter mode draws thresholds as HORIZONTAL dashed lines at the given y-values.
+        fig, ax = plot_rank(df_rank=_df(), threshold=[0.5, 0.8])
+        lines = sorted((round(float(ln.get_ydata()[0]), 6), ln.get_linestyle())
+                       for ln in ax.get_lines())
+        assert lines == [(0.5, "--"), (0.8, "--")]
+        # each threshold line is flat (constant y) -> truly horizontal
+        assert all(len(set(np.round(ln.get_ydata(), 6))) == 1 for ln in ax.get_lines())
+
+    def test_new_args_default_dont_touch_scatter(self):
+        # Passing the new args at their explicit defaults yields exactly the golden scatter.
+        fig, ax = plot_rank(df_rank=_df(), threshold=[0.5, 0.8], col_std=None, col_class=None)
+        offs = [tuple(np.round(xy, 6)) for xy in ax.collections[0].get_offsets()]
+        assert offs == [tuple(np.round(g, 6)) for g in self.GOLDEN_SUBSTRATE_OFFSETS]
+        assert len(ax.patches) == 0  # scatter path, not the bar path
 
     def test_default_axis_labels_unchanged(self):
         fig, ax = plot_rank(df_rank=_df())

@@ -12,6 +12,7 @@ import seaborn as sns
 from matplotlib import pyplot as plt
 from matplotlib.axes import Axes
 from matplotlib.figure import Figure
+from matplotlib.ticker import MaxNLocator
 
 from aaanalysis import utils as ut
 from ._plot_rank import _resolve_group_colors
@@ -20,21 +21,13 @@ from ._plot_rank import _resolve_group_colors
 
 
 # I Helper Functions
-def _check_binrange(name="binrange", val=None):
-    """Validate a 2-element numeric (low, high) range with low < high."""
-    if not isinstance(val, (list, tuple)) or len(val) != 2:
-        raise ValueError(f"'{name}' ({val}) should be a (low, high) tuple of two numbers.")
-    low, high = val
-    for v in (low, high):
-        ut.check_number_val(name=name, val=v, just_int=False)
-    if not low < high:
-        raise ValueError(f"'{name}' ({val}) should satisfy low < high.")
+# (all shared helpers live in ``_plot_rank``; nothing local needed)
 
 
 # II Main Functions
 def plot_prediction_hist(df_pred: pd.DataFrame,
-                         score: str = "score",
-                         group: str = "group",
+                         col_score: str = "score",
+                         col_group: str = "group",
                          group_order: Optional[List[str]] = None,
                          dict_color: Optional[Dict[str, str]] = None,
                          binwidth: Union[int, float] = 5,
@@ -52,9 +45,12 @@ def plot_prediction_hist(df_pred: pd.DataFrame,
     Plot a class-separated histogram of a per-sample prediction score (internal).
 
     Shows how a model's prediction score (e.g. a substrate-probability in ``[0, 100]`` %)
-    distributes across known classes such as substrate / non-substrate / unknown, so the
-    class separation of a deployed predictor can be read off at a glance. Scores in
-    ``[0, 1]`` are auto-rescaled to a ``[0, 100]`` percent axis.
+    distributes across known classes such as substrate / non-substrate / hold-out, so the
+    class separation of a deployed predictor can be read off at a glance.
+
+    A score column whose maximum is ``<= 1`` is treated as a ``[0, 1]`` probability and
+    rescaled to the ``[0, 100]`` percent axis (a notice is printed when ``verbose`` is on).
+    Pass an already-percent score (max ``> 1``) to skip the rescale.
 
     This function is **internal**: it is not part of the public ``aaanalysis`` namespace and
     may change without a deprecation cycle.
@@ -62,11 +58,11 @@ def plot_prediction_hist(df_pred: pd.DataFrame,
     Parameters
     ----------
     df_pred : pd.DataFrame, shape (n_samples, n_info)
-        One row per sample; must contain ``score`` (the prediction score) and ``group``
-        (the class label used to split the histogram).
-    score : str, default="score"
-        Column with the per-sample prediction score (``[0, 1]`` or ``[0, 100]``).
-    group : str, default="group"
+        One row per sample; must contain ``col_score`` (the prediction score) and
+        ``col_group`` (the class label used to split the histogram).
+    col_score : str, default="score"
+        Column with the per-sample prediction score (numeric; ``[0, 1]`` or ``[0, 100]``).
+    col_group : str, default="group"
         Column with the per-sample class label used to color / separate the bars.
     group_order : list of str, optional
         Order in which classes are colored / stacked. Defaults to first-appearance order.
@@ -114,22 +110,25 @@ def plot_prediction_hist(df_pred: pd.DataFrame,
         df_pred = pd.DataFrame({"score": [95, 80, 60, 40, 20, 5],
                                 "group": ["substrate", "substrate", "hold-out",
                                           "non-substrate", "non-substrate", "non-substrate"]})
-        fig, ax = plot_prediction_hist(df_pred, score="score", group="group")
+        fig, ax = plot_prediction_hist(df_pred, col_score="score", col_group="group")
 
     .. note::
        This symbol is internal; an example notebook and a public re-export are tracked as a
        TODO (re-export under :mod:`aaanalysis` is CONFIRM-FIRST, pending maintainer review).
     """
     # Check input
-    ut.check_str(name="score", val=score)
-    ut.check_str(name="group", val=group)
-    ut.check_df(name="df_pred", df=df_pred, cols_required=[score, group])
+    ut.check_str(name="col_score", val=col_score)
+    ut.check_str(name="col_group", val=col_group)
+    ut.check_df(name="df_pred", df=df_pred, cols_required=[col_score, col_group])
     if len(df_pred) == 0:
         raise ValueError("'df_pred' (0 rows) should contain at least one sample.")
+    if not pd.api.types.is_numeric_dtype(df_pred[col_score]):
+        raise ValueError(f"'{col_score}' column should be numeric (got dtype "
+                         f"'{df_pred[col_score].dtype}').")
     ut.check_list_like(name="group_order", val=group_order, accept_none=True)
     ut.check_dict_color(name="dict_color", val=dict_color, accept_none=True)
     ut.check_number_range(name="binwidth", val=binwidth, min_val=0, exclusive_limits=True, just_int=False)
-    _check_binrange(name="binrange", val=binrange)
+    ut.check_lim(name="binrange", val=binrange, accept_none=False)
     ut.check_bool(name="stacked", val=stacked)
     ut.check_bool(name="kde", val=kde)
     ut.check_bool(name="legend", val=legend)
@@ -142,18 +141,21 @@ def plot_prediction_hist(df_pred: pd.DataFrame,
 
     # Resolve order + colors
     if group_order is None:
-        group_order = list(dict.fromkeys(df_pred[group].tolist()))
+        group_order = list(dict.fromkeys(df_pred[col_group].tolist()))
     else:
-        missing = set(df_pred[group]) - set(group_order)
+        missing = set(df_pred[col_group]) - set(group_order)
         if missing:
             raise ValueError(f"'group_order' is missing groups present in 'df_pred': {missing}")
     dict_group_color = _resolve_group_colors(group_order=group_order, dict_color=dict_color)
 
-    # Auto-rescale a [0, 1] probability to a [0, 100] percent axis
+    # Rescale a [0, 1] probability to a [0, 100] percent axis (explicit, verbose-noticed)
     df = df_pred.copy()
-    scores = pd.to_numeric(df[score], errors="coerce")
-    if scores.notna().any() and float(np.nanmax(scores.to_numpy())) <= 1:
-        df[score] = scores * 100
+    scores = df[col_score].to_numpy(dtype=float)
+    if np.isfinite(scores).any() and np.nanmax(scores) <= 1:
+        df[col_score] = scores * 100
+        if ut.check_verbose(False):
+            ut.print_out(f"Note: '{col_score}' (max <= 1) looks like a [0, 1] probability; "
+                         f"rescaled to a [0, 100] % axis.")
 
     # Draw
     if ax is None:
@@ -161,17 +163,14 @@ def plot_prediction_hist(df_pred: pd.DataFrame,
     else:
         fig = ax.figure
     multiple = "stack" if stacked else "layer"
-    sns.histplot(data=df, x=score, hue=group, hue_order=group_order,
+    sns.histplot(data=df, x=col_score, hue=col_group, hue_order=group_order,
                  palette=dict_group_color, binwidth=binwidth, binrange=tuple(binrange),
                  multiple=multiple, kde=kde, legend=legend, ax=ax)
     ax.set_xlim(binrange[0], binrange[1])
     ax.set_xlabel(xlabel, fontsize=fontsize_labels)
     ax.set_ylabel(ylabel, fontsize=fontsize_labels)
-    # Integer y-ticks (counts)
-    yticks = [t for t in ax.get_yticks() if float(t).is_integer()]
-    if yticks:
-        ax.set_yticks(yticks)
-        ax.set_yticklabels([int(t) for t in yticks])
+    # Counts are integers: force integer y-ticks with matplotlib's own nice spacing
+    ax.yaxis.set_major_locator(MaxNLocator(integer=True))
     sns.despine(ax=ax)
     # ``ax.figure`` is typed ``Figure | SubFigure | None`` by the matplotlib stubs,
     # but a top-level Axes here always belongs to a real Figure.

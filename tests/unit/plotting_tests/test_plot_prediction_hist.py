@@ -57,6 +57,13 @@ class TestPlotPredictionHist:
         right_edges = [p.get_x() + p.get_width() for p in ax.patches if p.get_height() > 0]
         assert max(right_edges) > 1.0
 
+    def test_percent_scores_not_rescaled(self):
+        # An already-percent score (max > 1) must be left untouched (no x100 blow-up).
+        df = pd.DataFrame({"score": [2.0, 40.0, 95.0], "group": ["a", "a", "a"]})
+        fig, ax = plot_prediction_hist(df_pred=df, binrange=(0, 100))
+        right_edges = [p.get_x() + p.get_width() for p in ax.patches if p.get_height() > 0]
+        assert max(right_edges) <= 100.0  # would be 9500 if wrongly rescaled
+
     def test_stacked_true_uses_stack(self):
         fig, ax = plot_prediction_hist(df_pred=_df(), stacked=True)
         assert len(ax.patches) > 0
@@ -83,7 +90,7 @@ class TestPlotPredictionHist:
 
     def test_custom_columns(self):
         df = _df().rename(columns={"score": "s", "group": "g"})
-        fig, ax = plot_prediction_hist(df_pred=df, score="s", group="g")
+        fig, ax = plot_prediction_hist(df_pred=df, col_score="s", col_group="g")
         assert len(ax.patches) > 0
 
     def test_draws_on_passed_ax(self):
@@ -135,11 +142,11 @@ class TestPlotPredictionHistComplex:
 
     def test_bad_score_name_raises(self):
         with pytest.raises(ValueError):
-            plot_prediction_hist(df_pred=_df(), score="nope")
+            plot_prediction_hist(df_pred=_df(), col_score="nope")
 
     def test_bad_group_name_raises(self):
         with pytest.raises(ValueError):
-            plot_prediction_hist(df_pred=_df(), group="nope")
+            plot_prediction_hist(df_pred=_df(), col_group="nope")
 
     def test_group_order_missing_group_raises(self):
         with pytest.raises(ValueError):
@@ -202,3 +209,15 @@ class TestPlotPredictionHistComplex:
         df = pd.DataFrame({"score": [10, 50, 90], "group": ["a", "a", "a"]})
         fig, ax = plot_prediction_hist(df_pred=df)
         assert len(ax.patches) > 0
+
+    def test_non_numeric_score_raises(self):
+        # A non-numeric score column must fail loudly, not be silently coerced to NaN.
+        df = pd.DataFrame({"score": ["high", "low", "mid"], "group": ["a", "a", "a"]})
+        with pytest.raises(ValueError):
+            plot_prediction_hist(df_pred=df)
+
+    def test_integer_yticks(self):
+        # Counts are integers; every y-tick within the data range must be a whole number.
+        fig, ax = plot_prediction_hist(df_pred=_df())
+        _, top = ax.get_ylim()
+        assert all(float(t).is_integer() for t in ax.get_yticks() if 0 <= t <= top)
