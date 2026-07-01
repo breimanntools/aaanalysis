@@ -216,6 +216,12 @@ class TestPlotPredictionHistComplex:
         with pytest.raises(ValueError):
             plot_prediction_hist(df_pred=df)
 
+    def test_all_nan_score_raises(self):
+        # An all-NaN score column must fail with a clear message, not a cryptic seaborn error.
+        df = pd.DataFrame({"score": [np.nan, np.nan], "group": ["a", "b"]})
+        with pytest.raises(ValueError):
+            plot_prediction_hist(df_pred=df)
+
     def test_integer_yticks(self):
         # Counts are integers; every y-tick within the data range must be a whole number.
         fig, ax = plot_prediction_hist(df_pred=_df())

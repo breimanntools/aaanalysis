@@ -180,6 +180,12 @@ class TestPlotRankComplex:
         with pytest.raises(ValueError):
             plot_rank(df_rank=_df(), col_group="nope")
 
+    def test_non_numeric_score_raises(self):
+        # A non-numeric score column must fail loudly (scatter mode), not draw garbage.
+        df = pd.DataFrame({"score": ["hi", "lo", "mid"], "group": ["a", "a", "b"]})
+        with pytest.raises(ValueError):
+            plot_rank(df_rank=df)
+
     # Wrong-TYPE negatives for the cosmetic params (clean ValueError, not a deep mpl crash)
     def test_figsize_wrong_type_raises(self):
         with pytest.raises(ValueError):
@@ -290,6 +296,18 @@ class TestPlotRankCandidatesMode:
     def test_col_std_wrong_type_raises(self):
         with pytest.raises(ValueError):
             plot_rank(df_rank=_df_cand(), col_score="score", col_class="class", col_std=123)
+
+    def test_non_numeric_score_bar_mode_raises(self):
+        df = pd.DataFrame({"score": ["hi", "lo"], "class": ["substrate", "non-substrate"]},
+                          index=["A", "B"])
+        with pytest.raises(ValueError):
+            plot_rank(df_rank=df, col_score="score", col_class="class")
+
+    def test_non_numeric_std_raises(self):
+        df = _df_cand()
+        df["std"] = df["std"].astype(str)
+        with pytest.raises(ValueError):
+            plot_rank(df_rank=df, col_score="score", col_class="class", col_std="std")
 
     def test_draws_on_passed_ax_bar_mode(self):
         fig0, ax0 = plt.subplots()

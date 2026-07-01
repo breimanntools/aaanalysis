@@ -188,6 +188,12 @@ def plot_rank(df_rank: pd.DataFrame,
     ut.check_df(name="df_rank", df=df_rank, cols_required=cols_required)
     if len(df_rank) == 0:
         raise ValueError("'df_rank' (0 rows) should contain at least one protein.")
+    if not pd.api.types.is_numeric_dtype(df_rank[col_score]):
+        raise ValueError(f"'{col_score}' column should be numeric (got dtype "
+                         f"'{df_rank[col_score].dtype}').")
+    if col_std is not None and not pd.api.types.is_numeric_dtype(df_rank[col_std]):
+        raise ValueError(f"'{col_std}' column should be numeric (got dtype "
+                         f"'{df_rank[col_std].dtype}').")
     ut.check_list_like(name="group_order", val=group_order, accept_none=True)
     ut.check_dict_color(name="dict_color", val=dict_color, accept_none=True)
     ut.check_ax(ax=ax, accept_none=True)

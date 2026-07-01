@@ -125,6 +125,8 @@ def plot_prediction_hist(df_pred: pd.DataFrame,
     if not pd.api.types.is_numeric_dtype(df_pred[col_score]):
         raise ValueError(f"'{col_score}' column should be numeric (got dtype "
                          f"'{df_pred[col_score].dtype}').")
+    if not np.isfinite(df_pred[col_score].to_numpy(dtype=float)).any():
+        raise ValueError(f"'{col_score}' column has no finite values to plot.")
     ut.check_list_like(name="group_order", val=group_order, accept_none=True)
     ut.check_dict_color(name="dict_color", val=dict_color, accept_none=True)
     ut.check_number_range(name="binwidth", val=binwidth, min_val=0, exclusive_limits=True, just_int=False)
