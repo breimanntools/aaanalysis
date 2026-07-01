@@ -188,3 +188,20 @@ class TestPlotEvalHeatmapErrors:
     def test_bad_figsize_type(self):
         with pytest.raises(ValueError):
             plot_eval_heatmap(df_eval=_df(), figsize="wide")
+
+
+class TestPlotEvalHeatmapSquare:
+    """`square` — evaluation-map cells are equal width and height by default."""
+
+    def test_square_default_equal_aspect(self):
+        ax = plot_eval_heatmap(df_eval=_df())
+        # square=True makes seaborn force a box (data) aspect of 1.0 -> equal cells.
+        assert ax.get_aspect() in (1.0, "equal")
+
+    def test_square_false_not_forced(self):
+        ax = plot_eval_heatmap(df_eval=_df(), square=False)
+        assert ax.get_aspect() not in (1.0, "equal")
+
+    def test_square_bad_type(self):
+        with pytest.raises(ValueError):
+            plot_eval_heatmap(df_eval=_df(), square="yes")

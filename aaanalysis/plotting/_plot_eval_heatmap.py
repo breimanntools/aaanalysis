@@ -23,6 +23,7 @@ def plot_eval_heatmap(df_eval: pd.DataFrame,
                       cbar_label: Optional[str] = "Balanced accuracy [%]",
                       xtick_rotation: Union[int, float] = 0,
                       ytick_rotation: Union[int, float] = 0,
+                      square: bool = True,
                       figsize: Optional[Tuple[Union[int, float], Union[int, float]]] = None,
                       ax: Optional[Axes] = None,
                       ) -> Axes:
@@ -60,6 +61,10 @@ def plot_eval_heatmap(df_eval: pd.DataFrame,
         keep long column labels legible without overlap.
     ytick_rotation : int or float, default=0
         Rotation (degrees) of the y-axis tick labels.
+    square : bool, default=True
+        If ``True``, force each heatmap cell to be equal in width and height (a square grid),
+        the convention for an evaluation map. Set ``False`` to let the cells stretch to fill
+        the axes/figure.
     figsize : tuple, optional
         Figure ``(width, height)`` used when ``ax`` is ``None``. If ``None``, matplotlib's
         default figure size is used.
@@ -97,6 +102,7 @@ def plot_eval_heatmap(df_eval: pd.DataFrame,
     ut.check_str(name="cbar_label", val=cbar_label, accept_none=True)
     ut.check_number_val(name="xtick_rotation", val=xtick_rotation, just_int=False)
     ut.check_number_val(name="ytick_rotation", val=ytick_rotation, just_int=False)
+    ut.check_bool(name="square", val=square)
     ut.check_figsize(figsize=figsize, accept_none=True)
     ut.check_ax(ax=ax, accept_none=True)
 
@@ -105,7 +111,7 @@ def plot_eval_heatmap(df_eval: pd.DataFrame,
         _, ax = plt.subplots(figsize=figsize)
     cbar_kws = dict(label=cbar_label) if cbar_label is not None else None
     sns.heatmap(df_eval, ax=ax, vmin=vmin, vmax=vmax, cmap="viridis", annot=True,
-                fmt=".0f", linewidths=0.1, cbar_kws=cbar_kws)
+                fmt=".0f", linewidths=0.1, square=square, cbar_kws=cbar_kws)
     ax.tick_params(left=False, bottom=False)
     x_ha = "right" if xtick_rotation % 360 != 0 else "center"
     ax.set_yticklabels(ax.get_yticklabels(), rotation=ytick_rotation)
