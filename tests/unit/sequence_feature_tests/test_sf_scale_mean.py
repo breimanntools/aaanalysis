@@ -205,6 +205,32 @@ class TestScaleMeanGoldenValues:
         X = sf.scale_mean(df_seq=df_seq, df_scales=df_scales)
         assert float(X[0, 0]) == float(X[1, 0]) == 1.5
 
+    def test_multi_char_scale_label_never_matches_residue(self):
+        """A multi-character index label in df_scales must not be matched by a residue.
+
+        The byte lookup registers single-character labels only, mirroring the notebook's
+        per-character ``a in df_scales.index`` test, so a spurious ``'AC'`` scale row cannot
+        pull the span 'AC' toward its value.
+        """
+        order = "ACDEFGHIKLMNPQRSTVWY"
+        df_scales = pd.DataFrame({"S1": {a: float(i + 1) for i, a in enumerate(order)}})
+        df_scales.loc["AC"] = 99.0  # multi-character label that must be ignored
+        df_seq = pd.DataFrame({"entry": ["E1"], "jmd_n": [""], "tmd": ["AC"], "jmd_c": [""]})
+        sf = aa.SequenceFeature()
+        X = sf.scale_mean(df_seq=df_seq, df_scales=df_scales)
+        assert float(X[0, 0]) == 1.5  # mean(S1[A]=1, S1[C]=2), 'AC' label ignored
+
+    def test_non_latin1_residues_dropped(self):
+        """Codepoints above 255 (e.g. 'Ā') are treated as non-canonical and dropped, not crash."""
+        order = "ACDEFGHIKLMNPQRSTVWY"
+        df_scales = pd.DataFrame({"S1": {a: float(i + 1) for i, a in enumerate(order)}})
+        # 'AĀC' and lowercase 'AcC' both reduce to the canonical 'AC'
+        df_seq = pd.DataFrame({"entry": ["E1", "E2"], "jmd_n": ["", ""],
+                               "tmd": ["AĀC", "AcC"], "jmd_c": ["", ""]})
+        sf = aa.SequenceFeature()
+        X = sf.scale_mean(df_seq=df_seq, df_scales=df_scales)
+        assert float(X[0, 0]) == float(X[1, 0]) == 1.5
+
     def test_edge_all_non_canonical_is_nan(self):
         """An all-non-canonical / empty span yields an all-NaN row and warns when verbose."""
         order = "ACDEFGHIKLMNPQRSTVWY"
