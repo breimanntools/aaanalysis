@@ -21,6 +21,30 @@ def _get_colors_for_col_cat(labels=None, dict_color=None, df_feat=None, col_cat=
     return colors
 
 
+def _force_render(fig):
+    """Force a render so text ``get_window_extent`` returns true extents.
+
+    Without a render the extents are degenerate (~1px), which would report false
+    "no overlap"; a bare draw is enough on the Agg backend used for figures.
+    """
+    fig.canvas.draw()
+    return fig.canvas.get_renderer()
+
+
+def _row_labels_overlap(label_artists, renderer, overlap_frac=0.15):
+    """Whether any two vertically-adjacent row labels overlap beyond a fraction.
+
+    Row labels share the same x (right-aligned), so the vertical overlap fraction
+    of the smaller box is an accurate stand-in for the area fraction.
+    """
+    boxes = sorted((t.get_window_extent(renderer) for t in label_artists), key=lambda b: b.y0)
+    for lower, upper in zip(boxes[:-1], boxes[1:]):
+        overlap = lower.y1 - upper.y0
+        if overlap > 0 and overlap / min(lower.height, upper.height) >= overlap_frac:
+            return True
+    return False
+
+
 # II Main Functions
 class PlotElements:
     """Utility class for plot element configurations and enhancements."""
@@ -71,8 +95,34 @@ class PlotElements:
         """Add left colored sidebar to indicate category grouping"""
         labels = list(df_pos.index)
         colors = _get_colors_for_col_cat(labels=labels, df_feat=df_feat, col_cat=col_cat, dict_color=dict_color)
+        before = list(ax.texts)
         ut.plot_add_bars(ax=ax, labels=labels, colors=colors,
                          bar_width=bar_width, bar_spacing=bar_spacing, label_spacing_factor=2)
+        row_labels = [t for t in ax.texts if t not in before]
+        PlotElements.optimize_subcat_label_fontsize(fig=ax.figure, label_artists=row_labels)
+
+    @staticmethod
+    def optimize_subcat_label_fontsize(fig=None, label_artists=None, floor=5.0, fs_step=0.5):
+        """Shrink subcategory row-label font just enough to clear vertical overlap.
+
+        The row labels are hand-placed text artists at the current rcParams font
+        size; on dense feature maps / heatmaps (many subcategories in a fixed
+        figure height) they collide into an unreadable column. This reduces their
+        font stepwise until consecutive labels no longer overlap, never dropping
+        below the legibility ``floor`` (~5 pt). Sparse maps already fit, so their
+        labels are left untouched and their output stays unchanged.
+        """
+        if not label_artists or len(label_artists) < 2:
+            return
+        renderer = _force_render(fig)
+        if not _row_labels_overlap(label_artists, renderer):
+            return
+        fs = label_artists[0].get_fontsize()
+        while fs > floor and _row_labels_overlap(label_artists, renderer):
+            fs = max(floor, fs - fs_step)
+            for t in label_artists:
+                t.set_fontsize(fs)
+            renderer = _force_render(fig)
 
 
     @staticmethod

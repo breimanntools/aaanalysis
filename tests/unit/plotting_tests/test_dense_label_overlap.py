@@ -7,9 +7,13 @@ becomes an unreadable blur. These tests force-render the figure and assert that
 no two *row labels* overlap. They are the first layout/visual assertions in the
 suite (plain matplotlib bbox introspection, no image snapshots).
 """
+import io
+import re
+
 import matplotlib
 matplotlib.use("Agg")  # headless, deterministic
 import matplotlib.pyplot as plt
+from matplotlib.transforms import Bbox
 import pytest
 
 import aaanalysis as aa
@@ -18,6 +22,28 @@ from ._text_overlap import get_label_overlaps, make_dense_df_feat
 
 
 N_SUBCATS = [20, 36, 55, 74]
+_NUMERIC = re.compile(r"^\[?-?\d+(\.\d+)?%?\]?$")
+
+
+def _numeric_tick_overlaps(fig):
+    """Mutual overlaps among the numeric tick labels *of a single axis* (targets
+    the importance-bar ticks, e.g. the historical '40' over '0'). Scoped per axis
+    so harmless cross-axis coincidences (colorbar '%' vs heatmap position ticks)
+    are not flagged; the text row-label axis has no numeric ticks."""
+    fig.savefig(io.BytesIO(), format="png", dpi=fig.dpi)
+    r = fig.canvas.get_renderer()
+    bad = []
+    for ax in fig.axes:
+        for ticklabels in (ax.get_xticklabels(), ax.get_yticklabels()):
+            items = [(t.get_text().strip(), t.get_window_extent(renderer=r))
+                     for t in ticklabels
+                     if t.get_visible() and _NUMERIC.match(t.get_text().strip())]
+            for i in range(len(items)):
+                for j in range(i + 1, len(items)):
+                    it = Bbox.intersection(items[i][1], items[j][1])
+                    if it and it.width > 0 and it.height > 0:
+                        bad.append((items[i][0], items[j][0]))
+    return bad
 
 
 class TestOverlapDetector:
@@ -73,6 +99,15 @@ class TestFeatureMapLabelOverlap:
             f"{len(bad)} overlapping subcategory row labels at "
             f"n_subcat={n_subcat} (first few: {bad[:3]})"
         )
+
+    @pytest.mark.parametrize("n_subcat", [20, 74])
+    def test_no_importance_bar_tick_overlap(self, n_subcat):
+        # The top/right cumulative-importance bar numeric ticks must not collide
+        # (historically '40' over '0'); independent of grid density.
+        df_feat = make_dense_df_feat(n_subcat)
+        fig, ax = aa.CPPPlot().feature_map(df_feat)
+        bad = _numeric_tick_overlaps(fig)
+        assert bad == [], f"overlapping numeric ticks: {bad}"
 
     @pytest.mark.parametrize("n_subcat", N_SUBCATS)
     def test_row_label_font_above_floor(self, n_subcat):
