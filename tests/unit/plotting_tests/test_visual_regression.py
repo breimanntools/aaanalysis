@@ -25,13 +25,18 @@ import pytest
 
 import aaanalysis as aa
 
-from ._text_overlap import make_dense_df_feat
 
-
-# Deterministic, moderately dense fixture shared by the baselines.
+# Realistic, deterministic fixture shared by the baselines: the bundled DOM_GSEC
+# feature set (varied scales, categories and positions), NOT a synthetic stress
+# fixture. Baselines must look like real output so a human reviewing a diff can
+# trust them.
 def _df_feat():
     aa.options["verbose"] = False
-    return make_dense_df_feat(20)
+    return aa.load_features(name="DOM_GSEC").head(60)
+
+
+def _cpp():
+    return aa.CPPPlot(df_scales=aa.load_scales())
 
 
 # A generous RMS tolerance keeps minor cross-patch antialiasing noise from
@@ -41,17 +46,17 @@ _TOL = 20
 
 @pytest.mark.mpl_image_compare(tolerance=_TOL)
 def test_feature_map_baseline():
-    fig, ax = aa.CPPPlot().feature_map(_df_feat())
+    fig, ax = _cpp().feature_map(_df_feat(), figsize=(8, 8))
     return fig
 
 
 @pytest.mark.mpl_image_compare(tolerance=_TOL)
 def test_heatmap_baseline():
-    fig, ax = aa.CPPPlot().heatmap(_df_feat())
+    fig, ax = _cpp().heatmap(_df_feat(), figsize=(8, 8))
     return fig
 
 
 @pytest.mark.mpl_image_compare(tolerance=_TOL)
 def test_profile_baseline():
-    fig, ax = aa.CPPPlot().profile(_df_feat())
+    fig, ax = _cpp().profile(_df_feat(), figsize=(7, 5))
     return fig

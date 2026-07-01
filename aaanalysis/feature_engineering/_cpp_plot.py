@@ -1577,18 +1577,19 @@ class CPPPlot:
                                             fill=seq_char_fill)
             if self._verbose:
                 ut.print_out(f"Optimized sequence character fontsize is: {seq_size}")
-        # set_box_aspect triggers a relayout that re-exposes shared x-tick labels on
-        # the top-row axes (the top importance bar and the empty top-right cell),
-        # putting stray position/importance ticks above the grid. Keep ticks on the
-        # heatmap (bottom) only, matching the non-auto_font layout. Done last so
-        # tight_layout cannot re-show them.
-        if auto_grid:
-            top_edge = ax.get_position().y1
-            for other in fig.axes:
-                if other is not ax and other.get_position().y0 >= top_edge - 0.05:
-                    other.tick_params(axis="x", labelbottom=False, labeltop=False, length=0)
-                    for lbl in other.get_xticklabels():
-                        lbl.set_visible(False)
+        # The top importance bar shares the position x-axis with the heatmap, so it
+        # redundantly repeats the position ticks (1/10/30/40) ABOVE the grid — and
+        # set_box_aspect makes it worse. Keep the position ticks on the heatmap
+        # (bottom) only by hiding the x-tick labels of every top-row axis (the top
+        # importance bar and the empty top-right cell). The tall right importance
+        # bar (which legitimately labels its own scale at the top) is left alone.
+        # Done last so tight_layout cannot re-show them.
+        top_edge = ax.get_position().y1
+        for other in fig.axes:
+            if other is not ax and other.get_position().y0 >= top_edge - 0.05:
+                other.tick_params(axis="x", labelbottom=False, labeltop=False, length=0)
+                for lbl in other.get_xticklabels():
+                    lbl.set_visible(False)
         return ut.FigAxResult(fig, ax)
 
     def update_seq_size(self,
