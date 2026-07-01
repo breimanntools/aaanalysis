@@ -1,3 +1,5 @@
+:orphan:
+
 .. _cheat_sheet:
 
 Cheat Sheet
