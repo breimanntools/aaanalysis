@@ -30,100 +30,125 @@ def _close_figs():
 class TestPlotComparison:
     """Normal cases for plot_comparison."""
 
-    def test_returns_axes(self):
-        ax = plot_comparison(df_eval=_df())
-        assert isinstance(ax, plt.Axes)
+    def test_returns_fig_ax(self):
+        fig, ax = plot_comparison(df_eval=_df())
+        assert isinstance(fig, plt.Figure) and isinstance(ax, plt.Axes)
 
     def test_bar_count_groups_times_conditions(self):
         # 2 groups x 3 conditions = 6 bars
-        ax = plot_comparison(df_eval=_df())
+        fig, ax = plot_comparison(df_eval=_df())
         assert len(ax.patches) == 6
 
     def test_bar_count_three_groups(self):
-        ax = plot_comparison(df_eval=_df(groups=("A", "B", "C")))
+        fig, ax = plot_comparison(df_eval=_df(groups=("A", "B", "C")))
         assert len(ax.patches) == 9
 
     def test_baseline_drawn_when_set(self):
-        ax = plot_comparison(df_eval=_df(), baseline=50)
+        fig, ax = plot_comparison(df_eval=_df(), baseline=50)
         assert len(ax.lines) == 1
 
     def test_baseline_none_no_line(self):
-        ax = plot_comparison(df_eval=_df(), baseline=None)
+        fig, ax = plot_comparison(df_eval=_df(), baseline=None)
         assert len(ax.lines) == 0
 
     def test_baseline_label_default_text(self):
-        ax = plot_comparison(df_eval=_df(), baseline=50)
+        fig, ax = plot_comparison(df_eval=_df(), baseline=50)
         assert any("chance" in t.get_text() for t in ax.texts)
 
     def test_baseline_label_custom(self):
-        ax = plot_comparison(df_eval=_df(), baseline=50, baseline_label="random (50%)")
+        fig, ax = plot_comparison(df_eval=_df(), baseline=50, baseline_label="random (50%)")
         assert any("random (50%)" == t.get_text() for t in ax.texts)
 
     def test_baseline_label_empty_suppresses_text(self):
-        ax = plot_comparison(df_eval=_df(), baseline=50, baseline_label="")
+        fig, ax = plot_comparison(df_eval=_df(), baseline=50, baseline_label="")
         # 6 value labels, no baseline text
         assert len(ax.texts) == 6
 
     def test_annotate_true_writes_value_labels(self):
-        ax = plot_comparison(df_eval=_df(), annotate=True, baseline=None)
+        fig, ax = plot_comparison(df_eval=_df(), annotate=True, baseline=None)
         assert len(ax.texts) == 6
 
     def test_annotate_false_no_value_labels(self):
-        ax = plot_comparison(df_eval=_df(), annotate=False, baseline=None)
+        fig, ax = plot_comparison(df_eval=_df(), annotate=False, baseline=None)
         assert len(ax.texts) == 0
 
+    def test_integer_values_labelled_without_decimals(self):
+        fig, ax = plot_comparison(df_eval=_df(), baseline=None)
+        assert all("." not in t.get_text() for t in ax.texts)
+
+    def test_fractional_values_keep_precision(self):
+        # AUC-like values in [0, 1] must NOT collapse to "0"/"1" integer labels.
+        df = pd.DataFrame([{"group": g, "condition": c, "value": v}
+                           for g, c, v in [("A", "x", 0.62), ("A", "y", 0.71),
+                                           ("B", "x", 0.83), ("B", "y", 0.90)]])
+        fig, ax = plot_comparison(df_eval=df, baseline=None)
+        labels = sorted(t.get_text() for t in ax.texts)
+        assert labels == ["0.62", "0.71", "0.83", "0.90"]
+
+    def test_annotation_fmt_override(self):
+        fig, ax = plot_comparison(df_eval=_df(), baseline=None, annotation_fmt="{:.1f}")
+        assert all("." in t.get_text() for t in ax.texts)
+        assert any(t.get_text() == "60.0" for t in ax.texts)
+
     def test_legend_labels_are_groups(self):
-        ax = plot_comparison(df_eval=_df())
+        fig, ax = plot_comparison(df_eval=_df())
         labels = [t.get_text() for t in ax.get_legend().get_texts()]
         assert set(labels) == {"Scale-based", "CPP"}
 
     def test_group_order_controls_bar_order(self):
-        ax = plot_comparison(df_eval=_df(), group_order=["CPP", "Scale-based"])
+        fig, ax = plot_comparison(df_eval=_df(), group_order=["CPP", "Scale-based"])
         labels = [t.get_text() for t in ax.get_legend().get_texts()]
         assert labels == ["CPP", "Scale-based"]
 
     def test_condition_order_controls_ticks(self):
         order = ["dPULearn", "Random", "No expansion"]
-        ax = plot_comparison(df_eval=_df(), condition_order=order)
+        fig, ax = plot_comparison(df_eval=_df(), condition_order=order)
         assert [t.get_text() for t in ax.get_xticklabels()] == order
 
     def test_colors_list(self):
-        ax = plot_comparison(df_eval=_df(), colors=["tab:gray", "tab:red"])
+        fig, ax = plot_comparison(df_eval=_df(), colors=["tab:gray", "tab:red"])
         assert len(ax.patches) == 6
 
     def test_colors_dict(self):
-        ax = plot_comparison(df_eval=_df(), colors={"Scale-based": "tab:gray", "CPP": "tab:red"})
+        fig, ax = plot_comparison(df_eval=_df(), colors={"Scale-based": "tab:gray", "CPP": "tab:red"})
         assert len(ax.patches) == 6
 
     def test_custom_columns(self):
         df = _df().rename(columns={"group": "method", "condition": "setting", "value": "acc"})
-        ax = plot_comparison(df_eval=df, group="method", condition="setting", value="acc")
+        fig, ax = plot_comparison(df_eval=df, group="method", condition="setting", value="acc")
         assert len(ax.patches) == 6
 
     def test_aggregates_repeated_cells(self):
         df = pd.concat([_df(), _df()], ignore_index=True)  # duplicate (group, condition) rows
-        ax = plot_comparison(df_eval=df)
+        fig, ax = plot_comparison(df_eval=df)
         assert len(ax.patches) == 6
 
+    def test_repeated_cells_use_mean(self):
+        # Two rows for the same (group, condition) with different values -> the mean.
+        df = pd.DataFrame([{"group": "A", "condition": "x", "value": 60},
+                           {"group": "A", "condition": "x", "value": 80}])
+        fig, ax = plot_comparison(df_eval=df, baseline=None)
+        assert ax.patches[0].get_height() == pytest.approx(70)
+
     def test_passing_existing_ax(self):
-        fig, ax_in = plt.subplots()
-        ax_out = plot_comparison(df_eval=_df(), ax=ax_in)
-        assert ax_out is ax_in
+        fig_in, ax_in = plt.subplots()
+        fig_out, ax_out = plot_comparison(df_eval=_df(), ax=ax_in)
+        assert ax_out is ax_in and fig_out is fig_in
 
     def test_labels_and_title(self):
-        ax = plot_comparison(df_eval=_df(), xlabel="X", ylabel="Balanced accuracy [%]",
-                             title="Bench")
+        fig, ax = plot_comparison(df_eval=_df(), xlabel="X", ylabel="Balanced accuracy [%]",
+                                  title="Bench")
         assert ax.get_xlabel() == "X"
         assert ax.get_ylabel() == "Balanced accuracy [%]"
         assert ax.get_title() == "Bench"
 
     def test_ylim_respected(self):
-        ax = plot_comparison(df_eval=_df(), ylim=(0, 108))
+        fig, ax = plot_comparison(df_eval=_df(), ylim=(0, 108))
         assert ax.get_ylim() == (0, 108)
 
     def test_bar_width_and_figsize_and_fontsize(self):
-        ax = plot_comparison(df_eval=_df(), bar_width=0.6, figsize=(8, 5),
-                             fontsize_annotations=8)
+        fig, ax = plot_comparison(df_eval=_df(), bar_width=0.6, figsize=(8, 5),
+                                  fontsize_annotations=8)
         assert len(ax.patches) == 6
 
 
@@ -147,6 +172,10 @@ class TestPlotComparisonErrors:
         with pytest.raises(ValueError):
             plot_comparison(df_eval=_df(), group=123)
 
+    def test_duplicate_columns_raise(self):
+        with pytest.raises(ValueError):
+            plot_comparison(df_eval=_df(), group="group", condition="group")
+
     def test_bad_baseline_type_raises(self):
         with pytest.raises(ValueError):
             plot_comparison(df_eval=_df(), baseline="50")
@@ -154,6 +183,10 @@ class TestPlotComparisonErrors:
     def test_bad_annotate_type_raises(self):
         with pytest.raises(ValueError):
             plot_comparison(df_eval=_df(), annotate="yes")
+
+    def test_bad_annotation_fmt_type_raises(self):
+        with pytest.raises(ValueError):
+            plot_comparison(df_eval=_df(), annotation_fmt=2)
 
     def test_bar_width_out_of_range_raises(self):
         with pytest.raises(ValueError):

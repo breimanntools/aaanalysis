@@ -8,6 +8,7 @@ import pandas as pd
 import seaborn as sns
 from matplotlib import pyplot as plt
 from matplotlib.axes import Axes
+from matplotlib.figure import Figure
 
 from aaanalysis import utils as ut
 from ._plot_get_clist import plot_get_clist
@@ -45,6 +46,17 @@ def _resolve_colors(group_order: List, colors: Optional[Union[List, Dict]]) -> D
     return {g: colors[i] for i, g in enumerate(group_order)}
 
 
+def _auto_annotation_fmt(values: np.ndarray) -> str:
+    """Pick a value-label format: no decimals for integers, else 2 decimals for small
+    (fractional, e.g. AUC in [0, 1]) values and 1 decimal for larger scales."""
+    vals = values[~np.isnan(values)]
+    if vals.size == 0 or np.allclose(vals, np.round(vals)):
+        return "{:.0f}"
+    if float(np.max(np.abs(vals))) < 10:
+        return "{:.2f}"
+    return "{:.1f}"
+
+
 # II Main Functions
 def plot_comparison(df_eval: pd.DataFrame,
                     group: str = "group",
@@ -53,6 +65,7 @@ def plot_comparison(df_eval: pd.DataFrame,
                     baseline: Optional[Union[int, float]] = 50,
                     baseline_label: Optional[str] = None,
                     annotate: bool = True,
+                    annotation_fmt: Optional[str] = None,
                     group_order: Optional[List[str]] = None,
                     condition_order: Optional[List[str]] = None,
                     colors: Optional[Union[List[str], Dict[str, str]]] = None,
@@ -64,7 +77,7 @@ def plot_comparison(df_eval: pd.DataFrame,
                     title: Optional[str] = None,
                     ylim: Optional[Tuple[Union[int, float], Union[int, float]]] = None,
                     fontsize_annotations: Union[int, float] = 10,
-                    ) -> Axes:
+                    ) -> Tuple[Figure, Axes]:
     """
     Plot a grouped method x condition comparison barplot with value labels and a baseline line.
 
@@ -95,7 +108,11 @@ def plot_comparison(df_eval: pd.DataFrame,
         Text label for the baseline line. If ``None`` and ``baseline`` is set, a label
         ``"chance (<baseline>)"`` is generated; pass ``""`` to draw the line without a label.
     annotate : bool, default=True
-        If ``True``, write each bar's value above it (rounded to integer).
+        If ``True``, write each bar's value above it.
+    annotation_fmt : str, optional
+        Python format string for the value labels (e.g. ``"{:.1f}"``). If ``None``, it is
+        chosen from the data: no decimals for integer-valued scores, two decimals for
+        fractional metrics (e.g. AUC in ``[0, 1]``), one decimal otherwise.
     group_order : list of str, optional
         Order of the groups (bar order within each cluster). Defaults to first-appearance order.
     condition_order : list of str, optional
@@ -123,13 +140,16 @@ def plot_comparison(df_eval: pd.DataFrame,
 
     Returns
     -------
+    fig : matplotlib.figure.Figure
+        The figure.
     ax : matplotlib.axes.Axes
         The axes with the grouped comparison barplot.
 
     See Also
     --------
     * :func:`aaanalysis.plot_get_clist` for the house categorical palette.
-    * :func:`aaanalysis.plot_eval_heatmap` for a heatmap view of a wider eval grid.
+    * :func:`aaanalysis.plot_rank` for a per-protein rank scatter of a deployed predictor.
+    * :func:`aaanalysis.pipe.plot_eval` for a viridis evaluation-grid view of a wider sweep.
 
     Examples
     --------
@@ -139,12 +159,16 @@ def plot_comparison(df_eval: pd.DataFrame,
     ut.check_str(name="group", val=group)
     ut.check_str(name="condition", val=condition)
     ut.check_str(name="value", val=value)
+    if len({group, condition, value}) < 3:
+        raise ValueError(f"'group', 'condition', and 'value' should be three distinct columns, "
+                         f"got group={group!r}, condition={condition!r}, value={value!r}.")
     ut.check_df(name="df_eval", df=df_eval, cols_required=[group, condition, value])
     if len(df_eval) == 0:
         raise ValueError("'df_eval' (0 rows) should contain at least one row.")
     ut.check_number_val(name="baseline", val=baseline, accept_none=True, just_int=False)
     ut.check_str(name="baseline_label", val=baseline_label, accept_none=True)
     ut.check_bool(name="annotate", val=annotate)
+    ut.check_str(name="annotation_fmt", val=annotation_fmt, accept_none=True)
     ut.check_list_like(name="group_order", val=group_order, accept_none=True)
     ut.check_list_like(name="condition_order", val=condition_order, accept_none=True)
     ut.check_number_range(name="bar_width", val=bar_width, min_val=0, max_val=1, just_int=False)
@@ -172,12 +196,16 @@ def plot_comparison(df_eval: pd.DataFrame,
 
     # Draw
     if ax is None:
-        _, ax = plt.subplots(figsize=figsize)
+        fig, ax = plt.subplots(figsize=figsize)
+    else:
+        fig = ax.figure
     n_groups = len(group_order)
     n_cond = len(condition_order)
     x = np.arange(n_cond)
     each_w = bar_width / n_groups
     heights_max = float(np.nanmax(grid.values)) if grid.size else 0.0
+    if annotation_fmt is None:
+        annotation_fmt = _auto_annotation_fmt(grid.values)
     for j, g in enumerate(group_order):
         offset = (j - (n_groups - 1) / 2) * each_w
         heights = grid.loc[g].values.astype(float)
@@ -187,7 +215,7 @@ def plot_comparison(df_eval: pd.DataFrame,
                 if np.isnan(h):
                     continue
                 ax.text(b.get_x() + b.get_width() / 2, h + 0.01 * max(heights_max, 1),
-                        f"{h:.0f}", ha="center", va="bottom",
+                        annotation_fmt.format(h), ha="center", va="bottom",
                         fontsize=fontsize_annotations, weight="bold")
 
     # Baseline / chance line
@@ -210,9 +238,13 @@ def plot_comparison(df_eval: pd.DataFrame,
         ax.set_title(title)
     if ylim is not None:
         ax.set_ylim(ylim)
-    elif annotate and heights_max > 0:
-        top = max(heights_max, baseline if baseline is not None else heights_max)
-        ax.set_ylim(top=top * 1.15)
-    ax.legend()
+    elif heights_max > 0:
+        top = heights_max if baseline is None else max(heights_max, baseline)
+        ax.set_ylim(top=top * (1.15 if annotate else 1.05))
+    # Legend outside the axes (upper right): a grouped barplot fills the plot area, so an
+    # inside legend would overlap the tallest bars / their value labels.
+    ax.legend(loc="upper left", bbox_to_anchor=(1.01, 1.0), frameon=False)
     sns.despine(ax=ax)
-    return ax
+    # ``ax.figure`` is typed ``Figure | SubFigure | None`` by the matplotlib stubs,
+    # but a top-level Axes here always belongs to a real Figure.
+    return fig, ax  # pyright: ignore[reportReturnType]
