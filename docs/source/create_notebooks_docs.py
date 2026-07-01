@@ -50,6 +50,31 @@ LIST_EXCLUDE = []
 ORPHAN_TUTORIALS = {"tutorial0_minimal", "tutorial1_quick_start",
                     "tutorial1_slow_start", "plotting_prelude"}
 
+# Turn public-API code literals (``CPP`` / ``CPP.run``) in the exported notebook RST into
+# cross-reference roles, so class / method / function names link to the API (version-aware),
+# exactly like the hand-written .rst pages. Data objects and parameters (``df_seq``,
+# ``jmd_n``, ...) are not in ``aaanalysis.__all__`` and are left as plain literals.
+_API_ROLES = None
+
+
+def _linkify_api(rst):
+    """Convert ``Name`` / ``Class.method`` literals of the public API to Sphinx roles."""
+    global _API_ROLES
+    if _API_ROLES is None:
+        import inspect
+        import aaanalysis as aa
+        cls = sorted((n for n in aa.__all__ if inspect.isclass(getattr(aa, n))), key=len, reverse=True)
+        fun = sorted((n for n in aa.__all__ if not inspect.isclass(getattr(aa, n)) and n != "options"),
+                     key=len, reverse=True)
+        _API_ROLES = (cls, fun)
+    cls, fun = _API_ROLES
+    for n in cls:
+        rst = re.sub(r'``' + re.escape(n) + r'\.(\w+)``', r':meth:`~aaanalysis.' + n + r'.\1`', rst)
+        rst = re.sub(r'``' + re.escape(n) + r'``', ':class:`~aaanalysis.' + n + '`', rst)
+    for n in fun:
+        rst = re.sub(r'``' + re.escape(n) + r'``', ':func:`~aaanalysis.' + n + '`', rst)
+    return rst
+
 
 # Helper functions
 class CustomPreprocessor(Preprocessor):
@@ -100,6 +125,7 @@ def export_tutorial_notebooks_to_rst():
             custom_preprocessor = CustomPreprocessor(notebook_name=notebook_name)
             rst_exporter = nbconvert.RSTExporter(preprocessors=[custom_preprocessor])
             output, resources = rst_exporter.from_notebook_node(notebook)
+            output = _linkify_api(output)
             # Keep Getting-Started notebooks out of the sidebar nav (linked via :doc: instead)
             if notebook_name in ORPHAN_TUTORIALS:
                 output = ":orphan:\n\n" + output
@@ -126,6 +152,7 @@ def export_protocol_notebooks_to_rst():
             custom_preprocessor = CustomPreprocessor(notebook_name=notebook_name)
             rst_exporter = nbconvert.RSTExporter(preprocessors=[custom_preprocessor])
             output, resources = rst_exporter.from_notebook_node(notebook)
+            output = _linkify_api(output)
             # Write the RST and any accompanying files (like images)
             writer = FilesWriter(build_directory=FOLDER_GENERATED_RST)
             writer.write(output, resources, notebook_name=filename.replace('.ipynb', ''))
@@ -149,6 +176,7 @@ def export_use_case_notebooks_to_rst():
             custom_preprocessor = CustomPreprocessor(notebook_name=notebook_name)
             rst_exporter = nbconvert.RSTExporter(preprocessors=[custom_preprocessor])
             output, resources = rst_exporter.from_notebook_node(notebook)
+            output = _linkify_api(output)
             # Write the RST and any accompanying files (like images)
             writer = FilesWriter(build_directory=FOLDER_GENERATED_RST)
             writer.write(output, resources, notebook_name=filename.replace('.ipynb', ''))
