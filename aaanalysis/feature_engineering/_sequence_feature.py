@@ -753,6 +753,8 @@ class SequenceFeature:
             in a distinct format: **Position-based**, **Part-based**, **Sequence-based**, or **Sequence-TMD-based**.
             If given, ``df_parts`` is built internally via :meth:`get_df_parts` (using ``list_parts``), as an
             alternative to passing ``df_parts`` directly. Provide exactly one of ``df_parts`` or ``df_seq``.
+            Other :meth:`get_df_parts` options (e.g. ``jmd_n_len``, ``jmd_c_len``, ``tmd_len``) use their
+            defaults here; for full control, build ``df_parts`` with :meth:`get_df_parts` and pass it directly.
         list_parts : list of str, optional
             Names of sequence parts to obtain from ``df_seq`` (passed through to :meth:`get_df_parts`).
             Only used together with ``df_seq``; if ``None``, the :meth:`get_df_parts` default parts are used.
