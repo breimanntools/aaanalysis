@@ -23,13 +23,11 @@ examples, the latter adding the conceptual background, and the
 .. admonition:: Not sure where to start? Follow the Decision Map
    :class: tip
 
-   Skim the :ref:`Decision Map <gs_decision_map>` at the bottom of this page — it maps
+   Skim the :ref:`Decision Map <gs_decision_map>` at the bottom of this page: it maps
    your goal (*explore*, *predict*, or *optimize*) to the exact AAanalysis class or
-   function — then run the notebooks below for your first result.
+   function. Then run the notebooks below for your first result.
 
-The fastest way in is the short notebooks below: start with **A minimal CPP analysis**,
-compare the two interfaces in **Quick start** and **Slow start**, then make
-publication-ready figures with **Plotting Prelude**.
+The fastest way in is the short notebooks below:
 
 - :doc:`A minimal CPP analysis </generated/tutorial0_minimal>`
 - :doc:`Quick start with AAanalysis </generated/tutorial1_quick_start>`
@@ -61,9 +59,9 @@ The two APIs
 ------------
 AAanalysis offers the same analysis two ways, both documented in the Reference:
 
-- **Building blocks** (``import aaanalysis as aa``) — the individual objects and
+- **Building blocks** (``import aaanalysis as aa``): the individual objects and
   functions you compose, for full control over each step. See :ref:`API <api>`.
-- **Golden pipelines** (``import aaanalysis.pipe as aap``) — stateless one-call
+- **Golden pipelines** (``import aaanalysis.pipe as aap``): stateless one-call
   wrappers that chain those building blocks into a sensible default workflow.
   See :ref:`API (Pipelines) <api_pipe>`.
 
@@ -84,6 +82,6 @@ your question; click it to open the full-size version.
 .. raw:: html
 
    <a href="_static/decision_map.html" target="_blank" rel="noopener" title="Open the Decision Map">
-     <img src="_static/decision_map.png" alt="AAanalysis Decision Map"
+     <img src="_static/decision_map.png" alt="AAanalysis Decision Map (click to open the full map)"
           style="width:70%; display:block; margin:0 auto; border:1px solid #e3e7ec; border-radius:4px;">
    </a>
