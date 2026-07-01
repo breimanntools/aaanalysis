@@ -60,7 +60,8 @@ def shap_to_feat_imp(shap_values: ut.ArrayLike1D,
                      impact: bool = True,
                      ) -> np.ndarray:
     """
-    Convert a per-sample SHAP-value vector into normalized feature impact or importance.
+    Convert a per-sample SHAP-value vector into normalized feature impact or importance
+    (**[pro]**, requires ``aaanalysis[pro]``).
 
     For one sample (or the mean SHAP vector of a group of same-class samples), the SHAP
     values are normalized so the sum of their absolute values equals 100%:
