@@ -26,8 +26,8 @@ Explainable AI (eXAI) transforms opaque AI models into transparent systems, lett
 experts grasp the rationale behind specific predictions. This is particularly pivotal in
 the life sciences, where understanding each amino acid's role can inform drug discovery
 and disease treatment. Explanations come at two levels: *global* importance ranks which
-features matter across a whole dataset (``TreeModel``), while *local* attribution explains
-one specific sequence, residue by residue (``ShapModel``).
+features matter across a whole dataset (:class:`~aaanalysis.TreeModel`), while *local* attribution explains
+one specific sequence, residue by residue (:class:`~aaanalysis.ShapModel`).
 
 Combining CPP with SHAP
 -----------------------

@@ -36,7 +36,7 @@ machine-learning, explainable-AI, and protein-design stack, see
 embeddings can serve as the numerical representation of amino acids; embeddings can be
 created via
 `Google Colab <https://colab.research.google.com/drive/1N3Sf5EDwqHEN2lyPNcW5w6Mct5FZ2-W2?usp=sharing>`_
-and are integrated with CPP through ``CPP.run_num``.
+and are integrated with CPP through :meth:`~aaanalysis.CPP.run_num`.
 
 AAanalysis provides a handful of DataFrames for seamless data management. Starting with amino acid scale information
 (**df_scales**, **df_cat**) and protein sequences (**df_seq**), it enables segmentation into parts (**df_parts**)

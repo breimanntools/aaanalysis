@@ -116,8 +116,8 @@ learning, explainable AI, and protein-design stack. It *consumes* upstream repre
 embeddings, structures) and even competitor descriptor sets, and runs them through its interpretable
 core (*Part × Split × Scale* · AAontology · CPP). Downstream machine-learning and explainable-AI
 methods then either *consume* these features directly or are *integrated* into AAanalysis through
-wrappers or native implementations — for example SHAP via ``ShapModel``, or machine-learning models
-such as random forests via ``TreeModel`` — so the resulting features, explanations, and design
+wrappers or native implementations — for example SHAP via :class:`~aaanalysis.ShapModel`, or machine-learning models
+such as random forests via :class:`~aaanalysis.TreeModel` — so the resulting features, explanations, and design
 objectives feed straight into the standard ML / XAI / optimization tools.
 
 Click the diagram to open the full map (with PNG / PDF / HTML download options), or read

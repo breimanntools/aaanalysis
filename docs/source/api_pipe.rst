@@ -15,7 +15,7 @@ AAanalysis exposes the same analysis through two interfaces:
 
 The :ref:`building blocks <api>` (``aa``) are the explicit objects and functions you
 compose for full control over every step. The **golden pipelines** (``aap``) chain the
-standard ``load`` to ``CPP`` to ``model`` to ``explain`` to ``plot`` workflow into a
+standard ``load`` to :class:`~aaanalysis.CPP` to ``model`` to ``explain`` to ``plot`` workflow into a
 single call, much as ``pyplot`` sits over Matplotlib's ``Axes`` and ``Figure``. They are
 stateless wrappers whose defaults match the explicit path, and they live in their own
 module under a separate alias (``import aaanalysis.pipe as aap``). Reach for ``aa`` when
