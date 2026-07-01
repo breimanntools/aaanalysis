@@ -43,10 +43,7 @@ AAanalysis provides a handful of DataFrames for seamless data management. Starti
 and accommodates user-defined splitting (**split_kws**). Our CPP algorithm then utilizes these to generate
 physicochemical features (**df_feat**) by comparing protein sequence sets.
 
-See the primary analysis pipeline of the AAanalysis framework in the **Data Flow Map**
-below: it runs from the external data sources through the two CPP entry points (``CPP.run`` for
-amino acid scales, ``CPP.run_num`` for numeric values) to the feature matrix ``X`` and the
-model, explanation, and design wrappers
+See how the pieces connect in the **Data Flow Map** below
 (`open the full map <../_static/dataflow_map.html>`_):
 
 .. figure:: /_artwork/diagrams/dataflow_map.png

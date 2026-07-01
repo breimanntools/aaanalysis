@@ -27,9 +27,7 @@ examples, the latter adding the conceptual background, and the
    your goal (*explore*, *predict*, or *optimize*) to the exact AAanalysis class or
    function. Then run the notebooks below for your first result.
 
-The fastest way in is the short notebooks below: start with **A minimal CPP analysis**,
-compare the two interfaces in **Quick start** and **Slow start**, then make
-publication-ready figures with **Plotting Prelude**.
+The fastest way in is the short notebooks below:
 
 - :doc:`A minimal CPP analysis </generated/tutorial0_minimal>`
 - :doc:`Quick start with AAanalysis </generated/tutorial1_quick_start>`
