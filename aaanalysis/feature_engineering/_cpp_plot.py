@@ -1262,7 +1262,7 @@ class CPPPlot:
                     xtick_size: Union[int, float] = 11.0,
                     xtick_width: Union[int, float] = 2.0,
                     xtick_length: Union[int, float] = 5.0,
-                    seq_char_fill: bool = False,
+                    seq_char_fill: bool = True,
                     ) -> Tuple[Figure, Axes]:
         """
         Plot Comparative Physicochemical Profiling (CPP) feature map showing feature value mean
@@ -1410,10 +1410,14 @@ class CPPPlot:
             Width of the x-ticks (>0).
         xtick_length : int or float, default=5.0
             Length of the x-ticks (>0).
-        seq_char_fill : bool, default=False
-            If ``True`` and ``seq_size`` is auto-optimized (``None``), grow the sequence
-            characters until adjacent residues touch (no whitespace between them) while
-            still never overlapping. If ``False``, keep the default no-overlap spacing.
+        seq_char_fill : bool, default=True
+            If ``True`` (default) and ``seq_size`` is auto-optimized (``None``), grow the
+            sequence characters until adjacent residues touch (no whitespace between them)
+            while still never overlapping, so the residue letters fill the cells. If
+            ``False``, keep a small gap between characters (the previous spacing).
+
+            .. versionchanged:: 1.1.0
+                Now defaults to ``True`` (edge-to-edge residue characters).
 
         Returns
         -------
@@ -1573,6 +1577,18 @@ class CPPPlot:
                                             fill=seq_char_fill)
             if self._verbose:
                 ut.print_out(f"Optimized sequence character fontsize is: {seq_size}")
+        # set_box_aspect triggers a relayout that re-exposes shared x-tick labels on
+        # the top-row axes (the top importance bar and the empty top-right cell),
+        # putting stray position/importance ticks above the grid. Keep ticks on the
+        # heatmap (bottom) only, matching the non-auto_font layout. Done last so
+        # tight_layout cannot re-show them.
+        if auto_grid:
+            top_edge = ax.get_position().y1
+            for other in fig.axes:
+                if other is not ax and other.get_position().y0 >= top_edge - 0.05:
+                    other.tick_params(axis="x", labelbottom=False, labeltop=False, length=0)
+                    for lbl in other.get_xticklabels():
+                        lbl.set_visible(False)
         return ut.FigAxResult(fig, ax)
 
     def update_seq_size(self,

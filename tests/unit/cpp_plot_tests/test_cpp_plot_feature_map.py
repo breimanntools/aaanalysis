@@ -974,13 +974,19 @@ class TestFeatureMapSeqCharFill:
         on = self._max_seq_fs(ax_on); plt.close("all")
         assert on >= off  # fill never shrinks; grows toward touching characters
 
-    def test_fill_default_is_false(self):
+    def test_fill_default_is_true(self):
+        # Default is edge-to-edge fill (seq_char_fill=True): default matches fill=True,
+        # and is at least as large as the explicit no-fill spacing.
         df_feat = aa.load_features(name="DOM_GSEC").head(40)
         cpp = aa.CPPPlot(df_scales=aa.load_scales())
         kws = self._seq_kws()
         _, ax_def = cpp.feature_map(df_feat=df_feat, add_imp_bar_top=False, **kws)
+        def_fs = self._max_seq_fs(ax_def); plt.close("all")
+        _, ax_on = cpp.feature_map(df_feat=df_feat, add_imp_bar_top=False, seq_char_fill=True, **kws)
+        on_fs = self._max_seq_fs(ax_on); plt.close("all")
         _, ax_off = cpp.feature_map(df_feat=df_feat, add_imp_bar_top=False, seq_char_fill=False, **kws)
-        assert self._max_seq_fs(ax_def) == self._max_seq_fs(ax_off); plt.close("all")
+        off_fs = self._max_seq_fs(ax_off); plt.close("all")
+        assert def_fs == on_fs and def_fs >= off_fs
 
     def test_fill_bad_type_raises(self):
         df_feat = aa.load_features(name="DOM_GSEC").head(40)
