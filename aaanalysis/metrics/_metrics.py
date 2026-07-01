@@ -252,6 +252,9 @@ def _check_mask_known_pos(mask_known_pos=None, n_samples=None):
                          f"({n_samples}); got shape {mask.shape}.")
     if not np.all(np.isin(mask, [0, 1])):
         raise ValueError("'mask_known_pos' should contain only boolean (0/1) values.")
+    if mask.astype(bool).all():
+        raise ValueError("'mask_known_pos' masks every sample; at least one sample must "
+                         "remain unmasked to be scored.")
 
 
 # Feature-set evaluation (model + CV + metric scorer; incl. PU mask-known-positives CV)
@@ -297,7 +300,8 @@ def eval_features(X: ut.ArrayLike2D,
         If ``None``, leave-one-out cross-validation is used.
     metric : str, default='balanced_accuracy'
         Classification metric name. One of ``'balanced_accuracy'``, ``'accuracy'``,
-        ``'f1'``, ``'precision'``, ``'recall'``, ``'matthews_corrcoef'``.
+        ``'f1'``, ``'precision'``, ``'recall'``. All are bounded in ``[0, 1]``, so the
+        returned score is a genuine percentage in ``[0, 100]``.
     mask_known_pos : array-like of bool, shape (n_samples,), optional
         PU mask of known positives. Masked samples are kept in every training fold but
         excluded from scoring. If ``None``, all samples are scored.
@@ -308,8 +312,8 @@ def eval_features(X: ut.ArrayLike2D,
     Returns
     -------
     score : float
-        Cross-validated ``metric`` score scaled to a percentage (the bounded metric
-        value multiplied by 100).
+        Cross-validated ``metric`` score as a percentage in ``[0, 100]`` (the
+        ``[0, 1]``-bounded metric value multiplied by 100).
 
     Notes
     -----

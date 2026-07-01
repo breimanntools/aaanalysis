@@ -8,6 +8,11 @@ from scipy.spatial import distance
 from joblib import Parallel, delayed
 import os
 from scipy.stats import rankdata
+from sklearn.base import clone
+from sklearn.svm import SVC
+from sklearn.model_selection import LeaveOneOut, cross_val_predict, check_cv
+from sklearn.metrics import (accuracy_score, balanced_accuracy_score, f1_score,
+                             precision_score, recall_score)
 
 from ..config import resolve_n_jobs
 
@@ -312,22 +317,18 @@ def smooth_scores_(scores=None, method="triangular", window=2, sigma=None,
 
 
 # Feature-set evaluation (model + CV + metric scorer; incl. PU mask-known-positives CV)
-from sklearn.base import clone
-from sklearn.svm import SVC
-from sklearn.model_selection import LeaveOneOut, cross_val_predict
-from sklearn.metrics import (accuracy_score, balanced_accuracy_score, f1_score,
-                             matthews_corrcoef, precision_score, recall_score)
-
-# Registry of supported (y_true, y_pred) -> score classification metrics. Each is a
-# bounded score scaled by 100 in the frontend so the default reproduces the
-# notebook's ``balanced_accuracy_score(y, y_pred) * 100`` recipe.
+# Registry of supported (y_true, y_pred) -> score classification metrics. Every metric
+# is bounded in [0, 1], so the ``* 100`` scaling in ``eval_features_`` yields a genuine
+# percentage in [0, 100] (this reproduces the notebook's
+# ``balanced_accuracy_score(y, y_pred) * 100`` recipe). Signed-range metrics (e.g.
+# Matthews correlation coefficient, [-1, 1]) are intentionally excluded so the reported
+# score keeps a single percentage semantics.
 DICT_METRICS_EVAL = {
     "balanced_accuracy": balanced_accuracy_score,
     "accuracy": accuracy_score,
     "f1": f1_score,
     "precision": precision_score,
     "recall": recall_score,
-    "matthews_corrcoef": matthews_corrcoef,
 }
 LIST_METRICS_EVAL = list(DICT_METRICS_EVAL)
 
@@ -357,7 +358,10 @@ def _masked_cv_score(X, y, model=None, cv=None, f_score=None, mask=None):
         y_true.extend(np.asarray(y)[keep].tolist())
         y_pred.extend(np.asarray(preds).tolist())
     if len(y_true) == 0:
-        raise ValueError("'mask_known_pos' masks every sample; no test points remain to score.")
+        # Defensive net: the frontend already rejects an all-masked input, so this only
+        # triggers for a custom splitter whose test folds never cover an unmasked sample.
+        raise ValueError("No unmasked test points remain to score; check the 'cv' splitter "
+                         "and 'mask_known_pos' combination.")
     return f_score(np.array(y_true), np.array(y_pred))
 
 
@@ -375,8 +379,10 @@ def eval_features_(X=None, labels=None, model=None, cv=None, metric="balanced_ac
     # Honor the random_state contract for stochastic estimators (e.g. RandomForest)
     if random_state is not None and "random_state" in model.get_params():
         model.set_params(random_state=random_state)
-    if cv is None:
-        cv = LeaveOneOut()
+    # Normalize cv to a splitter object: None -> leave-one-out, int -> stratified k-fold
+    # (matching cross_val_predict's own int handling), splitter -> used as-is. This makes
+    # the masked path work for an int cv too (it needs a real ``.split``).
+    cv = LeaveOneOut() if cv is None else check_cv(cv, y, classifier=True)
     if mask_known_pos is None:
         y_pred = cross_val_predict(model, X, y, cv=cv)
         score = f_score(y, y_pred)
