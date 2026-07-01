@@ -125,6 +125,36 @@ class TestFeatureMapLabelOverlap:
         assert min(sizes) >= 5.0, f"row-label font {min(sizes)}pt < 5pt floor"
 
 
+class TestLabelOverlapEdgeCases:
+    """Robustness of the shrink gate across col_cat variants and tiny frames."""
+
+    def setup_method(self):
+        aa.options["verbose"] = False
+
+    def teardown_method(self):
+        aa.options["verbose"] = "off"
+        plt.close("all")
+
+    def test_single_subcategory_does_not_crash(self):
+        # < 2 labels: optimizer must early-return, plot must still succeed.
+        df_feat = make_dense_df_feat(1)
+        fig, ax = aa.CPPPlot().feature_map(df_feat)
+        assert fig is not None
+
+    def test_col_cat_category_few_rows_no_overlap(self):
+        df_feat = make_dense_df_feat(74)
+        cats = list(dict.fromkeys(df_feat["category"]))
+        fig, ax = aa.CPPPlot().feature_map(df_feat, col_cat="category")
+        assert get_label_overlaps(fig, cats) == []
+
+    def test_col_cat_scale_name_many_rows_no_overlap(self):
+        # Highest-density label axis (one row per scale name) must still clear.
+        df_feat = make_dense_df_feat(74)
+        names = list(dict.fromkeys(df_feat["scale_name"]))
+        fig, ax = aa.CPPPlot().feature_map(df_feat, col_cat="scale_name")
+        assert get_label_overlaps(fig, names) == []
+
+
 class TestHeatmapLabelOverlap:
     """The same row-label gate applies to standalone heatmap (shared plot path)."""
 
