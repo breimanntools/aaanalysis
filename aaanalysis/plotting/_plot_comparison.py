@@ -215,17 +215,18 @@ def plot_comparison(df_eval: pd.DataFrame,
     x = np.arange(n_cond)
     each_w = bar_width / n_groups
     heights_max = float(np.nanmax(grid.values)) if grid.size else 0.0
+    label_pad = 0.01 * max(heights_max, 1)  # loop-invariant gap between a bar top and its label
     if annotation_fmt is None:
         annotation_fmt = _auto_annotation_fmt(grid.values)
     for j, g in enumerate(group_order):
         offset = (j - (n_groups - 1) / 2) * each_w
-        heights = grid.loc[g].values.astype(float)
+        heights = grid.loc[g].to_numpy(dtype=float)
         bars = ax.bar(x + offset, heights, each_w, label=str(g), color=dict_group_color[g])
         if annotate:
             for b, h in zip(bars, heights):
                 if np.isnan(h):
                     continue
-                ax.text(b.get_x() + b.get_width() / 2, h + 0.01 * max(heights_max, 1),
+                ax.text(b.get_x() + b.get_width() / 2, h + label_pad,
                         annotation_fmt.format(h), ha="center", va="bottom",
                         fontsize=fontsize_annotations, weight="bold")
 
