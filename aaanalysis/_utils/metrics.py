@@ -359,8 +359,8 @@ def _masked_cv_score(X, y, model=None, cv=None, f_score=None, mask=None):
         est = clone(model)
         est.fit(X[train_full], y[train_full])
         preds = est.predict(X[keep])
-        y_true.extend(np.asarray(y)[keep].tolist())
-        y_pred.extend(np.asarray(preds).tolist())
+        y_true.extend(y[keep].tolist())
+        y_pred.extend(preds.tolist())
     if len(y_true) == 0:
         # Defensive net: the frontend already rejects an all-masked input, so this only
         # triggers for a custom splitter whose test folds never cover an unmasked sample.
