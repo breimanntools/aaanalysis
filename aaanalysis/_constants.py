@@ -441,6 +441,18 @@ COLS_EVAL_DPULEARN_DISSIMILARITY = [COL_AVG_ABS_AUC_POS, COL_AVG_KLD_POS,
                                     COL_AVG_ABS_AUC_NEG, COL_AVG_KLD_NEG]
 COLS_EVAL_DPULEARN = [COL_N_REL_NEG] + COLS_EVAL_DPULEARN_SIMILARITY + COLS_EVAL_DPULEARN_DISSIMILARITY
 
+# AAPred (model evaluation / deployment)
+COL_MODEL = "model"             # model class short name (e.g. 'RandomForestClassifier')
+COL_METRIC = "metric"           # performance metric name (e.g. 'balanced_accuracy')
+COL_PRINCIPLE = "principle"     # evaluation principle: 'cv' (cross-validation) | 'holdout'
+COL_SCORE_STD = "score_std"     # std of the score (across CV folds; NaN for a single holdout estimate)
+COL_GROUP = "group"             # per-sample/per-protein group label used for coloring
+STR_PRINCIPLE_CV = "cv"
+STR_PRINCIPLE_HOLDOUT = "holdout"
+LIST_PRINCIPLES = [STR_PRINCIPLE_CV, STR_PRINCIPLE_HOLDOUT]
+LIST_METRICS_PRED = ["accuracy", "balanced_accuracy", "precision", "recall", "f1", "roc_auc"]
+COLS_EVAL_PRED = [COL_MODEL, COL_METRIC, COL_PRINCIPLE, COL_SCORE, COL_SCORE_STD]
+
 # Labels
 LABEL_FEAT_VAL = "Feature value"
 LABEL_HIST_COUNT = "Number of proteins"

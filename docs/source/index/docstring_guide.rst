@@ -353,6 +353,9 @@ Rules:
    * - ``TreeModel``
      - ``tm``
      -
+   * - ``AAPred`` / ``AAPredPlot``
+     - ``aapred`` / ``aapred_plot``
+     -
    * - ``ShapModel``
      - ``sm``
      - ``pro``
