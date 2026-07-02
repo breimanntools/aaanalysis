@@ -136,6 +136,50 @@ def get_df_feat_(features=None, df_parts=None, labels=None,
     return df
 
 
+# Scale-average baseline featurization
+def get_scale_mean_(df_parts=None, df_scales=None):
+    """Per-sequence scale average over the concatenated sequence parts (vectorized).
+
+    For each row of ``df_parts`` the part strings are concatenated into one span; every
+    residue that is not a (single-letter) index label of ``df_scales`` (gaps ``'-'`` and
+    any other non-canonical symbol) is dropped, and the remaining residues' scale rows are
+    averaged column-wise into one value per scale, giving the ``(n_seq, n_scales)`` matrix.
+    A row whose span has no scored residue (empty / all-non-canonical) becomes all-``NaN``;
+    ``n_kept`` reports the number of averaged residues per row so the frontend can warn.
+
+    Implementation: all residues of all spans are flattened into one byte array and mapped
+    to scale rows via a 256-entry lookup table; a single ``np.bincount`` tallies a small
+    per-sequence residue-count matrix ``(n_seq, n_letters)``, and one BLAS matmul against
+    the scale matrix yields the per-sequence sums — no per-sequence Python loop or
+    ``DataFrame.loc``, and the wide part scales with ``n_scales`` as a matmul, not a scatter.
+    """
+    n_seq = len(df_parts)
+    scales_arr = df_scales.to_numpy(dtype=float)                    # (n_letters, n_scales)
+    n_letters = scales_arr.shape[0]
+    # Byte -> scale-row lookup (-1 = non-scored); only single-character labels can match a residue
+    lut = np.full(256, -1, dtype=np.intp)
+    for row, aa in enumerate(df_scales.index):
+        if len(aa) == 1 and ord(aa) < 256:
+            lut[ord(aa)] = row
+    # Flatten every residue of every span, tracking its owning sequence
+    # (df_parts columns are guaranteed str by the frontend's get_df_parts)
+    spans = df_parts.agg("".join, axis=1).to_list()
+    lengths = np.fromiter((len(s) for s in spans), dtype=np.intp, count=n_seq)
+    codes = np.frombuffer("".join(spans).encode("latin-1", "replace"), dtype=np.uint8)
+    seq_ids = np.repeat(np.arange(n_seq), lengths)
+    rows = lut[codes]                                               # scale row per residue
+    valid = rows >= 0
+    seq_ids, rows = seq_ids[valid], rows[valid]
+    # Per-sequence residue-count matrix (n_seq, n_letters) from one bincount, then sums via matmul
+    counts = np.bincount(seq_ids * n_letters + rows,
+                         minlength=n_seq * n_letters).reshape(n_seq, n_letters)
+    n_kept = counts.sum(axis=1).astype(int)
+    sums = counts @ scales_arr                                     # (n_seq, n_scales)
+    with np.errstate(invalid="ignore"):
+        X = sums / n_kept[:, None]                                 # 0 / 0 -> NaN (empty rows)
+    return X, n_kept
+
+
 # Multi-class / regression label conversion
 def get_labels_ovr_(labels=None, label_test=1, label_ref=0):
     """One-vs-rest: per class, a full-length binary array (class -> test, rest -> ref)."""
