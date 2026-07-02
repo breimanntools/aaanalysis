@@ -352,7 +352,14 @@ LIST_CANDIDATE_SEARCH = [CANDIDATE_SEARCH_EXACT, CANDIDATE_SEARCH_FAST]
 MODEL_SVM = "svm"
 MODEL_RF = "rf"
 MODEL_LOG_REG = "log_reg"
+MODEL_EXTRA_TREES = "extra_trees"
 LIST_CV_MODELS = [MODEL_SVM, MODEL_RF, MODEL_LOG_REG]
+# Prediction-model registry names (AAPred). Resolved to sklearn estimators by
+# ut.get_cv_model_. Kept deliberately small — the four standard families the package
+# already uses (matching pipe.predict_samples' default set). Any other estimator
+# (MLP, gradient boosting, xgboost, a voting/stacking ensemble, ...) is used by
+# passing a configured sklearn estimator instance instead of a name.
+LIST_PRED_MODELS = [MODEL_SVM, MODEL_RF, MODEL_EXTRA_TREES, MODEL_LOG_REG]
 DICT_VALUE_TYPE = {COL_ABS_AUC: "mean",
                    COL_ABS_MEAN_DIF: "mean",
                    COL_MEAN_DIF: "mean",
@@ -440,6 +447,20 @@ COLS_EVAL_DPULEARN_DISSIMILARITY = [COL_AVG_ABS_AUC_POS, COL_AVG_KLD_POS,
                                     COL_AVG_ABS_AUC_UNL, COL_AVG_KLD_UNL,
                                     COL_AVG_ABS_AUC_NEG, COL_AVG_KLD_NEG]
 COLS_EVAL_DPULEARN = [COL_N_REL_NEG] + COLS_EVAL_DPULEARN_SIMILARITY + COLS_EVAL_DPULEARN_DISSIMILARITY
+
+# AAPred (model evaluation / deployment)
+COL_MODEL = "model"             # model class short name (e.g. 'RandomForestClassifier')
+COL_METRIC = "metric"           # performance metric name (e.g. 'balanced_accuracy')
+COL_PRINCIPLE = "principle"     # evaluation principle: 'cv' (cross-validation) | 'holdout'
+COL_SCORE_STD = "score_std"     # std of the score (across CV folds; NaN for a single holdout estimate)
+COL_GROUP = "group"             # per-sample/per-protein group label used for coloring
+COL_OFFSET = "offset"           # AAPred.predict_domain — boundary shift applied to tmd_start/tmd_stop
+COL_RESIDUE_POS = "position"    # AAPred.predict_window — 1-based anchor position scored
+STR_PRINCIPLE_CV = "cv"
+STR_PRINCIPLE_HOLDOUT = "holdout"
+LIST_PRINCIPLES = [STR_PRINCIPLE_CV, STR_PRINCIPLE_HOLDOUT]
+LIST_METRICS_PRED = ["accuracy", "balanced_accuracy", "precision", "recall", "f1", "roc_auc"]
+COLS_EVAL_PRED = [COL_MODEL, COL_METRIC, COL_PRINCIPLE, COL_SCORE, COL_SCORE_STD]
 
 # Labels
 LABEL_FEAT_VAL = "Feature value"

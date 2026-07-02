@@ -93,6 +93,17 @@ Explainable AI
     TreeModel
     ShapModel
 
+.. _prediction_api:
+
+Prediction
+==========
+.. autosummary::
+    :toctree: generated/
+    :template: autosummary/class_template.rst
+
+    AAPred
+    AAPredPlot
+
 .. _protein_engineering_api:
 
 Protein Engineering
