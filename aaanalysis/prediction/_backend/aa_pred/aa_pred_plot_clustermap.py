@@ -31,8 +31,12 @@ def plot_clustermap_(data=None, names=None, labels=None, colors=None, cmap="GnBu
     n = values.shape[0]
     if names is None:
         names = [str(i) for i in range(n)]
-    # Sample x sample Pearson correlation of the explanation vectors.
+    # Sample x sample Pearson correlation of the explanation vectors. A sample whose
+    # vector has zero variance (e.g. an all-zero SHAP row) yields NaN correlations, which
+    # break the hierarchical linkage; treat those as uncorrelated (0) with self-corr 1.
     corr = np.corrcoef(values)
+    corr = np.nan_to_num(corr, nan=0.0)
+    np.fill_diagonal(corr, 1.0)
     corr_df = pd.DataFrame(corr, index=list(names), columns=list(names))
     side_colors = None
     dict_color = None

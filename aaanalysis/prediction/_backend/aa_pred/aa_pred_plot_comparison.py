@@ -73,7 +73,8 @@ def plot_comparison_(df_eval=None, group="group", condition="condition", value="
     n_groups = len(group_order)
     x = np.arange(len(condition_order))
     each_w = bar_width / n_groups
-    heights_max = float(np.nanmax(grid.values)) if grid.size else 0.0
+    all_nan = grid.size == 0 or bool(np.all(np.isnan(grid.values)))
+    heights_max = 0.0 if all_nan else float(np.nanmax(grid.values))
     label_pad = 0.01 * max(heights_max, 1)
     if annotation_fmt is None:
         annotation_fmt = _auto_annotation_fmt(grid.values)

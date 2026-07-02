@@ -30,24 +30,26 @@ _DEFAULT_PARAM_GRIDS = {
 
 
 # II Main Functions
-def fit_models(X, labels, list_model_classes=None, list_model_kwargs=None,
-               list_param_grids=None, optimize_hyperparams=False, n_cv=5, random_state=None):
-    """Fit every model on the full data and return the list of fitted estimators.
+def fit_models(X, labels, list_estimators=None, list_param_grids=None,
+               optimize_hyperparams=False, n_cv=5, random_state=None):
+    """Fit every configured estimator on the full data and return the fitted estimators.
 
-    When ``optimize_hyperparams`` is set, each model is tuned by ``GridSearchCV`` over
-    its entry in ``list_param_grids`` (or a built-in default grid), and the best
-    estimator is kept. Models with no available grid are fit directly.
+    Each estimator in ``list_estimators`` is cloned before fitting (so the stored
+    configuration is never mutated). When ``optimize_hyperparams`` is set, each model is
+    tuned by ``GridSearchCV`` over its entry in ``list_param_grids`` (or a built-in default
+    grid), and the best estimator is kept. Models with no available grid are fit directly.
     """
+    from sklearn.base import clone
     from sklearn.model_selection import GridSearchCV, StratifiedKFold
     list_models = []
-    for i, (model_class, model_kwargs) in enumerate(zip(list_model_classes, list_model_kwargs)):
-        model = model_class(**model_kwargs)
+    for i, estimator in enumerate(list_estimators):
+        model = clone(estimator)
         grid = None
         if optimize_hyperparams:
             if list_param_grids is not None and list_param_grids[i]:
                 grid = list_param_grids[i]
             else:
-                grid = _DEFAULT_PARAM_GRIDS.get(model_class.__name__)
+                grid = _DEFAULT_PARAM_GRIDS.get(type(estimator).__name__)
         if grid:
             cv = StratifiedKFold(n_splits=n_cv, shuffle=True, random_state=random_state)
             search = GridSearchCV(model, grid, cv=cv)

@@ -214,6 +214,17 @@ class TestAAPredPlotClustermap:
                                        cbar_label="r", title="t")
         assert r.ax is not None
 
+    def test_constant_row_does_not_crash(self):
+        # A zero-variance importance row yields NaN correlations; must be sanitized.
+        data = _imp_data()
+        data[0] = 0.0
+        r = aa.AAPredPlot().clustermap(data=data, labels=np.array([1, 0] * 6))
+        assert r.ax is not None
+
+    def test_string_labels_allowed(self):
+        r = aa.AAPredPlot().clustermap(data=_imp_data(), labels=["sub", "non"] * 6)
+        assert r.ax is not None
+
 
 class TestAAPredPlotHist:
     def test_returns_fig_ax(self):

@@ -10,11 +10,11 @@ import aaanalysis.utils as ut
 
 
 # I Helper Functions
-def _score_cv(model_class, model_kwargs, X, labels, metric, n_cv, random_state):
-    """Cross-validated score (mean, std) for one model x metric."""
+def _score_cv(estimator, X, labels, metric, n_cv, random_state):
+    """Cross-validated score (mean, std) for one estimator x metric."""
+    from sklearn.base import clone
     cv = StratifiedKFold(n_splits=n_cv, shuffle=True, random_state=random_state)
-    model = model_class(**model_kwargs)
-    scores = cross_val_score(model, X, labels, cv=cv, scoring=metric)
+    scores = cross_val_score(clone(estimator), X, labels, cv=cv, scoring=metric)
     return float(np.mean(scores)), float(np.std(scores))
 
 
@@ -25,19 +25,17 @@ def _score_holdout(fitted_model, X_holdout, labels_holdout, metric):
 
 
 # II Main Functions
-def eval_models(X, labels, list_model_classes=None, list_model_kwargs=None,
-                list_models=None, metrics=None, n_cv=5, random_state=None,
-                X_holdout=None, labels_holdout=None):
+def eval_models(X, labels, list_estimators=None, list_models=None, metrics=None, n_cv=5,
+                random_state=None, X_holdout=None, labels_holdout=None):
     """Score every model x metric by cross-validation and (optionally) on a held-out set.
 
     Returns a long-format ``df_eval`` with one row per (model, metric, principle).
     """
     rows = []
-    for i, (model_class, model_kwargs) in enumerate(zip(list_model_classes, list_model_kwargs)):
-        model_name = model_class.__name__
+    for i, estimator in enumerate(list_estimators):
+        model_name = type(estimator).__name__
         for metric in metrics:
-            score, score_std = _score_cv(model_class=model_class, model_kwargs=model_kwargs,
-                                         X=X, labels=labels, metric=metric,
+            score, score_std = _score_cv(estimator=estimator, X=X, labels=labels, metric=metric,
                                          n_cv=n_cv, random_state=random_state)
             rows.append([model_name, metric, ut.STR_PRINCIPLE_CV, score, score_std])
             if X_holdout is not None:

@@ -4,7 +4,7 @@ This is a script for the frontend of the AAPred class for evaluating and deployi
 from typing import Optional, Dict, List, Tuple, Type, Union
 import numpy as np
 import pandas as pd
-from sklearn.base import ClassifierMixin, BaseEstimator
+from sklearn.base import ClassifierMixin, BaseEstimator, clone
 from sklearn.ensemble import RandomForestClassifier
 
 import aaanalysis.utils as ut
@@ -15,6 +15,18 @@ from ._backend.aa_pred.aa_pred_eval import eval_models
 
 
 # I Helper Functions
+def _set_random_state_if_supported(estimator=None, random_state=None, only_if_unset=False):
+    """Inject ``random_state`` into an estimator that supports it (for reproducibility).
+
+    ``only_if_unset`` protects an explicit seed the user already set on a passed instance;
+    a value is written only when the estimator's ``random_state`` is currently ``None``.
+    """
+    params = estimator.get_params(deep=False)
+    if "random_state" in params and (not only_if_unset or params["random_state"] is None):
+        estimator.set_params(random_state=random_state)
+    return estimator
+
+
 def check_metrics(metrics=None):
     """Check that evaluation metrics are valid scikit-learn scorer names."""
     metrics = ut.check_list_like(name="metrics", val=metrics, accept_str=True, accept_none=False, min_len=1)
@@ -148,11 +160,12 @@ class AAPred(Wrapper):
         # Global parameters
         verbose = ut.check_verbose(verbose)
         random_state = ut.check_random_state(random_state=random_state)
-        # Model selection: `models` (registry name strings and/or configured sklearn
-        # estimator instances/classes) is the primary API. It is normalized into the
-        # (class, kwargs) representation so the legacy list_model_classes path below is
-        # unchanged. A name resolves via the shared registry; an instance is captured by
-        # its type + get_params(); a class is used with empty kwargs.
+        # Resolve models into configured estimator INSTANCES (``_list_estimators``), which
+        # fit/eval clone before use. `models` (registry name strings and/or configured
+        # sklearn estimator instances/classes) is the primary API; storing the instance and
+        # cloning it (rather than round-tripping through get_params + type) is what makes
+        # meta-ensembles (voting/stacking) and **kwargs estimators (xgboost) work and keeps
+        # a passed instance's own configuration + random_state intact.
         if models is not None:
             if list_model_classes is not None or list_model_kwargs is not None:
                 raise ValueError("Pass either 'models' or 'list_model_classes'/'list_model_kwargs', not both.")
@@ -160,36 +173,38 @@ class AAPred(Wrapper):
                 models = [models]
             if len(models) == 0:
                 raise ValueError("'models' must contain at least one model name or estimator.")
-            list_model_classes, list_model_kwargs = [], []
+            list_estimators = []
             for m in models:
                 if isinstance(m, str):
-                    inst = ut.get_cv_model_(name=m, random_state=random_state)
-                    list_model_classes.append(type(inst))
-                    list_model_kwargs.append(inst.get_params())
+                    est = ut.get_cv_model_(name=m, random_state=random_state)
                 elif isinstance(m, type):
-                    list_model_classes.append(m)
-                    list_model_kwargs.append({})
-                else:  # a configured estimator instance
-                    list_model_classes.append(type(m))
-                    list_model_kwargs.append(m.get_params())
-        # Model parameters
-        if list_model_classes is None:
-            list_model_classes = [RandomForestClassifier]
-        elif not isinstance(list_model_classes, list):
-            list_model_classes = [list_model_classes]
-        list_model_classes = ut.check_list_like(name="list_model_classes", val=list_model_classes,
-                                                accept_none=False, min_len=1)
-        list_model_kwargs = ut.check_list_like(name="list_model_kwargs", val=list_model_kwargs, accept_none=True)
-        if list_model_kwargs is None:
-            list_model_kwargs = [{} for _ in list_model_classes]
-        ut.check_match_list_model_classes_kwargs(list_model_classes=list_model_classes,
-                                                 list_model_kwargs=list_model_kwargs)
-        _list_model_kwargs = []
-        for model_class, model_kwargs in zip(list_model_classes, list_model_kwargs):
-            ut.check_mode_class(model_class=model_class)
-            model_kwargs = ut.check_model_kwargs(model_class=model_class, model_kwargs=model_kwargs,
-                                                 method_to_check="predict_proba", random_state=random_state)
-            _list_model_kwargs.append(model_kwargs)
+                    est = _set_random_state_if_supported(m(), random_state, only_if_unset=False)
+                else:  # a configured estimator instance: clone + seed only if the user left it unset
+                    est = _set_random_state_if_supported(clone(m), random_state, only_if_unset=True)
+                ut.check_mode_class(model_class=type(est))  # ensure predict_proba
+                list_estimators.append(est)
+            list_model_classes = [type(e) for e in list_estimators]
+            _list_model_kwargs = [{} for _ in list_estimators]  # introspection placeholder
+        else:
+            # Legacy path: class + kwargs, validated, then instantiated into estimators.
+            if list_model_classes is None:
+                list_model_classes = [RandomForestClassifier]
+            elif not isinstance(list_model_classes, list):
+                list_model_classes = [list_model_classes]
+            list_model_classes = ut.check_list_like(name="list_model_classes", val=list_model_classes,
+                                                    accept_none=False, min_len=1)
+            list_model_kwargs = ut.check_list_like(name="list_model_kwargs", val=list_model_kwargs, accept_none=True)
+            if list_model_kwargs is None:
+                list_model_kwargs = [{} for _ in list_model_classes]
+            ut.check_match_list_model_classes_kwargs(list_model_classes=list_model_classes,
+                                                     list_model_kwargs=list_model_kwargs)
+            _list_model_kwargs = []
+            for model_class, model_kwargs in zip(list_model_classes, list_model_kwargs):
+                ut.check_mode_class(model_class=model_class)
+                model_kwargs = ut.check_model_kwargs(model_class=model_class, model_kwargs=model_kwargs,
+                                                     method_to_check="predict_proba", random_state=random_state)
+                _list_model_kwargs.append(model_kwargs)
+            list_estimators = [cls(**kw) for cls, kw in zip(list_model_classes, _list_model_kwargs)]
         # Metric parameters
         if list_metrics is None:
             list_metrics = ["accuracy", "balanced_accuracy", "f1", "roc_auc"]
@@ -202,6 +217,7 @@ class AAPred(Wrapper):
         self._random_state = random_state
         self._list_model_classes = list_model_classes
         self._list_model_kwargs = _list_model_kwargs
+        self._list_estimators = list_estimators
         self._list_metrics = list_metrics
         self._df_feat = df_feat
         self._df_scales = df_scales
@@ -279,8 +295,7 @@ class AAPred(Wrapper):
             check_n_cv(n_cv=n_cv, labels=labels)
         # Fit models (optionally tuning hyperparameters via GridSearchCV)
         self.list_models_ = fit_models(X=X, labels=labels,
-                                       list_model_classes=self._list_model_classes,
-                                       list_model_kwargs=self._list_model_kwargs,
+                                       list_estimators=self._list_estimators,
                                        list_param_grids=list_param_grids,
                                        optimize_hyperparams=optimize_hyperparams,
                                        n_cv=n_cv, random_state=self._random_state)
@@ -346,15 +361,12 @@ class AAPred(Wrapper):
             if X_holdout.shape[1] != X.shape[1]:
                 raise ValueError(f"'X_holdout' n_features ({X_holdout.shape[1]}) should match "
                                  f"'X' n_features ({X.shape[1]}).")
-            list_models = fit_models(X=X, labels=labels,
-                                     list_model_classes=self._list_model_classes,
-                                     list_model_kwargs=self._list_model_kwargs)
+            list_models = fit_models(X=X, labels=labels, list_estimators=self._list_estimators)
         elif labels_holdout is not None:
             raise ValueError("'labels_holdout' was given without 'X_holdout'.")
         # Evaluate
         df_eval = eval_models(X=X, labels=labels,
-                              list_model_classes=self._list_model_classes,
-                              list_model_kwargs=self._list_model_kwargs,
+                              list_estimators=self._list_estimators,
                               list_models=list_models, metrics=metrics, n_cv=n_cv,
                               random_state=self._random_state,
                               X_holdout=X_holdout, labels_holdout=labels_holdout)

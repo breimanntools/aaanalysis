@@ -432,7 +432,9 @@ class AAPredPlot:
             if len(names) != data.shape[0]:
                 raise ValueError(f"'names' (n={len(names)}) should match n_samples ({data.shape[0]}).")
         if labels is not None:
-            labels = ut.check_labels(labels=labels)
+            # Labels here are purely cosmetic (sidebar coloring), so any hashable class
+            # values are allowed (e.g. "substrate"/"non-substrate"), not only integers.
+            labels = ut.check_list_like(name="labels", val=labels, accept_none=False)
             if len(labels) != data.shape[0]:
                 raise ValueError(f"'labels' (n={len(labels)}) should match n_samples ({data.shape[0]}).")
         ut.check_str(name="cmap", val=cmap)

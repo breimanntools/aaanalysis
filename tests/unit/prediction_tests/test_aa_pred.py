@@ -129,6 +129,30 @@ class TestAAPredModelsAndHPO:
         aapred.fit(X, y, optimize_hyperparams=True)
         assert aapred.list_models_ is not None
 
+    @pytest.mark.parametrize("name", ["voting", "stacking"])
+    def test_meta_ensemble_names_fit(self, name):
+        # Meta-ensembles have nested get_params keys; the clone-based path must handle them.
+        X, y = _data()
+        aapred = aa.AAPred(models=name, random_state=0).fit(X, y)
+        assert len(aapred.list_models_) == 1
+
+    def test_meta_ensemble_eval(self):
+        X, y = _data()
+        df = aa.AAPred(models=["voting"], random_state=0).eval(X, y, metrics=["accuracy"])
+        assert len(df) >= 1
+
+    def test_instance_receives_random_state(self):
+        # A passed estimator with random_state left unset inherits the AAPred seed.
+        X, y = _data()
+        aapred = aa.AAPred(models=RandomForestClassifier(), random_state=42).fit(X, y)
+        assert aapred.list_models_[0].random_state == 42
+
+    def test_instance_explicit_seed_preserved(self):
+        # A user-set seed on the passed instance is not overwritten.
+        X, y = _data()
+        aapred = aa.AAPred(models=RandomForestClassifier(random_state=7), random_state=42).fit(X, y)
+        assert aapred.list_models_[0].random_state == 7
+
 
 class TestAAPredEval:
     def test_eval_columns(self):

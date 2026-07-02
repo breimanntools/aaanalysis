@@ -85,8 +85,7 @@ def _xgboost(random_state=None):
             f"Model '{const.MODEL_XGBOOST}' requires the optional 'xgboost' package. "
             f"Install it with 'pip install xgboost'."
         ) from e
-    return XGBClassifier(random_state=random_state, use_label_encoder=False,
-                         eval_metric="logloss")
+    return XGBClassifier(random_state=random_state, eval_metric="logloss")
 
 
 _FACTORIES = {
