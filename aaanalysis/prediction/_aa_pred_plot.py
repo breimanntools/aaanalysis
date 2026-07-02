@@ -395,3 +395,188 @@ class AAPredPlot:
         ax.set_ylim(0, 100)
         sns.despine(ax=ax)
         return ut.FigAxResult(fig, ax)
+
+    @staticmethod
+    def window(df_window: pd.DataFrame,
+               entry: Optional[str] = None,
+               list_annotations: Optional[List[Dict]] = None,
+               threshold: Optional[Union[int, float]] = None,
+               ax: Optional[Axes] = None,
+               figsize: Tuple[Union[int, float], Union[int, float]] = (10, 4),
+               color: Optional[str] = None,
+               xlabel: str = "Residue position",
+               ylabel: str = "Prediction score",
+               ) -> Tuple[Figure, Axes]:
+        """
+        Per-residue prediction profile from :meth:`AAPred.predict_window`.
+
+        Draws the sliding-window score along the sequence, with an optional decision threshold and
+        optional per-residue annotation tracks (topology, pLDDT, domains, ...) shown as color strips
+        below the profile. Annotation values are user-provided arrays, so any track can be added.
+
+        .. versionadded:: 1.1.0
+
+        Parameters
+        ----------
+        df_window : pd.DataFrame
+            Output of :meth:`AAPred.predict_window` with columns ``entry``, ``position``, ``score``.
+        entry : str, optional
+            Protein to plot. Required only if ``df_window`` contains more than one ``entry``.
+        list_annotations : list of dict, optional
+            Per-residue annotation tracks. Each dict has ``values`` (array aligned to the plotted
+            positions), ``label`` (str), and optional ``cmap`` (default ``viridis``).
+        threshold : int or float, optional
+            Score drawn as a horizontal dashed line.
+        ax : matplotlib.axes.Axes, optional
+            Axes to draw the profile on. If ``None``, a new figure is created (with extra track
+            axes below when ``list_annotations`` is given).
+        figsize : tuple, default=(10, 4)
+            Figure size when ``ax`` is ``None``.
+        color : str, optional
+            Line color. Defaults to the house feature-negative (blue) color.
+        xlabel, ylabel : str
+            Axis labels.
+
+        Returns
+        -------
+        fig : matplotlib.figure.Figure
+            The figure.
+        ax : matplotlib.axes.Axes
+            The profile axes (the top axes when annotation tracks are present).
+
+        Examples
+        --------
+        .. include:: examples/aapred_plot_window.rst
+        """
+        # Check input
+        ut.check_df(name="df_window", df=df_window,
+                    cols_required=[ut.COL_ENTRY, ut.COL_RESIDUE_POS, ut.COL_SCORE])
+        ut.check_str(name="entry", val=entry, accept_none=True)
+        ut.check_list_like(name="list_annotations", val=list_annotations, accept_none=True)
+        if threshold is not None:
+            ut.check_number_val(name="threshold", val=threshold, just_int=False)
+        ut.check_ax(ax=ax, accept_none=True)
+        ut.check_figsize(figsize=figsize, accept_none=True)
+        ut.check_color(name="color", val=color, accept_none=True)
+        ut.check_str(name="xlabel", val=xlabel, accept_none=True)
+        ut.check_str(name="ylabel", val=ylabel, accept_none=True)
+        # Resolve the entry
+        entries = list(dict.fromkeys(df_window[ut.COL_ENTRY].tolist()))
+        if entry is None:
+            if len(entries) > 1:
+                raise ValueError(f"'df_window' contains multiple entries {entries}; pass 'entry='.")
+            entry = entries[0]
+        elif entry not in entries:
+            raise ValueError(f"'entry' ({entry}) not in 'df_window' entries {entries}.")
+        sub = df_window[df_window[ut.COL_ENTRY] == entry].sort_values(ut.COL_RESIDUE_POS)
+        pos = sub[ut.COL_RESIDUE_POS].to_numpy()
+        score = sub[ut.COL_SCORE].to_numpy()
+        # Layout: profile axes (+ track axes when annotations given)
+        tracks = list(list_annotations) if list_annotations is not None else []
+        if ax is None:
+            if tracks:
+                fig, axes = plt.subplots(len(tracks) + 1, 1, figsize=figsize, sharex=True,
+                                         gridspec_kw={"height_ratios": [6] + [0.6] * len(tracks)})
+                ax, track_axes = axes[0], list(axes[1:])
+            else:
+                fig, ax = plt.subplots(figsize=figsize)
+                track_axes = []
+        else:
+            fig = ax.figure
+            track_axes = []
+        # Draw the profile
+        ax.plot(pos, score, color=color or ut.COLOR_FEAT_NEG, linewidth=1.2)
+        if threshold is not None:
+            ax.axhline(threshold, color="0.4", linestyle="--", linewidth=1.2)
+        ax.set_ylim(0, 1)
+        ax.set_ylabel(ylabel)
+        ax.set_xlim(pos.min(), pos.max())
+        # Draw annotation tracks
+        for tax, track in zip(track_axes, tracks):
+            values = np.asarray(track["values"], dtype=float).reshape(1, -1)
+            tax.imshow(values, aspect="auto", cmap=track.get("cmap", "viridis"),
+                       extent=[pos.min(), pos.max(), 0, 1])
+            tax.set_yticks([])
+            tax.set_ylabel(track.get("label", ""), rotation=0, ha="right", va="center", fontsize=8)
+        (track_axes[-1] if track_axes else ax).set_xlabel(xlabel)
+        if not track_axes:
+            sns.despine(ax=ax)
+        return ut.FigAxResult(fig, ax)
+
+    @staticmethod
+    def domain(df_domain: pd.DataFrame,
+               entry: Optional[str] = None,
+               ax: Optional[Axes] = None,
+               figsize: Tuple[Union[int, float], Union[int, float]] = (6, 4.5),
+               color: Optional[str] = None,
+               xlabel: str = "Boundary offset [residues]",
+               ylabel: str = "Prediction score",
+               ) -> Tuple[Figure, Axes]:
+        """
+        Domain boundary-sensitivity plot from :meth:`AAPred.predict_domain`.
+
+        Shows the prediction score as a function of the boundary shift, marking the highest-scoring
+        definition — so how strongly the score depends on the exact domain boundary is visible.
+
+        .. versionadded:: 1.1.0
+
+        Parameters
+        ----------
+        df_domain : pd.DataFrame
+            Output of :meth:`AAPred.predict_domain` with columns ``entry``, ``offset``, ``score``,
+            ``is_best``.
+        entry : str, optional
+            Protein to plot. Required only if ``df_domain`` contains more than one ``entry``.
+        ax : matplotlib.axes.Axes, optional
+            Axes to draw on. If ``None``, a new figure and axes are created.
+        figsize : tuple, default=(6, 4.5)
+            Figure size when ``ax`` is ``None``.
+        color : str, optional
+            Line color. Defaults to the house feature-positive color.
+        xlabel, ylabel : str
+            Axis labels.
+
+        Returns
+        -------
+        fig : matplotlib.figure.Figure
+            The figure.
+        ax : matplotlib.axes.Axes
+            The axes with the sensitivity curve.
+
+        Examples
+        --------
+        .. include:: examples/aapred_plot_domain.rst
+        """
+        # Check input
+        ut.check_df(name="df_domain", df=df_domain,
+                    cols_required=[ut.COL_ENTRY, ut.COL_OFFSET, ut.COL_SCORE])
+        ut.check_str(name="entry", val=entry, accept_none=True)
+        ut.check_ax(ax=ax, accept_none=True)
+        ut.check_figsize(figsize=figsize, accept_none=True)
+        ut.check_color(name="color", val=color, accept_none=True)
+        ut.check_str(name="xlabel", val=xlabel, accept_none=True)
+        ut.check_str(name="ylabel", val=ylabel, accept_none=True)
+        # Resolve the entry
+        entries = list(dict.fromkeys(df_domain[ut.COL_ENTRY].tolist()))
+        if entry is None:
+            if len(entries) > 1:
+                raise ValueError(f"'df_domain' contains multiple entries {entries}; pass 'entry='.")
+            entry = entries[0]
+        elif entry not in entries:
+            raise ValueError(f"'entry' ({entry}) not in 'df_domain' entries {entries}.")
+        sub = df_domain[df_domain[ut.COL_ENTRY] == entry].sort_values(ut.COL_OFFSET)
+        offsets = sub[ut.COL_OFFSET].to_numpy()
+        score = sub[ut.COL_SCORE].to_numpy()
+        # Draw
+        fig, ax = _new_ax(ax=ax, figsize=figsize)
+        ax.plot(offsets, score, color=color or ut.COLOR_FEAT_POS, marker="o", linewidth=1.6)
+        i_best = int(np.argmax(score))
+        ax.scatter([offsets[i_best]], [score[i_best]], s=110, marker="*",
+                   color=ut.COLOR_FEAT_POS, edgecolors="black", zorder=5, label="best")
+        ax.axvline(0, color="0.6", linestyle="--", linewidth=1)  # annotated boundary
+        ax.set_xlabel(xlabel)
+        ax.set_ylabel(ylabel)
+        ax.set_ylim(0, 1)
+        ax.legend(frameon=False)
+        sns.despine(ax=ax)
+        return ut.FigAxResult(fig, ax)
