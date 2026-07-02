@@ -2,6 +2,7 @@
 This is a script for the frontend of the SequenceFeature class, a supportive class for the CPP feature engineering.
 """
 from typing import Literal, Optional, Union, List, Dict, Tuple, Sequence
+import inspect
 import warnings
 import numpy as np
 import pandas as pd
@@ -33,6 +34,25 @@ from ._backend.feature_filter import filter_correlation_, filter_variance_
 
 
 # I Helper Functions
+def _valid_df_parts_kws_keys():
+    """Return the ``SequenceFeature.get_df_parts`` parameter names valid in a ``df_parts_kws`` dict."""
+    params = inspect.signature(SequenceFeature.get_df_parts).parameters
+    return {p for p in params if p not in ("self", "df_seq")}
+
+
+def check_df_parts_kws(df_parts_kws=None, df_seq=None) -> None:
+    """Check ``df_parts_kws`` is a valid-key dict of ``get_df_parts`` kwargs, only used with ``df_seq``."""
+    if df_parts_kws is None:
+        return
+    ut.check_dict(name="df_parts_kws", val=df_parts_kws, accept_none=True)
+    if df_seq is None:
+        raise ValueError("'df_parts_kws' is only used together with 'df_seq'; with 'df_parts' the parts "
+                         "are taken directly from its columns.")
+    valid_keys = _valid_df_parts_kws_keys()
+    invalid_keys = set(df_parts_kws) - valid_keys
+    if invalid_keys:
+        raise ValueError(f"'df_parts_kws' should only contain 'get_df_parts' parameter names. Invalid keys: "
+                         f"{sorted(invalid_keys)}. Valid keys: {sorted(valid_keys)}.")
 def check_split_types(split_types=None):
     """Check if split types valid (Segment, Pattern, or PeriodicPattern)"""
     split_types = ut.check_list_like(name="split_types", val=split_types, accept_str=True, accept_none=True)
@@ -699,11 +719,13 @@ class SequenceFeature:
 
     def feature_matrix(self,
                        features: Union[ut.ArrayLike1D, pd.DataFrame],
-                       df_parts: Union[pd.DataFrame, List[pd.DataFrame]],
+                       df_parts: Optional[Union[pd.DataFrame, List[pd.DataFrame]]] = None,
                        df_scales: Optional[pd.DataFrame] = None,
                        accept_gaps: bool = False,
                        n_jobs: Union[int, None] = 1,
                        batch: bool = False,
+                       df_seq: Optional[pd.DataFrame] = None,
+                       df_parts_kws: Optional[dict] = None,
                        ) -> Union[ut.ArrayLike2D, List[ut.ArrayLike2D]]:
         """
         Create feature matrix for given feature ids and sequence parts.
@@ -719,14 +741,19 @@ class SequenceFeature:
         .. versionchanged:: 1.1.0
             Added the ``batch`` parameter for building a list of ``df_parts`` in a single pass.
 
+        .. versionchanged:: 1.1.0
+            Added the ``df_seq`` and ``df_parts_kws`` parameters to build ``df_parts`` internally, so the
+            sequence-to-matrix step no longer requires a separate :meth:`get_df_parts` call.
+
         Parameters
         ----------
         features : array-like, shape (n_features,) or pd.DataFrame
             Ids of features (``'PART-SPLIT-SCALE'``) for which matrix of feature values should be created.
             Alternatively, a ``df_feat`` DataFrame, in which case its ``'feature'`` column is used.
-        df_parts : pd.DataFrame, shape (n_samples, n_parts)
+        df_parts : pd.DataFrame, shape (n_samples, n_parts), optional
             DataFrame with sequence parts. If ``batch=True``, instead a **list of such
-            DataFrames** (one per batch; all must share the same part columns).
+            DataFrames** (one per batch; all must share the same part columns). Provide exactly one of
+            ``df_parts`` or ``df_seq``.
         df_scales : pd.DataFrame, shape (n_letters, n_scales), optional
             DataFrame of scales with letters typically representing amino acids. Default from :meth:`load_scales`
             unless specified in ``options['df_scales']``.
@@ -740,6 +767,19 @@ class SequenceFeature:
             (concatenated → Cython builder runs **once** → split back), returning one matrix per batch.
             Use for per-protein sliding scoring where the same ``features`` are applied to many small
             ``df_parts`` in a tight loop; the result is **byte-identical** to calling this per batch.
+            Not supported together with ``df_seq``.
+        df_seq : pd.DataFrame, shape (n_samples, n_seq_info), optional
+            DataFrame containing an ``entry`` column with unique protein identifiers and sequence information
+            in a distinct format: **Position-based**, **Part-based**, **Sequence-based**, or **Sequence-TMD-based**.
+            If given, ``df_parts`` is built internally via :meth:`get_df_parts`, as an alternative to passing
+            ``df_parts`` directly. Provide exactly one of ``df_parts`` or ``df_seq``.
+        df_parts_kws : dict, optional
+            Keyword arguments forwarded to :meth:`get_df_parts` when building ``df_parts`` from ``df_seq``
+            (e.g. ``{"list_parts": ["tmd"], "jmd_n_len": 10, "jmd_c_len": 10}``). Keys must be
+            :meth:`get_df_parts` parameter names (``df_seq`` excluded); unset options use their defaults.
+            The JMD flank lengths ``jmd_n_len`` / ``jmd_c_len`` default to 10, while ``tmd_len`` defaults
+            to ``None`` (the TMD length is variable, read from each sequence, except in the Position-based
+            input mode where it is fixed). Only valid together with ``df_seq``.
 
         Returns
         -------
@@ -757,13 +797,23 @@ class SequenceFeature:
         --------
         .. include:: examples/sf_feature_matrix.rst
         """
+        # Resolve sequence input: exactly one of 'df_parts' / 'df_seq' (mutually exclusive)
+        ut.check_bool(name="batch", val=batch)
+        if (df_parts is None) == (df_seq is None):
+            raise ValueError("Exactly one of 'df_parts' or 'df_seq' should be given (not both, not neither).")
+        check_df_parts_kws(df_parts_kws=df_parts_kws, df_seq=df_seq)
+        if df_seq is not None:
+            if batch:
+                raise ValueError("'batch=True' is not supported together with 'df_seq'; "
+                                 "build the part DataFrames yourself and pass them as a list via 'df_parts'.")
+            # Build df_parts internally via the existing get_df_parts logic (same result as the two-step call)
+            df_parts = self.get_df_parts(df_seq=df_seq, **(df_parts_kws or {}))
         # Load defaults
         if df_scales is None:
             df_scales = ut.load_default_scales()
         # Check input
         check_df_scales(df_scales=df_scales)
         ut.check_bool(name="accept_gaps", val=accept_gaps)
-        ut.check_bool(name="batch", val=batch)
         n_jobs = ut.check_n_jobs(n_jobs=n_jobs)
         # Normalize to a list of df_parts; remember whether to unwrap the single result.
         if batch:
