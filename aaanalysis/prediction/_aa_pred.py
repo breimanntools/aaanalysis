@@ -55,11 +55,18 @@ def check_featurizer(df_feat=None):
 
 
 def featurize_seq(df_feat=None, df_scales=None, df_seq=None, list_parts=None, **parts_kwargs):
-    """Featurize a ``df_seq`` into the CPP feature matrix ``X`` bound to the model."""
+    """Featurize a ``df_seq`` into the CPP feature matrix ``X`` bound to the model.
+
+    Uses the single-call ``feature_matrix(df_seq=, df_parts_kws=)`` path (which builds
+    ``df_parts`` internally) instead of the manual get_df_parts + feature_matrix pair.
+    """
     from aaanalysis.feature_engineering import SequenceFeature
     sf = SequenceFeature()
-    df_parts = sf.get_df_parts(df_seq=df_seq, list_parts=list_parts, **parts_kwargs)
-    X = sf.feature_matrix(features=df_feat, df_parts=df_parts, df_scales=df_scales)
+    df_parts_kws = dict(parts_kwargs)
+    if list_parts is not None:
+        df_parts_kws["list_parts"] = list_parts
+    X = sf.feature_matrix(features=df_feat, df_seq=df_seq,
+                          df_parts_kws=df_parts_kws or None, df_scales=df_scales)
     return np.asarray(X)
 
 
