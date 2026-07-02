@@ -1,11 +1,18 @@
 """
-Tests the dense-plot row-label overlap gate for ``CPPPlot.feature_map``.
+Layout invariants for the ``auto_font`` constant-cell-size sizing of the CPP
+composite plots (``CPPPlot.feature_map`` / ``heatmap`` / ``profile``).
 
-The scale subcategory row labels collide once the grid has more than a handful
-of rows; at the full AAontology breadth (74 subcategories) the label column
-becomes an unreadable blur. These tests force-render the figure and assert that
-no two *row labels* overlap. They are the first layout/visual assertions in the
-suite (plain matplotlib bbox introspection, no image snapshots).
+The guarantee under ``auto_font=True`` (the default) is: every grid *cell* keeps a
+constant physical size regardless of how many subcategory rows or residue-position
+columns the grid has — the *figure* grows instead. That keeps fonts fixed (they are
+measured in points, so they do not scale with the figure) and therefore legible and
+non-overlapping at any data size, without the caller hand-tuning
+``plot_settings(font_scale=...)``.
+
+These assert the invariants directly (constant cell size; font neither shrunk nor
+enlarged; no overlap; figure grows) rather than fragile absolute-pixel snapshots,
+so they are robust to the freetype/matplotlib build. The pixel-exact check lives in
+the pytest-mpl ``visual_regression`` suite.
 """
 import io
 import re
@@ -17,23 +24,40 @@ from matplotlib.transforms import Bbox
 import pytest
 
 import aaanalysis as aa
-from aaanalysis.feature_engineering._backend.cpp.cpp_plot_feature_map import (
-    derive_feature_map_figsize,
-    FEATURE_MAP_CELL_ASPECT,
+from aaanalysis.feature_engineering._backend.cpp._utils_cpp_plot_sizing import (
+    CELL_W_IN,
+    CELL_H_IN,
 )
 
 from ._text_overlap import get_label_overlaps, make_dense_df_feat
 
 
 N_SUBCATS = [20, 36, 55, 74]
+N_POSITIONS = 40  # default tmd_len 20 + jmd_n 10 + jmd_c 10
+CELL_TOL = 0.06   # relative tolerance on the per-cell size (freetype/layout jitter)
+
+
+def _cell_size(fig, ax, n_rows, n_cols):
+    """Per-cell (width, height) in inches from the axes' figure-fraction * figsize."""
+    fig.canvas.draw()
+    w_in, h_in = (float(v) for v in fig.get_size_inches())
+    pos = ax.get_position()
+    return pos.width * w_in / n_cols, pos.height * h_in / n_rows
+
+
+def _row_label_fonts(fig, subcats):
+    fig.canvas.draw()
+    subcats = set(subcats)
+    return [t.get_fontsize() for a in fig.axes for t in a.texts
+            if t.get_text().strip() in subcats and t.get_visible()]
+
+
 _NUMERIC = re.compile(r"^\[?-?\d+(\.\d+)?%?\]?$")
 
 
 def _numeric_tick_overlaps(fig):
-    """Mutual overlaps among the numeric tick labels *of a single axis* (targets
-    the importance-bar ticks, e.g. the historical '40' over '0'). Scoped per axis
-    so harmless cross-axis coincidences (colorbar '%' vs heatmap position ticks)
-    are not flagged; the text row-label axis has no numeric ticks."""
+    """Mutual overlaps among numeric tick labels of a single axis (targets the
+    importance-bar ticks, historically '40' over '0')."""
     fig.savefig(io.BytesIO(), format="png", dpi=fig.dpi)
     r = fig.canvas.get_renderer()
     bad = []
@@ -51,244 +75,181 @@ def _numeric_tick_overlaps(fig):
 
 
 class TestOverlapDetector:
-    """Self-validation of the detector itself (independent of any plot fix)."""
+    """Self-validation of the overlap detector itself (independent of any fix)."""
 
     def test_detects_stacked_labels(self):
-        # Three labels drawn at (almost) the same point must be flagged.
         fig, ax = plt.subplots()
         names = ["Alpha", "Beta", "Gamma"]
         for i, name in enumerate(names):
             ax.text(0.5, 0.5 + i * 0.0001, name, ha="center", va="center")
-        bad = get_label_overlaps(fig, names)
-        assert len(bad) > 0
+        assert len(get_label_overlaps(fig, names)) > 0
         plt.close(fig)
 
     def test_no_false_positive_when_spaced(self):
-        # Well-separated labels must report clean.
         fig, ax = plt.subplots(figsize=(6, 6))
         names = ["Alpha", "Beta", "Gamma"]
         for i, name in enumerate(names):
             ax.text(0.5, 0.1 + i * 0.4, name, ha="center", va="center")
-        bad = get_label_overlaps(fig, names)
-        assert bad == []
+        assert get_label_overlaps(fig, names) == []
         plt.close(fig)
 
     def test_scoped_to_named_labels_only(self):
-        # Text artists not in `names` are ignored even when overlapping.
         fig, ax = plt.subplots()
         ax.text(0.5, 0.5, "IGNORED", ha="center", va="center")
         ax.text(0.5, 0.5, "ALSO_IGNORED", ha="center", va="center")
-        bad = get_label_overlaps(fig, names=["Something", "Else"])
-        assert bad == []
+        assert get_label_overlaps(fig, names=["Something", "Else"]) == []
         plt.close(fig)
 
 
-class TestFeatureMapLabelOverlap:
-    """The row-label overlap gate for feature_map at increasing grid density."""
+class TestConstantCellSize:
+    """auto_font=True holds each cell at a constant physical size across densities."""
 
     def setup_method(self):
         aa.options["verbose"] = False
 
     def teardown_method(self):
-        aa.options["verbose"] = "off"
         plt.close("all")
 
     @pytest.mark.parametrize("n_subcat", N_SUBCATS)
-    def test_no_row_label_overlap(self, n_subcat):
+    def test_feature_map_cell_size_is_target(self, n_subcat):
+        fig, ax = aa.CPPPlot().feature_map(make_dense_df_feat(n_subcat))
+        cw, ch = _cell_size(fig, ax, n_subcat, N_POSITIONS)
+        assert abs(cw - CELL_W_IN) <= CELL_W_IN * CELL_TOL, cw
+        assert abs(ch - CELL_H_IN) <= CELL_H_IN * CELL_TOL, ch
+
+    @pytest.mark.parametrize("n_subcat", [20, 74])
+    def test_heatmap_cell_size_is_target(self, n_subcat):
+        fig, ax = aa.CPPPlot().heatmap(make_dense_df_feat(n_subcat))
+        cw, ch = _cell_size(fig, ax, n_subcat, N_POSITIONS)
+        assert abs(cw - CELL_W_IN) <= CELL_W_IN * CELL_TOL, cw
+        assert abs(ch - CELL_H_IN) <= CELL_H_IN * CELL_TOL, ch
+
+    def test_cell_size_constant_across_densities(self):
+        # The whole point: the cell does NOT shrink as the grid gets denser.
+        heights = []
+        for n in (20, 74):
+            fig, ax = aa.CPPPlot().feature_map(make_dense_df_feat(n))
+            heights.append(_cell_size(fig, ax, n, N_POSITIONS)[1])
+        assert abs(heights[0] - heights[1]) <= CELL_H_IN * CELL_TOL, heights
+
+
+class TestFontStableAndNoOverlap:
+    """Fonts stay fixed (never shrunk, never gigantic) and labels never overlap."""
+
+    def setup_method(self):
+        aa.options["verbose"] = False
+
+    def teardown_method(self):
+        plt.close("all")
+
+    @pytest.mark.parametrize("n_subcat", N_SUBCATS)
+    def test_feature_map_no_row_label_overlap(self, n_subcat):
         df_feat = make_dense_df_feat(n_subcat)
         subcats = list(dict.fromkeys(df_feat["subcategory"]))
         fig, ax = aa.CPPPlot().feature_map(df_feat)
         bad = get_label_overlaps(fig, subcats)
-        assert bad == [], (
-            f"{len(bad)} overlapping subcategory row labels at "
-            f"n_subcat={n_subcat} (first few: {bad[:3]})"
-        )
+        assert bad == [], f"{len(bad)} overlaps at n={n_subcat} (first: {bad[:3]})"
+
+    @pytest.mark.parametrize("n_subcat", [20, 74])
+    def test_heatmap_no_row_label_overlap(self, n_subcat):
+        df_feat = make_dense_df_feat(n_subcat)
+        subcats = list(dict.fromkeys(df_feat["subcategory"]))
+        fig, ax = aa.CPPPlot().heatmap(df_feat)
+        assert get_label_overlaps(fig, subcats) == []
+
+    def test_font_not_shrunk_and_constant_across_densities(self):
+        # The shrink gate must NOT fire in the auto path: the row-label font is the
+        # same at n=20 and n=74 (the figure grows instead of the font dropping).
+        f20 = min(_row_label_fonts(_fm(20)[0], make_dense_df_feat(20)["subcategory"]))
+        f74 = min(_row_label_fonts(_fm(74)[0], make_dense_df_feat(74)["subcategory"]))
+        assert f20 == f74, (f20, f74)
+
+    def test_font_not_gigantic(self):
+        # Guards the last-round failure: sizing must never inflate the font.
+        for n in (20, 74):
+            fig, ax = _fm(n)
+            assert max(_row_label_fonts(fig, make_dense_df_feat(n)["subcategory"])) <= 20.0
 
     @pytest.mark.parametrize("n_subcat", [20, 74])
     def test_no_importance_bar_tick_overlap(self, n_subcat):
-        # The top/right cumulative-importance bar numeric ticks must not collide
-        # (historically '40' over '0'); independent of grid density.
-        df_feat = make_dense_df_feat(n_subcat)
-        fig, ax = aa.CPPPlot().feature_map(df_feat)
-        bad = _numeric_tick_overlaps(fig)
-        assert bad == [], f"overlapping numeric ticks: {bad}"
-
-    @pytest.mark.parametrize("n_subcat", N_SUBCATS)
-    def test_row_label_font_above_floor(self, n_subcat):
-        # Shrinking to fit must never take the row-label font below ~5pt.
-        df_feat = make_dense_df_feat(n_subcat)
-        subcats = set(df_feat["subcategory"])
-        fig, ax = aa.CPPPlot().feature_map(df_feat)
-        fig.canvas.draw()
-        sizes = [t.get_fontsize() for a in fig.axes for t in a.texts
-                 if t.get_text().strip() in subcats and t.get_visible()]
-        assert sizes, "no row-label text artists found"
-        assert min(sizes) >= 5.0, f"row-label font {min(sizes)}pt < 5pt floor"
-
-
-class TestLabelOverlapEdgeCases:
-    """Robustness of the shrink gate across col_cat variants and tiny frames."""
-
-    def setup_method(self):
-        aa.options["verbose"] = False
-
-    def teardown_method(self):
-        aa.options["verbose"] = "off"
-        plt.close("all")
-
-    def test_single_subcategory_does_not_crash(self):
-        # < 2 labels: optimizer must early-return, plot must still succeed.
-        df_feat = make_dense_df_feat(1)
-        fig, ax = aa.CPPPlot().feature_map(df_feat)
-        assert fig is not None
-
-    def test_col_cat_category_few_rows_no_overlap(self):
-        df_feat = make_dense_df_feat(74)
-        cats = list(dict.fromkeys(df_feat["category"]))
-        fig, ax = aa.CPPPlot().feature_map(df_feat, col_cat="category")
-        assert get_label_overlaps(fig, cats) == []
+        fig, ax = aa.CPPPlot().feature_map(make_dense_df_feat(n_subcat))
+        assert _numeric_tick_overlaps(fig) == []
 
     def test_col_cat_scale_name_many_rows_no_overlap(self):
-        # Highest-density label axis (one row per scale name) must still clear.
         df_feat = make_dense_df_feat(74)
         names = list(dict.fromkeys(df_feat["scale_name"]))
         fig, ax = aa.CPPPlot().feature_map(df_feat, col_cat="scale_name")
         assert get_label_overlaps(fig, names) == []
 
 
-class TestHeatmapLabelOverlap:
-    """The same row-label gate applies to standalone heatmap (shared plot path)."""
+def _fm(n_subcat, **kwargs):
+    return aa.CPPPlot().feature_map(make_dense_df_feat(n_subcat), **kwargs)
+
+
+class TestFigureGrows:
+    """The figure grows with the grid instead of cramming."""
 
     def setup_method(self):
         aa.options["verbose"] = False
 
     def teardown_method(self):
-        aa.options["verbose"] = "off"
         plt.close("all")
 
-    @pytest.mark.parametrize("n_subcat", [20, 74])
-    def test_no_row_label_overlap(self, n_subcat):
-        df_feat = make_dense_df_feat(n_subcat)
-        subcats = list(dict.fromkeys(df_feat["subcategory"]))
-        fig, ax = aa.CPPPlot().heatmap(df_feat)
-        assert get_label_overlaps(fig, subcats) == []
+    def test_dense_grid_grows_figure_height(self):
+        h20 = float(_fm(20)[0].get_size_inches()[1])
+        h74 = float(_fm(74)[0].get_size_inches()[1])
+        assert h74 > h20 > 0
+
+    def test_profile_widens_with_sequence_length(self):
+        w_short = float(aa.CPPPlot().profile(make_dense_df_feat(12), tmd_len=10)[0].get_size_inches()[0])
+        w_long = float(aa.CPPPlot().profile(make_dense_df_feat(12), tmd_len=60)[0].get_size_inches()[0])
+        assert w_long > w_short
 
 
-class TestOptionIsolation:
-    """The autouse reset fixture must clear auto_font between tests (no leakage)."""
-
-    def test_auto_font_defaults_false_each_test(self):
-        # If a prior test left auto_font=True and the reset fixture missed it,
-        # this would fail. Guards that 'auto_font' is in the reset defaults.
-        assert aa.options["auto_font"] is False
-
-
-class TestAutoFontFeatureMap:
-    """The global auto_font option: off = unchanged size; on = grid-derived size."""
+class TestAutoFontOffAndExplicit:
+    """auto_font=False reproduces the fixed default; explicit figsize always wins."""
 
     def setup_method(self):
         aa.options["verbose"] = False
 
     def teardown_method(self):
-        aa.options["auto_font"] = False
-        aa.options["verbose"] = "off"
         plt.close("all")
-
-    def test_derive_figsize_bounded(self):
-        f = derive_feature_map_figsize
-        # Width grows with residue positions (grid) and with the subcategory name length
-        # so long row-labels get room. Height is kept modest (set_box_aspect in the
-        # frontend, not the figure size, controls the per-cell shape), so it does NOT
-        # depend on the number of subcategories.
-        assert f(n_subcat=40, n_positions=80)[0] > f(n_subcat=40, n_positions=20)[0]
-        assert f(n_subcat=40, n_positions=40, max_label_len=40)[0] \
-            > f(n_subcat=40, n_positions=40, max_label_len=5)[0]
-        assert f(n_subcat=74, n_positions=40)[1] == f(n_subcat=20, n_positions=40)[1]
-        # clamped to sane bounds
-        w, h = f(n_subcat=5000, n_positions=5000, max_label_len=500)
-        assert 6.0 <= w <= 26.0 and 4.5 <= h <= 14.0
-        w, h = f(n_subcat=1, n_positions=1)
-        assert 6.0 <= w <= 26.0 and 4.5 <= h <= 14.0
 
     def test_off_keeps_default_figsize(self):
         aa.options["auto_font"] = False
-        df_feat = make_dense_df_feat(74)
-        fig, ax = aa.CPPPlot().feature_map(df_feat)
+        fig, ax = aa.CPPPlot().feature_map(make_dense_df_feat(74))
         assert tuple(round(float(v), 2) for v in fig.get_size_inches()) == (8.0, 8.0)
 
-    def test_on_derives_larger_figure_for_dense_grid(self):
-        df_feat = make_dense_df_feat(74)
-        aa.options["auto_font"] = True
-        fig, ax = aa.CPPPlot().feature_map(df_feat)
-        _, h = (float(v) for v in fig.get_size_inches())
-        assert h > 8.0  # dense grid grew beyond the (8, 8) default
-
-    def test_on_holds_consistent_cell_aspect(self):
-        # auto_font gives every heatmap CELL the same shape (1 : FEATURE_MAP_CELL_ASPECT)
-        # regardless of the row/column counts. box_aspect = cell_aspect * n_subcat/n_pos,
-        # so cell_aspect = box_aspect * n_positions / n_subcat.
-        aa.options["auto_font"] = True
-        n_pos = 40  # default tmd_len 20 + jmd 10 + jmd 10
-        for n_subcat in (20, 74):
-            _, ax = aa.CPPPlot().feature_map(make_dense_df_feat(n_subcat))
-            cell_aspect = ax.get_box_aspect() * n_pos / n_subcat
-            assert abs(cell_aspect - FEATURE_MAP_CELL_ASPECT) < 1e-6, (n_subcat, cell_aspect)
-
-    def test_off_leaves_grid_box_aspect_untouched(self):
-        aa.options["auto_font"] = False
-        _, ax = aa.CPPPlot().feature_map(make_dense_df_feat(74))
-        assert ax.get_box_aspect() is None  # default path untouched
-
-    def test_on_improves_legibility_no_overlap(self):
-        df_feat = make_dense_df_feat(74)
-        subcats = list(dict.fromkeys(df_feat["subcategory"]))
-
-        aa.options["auto_font"] = False
-        fig_off, _ = aa.CPPPlot().feature_map(df_feat)
-        fig_off.canvas.draw()
-        fs_off = min(t.get_fontsize() for a in fig_off.axes for t in a.texts
-                     if t.get_text().strip() in set(subcats))
-
-        aa.options["auto_font"] = True
-        fig_on, _ = aa.CPPPlot().feature_map(df_feat)
-        fig_on.canvas.draw()
-        fs_on = min(t.get_fontsize() for a in fig_on.axes for t in a.texts
-                    if t.get_text().strip() in set(subcats))
-
-        assert fs_on >= fs_off >= 5.0  # auto_font is at least as legible, never below floor
-        assert get_label_overlaps(fig_on, subcats) == []
-
     def test_explicit_figsize_wins_over_auto_font(self):
-        df_feat = make_dense_df_feat(74)
         aa.options["auto_font"] = True
-        fig, ax = aa.CPPPlot().feature_map(df_feat, figsize=(10, 6))
+        fig, ax = aa.CPPPlot().feature_map(make_dense_df_feat(74), figsize=(10, 6))
         assert tuple(round(float(v), 2) for v in fig.get_size_inches()) == (10.0, 6.0)
 
-    def test_long_sequence_widens_figure(self):
-        # Under auto_font, a long TMD sequence must widen the figure more than a
-        # short one so residue letters stay legible.
-        df = make_dense_df_feat(8)
+    def test_single_subcategory_does_not_crash(self):
+        fig, ax = aa.CPPPlot().feature_map(make_dense_df_feat(1))
+        assert fig is not None
+
+
+class TestForcedFigsizeFallback:
+    """auto_font on + a forced too-small figsize falls back to the shrink gate."""
+
+    def setup_method(self):
+        aa.options["verbose"] = False
+
+    def teardown_method(self):
+        plt.close("all")
+
+    def test_fallback_shrinks_but_holds_5pt_floor(self):
+        # No room to grow (fixed small figure) -> labels shrink to fit, never < 5pt.
         aa.options["auto_font"] = True
-
-        def width(tmd_len):
-            df2 = df.copy()
-            df2["feature"] = [f"TMD-Segment(1,1)-{f.split('-')[-1]}" for f in df2["feature"]]
-            df2["positions"] = ",".join(str(p) for p in range(11, 11 + tmd_len))
-            seq = ("ACDEFGHIKLMNPQRSTVWY" * 10)
-            fig, ax = aa.CPPPlot().feature_map(
-                df2, tmd_len=tmd_len, jmd_n_seq="A" * 10, jmd_c_seq="K" * 10,
-                tmd_seq=seq[:tmd_len])
-            w = float(fig.get_size_inches()[0])
-            plt.close(fig)
-            return w
-
-        assert width(100) > width(10)
-
-    def test_figsize_none_is_auto_derived_when_on(self):
-        # figsize=None with auto_font on must not crash and should derive a size.
         df_feat = make_dense_df_feat(74)
-        aa.options["auto_font"] = True
-        fig, ax = aa.CPPPlot().feature_map(df_feat, figsize=None)
-        _, h = (float(v) for v in fig.get_size_inches())
-        assert h > 8.0
-        assert get_label_overlaps(fig, list(dict.fromkeys(df_feat["subcategory"]))) == []
+        fig, ax = aa.CPPPlot().feature_map(df_feat, figsize=(6, 6))
+        sizes = _row_label_fonts(fig, df_feat["subcategory"])
+        assert sizes and min(sizes) >= 5.0, min(sizes) if sizes else None
+
+
+class TestOptionIsolation:
+    """The reset fixture restores the (now True) auto_font default between tests."""
+
+    def test_auto_font_defaults_true_each_test(self):
+        assert aa.options["auto_font"] is True

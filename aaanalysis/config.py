@@ -24,7 +24,7 @@ _dict_options = {
     'jmd_c_len': None,
     'df_scales': None,
     'df_cat': None,
-    'auto_font': False,
+    'auto_font': True,
 }
 
 
@@ -219,13 +219,16 @@ class Settings:
     df_cat : DataFrame, optional
         Scale category DataFrame used in CPP algorithm. Adjust on system level if non-default scale categories are used.
         If ``None``, AAanalysis framework will use the scale category DataFrame loaded by :func:`load_scales` with ``name='scales_cat'``.
-    auto_font : bool, default=False
-        Global toggle for automatic plot sizing. When ``True``, dense composite plots
-        (currently :meth:`CPPPlot.feature_map`) derive their figure size from the data
-        shape (number of scale subcategories and residue positions) so cells stay
-        legible as the grid grows, unless an explicit ``figsize`` is passed (which always
-        wins). When ``False`` (default), plots keep their fixed defaults and output is
-        unchanged.
+    auto_font : bool, default=True
+        Global toggle for automatic, size-stable plot sizing. When ``True`` (default),
+        the composite CPP plots (:meth:`CPPPlot.feature_map`, :meth:`CPPPlot.heatmap`,
+        :meth:`CPPPlot.profile`) hold each grid cell at a constant physical size and grow
+        the *figure* with the data (number of scale subcategories and residue positions),
+        so subcategory labels, position ticks and residue letters stay at a constant,
+        legible font regardless of grid size — no manual ``plot_settings(font_scale=...)``
+        needed. An explicit ``figsize`` always wins (auto-sizing is skipped). When
+        ``False``, plots keep their fixed default figure size, reproducing the previous
+        (pre-auto-font) output.
 
     See Also
     --------

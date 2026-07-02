@@ -204,36 +204,6 @@ def add_feat_importance_legend(ax=None,
               borderpad=0)
 
 
-#: Per-cell aspect (height : width) of the feature-map heatmap grid under ``auto_font``.
-#: The frontend sets ``box_aspect = FEATURE_MAP_CELL_ASPECT * n_subcat / n_positions``
-#: so each cell renders ~1 wide : 1.1 tall regardless of the grid's row/column counts.
-FEATURE_MAP_CELL_ASPECT = 1.1
-
-#: Target on-figure width (inches) per residue position / heatmap column. Drives both
-#: the figure width (column + residue-letter legibility) and, with the cell aspect, the
-#: figure height, so cells stay ~constant in size as the grid grows.
-CELL_WIDTH_IN = 0.16
-
-
-def derive_feature_map_figsize(n_subcat=None, n_positions=None, max_label_len=None):
-    """Derive a feature-map figure size for ``auto_font``.
-
-    Sizes the *figure* only; the per-cell ``1 : FEATURE_MAP_CELL_ASPECT`` shape is enforced
-    separately by ``set_box_aspect`` in the frontend (which shrinks the grid box within
-    this figure to hit that shape, so the figure height must stay modest, not grow with
-    ``n_subcat``, or the box aspect cannot be satisfied). Figure width grows with the
-    number of residue positions (column + sequence-letter legibility) and with the longest
-    subcategory row-label so names are never clipped; height is kept square-ish. Clamped.
-    """
-    grid_w = min(max((n_positions or 0) * CELL_WIDTH_IN, 3.5), 14.0)
-    left_margin = 0.085 * (max_label_len or 14)  # room for the subcategory row-labels
-    right_overhead = 1.8                         # colorbar, legends, importance bars
-    vert_overhead = 2.4                          # titles, sequence row, x-labels, legend
-    width = float(min(max(grid_w + left_margin + right_overhead, 6.0), 26.0))
-    height = float(min(max(grid_w * 1.1 + vert_overhead, 4.5), 14.0))
-    return round(width, 2), round(height, 2)
-
-
 # II Main Functions
 def plot_feature_map(df_feat=None, df_cat=None,
                      shap_plot=False,
@@ -262,7 +232,7 @@ def plot_feature_map(df_feat=None, df_cat=None,
                      dict_color=None, legend_kws=None, legend_xy=(-0.1, -0.01),
                      legend_imp_xy=(1.25, 0),
                      xtick_size=11.0, xtick_width=2.0, xtick_length=5.0,
-                     seq_char_fill=False):
+                     seq_char_fill=False, optimize_labels=False):
     """Create a comprehensive feature map with a heatmap, feature importance bars, and custom legends."""
     # Get fontsize
     pe = PlotElements()
@@ -387,6 +357,7 @@ def plot_feature_map(df_feat=None, df_cat=None,
                   cmap=cmap, cmap_n_colors=cmap_n_colors,
                   cbar_ax=cbar_ax, cbar_pct=cbar_pct, cbar_kws=_cbar_kws,
                   dict_color=dict_color, legend_kws=_legend_kws,
+                  optimize_labels=optimize_labels,
                   **args_xtick)
     # Add feature position title
     sns.despine(ax=ax_hm, top=True, left=True, right=True, bottom=True)

@@ -91,15 +91,23 @@ class PlotElements:
     # Scale classification elements
     @staticmethod
     def add_subcat_bars(ax=None, df_pos=None, df_feat=None, col_cat=None, dict_color=None,
-                        bar_width=0.3, bar_spacing=0.15):
-        """Add left colored sidebar to indicate category grouping"""
+                        bar_width=0.3, bar_spacing=0.15, optimize_labels=False):
+        """Add left colored sidebar to indicate category grouping.
+
+        ``optimize_labels`` runs the overlap-driven font-shrink fallback. It stays
+        off by default (byte-identical to a no-gate render); the frontend enables it
+        only when ``auto_font`` is on AND the caller forced a fixed figsize, so the
+        figure cannot be grown to fit. In the normal ``auto_font`` path the figure is
+        instead rescaled to a constant cell size, which keeps labels full-size.
+        """
         labels = list(df_pos.index)
         colors = _get_colors_for_col_cat(labels=labels, df_feat=df_feat, col_cat=col_cat, dict_color=dict_color)
         before = list(ax.texts)
         ut.plot_add_bars(ax=ax, labels=labels, colors=colors,
                          bar_width=bar_width, bar_spacing=bar_spacing, label_spacing_factor=2)
-        row_labels = [t for t in ax.texts if t not in before]
-        PlotElements.optimize_subcat_label_fontsize(fig=ax.figure, label_artists=row_labels)
+        if optimize_labels:
+            row_labels = [t for t in ax.texts if t not in before]
+            PlotElements.optimize_subcat_label_fontsize(fig=ax.figure, label_artists=row_labels)
 
     @staticmethod
     def optimize_subcat_label_fontsize(fig=None, label_artists=None, floor=5.0, fs_step=0.5):
