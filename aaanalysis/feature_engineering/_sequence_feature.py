@@ -775,9 +775,11 @@ class SequenceFeature:
             ``df_parts`` directly. Provide exactly one of ``df_parts`` or ``df_seq``.
         df_parts_kws : dict, optional
             Keyword arguments forwarded to :meth:`get_df_parts` when building ``df_parts`` from ``df_seq``
-            (e.g. ``{"list_parts": ["tmd"], "jmd_n_len": 10, "tmd_len": 20}``). Keys must be
+            (e.g. ``{"list_parts": ["tmd"], "jmd_n_len": 10, "jmd_c_len": 10}``). Keys must be
             :meth:`get_df_parts` parameter names (``df_seq`` excluded); unset options use their defaults.
-            Only valid together with ``df_seq``.
+            The JMD flank lengths ``jmd_n_len`` / ``jmd_c_len`` default to 10, while ``tmd_len`` defaults
+            to ``None`` (the TMD length is variable, read from each sequence, except in the Position-based
+            input mode where it is fixed). Only valid together with ``df_seq``.
 
         Returns
         -------
