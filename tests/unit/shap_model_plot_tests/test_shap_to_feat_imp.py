@@ -2,7 +2,7 @@
 import numpy as np
 import pytest
 
-pytest.importorskip("shap")  # ShapModelPlot lives in the pro extra (needs shap to import)
+pytest.importorskip("shap")  # shap_to_feat_imp lives in the pro extra (needs shap to import)
 from aaanalysis.explainable_ai_pro import shap_to_feat_imp
 
 RNG = np.random.default_rng(0)
