@@ -1245,7 +1245,7 @@ class CPPPlot:
                     col_imp: str = "feat_importance",
                     name_test: str = "TEST",
                     name_ref: str = "REF",
-                    figsize: Tuple[Union[int, float], Union[int, float]] = (8, 8),
+                    figsize: Optional[Tuple[Union[int, float], Union[int, float]]] = None,
 
                     # Feature importance
                     add_imp_bar_top: bool = True,
@@ -1346,15 +1346,17 @@ class CPPPlot:
             Name for the test dataset.
         name_ref : str, default="REF"
             Name for the reference dataset.
-        figsize : tuple, default=(8, 8)
-            Figure dimensions (width, height) in inches. When the global ``auto_font``
-            option is enabled (see :class:`aaanalysis.options`) and ``figsize`` is left at
-            its default (or ``None``), the size is derived automatically from the grid shape
-            (number of scale subcategories and residue positions); an explicit ``figsize``
-            always wins.
+        figsize : tuple, optional
+            Figure dimensions (width, height) in inches. When ``None`` (default) and the global
+            ``auto_font`` option is enabled (see :class:`aaanalysis.options`), the size is derived
+            automatically from the grid shape (number of scale subcategories and residue
+            positions). Any explicit ``figsize`` (including ``(8, 8)``) is honored as a fixed size
+            and wins over ``auto_font`` — pass one to pin a predictable size (e.g. when embedding
+            the figure). With ``auto_font`` disabled, ``None`` falls back to ``(8, 8)``.
 
             .. versionchanged:: 1.1.0
-                Auto-derived from the grid shape when the ``auto_font`` option is enabled.
+                Auto-derived from the grid shape when ``auto_font`` is enabled and ``figsize`` is
+                omitted; an explicit ``figsize`` always wins.
         add_imp_bar_top : bool, default=True
             If ``True``, add bars for cumulative feature importance per position (top).
         imp_bar_th : int or float, optional
@@ -1546,20 +1548,20 @@ class CPPPlot:
         ut.check_bool(name="seq_char_fill", val=seq_char_fill)
         args_xtick = check_args_xtick(xtick_size=xtick_size, xtick_width=xtick_width, xtick_length=xtick_length)
 
-        # Normalize figsize=None to the default up-front (so figsize=None works
-        # regardless of auto_font state), then decide the auto-sizing path.
+        # Auto-sizing applies only when the caller OMITS figsize (figsize is None, the
+        # signature default). Any explicit figsize -- including (8, 8) -- is honored as a
+        # fixed size and wins over auto_font, so embedded consumers can pin a predictable
+        # size. Capture "omitted" before normalizing None to the default footprint.
+        figsize_omitted = figsize is None
         if figsize is None:
             figsize = (8, 8)
-        # Constant-cell-size grid when the global auto_font option is on and the user did
-        # not customize figsize. The figure is laid out at the default size first and then
-        # rescaled (below, after tight_layout) so every cell hits a constant physical size;
-        # the figure grows with the grid while fonts stay fixed. An explicit figsize always
-        # wins; with auto_font off (default) nothing runs -> byte-identical output.
-        figsize_is_default = tuple(figsize) == (8, 8)
-        auto_grid = ut.check_auto_font() and figsize_is_default
-        # Fallback: auto_font on but the caller forced a fixed (non-default) figsize,
-        # so the figure cannot be grown -> fall back to shrinking labels to fit.
-        optimize_labels = ut.check_auto_font() and not figsize_is_default
+        # Constant-cell-size grid when auto_font is on and figsize was omitted: laid out at
+        # the default size first, then rescaled (after tight_layout) so every cell hits a
+        # constant physical size; the figure grows with the grid while fonts stay fixed.
+        auto_grid = ut.check_auto_font() and figsize_omitted
+        # Fallback: auto_font on but the caller forced a fixed figsize, so the figure cannot
+        # be grown -> fall back to shrinking labels to fit.
+        optimize_labels = ut.check_auto_font() and not figsize_omitted
         if auto_grid:
             # jmd lengths are validated non-None above; `or 0` keeps the sum typed.
             n_positions = tmd_len + (jmd_n_len or 0) + (jmd_c_len or 0)

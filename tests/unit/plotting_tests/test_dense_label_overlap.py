@@ -252,6 +252,14 @@ class TestAutoFontOffAndExplicit:
         fig, ax = aa.CPPPlot().feature_map(make_dense_df_feat(74), figsize=(10, 6))
         assert tuple(round(float(v), 2) for v in fig.get_size_inches()) == (10.0, 6.0)
 
+    def test_explicit_default_figsize_also_wins(self):
+        # An explicit (8, 8) -- the old sentinel -- must be honored as a fixed size, not
+        # auto-sized. This is what lets embedded consumers (e.g. the structure explorer)
+        # pin a predictable figure independent of the auto_font default.
+        aa.options["auto_font"] = True
+        fig, ax = aa.CPPPlot().feature_map(make_dense_df_feat(74), figsize=(8, 8))
+        assert tuple(round(float(v), 2) for v in fig.get_size_inches()) == (8.0, 8.0)
+
     def test_single_subcategory_does_not_crash(self):
         fig, ax = aa.CPPPlot().feature_map(make_dense_df_feat(1))
         assert fig is not None
