@@ -818,6 +818,55 @@ class TestCCPlotFeatureMapShap:
         assert isinstance(fig, plt.Figure) and isinstance(ax, plt.Axes)
         plt.close()
 
+    def test_shap_impact_bar_aligns_with_correct_row(self):
+        # Regression: the per-subcategory SHAP impact bar must sit on its OWN row, not be
+        # compacted onto the top rows. Put all impact in a single subcategory and check the
+        # bar's y-position matches that subcategory's heatmap row index. col_val is a
+        # mean-difference column (not a feat_impact column) so the side bars are shown.
+        cpp_plot = aa.CPPPlot()
+        df_feat = aa.load_features("DOM_GSEC")
+        subcats = list(dict.fromkeys(df_feat["subcategory"]))[:12]
+        df_feat = df_feat[df_feat["subcategory"].isin(subcats)].copy()
+        target = subcats[-1]  # a subcategory near the bottom of the row order
+        df_feat[COL_FEAT_IMPACT_TEST] = [5.0 if s == target else 0.0 for s in df_feat["subcategory"]]
+        fig, hm = cpp_plot.feature_map(df_feat=df_feat, shap_plot=True,
+                                       col_val="mean_dif", col_imp=COL_FEAT_IMPACT_TEST)
+        fig.canvas.draw()
+        ylabels = [t.get_text() for t in hm.get_yticklabels()]
+        row = ylabels.index(target)
+        hm_x0 = hm.get_position().x0
+        bar_ax = next(a for a in fig.get_axes()
+                      if a is not hm and a.get_position().x0 > hm_x0 + 0.1
+                      and a.get_position().width < 0.2 and a.get_position().height > 0.4)
+        y_centers = {round(p.get_y() + p.get_height() / 2)
+                     for p in bar_ax.patches if getattr(p, "get_width", lambda: 0)() > 0.01}
+        assert y_centers == {row}, (y_centers, "expected only row", row)
+        plt.close()
+
+    def test_shap_impact_bars_map_one_to_one_to_rows(self):
+        # Stronger alignment guard: give several distinct subcategories impact and verify
+        # each bar sits on exactly its own heatmap row (no compaction, no reordering).
+        cpp_plot = aa.CPPPlot()
+        df_feat = aa.load_features("DOM_GSEC")
+        subcats = list(dict.fromkeys(df_feat["subcategory"]))[:14]
+        df_feat = df_feat[df_feat["subcategory"].isin(subcats)].copy()
+        targets = {subcats[1], subcats[6], subcats[-1]}  # well-separated rows
+        df_feat[COL_FEAT_IMPACT_TEST] = [3.0 if s in targets else 0.0
+                                         for s in df_feat["subcategory"]]
+        fig, hm = cpp_plot.feature_map(df_feat=df_feat, shap_plot=True,
+                                       col_val="mean_dif", col_imp=COL_FEAT_IMPACT_TEST)
+        fig.canvas.draw()
+        ylabels = [t.get_text() for t in hm.get_yticklabels()]
+        expected_rows = {ylabels.index(t) for t in targets}
+        hm_x0 = hm.get_position().x0
+        bar_ax = next(a for a in fig.get_axes()
+                      if a is not hm and a.get_position().x0 > hm_x0 + 0.1
+                      and a.get_position().width < 0.2 and a.get_position().height > 0.4)
+        bar_rows = {round(p.get_y() + p.get_height() / 2)
+                    for p in bar_ax.patches if getattr(p, "get_width", lambda: 0)() > 0.01}
+        assert bar_rows == expected_rows, (sorted(bar_rows), "expected", sorted(expected_rows))
+        plt.close()
+
     def test_default_bars_are_gray_not_signed(self):
         """shap_plot=False keeps the gray cumulative bars and shows no SHAP +/- colors."""
         cpp_plot = aa.CPPPlot()
@@ -839,21 +888,27 @@ class TestCCPlotFeatureMapShap:
         assert _rgba(FEAT_IMP_GRAY) not in colors
         plt.close()
 
-    def test_shap_bars_are_one_direction(self):
-        """The cumulative impact bars are stacked in one direction (no negative extent)."""
+    def test_shap_bars_are_signed_diverging(self):
+        """SHAP impact bars are signed and diverge from the zero baseline: positive impact
+        extends one way, negative the other. The right per-subcategory bars diverge
+        horizontally (some negative width); the top per-position bars diverge vertically
+        (some negative height). (Regression guard: a magnitude-only 'one direction' stack
+        would fold net-negative rows/positions the wrong way -- checked on get_width()/
+        get_height(), since barh/bar keep the signed extent there, not in get_x()/get_y().)"""
         cpp_plot = aa.CPPPlot()
-        df_feat = get_df_feat_shap()
+        df_feat = get_df_feat_shap()  # alternating +/- impact -> both signs present
         fig, _ = cpp_plot.feature_map(df_feat=df_feat, shap_plot=True,
                                       col_imp=COL_FEAT_IMPACT_TEST, col_val=COL_MEAN_DIF_TEST)
-        # SHAP-colored impact bars start at the zero baseline (one-direction cumulative stack)
         shap_rgba = {_rgba(SHAP_POS), _rgba(SHAP_NEG)}
-        n_shap_bars = 0
+        widths, heights = [], []
         for ax in fig.axes:
             for p in ax.patches:
                 if tuple(round(x, 3) for x in p.get_facecolor()) in shap_rgba:
-                    n_shap_bars += 1
-                    assert round(p.get_x(), 6) >= 0 and round(p.get_y(), 6) >= 0
-        assert n_shap_bars > 0
+                    widths.append(round(p.get_width(), 6))
+                    heights.append(round(p.get_height(), 6))
+        assert widths and heights
+        assert any(w < 0 for w in widths), "expected left-extending (negative) subcategory bars"
+        assert any(h < 0 for h in heights), "expected down-extending (negative) position bars"
         plt.close()
 
     def test_shap_markers_present(self):
