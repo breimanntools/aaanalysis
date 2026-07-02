@@ -37,7 +37,7 @@ DEDICATED_OWNERS = {
         "cpp_struct": {"_cpp_structure_plot"},
     },
     "prediction": {
-        "aa_pred": {"_aa_pred"},
+        "aa_pred": {"_aa_pred", "_aa_pred_plot"},
     },
 }
 

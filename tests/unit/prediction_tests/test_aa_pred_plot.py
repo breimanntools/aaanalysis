@@ -74,6 +74,58 @@ class TestAAPredPlotEval:
         assert ax.get_ylabel() == "Balanced accuracy"
 
 
+def _df_comp():
+    return pd.DataFrame({"group": ["A", "A", "B", "B"],
+                         "condition": ["c1", "c2", "c1", "c2"],
+                         "value": [61.0, 60.0, 71.0, 74.0]})
+
+
+class TestAAPredPlotComparison:
+    def test_returns_fig_ax(self):
+        r = aa.AAPredPlot().comparison(_df_comp())
+        assert r.fig is not None and r.ax is not None
+
+    def test_group_condition_value_cols(self):
+        df = _df_comp().rename(columns={"group": "method", "condition": "cond", "value": "acc"})
+        r = aa.AAPredPlot().comparison(df, group="method", condition="cond", value="acc")
+        assert r.ax is not None
+
+    def test_missing_column_raises(self):
+        with pytest.raises(ValueError):
+            aa.AAPredPlot().comparison(_df_comp().drop(columns=["value"]))
+
+    def test_empty_df_raises(self):
+        with pytest.raises(ValueError):
+            aa.AAPredPlot().comparison(_df_comp().iloc[0:0])
+
+    def test_baseline_and_baseline_label(self):
+        r = aa.AAPredPlot().comparison(_df_comp(), baseline=50, baseline_label="chance")
+        assert any(line.get_linestyle() == "--" for line in r.ax.get_lines())
+
+    def test_annotate_and_fmt(self):
+        r = aa.AAPredPlot().comparison(_df_comp(), annotate=True, annotation_fmt="{:.0f}")
+        assert any(t.get_text() for t in r.ax.texts)
+
+    def test_orders_and_colors(self):
+        r = aa.AAPredPlot().comparison(_df_comp(), group_order=["B", "A"],
+                                       condition_order=["c2", "c1"], colors=["red", "blue"])
+        assert r.ax is not None
+
+    def test_bar_width_and_rotation(self):
+        r = aa.AAPredPlot().comparison(_df_comp(), bar_width=0.6, xtick_rotation=30)
+        assert r.ax is not None
+
+    def test_labels_title_ylim_fontsize(self):
+        r = aa.AAPredPlot().comparison(_df_comp(), xlabel="x", ylabel="y", title="t",
+                                       ylim=(0, 100), fontsize_annotations=8)
+        assert r.ax.get_title() == "t"
+
+    def test_ax_figsize_passthrough(self):
+        _, ax = plt.subplots()
+        r = aa.AAPredPlot().comparison(_df_comp(), ax=ax, figsize=(6, 4))
+        assert r.ax is ax
+
+
 class TestAAPredPlotHist:
     def test_returns_fig_ax(self):
         scores, labels = _scores()

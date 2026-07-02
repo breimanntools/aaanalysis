@@ -10,6 +10,7 @@ from matplotlib.axes import Axes
 from matplotlib.figure import Figure
 
 import aaanalysis.utils as ut
+from ._backend.aa_pred.aa_pred_plot_comparison import plot_comparison_
 
 
 # I Helper Functions
@@ -142,6 +143,137 @@ class AAPredPlot:
         ax.set_ylabel(ylabel)
         ax.legend(frameon=False, fontsize=8)
         sns.despine(ax=ax)
+        return ut.FigAxResult(fig, ax)
+
+    @staticmethod
+    def comparison(df_eval: pd.DataFrame,
+                   group: str = "group",
+                   condition: str = "condition",
+                   value: str = "value",
+                   baseline: Optional[Union[int, float]] = 50,
+                   baseline_label: Optional[str] = None,
+                   annotate: bool = True,
+                   annotation_fmt: Optional[str] = None,
+                   group_order: Optional[List[str]] = None,
+                   condition_order: Optional[List[str]] = None,
+                   colors: Optional[Union[List[str], Dict[str, str]]] = None,
+                   bar_width: Union[int, float] = 0.8,
+                   ax: Optional[Axes] = None,
+                   figsize: Tuple[Union[int, float], Union[int, float]] = (7, 4.2),
+                   xlabel: Optional[str] = None,
+                   ylabel: str = "Score",
+                   title: Optional[str] = None,
+                   ylim: Optional[Tuple[Union[int, float], Union[int, float]]] = None,
+                   fontsize_annotations: Union[int, float] = 10,
+                   xtick_rotation: Union[int, float] = 0,
+                   ) -> ut.FigAxResult:
+        """
+        Plot a grouped method x condition comparison barplot with value labels and a baseline.
+
+        Draws the recurring "benchmark result" figure from a tidy eval frame in one call: each
+        ``condition`` is an x-axis cluster, each ``group`` a colored bar within it (auto offsets /
+        widths for *N* groups), with optional per-bar value labels and an optional dashed chance /
+        baseline line.
+
+        .. versionadded:: 1.1.0
+
+        Parameters
+        ----------
+        df_eval : pd.DataFrame, shape (n_rows, n_cols)
+            Tidy (long-form) frame with one row per (``group``, ``condition``); must contain the
+            ``group``, ``condition``, and ``value`` columns. Repeated cells are averaged.
+        group : str, default="group"
+            Column whose distinct values become the colored bars within each cluster (the legend).
+        condition : str, default="condition"
+            Column whose distinct values become the x-axis clusters.
+        value : str, default="value"
+            Column with the numeric bar heights (e.g. balanced accuracy in percent).
+        baseline : int or float, optional
+            y-value of a dashed chance / baseline line. If ``None``, no line is drawn.
+        baseline_label : str, optional
+            Legend label for the baseline. ``None`` generates ``"chance (<baseline>)"``; ``""`` draws
+            the line without a legend entry.
+        annotate : bool, default=True
+            If ``True``, write each bar's value above it.
+        annotation_fmt : str, optional
+            Format string for the value labels; if ``None``, chosen from the data scale.
+        group_order : list of str, optional
+            Order of the groups (bars within a cluster). Defaults to first-appearance order.
+        condition_order : list of str, optional
+            Order of the conditions (x-axis clusters). Defaults to first-appearance order.
+        colors : list of str or dict, optional
+            Bar colors aligned to ``group_order`` or a ``group -> color`` dict; defaults to the
+            house categorical palette.
+        bar_width : int or float, default=0.8
+            Total width of each cluster (split across the groups). Must be in (0, 1].
+        ax : matplotlib.axes.Axes, optional
+            Axes to draw on. If ``None``, a new figure and axes are created.
+        figsize : tuple, default=(7, 4.2)
+            Figure size when ``ax`` is ``None``.
+        xlabel : str, optional
+            x-axis label.
+        ylabel : str, default="Score"
+            y-axis label.
+        title : str, optional
+            Axes title.
+        ylim : tuple, optional
+            y-axis limits ``(bottom, top)``; if ``None``, the top leaves room for the value labels.
+        fontsize_annotations : int or float, default=10
+            Font size of the per-bar value labels.
+        xtick_rotation : int or float, default=0
+            Rotation (degrees) of the cluster tick labels.
+
+        Returns
+        -------
+        fig : matplotlib.figure.Figure
+            The figure.
+        ax : matplotlib.axes.Axes
+            The axes with the grouped comparison barplot.
+
+        Examples
+        --------
+        .. include:: examples/aapred_plot_comparison.rst
+        """
+        # Check input
+        ut.check_str(name="group", val=group)
+        ut.check_str(name="condition", val=condition)
+        ut.check_str(name="value", val=value)
+        if len({group, condition, value}) < 3:
+            raise ValueError(f"'group', 'condition', and 'value' should be three distinct columns, "
+                             f"got group={group!r}, condition={condition!r}, value={value!r}.")
+        ut.check_df(name="df_eval", df=df_eval, cols_required=[group, condition, value])
+        if len(df_eval) == 0:
+            raise ValueError("'df_eval' (0 rows) should contain at least one row.")
+        if not pd.api.types.is_numeric_dtype(df_eval[value]):
+            raise ValueError(f"'{value}' column of 'df_eval' should be numeric, "
+                             f"got dtype '{df_eval[value].dtype}'.")
+        ut.check_number_val(name="baseline", val=baseline, accept_none=True, just_int=False)
+        ut.check_str(name="baseline_label", val=baseline_label, accept_none=True)
+        ut.check_bool(name="annotate", val=annotate)
+        ut.check_str(name="annotation_fmt", val=annotation_fmt, accept_none=True)
+        ut.check_list_like(name="group_order", val=group_order, accept_none=True)
+        ut.check_list_like(name="condition_order", val=condition_order, accept_none=True)
+        ut.check_number_range(name="bar_width", val=bar_width, min_val=0, max_val=1, just_int=False)
+        if bar_width == 0:
+            raise ValueError("'bar_width' should be greater than 0.")
+        ut.check_ax(ax=ax, accept_none=True)
+        ut.check_figsize(figsize=figsize, accept_none=True)
+        ut.check_str(name="xlabel", val=xlabel, accept_none=True)
+        ut.check_str(name="ylabel", val=ylabel, accept_none=True)
+        ut.check_str(name="title", val=title, accept_none=True)
+        ut.check_number_range(name="fontsize_annotations", val=fontsize_annotations, min_val=0,
+                              just_int=False)
+        ut.check_number_val(name="xtick_rotation", val=xtick_rotation, just_int=False)
+        if ylim is not None:
+            ut.check_lim(name="ylim", val=ylim)
+        # Plot
+        fig, ax = plot_comparison_(df_eval=df_eval, group=group, condition=condition, value=value,
+                                   baseline=baseline, baseline_label=baseline_label, annotate=annotate,
+                                   annotation_fmt=annotation_fmt, group_order=group_order,
+                                   condition_order=condition_order, colors=colors, bar_width=bar_width,
+                                   ax=ax, figsize=figsize, xlabel=xlabel, ylabel=ylabel, title=title,
+                                   ylim=ylim, fontsize_annotations=fontsize_annotations,
+                                   xtick_rotation=xtick_rotation)
         return ut.FigAxResult(fig, ax)
 
     @staticmethod
