@@ -171,7 +171,7 @@ class AAPredPlot:
                    ylim: Optional[Tuple[Union[int, float], Union[int, float]]] = None,
                    fontsize_annotations: Union[int, float] = 10,
                    xtick_rotation: Union[int, float] = 0,
-                   ) -> ut.FigAxResult:
+                   ) -> Tuple[Figure, Axes]:
         """
         Plot a grouped method x condition comparison barplot with value labels and a baseline.
 
@@ -295,7 +295,7 @@ class AAPredPlot:
                 figsize: Optional[Tuple[Union[int, float], Union[int, float]]] = None,
                 xlabel: str = "Prediction score",
                 title: Optional[str] = None,
-                ) -> ut.FigAxResult:
+                ) -> Tuple[Figure, Axes]:
         """
         Plot ranked candidates as horizontal bars colored by class, with cut-off lines.
 
@@ -383,7 +383,7 @@ class AAPredPlot:
                    figsize: Tuple[Union[int, float], Union[int, float]] = (9, 9),
                    cbar_label: str = "Pearson correlation (r)",
                    title: Optional[str] = None,
-                   ) -> ut.FigAxResult:
+                   ) -> Tuple[Figure, Axes]:
         """
         Cluster samples by explanation similarity (correlation of per-sample importance vectors).
 
