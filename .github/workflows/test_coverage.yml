@@ -13,12 +13,15 @@ on:
     branches:
       - master
 
-# Cancel EVERY in-progress Test Coverage run when a new one is triggered. The
-# group is keyed on the workflow name only (no ${{ github.ref }}), so a fresh run
-# on any branch/PR supersedes all in-flight coverage runs -- only the newest one
-# survives. This is the heaviest workflow, so we never let two of them run at once.
+# Cancel a superseded in-progress Test Coverage run only within the SAME ref: a new
+# push to a branch/PR cancels that branch's own older run (no stacked redundant runs
+# on rapid pushes), but runs on different branches/PRs do NOT cancel each other. The
+# group MUST include ${{ github.ref }} -- keying it on the workflow name alone made
+# the group repo-global, so with several PRs open only the newest run survived and
+# every other PR's coverage run showed as a spurious "cancelled" (red) with no
+# coverage ever reported.
 concurrency:
-  group: ${{ github.workflow }}
+  group: ${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: true
 
 jobs:
