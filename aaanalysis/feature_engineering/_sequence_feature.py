@@ -2,6 +2,7 @@
 This is a script for the frontend of the SequenceFeature class, a supportive class for the CPP feature engineering.
 """
 from typing import Literal, Optional, Union, List, Dict, Tuple, Sequence
+import inspect
 import warnings
 import numpy as np
 import pandas as pd
@@ -33,6 +34,25 @@ from ._backend.feature_filter import filter_correlation_, filter_variance_
 
 
 # I Helper Functions
+def _valid_df_parts_kws_keys():
+    """Return the ``SequenceFeature.get_df_parts`` parameter names valid in a ``df_parts_kws`` dict."""
+    params = inspect.signature(SequenceFeature.get_df_parts).parameters
+    return {p for p in params if p not in ("self", "df_seq")}
+
+
+def check_df_parts_kws(df_parts_kws=None, df_seq=None) -> None:
+    """Check ``df_parts_kws`` is a valid-key dict of ``get_df_parts`` kwargs, only used with ``df_seq``."""
+    if df_parts_kws is None:
+        return
+    ut.check_dict(name="df_parts_kws", val=df_parts_kws, accept_none=True)
+    if df_seq is None:
+        raise ValueError("'df_parts_kws' is only used together with 'df_seq'; with 'df_parts' the parts "
+                         "are taken directly from its columns.")
+    valid_keys = _valid_df_parts_kws_keys()
+    invalid_keys = set(df_parts_kws) - valid_keys
+    if invalid_keys:
+        raise ValueError(f"'df_parts_kws' should only contain 'get_df_parts' parameter names. Invalid keys: "
+                         f"{sorted(invalid_keys)}. Valid keys: {sorted(valid_keys)}.")
 def check_split_types(split_types=None):
     """Check if split types valid (Segment, Pattern, or PeriodicPattern)"""
     split_types = ut.check_list_like(name="split_types", val=split_types, accept_str=True, accept_none=True)
@@ -705,7 +725,7 @@ class SequenceFeature:
                        n_jobs: Union[int, None] = 1,
                        batch: bool = False,
                        df_seq: Optional[pd.DataFrame] = None,
-                       list_parts: Optional[Union[str, List[str]]] = None,
+                       df_parts_kws: Optional[dict] = None,
                        ) -> Union[ut.ArrayLike2D, List[ut.ArrayLike2D]]:
         """
         Create feature matrix for given feature ids and sequence parts.
@@ -722,7 +742,7 @@ class SequenceFeature:
             Added the ``batch`` parameter for building a list of ``df_parts`` in a single pass.
 
         .. versionchanged:: 1.1.0
-            Added the ``df_seq`` and ``list_parts`` parameters to build ``df_parts`` internally, so the
+            Added the ``df_seq`` and ``df_parts_kws`` parameters to build ``df_parts`` internally, so the
             sequence-to-matrix step no longer requires a separate :meth:`get_df_parts` call.
 
         Parameters
@@ -751,13 +771,13 @@ class SequenceFeature:
         df_seq : pd.DataFrame, shape (n_samples, n_seq_info), optional
             DataFrame containing an ``entry`` column with unique protein identifiers and sequence information
             in a distinct format: **Position-based**, **Part-based**, **Sequence-based**, or **Sequence-TMD-based**.
-            If given, ``df_parts`` is built internally via :meth:`get_df_parts` (using ``list_parts``), as an
-            alternative to passing ``df_parts`` directly. Provide exactly one of ``df_parts`` or ``df_seq``.
-            Other :meth:`get_df_parts` options (e.g. ``jmd_n_len``, ``jmd_c_len``, ``tmd_len``) use their
-            defaults here; for full control, build ``df_parts`` with :meth:`get_df_parts` and pass it directly.
-        list_parts : list of str, optional
-            Names of sequence parts to obtain from ``df_seq`` (passed through to :meth:`get_df_parts`).
-            Only used together with ``df_seq``; if ``None``, the :meth:`get_df_parts` default parts are used.
+            If given, ``df_parts`` is built internally via :meth:`get_df_parts`, as an alternative to passing
+            ``df_parts`` directly. Provide exactly one of ``df_parts`` or ``df_seq``.
+        df_parts_kws : dict, optional
+            Keyword arguments forwarded to :meth:`get_df_parts` when building ``df_parts`` from ``df_seq``
+            (e.g. ``{"list_parts": ["tmd"], "jmd_n_len": 10, "tmd_len": 20}``). Keys must be
+            :meth:`get_df_parts` parameter names (``df_seq`` excluded); unset options use their defaults.
+            Only valid together with ``df_seq``.
 
         Returns
         -------
@@ -779,15 +799,13 @@ class SequenceFeature:
         ut.check_bool(name="batch", val=batch)
         if (df_parts is None) == (df_seq is None):
             raise ValueError("Exactly one of 'df_parts' or 'df_seq' should be given (not both, not neither).")
+        check_df_parts_kws(df_parts_kws=df_parts_kws, df_seq=df_seq)
         if df_seq is not None:
             if batch:
                 raise ValueError("'batch=True' is not supported together with 'df_seq'; "
                                  "build the part DataFrames yourself and pass them as a list via 'df_parts'.")
             # Build df_parts internally via the existing get_df_parts logic (same result as the two-step call)
-            df_parts = self.get_df_parts(df_seq=df_seq, list_parts=list_parts)
-        elif list_parts is not None:
-            raise ValueError("'list_parts' is only used together with 'df_seq'; with 'df_parts' the parts "
-                             "are taken directly from its columns.")
+            df_parts = self.get_df_parts(df_seq=df_seq, **(df_parts_kws or {}))
         # Load defaults
         if df_scales is None:
             df_scales = ut.load_default_scales()

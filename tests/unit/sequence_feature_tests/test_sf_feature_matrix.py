@@ -233,7 +233,7 @@ def _get_df_seq_input(n_feat=10, n_samples=20):
 
 
 class TestFeatureMatrixDfSeq:
-    """Test the additive 'df_seq' / 'list_parts' input path of 'feature_matrix'."""
+    """Test the additive 'df_seq' / 'df_parts_kws' input path of 'feature_matrix'."""
 
     # Positive tests
     def test_valid_df_seq(self):
@@ -256,14 +256,26 @@ class TestFeatureMatrixDfSeq:
         X_one_step = sf.feature_matrix(features=features, df_seq=df_seq)
         assert np.array_equal(X_two_step, X_one_step)
 
-    def test_valid_list_parts(self):
-        """'list_parts' is forwarded to get_df_parts; result matches the explicit two-step call."""
+    def test_valid_df_parts_kws_list_parts(self):
+        """'df_parts_kws' forwards list_parts to get_df_parts; result matches the two-step call."""
         features, df_seq = _get_df_seq_input(n_feat=8, n_samples=15)
         list_feat_parts = sorted(set(f.split("-")[0].lower() for f in features))
         sf = aa.SequenceFeature()
         df_parts = sf.get_df_parts(df_seq=df_seq, list_parts=list_feat_parts)
         X_two_step = sf.feature_matrix(features=features, df_parts=df_parts)
-        X_one_step = sf.feature_matrix(features=features, df_seq=df_seq, list_parts=list_feat_parts)
+        X_one_step = sf.feature_matrix(features=features, df_seq=df_seq,
+                                       df_parts_kws={"list_parts": list_feat_parts})
+        assert np.array_equal(X_two_step, X_one_step)
+
+    def test_valid_df_parts_kws_multiple_options(self):
+        """'df_parts_kws' forwards several get_df_parts options at once; matches the two-step call."""
+        features, df_seq = _get_df_seq_input(n_feat=8, n_samples=15)
+        list_feat_parts = sorted(set(f.split("-")[0].lower() for f in features))
+        kws = {"list_parts": list_feat_parts, "jmd_n_len": 5, "jmd_c_len": 5}
+        sf = aa.SequenceFeature()
+        df_parts = sf.get_df_parts(df_seq=df_seq, **kws)
+        X_two_step = sf.feature_matrix(features=features, df_parts=df_parts)
+        X_one_step = sf.feature_matrix(features=features, df_seq=df_seq, df_parts_kws=kws)
         assert np.array_equal(X_two_step, X_one_step)
 
     def test_df_seq_with_df_scales(self):
@@ -291,13 +303,27 @@ class TestFeatureMatrixDfSeq:
         with pytest.raises(ValueError):
             sf.feature_matrix(features=features)
 
-    def test_invalid_list_parts_without_df_seq(self):
-        """'list_parts' given with 'df_parts' (no 'df_seq') raises ValueError."""
+    def test_invalid_df_parts_kws_without_df_seq(self):
+        """'df_parts_kws' given with 'df_parts' (no 'df_seq') raises ValueError."""
         features, df_seq = _get_df_seq_input(n_feat=6, n_samples=10)
         sf = aa.SequenceFeature()
         df_parts = sf.get_df_parts(df_seq=df_seq)
         with pytest.raises(ValueError):
-            sf.feature_matrix(features=features, df_parts=df_parts, list_parts=["tmd"])
+            sf.feature_matrix(features=features, df_parts=df_parts, df_parts_kws={"list_parts": ["tmd"]})
+
+    def test_invalid_df_parts_kws_bad_key(self):
+        """'df_parts_kws' with a non-get_df_parts key raises ValueError."""
+        features, df_seq = _get_df_seq_input(n_feat=6, n_samples=10)
+        sf = aa.SequenceFeature()
+        with pytest.raises(ValueError):
+            sf.feature_matrix(features=features, df_seq=df_seq, df_parts_kws={"not_a_param": 1})
+
+    def test_invalid_df_parts_kws_type(self):
+        """A non-dict 'df_parts_kws' raises ValueError."""
+        features, df_seq = _get_df_seq_input(n_feat=6, n_samples=10)
+        sf = aa.SequenceFeature()
+        with pytest.raises(ValueError):
+            sf.feature_matrix(features=features, df_seq=df_seq, df_parts_kws=["list_parts"])
 
     def test_invalid_batch_with_df_seq(self):
         """'batch=True' together with 'df_seq' raises ValueError."""
