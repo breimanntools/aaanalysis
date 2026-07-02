@@ -472,7 +472,12 @@ class CPP(Tool):
                :class:`CPPGrid` (default ``backend="threads"``), which sidesteps this.
         vectorized : bool, default=True
             Whether to apply sequence splitting and the Mann-Whitney U test in 'vectorized' mode (``True``),
-            improving speed but increasing memory consumption.
+            improving speed but increasing memory consumption. The vectorized Mann-Whitney U test uses a
+            fast normal approximation of the p-value (roughly an order of magnitude faster on the test
+            step); ``vectorized=False`` instead computes the exact :func:`scipy.stats.mannwhitneyu`
+            p-value, which is slower but reproducible bit-for-bit. This choice changes only the reported
+            'p_val_mann_whitney' and 'p_val_fdr_bh' columns: feature ranking and selection are driven by
+            'abs_auc' and 'abs_mean_dif', so the selected features are identical in either mode.
         n_batches : int, None, default=None
             Number of batches (>=2) used for batch processing. If ``None``, single-processing is used, which is faster
             but more memory-intensive. Increasing ``n_batches`` (up to the maximum number of scales in ``df_scales``)
@@ -769,7 +774,12 @@ class CPP(Tool):
             when set. The Python 3.14 + macOS spawn caveat documented in :meth:`run` applies here too.
         vectorized : bool, default=True
             Whether to apply sequence splitting and the Mann-Whitney U test in 'vectorized' mode (``True``),
-            improving speed but increasing memory consumption.
+            improving speed but increasing memory consumption. The vectorized Mann-Whitney U test uses a
+            fast normal approximation of the p-value (roughly an order of magnitude faster on the test
+            step); ``vectorized=False`` instead computes the exact :func:`scipy.stats.mannwhitneyu`
+            p-value, which is slower but reproducible bit-for-bit. This choice changes only the reported
+            'p_val_mann_whitney' and 'p_val_fdr_bh' columns: feature ranking and selection are driven by
+            'abs_auc' and 'abs_mean_dif', so the selected features are identical in either mode.
         n_batches : int, None, default=None
             Number of batches (2 to ``len(df_scales.columns)``) over the D axis of
             ``dict_num_parts``. If ``None``, single-pass; a value bounds the **pass-1
