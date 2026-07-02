@@ -126,6 +126,56 @@ class TestAAPredPlotComparison:
         assert r.ax is ax
 
 
+def _df_rank(n=8):
+    rng = np.random.RandomState(0)
+    return pd.DataFrame({"name": [f"G{i}" for i in range(n)],
+                         "score": np.linspace(30, 95, n),
+                         "group": (["sub", "non"] * n)[:n],
+                         "std": np.linspace(1, 4, n)})
+
+
+class TestAAPredPlotRanking:
+    def test_returns_fig_ax(self):
+        r = aa.AAPredPlot().ranking(df_pred=_df_rank())
+        assert r.fig is not None and r.ax is not None
+
+    def test_col_name_score(self):
+        df = _df_rank().rename(columns={"name": "gene", "score": "p"})
+        r = aa.AAPredPlot().ranking(df, col_name="gene", col_score="p")
+        assert r.ax is not None
+
+    def test_col_group_and_std(self):
+        r = aa.AAPredPlot().ranking(_df_rank(), col_group="group", col_std="std")
+        assert len(r.ax.patches) == 8
+
+    def test_missing_column_raises(self):
+        with pytest.raises(ValueError):
+            aa.AAPredPlot().ranking(_df_rank().drop(columns=["score"]))
+
+    def test_empty_raises(self):
+        with pytest.raises(ValueError):
+            aa.AAPredPlot().ranking(_df_rank().iloc[0:0])
+
+    def test_top_n_and_ascending(self):
+        r = aa.AAPredPlot().ranking(_df_rank(), top_n=3, ascending=True)
+        assert len(r.ax.patches) == 3
+
+    def test_cutoffs_and_colors(self):
+        r = aa.AAPredPlot().ranking(_df_rank(), col_group="group",
+                                    colors={"sub": "red", "non": "blue"}, cutoffs=(60,))
+        assert any(line.get_linestyle() == "--" for line in r.ax.get_lines())
+
+    def test_figsize_height_scales_with_items(self):
+        h8 = aa.AAPredPlot().ranking(_df_rank(8)).fig.get_size_inches()[1]
+        h20 = aa.AAPredPlot().ranking(_df_rank(20)).fig.get_size_inches()[1]
+        assert h20 > h8
+
+    def test_ax_xlabel_title(self):
+        _, ax = plt.subplots()
+        r = aa.AAPredPlot().ranking(_df_rank(), ax=ax, xlabel="score", title="t")
+        assert r.ax is ax
+
+
 class TestAAPredPlotHist:
     def test_returns_fig_ax(self):
         scores, labels = _scores()

@@ -11,6 +11,7 @@ from matplotlib.figure import Figure
 
 import aaanalysis.utils as ut
 from ._backend.aa_pred.aa_pred_plot_comparison import plot_comparison_
+from ._backend.aa_pred.aa_pred_plot_ranking import plot_ranking_
 
 
 # I Helper Functions
@@ -274,6 +275,99 @@ class AAPredPlot:
                                    ax=ax, figsize=figsize, xlabel=xlabel, ylabel=ylabel, title=title,
                                    ylim=ylim, fontsize_annotations=fontsize_annotations,
                                    xtick_rotation=xtick_rotation)
+        return ut.FigAxResult(fig, ax)
+
+    @staticmethod
+    def ranking(df_pred: pd.DataFrame,
+                col_name: str = "name",
+                col_score: str = "score",
+                col_group: Optional[str] = None,
+                col_std: Optional[str] = None,
+                colors: Optional[Dict[str, str]] = None,
+                cutoffs: Optional[Tuple[Union[int, float], ...]] = (50, 80),
+                top_n: Optional[int] = None,
+                ascending: bool = False,
+                ax: Optional[Axes] = None,
+                figsize: Optional[Tuple[Union[int, float], Union[int, float]]] = None,
+                xlabel: str = "Prediction score",
+                title: Optional[str] = None,
+                ) -> ut.FigAxResult:
+        """
+        Plot ranked candidates as horizontal bars colored by class, with cut-off lines.
+
+        Ranks proteins/samples by a prediction ``col_score`` (highest on top) and draws one
+        horizontal bar each, colored by ``col_group`` (e.g. substrate vs non-substrate), with
+        optional per-item error bars (``col_std``) and dashed confidence cut-off lines. The
+        figure height grows with the number of items so each bar keeps a constant height.
+
+        .. versionadded:: 1.1.0
+
+        Parameters
+        ----------
+        df_pred : pd.DataFrame, shape (n_samples, n_cols)
+            Per-sample prediction frame; must contain ``col_name`` and ``col_score`` (and
+            ``col_group`` / ``col_std`` when given).
+        col_name : str, default="name"
+            Column with the per-item labels shown as y-tick labels (e.g. gene names).
+        col_score : str, default="score"
+            Column with the numeric prediction score used to rank and size the bars.
+        col_group : str, optional
+            Column whose distinct values color the bars (adds a class legend). If ``None``, a
+            single color is used.
+        col_std : str, optional
+            Column with per-item standard deviations, drawn as horizontal error bars.
+        colors : dict, optional
+            A ``group -> color`` mapping; defaults to the house categorical palette.
+        cutoffs : tuple, optional
+            x-positions of dashed confidence cut-off lines. ``None`` or empty draws none.
+        top_n : int, optional
+            If given, keep only the top ``top_n`` ranked items.
+        ascending : bool, default=False
+            Sort order of the score; ``False`` ranks the highest score first (on top).
+        ax : matplotlib.axes.Axes, optional
+            Axes to draw on. If ``None``, a new figure and axes are created.
+        figsize : tuple, optional
+            Figure size when ``ax`` is ``None``. If ``None``, the height scales with the number
+            of items (``0.22 * n + 1``) and the width defaults to 5.
+        xlabel : str, default="Prediction score"
+            x-axis label.
+        title : str, optional
+            Axes title.
+
+        Returns
+        -------
+        fig : matplotlib.figure.Figure
+            The figure.
+        ax : matplotlib.axes.Axes
+            The axes with the ranked-candidate bars.
+
+        Examples
+        --------
+        .. include:: examples/aapred_plot_ranking.rst
+        """
+        # Check input
+        ut.check_str(name="col_name", val=col_name)
+        ut.check_str(name="col_score", val=col_score)
+        ut.check_str(name="col_group", val=col_group, accept_none=True)
+        ut.check_str(name="col_std", val=col_std, accept_none=True)
+        cols_required = [c for c in [col_name, col_score, col_group, col_std] if c is not None]
+        ut.check_df(name="df_pred", df=df_pred, cols_required=cols_required)
+        if len(df_pred) == 0:
+            raise ValueError("'df_pred' (0 rows) should contain at least one row.")
+        if not pd.api.types.is_numeric_dtype(df_pred[col_score]):
+            raise ValueError(f"'{col_score}' column of 'df_pred' should be numeric.")
+        ut.check_bool(name="ascending", val=ascending)
+        if top_n is not None:
+            ut.check_number_range(name="top_n", val=top_n, min_val=1, just_int=True)
+        ut.check_ax(ax=ax, accept_none=True)
+        ut.check_figsize(figsize=figsize, accept_none=True)
+        ut.check_str(name="xlabel", val=xlabel, accept_none=True)
+        ut.check_str(name="title", val=title, accept_none=True)
+        # Plot
+        fig, ax = plot_ranking_(df_pred=df_pred, col_name=col_name, col_score=col_score,
+                                col_group=col_group, col_std=col_std, colors=colors,
+                                cutoffs=cutoffs, top_n=top_n, ascending=ascending, ax=ax,
+                                figsize=figsize, xlabel=xlabel, title=title)
         return ut.FigAxResult(fig, ax)
 
     @staticmethod
