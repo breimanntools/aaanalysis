@@ -867,6 +867,30 @@ class TestCCPlotFeatureMapShap:
         assert bar_rows == expected_rows, (sorted(bar_rows), "expected", sorted(expected_rows))
         plt.close()
 
+    def test_importance_bar_labels_extend_outward_not_clipped(self):
+        # The cumulative-importance % labels must extend outward (to the right of the bar
+        # tip), never left past the x=0 baseline into the heatmap where they'd be hidden/
+        # clipped. Regression guard for the inside-bar (right-anchored, white) rendering
+        # that cut the leading digit of short-bar labels.
+        cpp_plot = aa.CPPPlot()
+        df_feat = get_df_feat()
+        fig, hm = cpp_plot.feature_map(df_feat=df_feat)
+        fig.canvas.draw()
+        renderer = fig.canvas.get_renderer()
+        hm_x0 = hm.get_position().x0
+        left_edges = []
+        for a in fig.axes:  # the right importance bar: narrow + tall, right of the heatmap
+            p = a.get_position()
+            if a is hm or p.x0 <= hm_x0 + 0.1 or p.width >= 0.2 or p.height <= 0.4:
+                continue
+            for t in a.texts:
+                if t.get_text().strip().endswith("%"):
+                    ext = t.get_window_extent(renderer)
+                    left_edges.append(a.transData.inverted().transform((ext.x0, ext.y0))[0])
+        assert left_edges, "no % importance-bar labels found"
+        assert min(left_edges) >= -1e-6, f"a label extends left of the baseline: {min(left_edges)}"
+        plt.close()
+
     def test_default_bars_are_gray_not_signed(self):
         """shap_plot=False keeps the gray cumulative bars and shows no SHAP +/- colors."""
         cpp_plot = aa.CPPPlot()

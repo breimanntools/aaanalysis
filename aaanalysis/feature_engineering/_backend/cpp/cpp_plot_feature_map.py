@@ -72,10 +72,14 @@ def plot_feat_importance_bars_subcat(ax=None,
         annotation_th = v_max / 2 if annotation_th is None else annotation_th
         for i, val in enumerate(list_imp):
             if val >= annotation_th:
-                ax.text(val, i + 0.45, f"{round(val, 1)}% ",
-                        va="center", ha="right",
+                # Label just OUTSIDE the bar tip (ha="left" -> extends right, away from the
+                # heatmap) with clip_on=False, so it is never cut. Drawing it inside the bar
+                # (right-anchored, white) clips the leading digit on short bars, hiding it
+                # under the heatmap (e.g. "2.0%" -> "0%"); this restores the never-cut form.
+                ax.text(val, i + 0.45, f" {round(val, 1)}%",
+                        va="center", ha="left",
                         weight=weight_annotation,
-                        color="white",
+                        clip_on=False,
                         size=fontsize_imp_bar)
 
     # Adjust ticks
