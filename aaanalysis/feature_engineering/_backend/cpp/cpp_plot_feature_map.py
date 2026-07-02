@@ -38,24 +38,19 @@ def plot_feat_importance_bars_subcat(ax=None,
                                     list_cat=df_feat[col_cat].to_list(),
                                     col_cat=col_cat)
     if shap_plot:
-        # Cumulative feature impact per category, stacked in one direction with one
-        # thin white-edged segment per feature (red=positive, blue=negative)
+        # Stack signed feature impact per category (positive=red right, negative=blue left).
+        # Build one value PER category in list_cat (row) order -- categories with no impact
+        # get 0 -- and pass the whole ordered list to a single ax.barh call, so every bar
+        # reserves its own row slot and stays aligned with the heatmap rows. (Drawing bars
+        # one category at a time by name lets matplotlib's categorical converter compact the
+        # non-empty ones onto the top rows -- see test_shap_impact_bar_aligns_with_correct_row.)
         df = df_feat[[col_cat, col_imp]]
-        dict_total = {}
-        for cat in list_cat:
-            vals = df.loc[df[col_cat] == cat, col_imp].values
-            left = 0.0
-            for v in vals:
-                if v > 0:
-                    ax.barh(cat, v, left=left, color=ut.COLOR_SHAP_POS,
-                            edgecolor="white", linewidth=0.3, align="edge")
-                    left += v
-            for v in vals:
-                if v < 0:
-                    ax.barh(cat, abs(v), left=left, color=ut.COLOR_SHAP_NEG,
-                            edgecolor="white", linewidth=0.3, align="edge")
-                    left += abs(v)
-            dict_total[cat] = left
+        s_pos = df[df[col_imp] > 0].groupby(by=col_cat)[col_imp].sum()
+        s_neg = df[df[col_imp] < 0].groupby(by=col_cat)[col_imp].sum()
+        list_pos = [s_pos.get(x, 0) for x in list_cat]
+        list_neg = [s_neg.get(x, 0) for x in list_cat]
+        ax.barh(list_cat, list_pos, color=ut.COLOR_SHAP_POS, edgecolor=None, align="edge")
+        ax.barh(list_cat, list_neg, color=ut.COLOR_SHAP_NEG, edgecolor=None, align="edge")
     else:
         # Get feature importance per scale class
         df_imp = df_feat[[col_cat, col_imp]].groupby(by=col_cat).sum()
@@ -91,7 +86,7 @@ def plot_feat_importance_bars_subcat(ax=None,
         label.set_visible(False)
 
     if shap_plot:
-        ax.set_xlim(0, max(list(dict_total.values()) + [0]))
+        ax.set_xlim(min(list_neg + [0]), max(list_pos + [0]))
     else:
         ax.set_xlim(0, v_max)
 
