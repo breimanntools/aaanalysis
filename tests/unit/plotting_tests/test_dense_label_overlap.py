@@ -33,6 +33,10 @@ from ._text_overlap import get_label_overlaps, make_dense_df_feat
 
 
 N_SUBCATS = [20, 36, 55, 74]
+# Grids dense enough that the auto figure exceeds the default (8, 8) floor, so the
+# constant-cell-size invariant applies (below the floor, auto_font only grows the
+# figure to the default and cells are larger — see TestSmallGridFloor).
+DENSE_SUBCATS = [40, 55, 74]
 N_POSITIONS = 40  # default tmd_len 20 + jmd_n 10 + jmd_c 10
 CELL_TOL = 0.06   # relative tolerance on the per-cell size (freetype/layout jitter)
 
@@ -110,14 +114,14 @@ class TestConstantCellSize:
     def teardown_method(self):
         plt.close("all")
 
-    @pytest.mark.parametrize("n_subcat", N_SUBCATS)
+    @pytest.mark.parametrize("n_subcat", DENSE_SUBCATS)
     def test_feature_map_cell_size_is_target(self, n_subcat):
         fig, ax = aa.CPPPlot().feature_map(make_dense_df_feat(n_subcat))
         cw, ch = _cell_size(fig, ax, n_subcat, N_POSITIONS)
         assert abs(cw - CELL_W_IN) <= CELL_W_IN * CELL_TOL, cw
         assert abs(ch - CELL_H_IN) <= CELL_H_IN * CELL_TOL, ch
 
-    @pytest.mark.parametrize("n_subcat", [20, 74])
+    @pytest.mark.parametrize("n_subcat", [55, 74])
     def test_heatmap_cell_size_is_target(self, n_subcat):
         fig, ax = aa.CPPPlot().heatmap(make_dense_df_feat(n_subcat))
         cw, ch = _cell_size(fig, ax, n_subcat, N_POSITIONS)
@@ -125,12 +129,35 @@ class TestConstantCellSize:
         assert abs(ch - CELL_H_IN) <= CELL_H_IN * CELL_TOL, ch
 
     def test_cell_size_constant_across_densities(self):
-        # The whole point: the cell does NOT shrink as the grid gets denser.
+        # The whole point: the cell does NOT shrink as the grid gets denser (above the floor).
         heights = []
-        for n in (20, 74):
+        for n in (40, 74):
             fig, ax = aa.CPPPlot().feature_map(make_dense_df_feat(n))
             heights.append(_cell_size(fig, ax, n, N_POSITIONS)[1])
         assert abs(heights[0] - heights[1]) <= CELL_H_IN * CELL_TOL, heights
+
+
+class TestSmallGridFloor:
+    """auto_font only GROWS the figure: sparse grids never collapse below the default."""
+
+    def setup_method(self):
+        aa.options["verbose"] = False
+
+    def teardown_method(self):
+        plt.close("all")
+
+    @pytest.mark.parametrize("n_subcat", [1, 5, 15])
+    def test_feature_map_not_smaller_than_default(self, n_subcat):
+        fig, ax = aa.CPPPlot().feature_map(make_dense_df_feat(n_subcat))
+        w, h = (float(v) for v in fig.get_size_inches())
+        # Never shrink below the (8, 8) default footprint (so decorations/fonts fit).
+        assert w >= 8.0 - 1e-6 and h >= 8.0 - 1e-6, (n_subcat, w, h)
+
+    @pytest.mark.parametrize("n_subcat", [1, 5, 15])
+    def test_heatmap_not_smaller_than_default(self, n_subcat):
+        fig, ax = aa.CPPPlot().heatmap(make_dense_df_feat(n_subcat))
+        w, h = (float(v) for v in fig.get_size_inches())
+        assert w >= 8.0 - 1e-6 and h >= 8.0 - 1e-6, (n_subcat, w, h)
 
 
 class TestFontStableAndNoOverlap:
@@ -228,6 +255,27 @@ class TestAutoFontOffAndExplicit:
     def test_single_subcategory_does_not_crash(self):
         fig, ax = aa.CPPPlot().feature_map(make_dense_df_feat(1))
         assert fig is not None
+
+    @pytest.mark.parametrize("auto", [True, False])
+    @pytest.mark.parametrize("method", ["feature_map", "heatmap", "profile"])
+    def test_figsize_none_works_in_both_states(self, method, auto):
+        aa.options["auto_font"] = auto
+        fig, ax = getattr(aa.CPPPlot(), method)(make_dense_df_feat(20), figsize=None)
+        assert fig is not None
+
+    def test_seq_char_fill_off_when_auto_font_off(self):
+        # seq_char_fill=None follows auto_font: off (unchanged spacing) when auto_font off.
+        aa.options["auto_font"] = False
+        df = make_dense_df_feat(20)
+        f_none, _ = aa.CPPPlot().feature_map(df, tmd_seq="A" * 20, jmd_n_seq="A" * 10,
+                                             jmd_c_seq="A" * 10, figsize=None)
+        f_false, _ = aa.CPPPlot().feature_map(df, tmd_seq="A" * 20, jmd_n_seq="A" * 10,
+                                              jmd_c_seq="A" * 10, seq_char_fill=False, figsize=None)
+        f_none.canvas.draw(); f_false.canvas.draw()
+        # None resolves to False under auto_font=False -> identical seq-letter sizing.
+        s_none = [t.get_fontsize() for t in f_none.axes[0].texts]
+        s_false = [t.get_fontsize() for t in f_false.axes[0].texts]
+        assert s_none == s_false
 
 
 class TestForcedFigsizeFallback:

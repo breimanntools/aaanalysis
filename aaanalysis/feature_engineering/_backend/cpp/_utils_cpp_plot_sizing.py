@@ -42,19 +42,25 @@ def fit_cells_by_rescale(fig=None, ax_grid=None, n_rows=None, n_cols=None,
     Must be called AFTER the figure is fully laid out (``tight_layout`` + colorbar
     /legends placed) and BEFORE any residue-letter fitting, so letters are fitted
     to the final column width. Does not re-run ``tight_layout``: the axes fractions
-    are already correct, so one rescale is exact. Returns ``(fig_w, fig_h, capped)``.
+    are already correct, so one rescale is exact.
+
+    auto_font only ever GROWS the figure: the target is floored at the entry (default)
+    size so a sparse grid never shrinks below the default footprint (the point-sized
+    decorations — colorbar, legends, importance bars — would otherwise collapse and the
+    fixed fonts overflow). For grids dense enough to exceed the default, cells stay at
+    ``(cell_w, cell_h)``. Returns ``(fig_w, fig_h, capped)``.
     """
     fig.canvas.draw()
+    w_in, h_in = fig.get_size_inches()  # entry (default) size = lower bound
     pos = ax_grid.get_position()
     frac_w, frac_h = pos.width, pos.height
     if frac_w <= 0 or frac_h <= 0:
-        w_in, h_in = fig.get_size_inches()
         return float(w_in), float(h_in), False
-    target_w = n_cols * cell_w / frac_w
-    target_h = n_rows * cell_h / frac_h
-    capped = target_w > SAFETY_CAP_IN or target_h > SAFETY_CAP_IN
-    target_w = min(target_w, SAFETY_CAP_IN)
-    target_h = min(target_h, SAFETY_CAP_IN)
+    want_w = n_cols * cell_w / frac_w
+    want_h = n_rows * cell_h / frac_h
+    capped = want_w > SAFETY_CAP_IN or want_h > SAFETY_CAP_IN
+    target_w = min(max(want_w, w_in), SAFETY_CAP_IN)
+    target_h = min(max(want_h, h_in), SAFETY_CAP_IN)
     fig.set_size_inches(target_w, target_h)
     return float(target_w), float(target_h), capped
 
@@ -64,16 +70,19 @@ def fit_width_by_rescale(fig=None, ax_grid=None, n_cols=None, cell_w=CELL_W_IN):
 
     For plots with a position x-axis but no subcategory rows (e.g. the profile):
     width grows with the sequence length while the height (and all fonts) stay
-    fixed. Returns the new figure width in inches.
+    fixed. Only grows (floored at the entry width); never shrinks below the default.
+    Returns ``(fig_w, capped)``.
     """
     fig.canvas.draw()
     w_in, h_in = fig.get_size_inches()
     pos = ax_grid.get_position()
     if pos.width <= 0:
-        return float(w_in)
-    target_w = min(n_cols * cell_w / pos.width, SAFETY_CAP_IN)
+        return float(w_in), False
+    want_w = n_cols * cell_w / pos.width
+    capped = want_w > SAFETY_CAP_IN
+    target_w = min(max(want_w, w_in), SAFETY_CAP_IN)
     fig.set_size_inches(target_w, h_in)
-    return float(target_w)
+    return float(target_w), capped
 
 
 def ranking_figheight(n_items=None, per_item_in=0.22, base_in=1.0):
