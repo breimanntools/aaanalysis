@@ -27,7 +27,8 @@ def plot_heatmap(df_feat=None, df_cat=None,
                  cmap=None, cmap_n_colors=101,
                  cbar_pct=True, cbar_kws=None, cbar_xywh=(0.7, None, 0.2, None),
                  dict_color=None, legend_kws=None, legend_xy=(-0.1, -0.01),
-                 xtick_size=11.0, xtick_width=2.0, xtick_length=5.0):
+                 xtick_size=11.0, xtick_width=2.0, xtick_length=5.0,
+                 optimize_labels=False):
     """Plot heatmap of feature values"""
     # Set fontsize
     pe = PlotElements()
@@ -84,5 +85,6 @@ def plot_heatmap(df_feat=None, df_cat=None,
                        cmap=cmap, cmap_n_colors=cmap_n_colors,
                        cbar_ax=cbar_ax, cbar_pct=cbar_pct, cbar_kws=_cbar_kws,
                        dict_color=dict_color, legend_kws=_legend_kws,
+                       optimize_labels=optimize_labels,
                        **args_xtick)
     return fig, ax

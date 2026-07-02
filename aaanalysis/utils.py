@@ -19,6 +19,7 @@ from .config import (options,
                      check_n_jobs,
                      resolve_n_jobs,
                      check_random_state,
+                     check_auto_font,
                      check_jmd_n_len,
                      check_jmd_c_len)
 
