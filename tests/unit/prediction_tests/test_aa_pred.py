@@ -129,17 +129,29 @@ class TestAAPredModelsAndHPO:
         aapred.fit(X, y, optimize_hyperparams=True)
         assert aapred.list_models_ is not None
 
-    @pytest.mark.parametrize("name", ["voting", "stacking"])
-    def test_meta_ensemble_names_fit(self, name):
-        # Meta-ensembles have nested get_params keys; the clone-based path must handle them.
+    def test_ensemble_instance_fit(self):
+        # Meta-ensembles are used by passing an instance (not a registry name); the
+        # clone-based path must handle their nested get_params keys.
+        from sklearn.ensemble import VotingClassifier
+        from sklearn.svm import SVC
         X, y = _data()
-        aapred = aa.AAPred(models=name, random_state=0).fit(X, y)
+        vc = VotingClassifier(estimators=[("rf", RandomForestClassifier()),
+                                          ("svm", SVC(probability=True))], voting="soft")
+        aapred = aa.AAPred(models=vc, random_state=0).fit(X, y)
         assert len(aapred.list_models_) == 1
 
-    def test_meta_ensemble_eval(self):
+    def test_ensemble_instance_eval(self):
+        from sklearn.ensemble import VotingClassifier
+        from sklearn.svm import SVC
         X, y = _data()
-        df = aa.AAPred(models=["voting"], random_state=0).eval(X, y, metrics=["accuracy"])
+        vc = VotingClassifier(estimators=[("rf", RandomForestClassifier()),
+                                          ("svm", SVC(probability=True))], voting="soft")
+        df = aa.AAPred(models=vc, random_state=0).eval(X, y, metrics=["accuracy"])
         assert len(df) >= 1
+
+    def test_unknown_model_name_raises(self):
+        with pytest.raises(ValueError):
+            aa.AAPred(models="xgboost")  # not in the small registry; pass an instance instead
 
     def test_instance_receives_random_state(self):
         # A passed estimator with random_state left unset inherits the AAPred seed.

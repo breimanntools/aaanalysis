@@ -352,23 +352,14 @@ LIST_CANDIDATE_SEARCH = [CANDIDATE_SEARCH_EXACT, CANDIDATE_SEARCH_FAST]
 MODEL_SVM = "svm"
 MODEL_RF = "rf"
 MODEL_LOG_REG = "log_reg"
+MODEL_EXTRA_TREES = "extra_trees"
 LIST_CV_MODELS = [MODEL_SVM, MODEL_RF, MODEL_LOG_REG]
 # Prediction-model registry names (AAPred). Resolved to sklearn estimators by
-# ut.get_cv_model_; the roster covers the standard families plus two meta-ensembles.
-# A model may also be passed as a configured sklearn estimator instance instead of a name.
-MODEL_MLP = "mlp"
-MODEL_TREE = "tree"
-MODEL_EXTRA_TREES = "extra_trees"
-MODEL_LDA = "lda"
-MODEL_GRADIENT_BOOSTING = "gradient_boosting"
-MODEL_KNN = "knn"
-MODEL_VOTING = "voting"
-MODEL_STACKING = "stacking"
-MODEL_XGBOOST = "xgboost"  # optional heavy dependency (install hint raised on use)
-LIST_PRED_MODELS = [MODEL_SVM, MODEL_RF, MODEL_EXTRA_TREES, MODEL_LOG_REG, MODEL_MLP,
-                    MODEL_TREE, MODEL_LDA, MODEL_GRADIENT_BOOSTING, MODEL_KNN,
-                    MODEL_VOTING, MODEL_STACKING]
-LIST_PRED_MODELS_OPTIONAL = [MODEL_XGBOOST]
+# ut.get_cv_model_. Kept deliberately small — the four standard families the package
+# already uses (matching pipe.predict_samples' default set). Any other estimator
+# (MLP, gradient boosting, xgboost, a voting/stacking ensemble, ...) is used by
+# passing a configured sklearn estimator instance instead of a name.
+LIST_PRED_MODELS = [MODEL_SVM, MODEL_RF, MODEL_EXTRA_TREES, MODEL_LOG_REG]
 DICT_VALUE_TYPE = {COL_ABS_AUC: "mean",
                    COL_ABS_MEAN_DIF: "mean",
                    COL_MEAN_DIF: "mean",
