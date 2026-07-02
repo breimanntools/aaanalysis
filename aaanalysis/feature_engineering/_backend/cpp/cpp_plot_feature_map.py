@@ -109,24 +109,16 @@ def plot_feat_importance_bars_pos(ax=None,
                            value_type="sum", normalize=False)
     # Plot bars
     if shap_plot:
-        # Cumulative feature impact per position, stacked in one direction with one
-        # thin white-edged segment per contributing feature (red=positive, blue=negative)
-        totals = []
-        for j in range(df_pos.shape[1]):
-            vals = df_pos.iloc[:, j].values
-            bottom = 0.0
-            for v in vals:
-                if v > 0:
-                    ax.bar(j, v, bottom=bottom, color=ut.COLOR_SHAP_POS,
-                           edgecolor="white", linewidth=0.3, align="edge")
-                    bottom += v
-            for v in vals:
-                if v < 0:
-                    ax.bar(j, abs(v), bottom=bottom, color=ut.COLOR_SHAP_NEG,
-                           edgecolor="white", linewidth=0.3, align="edge")
-                    bottom += abs(v)
-            totals.append(bottom)
-        ax.set_ylim(0, max(totals + [0]))
+        # Stack signed feature impact per position (positive=red up, negative=blue down).
+        # Kept consistent with the per-subcategory (right) bars: both are signed and
+        # diverging, so a net-negative position reads as a downward blue bar rather than
+        # being folded into an upward magnitude sum.
+        list_pos = list(df_pos[df_pos > 0].sum())
+        list_neg = list(df_pos[df_pos < 0].sum())
+        x_ticks = list(range(0, len(list_pos)))
+        ax.bar(x_ticks, list_pos, color=ut.COLOR_SHAP_POS, edgecolor=None, align="edge")
+        ax.bar(x_ticks, list_neg, color=ut.COLOR_SHAP_NEG, edgecolor=None, align="edge")
+        ax.set_ylim(min(list_neg + [0]), max(list_pos + [0]))
     else:
         list_imp = list(df_pos.sum())
         x_ticks = list(range(0, len(list_imp)))

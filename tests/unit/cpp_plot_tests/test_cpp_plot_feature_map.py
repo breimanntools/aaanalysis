@@ -888,21 +888,27 @@ class TestCCPlotFeatureMapShap:
         assert _rgba(FEAT_IMP_GRAY) not in colors
         plt.close()
 
-    def test_shap_bars_are_one_direction(self):
-        """The cumulative impact bars are stacked in one direction (no negative extent)."""
+    def test_shap_bars_are_signed_diverging(self):
+        """SHAP impact bars are signed and diverge from the zero baseline: positive impact
+        extends one way, negative the other. The right per-subcategory bars diverge
+        horizontally (some negative width); the top per-position bars diverge vertically
+        (some negative height). (Regression guard: a magnitude-only 'one direction' stack
+        would fold net-negative rows/positions the wrong way -- checked on get_width()/
+        get_height(), since barh/bar keep the signed extent there, not in get_x()/get_y().)"""
         cpp_plot = aa.CPPPlot()
-        df_feat = get_df_feat_shap()
+        df_feat = get_df_feat_shap()  # alternating +/- impact -> both signs present
         fig, _ = cpp_plot.feature_map(df_feat=df_feat, shap_plot=True,
                                       col_imp=COL_FEAT_IMPACT_TEST, col_val=COL_MEAN_DIF_TEST)
-        # SHAP-colored impact bars start at the zero baseline (one-direction cumulative stack)
         shap_rgba = {_rgba(SHAP_POS), _rgba(SHAP_NEG)}
-        n_shap_bars = 0
+        widths, heights = [], []
         for ax in fig.axes:
             for p in ax.patches:
                 if tuple(round(x, 3) for x in p.get_facecolor()) in shap_rgba:
-                    n_shap_bars += 1
-                    assert round(p.get_x(), 6) >= 0 and round(p.get_y(), 6) >= 0
-        assert n_shap_bars > 0
+                    widths.append(round(p.get_width(), 6))
+                    heights.append(round(p.get_height(), 6))
+        assert widths and heights
+        assert any(w < 0 for w in widths), "expected left-extending (negative) subcategory bars"
+        assert any(h < 0 for h in heights), "expected down-extending (negative) position bars"
         plt.close()
 
     def test_shap_markers_present(self):
