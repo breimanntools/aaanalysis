@@ -15,13 +15,46 @@ def _positive_proba(model, X, label_pos):
     return proba[:, idx_pos]
 
 
+# Minimal built-in hyperparameter grids, keyed by estimator class name. Used when
+# hyperparameter optimization is requested without an explicit grid. Models absent
+# here are fit directly (no search).
+_DEFAULT_PARAM_GRIDS = {
+    "SVC": {"C": [0.1, 1.0, 10.0]},
+    "RandomForestClassifier": {"n_estimators": [100, 300], "max_depth": [None, 10]},
+    "ExtraTreesClassifier": {"n_estimators": [100, 300], "max_depth": [None, 10]},
+    "LogisticRegression": {"C": [0.1, 1.0, 10.0]},
+    "KNeighborsClassifier": {"n_neighbors": [3, 5, 7]},
+    "GradientBoostingClassifier": {"learning_rate": [0.05, 0.1], "n_estimators": [100, 300]},
+    "MLPClassifier": {"alpha": [1e-4, 1e-3]},
+}
+
+
 # II Main Functions
-def fit_models(X, labels, list_model_classes=None, list_model_kwargs=None):
-    """Fit every model on the full data and return the list of fitted estimators."""
+def fit_models(X, labels, list_model_classes=None, list_model_kwargs=None,
+               list_param_grids=None, optimize_hyperparams=False, n_cv=5, random_state=None):
+    """Fit every model on the full data and return the list of fitted estimators.
+
+    When ``optimize_hyperparams`` is set, each model is tuned by ``GridSearchCV`` over
+    its entry in ``list_param_grids`` (or a built-in default grid), and the best
+    estimator is kept. Models with no available grid are fit directly.
+    """
+    from sklearn.model_selection import GridSearchCV, StratifiedKFold
     list_models = []
-    for model_class, model_kwargs in zip(list_model_classes, list_model_kwargs):
+    for i, (model_class, model_kwargs) in enumerate(zip(list_model_classes, list_model_kwargs)):
         model = model_class(**model_kwargs)
-        model.fit(X, labels)
+        grid = None
+        if optimize_hyperparams:
+            if list_param_grids is not None and list_param_grids[i]:
+                grid = list_param_grids[i]
+            else:
+                grid = _DEFAULT_PARAM_GRIDS.get(model_class.__name__)
+        if grid:
+            cv = StratifiedKFold(n_splits=n_cv, shuffle=True, random_state=random_state)
+            search = GridSearchCV(model, grid, cv=cv)
+            search.fit(X, labels)
+            model = search.best_estimator_
+        else:
+            model.fit(X, labels)
         list_models.append(model)
     return list_models
 

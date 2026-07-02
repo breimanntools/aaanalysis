@@ -102,6 +102,34 @@ class TestAAPredFit:
         assert set(np.unique(aapred.predict(X))).issubset({1, 2})
 
 
+class TestAAPredModelsAndHPO:
+    def test_models_by_name(self):
+        X, y = _data()
+        aapred = aa.AAPred(models=["svm", "rf"], random_state=0).fit(X, y)
+        assert len(aapred.list_models_) == 2
+
+    def test_models_accepts_estimator_instance(self):
+        X, y = _data()
+        aapred = aa.AAPred(models=SVC(kernel="rbf", probability=True), random_state=0).fit(X, y)
+        assert aapred.list_models_[0].kernel == "rbf"
+
+    def test_models_and_list_model_classes_mutually_exclusive(self):
+        with pytest.raises(ValueError):
+            aa.AAPred(models=["svm"], list_model_classes=[SVC])
+
+    def test_optimize_hyperparams_with_param_grids(self):
+        X, y = _data()
+        aapred = aa.AAPred(models=["svm"], random_state=0)
+        aapred.fit(X, y, optimize_hyperparams=True, param_grids={"C": [0.1, 10.0]}, n_cv=3)
+        assert aapred.list_models_[0].C in (0.1, 10.0)
+
+    def test_optimize_hyperparams_default_grid(self):
+        X, y = _data()
+        aapred = aa.AAPred(models=["svm"], random_state=0)
+        aapred.fit(X, y, optimize_hyperparams=True)
+        assert aapred.list_models_ is not None
+
+
 class TestAAPredEval:
     def test_eval_columns(self):
         X, labels = _data()

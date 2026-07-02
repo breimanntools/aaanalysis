@@ -93,6 +93,7 @@ class AAPred(Wrapper):
     """
 
     def __init__(self,
+                 models: Optional[Union[str, "BaseEstimator", List]] = None,
                  list_model_classes: Optional[List[Type[Union[ClassifierMixin, BaseEstimator]]]] = None,
                  list_model_kwargs: Optional[List[Dict]] = None,
                  list_metrics: Optional[List[str]] = None,
@@ -104,8 +105,15 @@ class AAPred(Wrapper):
         """
         Parameters
         ----------
+        models : str, estimator, or list, optional
+            The models to evaluate and deploy, given as registry name strings (e.g.
+            ``"svm"``, ``"rf"``; see ``aaanalysis.utils.LIST_PRED_MODELS``) and/or configured
+            scikit-learn estimator instances, in any mix. This is the recommended way to
+            select models; it is mutually exclusive with ``list_model_classes``. Each model
+            must implement ``predict_proba``.
         list_model_classes : list of Type[ClassifierMixin or BaseEstimator], default=[RandomForestClassifier]
-            Model classes to evaluate and deploy. Each must implement ``predict_proba``.
+            Model classes to evaluate and deploy (legacy alternative to ``models``). Each
+            must implement ``predict_proba``.
         list_model_kwargs : list of dict, optional
             Keyword arguments for each model in ``list_model_classes`` (same length).
         list_metrics : list of str, default=["accuracy", "balanced_accuracy", "f1", "roc_auc"]
@@ -133,6 +141,30 @@ class AAPred(Wrapper):
         # Global parameters
         verbose = ut.check_verbose(verbose)
         random_state = ut.check_random_state(random_state=random_state)
+        # Model selection: `models` (registry name strings and/or configured sklearn
+        # estimator instances/classes) is the primary API. It is normalized into the
+        # (class, kwargs) representation so the legacy list_model_classes path below is
+        # unchanged. A name resolves via the shared registry; an instance is captured by
+        # its type + get_params(); a class is used with empty kwargs.
+        if models is not None:
+            if list_model_classes is not None or list_model_kwargs is not None:
+                raise ValueError("Pass either 'models' or 'list_model_classes'/'list_model_kwargs', not both.")
+            if not isinstance(models, list):
+                models = [models]
+            if len(models) == 0:
+                raise ValueError("'models' must contain at least one model name or estimator.")
+            list_model_classes, list_model_kwargs = [], []
+            for m in models:
+                if isinstance(m, str):
+                    inst = ut.get_cv_model_(name=m, random_state=random_state)
+                    list_model_classes.append(type(inst))
+                    list_model_kwargs.append(inst.get_params())
+                elif isinstance(m, type):
+                    list_model_classes.append(m)
+                    list_model_kwargs.append({})
+                else:  # a configured estimator instance
+                    list_model_classes.append(type(m))
+                    list_model_kwargs.append(m.get_params())
         # Model parameters
         if list_model_classes is None:
             list_model_classes = [RandomForestClassifier]
@@ -175,6 +207,9 @@ class AAPred(Wrapper):
             X: ut.ArrayLike2D,
             labels: ut.ArrayLike1D,
             label_pos: int = 1,
+            optimize_hyperparams: bool = False,
+            param_grids: Optional[Union[Dict, List[Dict]]] = None,
+            n_cv: int = 5,
             ) -> "AAPred":
         """
         Fit every model on the full dataset for deployment.
@@ -194,6 +229,16 @@ class AAPred(Wrapper):
             ``0`` for the negative class).
         label_pos : int, default=1
             Label of the positive class whose probability :meth:`predict_proba` returns.
+        optimize_hyperparams : bool, default=False
+            If ``True``, each model is tuned by ``GridSearchCV`` (``n_cv`` folds) over its
+            ``param_grids`` entry, or a built-in default grid when none is given; the best
+            estimator is kept. If ``False``, models are fit with their given parameters.
+        param_grids : dict or list of dict, optional
+            Hyperparameter grid(s) for the optimization. A single dict is applied to every
+            model; a list must have one grid per model. Used only when
+            ``optimize_hyperparams=True``.
+        n_cv : int, default=5
+            Number of stratified cross-validation folds used by the hyperparameter search.
 
         Returns
         -------
@@ -212,10 +257,26 @@ class AAPred(Wrapper):
         ut.check_number_val(name="label_pos", val=label_pos, just_int=True)
         if label_pos not in classes:
             raise ValueError(f"'label_pos' ({label_pos}) should be one of the labels: {classes}")
-        # Fit models
+        ut.check_bool(name="optimize_hyperparams", val=optimize_hyperparams)
+        # A single dict applies to every model; a list must match the number of models.
+        if isinstance(param_grids, dict):
+            list_param_grids = [param_grids for _ in self._list_model_classes]
+        elif isinstance(param_grids, list):
+            if len(param_grids) != len(self._list_model_classes):
+                raise ValueError(f"'param_grids' list length ({len(param_grids)}) should match "
+                                 f"the number of models ({len(self._list_model_classes)}).")
+            list_param_grids = param_grids
+        else:
+            list_param_grids = None
+        if optimize_hyperparams:
+            check_n_cv(n_cv=n_cv, labels=labels)
+        # Fit models (optionally tuning hyperparameters via GridSearchCV)
         self.list_models_ = fit_models(X=X, labels=labels,
                                        list_model_classes=self._list_model_classes,
-                                       list_model_kwargs=self._list_model_kwargs)
+                                       list_model_kwargs=self._list_model_kwargs,
+                                       list_param_grids=list_param_grids,
+                                       optimize_hyperparams=optimize_hyperparams,
+                                       n_cv=n_cv, random_state=self._random_state)
         self.label_pos_ = label_pos
         self.label_neg_ = int([c for c in classes if c != label_pos][0])
         return self
