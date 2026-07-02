@@ -24,11 +24,11 @@ for any sequence analysis representable by numerical values.
 
 Key Algorithms
 --------------
-- **CPP**: Comparative Physicochemical Profiling, an interpretable feature engineering algorithm comparing two sets of
+- :class:`~aaanalysis.CPP`: Comparative Physicochemical Profiling, an interpretable feature engineering algorithm comparing two sets of
   protein sequences to identify the set of most distinctive features.
-- **dPULearn**: A deterministic Positive-Unlabeled (PU) Learning algorithm tailored for training on unbalanced and
+- :class:`~aaanalysis.dPULearn`: A deterministic Positive-Unlabeled (PU) Learning algorithm tailored for training on unbalanced and
   small datasets, enhancing predictive accuracy.
-- **AAclust**: A k-optimized clustering wrapper that selects redundancy-reduced sets of numerical scales,
+- :class:`~aaanalysis.AAclust`: A k-optimized clustering wrapper that selects redundancy-reduced sets of numerical scales,
   such as amino acid scales.
 
 Purpose and Audience
@@ -65,15 +65,15 @@ datasets) and the :ref:`DataFrame schemas <df_schemas>` that define every ``df_*
 :ref:`Contributing <contributing>` guide, the :ref:`Docstring Guide <docstring_guide>` documents the
 docstring style, and the :ref:`Release Notes <release_notes>` track changes across versions.
 
-Finally, four at-a-glance reference documents summarise the whole framework — keep them open while
+Finally, four at-a-glance reference documents summarise the whole framework. Keep them open while
 you work:
 
-- `Cheat Sheet <../_static/cheat_sheet.html>`_ — the canonical workflow, the main classes by
+- `Cheat Sheet <../_static/cheat_sheet.html>`_: the canonical workflow, the main classes by
   capability, and the *Part × Split × Scale* feature ontology on three pages.
-- `Decision Map <../_static/decision_map.html>`_ — a flowchart from your goal (*explore*, *predict*,
+- `Decision Map <../_static/decision_map.html>`_: a flowchart from your goal (*explore*, *predict*,
   or *optimize*) to the exact AAanalysis class or function to call.
-- `Ecosystem Map <../_static/ecosystem_map.html>`_ — where AAanalysis fits among related
+- `Ecosystem Map <../_static/ecosystem_map.html>`_: where AAanalysis fits among related
   bioinformatics, machine-learning, and explainability tools (or read the full
   `positioning article <../_static/aaanalysis_ecosystem.html>`_ with the map plus background).
-- `Data Flow Map <../_static/dataflow_map.html>`_ — how data flows from sequences and scales through
+- `Data Flow Map <../_static/dataflow_map.html>`_: how data flows from sequences and scales through
   CPP to features, models, and explanations.

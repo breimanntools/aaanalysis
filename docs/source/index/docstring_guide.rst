@@ -71,7 +71,7 @@ Invariants:
   describes — its own paper, or the project paper ``[Breimann25]_`` for the core
   γ-secretase CPP / dPULearn / TreeModel algorithms it covers. **Most classes —
   every data-prep / utility / helper class (preprocessors, loaders,
-  ``NumericalFeature``, ``AAlogo``, …) — carry no citation, and that is correct,
+  :class:`~aaanalysis.NumericalFeature`, :class:`~aaanalysis.AAlogo`, …) — carry no citation, and that is correct,
   not a gap.** Never add one to satisfy a checker note. **Verify before adding,
   and never invent one:** the key must be defined in ``references.rst`` (the
   checker's ``CITATION-UNDEFINED`` flags typo'd / fabricated keys) *and* the cited
@@ -145,7 +145,7 @@ Invariants:
   (e.g. DNA, 3D, ID, CPU, PDB) need no expansion.
 * ``Returns`` is **named** (``name : type``) and matches the returned variable.
   Two type-only idioms are allowed: a bare class name (scikit-learn self-return,
-  e.g. ``AAclust``) and a polymorphic ``X or Y``.
+  e.g. :class:`~aaanalysis.AAclust`) and a polymorphic ``X or Y``.
 * **Fixed-option parameters use** ``Literal``, **not** ``str``. When a parameter
   accepts a closed, finite set of string options (the values a ``check_str_options``
   /membership check validates against), type-hint it in the *signature* as
@@ -218,8 +218,8 @@ Cross-references (``See Also``)
   ``name : desc`` numpydoc entries and no ``  :  `` (space-colon-space).
 * **Every cross-reference must resolve.** A ``:class:``/``:meth:``/``:func:``
   target (in ``See Also`` *or* inline prose) must name a real public symbol —
-  ``CPP``, ``CPP.run_num``, ``aaanalysis.combine_dict_nums``. Watch
-  capitalization (``AAlogo``, not ``AALogo``) and method names on the right
+  :class:`~aaanalysis.CPP`, :meth:`~aaanalysis.CPP.run_num`, ``aaanalysis.combine_dict_nums``. Watch
+  capitalization (:class:`~aaanalysis.AAlogo`, not ``AALogo``) and method names on the right
   class. The checker's ``XREF-UNRESOLVED`` flags an internal target that does
   not resolve; external refs (``pandas.DataFrame``) are left alone.
 * **Order multi-layer links by documentation layer.** When a ``See Also`` (or
@@ -287,13 +287,13 @@ is registered; every ``<abbr> = aa.<Class>()`` and notebook filename matches).
 
 Rules:
 
-* ``AA*`` classes keep the ``aa`` prefix; acronyms stay whole (``CPP`` → ``cpp``);
-  the established public spelling is kept (``dPULearn`` → ``dpul``).
-* A plot pair is the base abbreviation plus ``_plot`` (``CPPPlot`` → ``cpp_plot``).
+* ``AA*`` classes keep the ``aa`` prefix; acronyms stay whole (:class:`~aaanalysis.CPP` → ``cpp``);
+  the established public spelling is kept (:class:`~aaanalysis.dPULearn` → ``dpul``).
+* A plot pair is the base abbreviation plus ``_plot`` (:class:`~aaanalysis.CPPPlot` → ``cpp_plot``).
 * **Legacy/incumbency wins.** Existing short forms are kept (``aac``, ``aal``);
-  the ``aa`` prefix is enforced where missing (``AAWindowSampler`` → ``aaws``);
+  the ``aa`` prefix is enforced where missing (:class:`~aaanalysis.AAWindowSampler` → ``aaws``);
   and when two classes would collide the *newer* one takes the longer form — so
-  ``SeqMut`` stays ``seqmut``, leaving ``sm`` free for ``ShapModel``.
+  :class:`~aaanalysis.SeqMut` stays ``seqmut``, leaving ``sm`` free for :class:`~aaanalysis.ShapModel`.
 * **A class instance is named the bare abbreviation, always** — ``cpp = aa.CPP(...)``,
   never ``cpp_res``/``cpp_dom``. If you build the same class repeatedly (e.g. one
   CPP per prediction level), **reassign the bare name** and let the *outputs* carry
@@ -308,61 +308,61 @@ Rules:
    * - Class
      - Abbr.
      - Extra
-   * - ``SequencePreprocessor``
+   * - :class:`~aaanalysis.SequencePreprocessor`
      - ``sp``
      -
-   * - ``EmbeddingPreprocessor``
+   * - :class:`~aaanalysis.EmbeddingPreprocessor`
      - ``ep``
      -
-   * - ``AAlogo`` / ``AAlogoPlot``
+   * - :class:`~aaanalysis.AAlogo` / :class:`~aaanalysis.AAlogoPlot`
      - ``aal`` / ``aal_plot``
      -
-   * - ``AAWindowSampler``
+   * - :class:`~aaanalysis.AAWindowSampler`
      - ``aaws``
      -
-   * - ``AAclust`` / ``AAclustPlot``
+   * - :class:`~aaanalysis.AAclust` / :class:`~aaanalysis.AAclustPlot`
      - ``aac`` / ``aac_plot``
      -
-   * - ``SequenceFeature``
+   * - :class:`~aaanalysis.SequenceFeature`
      - ``sf``
      -
-   * - ``NumericalFeature``
+   * - :class:`~aaanalysis.NumericalFeature`
      - ``nf``
      -
-   * - ``CPP`` / ``CPPPlot``
+   * - :class:`~aaanalysis.CPP` / :class:`~aaanalysis.CPPPlot`
      - ``cpp`` / ``cpp_plot``
      -
-   * - ``CPPGrid``
+   * - :class:`~aaanalysis.CPPGrid`
      - ``cppg``
      -
-   * - ``CPPStructurePlot``
+   * - :class:`~aaanalysis.CPPStructurePlot`
      - ``csp``
      - ``pro``
-   * - ``dPULearn`` / ``dPULearnPlot``
+   * - :class:`~aaanalysis.dPULearn` / :class:`~aaanalysis.dPULearnPlot`
      - ``dpul`` / ``dpul_plot``
      -
-   * - ``AAMut`` / ``AAMutPlot``
+   * - :class:`~aaanalysis.AAMut` / :class:`~aaanalysis.AAMutPlot`
      - ``aamut`` / ``aamut_plot``
      -
-   * - ``SeqMut`` / ``SeqMutPlot``
+   * - :class:`~aaanalysis.SeqMut` / :class:`~aaanalysis.SeqMutPlot`
      - ``seqmut`` / ``seqmut_plot``
      -
-   * - ``SeqOpt`` / ``SeqOptPlot``
+   * - :class:`~aaanalysis.SeqOpt` / :class:`~aaanalysis.SeqOptPlot`
      - ``seqopt`` / ``seqopt_plot``
      - core (``mode="impact"`` needs ``pro``)
-   * - ``TreeModel``
+   * - :class:`~aaanalysis.TreeModel`
      - ``tm``
      -
-   * - ``AAPred`` / ``AAPredPlot``
+   * - :class:`~aaanalysis.AAPred` / :class:`~aaanalysis.AAPredPlot`
      - ``aapred`` / ``aapred_plot``
      -
-   * - ``ShapModel``
+   * - :class:`~aaanalysis.ShapModel`
      - ``sm``
      - ``pro``
-   * - ``StructurePreprocessor``
+   * - :class:`~aaanalysis.StructurePreprocessor`
      - ``stp``
      - ``pro``
-   * - ``AnnotationPreprocessor``
+   * - :class:`~aaanalysis.AnnotationPreprocessor`
      - ``ap``
      - ``pro``
 
@@ -415,15 +415,15 @@ the *class-instance* names above are checked).
    * - Variable
      - Object (producer)
    * - ``df_seq``
-     - sequence frame (``load_dataset``, ``read_fasta``)
+     - sequence frame (:func:`~aaanalysis.load_dataset`, :func:`~aaanalysis.read_fasta`)
    * - ``df_scales`` / ``df_cat``
-     - AAontology scales / scale categories (``load_scales``, ``build_cat``)
+     - AAontology scales / scale categories (:func:`~aaanalysis.load_scales`, ``build_cat``)
    * - ``df_parts``
      - assembled parts (``sf.get_df_parts``)
    * - ``split_kws``
      - split specification (``sf.get_split_kws``) — matches the ``split_kws=`` parameter
    * - ``df_feat``
-     - feature frame, canonical schema (``cpp.run``, ``load_features``, ``sm.add_*``)
+     - feature frame, canonical schema (``cpp.run``, :func:`~aaanalysis.load_features`, ``sm.add_*``)
    * - ``X`` / ``labels``
      - feature matrix (``sf.feature_matrix``) / class labels (``df_seq["label"].to_list()``)
    * - ``df_eval``
@@ -459,20 +459,20 @@ but name *different* concepts — keep them distinct rather than collapsing them
    * - Contrast markers (the two groups being compared)
      - ``label_test`` / ``label_ref``
      - The positive/test group vs the reference group of a *contrast* —
-       ``CPP.run`` / ``CPP.eval``, ``AAlogo.get_df_logo``.
+       :meth:`~aaanalysis.CPP.run` / :meth:`~aaanalysis.CPP.eval`, :meth:`~aaanalysis.AAlogo.get_df_logo`.
    * - Single labeling (1D)
      - ``labels``
      - One per-sample class-label vector, shape ``(n_samples,)`` — e.g.
-       ``CPP.run``, ``TreeModel.fit`` / ``eval``, ``ShapModel.fit``,
-       ``dPULearn.fit``.
+       :meth:`~aaanalysis.CPP.run`, :meth:`~aaanalysis.TreeModel.fit` / ``eval``, :meth:`~aaanalysis.ShapModel.fit`,
+       :meth:`~aaanalysis.dPULearn.fit`.
    * - List of labelings (2D, multi-dataset)
      - ``list_labels``
      - Several labelings stacked, shape ``(n_datasets, n_samples)``, paired with
-       ``names_datasets`` — ``AAclust.eval``, ``dPULearn.eval``. Distinct from
+       ``names_datasets`` — :meth:`~aaanalysis.AAclust.eval`, :meth:`~aaanalysis.dPULearn.eval`. Distinct from
        ``labels`` **on purpose**: the plural marks a list of datasets, not one.
    * - Target-class selector (a single class to attribute)
      - ``label_target_class``
-     - ``ShapModel.fit`` — the one class whose model prediction the SHAP values
+     - :meth:`~aaanalysis.ShapModel.fit` — the one class whose model prediction the SHAP values
        explain. It can be **any** class (the positive, the negative/reference,
        or any index in a multi-class model), so it is **not** the same concept as
        ``label_test`` and deliberately keeps its own name.
@@ -635,16 +635,16 @@ in by these rules:
    (data in → analyse → engineer features → model → design → helpers).
 #. **Within a section, follow data flow:** inputs/loaders first, then the
    processing classes, then combiners/outputs (Data Handling = loaders →
-   preprocessors → ``combine_dict_nums``).
+   preprocessors → :func:`~aaanalysis.combine_dict_nums`).
 #. **Parallel-modality families go sequence → structure → embedding → annotation**
    (the sequence-to-structure-to-function logic), e.g. the preprocessors:
-   ``SequencePreprocessor``, ``StructurePreprocessor``, ``EmbeddingPreprocessor``,
-   ``AnnotationPreprocessor``.
+   :class:`~aaanalysis.SequencePreprocessor`, :class:`~aaanalysis.StructurePreprocessor`, :class:`~aaanalysis.EmbeddingPreprocessor`,
+   :class:`~aaanalysis.AnnotationPreprocessor`.
 #. **A logic class is immediately followed by its ``*Plot`` pair**, and close
-   variants form one contiguous family: ``AAclust`` → ``AAclustPlot``; the CPP
-   family ``CPP`` → ``CPPGrid`` → ``CPPPlot``; ``dPULearn`` → ``dPULearnPlot``.
-#. **Core before pro** where modality does not dictate otherwise (``TreeModel``
-   before ``ShapModel``).
+   variants form one contiguous family: :class:`~aaanalysis.AAclust` → :class:`~aaanalysis.AAclustPlot`; the CPP
+   family :class:`~aaanalysis.CPP` → :class:`~aaanalysis.CPPGrid` → :class:`~aaanalysis.CPPPlot`; :class:`~aaanalysis.dPULearn` → :class:`~aaanalysis.dPULearnPlot`.
+#. **Core before pro** where modality does not dictate otherwise (:class:`~aaanalysis.TreeModel`
+   before :class:`~aaanalysis.ShapModel`).
 #. **Group functions by kind** in Utility Functions: the ``comp_*`` metrics
    together, then display/options, then the ``plot_*`` helpers.
 #. **Every public symbol appears in ``api.rst`` exactly once** — ``__all__`` (incl.

@@ -9,8 +9,8 @@ AAanalysis is the interpretable middle layer between bioinformatics I/O and the
 downstream machine-learning, explainable-AI, causal, and protein-design stack. The
 map below shows the Python packages it complements *upstream* (sequences, embeddings,
 structures, omics) and *downstream* (models, optimization, design, XAI evaluation),
-and where its own classes (*Part × Split × Scale* · AAontology · CPP · ``TreeModel`` ·
-``ShapModel`` · ...) fit in between.
+and where its own classes (*Part × Split × Scale* · AAontology · CPP · :class:`~aaanalysis.TreeModel` ·
+:class:`~aaanalysis.ShapModel` · ...) fit in between.
 
 .. raw:: html
 

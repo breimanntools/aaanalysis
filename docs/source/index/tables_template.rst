@@ -54,7 +54,7 @@ and unlabeled (2) data samples, as indicated by appending '_PU' to the dataset n
 **Columns at a glance:**
 
 - **Level** — prediction level (Amino acid, Domain, or Sequence).
-- **Dataset** — dataset name passed to ``aa.load_dataset``.
+- **Dataset** — dataset name passed to :func:`~aaanalysis.load_dataset`.
 - **# Sequences**, **Avg length**, **# Amino acids** — dataset size.
 - **# Positives**, **# Negatives** — class balance (label ``1`` / ``0``).
 - **Predictor** — reference method the benchmark accompanies.
@@ -72,7 +72,7 @@ Various amino acid scale datasets are provided.
 
 **Columns at a glance:**
 
-- **Dataset** — scale-set name passed to ``aa.load_scales``.
+- **Dataset** — scale-set name passed to :func:`~aaanalysis.load_scales`.
 - **Description** — what the scale set contains.
 - **# Scales** — number of amino acid scales.
 - **Reference** — source publication.
