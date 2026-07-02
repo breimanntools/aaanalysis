@@ -89,9 +89,9 @@ class TestCheckOptionBranches:
         aa.options["df_scales"] = df
         assert aa.options["df_scales"] is df
 
-    def test_auto_font_default_off(self):
-        assert aa.options["auto_font"] is False
-        assert check_auto_font() is False
+    def test_auto_font_default_on(self):
+        assert aa.options["auto_font"] is True
+        assert check_auto_font() is True
 
     def test_set_auto_font(self):
         try:

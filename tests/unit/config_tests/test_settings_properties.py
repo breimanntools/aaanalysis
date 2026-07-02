@@ -26,7 +26,7 @@ _EXPECTED_DEFAULTS = {
     "jmd_c_len": None,
     "df_scales": None,
     "df_cat": None,
-    "auto_font": False,
+    "auto_font": True,
 }
 
 # One representative valid value per scalar key for the roundtrip property.
