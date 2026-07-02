@@ -19,7 +19,7 @@ import pytest
 import aaanalysis as aa
 from aaanalysis.feature_engineering._backend.cpp.cpp_plot_feature_map import (
     derive_feature_map_figsize,
-    FEATURE_MAP_GRID_ASPECT,
+    FEATURE_MAP_CELL_ASPECT,
 )
 
 from ._text_overlap import get_label_overlaps, make_dense_df_feat
@@ -194,21 +194,21 @@ class TestAutoFontFeatureMap:
         aa.options["verbose"] = "off"
         plt.close("all")
 
-    def test_derive_figsize_consistent_aspect_and_bounded(self):
+    def test_derive_figsize_bounded(self):
         f = derive_feature_map_figsize
-        # Width grows with residue positions (grid) and with the subcategory name length,
-        # so long row-labels get more room.
+        # Width grows with residue positions (grid) and with the subcategory name length
+        # so long row-labels get room. Height is kept modest (set_box_aspect in the
+        # frontend, not the figure size, controls the per-cell shape), so it does NOT
+        # depend on the number of subcategories.
         assert f(n_subcat=40, n_positions=80)[0] > f(n_subcat=40, n_positions=20)[0]
         assert f(n_subcat=40, n_positions=40, max_label_len=40)[0] \
             > f(n_subcat=40, n_positions=40, max_label_len=5)[0]
-        # The grid aspect is held constant (set_box_aspect in the frontend), so the figure
-        # height does NOT depend on the number of subcategories -> consistent appearance.
         assert f(n_subcat=74, n_positions=40)[1] == f(n_subcat=20, n_positions=40)[1]
         # clamped to sane bounds
         w, h = f(n_subcat=5000, n_positions=5000, max_label_len=500)
-        assert 6.0 <= w <= 24.0 and 4.0 <= h <= 20.0
+        assert 6.0 <= w <= 26.0 and 4.5 <= h <= 14.0
         w, h = f(n_subcat=1, n_positions=1)
-        assert 6.0 <= w <= 24.0 and 4.0 <= h <= 20.0
+        assert 6.0 <= w <= 26.0 and 4.5 <= h <= 14.0
 
     def test_off_keeps_default_figsize(self):
         aa.options["auto_font"] = False
@@ -223,14 +223,16 @@ class TestAutoFontFeatureMap:
         _, h = (float(v) for v in fig.get_size_inches())
         assert h > 8.0  # dense grid grew beyond the (8, 8) default
 
-    def test_on_holds_consistent_grid_box_aspect(self):
-        # auto_font holds the heatmap grid at a constant box aspect regardless of
-        # how many subcategories the grid has -> consistent appearance.
+    def test_on_holds_consistent_cell_aspect(self):
+        # auto_font gives every heatmap CELL the same shape (1 : FEATURE_MAP_CELL_ASPECT)
+        # regardless of the row/column counts. box_aspect = cell_aspect * n_subcat/n_pos,
+        # so cell_aspect = box_aspect * n_positions / n_subcat.
         aa.options["auto_font"] = True
-        _, ax_small = aa.CPPPlot().feature_map(make_dense_df_feat(20))
-        _, ax_big = aa.CPPPlot().feature_map(make_dense_df_feat(74))
-        assert abs(ax_small.get_box_aspect() - FEATURE_MAP_GRID_ASPECT) < 1e-6
-        assert abs(ax_big.get_box_aspect() - FEATURE_MAP_GRID_ASPECT) < 1e-6
+        n_pos = 40  # default tmd_len 20 + jmd 10 + jmd 10
+        for n_subcat in (20, 74):
+            _, ax = aa.CPPPlot().feature_map(make_dense_df_feat(n_subcat))
+            cell_aspect = ax.get_box_aspect() * n_pos / n_subcat
+            assert abs(cell_aspect - FEATURE_MAP_CELL_ASPECT) < 1e-6, (n_subcat, cell_aspect)
 
     def test_off_leaves_grid_box_aspect_untouched(self):
         aa.options["auto_font"] = False

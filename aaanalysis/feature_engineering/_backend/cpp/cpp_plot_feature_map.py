@@ -204,55 +204,33 @@ def add_feat_importance_legend(ax=None,
               borderpad=0)
 
 
-#: Constant grid aspect (height : width) of the feature-map heatmap under ``auto_font``.
-FEATURE_MAP_GRID_ASPECT = 1.05
+#: Per-cell aspect (height : width) of the feature-map heatmap grid under ``auto_font``.
+#: The frontend sets ``box_aspect = FEATURE_MAP_CELL_ASPECT * n_subcat / n_positions``
+#: so each cell renders ~1 wide : 1.1 tall regardless of the grid's row/column counts.
+FEATURE_MAP_CELL_ASPECT = 1.1
 
-#: Minimum on-figure width (inches) per residue for a shown TMD-JMD sequence, so the
-#: residue letters stay legible; for long sequences the figure grows wider (and drops
-#: the constant grid aspect) instead of shrinking the letters toward nothing.
-SEQ_MIN_RESIDUE_WIDTH_IN = 0.12
-#: Non-grid width (inches) reserved for row labels, colorbar, legends, importance bars.
-SEQ_WIDTH_OVERHEAD_IN = 3.0
-#: Upper bound (inches) on the auto-widened figure for very long sequences.
-SEQ_MAX_WIDTH_IN = 30.0
-
-
-def adjust_figsize_for_sequence(figsize, n_positions):
-    """Widen the figure so a shown TMD-JMD sequence keeps legible residue letters.
-
-    Returns ``(figsize, keep_box_aspect)``. When the sequence is long enough that the
-    residue columns would fall below ``SEQ_MIN_RESIDUE_WIDTH_IN`` at the given width,
-    the figure width grows to restore that per-residue width (capped at
-    ``SEQ_MAX_WIDTH_IN``) and the constant grid aspect is dropped (it would otherwise
-    squeeze the wide sequence back into a square). Short sequences are unchanged and
-    keep the constant aspect.
-    """
-    min_width = n_positions * SEQ_MIN_RESIDUE_WIDTH_IN + SEQ_WIDTH_OVERHEAD_IN
-    if min_width > figsize[0]:
-        return (round(min(min_width, SEQ_MAX_WIDTH_IN), 2), figsize[1]), False
-    return figsize, True
+#: Target on-figure width (inches) per residue position / heatmap column. Drives both
+#: the figure width (column + residue-letter legibility) and, with the cell aspect, the
+#: figure height, so cells stay ~constant in size as the grid grows.
+CELL_WIDTH_IN = 0.16
 
 
 def derive_feature_map_figsize(n_subcat=None, n_positions=None, max_label_len=None):
-    """Derive a feature-map figure size for ``auto_font`` with a consistent grid shape.
+    """Derive a feature-map figure size for ``auto_font``.
 
-    The heatmap grid itself is held at a constant aspect (``FEATURE_MAP_GRID_ASPECT``,
-    height:width = 1:1.15) by ``set_box_aspect`` in the frontend, so the plot looks the
-    same regardless of how many subcategories/positions it has. This function only sizes
-    the surrounding *figure*: the grid width grows mildly with the number of residue
-    positions (column legibility), the figure height follows the grid (grid_width x 1.15
-    plus vertical overhead), and the figure *width* grows with the longest subcategory
-    row-label so the names are never clipped. All clamped to sensible bounds.
+    Sizes the *figure* only; the per-cell ``1 : FEATURE_MAP_CELL_ASPECT`` shape is enforced
+    separately by ``set_box_aspect`` in the frontend (which shrinks the grid box within
+    this figure to hit that shape, so the figure height must stay modest, not grow with
+    ``n_subcat``, or the box aspect cannot be satisfied). Figure width grows with the
+    number of residue positions (column + sequence-letter legibility) and with the longest
+    subcategory row-label so names are never clipped; height is kept square-ish. Clamped.
     """
-    grid_w = 0.12 * (n_positions or 0) + 3.0     # grid width grows mildly with positions
-    grid_w = min(max(grid_w, 4.0), 12.0)
+    grid_w = min(max((n_positions or 0) * CELL_WIDTH_IN, 3.5), 14.0)
     left_margin = 0.085 * (max_label_len or 14)  # room for the subcategory row-labels
     right_overhead = 1.8                         # colorbar, legends, importance bars
-    vert_overhead = 2.4                          # titles, sequence row, x-labels
-    width = grid_w + left_margin + right_overhead
-    height = grid_w * FEATURE_MAP_GRID_ASPECT + vert_overhead
-    width = float(min(max(width, 6.0), 24.0))
-    height = float(min(max(height, 4.0), 20.0))
+    vert_overhead = 2.4                          # titles, sequence row, x-labels, legend
+    width = float(min(max(grid_w + left_margin + right_overhead, 6.0), 26.0))
+    height = float(min(max(grid_w * 1.1 + vert_overhead, 4.5), 14.0))
     return round(width, 2), round(height, 2)
 
 

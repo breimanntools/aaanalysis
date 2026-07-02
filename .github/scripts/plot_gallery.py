@@ -93,12 +93,19 @@ def _scaled_df_feat(n_subcat, n_features):
 
 
 def _cpp_composite(method, dims, **extra):
-    """Render one CPP composite (feature_map/heatmap/profile/ranking) at a data scale."""
+    """Render one CPP composite (feature_map/heatmap/profile/ranking) at a data scale.
+
+    Rendered under auto_font (no explicit figsize) so the figure auto-sizes to the grid
+    and every heatmap cell keeps the ~1 : 1.1 shape across scales.
+    """
     n_subcat, n_features = dims
     df = _scaled_df_feat(n_subcat, n_features)
     cpp = aa.CPPPlot(df_scales=aa.load_scales())
-    figsize = (8, 8) if method in ("feature_map", "heatmap") else (7, 5)
-    return getattr(cpp, method)(df_feat=df, figsize=figsize, **extra)[0]
+    aa.options["auto_font"] = True
+    try:
+        return getattr(cpp, method)(df_feat=df, **extra)[0]
+    finally:
+        aa.options["auto_font"] = False
 
 
 def _aaclust_fig(method):
