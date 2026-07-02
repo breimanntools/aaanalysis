@@ -176,6 +176,45 @@ class TestAAPredPlotRanking:
         assert r.ax is ax
 
 
+def _imp_data(n=12, n_feat=20, seed=0):
+    rng = np.random.RandomState(seed)
+    return np.vstack([rng.normal(0.6, 0.2, (n // 2, n_feat)),
+                      rng.normal(-0.6, 0.2, (n - n // 2, n_feat))])
+
+
+class TestAAPredPlotClustermap:
+    def test_returns_fig_ax(self):
+        r = aa.AAPredPlot().clustermap(data=_imp_data())
+        assert r.fig is not None and r.ax is not None
+
+    def test_labels_and_names(self):
+        r = aa.AAPredPlot().clustermap(data=_imp_data(), labels=np.array([1, 0] * 6),
+                                       names=[f"P{i}" for i in range(12)])
+        assert r.ax is not None
+
+    def test_colors_and_cmap(self):
+        r = aa.AAPredPlot().clustermap(data=_imp_data(), labels=np.array([1, 0] * 6),
+                                       colors={1: "red", 0: "blue"}, cmap="viridis")
+        assert r.ax is not None
+
+    def test_min_samples_raises(self):
+        with pytest.raises(ValueError):
+            aa.AAPredPlot().clustermap(data=np.random.RandomState(0).rand(1, 5))
+
+    def test_labels_length_mismatch_raises(self):
+        with pytest.raises(ValueError):
+            aa.AAPredPlot().clustermap(data=_imp_data(), labels=np.array([1, 0, 1]))
+
+    def test_names_length_mismatch_raises(self):
+        with pytest.raises(ValueError):
+            aa.AAPredPlot().clustermap(data=_imp_data(), names=["a", "b"])
+
+    def test_figsize_cbar_label_title(self):
+        r = aa.AAPredPlot().clustermap(data=_imp_data(), figsize=(6, 6),
+                                       cbar_label="r", title="t")
+        assert r.ax is not None
+
+
 class TestAAPredPlotHist:
     def test_returns_fig_ax(self):
         scores, labels = _scores()

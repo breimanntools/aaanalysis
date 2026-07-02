@@ -12,6 +12,7 @@ from matplotlib.figure import Figure
 import aaanalysis.utils as ut
 from ._backend.aa_pred.aa_pred_plot_comparison import plot_comparison_
 from ._backend.aa_pred.aa_pred_plot_ranking import plot_ranking_
+from ._backend.aa_pred.aa_pred_plot_clustermap import plot_clustermap_
 
 
 # I Helper Functions
@@ -35,9 +36,12 @@ class AAPredPlot:
     """
     Plotting class for :class:`AAPred` evaluation and prediction results [Breimann25]_.
 
-    Visualizes the two outputs of a prediction workflow: the model x metric evaluation table
-    from :meth:`AAPred.eval` (:meth:`eval`), and the per-sample prediction scores from
-    :meth:`AAPred.predict_proba` (:meth:`hist`, :meth:`scatter`, :meth:`cutoff`).
+    The single home for prediction figures, grouped into three types:
+
+    - **Positional** (one protein along its sequence): :meth:`window`, :meth:`domain`.
+    - **Cohort** (many proteins / sequence-level scores): :meth:`hist`, :meth:`ranking`,
+      :meth:`scatter`, :meth:`cutoff`, :meth:`clustermap`.
+    - **Evaluation** (models / feature sets): :meth:`eval`, :meth:`comparison`.
 
     .. versionadded:: 1.1.0
 
@@ -368,6 +372,76 @@ class AAPredPlot:
                                 col_group=col_group, col_std=col_std, colors=colors,
                                 cutoffs=cutoffs, top_n=top_n, ascending=ascending, ax=ax,
                                 figsize=figsize, xlabel=xlabel, title=title)
+        return ut.FigAxResult(fig, ax)
+
+    @staticmethod
+    def clustermap(data: ut.ArrayLike2D,
+                   names: Optional[List[str]] = None,
+                   labels: Optional[ut.ArrayLike1D] = None,
+                   colors: Optional[Dict[str, str]] = None,
+                   cmap: str = "GnBu",
+                   figsize: Tuple[Union[int, float], Union[int, float]] = (9, 9),
+                   cbar_label: str = "Pearson correlation (r)",
+                   title: Optional[str] = None,
+                   ) -> ut.FigAxResult:
+        """
+        Cluster samples by explanation similarity (correlation of per-sample importance vectors).
+
+        Groups samples by *why* the model scores them: it correlates their per-sample
+        importance / SHAP vectors (Pearson) and draws a hierarchically-clustered heatmap of the
+        sample x sample correlation, with optional row/column class-color sidebars. Because it
+        consumes provided importance vectors, it needs no optional dependency; compute the SHAP
+        vectors with :class:`ShapModel` (``pro``) and pass them in.
+
+        .. versionadded:: 1.1.0
+
+        Parameters
+        ----------
+        data : array-like, shape (n_samples, n_features)
+            Per-sample importance/explanation vectors (e.g. SHAP values), one row per sample.
+        names : list of str, optional
+            Per-sample labels shown as tick labels. Defaults to positional indices.
+        labels : array-like, shape (n_samples,), optional
+            Per-sample class labels used to color the row/column sidebars (adds a class legend).
+        colors : dict, optional
+            A ``label -> color`` mapping for the sidebars; defaults to the house palette.
+        cmap : str, default="GnBu"
+            Colormap for the correlation heatmap.
+        figsize : tuple, default=(9, 9)
+            Figure size.
+        cbar_label : str, default="Pearson correlation (r)"
+            Label of the colorbar.
+        title : str, optional
+            Figure title.
+
+        Returns
+        -------
+        fig : matplotlib.figure.Figure
+            The clustermap figure.
+        ax : matplotlib.axes.Axes
+            The heatmap axes of the clustermap.
+
+        Examples
+        --------
+        .. include:: examples/aapred_plot_clustermap.rst
+        """
+        # Check input
+        data = ut.check_X(X=data, min_n_samples=2, min_n_features=1)
+        if names is not None:
+            ut.check_list_like(name="names", val=names)
+            if len(names) != data.shape[0]:
+                raise ValueError(f"'names' (n={len(names)}) should match n_samples ({data.shape[0]}).")
+        if labels is not None:
+            labels = ut.check_labels(labels=labels)
+            if len(labels) != data.shape[0]:
+                raise ValueError(f"'labels' (n={len(labels)}) should match n_samples ({data.shape[0]}).")
+        ut.check_str(name="cmap", val=cmap)
+        ut.check_figsize(figsize=figsize, accept_none=True)
+        ut.check_str(name="cbar_label", val=cbar_label, accept_none=True)
+        ut.check_str(name="title", val=title, accept_none=True)
+        # Plot
+        fig, ax = plot_clustermap_(data=data, names=names, labels=labels, colors=colors,
+                                   cmap=cmap, figsize=figsize, cbar_label=cbar_label, title=title)
         return ut.FigAxResult(fig, ax)
 
     @staticmethod
