@@ -478,6 +478,15 @@ COLOR_UNL = "tab:gray"
 COLOR_NEG = "#ad4570"   # (173,69,112)
 COLOR_REL_NEG = "#ad9745" # (173, 151, 69)
 
+# Public, named aliases for the canonical sample-group colors (positive / negative /
+# unlabeled / reliable-negative). They mirror the ``DICT_COLOR["SAMPLES_*"]`` entries
+# exactly, so users can reference a named constant (``aa.COLOR_SAMPLES_POS``) instead
+# of indexing ``plot_get_cdict("DICT_COLOR")`` by string key.
+COLOR_SAMPLES_POS = COLOR_POS
+COLOR_SAMPLES_NEG = COLOR_NEG
+COLOR_SAMPLES_UNL = COLOR_UNL
+COLOR_SAMPLES_REL_NEG = COLOR_REL_NEG
+
 DICT_COLOR = {"SHAP_POS": COLOR_SHAP_POS,
               "SHAP_NEG": COLOR_SHAP_NEG,
               "FEAT_POS": COLOR_FEAT_POS,

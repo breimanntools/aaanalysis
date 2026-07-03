@@ -35,6 +35,11 @@ Added
   per-residue PTM and functional-site annotations and encodes them into tensors
   (``fetch_uniprot``, ``ingest``, ``register_feature``, ``encode``, ``build_scales``,
   ``build_cat``, ``to_df_seq``).
+- **combine_dict_nums**: Concatenates per-residue tensors (embedding / structure /
+  annotation) along the feature axis into one combined ``CPP.run_num`` input.
+- **get_labels**: Derives a binary ``int`` label vector from a sequence DataFrame's
+  label column (``positive_label`` mapped to ``1``, everything else to ``0``) — the
+  single-call form of the recurring ``(df[col] == x).astype(int).to_numpy()`` expression.
 - :func:`~aaanalysis.combine_dict_nums`: Concatenates per-residue tensors (embedding / structure /
   annotation) along the feature axis into one combined :meth:`~aaanalysis.CPP.run_num` input.
 
@@ -132,6 +137,16 @@ Added
   switches the pre-computed prediction per P1 (feature map + structure restyle) with no kernel,
   keeping the column-residue linking (warned past 40 sites, hard-capped at 200).
 
+**PU Learning**
+
+- **dPULearn.fit — positives/unlabeled split input**: for the common positive / unlabeled
+  setup, ``fit`` now accepts ``X_pos`` and ``X_unlabeled`` separately (an alternative to
+  ``X`` + ``labels``) instead of stacking them by hand and building a ``1`` / ``2`` label
+  vector. After fitting, the new ``dPULearn.mask_neg_`` attribute holds the **boolean mask
+  of reliable negatives** — over the rows of ``X_unlabeled`` in the split mode, over ``X``
+  otherwise (equal to the manual ``labels_[len(X_pos):] == 0`` result exactly). ``fit`` still
+  returns ``self`` and the existing ``fit(X, labels=...)`` path is unchanged.
+
 **Sequence Analysis**
 
 - :class:`~aaanalysis.AAWindowSampler`: Samples fixed-length sequence windows for PU-learning and
@@ -191,6 +206,10 @@ Added
 
 - :func:`~aaanalysis.plot_rank`: Standalone per-protein max-score-vs-rank scatter with group coloring and
   optional threshold lines (pairs with the new ``aa.metrics`` functions).
+- **COLOR_SAMPLES_POS / COLOR_SAMPLES_NEG / COLOR_SAMPLES_UNL / COLOR_SAMPLES_REL_NEG**:
+  Public, named constants for the canonical sample-group colors (positive / negative /
+  unlabeled / reliable-negative). They equal the ``plot_get_cdict("DICT_COLOR")["SAMPLES_*"]``
+  values exactly, so a named constant replaces indexing the color dict by string key.
 
 **Golden Pipelines**
 
