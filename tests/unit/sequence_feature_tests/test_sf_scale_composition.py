@@ -1,4 +1,4 @@
-"""This is a script to test the SequenceFeature().scale_mean() method."""
+"""This is a script to test the SequenceFeature().scale_composition() method."""
 from hypothesis import given, settings
 import hypothesis.strategies as st
 import warnings
@@ -33,7 +33,7 @@ def _manual_scale_X(df_parts, df_scales):
 
 
 class TestScaleMean:
-    """Test class for the 'scale_mean' method of the SequenceFeature class."""
+    """Test class for the 'scale_composition' method of the SequenceFeature class."""
 
     # Positive tests
     def test_valid_df_seq(self):
@@ -41,7 +41,7 @@ class TestScaleMean:
         for n in [3, 5, 10]:
             df_seq, df_scales = _get_input(n_samples=n)
             sf = aa.SequenceFeature()
-            X = sf.scale_mean(df_seq=df_seq, df_scales=df_scales)
+            X = sf.scale_composition(df_seq=df_seq, df_scales=df_scales)
             assert isinstance(X, np.ndarray)
             assert X.shape == (len(df_seq), df_scales.shape[1])
 
@@ -50,14 +50,14 @@ class TestScaleMean:
         df_seq, df_scales = _get_input()
         sf = aa.SequenceFeature()
         # Full scales
-        X = sf.scale_mean(df_seq=df_seq, df_scales=df_scales)
+        X = sf.scale_composition(df_seq=df_seq, df_scales=df_scales)
         assert X.shape[1] == df_scales.shape[1]
         # Subset of scales
         sub = df_scales.iloc[:, :5]
-        X_sub = sf.scale_mean(df_seq=df_seq, df_scales=sub)
+        X_sub = sf.scale_composition(df_seq=df_seq, df_scales=sub)
         assert X_sub.shape == (len(df_seq), 5)
         # Default (df_scales=None) loads the bundled scales
-        X_def = sf.scale_mean(df_seq=df_seq)
+        X_def = sf.scale_composition(df_seq=df_seq)
         assert isinstance(X_def, np.ndarray)
         assert X_def.shape[0] == len(df_seq)
 
@@ -67,19 +67,19 @@ class TestScaleMean:
         """Positive test for valid 'list_parts' inputs (single, str, multiple)."""
         df_seq, df_scales = _get_input(n_samples=8)
         sf = aa.SequenceFeature()
-        X = sf.scale_mean(df_seq=df_seq, df_scales=df_scales, list_parts=list_parts)
+        X = sf.scale_composition(df_seq=df_seq, df_scales=df_scales, list_parts=list_parts)
         assert isinstance(X, np.ndarray)
         assert X.shape == (len(df_seq), df_scales.shape[1])
         # A single part may also be passed as a bare string
-        X_str = sf.scale_mean(df_seq=df_seq, df_scales=df_scales, list_parts=list_parts[0])
+        X_str = sf.scale_composition(df_seq=df_seq, df_scales=df_scales, list_parts=list_parts[0])
         assert X_str.shape == (len(df_seq), df_scales.shape[1])
 
     def test_valid_list_parts_none_is_whole_span(self):
         """list_parts=None equals the explicit jmd_n + tmd + jmd_c part list."""
         df_seq, df_scales = _get_input()
         sf = aa.SequenceFeature()
-        X_none = sf.scale_mean(df_seq=df_seq, df_scales=df_scales, list_parts=None)
-        X_explicit = sf.scale_mean(df_seq=df_seq, df_scales=df_scales,
+        X_none = sf.scale_composition(df_seq=df_seq, df_scales=df_scales, list_parts=None)
+        X_explicit = sf.scale_composition(df_seq=df_seq, df_scales=df_scales,
                                    list_parts=["jmd_n", "tmd", "jmd_c"])
         assert np.allclose(X_none, X_explicit, equal_nan=True)
 
@@ -87,9 +87,9 @@ class TestScaleMean:
         """Positive test for valid 'return_df' input."""
         df_seq, df_scales = _get_input()
         sf = aa.SequenceFeature()
-        X = sf.scale_mean(df_seq=df_seq, df_scales=df_scales, return_df=False)
+        X = sf.scale_composition(df_seq=df_seq, df_scales=df_scales, return_df=False)
         assert isinstance(X, np.ndarray)
-        df = sf.scale_mean(df_seq=df_seq, df_scales=df_scales, return_df=True)
+        df = sf.scale_composition(df_seq=df_seq, df_scales=df_scales, return_df=True)
         assert isinstance(df, pd.DataFrame)
         assert list(df.columns) == list(df_scales.columns)
         assert df.shape == (len(df_seq), df_scales.shape[1])
@@ -102,38 +102,38 @@ class TestScaleMean:
         df_seq, df_scales = _get_input()
         sf = aa.SequenceFeature()
         with pytest.raises(ValueError):
-            sf.scale_mean(df_seq=None, df_scales=df_scales)
+            sf.scale_composition(df_seq=None, df_scales=df_scales)
         with pytest.raises(ValueError):
-            sf.scale_mean(df_seq="invalid_input", df_scales=df_scales)
+            sf.scale_composition(df_seq="invalid_input", df_scales=df_scales)
         with pytest.raises(ValueError):
-            sf.scale_mean(df_seq=pd.DataFrame({"wrong": ["A"]}), df_scales=df_scales)
+            sf.scale_composition(df_seq=pd.DataFrame({"wrong": ["A"]}), df_scales=df_scales)
 
     def test_invalid_df_scales(self):
         """Negative test for invalid 'df_scales' input."""
         df_seq, _ = _get_input()
         sf = aa.SequenceFeature()
         with pytest.raises(ValueError):
-            sf.scale_mean(df_seq=df_seq, df_scales="invalid_input")
+            sf.scale_composition(df_seq=df_seq, df_scales="invalid_input")
 
     def test_invalid_list_parts(self):
         """Negative test for invalid 'list_parts' input."""
         df_seq, df_scales = _get_input()
         sf = aa.SequenceFeature()
         with pytest.raises(ValueError):
-            sf.scale_mean(df_seq=df_seq, df_scales=df_scales, list_parts=["not_a_part"])
+            sf.scale_composition(df_seq=df_seq, df_scales=df_scales, list_parts=["not_a_part"])
         with pytest.raises(ValueError):
-            sf.scale_mean(df_seq=df_seq, df_scales=df_scales, list_parts=[])
+            sf.scale_composition(df_seq=df_seq, df_scales=df_scales, list_parts=[])
 
     def test_invalid_return_df(self):
         """Negative test for invalid 'return_df' input."""
         df_seq, df_scales = _get_input()
         sf = aa.SequenceFeature()
         with pytest.raises(ValueError):
-            sf.scale_mean(df_seq=df_seq, df_scales=df_scales, return_df="not_a_boolean")
+            sf.scale_composition(df_seq=df_seq, df_scales=df_scales, return_df="not_a_boolean")
 
 
 class TestScaleMeanComplex:
-    """Complex positive / negative tests for the 'scale_mean' method."""
+    """Complex positive / negative tests for the 'scale_composition' method."""
 
     def test_valid_combinations(self):
         """Test with valid combinations of parameters."""
@@ -141,7 +141,7 @@ class TestScaleMeanComplex:
         sf = aa.SequenceFeature()
         for list_parts in [None, "tmd", ["jmd_n", "jmd_c"], ["tmd_jmd"]]:
             for return_df in [True, False]:
-                out = sf.scale_mean(df_seq=df_seq, df_scales=df_scales,
+                out = sf.scale_composition(df_seq=df_seq, df_scales=df_scales,
                                     list_parts=list_parts, return_df=return_df)
                 if return_df:
                     assert isinstance(out, pd.DataFrame)
@@ -154,9 +154,9 @@ class TestScaleMeanComplex:
         df_seq, df_scales = _get_input()
         sf = aa.SequenceFeature()
         with pytest.raises(ValueError):
-            sf.scale_mean(df_seq=None, df_scales="invalid")
+            sf.scale_composition(df_seq=None, df_scales="invalid")
         with pytest.raises(ValueError):
-            sf.scale_mean(df_seq=df_seq, df_scales=df_scales, list_parts="bad_part", return_df="bad")
+            sf.scale_composition(df_seq=df_seq, df_scales=df_scales, list_parts="bad_part", return_df="bad")
 
 
 class TestScaleMeanGoldenValues:
@@ -170,7 +170,7 @@ class TestScaleMeanGoldenValues:
         sf = aa.SequenceFeature()
         df_parts = sf.get_df_parts(df_seq=df_seq, list_parts=["jmd_n", "tmd", "jmd_c"])
         X_manual = _manual_scale_X(df_parts=df_parts, df_scales=df_scales)
-        X = sf.scale_mean(df_seq=df_seq, df_scales=df_scales)
+        X = sf.scale_composition(df_seq=df_seq, df_scales=df_scales)
         assert X.shape == X_manual.shape
         assert np.allclose(X, X_manual, equal_nan=True)
 
@@ -181,7 +181,7 @@ class TestScaleMeanGoldenValues:
         # Part-based df_seq with jmd_n/jmd_c so the span is exactly the TMD 'AC'
         df_seq = pd.DataFrame({"entry": ["E1"], "jmd_n": [""], "tmd": ["AC"], "jmd_c": [""]})
         sf = aa.SequenceFeature()
-        X = sf.scale_mean(df_seq=df_seq, df_scales=df_scales)
+        X = sf.scale_composition(df_seq=df_seq, df_scales=df_scales)
         assert X.shape == (1, 1)
         assert float(X[0, 0]) == 1.5
 
@@ -191,7 +191,7 @@ class TestScaleMeanGoldenValues:
         df_scales = pd.DataFrame({"S1": {a: float(i + 1) for i, a in enumerate(order)}})
         df_seq = pd.DataFrame({"entry": ["E1"], "jmd_n": [""], "tmd": ["AAC"], "jmd_c": [""]})
         sf = aa.SequenceFeature()
-        X = sf.scale_mean(df_seq=df_seq, df_scales=df_scales)
+        X = sf.scale_composition(df_seq=df_seq, df_scales=df_scales)
         assert np.isclose(float(X[0, 0]), 4.0 / 3.0)
 
     def test_non_canonical_residues_dropped(self):
@@ -202,7 +202,7 @@ class TestScaleMeanGoldenValues:
         df_seq = pd.DataFrame({"entry": ["E1", "E2"], "jmd_n": ["", ""],
                                "tmd": ["AXC", "AC"], "jmd_c": ["", ""]})
         sf = aa.SequenceFeature()
-        X = sf.scale_mean(df_seq=df_seq, df_scales=df_scales)
+        X = sf.scale_composition(df_seq=df_seq, df_scales=df_scales)
         assert float(X[0, 0]) == float(X[1, 0]) == 1.5
 
     def test_multi_char_scale_label_never_matches_residue(self):
@@ -217,7 +217,7 @@ class TestScaleMeanGoldenValues:
         df_scales.loc["AC"] = 99.0  # multi-character label that must be ignored
         df_seq = pd.DataFrame({"entry": ["E1"], "jmd_n": [""], "tmd": ["AC"], "jmd_c": [""]})
         sf = aa.SequenceFeature()
-        X = sf.scale_mean(df_seq=df_seq, df_scales=df_scales)
+        X = sf.scale_composition(df_seq=df_seq, df_scales=df_scales)
         assert float(X[0, 0]) == 1.5  # mean(S1[A]=1, S1[C]=2), 'AC' label ignored
 
     def test_non_latin1_residues_dropped(self):
@@ -228,7 +228,7 @@ class TestScaleMeanGoldenValues:
         df_seq = pd.DataFrame({"entry": ["E1", "E2"], "jmd_n": ["", ""],
                                "tmd": ["AĀC", "AcC"], "jmd_c": ["", ""]})
         sf = aa.SequenceFeature()
-        X = sf.scale_mean(df_seq=df_seq, df_scales=df_scales)
+        X = sf.scale_composition(df_seq=df_seq, df_scales=df_scales)
         assert float(X[0, 0]) == float(X[1, 0]) == 1.5
 
     def test_edge_all_non_canonical_is_nan(self):
@@ -241,7 +241,7 @@ class TestScaleMeanGoldenValues:
         sf = aa.SequenceFeature(verbose=True)
         with warnings.catch_warnings(record=True) as records:
             warnings.simplefilter("always")
-            X = sf.scale_mean(df_seq=df_seq, df_scales=df_scales)
+            X = sf.scale_composition(df_seq=df_seq, df_scales=df_scales)
         assert np.all(np.isnan(X[0]))         # all-non-canonical -> NaN row
         assert np.all(np.isfinite(X[1]))      # canonical row stays finite
         assert any("no scored residue" in str(r.message) for r in records)
@@ -254,7 +254,7 @@ class TestScaleMeanGoldenValues:
         sf = aa.SequenceFeature(verbose=False)
         with warnings.catch_warnings(record=True) as records:
             warnings.simplefilter("always")
-            X = sf.scale_mean(df_seq=df_seq, df_scales=df_scales)
+            X = sf.scale_composition(df_seq=df_seq, df_scales=df_scales)
         assert np.all(np.isnan(X[0]))
         assert not any("no scored residue" in str(r.message) for r in records)
 
@@ -264,5 +264,5 @@ class TestScaleMeanGoldenValues:
         for n in [3, 7, 12]:
             df_seq = aa.load_dataset(name="DOM_GSEC", n=n)
             sf = aa.SequenceFeature()
-            X = np.asarray(sf.scale_mean(df_seq=df_seq, df_scales=df_scales))
+            X = np.asarray(sf.scale_composition(df_seq=df_seq, df_scales=df_scales))
             assert X.shape == (len(df_seq), df_scales.shape[1])

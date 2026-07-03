@@ -26,7 +26,7 @@ from ._backend.cpp.utils_feature import (get_df_parts_,
                                          get_positions_, get_amino_acids_,
                                          get_df_pos_, get_df_pos_parts_)
 from ._backend.cpp.sequence_feature import (get_split_kws_, get_features_, get_feature_names_,
-                                            get_feature_descriptions_, get_df_feat_, get_scale_mean_,
+                                            get_feature_descriptions_, get_df_feat_, get_scale_composition_,
                                             get_labels_ovr_, get_labels_ovo_, get_labels_quantile_,
                                             get_labels_tiered_)
 from ._backend.cpp_run import _pick_feature_matrix_builder
@@ -853,24 +853,30 @@ class SequenceFeature:
             start += n
         return list_X if batch else list_X[0]
 
-    def scale_mean(self,
-                   df_seq: pd.DataFrame,
-                   df_scales: Optional[pd.DataFrame] = None,
-                   list_parts: Optional[Union[str, List[str]]] = None,
-                   return_df: bool = False,
-                   ) -> Union[ut.ArrayLike2D, pd.DataFrame]:
+    def scale_composition(self,
+                          df_seq: pd.DataFrame,
+                          df_scales: Optional[pd.DataFrame] = None,
+                          list_parts: Optional[Union[str, List[str]]] = None,
+                          return_df: bool = False,
+                          ) -> Union[ut.ArrayLike2D, pd.DataFrame]:
         """
-        Create the scale-average baseline matrix for given sequences and scales.
+        Create the scale-composition baseline matrix for given sequences and scales.
 
         Builds the no-positional-split **scale-based baseline** featurization: for each
         sequence the requested Parts are concatenated into one span, and every scale is
         averaged over the residues of that span, yielding one value per scale. The result
-        is the ``(n_seq, n_scales)`` matrix ``X`` — the standard counterpart to a
-        :class:`CPP` feature matrix when comparing a scale-only baseline against
-        positional-split CPP features. Unlike :meth:`SequenceFeature.feature_matrix`,
-        which averages each scale over the residues of a specific Part-Split, this method
-        averages each scale over the **whole span** (a single mean per scale), with no
-        positional information.
+        is the ``(n_seq, n_scales)`` matrix ``X`` — the sequence's mean profile in
+        scale-space, the scale-based analogue of amino-acid composition. Unlike
+        :meth:`SequenceFeature.feature_matrix`, which averages each scale over the residues
+        of a specific Part-Split, this method averages each scale over the **whole span**
+        (a single mean per scale), with no positional information.
+
+        **Application.** Use this to build a **baseline feature set** for a prediction
+        model: fit the same classifier on this scale-composition ``X`` and on a
+        :class:`CPP` :meth:`feature_matrix` and compare the scores to show how much the
+        positional Part-Split-Scale features add over a plain scale-average encoding (the
+        "scale baseline vs CPP" comparison). It is *not* a positional feature set — reach
+        for :class:`CPP` when you need where-along-the-sequence information.
 
         .. versionadded:: 1.1.0
 
@@ -914,7 +920,7 @@ class SequenceFeature:
 
         Examples
         --------
-        .. include:: examples/sf_scale_mean.rst
+        .. include:: examples/sf_scale_composition.rst
         """
         # Load defaults
         if df_scales is None:
@@ -928,7 +934,7 @@ class SequenceFeature:
         list_parts_used = ["tmd_jmd"] if list_parts is None else list_parts
         # Build the sequence parts and the scale-average matrix
         df_parts = self.get_df_parts(df_seq=df_seq, list_parts=list_parts_used)
-        X, n_kept = get_scale_mean_(df_parts=df_parts, df_scales=df_scales)
+        X, n_kept = get_scale_composition_(df_parts=df_parts, df_scales=df_scales)
         # Warn about rows that had no scored residue (all-NaN output)
         n_empty = int((n_kept == 0).sum())
         if n_empty > 0 and self.verbose:

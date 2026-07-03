@@ -136,8 +136,8 @@ def get_df_feat_(features=None, df_parts=None, labels=None,
     return df
 
 
-# Scale-average baseline featurization
-def get_scale_mean_(df_parts=None, df_scales=None):
+# Scale-composition baseline featurization
+def get_scale_composition_(df_parts=None, df_scales=None):
     """Per-sequence scale average over the concatenated sequence parts (vectorized).
 
     For each row of ``df_parts`` the part strings are concatenated into one span; every
