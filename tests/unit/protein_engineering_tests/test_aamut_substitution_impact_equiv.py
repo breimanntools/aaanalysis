@@ -13,7 +13,7 @@ import pandas as pd
 
 import aaanalysis as aa
 import aaanalysis.utils as ut
-from aaanalysis.protein_design._backend.aamut.aamut import (
+from aaanalysis.protein_engineering._backend.aamut.aamut import (
     comp_substitution_impact, _get_df_cat_lookup,
 )
 

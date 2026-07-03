@@ -1,4 +1,4 @@
-"""This is a script to test residual protein_design (AAMut / SeqMut) branch arms.
+"""This is a script to test residual protein_engineering (AAMut / SeqMut) branch arms.
 
 All exercised exclusively through the public API (aa.AAMut / aa.AAMutPlot /
 aa.SeqMut / aa.SeqMutPlot). Fixtures come from the subpackage conftest.py.

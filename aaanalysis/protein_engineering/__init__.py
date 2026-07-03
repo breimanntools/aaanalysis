@@ -1,5 +1,5 @@
 """
-Protein design / engineering: per-mutation and per-sequence ΔCPP feature-impact analysis
+Protein engineering: per-mutation and per-sequence ΔCPP feature-impact analysis
 and multi-objective directed-evolution optimization.
 
 Public objects: AAMut(+Plot), SeqMut(+Plot), SeqOpt(+Plot).
@@ -9,7 +9,7 @@ Consumes CPP feature impact from ``feature_engineering`` to score amino-acid mut
 a core class — only its SHAP-guided ``mode="impact"`` needs ``aaanalysis[pro]`` (imported lazily).
 
 See ``.claude/rules/code-conventions.md`` for conventions, ``CONTEXT.md`` for domain
-terms (protein-design (mutation / ΔCPP) + SeqOpt directed-evolution vocabulary).
+terms (protein-engineering (mutation / ΔCPP) + SeqOpt directed-evolution vocabulary).
 """
 from ._aamut import AAMut
 from ._aamut_plot import AAMutPlot

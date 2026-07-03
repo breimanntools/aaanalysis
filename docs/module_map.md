@@ -37,7 +37,7 @@ flowchart LR
     TM["TreeModel"]
     SM["ShapModel (pro)"]
   end
-  subgraph PD["protein_design"]
+  subgraph PD["protein_engineering"]
     AAM["AAMut / SeqMut"]
   end
 
@@ -88,7 +88,7 @@ feature impact onto a 3D protein structure, reusing the CPP position backend fro
 - metrics
 - pipe
 - plotting
-- protein_design
+- protein_engineering
 - pu_learning
 - seq_analysis
 - seq_analysis_pro

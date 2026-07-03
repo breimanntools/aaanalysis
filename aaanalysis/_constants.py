@@ -255,7 +255,7 @@ COLS_FEAT_SCALES_FULL = COLS_FEAT_SCALES + [COL_SCALE_DES]  # incl. scale_descri
 COLS_FEAT_STAT = [COL_ABS_AUC, COL_ABS_MEAN_DIF, COL_MEAN_DIF, COL_STD_TEST, COL_STD_REF]
 COLS_FEAT_WEIGHT = [COL_FEAT_IMPORT, COL_FEAT_IMPORT_STD, COL_FEAT_IMPACT]
 
-# Protein design (AAMut / SeqMut) — output column names
+# Protein engineering (AAMut / SeqMut) — output column names
 COL_FROM_AA = "from_aa"             # substituted-from amino acid (single letter)
 COL_TO_AA = "to_aa"                 # substituted-to amino acid (single letter)
 COL_MUTATION = "mutation"           # HGVS-like label "<from_aa><pos><to_aa>", e.g. "M123V"
@@ -287,7 +287,7 @@ COLS_SEQMUT_VARIANT = [COL_ENTRY, COL_VARIANT, COL_N_MUT, COL_SEQ_MUT,
 # SeqMut.suggest — optional weighting of the shift score by a df_feat column
 LIST_SHIFT_WEIGHTS = [COL_FEAT_IMPORT, COL_ABS_AUC]
 
-# Protein design pro (SeqOpt) — multi-objective directed-evolution optimizer.
+# Protein engineering (SeqOpt) — multi-objective directed-evolution optimizer.
 # NSGA-II output columns (COL_RANK is shared, defined in the eval block below; COL_VARIANT,
 # COL_N_MUT, COL_SEQ_MUT, COL_ENTRY are reused from the SeqMut block above).
 COL_GENERATION = "generation"       # SeqOpt — 0-based evolve-score-select round index

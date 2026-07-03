@@ -628,7 +628,7 @@ The API reference (``docs/source/api.rst``) is ordered to read as the analysis
 in by these rules:
 
 #. **Sections follow the workflow:** Data Handling → Sequence Analysis → Feature
-   Engineering → PU Learning → Explainable AI → Protein Design → Utility Functions
+   Engineering → PU Learning → Explainable AI → Protein Engineering → Utility Functions
    (data in → analyse → engineer features → model → design → helpers).
 #. **Within a section, follow data flow:** inputs/loaders first, then the
    processing classes, then combiners/outputs (Data Handling = loaders →

@@ -118,7 +118,7 @@ def test_get_parts_states_normalization_and_order():
 
 @pytest.mark.parametrize("method", ["mutate", "scan", "suggest"])
 def test_seqmut_df_seq_cross_links_format_spec(method):
-    doc = _module_doc("protein_design/_seqmut.py", cls="SeqMut", func=method)
+    doc = _module_doc("protein_engineering/_seqmut.py", cls="SeqMut", func=method)
     assert "SequenceFeature.get_df_parts" in doc, (
         f"SeqMut.{method} df_seq doc must cross-link the canonical format spec"
     )

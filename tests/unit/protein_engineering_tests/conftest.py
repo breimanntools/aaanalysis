@@ -1,4 +1,4 @@
-"""Shared fixtures for the protein_design (AAMut / SeqMut) test suite.
+"""Shared fixtures for the protein_engineering (AAMut / SeqMut) test suite.
 
 Tiny, deterministic position-based ``df_seq`` + a real-scale ``df_feat`` so the ΔCPP engine
 runs through the genuine SequenceFeature builder (not a mock) while staying fast.

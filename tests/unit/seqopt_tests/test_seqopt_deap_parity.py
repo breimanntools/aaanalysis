@@ -18,7 +18,7 @@ import hypothesis.strategies as some
 deap = pytest.importorskip("deap")
 from deap import base, creator, tools  # noqa: E402
 
-from aaanalysis.protein_design._backend.seqopt.nsga2 import (  # noqa: E402
+from aaanalysis.protein_engineering._backend.seqopt.nsga2 import (  # noqa: E402
     normalize_objectives_, fast_non_dominated_sort, crowding_distance, select_nsga2)
 
 settings.register_profile("ci", deadline=None)

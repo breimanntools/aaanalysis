@@ -156,7 +156,7 @@ Added
   occurrences via MEME/FIMO, complementing the pure-Python
   :meth:`~aaanalysis.AAWindowSampler.sample_motif_matched` sampler.
 
-**Protein Design**
+**Protein Engineering**
 
 - **SeqOpt — multi-objective protein engineering** (**core**; only ``mode="impact"`` needs
   ``aaanalysis[pro]``): A new :class:`~aaanalysis.SeqOpt` optimizer
@@ -342,6 +342,17 @@ Changed
   (``.github/pyright_baseline.txt``) drives the type-contract count down per subpackage
   (now 887, every public-API signature pyright-clean). None gate a merge or change the
   public API.
+
+Changed
+~~~~~~~
+
+- **Module rename**: the ``protein_design`` subpackage is now ``protein_engineering``,
+  matching its user-facing name (``AAMut`` / ``SeqMut`` / ``SeqOpt`` are amino-acid
+  mutation and directed-evolution tools). The public classes are unchanged and imported
+  the same way (``import aaanalysis as aa`` → :class:`~aaanalysis.AAMut`,
+  :class:`~aaanalysis.SeqMut`, :class:`~aaanalysis.SeqOpt` and their plot classes); only a
+  full-path import such as ``from aaanalysis.protein_design import SeqMut`` must become
+  ``from aaanalysis.protein_engineering import SeqMut``.
 
 
 Version 1.0 (Stable Version)
