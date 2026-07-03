@@ -1,11 +1,12 @@
 """
-This script tests the dPULearn.mine_negatives() convenience method (issue #308).
+Tests the dPULearn.fit positives/unlabeled split-input mode + mask_neg_ (issue #308).
 
-mine_negatives is additive sugar over dPULearn.fit: it stacks X_pos over X_unlabeled,
-builds a 1 (positive) / 2 (unlabeled) label vector, fits, and returns the boolean mask of
-identified reliable negatives over the rows of X_unlabeled. The key contract is that the
-mask equals the manual ``labels_[len(X_pos):] == 0`` result exactly, and that the existing
-``fit`` path stays byte-identical (no algorithm change).
+For the common positive/unlabeled setup, ``fit`` accepts ``X_pos`` and ``X_unlabeled``
+separately (instead of ``X`` + a hand-built 1/2 label vector), stacks them internally, and
+sets ``mask_neg_`` — the boolean mask of identified reliable negatives over the rows of
+``X_unlabeled``. The key contract is that ``mask_neg_`` equals the manual
+``labels_[len(X_pos):] == 0`` result exactly, and that the existing ``fit(X, labels=...)``
+path stays byte-identical (no algorithm change).
 """
 import numpy as np
 import pytest
@@ -31,13 +32,13 @@ def _manual_mask(X_pos, X_unl, random_state=42, **fit_kwargs):
 
 
 # Normal Cases Test Class
-class TestMineNegatives:
-    """Test dPULearn.mine_negatives() for each parameter individually."""
+class TestFitSplitInput:
+    """fit(X_pos=, X_unlabeled=) sets mask_neg_ over the unlabeled rows, per parameter."""
 
-    def test_returns_boolean_mask_over_unlabeled(self):
+    def test_mask_neg_is_boolean_over_unlabeled(self):
         X_pos, X_unl = _make_data()
         dpul = aa.dPULearn(random_state=42, verbose=False)
-        mask = dpul.mine_negatives(X_pos=X_pos, X_unlabeled=X_unl, n_neg=10)
+        mask = dpul.fit(X_pos=X_pos, X_unlabeled=X_unl, n_neg=10).mask_neg_
         assert isinstance(mask, np.ndarray)
         assert mask.dtype == bool
         assert mask.shape == (X_unl.shape[0],)
@@ -46,13 +47,13 @@ class TestMineNegatives:
     def test_X_pos_parameter(self):
         X_pos, X_unl = _make_data(n_pos=30)
         dpul = aa.dPULearn(random_state=42, verbose=False)
-        mask = dpul.mine_negatives(X_pos=X_pos, X_unlabeled=X_unl, n_neg=5)
+        mask = dpul.fit(X_pos=X_pos, X_unlabeled=X_unl, n_neg=5).mask_neg_
         assert mask.shape[0] == X_unl.shape[0]
 
     def test_X_unlabeled_parameter(self):
         X_pos, X_unl = _make_data(n_unl=70)
         dpul = aa.dPULearn(random_state=42, verbose=False)
-        mask = dpul.mine_negatives(X_pos=X_pos, X_unlabeled=X_unl, n_neg=12)
+        mask = dpul.fit(X_pos=X_pos, X_unlabeled=X_unl, n_neg=12).mask_neg_
         assert mask.shape[0] == 70
         assert mask.sum() == 12
 
@@ -60,45 +61,55 @@ class TestMineNegatives:
         X_pos, X_unl = _make_data()
         for n in (1, 5, 25):
             dpul = aa.dPULearn(random_state=42, verbose=False)
-            mask = dpul.mine_negatives(X_pos=X_pos, X_unlabeled=X_unl, n_neg=n)
+            mask = dpul.fit(X_pos=X_pos, X_unlabeled=X_unl, n_neg=n).mask_neg_
             assert mask.sum() == n
+
+    def test_n_unl_to_neg_equivalent_to_n_neg(self):
+        # With no pre-labeled negatives the two count params are equivalent.
+        X_pos, X_unl = _make_data()
+        m1 = aa.dPULearn(random_state=42, verbose=False).fit(X_pos=X_pos, X_unlabeled=X_unl, n_neg=8).mask_neg_
+        m2 = aa.dPULearn(random_state=42, verbose=False).fit(X_pos=X_pos, X_unlabeled=X_unl, n_unl_to_neg=8).mask_neg_
+        assert np.array_equal(m1, m2)
 
     def test_metric_parameter(self):
         X_pos, X_unl = _make_data()
         for metric in ("euclidean", "manhattan", "cosine"):
             dpul = aa.dPULearn(random_state=42, verbose=False)
-            mask = dpul.mine_negatives(X_pos=X_pos, X_unlabeled=X_unl,
-                                       n_neg=10, metric=metric)
+            mask = dpul.fit(X_pos=X_pos, X_unlabeled=X_unl, n_neg=10, metric=metric).mask_neg_
             assert mask.sum() == 10
 
     def test_n_components_parameter(self):
         X_pos, X_unl = _make_data()
         for n_components in (2, 3, 0.5):
             dpul = aa.dPULearn(random_state=42, verbose=False)
-            mask = dpul.mine_negatives(X_pos=X_pos, X_unlabeled=X_unl,
-                                       n_neg=10, n_components=n_components)
+            mask = dpul.fit(X_pos=X_pos, X_unlabeled=X_unl, n_neg=10, n_components=n_components).mask_neg_
             assert mask.sum() == 10
 
-    def test_instance_attributes_set(self):
-        """After mining, labels_ / df_pu_ are set so the plotting class works."""
+    def test_fit_returns_self_in_split_mode(self):
         X_pos, X_unl = _make_data()
         dpul = aa.dPULearn(random_state=42, verbose=False)
-        dpul.mine_negatives(X_pos=X_pos, X_unlabeled=X_unl, n_neg=10)
+        out = dpul.fit(X_pos=X_pos, X_unlabeled=X_unl, n_neg=10)
+        assert out is dpul  # sklearn contract preserved
+
+    def test_instance_attributes_set(self):
+        X_pos, X_unl = _make_data()
+        dpul = aa.dPULearn(random_state=42, verbose=False)
+        dpul.fit(X_pos=X_pos, X_unlabeled=X_unl, n_neg=10)
         assert dpul.labels_ is not None
         assert dpul.labels_.shape[0] == X_pos.shape[0] + X_unl.shape[0]
         assert dpul.df_pu_ is not None
 
 
 # Regression / golden equivalence
-class TestMineNegativesEquivalence:
-    """The mask must equal the manual stacking path exactly (KPI #308)."""
+class TestSplitMaskEquivalence:
+    """mask_neg_ must equal the manual stacking path exactly (KPI #308)."""
 
     @pytest.mark.parametrize("seed", [0, 1, 7])
     def test_mask_equals_manual_pca(self, seed):
         X_pos, X_unl = _make_data(seed=seed)
         manual_mask, dpul_m = _manual_mask(X_pos, X_unl, n_unl_to_neg=10)
         dpul = aa.dPULearn(random_state=42, verbose=False)
-        mask = dpul.mine_negatives(X_pos=X_pos, X_unlabeled=X_unl, n_neg=10)
+        mask = dpul.fit(X_pos=X_pos, X_unlabeled=X_unl, n_neg=10).mask_neg_
         assert np.array_equal(mask, manual_mask)
         assert np.array_equal(np.asarray(dpul.labels_), np.asarray(dpul_m.labels_))
 
@@ -106,55 +117,62 @@ class TestMineNegativesEquivalence:
         X_pos, X_unl = _make_data(seed=3)
         manual_mask, _ = _manual_mask(X_pos, X_unl, n_unl_to_neg=8, metric="cosine")
         dpul = aa.dPULearn(random_state=42, verbose=False)
-        mask = dpul.mine_negatives(X_pos=X_pos, X_unlabeled=X_unl,
-                                   n_neg=8, metric="cosine")
+        mask = dpul.fit(X_pos=X_pos, X_unlabeled=X_unl, n_neg=8, metric="cosine").mask_neg_
         assert np.array_equal(mask, manual_mask)
 
     def test_mask_equals_manual_few_positives(self):
-        # n_pos < 3: the manual stacked path accepts it (the >=3 floor applies to the
-        # stacked matrix), so mine_negatives must match it, not reject the small pos set.
+        # n_pos < 3: the stacked matrix carries the >=3 floor, so the split path accepts a
+        # small positive set exactly as the manual path does.
         X_pos, X_unl = _make_data(n_pos=1, seed=5)
         manual_mask, _ = _manual_mask(X_pos, X_unl, n_unl_to_neg=6)
         dpul = aa.dPULearn(random_state=42, verbose=False)
-        mask = dpul.mine_negatives(X_pos=X_pos, X_unlabeled=X_unl, n_neg=6)
+        mask = dpul.fit(X_pos=X_pos, X_unlabeled=X_unl, n_neg=6).mask_neg_
         assert np.array_equal(mask, manual_mask)
+
+    def test_manual_mode_mask_neg_is_labels_zero(self):
+        # In the (X, labels) mode, mask_neg_ is over all rows and equals labels_ == 0.
+        X_pos, X_unl = _make_data(seed=2)
+        _, dpul = _manual_mask(X_pos, X_unl, n_unl_to_neg=9)
+        assert np.array_equal(dpul.mask_neg_, np.asarray(dpul.labels_) == 0)
+        assert dpul.mask_neg_.shape[0] == X_pos.shape[0] + X_unl.shape[0]
 
 
 # Negative Cases Test Class
-class TestMineNegativesNegative:
+class TestSplitInputNegative:
     """Invalid inputs must raise informative ValueErrors."""
 
     def test_feature_mismatch(self):
         X_pos, _ = _make_data(n_features=8)
         _, X_unl = _make_data(n_features=6)
-        dpul = aa.dPULearn(random_state=42, verbose=False)
         with pytest.raises(ValueError):
-            dpul.mine_negatives(X_pos=X_pos, X_unlabeled=X_unl, n_neg=5)
+            aa.dPULearn(random_state=42, verbose=False).fit(X_pos=X_pos, X_unlabeled=X_unl, n_neg=5)
 
     def test_n_neg_below_one(self):
         X_pos, X_unl = _make_data()
-        dpul = aa.dPULearn(random_state=42, verbose=False)
-        # The error must name 'n_neg' (not the internal 'n_unl_to_neg' fit sees).
-        with pytest.raises(ValueError, match="n_neg"):
-            dpul.mine_negatives(X_pos=X_pos, X_unlabeled=X_unl, n_neg=0)
+        with pytest.raises(ValueError):
+            aa.dPULearn(random_state=42, verbose=False).fit(X_pos=X_pos, X_unlabeled=X_unl, n_neg=0)
 
     def test_too_many_negatives_requested(self):
         X_pos, X_unl = _make_data(n_unl=10)
-        dpul = aa.dPULearn(random_state=42, verbose=False)
         with pytest.raises(ValueError):
-            dpul.mine_negatives(X_pos=X_pos, X_unlabeled=X_unl, n_neg=999)
+            aa.dPULearn(random_state=42, verbose=False).fit(X_pos=X_pos, X_unlabeled=X_unl, n_neg=999)
 
-    def test_X_pos_none(self):
-        _, X_unl = _make_data()
-        dpul = aa.dPULearn(random_state=42, verbose=False)
-        with pytest.raises(ValueError):
-            dpul.mine_negatives(X_pos=None, X_unlabeled=X_unl, n_neg=5)
-
-    def test_X_unlabeled_none(self):
+    def test_X_unlabeled_missing(self):
         X_pos, _ = _make_data()
-        dpul = aa.dPULearn(random_state=42, verbose=False)
         with pytest.raises(ValueError):
-            dpul.mine_negatives(X_pos=X_pos, X_unlabeled=None, n_neg=5)
+            aa.dPULearn(random_state=42, verbose=False).fit(X_pos=X_pos, n_neg=5)
+
+    def test_both_input_modes_rejected(self):
+        X_pos, X_unl = _make_data()
+        X = np.vstack([X_pos, X_unl])
+        y = np.array([1] * len(X_pos) + [2] * len(X_unl))
+        with pytest.raises(ValueError):
+            aa.dPULearn(random_state=42, verbose=False).fit(X=X, labels=y, X_pos=X_pos,
+                                                            X_unlabeled=X_unl, n_neg=5)
+
+    def test_no_input_given(self):
+        with pytest.raises(ValueError):
+            aa.dPULearn(random_state=42, verbose=False).fit(n_neg=5)
 
 
 # Existing-fit byte-identical regression
@@ -168,7 +186,6 @@ class TestFitUnchanged:
         dpul = aa.dPULearn(random_state=42, verbose=False)
         dpul.fit(X=X_pool, labels=y_pool, n_unl_to_neg=10)
         labels = np.asarray(dpul.labels_)
-        # contract: positives stay 1, exactly 10 mined negatives become 0, rest stay 2
         assert (labels[:len(X_pos)] == 1).all()
         assert (labels == 0).sum() == 10
         assert set(np.unique(labels)).issubset({0, 1, 2})

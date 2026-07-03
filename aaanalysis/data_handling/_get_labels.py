@@ -55,7 +55,7 @@ def get_labels(df: pd.DataFrame,
     * The result equals ``(df[col_label] == positive_label).astype(int).to_numpy()``.
     * Pass the resulting vector directly as the ``labels`` argument of CPP, TreeModel,
       or other tools. For Positive-Unlabeled mining keep the package ``1`` (positive) /
-      ``2`` (unlabeled) markers instead and use :meth:`dPULearn.mine_negatives`.
+      ``2`` (unlabeled) markers instead and pass ``X_pos`` / ``X_unlabeled`` to :meth:`dPULearn.fit`.
 
     Examples
     --------

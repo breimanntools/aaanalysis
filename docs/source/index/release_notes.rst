@@ -139,13 +139,13 @@ Added
 
 **PU Learning**
 
-- **dPULearn.mine_negatives**: One-call convenience over ``dPULearn.fit`` for the common
-  positive / unlabeled setup. Pass ``X_pos`` and ``X_unlabeled`` separately instead of
-  stacking them by hand, building a ``1`` / ``2`` label vector, fitting, and slicing the
-  mined rows back out; it returns the **boolean mask over the rows of** ``X_unlabeled``
-  flagging the identified reliable negatives (equal to the manual ``labels_[len(X_pos):]
-  == 0`` result exactly). The instance is left fitted (``labels_`` / ``df_pu_`` set, so
-  ``dPULearnPlot`` works), and the existing ``fit(X, labels=...)`` path is unchanged.
+- **dPULearn.fit — positives/unlabeled split input**: for the common positive / unlabeled
+  setup, ``fit`` now accepts ``X_pos`` and ``X_unlabeled`` separately (an alternative to
+  ``X`` + ``labels``) instead of stacking them by hand and building a ``1`` / ``2`` label
+  vector. After fitting, the new ``dPULearn.mask_neg_`` attribute holds the **boolean mask
+  of reliable negatives** — over the rows of ``X_unlabeled`` in the split mode, over ``X``
+  otherwise (equal to the manual ``labels_[len(X_pos):] == 0`` result exactly). ``fit`` still
+  returns ``self`` and the existing ``fit(X, labels=...)`` path is unchanged.
 
 **Sequence Analysis**
 
