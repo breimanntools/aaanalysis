@@ -107,7 +107,7 @@ def _plot_profile(df_pos=None, shap_plot=False, ax=None,
     ax.set_xlim(x_lim)
     if ylim is None:
         ymin, ymax = ax.get_ylim()
-        y_space = min(0, (ymax - ymin) * 0.25)
+        y_space = max(0, (ymax - ymin) * 0.25)
         y_lim = (ymin - y_space, ymax + y_space)
         ax.set_ylim(y_lim)
 

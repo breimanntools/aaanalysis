@@ -39,7 +39,7 @@ def _check_show(name="row_to_show", val=None, df=None):
         if val not in rows_or_columns:
             raise ValueError(f"'{name}' ('{val}') should be one of: {rows_or_columns}")
     elif isinstance(val, int):
-        ut.check_number_range(name=name, val=val, accept_none=True, min_val=0, max_val=n, just_int=True)
+        ut.check_number_range(name=name, val=val, accept_none=True, min_val=0, max_val=n - 1, just_int=True)
     else:
         raise ValueError(f"'{name}' ('{val}') should be int (<{n}) or one of following {str_row_or_column} names: {rows_or_columns}")
 

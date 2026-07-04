@@ -281,12 +281,14 @@ class SeqMut:
                                                            df_plan[ut.COL_TMD_STOP])]
             df_scored = self._delta_table(df_plan=df_plan, df_seq=df_seq, df_feat=df_feat,
                                           jmd_n_len=jmd_n_len, jmd_c_len=jmd_c_len)
-            df_scored = df_scored.set_index(ut.COL_MUTATION)
-            df_mut[ut.COL_DELTA_CPP] = df_scored.loc[df_mut[ut.COL_MUTATION], ut.COL_DELTA_CPP].to_numpy()
-            df_mut[ut.COL_SHIFT_SCORE] = df_scored.loc[df_mut[ut.COL_MUTATION], ut.COL_SHIFT_SCORE].to_numpy()
+            # build_scan_output sorts by delta_cpp, so re-join the scored rows back to the
+            # mutation order using (entry, mutation) — the label alone is not unique across entries.
+            df_scored = df_scored.set_index([ut.COL_ENTRY, ut.COL_MUTATION])
+            keys = list(zip(df_mut[ut.COL_ENTRY], df_mut[ut.COL_MUTATION]))
+            df_mut[ut.COL_DELTA_CPP] = df_scored.loc[keys, ut.COL_DELTA_CPP].to_numpy()
+            df_mut[ut.COL_SHIFT_SCORE] = df_scored.loc[keys, ut.COL_SHIFT_SCORE].to_numpy()
             if self._model is not None:
-                df_mut[ut.COL_DELTA_PRED] = df_scored.loc[df_mut[ut.COL_MUTATION],
-                                                          ut.COL_DELTA_PRED].to_numpy()
+                df_mut[ut.COL_DELTA_PRED] = df_scored.loc[keys, ut.COL_DELTA_PRED].to_numpy()
         return df_mut
 
     def scan(self,

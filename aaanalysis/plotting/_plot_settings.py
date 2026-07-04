@@ -161,6 +161,11 @@ def plot_settings(font_scale: Union[int, float] = 1,
     if weight_bold:
         plt.rcParams["axes.labelweight"] = "bold"
         plt.rcParams["axes.titleweight"] = "bold"
+        plt.rcParams["axes.linewidth"] = 1.25
+        plt.rcParams["xtick.major.width"] = 1.1
+        plt.rcParams["xtick.minor.width"] = 0.9
+        plt.rcParams["ytick.major.width"] = 1.1
+        plt.rcParams["ytick.minor.width"] = 0.9
     else:
         plt.rcParams["axes.labelweight"] = "normal"
         plt.rcParams["axes.titleweight"] = "normal"
