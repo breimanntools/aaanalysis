@@ -1,4 +1,5 @@
 """This script tests the aaanalysis.pipe.find_features() staged CPP AutoML golden pipeline."""
+import warnings
 import matplotlib
 matplotlib.use("Agg")
 from matplotlib.axes import Axes
@@ -10,7 +11,8 @@ import aaanalysis as aa
 import aaanalysis.pipe as aap
 from aaanalysis.pipe._find_features import (_resolve_config, _resolve_models, _load_scale_spec,
                                             _cv_scores, _pareto_mask, _axis_impact, _MODES,
-                                            _PART_SETS, _SPLIT_TYPE_SETS)
+                                            _PART_SETS, _SPLIT_TYPE_SETS, _KWS_KEYS,
+                                            _fit_split_kws_to_parts, _split_kws_for)
 
 aa.options["verbose"] = False
 
@@ -21,6 +23,13 @@ labels = df_seq["label"].to_list()
 sf = aa.SequenceFeature(verbose=False)
 # kws that shrink a search to a tiny Stage-1 grid (one scale, one n_split) so tests stay fast.
 SMALL = {"n_explain": 30, "n_split_max": 15}
+
+# #338: short free peptides (linear epitopes) with NO flanking context (8 aa each).
+_FREE_SEQS = ["PQFTIFGT", "AIVMWFLL", "GKKRTLSN", "DDECWQPT", "MNPQRSTV", "LLIIVVAA",
+              "KKRPWWFT", "SSTTNNQQ", "WWYYFFTT", "RRKKHHDD"]
+df_seq_free = pd.DataFrame({"entry": [f"P{i}" for i in range(len(_FREE_SEQS))],
+                            "sequence": _FREE_SEQS})
+labels_free = [1, 1, 1, 1, 1, 0, 0, 0, 0, 0]
 
 
 def _explicit_fast(random_state=0):
@@ -328,6 +337,37 @@ class TestFindFeaturesComplex:
                                      random_state=0, n_jobs=1)
         assert isinstance(ax, Axes) and ax.eval == []
 
+    # #338: free peptides with no flanking context must be usable end to end.
+    def test_fast_free_peptides_auto_fits_and_warns(self):
+        # search='fast' with n_jmd=0 (no flanks): the split config auto-fits to the short parts
+        # (Pattern dropped, n_split_max clamped) with a UserWarning, and still returns features.
+        with pytest.warns(UserWarning, match="too short"):
+            df_feat, _, df_eval = aap.find_features(
+                labels_free, df_seq=df_seq_free, search="fast", plot=False,
+                kws={"n_jmd": 0}, random_state=0, n_jobs=1)
+        assert len(df_feat) > 0 and len(df_eval) == 1
+
+    def test_fast_free_peptides_explicit_kws_runs(self):
+        # The len_max / n_split_max kws are honored (threaded into the split_kws) so a user can
+        # request shorter Pattern / Segment splits on free peptides; the run returns features.
+        with warnings.catch_warnings():
+            warnings.simplefilter("ignore")
+            df_feat, _, _ = aap.find_features(
+                labels_free, df_seq=df_seq_free, search="fast", plot=False,
+                kws={"n_jmd": 0, "n_split_max": 8, "len_max": 8}, random_state=0, n_jobs=1)
+        assert len(df_feat) > 0
+
+    @pytest.mark.slow
+    def test_balanced_free_peptides_runs(self):
+        # The staged search reaches Stage 3 (simplify) on free peptides without hard-erroring.
+        with warnings.catch_warnings():
+            warnings.simplefilter("ignore")
+            df_feat, _, df_eval = aap.find_features(
+                labels_free, df_seq=df_seq_free, search="balanced", plot=False,
+                kws={"n_jmd": 0}, random_state=0, n_jobs=1)
+        assert len(df_feat) > 0
+        assert int(df_eval["is_selected"].sum()) == 1
+
     @pytest.mark.slow
     def test_balanced_ax_eval_publication_figures(self):
         from matplotlib.figure import Figure
@@ -364,6 +404,60 @@ class TestFindFeaturesHelpers:
     def test_resolve_config_unknown_kws_raises(self):
         with pytest.raises(ValueError):
             _resolve_config(search="balanced", kws={"bogus": 1})
+
+    # #338: len_max lever + auto-fit for free peptides / short parts
+    def test_kws_keys_includes_len_max(self):
+        assert "len_max" in _KWS_KEYS
+
+    def test_resolve_config_default_len_max(self):
+        # Default Pattern span is 15 for every grade (matches SequenceFeature.get_split_kws).
+        for mode in _MODES:
+            assert _resolve_config(search=mode)["len_max"] == 15
+
+    def test_resolve_config_kws_pins_len_max(self):
+        assert _resolve_config(search="balanced", kws={"len_max": 8})["len_max"] == 8
+
+    def test_split_kws_for_threads_levers(self):
+        skw = _split_kws_for(split_types=_SPLIT_TYPE_SETS[-1], n_split_max=6, len_max=7)
+        assert skw["Segment"]["n_split_max"] == 6
+        assert skw["Pattern"]["len_max"] == 7
+
+    def test_fit_split_kws_long_parts_byte_identical(self):
+        # Parts long enough for the default config -> no drop / clamp / warning, default split_kws.
+        df_parts = pd.DataFrame({"tmd": ["ACDEFGHIKLMNPQRSTVWY"] * 3})
+        with warnings.catch_warnings():
+            warnings.simplefilter("error")  # any warning would fail here
+            skw = _fit_split_kws_to_parts(split_types=_SPLIT_TYPE_SETS[-1], n_split_max=15,
+                                          len_max=15, df_parts=df_parts)
+        assert set(skw) == {"Segment", "Pattern", "PeriodicPattern"}
+        assert skw["Segment"]["n_split_max"] == 15 and skw["Pattern"]["len_max"] == 15
+
+    def test_fit_split_kws_short_parts_drops_pattern_and_clamps_segment(self):
+        df_parts = pd.DataFrame({"tmd": ["PQFTIFGT", "AIVMWFLL"]})  # n=8
+        with pytest.warns(UserWarning, match="too short"):
+            skw = _fit_split_kws_to_parts(split_types=_SPLIT_TYPE_SETS[-1], n_split_max=15,
+                                          len_max=15, df_parts=df_parts)
+        # Pattern (len_max=15 > 8) dropped; Segment kept but clamped to 8; PeriodicPattern (3<=8) kept.
+        assert "Pattern" not in skw
+        assert skw["Segment"]["n_split_max"] == 8
+        assert "PeriodicPattern" in skw
+
+    def test_fit_split_kws_always_keeps_segment(self):
+        # Even a 2-residue part keeps a (clamped) Segment so the run never has zero split types.
+        df_parts = pd.DataFrame({"tmd": ["AC", "DE"]})
+        with pytest.warns(UserWarning):
+            skw = _fit_split_kws_to_parts(split_types=_SPLIT_TYPE_SETS[-1], n_split_max=15,
+                                          len_max=15, df_parts=df_parts)
+        assert "Segment" in skw and skw["Segment"]["n_split_max"] == 2
+
+    def test_fit_split_kws_no_warn_when_config_fits(self):
+        # A user who already lowered n_split_max / len_max to fit the parts gets no warning.
+        df_parts = pd.DataFrame({"tmd": ["PQFTIFGT", "AIVMWFLL"]})  # n=8
+        with warnings.catch_warnings():
+            warnings.simplefilter("error")
+            skw = _fit_split_kws_to_parts(split_types=_SPLIT_TYPE_SETS[-1], n_split_max=8,
+                                          len_max=8, df_parts=df_parts)
+        assert set(skw) == {"Segment", "Pattern", "PeriodicPattern"}
 
     def test_resolve_models_list(self):
         models = _resolve_models(["svm", "rf"], random_state=0)

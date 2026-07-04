@@ -27,21 +27,32 @@ def _get_max_pos_split(split=None):
     return n_max
 
 
+def _get_split_kws_requirements(split_kws=None):
+    """Get per-split-type minimum part length required by split_kws.
+
+    Each split type imposes a minimum length on every sequence part: a ``Segment``
+    needs at least ``n_split_max`` residues (it cannot be split into more pieces than
+    it has residues), a ``Pattern`` at least ``len_max`` residues, and a
+    ``PeriodicPattern`` at least its first step (``steps[0]``). Returns a dict
+    ``{split_type: (required_len, param_name)}`` so callers can name the exact
+    parameter that binds the requirement.
+    """
+    reqs = {}
+    if ut.STR_SEGMENT in split_kws:
+        reqs[ut.STR_SEGMENT] = (split_kws[ut.STR_SEGMENT]["n_split_max"], "n_split_max")
+    if ut.STR_PATTERN in split_kws:
+        reqs[ut.STR_PATTERN] = (split_kws[ut.STR_PATTERN]["len_max"], "len_max")
+    if ut.STR_PERIODIC_PATTERN in split_kws:
+        reqs[ut.STR_PERIODIC_PATTERN] = (split_kws[ut.STR_PERIODIC_PATTERN]["steps"][0], "steps[0]")
+    return reqs
+
+
 def _get_max_pos_split_kws(split_kws=None):
     """Get maximum position required for splits basd on split_kws"""
-    list_n_max = []
-    if ut.STR_SEGMENT in split_kws:
-        n_max = split_kws[ut.STR_SEGMENT]["n_split_max"]
-        list_n_max.append(n_max)
-    if ut.STR_PATTERN in split_kws:
-        n_max = split_kws[ut.STR_PATTERN]["len_max"]
-        list_n_max.append(n_max)
-    if ut.STR_PERIODIC_PATTERN in split_kws:
-        n_max = split_kws[ut.STR_PERIODIC_PATTERN]["steps"][0]
-        list_n_max.append(n_max)
-    if len(list_n_max) == 0:
+    reqs = _get_split_kws_requirements(split_kws=split_kws)
+    if len(reqs) == 0:
         raise ValueError(f"Wrong 'split_kws' ({split_kws})")
-    n_max = max(list_n_max)
+    n_max = max(val for val, _ in reqs.values())
     return n_max
 
 
@@ -374,20 +385,22 @@ def check_match_df_parts_features(df_parts=None, features=None):
 def check_match_df_parts_split_kws(df_parts=None, split_kws=None):
     """Check if df_parts and split_kws match regarding the sequence size"""
     n_max = _get_max_pos_split_kws(split_kws=split_kws)
+    reqs = _get_split_kws_requirements(split_kws=split_kws)
+    # Name the split type(s) whose required length binds 'n_max' so the message can point at the
+    # exact parameter to lower (or split type to drop) rather than only reporting the number.
+    driver = "/".join(f"{st} ({param}={val})" for st, (val, param) in reqs.items() if val == n_max)
     for part in list(df_parts):
-        if any(df_parts[part.lower()].map(len) < n_max):
-            mask = df_parts[part.lower()].map(len) < n_max
-            list_seq = df_parts[mask][part.lower()].to_list()
-            if len(list_seq) == 1:
-                seq = list_seq[0]
-                raise ValueError(
-                    f"'{part}' part contains too short sequence ('{seq}', n={len(seq)})"
-                    f"\n  for '{split_kws}' split_kws (n_max={n_max})")
-            else:
-                seq = list_seq[0]
-                raise ValueError(
-                    f"For split_kws (n_max={n_max}): '{split_kws}',"
-                    f"\n  following '{part}' part contains too short sequences (e.g., '{seq}', n={len(seq)}).")
+        lengths = df_parts[part.lower()].map(len)
+        if any(lengths < n_max):
+            list_seq = df_parts[lengths < n_max][part.lower()].to_list()
+            seq = list_seq[0]
+            count = "a sequence" if len(list_seq) == 1 else f"{len(list_seq)} sequences"
+            raise ValueError(
+                f"'{part}' part contains {count} too short (e.g. '{seq}', n={len(seq)}) for the "
+                f"{driver} split length (n_max={n_max})."
+                f"\n  For free peptides with no flanking context, use Segment-only splits or reduce "
+                f"'len_max'/'n_split_max' (via SequenceFeature.get_split_kws),"
+                f"\n  or add flanking context (jmd_n/jmd_c).")
 
 
 # Check df_scales & df_cat

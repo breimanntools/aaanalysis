@@ -251,6 +251,42 @@ class TestCheckMatchPartsAndCat:
             check_match_df_parts_split_kws(
                 df_parts=self._df_parts(["AC"]), split_kws=kws)
 
+    def test_match_df_parts_split_kws_message_is_actionable(self):
+        # #338: a free peptide too short for the default splits must get a message that states the
+        # real cause (which split length binds n_max) AND how to fix it.
+        kws = {"Segment": {"n_split_min": 1, "n_split_max": 15},
+               "Pattern": {"len_max": 15, "n_max": 4, "n_min": 2, "steps": [3, 4]},
+               "PeriodicPattern": {"steps": [3, 4]}}
+        with pytest.raises(ValueError) as exc:
+            check_match_df_parts_split_kws(df_parts=self._df_parts(["PQFTIFGT"]), split_kws=kws)
+        msg = str(exc.value)
+        # Cause: names the binding split type + its parameter and the offending length.
+        assert "n_max=15" in msg and "len_max=15" in msg and "n=8" in msg
+        # Fix: points at the concrete remedies.
+        assert "Segment-only" in msg
+        assert "len_max" in msg and "n_split_max" in msg
+        assert "jmd_n" in msg and "jmd_c" in msg
+
+    def test_match_df_parts_split_kws_names_binding_split_type(self):
+        # Segment n_split_max is the sole binding requirement here -> named as the driver.
+        kws = {"Segment": {"n_split_min": 1, "n_split_max": 12}}
+        with pytest.raises(ValueError, match=r"Segment \(n_split_max=12\)"):
+            check_match_df_parts_split_kws(df_parts=self._df_parts(["ACDEF"]), split_kws=kws)
+
+    def test_match_df_parts_split_kws_segment_only_short_ok(self):
+        # Positive: Segment-only with n_split_max <= part length passes (free-peptide path).
+        kws = {"Segment": {"n_split_min": 1, "n_split_max": 8}}
+        assert check_match_df_parts_split_kws(
+            df_parts=self._df_parts(["PQFTIFGT", "AIVMWFLL"]), split_kws=kws) is None
+
+    def test_match_df_parts_split_kws_reduced_len_max_ok(self):
+        # Positive: reducing len_max/n_split_max lets short parts pass with all split types.
+        kws = {"Segment": {"n_split_min": 1, "n_split_max": 8},
+               "Pattern": {"len_max": 8, "n_max": 4, "n_min": 2, "steps": [3, 4]},
+               "PeriodicPattern": {"steps": [3, 4]}}
+        assert check_match_df_parts_split_kws(
+            df_parts=self._df_parts(["PQFTIFGT", "AIVMWFLL"]), split_kws=kws) is None
+
     def test_match_df_parts_df_scales_missing_char(self):
         # 'B' is not a canonical AA in df_scales index -> missing char, no gaps
         order = "ACDEFGHIKLMNPQRSTVWY"

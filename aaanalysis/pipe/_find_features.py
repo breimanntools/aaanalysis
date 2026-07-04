@@ -8,6 +8,7 @@ configuration across all metrics wins, scored by the average cross-validated per
 more models.
 """
 from typing import Optional, List, Tuple, Union, Dict
+import warnings
 import numpy as np
 import pandas as pd
 from matplotlib.axes import Axes
@@ -79,9 +80,56 @@ _PATTERN_MODE = {(ut.STR_SEGMENT,): "none",
                  (ut.STR_SEGMENT, ut.STR_PERIODIC_PATTERN): "p2",
                  (ut.STR_SEGMENT, ut.STR_PATTERN, ut.STR_PERIODIC_PATTERN): "p1+p2"}
 # Levers a power user may pin via the bounded ``kws`` dict (unknown keys raise).
-_KWS_KEYS = {"n_explain", "n_split_max", "n_filter", "n_jmd", "simplify_strategy",
+_KWS_KEYS = {"n_explain", "n_split_max", "n_filter", "n_jmd", "len_max", "simplify_strategy",
              "max_cor", "max_overlap"}
 _LIST_MODELS = [ut.MODEL_SVM, ut.MODEL_RF, ut.MODEL_LOG_REG]
+# The first (default) PeriodicPattern step; a part must be at least this long to carry one.
+_PERIODIC_STEP0 = 3
+
+
+def _split_kws_for(split_types=None, n_split_max=15, len_max=15):
+    """Build ``split_kws`` from the frontend ``SequenceFeature.get_split_kws``.
+
+    Threads the Segment ``n_split_max`` and Pattern ``len_max`` levers through the public
+    front door so ``find_features`` can request shorter splits (needed for free peptides).
+    """
+    return SequenceFeature.get_split_kws(split_types=list(split_types),
+                                         n_split_max=n_split_max, len_max=len_max)
+
+
+def _fit_split_kws_to_parts(split_types=None, n_split_max=15, len_max=15, df_parts=None):
+    """Adapt the requested split config to the shortest sequence part (free-peptide safety net).
+
+    A part of length ``L`` can only carry a ``Segment`` with ``n_split_max <= L``, a ``Pattern``
+    with ``len_max <= L``, and a ``PeriodicPattern`` with ``steps[0] (=3) <= L``. When the shortest
+    part is too short for the requested config, ``Pattern`` / ``PeriodicPattern`` are dropped and the
+    ``Segment`` ``n_split_max`` is clamped so the run still works (``Segment``-only at minimum). A
+    single ``UserWarning`` names what changed. For parts long enough for the requested config nothing
+    is dropped or clamped, so the built ``split_kws`` is byte-identical to the requested one.
+    """
+    min_len = int(min(df_parts[c].map(len).min() for c in df_parts.columns))
+    kept, changes = list(split_types), []
+    if ut.STR_PERIODIC_PATTERN in kept and min_len < _PERIODIC_STEP0:
+        kept.remove(ut.STR_PERIODIC_PATTERN)
+        changes.append(f"dropped 'PeriodicPattern' (needs >= {_PERIODIC_STEP0} residues)")
+    if ut.STR_PATTERN in kept and min_len < len_max:
+        kept.remove(ut.STR_PATTERN)
+        changes.append(f"dropped 'Pattern' (len_max={len_max} > shortest part n={min_len})")
+    fitted_n_split_max = n_split_max
+    if ut.STR_SEGMENT not in kept:
+        # Never leave zero split types; Segment is the universal fallback (works down to n=1).
+        kept.insert(0, ut.STR_SEGMENT)
+    if n_split_max > min_len:
+        fitted_n_split_max = min_len
+        changes.append(f"clamped Segment 'n_split_max' {n_split_max} -> {min_len}")
+    split_kws = _split_kws_for(split_types=kept, n_split_max=fitted_n_split_max, len_max=len_max)
+    if changes:
+        warnings.warn(
+            f"'find_features': the shortest sequence part (n={min_len}) is too short for the "
+            f"requested splits; {'; '.join(changes)}. This keeps the run working on free peptides / "
+            f"short parts. Set 'kws' (n_split_max / len_max / n_jmd) or add flanking context to "
+            f"control this.", UserWarning)
+    return split_kws
 
 
 def _resolve_model(model, random_state=None):
@@ -158,6 +206,9 @@ def _resolve_config(search="balanced", kws=None):
         "n_jmd_vals": list(mode["n_jmd_vals"]),
         "simplify_strategy": mode["simplify_strategy"],
         "max_cor": 0.5, "max_overlap": 0.5,
+        # Pattern span (default 15 = the SequenceFeature.get_split_kws default). A power user lowers
+        # it via kws["len_max"] to request shorter Pattern splits on short / free-peptide parts.
+        "len_max": 15,
     }
     if kws is not None:
         ut.check_dict(name="kws", val=kws)
@@ -169,6 +220,8 @@ def _resolve_config(search="balanced", kws=None):
             cfg["sweep_scales"] = False
         if "n_split_max" in kws:
             cfg["n_split_max_vals"] = [kws["n_split_max"]]
+        if "len_max" in kws:
+            cfg["len_max"] = kws["len_max"]
         if "n_filter" in kws:
             cfg["n_filter_vals"] = [kws["n_filter"]]
         if "n_jmd" in kws:
@@ -286,8 +339,13 @@ def find_features(labels: ut.ArrayLike1D,
         Cross-validation scoring metric(s). A list triggers multi-objective Pareto selection.
     kws : dict, optional
         Bounded power-user overrides; each pins a swept lever to a single value (unknown keys raise).
-        Recognized keys: ``n_explain``, ``n_split_max``, ``n_filter``, ``n_jmd`` (the symmetric JMD
-        length ``jmd_n_len = jmd_c_len``), ``simplify_strategy``, ``max_cor``, ``max_overlap``.
+        Recognized keys: ``n_explain``, ``n_split_max`` (max ``Segment`` splits), ``len_max`` (max
+        ``Pattern`` span), ``n_filter``, ``n_jmd`` (the symmetric JMD length ``jmd_n_len =
+        jmd_c_len``), ``simplify_strategy``, ``max_cor``, ``max_overlap``. For **free peptides / short
+        parts** (no flanking context), pass ``kws={"n_jmd": 0}`` so no JMD is carved out; the split
+        config then auto-fits to the shortest part (``Pattern`` / ``PeriodicPattern`` are dropped and
+        ``n_split_max`` is clamped, with a ``UserWarning``). Lower ``n_split_max`` / ``len_max``
+        yourself to control which splits are used.
     subcategories : list of str, optional
         AAontology subcategories to restrict the scale sets to. If ``None``, all scales of the grade.
     top_n : int, optional
@@ -416,7 +474,15 @@ def _run_fast(sf=None, labels=None, df_seq=None, cfg=None, simplify=True, models
     df_scales = _load_scale_spec(spec, subcategories=subcategories)
     if df_scales is None:
         raise ValueError(f"'subcategories' ({subcategories}) should be names that match a scale.")
-    cpp = CPP(df_parts=df_parts, df_scales=df_scales, random_state=random_state, verbose=verbose)
+    # Thread the requested Segment n_split_max / Pattern len_max through to the split_kws (was
+    # always the default before, silently ignoring kws), and auto-fit to the shortest part so a
+    # free peptide / short part drops Pattern-type splits + clamps n_split_max instead of hard
+    # erroring. For long-enough parts this is byte-identical to the default split_kws.
+    split_kws = _fit_split_kws_to_parts(split_types=split_types,
+                                        n_split_max=cfg["n_split_max_vals"][0],
+                                        len_max=cfg["len_max"], df_parts=df_parts)
+    cpp = CPP(df_parts=df_parts, df_scales=df_scales, split_kws=split_kws,
+              random_state=random_state, verbose=verbose)
     df_feat = cpp.run(labels=labels, label_test=label_test, label_ref=label_ref,
                       n_filter=cfg["n_filter_vals"][0], max_cor=cfg["max_cor"],
                       max_overlap=cfg["max_overlap"], n_jobs=n_jobs)
@@ -459,7 +525,8 @@ def _grid_stage(sf=None, df_seq=None, parts=None, split_sets=None, n_split_vals=
         raise ValueError(f"'subcategories' ({subcategories}) should match at least one scale.")
     params_parts = {"list_parts": [list(p) for p in parts],
                     "jmd_n_len": list(n_jmd_vals), "jmd_c_len": list(n_jmd_vals)}
-    params_split = {"split_types": [list(s) for s in split_sets], "n_split_max": list(n_split_vals)}
+    params_split = {"split_types": [list(s) for s in split_sets], "n_split_max": list(n_split_vals),
+                    "len_max": cfg["len_max"]}
     params_cpp = {"n_filter": list(n_filters), "label_test": label_test, "label_ref": label_ref,
                   "max_cor": cfg["max_cor"], "max_overlap": cfg["max_overlap"]}
     cppg = CPPGrid(df_seq=df_seq, labels=labels, random_state=random_state, verbose=verbose,
@@ -556,7 +623,12 @@ def _run_search(sf=None, labels=None, df_seq=None, cfg=None, simplify=True, mode
     base = _cv_scores(X_win, labels, models=models, cv=cv, metrics=metrics, random_state=random_state)
     rows3 = []
     if simplify:
-        cpp_win = CPP(df_parts=df_parts_win, df_scales=df_scales_win,
+        # Rebuild the winner's split_kws (Segment n_split_max / Pattern len_max) so the CPP used for
+        # simplify validates against short / free-peptide parts. simplify operates on the existing
+        # df_feat (it never reads split_kws), so this does not change the result for normal parts.
+        split_kws_win = _split_kws_for(split_types=win2["split_types"],
+                                       n_split_max=win2["n_split_max"], len_max=cfg["len_max"])
+        cpp_win = CPP(df_parts=df_parts_win, df_scales=df_scales_win, split_kws=split_kws_win,
                       random_state=random_state, verbose=verbose)
         df_simpl = cpp_win.simplify(df_feat=df_feat_win, labels=labels,
                                     strategy=cfg["simplify_strategy"], ml_cv=cv,

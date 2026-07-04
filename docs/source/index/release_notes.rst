@@ -363,6 +363,23 @@ Changed
   full-path import such as ``from aaanalysis.protein_design import SeqMut`` must become
   ``from aaanalysis.protein_engineering import SeqMut``.
 
+Fixed
+~~~~~
+
+- **CPP splits on free peptides / short parts (#338)**: ``aap.find_features`` and the
+  ``Pattern`` / ``PeriodicPattern`` splits were unusable on free peptides with no flanking
+  context (the linear-epitope case). ``find_features(search="fast")`` and its Stage-3
+  simplify step ignored the requested / winning split configuration and always used the
+  default (``len_max=15``, ``n_split_max=15``), so any target region shorter than ~15
+  residues raised. The bounded ``kws`` dict now accepts ``len_max`` (and actually honors
+  ``n_split_max``) so shorter ``Pattern`` / ``Segment`` splits can be requested; the fast
+  path auto-fits the split configuration to the shortest part — dropping
+  ``Pattern`` / ``PeriodicPattern`` and clamping ``n_split_max`` with a ``UserWarning`` — so
+  free peptides run out of the box; and the too-short-part ``ValueError`` now names the
+  binding split length and how to fix it (Segment-only splits, lower
+  ``len_max`` / ``n_split_max``, or add ``jmd_n`` / ``jmd_c`` context). Results for flanked
+  inputs are unchanged.
+
 
 Version 1.0 (Stable Version)
 --------------------------------
