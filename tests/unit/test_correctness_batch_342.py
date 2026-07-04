@@ -123,21 +123,26 @@ def test_options_name_tmd_is_validated():
         aa.options["name_tmd"] = "TMD"
 
 
-# --- A12: re-enabling allow_multiprocessing must not leave LOKY_MAX_CPU_COUNT stuck at 1 ---
-def test_allow_multiprocessing_reenable_clears_loky_cap():
+# --- A12: disabling then re-enabling allow_multiprocessing must restore (not lose) the
+#         user's own LOKY_MAX_CPU_COUNT, and never leave it stuck at "1" ---
+def test_allow_multiprocessing_restores_user_loky_value():
     import os
-    from aaanalysis.config import check_n_jobs
+    from aaanalysis import config as _cfg
     prev = os.environ.get("LOKY_MAX_CPU_COUNT")
     try:
-        aa.options["allow_multiprocessing"] = False
-        check_n_jobs(n_jobs=1)
-        assert os.environ.get("LOKY_MAX_CPU_COUNT") == "1"
+        # Start from a clean, enabled state (reset the module cap flag).
         aa.options["allow_multiprocessing"] = True
-        check_n_jobs(n_jobs=1)
-        assert os.environ.get("LOKY_MAX_CPU_COUNT") != "1"
+        _cfg.check_n_jobs(n_jobs=1)
+        os.environ["LOKY_MAX_CPU_COUNT"] = "4"            # the user's own cap
+        aa.options["allow_multiprocessing"] = False
+        _cfg.check_n_jobs(n_jobs=1)
+        assert os.environ.get("LOKY_MAX_CPU_COUNT") == "1"   # our cap while disabled
+        aa.options["allow_multiprocessing"] = True
+        _cfg.check_n_jobs(n_jobs=1)
+        assert os.environ.get("LOKY_MAX_CPU_COUNT") == "4"   # user's value restored, not lost
     finally:
         aa.options["allow_multiprocessing"] = True
-        check_n_jobs(n_jobs=1)  # reset the internal cap flag
+        _cfg.check_n_jobs(n_jobs=1)
         if prev is None:
             os.environ.pop("LOKY_MAX_CPU_COUNT", None)
         else:

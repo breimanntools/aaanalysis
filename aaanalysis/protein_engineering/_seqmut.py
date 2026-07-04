@@ -186,7 +186,7 @@ class SeqMut:
 
     # Helper methods
     def _delta_table(self, df_plan=None, df_seq=None, df_feat=None, jmd_n_len=10, jmd_c_len=10,
-                     weight=None):
+                     weight=None, sort=True):
         """Run the ΔCPP (+ model ΔP) engine for a mutation plan and return the scored output."""
         features = list(df_feat[ut.COL_FEATURE])
         mean_dif = df_feat[ut.COL_MEAN_DIF].to_numpy(dtype=float)
@@ -201,8 +201,9 @@ class SeqMut:
                 X_wt=X_wt, X_mut=X_mut, wt_rows=wt_rows, model=self._model,
                 target_class=self._target_class)
             return build_scan_output(df_plan=df_plan, delta_cpp=delta_cpp, shift_score=shift_score,
-                                     delta_pred=delta_pred, wt_pred=wt_pred, wt_pred_std=wt_pred_std)
-        return build_scan_output(df_plan=df_plan, delta_cpp=delta_cpp, shift_score=shift_score)
+                                     delta_pred=delta_pred, wt_pred=wt_pred, wt_pred_std=wt_pred_std,
+                                     sort=sort)
+        return build_scan_output(df_plan=df_plan, delta_cpp=delta_cpp, shift_score=shift_score, sort=sort)
 
     # Main methods
     def mutate(self,
@@ -279,16 +280,14 @@ class SeqMut:
                                       for p, ts, te in zip(df_plan[ut.COL_POS],
                                                            df_plan[ut.COL_TMD_START],
                                                            df_plan[ut.COL_TMD_STOP])]
+            # Score in mutation order (sort=False) so results align row-for-row with df_mut;
+            # no label re-join, so duplicate mutation rows can never desync or crash.
             df_scored = self._delta_table(df_plan=df_plan, df_seq=df_seq, df_feat=df_feat,
-                                          jmd_n_len=jmd_n_len, jmd_c_len=jmd_c_len)
-            # build_scan_output sorts by delta_cpp, so re-join the scored rows back to the
-            # mutation order using (entry, mutation) — the label alone is not unique across entries.
-            df_scored = df_scored.set_index([ut.COL_ENTRY, ut.COL_MUTATION])
-            keys = list(zip(df_mut[ut.COL_ENTRY], df_mut[ut.COL_MUTATION]))
-            df_mut[ut.COL_DELTA_CPP] = df_scored.loc[keys, ut.COL_DELTA_CPP].to_numpy()
-            df_mut[ut.COL_SHIFT_SCORE] = df_scored.loc[keys, ut.COL_SHIFT_SCORE].to_numpy()
+                                          jmd_n_len=jmd_n_len, jmd_c_len=jmd_c_len, sort=False)
+            df_mut[ut.COL_DELTA_CPP] = df_scored[ut.COL_DELTA_CPP].to_numpy()
+            df_mut[ut.COL_SHIFT_SCORE] = df_scored[ut.COL_SHIFT_SCORE].to_numpy()
             if self._model is not None:
-                df_mut[ut.COL_DELTA_PRED] = df_scored.loc[keys, ut.COL_DELTA_PRED].to_numpy()
+                df_mut[ut.COL_DELTA_PRED] = df_scored[ut.COL_DELTA_PRED].to_numpy()
         return df_mut
 
     def scan(self,

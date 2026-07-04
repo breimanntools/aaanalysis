@@ -27,9 +27,10 @@ _dict_options = {
 }
 
 
-# Tracks whether allow_multiprocessing=False set the loky CPU cap, so re-enabling
-# multiprocessing can undo exactly our own cap (never a user's own env setting).
+# Tracks whether allow_multiprocessing=False set the loky CPU cap, and the user's prior
+# LOKY_MAX_CPU_COUNT value, so re-enabling multiprocessing restores it (never loses it).
 _loky_capped_by_options = False
+_loky_prev_value = None
 
 
 # Check system level (option) parameters or depending on parameters
@@ -72,18 +73,24 @@ def check_n_jobs(n_jobs=None):
     global_n_jobs = options["n_jobs"]
     if global_n_jobs != "off":
         n_jobs = global_n_jobs
-    global _loky_capped_by_options
+    global _loky_capped_by_options, _loky_prev_value
     allow_multiprocessing = options["allow_multiprocessing"]
     check_bool(name="allow_multiprocessing (options)", val=allow_multiprocessing)
-    # Disable multiprocessing (and undo only our own cap once it is re-enabled, so the
-    # loky CPU count is not left stuck at 1 and a user's own env var is never clobbered)
+    # Cap loky when multiprocessing is disabled, remembering the user's prior value so it is
+    # restored (not lost) once multiprocessing is re-enabled on the next parallel-capable call.
     if not allow_multiprocessing:
         n_jobs = 1
+        if not _loky_capped_by_options:
+            _loky_prev_value = os.environ.get('LOKY_MAX_CPU_COUNT')
+            _loky_capped_by_options = True
         os.environ['LOKY_MAX_CPU_COUNT'] = "1"
-        _loky_capped_by_options = True
     elif _loky_capped_by_options:
-        os.environ.pop('LOKY_MAX_CPU_COUNT', None)
+        if _loky_prev_value is None:
+            os.environ.pop('LOKY_MAX_CPU_COUNT', None)
+        else:
+            os.environ['LOKY_MAX_CPU_COUNT'] = _loky_prev_value
         _loky_capped_by_options = False
+        _loky_prev_value = None
     # Set n_jobs to maximum number of CPUs
     if n_jobs == -1:
         n_jobs = os.cpu_count()
