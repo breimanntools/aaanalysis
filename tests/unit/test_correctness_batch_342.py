@@ -1,9 +1,5 @@
-"""Regression tests for the correctness audit batch (issue #342).
-
-Each test pins one fix from the batch so the defect cannot silently return.
-The config.options fixes (verbose/random_state/name_tmd/LOKY) are intentionally
-excluded here — config.py is a CONFIRM-FIRST surface handled separately.
-"""
+"""Regression tests pinning a batch of low-risk correctness fixes so each defect
+cannot silently return."""
 import numpy as np
 import pandas as pd
 import pytest
@@ -12,7 +8,7 @@ import aaanalysis as aa
 import aaanalysis.utils as ut
 
 
-# --- A2: load_dataset(non_canonical_aa="gap") must not corrupt the shared cache ---
+# load_dataset(non_canonical_aa="gap") must not corrupt the shared cache
 def test_load_dataset_gap_does_not_corrupt_cache():
     name = "SEQ_CAPSID"  # contains non-canonical amino acids (B, U, X)
     df_gap = aa.load_dataset(name=name, non_canonical_aa="gap")
@@ -23,7 +19,7 @@ def test_load_dataset_gap_does_not_corrupt_cache():
         "'keep' returned gapped sequences -> the earlier 'gap' call corrupted the cache"
 
 
-# --- A9: load_features must return a fresh copy, not the shared cached object ---
+# load_features must return a fresh copy, not the shared cached object
 def test_load_features_returns_independent_copy():
     d1 = aa.load_features(name="DOM_GSEC")
     d2 = aa.load_features(name="DOM_GSEC")
@@ -33,7 +29,7 @@ def test_load_features_returns_independent_copy():
     assert d3.iloc[0, 0] != "__SENTINEL__"
 
 
-# --- A10: read_fasta -> clear ValueError on pre-header text; leading blank is skipped ---
+# read_fasta -> clear ValueError on pre-header text; leading blank is skipped
 def test_read_fasta_preheader_text_raises_valueerror(tmp_path):
     bad = tmp_path / "bad.fasta"
     bad.write_text("junk before header\n>A\nMKV\n")
@@ -48,7 +44,7 @@ def test_read_fasta_leading_blank_line_ok(tmp_path):
     assert len(df) == 2
 
 
-# --- A14: comp_seq_sim self-similarity diagonal on the [0, 100] scale ---
+# comp_seq_sim self-similarity diagonal on the [0, 100] scale
 def test_comp_seq_sim_diagonal_is_100():
     pytest.importorskip("Bio")
     df_seq = pd.DataFrame({ut.COL_ENTRY: ["P1", "P2"],
@@ -58,14 +54,14 @@ def test_comp_seq_sim_diagonal_is_100():
     assert np.allclose(diag, 100.0)
 
 
-# --- A16: get_best_n_clusters must not return 0 for a single-feature set (KMeans(0)) ---
+# get_best_n_clusters must not return 0 for a single-feature set (KMeans(0))
 def test_get_best_n_clusters_single_feature():
     from aaanalysis.feature_engineering._backend.cpp.cpp_eval import get_best_n_clusters
     X = np.array([[0.1, 0.2, 0.3, 0.4]])  # one feature (row)
     assert get_best_n_clusters(X=X, min_th=0.3, random_state=0) >= 1
 
 
-# --- A17: wrong-length marker_size list -> ValueError, not a later IndexError ---
+# wrong-length marker_size list -> ValueError, not a later IndexError
 def test_check_marker_size_wrong_length_raises_valueerror():
     from aaanalysis._utils.plotting import _check_marker_size
     with pytest.raises(ValueError):
@@ -73,14 +69,14 @@ def test_check_marker_size_wrong_length_raises_valueerror():
     assert _check_marker_size(marker_size=[10, 12, 14], list_cat=["a", "b", "c"]) == [10, 12, 14]
 
 
-# --- A18: display_df row/col selector is 0..n-1 (off-by-one) ---
+# display_df row/col selector is 0..n-1 (off-by-one)
 def test_display_df_out_of_bounds_selector_raises():
     df = pd.DataFrame({"x": [1, 2, 3]})
     with pytest.raises(ValueError):
         aa.display_df(df=df, row_to_show=3)   # valid rows are 0..2
 
 
-# --- A25: check_match_X_n_clusters states the correct inequality ---
+# check_match_X_n_clusters states the correct inequality
 def test_aaclust_n_clusters_message_uses_leq():
     from aaanalysis.feature_engineering._aaclust import check_match_X_n_clusters
     X = np.array([[1.0, 2.0], [1.0, 2.0], [1.0, 2.0]])  # 3 samples, 1 unique
@@ -89,7 +85,7 @@ def test_aaclust_n_clusters_message_uses_leq():
     assert "<=" in str(e.value)
 
 
-# --- A26: check_metric message no longer advertises None ---
+# check_metric message no longer advertises None
 def test_check_metric_message_no_none():
     from aaanalysis.feature_engineering._backend.check_aaclust import check_metric
     with pytest.raises(ValueError) as e:
@@ -97,7 +93,7 @@ def test_check_metric_message_no_none():
     assert "None" not in str(e.value)
 
 
-# --- A5: options validation must check the incoming candidate, not the current global ---
+# options validation must check the incoming candidate, not the current global
 def test_options_validation_not_bypassed_after_value_set():
     try:
         aa.options["verbose"] = True
@@ -113,7 +109,7 @@ def test_options_validation_not_bypassed_after_value_set():
         aa.options["random_state"] = "off"
 
 
-# --- A20: name_tmd must be validated like the other name_* options ---
+# name_tmd must be validated like the other name_* options
 def test_options_name_tmd_is_validated():
     try:
         with pytest.raises(ValueError):
@@ -123,8 +119,8 @@ def test_options_name_tmd_is_validated():
         aa.options["name_tmd"] = "TMD"
 
 
-# --- A12: disabling then re-enabling allow_multiprocessing must restore (not lose) the
-#         user's own LOKY_MAX_CPU_COUNT, and never leave it stuck at "1" ---
+# disabling then re-enabling allow_multiprocessing must restore (not lose) the
+# user's own LOKY_MAX_CPU_COUNT, and never leave it stuck at "1"
 def test_allow_multiprocessing_restores_user_loky_value():
     import os
     from aaanalysis import config as _cfg
@@ -149,7 +145,7 @@ def test_allow_multiprocessing_restores_user_loky_value():
             os.environ["LOKY_MAX_CPU_COUNT"] = prev
 
 
-# --- A12 (cont.): a value the user sets DURING the disabled window must not be clobbered ---
+# a value the user sets DURING the disabled window must not be clobbered
 def test_allow_multiprocessing_reenable_preserves_user_change_during_disable():
     import os
     from aaanalysis import config as _cfg
