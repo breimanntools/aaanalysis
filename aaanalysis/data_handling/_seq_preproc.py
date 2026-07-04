@@ -89,9 +89,9 @@ def check_match_slide_start_slide_stop(slide_start=None, slide_stop=None) -> Non
 def check_match_slide_start_slide_stop_window_size(slide_start=None, slide_stop=None, window_size=None) -> None:
     """Check if one is given"""
     if slide_stop is not None:
-        min_window_size = slide_stop - slide_stop
-        if window_size < min_window_size:
-            raise ValueError(f"'window_size' ('{window_size}') should be smaller then the distance ({min_window_size})"
+        max_window_size = slide_stop - slide_start + 1
+        if window_size > max_window_size:
+            raise ValueError(f"'window_size' ('{window_size}') should be <= the distance ({max_window_size})"
                              f" between 'slide_start' ('{slide_start}') and 'slide_stop' ({slide_stop}).")
 
 
