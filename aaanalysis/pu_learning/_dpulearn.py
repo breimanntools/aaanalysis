@@ -133,6 +133,15 @@ def check_match_X_X_neg(X=None, X_neg=None) -> None:
         raise ValueError(f"'n_features' does not match between 'X' (n={n_features}) and 'X_neg' (n={n_features_neg})")
 
 
+def check_match_X_pos_X_unlabeled(X_pos=None, X_unlabeled=None) -> None:
+    """Check that positive and unlabeled feature matrices share the same feature dimension."""
+    n_features_pos = X_pos.shape[1]
+    n_features_unl = X_unlabeled.shape[1]
+    if n_features_pos != n_features_unl:
+        raise ValueError(f"'n_features' does not match between 'X_pos' (n={n_features_pos}) and "
+                         f"'X_unlabeled' (n={n_features_unl})")
+
+
 # II Main Functions
 class dPULearn(Wrapper):
     """
@@ -210,11 +219,14 @@ class dPULearn(Wrapper):
         # Output parameters (will be set during model fitting)
         self.labels_ = None
         self.df_pu_ = None
+        self.mask_neg_ = None
 
     # Main method
     def fit(self,
-            X: ut.ArrayLike2D,
-            labels: ut.ArrayLike1D,
+            X: Optional[ut.ArrayLike2D] = None,
+            labels: Optional[ut.ArrayLike1D] = None,
+            X_pos: Optional[ut.ArrayLike2D] = None,
+            X_unlabeled: Optional[ut.ArrayLike2D] = None,
             label_pos: int = 1,
             label_unl: int = 2,
             label_neg: Optional[int] = None,
@@ -239,15 +251,30 @@ class dPULearn(Wrapper):
 
         .. versionadded:: 0.1.0
 
+        There are two input modes (provide exactly one): pass ``X`` + ``labels`` (a single feature
+        matrix with per-sample markers), or — for the common positives-vs-unlabeled setup — pass the
+        two matrices ``X_pos`` and ``X_unlabeled`` separately, which are stacked internally with the
+        package markers. Either way, after fitting :attr:`dPULearn.mask_neg_` is the boolean mask of
+        reliable negatives (over ``X_unlabeled`` in the split mode, over ``X`` otherwise).
+
         Parameters
         ----------
-        X : array-like, shape (n_samples, n_features)
-            Feature matrix. `Rows` typically correspond to proteins and `columns` to features.
-        labels : array-like, shape (n_samples,)
+        X : array-like, shape (n_samples, n_features), optional
+            Feature matrix. `Rows` typically correspond to proteins and `columns` to features. Provide
+            ``X`` + ``labels``, or ``X_pos`` + ``X_unlabeled`` (exactly one of the two modes).
+        labels : array-like, shape (n_samples,), optional
             Dataset labels of samples in ``X``. Must contain the positive marker (``label_pos``) and the
             unlabeled marker (``label_unl``); pre-labeled negatives (``label_neg``) are optional. By
             default positives are ``1`` and unlabeled are ``2``; set ``label_unl=0`` to pass the standard
             ``{0, 1}`` encoding directly (``0`` = unlabeled, ``1`` = positive).
+        X_pos : array-like, shape (n_pos, n_features), optional
+            Feature matrix of the positive samples (split-input mode). Provided together with
+            ``X_unlabeled`` instead of ``X`` + ``labels``; the two are stacked and marked internally
+            (positives ``label_pos``, unlabeled ``label_unl``), so no manual label vector is needed.
+        X_unlabeled : array-like, shape (n_unl, n_features), optional
+            Feature matrix of the unlabeled candidate pool (split-input mode). Must have the same number
+            of features as ``X_pos``. After fitting, :attr:`dPULearn.mask_neg_` is a boolean mask over its
+            rows marking the identified reliable negatives.
         label_pos : int, default=1
             Value marking positive samples in ``labels``. Must be present.
         label_unl : int, default=2
@@ -322,6 +349,24 @@ class dPULearn(Wrapper):
         --------
         .. include:: examples/dpul_fit.rst
         """
+        # Resolve the input mode: (X, labels) or the positives/unlabeled split. In the split
+        # mode, stack X_pos over X_unlabeled and build the label vector internally with the
+        # package markers, so the caller does not hand-roll the vstack + 1/2 vector + slice.
+        split_mode = X_pos is not None or X_unlabeled is not None
+        n_pos = None
+        if split_mode:
+            if X is not None or labels is not None:
+                raise ValueError("Pass either 'X'/'labels' or 'X_pos'/'X_unlabeled', not both.")
+            if X_pos is None or X_unlabeled is None:
+                raise ValueError("'X_pos' and 'X_unlabeled' must both be given for the split-input mode.")
+            X_pos = ut.check_X(X=X_pos, X_name="X_pos", min_n_samples=1)
+            X_unlabeled = ut.check_X(X=X_unlabeled, X_name="X_unlabeled", min_n_samples=1)
+            check_match_X_pos_X_unlabeled(X_pos=X_pos, X_unlabeled=X_unlabeled)
+            n_pos = X_pos.shape[0]
+            X = np.vstack([X_pos, X_unlabeled])
+            labels = np.array([label_pos] * n_pos + [label_unl] * X_unlabeled.shape[0])
+        elif X is None or labels is None:
+            raise ValueError("'X' and 'labels' are required (or pass 'X_pos' + 'X_unlabeled').")
         # Check input
         X = ut.check_X(X=X)
         check_match_labels_markers(label_pos=label_pos, label_unl=label_unl, label_neg=label_neg)
@@ -353,9 +398,11 @@ class dPULearn(Wrapper):
         # Identify most far away negatives in PCA compressed feature space
         else:
             new_labels, df_pu = get_neg_via_pca(**args, n_components=n_components, **self._model_kwargs)
-        # Set new labels
+        # Set new labels + the reliable-negative mask. In the split-input mode the mask is over
+        # the rows of X_unlabeled (True = mined reliable negative); otherwise over all rows of X.
         self.labels_ = np.asarray(new_labels)
         self.df_pu_ = df_pu
+        self.mask_neg_ = self.labels_[n_pos:] == 0 if n_pos is not None else self.labels_ == 0
         return self
 
     @staticmethod

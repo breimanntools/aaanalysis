@@ -37,7 +37,7 @@ flowchart LR
     TM["TreeModel"]
     SM["ShapModel (pro)"]
   end
-  subgraph PD["protein_design"]
+  subgraph PD["protein_engineering"]
     AAM["AAMut / SeqMut"]
   end
 
@@ -63,9 +63,19 @@ flowchart LR
 (`plot_settings`/colors/`plot_legend`/`plot_rank`) styles every `*Plot`; `metrics`
 (`comp_*`) scores model/clustering outputs.
 
+**Convenience facade (wraps the whole flow):** `pipe` — imported as
+`import aaanalysis.pipe as aap`, a stateless second API whose golden pipelines
+(`obtain_samples` → `find_features` → `predict_samples` → `explain_features`, plus
+the `plot_eval` grid) chain the primitives above into one call each. Its defaults
+are byte-identical to the explicit primitive path; it adds no algorithm of its own,
+returns plain numpy/pandas objects, and threads `random_state` / `n_jobs` through.
+
 **Pro / utility subpackages (off the core flow):** `data_handling_pro`
 (StructurePreprocessor, AnnotationPreprocessor), `seq_analysis_pro`
 (comp_seq_sim, filter_seq, scan_motif), `explainable_ai_pro` (ShapModel),
+`feature_engineering_pro` (CPPStructurePlot — paints a `df_feat` of CPP / CPP-SHAP
+feature impact onto a 3D protein structure, reusing the CPP position backend from
+`feature_engineering` and the structure parser from `data_handling_pro`),
 `show_html` (display_df, dev).
 
 <!-- MAP-SUBPKGS:START — roster checked by check_module_map.py; regenerate with --write-roster -->
@@ -74,9 +84,11 @@ flowchart LR
 - explainable_ai
 - explainable_ai_pro
 - feature_engineering
+- feature_engineering_pro
 - metrics
+- pipe
 - plotting
-- protein_design
+- protein_engineering
 - pu_learning
 - seq_analysis
 - seq_analysis_pro

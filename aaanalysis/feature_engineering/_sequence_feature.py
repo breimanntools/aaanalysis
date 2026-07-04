@@ -26,7 +26,7 @@ from ._backend.cpp.utils_feature import (get_df_parts_,
                                          get_positions_, get_amino_acids_,
                                          get_df_pos_, get_df_pos_parts_)
 from ._backend.cpp.sequence_feature import (get_split_kws_, get_features_, get_feature_names_,
-                                            get_feature_descriptions_, get_df_feat_,
+                                            get_feature_descriptions_, get_df_feat_, get_scale_composition_,
                                             get_labels_ovr_, get_labels_ovo_, get_labels_quantile_,
                                             get_labels_tiered_)
 from ._backend.cpp_run import _pick_feature_matrix_builder
@@ -852,6 +852,97 @@ class SequenceFeature:
             list_X.append(X_all[start:start + n])
             start += n
         return list_X if batch else list_X[0]
+
+    def scale_composition(self,
+                          df_seq: pd.DataFrame,
+                          df_scales: Optional[pd.DataFrame] = None,
+                          list_parts: Optional[Union[str, List[str]]] = None,
+                          return_df: bool = False,
+                          ) -> Union[ut.ArrayLike2D, pd.DataFrame]:
+        """
+        Create the scale-composition baseline matrix for given sequences and scales.
+
+        Builds the no-positional-split **scale-based baseline** featurization: for each
+        sequence the requested Parts are concatenated into one span, and every scale is
+        averaged over the residues of that span, yielding one value per scale. The result
+        is the ``(n_seq, n_scales)`` matrix ``X`` — the sequence's mean profile in
+        scale-space, the scale-based analogue of amino-acid composition. Unlike
+        :meth:`SequenceFeature.feature_matrix`, which averages each scale over the residues
+        of a specific Part-Split, this method averages each scale over the **whole span**
+        (a single mean per scale), with no positional information.
+
+        **Application.** Use this to build a **baseline feature set** for a prediction
+        model: fit the same classifier on this scale-composition ``X`` and on a
+        :class:`CPP` :meth:`feature_matrix` and compare the scores to show how much the
+        positional Part-Split-Scale features add over a plain scale-average encoding (the
+        "scale baseline vs CPP" comparison). It is *not* a positional feature set — reach
+        for :class:`CPP` when you need where-along-the-sequence information.
+
+        .. versionadded:: 1.1.0
+
+        Parameters
+        ----------
+        df_seq : pd.DataFrame, shape (n_samples, n_seq_info)
+            DataFrame containing an ``entry`` column with unique protein identifiers and sequence information
+            in a distinct format: **Position-based**, **Part-based**, **Sequence-based**, or **Sequence-TMD-based**
+            (the same input accepted by :meth:`SequenceFeature.get_df_parts`).
+        df_scales : pd.DataFrame, shape (n_letters, n_scales), optional
+            DataFrame of scales with letters (amino acids) as index. Default from :meth:`load_scales`
+            unless specified in ``options['df_scales']``. The index defines which residues are scored;
+            residues absent from it are dropped before averaging.
+        list_parts : str or list of str, optional
+            Names of the sequence parts to average over (see :class:`SequenceFeature` for valid parts).
+            If ``None`` (default), the whole TMD-JMD span ``jmd_n`` + ``tmd`` + ``jmd_c`` (the ``tmd_jmd``
+            part) is used. Multiple parts are concatenated per sequence before averaging.
+        return_df : bool, default=False
+            If ``True``, return a labeled ``pd.DataFrame`` (rows indexed like ``df_parts``, one column per
+            scale) instead of a plain numpy array.
+
+        Returns
+        -------
+        X : array-like, shape (n_samples, n_scales)
+            Scale-average matrix containing, per sequence, the mean of each scale over the span residues.
+            Returned as a ``pd.DataFrame`` (scale names as columns) when ``return_df=True``.
+
+        Notes
+        -----
+        * **Missing / non-canonical residues**: a residue is averaged only if it is an index label of
+          ``df_scales``. Gap symbols (``'-'``) and any other non-canonical symbol (e.g. ``'X'``) are
+          dropped per the package convention, so the mean is taken over the scored residues only.
+        * A sequence whose span has **no** scored residue (empty span, or all residues non-canonical)
+          yields an all-``NaN`` row; a ``UserWarning`` naming the count is emitted when ``verbose=True``.
+        * This is a no-positional-split mean only; positional splits remain the job of :class:`CPP`.
+
+        See Also
+        --------
+        * :meth:`SequenceFeature.feature_matrix` for the positional Part-Split-Scale feature matrix.
+        * :meth:`SequenceFeature.get_df_parts` for the part-slicing used to build the span.
+
+        Examples
+        --------
+        .. include:: examples/sf_scale_composition.rst
+        """
+        # Load defaults
+        if df_scales is None:
+            df_scales = ut.load_default_scales()
+        # Check input
+        ut.check_df_seq(df_seq=df_seq)
+        check_df_scales(df_scales=df_scales)
+        ut.check_bool(name="return_df", val=return_df)
+        list_parts = ut.check_list_parts(list_parts=list_parts, return_default=False, accept_none=True)
+        # Resolve parts: None -> whole TMD-JMD span (jmd_n + tmd + jmd_c, the "tmd_jmd" part)
+        list_parts_used = ["tmd_jmd"] if list_parts is None else list_parts
+        # Build the sequence parts and the scale-average matrix
+        df_parts = self.get_df_parts(df_seq=df_seq, list_parts=list_parts_used)
+        X, n_kept = get_scale_composition_(df_parts=df_parts, df_scales=df_scales)
+        # Warn about rows that had no scored residue (all-NaN output)
+        n_empty = int((n_kept == 0).sum())
+        if n_empty > 0 and self.verbose:
+            warnings.warn(f"{n_empty} sequence(s) have no scored residue in the selected parts "
+                          f"(empty or all non-canonical); their scale-average row is all-NaN.")
+        if return_df:
+            return pd.DataFrame(X, index=df_parts.index, columns=list(df_scales.columns))
+        return X
 
     def prune_by_variance(self,
                           df_feat: pd.DataFrame,

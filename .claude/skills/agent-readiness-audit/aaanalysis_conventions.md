@@ -32,7 +32,7 @@ skill at another package, replace this file.
 ## 2. Public subpackages the checker scans
 
 `feature_engineering`, `data_handling`, `seq_analysis`, `pu_learning`,
-`explainable_ai`, `plotting`, `metrics`, `protein_design`, and the `*_pro` /
+`explainable_ai`, `plotting`, `metrics`, `protein_engineering`, and the `*_pro` /
 dev siblings `data_handling_pro`, `seq_analysis_pro`, `explainable_ai_pro`,
 `show_html`. Internal dirs (`_utils/`, `_backend/`, `_data/`) are skipped by the
 leading-underscore rule. The top-level `aaanalysis/__init__.py` appends the 7
@@ -98,7 +98,7 @@ Feature engineering: scale-based amino-acid features for interpretable predictio
 
 Public objects: AAclust(+Plot), SequenceFeature, NumericalFeature, CPP, CPPGrid, CPPPlot.
 Consumes scale sets from ``data_handling.load_scales``; CPP features (``df_feat``)
-feed ``explainable_ai.TreeModel`` and ``protein_design``.
+feed ``explainable_ai.TreeModel`` and ``protein_engineering``.
 
 See ``.claude/rules/code-conventions.md`` / ``frontend-backend.md`` for conventions,
 ``CONTEXT.md`` for domain terms (df_parts, part, split, scale), ADR-0001 for the CPP backend.

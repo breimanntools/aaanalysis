@@ -35,6 +35,11 @@ Added
   per-residue PTM and functional-site annotations and encodes them into tensors
   (``fetch_uniprot``, ``ingest``, ``register_feature``, ``encode``, ``build_scales``,
   ``build_cat``, ``to_df_seq``).
+- **combine_dict_nums**: Concatenates per-residue tensors (embedding / structure /
+  annotation) along the feature axis into one combined ``CPP.run_num`` input.
+- **get_labels**: Derives a binary ``int`` label vector from a sequence DataFrame's
+  label column (``positive_label`` mapped to ``1``, everything else to ``0``) — the
+  single-call form of the recurring ``(df[col] == x).astype(int).to_numpy()`` expression.
 - :func:`~aaanalysis.combine_dict_nums`: Concatenates per-residue tensors (embedding / structure /
   annotation) along the feature axis into one combined :meth:`~aaanalysis.CPP.run_num` input.
 
@@ -58,6 +63,15 @@ Added
 - **SequenceFeature.get_labels_quantile / get_labels_tiered**: Discretize a continuous
   target into binary ``labels`` — a single quantile cut, or a fixed positive set swept
   against stepwise-lowered negative cuts (each tier row-matched).
+- **SequenceFeature.scale_composition**: Scale-composition baseline featurizer that turns
+  sequences + scales into a ``(n_seq, n_scales)`` matrix by averaging each scale over a
+  sequence span (``list_parts=None`` → whole ``jmd_n`` + ``tmd`` + ``jmd_c``), dropping
+  missing / non-canonical residues — the sequence's mean profile in scale-space (the
+  scale-based analogue of amino-acid composition). The no-positional-split baseline to
+  compare against ``feature_matrix`` / CPP; optional ``return_df=True`` for a labeled frame.
+- **SequenceFeature.get_df_parts_from_windows**: Assemble a reference ``df_parts`` from
+  per-part window sets (e.g. ``AAWindowSampler.sample_synthetic`` output).
+- **SequenceFeature.get_seq_kws**: Return one protein's ``{jmd_n_seq, tmd_seq, jmd_c_seq}``
 - :meth:`~aaanalysis.SequenceFeature.get_df_parts_from_windows`: Assemble a reference ``df_parts`` from
   per-part window sets (e.g. :meth:`~aaanalysis.AAWindowSampler.sample_synthetic` output).
 - :meth:`~aaanalysis.SequenceFeature.get_seq_kws`: Return one protein's ``{jmd_n_seq, tmd_seq, jmd_c_seq}``
@@ -132,6 +146,16 @@ Added
   switches the pre-computed prediction per P1 (feature map + structure restyle) with no kernel,
   keeping the column-residue linking (warned past 40 sites, hard-capped at 200).
 
+**PU Learning**
+
+- **dPULearn.fit — positives/unlabeled split input**: for the common positive / unlabeled
+  setup, ``fit`` now accepts ``X_pos`` and ``X_unlabeled`` separately (an alternative to
+  ``X`` + ``labels``) instead of stacking them by hand and building a ``1`` / ``2`` label
+  vector. After fitting, the new ``dPULearn.mask_neg_`` attribute holds the **boolean mask
+  of reliable negatives** — over the rows of ``X_unlabeled`` in the split mode, over ``X``
+  otherwise (equal to the manual ``labels_[len(X_pos):] == 0`` result exactly). ``fit`` still
+  returns ``self`` and the existing ``fit(X, labels=...)`` path is unchanged.
+
 **Sequence Analysis**
 
 - :class:`~aaanalysis.AAWindowSampler`: Samples fixed-length sequence windows for PU-learning and
@@ -141,7 +165,7 @@ Added
   occurrences via MEME/FIMO, complementing the pure-Python
   :meth:`~aaanalysis.AAWindowSampler.sample_motif_matched` sampler.
 
-**Protein Design**
+**Protein Engineering**
 
 - **SeqOpt — multi-objective protein engineering** (**core**; only ``mode="impact"`` needs
   ``aaanalysis[pro]``): A new :class:`~aaanalysis.SeqOpt` optimizer
@@ -191,6 +215,10 @@ Added
 
 - :func:`~aaanalysis.plot_rank`: Standalone per-protein max-score-vs-rank scatter with group coloring and
   optional threshold lines (pairs with the new ``aa.metrics`` functions).
+- **COLOR_SAMPLES_POS / COLOR_SAMPLES_NEG / COLOR_SAMPLES_UNL / COLOR_SAMPLES_REL_NEG**:
+  Public, named constants for the canonical sample-group colors (positive / negative /
+  unlabeled / reliable-negative). They equal the ``plot_get_cdict("DICT_COLOR")["SAMPLES_*"]``
+  values exactly, so a named constant replaces indexing the color dict by string key.
 
 **Golden Pipelines**
 
@@ -323,6 +351,17 @@ Changed
   (``.github/pyright_baseline.txt``) drives the type-contract count down per subpackage
   (now 887, every public-API signature pyright-clean). None gate a merge or change the
   public API.
+
+Changed
+~~~~~~~
+
+- **Module rename**: the ``protein_design`` subpackage is now ``protein_engineering``,
+  matching its user-facing name (``AAMut`` / ``SeqMut`` / ``SeqOpt`` are amino-acid
+  mutation and directed-evolution tools). The public classes are unchanged and imported
+  the same way (``import aaanalysis as aa`` → :class:`~aaanalysis.AAMut`,
+  :class:`~aaanalysis.SeqMut`, :class:`~aaanalysis.SeqOpt` and their plot classes); only a
+  full-path import such as ``from aaanalysis.protein_design import SeqMut`` must become
+  ``from aaanalysis.protein_engineering import SeqMut``.
 
 
 Version 1.0 (Stable Version)

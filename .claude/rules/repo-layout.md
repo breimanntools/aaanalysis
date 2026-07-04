@@ -21,7 +21,7 @@ aaanalysis/
   explainable_ai_pro/    # ShapModel (pro)
   seq_analysis/          # AAlogo(+Plot), AAWindowSampler
   seq_analysis_pro/      # comp_seq_sim, filter_seq, scan_motif (pro)
-  protein_design/        # AAMut(+Plot), SeqMut(+Plot)
+  protein_engineering/        # AAMut(+Plot), SeqMut(+Plot)
   plotting/              # plot_settings, plot_get_clist/cmap/cdict, plot_legend, plot_gcfs
   metrics/               # comp_auc_adjusted, comp_bic_score, comp_kld
   show_html/             # display_df (dev)
