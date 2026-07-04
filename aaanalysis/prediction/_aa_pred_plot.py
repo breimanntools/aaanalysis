@@ -66,15 +66,20 @@ class AAPredPlot:
     def eval(df_eval: pd.DataFrame,
              ax: Optional[Axes] = None,
              figsize: Tuple[Union[int, float], Union[int, float]] = (7, 5),
+             kind: Optional[str] = None,
              dict_color: Optional[Dict[str, str]] = None,
+             cmap: Optional[str] = None,
              baseline: Optional[Union[int, float]] = None,
              ylabel: str = "Score",
              ) -> Tuple[Figure, Axes]:
         """
-        Grouped bar plot of the model x metric evaluation table.
+        Evaluation plot of the model x metric table, adapting to the shape of the data.
 
-        Bars are grouped by metric and colored by model; cross-validation bars carry error bars
-        from ``score_std`` and held-out bars (if present) are drawn hatched.
+        When both several models **and** several metrics are present (2D data) the table is
+        shown as an annotated **heatmap** (rows = models, columns = metrics, cell color = score).
+        When only one of the two varies (1D data) it is shown as a grouped **bar plot** (bars
+        grouped by metric, colored by model; cross-validation bars carry ``score_std`` error bars
+        and held-out bars are hatched). Pass ``kind`` to force either layout.
 
         .. versionadded:: 1.1.0
 
@@ -87,19 +92,31 @@ class AAPredPlot:
             Axes to draw on. If ``None``, a new figure and axes are created.
         figsize : tuple, default=(7, 5)
             Figure size when ``ax`` is ``None``.
+        kind : str, optional
+            Force the layout: ``'heatmap'`` or ``'bar'``. If ``None`` (default), a heatmap is
+            drawn for 2D data (>1 model and >1 metric) and a bar plot otherwise.
         dict_color : dict, optional
-            Mapping ``model -> color``. Defaults to the house categorical palette.
+            Mapping ``model -> color`` for the **bar** layout. Defaults to the house
+            categorical palette.
+        cmap : str, optional
+            Colormap name for the **heatmap** layout. Defaults to ``'viridis'``.
         baseline : int or float, optional
-            If given, a horizontal reference line is drawn at this score (e.g. ``0.5`` for chance).
+            **Bar layout only.** If given, a horizontal reference line is drawn at this score
+            (e.g. ``0.5`` for chance).
         ylabel : str, default="Score"
-            Label for the y-axis.
+            Label for the bar y-axis / the heatmap colorbar.
 
         Returns
         -------
         fig : matplotlib.figure.Figure
             The figure.
         ax : matplotlib.axes.Axes
-            The axes with the grouped bar plot.
+            The axes with the heatmap or grouped bar plot.
+
+        Notes
+        -----
+        * In the heatmap layout, cells aggregate the ``score`` across ``principle`` (mean); use
+          the bar layout to see the cross-validation vs held-out split.
 
         Examples
         --------
@@ -110,7 +127,10 @@ class AAPredPlot:
         ut.check_df(name="df_eval", df=df_eval, cols_required=cols)
         ut.check_ax(ax=ax, accept_none=True)
         ut.check_figsize(figsize=figsize, accept_none=True)
+        if kind is not None and kind not in ("heatmap", "bar"):
+            raise ValueError(f"'kind' ('{kind}') must be 'heatmap', 'bar', or None (auto).")
         ut.check_dict_color(name="dict_color", val=dict_color, accept_none=True)
+        ut.check_str(name="cmap", val=cmap, accept_none=True)
         if baseline is not None:
             ut.check_number_val(name="baseline", val=baseline, just_int=False)
         ut.check_str(name="ylabel", val=ylabel, accept_none=True)
@@ -118,11 +138,25 @@ class AAPredPlot:
         metrics = list(dict.fromkeys(df_eval[ut.COL_METRIC].tolist()))
         models = list(dict.fromkeys(df_eval[ut.COL_MODEL].tolist()))
         principles = list(dict.fromkeys(df_eval[ut.COL_PRINCIPLE].tolist()))
+        if kind is None:
+            kind = "heatmap" if (len(models) > 1 and len(metrics) > 1) else "bar"
+        fig, ax = _new_ax(ax=ax, figsize=figsize)
+        if kind == "heatmap":
+            # 2D data: annotated model x metric heatmap (scores averaged across principle)
+            pivot = df_eval.pivot_table(index=ut.COL_MODEL, columns=ut.COL_METRIC,
+                                        values=ut.COL_SCORE, aggfunc="mean")
+            pivot = pivot.reindex(index=models, columns=metrics)
+            sns.heatmap(pivot, annot=True, fmt=".2f", cmap=(cmap or "viridis"),
+                        linewidths=0.5, linecolor="white", ax=ax,
+                        cbar_kws={"label": ylabel})
+            ax.set_xlabel("")
+            ax.set_ylabel("")
+            ax.set_xticklabels(ax.get_xticklabels(), rotation=30, ha="right")
+            return ut.FigAxResult(fig, ax)
+        # 1D data: grouped bar plot (colored by model, CV error bars, held-out hatched)
         clist = ut.plot_get_clist_(n_colors=max(len(models), 2))
         dict_color = dict(dict_color) if dict_color is not None else {}
         dict_model_color = {m: dict_color.get(m, clist[i % len(clist)]) for i, m in enumerate(models)}
-        # Draw grouped bars
-        fig, ax = _new_ax(ax=ax, figsize=figsize)
         n_groups = len(models) * len(principles)
         width = 0.8 / max(n_groups, 1)
         x = np.arange(len(metrics))

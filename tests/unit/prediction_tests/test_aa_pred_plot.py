@@ -26,6 +26,24 @@ def _df_eval(holdout=False):
     return aa.AAPred(random_state=0).eval(X, labels, metrics=["accuracy", "balanced_accuracy"], **kwargs)
 
 
+def _df_eval_grid(models, metrics):
+    """Synthetic df_eval with a chosen number of models x metrics (controls 1D vs 2D)."""
+    import aaanalysis.utils as ut
+    rows = [{ut.COL_MODEL: m, ut.COL_METRIC: me, ut.COL_PRINCIPLE: "cv",
+             ut.COL_SCORE: 0.6 + 0.05 * (i + j), ut.COL_SCORE_STD: 0.02}
+            for i, m in enumerate(models) for j, me in enumerate(metrics)]
+    return pd.DataFrame(rows)
+
+
+def _is_heatmap(ax):
+    import matplotlib.collections as mc
+    return any(isinstance(c, mc.QuadMesh) for c in ax.collections)
+
+
+def _is_bar(ax):
+    return any(type(p).__name__ == "Rectangle" for p in ax.patches) and not _is_heatmap(ax)
+
+
 def _scores(seed=0):
     X, labels = _data(seed=seed)
     aapred = aa.AAPred(random_state=seed).fit(X, labels)
@@ -72,6 +90,35 @@ class TestAAPredPlotEval:
     def test_ylabel(self):
         fig, ax = aa.AAPredPlot().eval(_df_eval(), ylabel="Balanced accuracy")
         assert ax.get_ylabel() == "Balanced accuracy"
+
+    def test_2d_data_is_heatmap(self):
+        # >1 model AND >1 metric -> heatmap
+        fig, ax = aa.AAPredPlot().eval(_df_eval_grid(["svm", "rf", "log"], ["acc", "auc", "f1"]))
+        assert _is_heatmap(ax)
+
+    def test_1d_single_model_is_bar(self):
+        fig, ax = aa.AAPredPlot().eval(_df_eval_grid(["svm"], ["acc", "auc", "f1"]))
+        assert _is_bar(ax)
+
+    def test_1d_single_metric_is_bar(self):
+        fig, ax = aa.AAPredPlot().eval(_df_eval_grid(["svm", "rf", "log"], ["auc"]))
+        assert _is_bar(ax)
+
+    def test_kind_bar_forces_bar_on_2d(self):
+        fig, ax = aa.AAPredPlot().eval(_df_eval_grid(["svm", "rf"], ["acc", "auc"]), kind="bar")
+        assert _is_bar(ax)
+
+    def test_kind_heatmap_forces_heatmap_on_1d(self):
+        fig, ax = aa.AAPredPlot().eval(_df_eval_grid(["svm"], ["auc"]), kind="heatmap")
+        assert _is_heatmap(ax)
+
+    def test_kind_invalid_raises(self):
+        with pytest.raises(ValueError):
+            aa.AAPredPlot().eval(_df_eval_grid(["svm"], ["auc"]), kind="pie")
+
+    def test_cmap_on_heatmap(self):
+        fig, ax = aa.AAPredPlot().eval(_df_eval_grid(["svm", "rf"], ["acc", "auc"]), cmap="plasma")
+        assert _is_heatmap(ax)
 
 
 def _df_comp():
