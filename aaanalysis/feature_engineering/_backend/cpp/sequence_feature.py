@@ -180,6 +180,85 @@ def get_scale_composition_(df_parts=None, df_scales=None):
     return X, n_kept
 
 
+def _canonical_codes_(df_parts=None):
+    """Flatten every residue of every span to a canonical index (0..19), dropping non-canonical.
+
+    The part strings of each row are concatenated into one span (in ``df_parts`` column order,
+    matching :func:`get_scale_composition_`), every residue is mapped through a 256-entry byte
+    lookup to its position in ``ut.LIST_CANONICAL_AA``, and gaps / non-canonical symbols (byte
+    lookup ``-1``, incl. codepoints above 255 which ``latin-1`` "replace" turns into ``'?'``)
+    are dropped. Returns the per-residue owning-sequence ids ``seq_ids`` and canonical indices
+    ``aa_idx`` (both 1-D, aligned) plus the sequence count ``n_seq`` — the shared vectorized
+    front half of the AAC and DPC composition featurizers (no per-sequence Python loop).
+    """
+    n_seq = len(df_parts)
+    list_aa = list(ut.LIST_CANONICAL_AA)
+    # Byte -> canonical index lookup (-1 = non-canonical)
+    lut = np.full(256, -1, dtype=np.intp)
+    for idx, aa in enumerate(list_aa):
+        lut[ord(aa)] = idx
+    # Flatten every residue of every span, tracking its owning sequence
+    # (df_parts columns are guaranteed str by the frontend's get_df_parts)
+    spans = df_parts.agg("".join, axis=1).to_list()
+    lengths = np.fromiter((len(s) for s in spans), dtype=np.intp, count=n_seq)
+    codes = np.frombuffer("".join(spans).encode("latin-1", "replace"), dtype=np.uint8)
+    seq_ids = np.repeat(np.arange(n_seq), lengths)
+    aa_idx = lut[codes]                                             # canonical index per residue
+    valid = aa_idx >= 0
+    return seq_ids[valid], aa_idx[valid], n_seq
+
+
+def get_aa_composition_(df_parts=None):
+    """Per-sequence amino-acid composition over the concatenated sequence parts (vectorized).
+
+    For each row of ``df_parts`` the parts are concatenated into one span, non-canonical
+    residues are dropped, and the 20 canonical amino acids (``ut.LIST_CANONICAL_AA`` order)
+    are tallied and divided by the kept-residue count, giving the ``(n_seq, 20)`` fraction
+    matrix ``X`` (each row sums to 1). A span with no canonical residue (empty / all
+    non-canonical) becomes an all-``NaN`` row; ``n_kept`` reports the number of counted
+    residues per row so the frontend can warn. One ``np.bincount`` over ``20 * seq + aa``
+    builds the whole count matrix, so there is no per-sequence Python loop.
+    """
+    seq_ids, aa_idx, n_seq = _canonical_codes_(df_parts=df_parts)
+    counts = np.bincount(seq_ids * 20 + aa_idx,
+                         minlength=n_seq * 20).reshape(n_seq, 20).astype(float)
+    n_kept = counts.sum(axis=1).astype(int)
+    with np.errstate(invalid="ignore"):
+        X = counts / n_kept[:, None]                               # 0 / 0 -> NaN (empty rows)
+    return X, n_kept
+
+
+def get_dipeptide_composition_(df_parts=None):
+    """Per-sequence dipeptide composition over the concatenated sequence parts (vectorized).
+
+    For each row of ``df_parts`` the parts are concatenated into one span and non-canonical
+    residues are dropped; the remaining canonical residues form one contiguous chain over
+    which the 400 ordered adjacent pairs (``AA, AC, ..., YY`` in ``ut.LIST_CANONICAL_AA``
+    order, pair code ``20 * first + second``) are counted and divided by the pair count,
+    giving the ``(n_seq, 400)`` fraction matrix ``X`` (each row with >= 2 canonical residues
+    sums to 1). Pairs are formed on the concatenated, gap-free span, so an adjacency spans a
+    dropped non-canonical residue and crosses a part boundary. A span with fewer than two
+    canonical residues has no pair and becomes an all-``NaN`` row; ``n_pairs`` reports the
+    counted pairs per row so the frontend can warn.
+
+    Fully vectorized: consecutive flattened residues form candidate pairs, a same-sequence
+    mask (``seq_ids[:-1] == seq_ids[1:]``) drops the cross-sequence junctions, and one
+    ``np.bincount`` over ``400 * seq + pair`` builds the whole count matrix — no per-sequence
+    Python loop.
+    """
+    seq_ids, aa_idx, n_seq = _canonical_codes_(df_parts=df_parts)
+    # Candidate adjacent pairs are consecutive flattened residues; keep only same-sequence ones
+    same = seq_ids[:-1] == seq_ids[1:]
+    pair_seq = seq_ids[:-1][same]
+    pair_code = (aa_idx[:-1][same] * 20 + aa_idx[1:][same])         # 0..399
+    counts = np.bincount(pair_seq * 400 + pair_code,
+                         minlength=n_seq * 400).reshape(n_seq, 400).astype(float)
+    n_pairs = counts.sum(axis=1).astype(int)
+    with np.errstate(invalid="ignore"):
+        X = counts / n_pairs[:, None]                              # 0 / 0 -> NaN (< 2 residues)
+    return X, n_pairs
+
+
 # Multi-class / regression label conversion
 def get_labels_ovr_(labels=None, label_test=1, label_ref=0):
     """One-vs-rest: per class, a full-length binary array (class -> test, rest -> ref)."""

@@ -83,6 +83,20 @@ Added
   residue axis rather than the JMD-offset ``positions`` display numbering. ``X`` is therefore
   byte-identical to the values :meth:`~aaanalysis.CPP.run_num` computed and preserves the per-residue
   context that per-AA-averaged sequence features discard.
+- **SequenceFeature.aa_composition**: Amino-acid-composition (AAC) baseline featurizer that
+  turns sequences into a ``(n_seq, 20)`` matrix — the fraction of each of the 20 canonical
+  amino acids (``ut.LIST_CANONICAL_AA`` column order) over a sequence span
+  (``list_parts=None`` → whole ``jmd_n`` + ``tmd`` + ``jmd_c``), dropping gaps /
+  non-canonical residues so each row sums to 1. Fully vectorized; the no-positional-split
+  residue-frequency baseline to compare against ``feature_matrix`` / CPP; optional
+  ``return_df=True`` for a labeled frame.
+- **SequenceFeature.dipeptide_composition**: Dipeptide-composition (DPC) baseline featurizer
+  that turns sequences into a ``(n_seq, 400)`` matrix — the fraction of each of the 400
+  ordered adjacent canonical amino-acid pairs (``AA, AC, ..., YY``) over a sequence span,
+  dropping gaps / non-canonical residues before pairing (adjacencies span dropped residues
+  and cross concatenated part boundaries); each row with at least two canonical residues sums
+  to 1. Captures local sequential order that plain composition discards; fully vectorized;
+  optional ``return_df=True`` for a labeled frame.
 - **SequenceFeature.get_df_parts_from_windows**: Assemble a reference ``df_parts`` from
   per-part window sets (e.g. ``AAWindowSampler.sample_synthetic`` output).
 - **SequenceFeature.get_seq_kws**: Return one protein's ``{jmd_n_seq, tmd_seq, jmd_c_seq}``

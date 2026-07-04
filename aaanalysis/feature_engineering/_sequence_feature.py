@@ -27,6 +27,7 @@ from ._backend.cpp.utils_feature import (get_df_parts_,
                                          get_df_pos_, get_df_pos_parts_)
 from ._backend.cpp.sequence_feature import (get_split_kws_, get_features_, get_feature_names_,
                                             get_feature_descriptions_, get_df_feat_, get_scale_composition_,
+                                            get_aa_composition_, get_dipeptide_composition_,
                                             get_labels_ovr_, get_labels_ovo_, get_labels_quantile_,
                                             get_labels_tiered_)
 from ._backend.cpp_run import _pick_feature_matrix_builder
@@ -942,6 +943,187 @@ class SequenceFeature:
                           f"(empty or all non-canonical); their scale-average row is all-NaN.")
         if return_df:
             return pd.DataFrame(X, index=df_parts.index, columns=list(df_scales.columns))
+        return X
+
+    def aa_composition(self,
+                       df_seq: pd.DataFrame,
+                       list_parts: Optional[Union[str, List[str]]] = None,
+                       return_df: bool = False,
+                       ) -> Union[ut.ArrayLike2D, pd.DataFrame]:
+        """
+        Create the amino-acid-composition (AAC) baseline matrix for given sequences.
+
+        Builds the no-positional-split **amino-acid-composition baseline** featurization: for
+        each sequence the requested Parts are concatenated into one span and the fraction of
+        each of the 20 canonical amino acids over that span is computed, yielding the
+        ``(n_seq, 20)`` matrix ``X``. The 20 columns follow the canonical order
+        ``ut.LIST_CANONICAL_AA`` (``A, C, D, ..., Y``) so column order is stable, and each row
+        sums to 1. Unlike :meth:`SequenceFeature.feature_matrix`, which averages scales over a
+        specific Part-Split, this method carries no positional information — it is a plain
+        residue frequency count.
+
+        **Application.** Use this to build a **baseline feature set** for a prediction model:
+        fit the same classifier on this composition ``X`` and on a :class:`CPP`
+        :meth:`feature_matrix` and compare the scores to show how much the positional
+        Part-Split-Scale features add over a plain amino-acid frequency encoding (the "AAC
+        baseline vs CPP" comparison). It is *not* a positional feature set — reach for
+        :class:`CPP` when you need where-along-the-sequence information.
+
+        .. versionadded:: 1.1.0
+
+        Parameters
+        ----------
+        df_seq : pd.DataFrame, shape (n_samples, n_seq_info)
+            DataFrame containing an ``entry`` column with unique protein identifiers and sequence information
+            in a distinct format: **Position-based**, **Part-based**, **Sequence-based**, or **Sequence-TMD-based**
+            (the same input accepted by :meth:`SequenceFeature.get_df_parts`).
+        list_parts : str or list of str, optional
+            Names of the sequence parts to count over (see :class:`SequenceFeature` for valid parts).
+            If ``None`` (default), the whole TMD-JMD span ``jmd_n`` + ``tmd`` + ``jmd_c`` (the ``tmd_jmd``
+            part) is used. Multiple parts are concatenated per sequence before counting.
+        return_df : bool, default=False
+            If ``True``, return a labeled ``pd.DataFrame`` (rows indexed like ``df_parts``, one column per
+            canonical amino acid) instead of a plain numpy array.
+
+        Returns
+        -------
+        X : array-like, shape (n_samples, 20)
+            Amino-acid-composition matrix containing, per sequence, the fraction of each of the 20 canonical
+            amino acids over the span residues (columns in ``ut.LIST_CANONICAL_AA`` order). Returned as a
+            ``pd.DataFrame`` (amino-acid letters as columns) when ``return_df=True``.
+
+        Notes
+        -----
+        * **Missing / non-canonical residues**: only the 20 canonical amino acids are counted. Gap symbols
+          (``'-'``) and any other non-canonical symbol (e.g. ``'X'``) are dropped per the package convention,
+          so the fractions are taken over the canonical residues only and sum to 1.
+        * A sequence whose span has **no** canonical residue (empty span, or all residues non-canonical)
+          yields an all-``NaN`` row; a ``UserWarning`` naming the count is emitted when ``verbose=True``.
+        * This is a no-positional-split composition only; positional splits remain the job of :class:`CPP`.
+
+        See Also
+        --------
+        * :meth:`SequenceFeature.dipeptide_composition` for the ordered adjacent-pair (DPC) baseline.
+        * :meth:`SequenceFeature.scale_composition` for the scale-based composition baseline.
+        * :meth:`SequenceFeature.feature_matrix` for the positional Part-Split-Scale feature matrix.
+
+        Examples
+        --------
+        .. include:: examples/sf_aa_composition.rst
+        """
+        # Check input
+        ut.check_df_seq(df_seq=df_seq)
+        ut.check_bool(name="return_df", val=return_df)
+        list_parts = ut.check_list_parts(list_parts=list_parts, return_default=False, accept_none=True)
+        # Resolve parts: None -> whole TMD-JMD span (jmd_n + tmd + jmd_c, the "tmd_jmd" part)
+        list_parts_used = ["tmd_jmd"] if list_parts is None else list_parts
+        # Build the sequence parts and the amino-acid-composition matrix
+        df_parts = self.get_df_parts(df_seq=df_seq, list_parts=list_parts_used)
+        X, n_kept = get_aa_composition_(df_parts=df_parts)
+        # Warn about rows that had no canonical residue (all-NaN output)
+        n_empty = int((n_kept == 0).sum())
+        if n_empty > 0 and self.verbose:
+            warnings.warn(f"{n_empty} sequence(s) have no canonical residue in the selected parts "
+                          f"(empty or all non-canonical); their composition row is all-NaN.")
+        if return_df:
+            return pd.DataFrame(X, index=df_parts.index, columns=list(ut.LIST_CANONICAL_AA))
+        return X
+
+    def dipeptide_composition(self,
+                              df_seq: pd.DataFrame,
+                              list_parts: Optional[Union[str, List[str]]] = None,
+                              return_df: bool = False,
+                              ) -> Union[ut.ArrayLike2D, pd.DataFrame]:
+        """
+        Create the dipeptide-composition (DPC) baseline matrix for given sequences.
+
+        Builds the no-positional-split **dipeptide-composition baseline** featurization: for
+        each sequence the requested Parts are concatenated into one span and the fraction of
+        each of the 400 ordered adjacent canonical amino-acid pairs over that span is computed,
+        yielding the ``(n_seq, 400)`` matrix ``X``. The 400 columns are the ordered pairs
+        ``AA, AC, ..., YY`` in ``ut.LIST_CANONICAL_AA`` order (pair ``xy`` = first residue ``x``
+        followed by second residue ``y``) so column order is stable, and each row with at least
+        two canonical residues sums to 1. Unlike :meth:`SequenceFeature.feature_matrix`, which
+        averages scales over a specific Part-Split, this method carries no positional
+        information — it is a plain adjacent-pair frequency count.
+
+        **Application.** Use this to build a **baseline feature set** for a prediction model:
+        fit the same classifier on this composition ``X`` and on a :class:`CPP`
+        :meth:`feature_matrix` and compare the scores to show how much the positional
+        Part-Split-Scale features add over a plain dipeptide-frequency encoding (the "DPC
+        baseline vs CPP" comparison). DPC captures local sequential order (which residue
+        follows which) that plain amino-acid composition discards, while still being
+        position-agnostic — reach for :class:`CPP` when you need where-along-the-sequence
+        information.
+
+        .. versionadded:: 1.1.0
+
+        Parameters
+        ----------
+        df_seq : pd.DataFrame, shape (n_samples, n_seq_info)
+            DataFrame containing an ``entry`` column with unique protein identifiers and sequence information
+            in a distinct format: **Position-based**, **Part-based**, **Sequence-based**, or **Sequence-TMD-based**
+            (the same input accepted by :meth:`SequenceFeature.get_df_parts`).
+        list_parts : str or list of str, optional
+            Names of the sequence parts to count pairs over (see :class:`SequenceFeature` for valid parts).
+            If ``None`` (default), the whole TMD-JMD span ``jmd_n`` + ``tmd`` + ``jmd_c`` (the ``tmd_jmd``
+            part) is used. Multiple parts are concatenated per sequence before pairing, so an adjacent pair
+            may cross a part boundary (see Notes).
+        return_df : bool, default=False
+            If ``True``, return a labeled ``pd.DataFrame`` (rows indexed like ``df_parts``, one column per
+            ordered amino-acid pair) instead of a plain numpy array.
+
+        Returns
+        -------
+        X : array-like, shape (n_samples, 400)
+            Dipeptide-composition matrix containing, per sequence, the fraction of each of the 400 ordered
+            adjacent canonical amino-acid pairs over the span (columns ``AA, AC, ..., YY`` in
+            ``ut.LIST_CANONICAL_AA`` order). Returned as a ``pd.DataFrame`` (pair strings as columns) when
+            ``return_df=True``.
+
+        Notes
+        -----
+        * **Missing / non-canonical residues**: only the 20 canonical amino acids are counted. Gap symbols
+          (``'-'``) and any other non-canonical symbol (e.g. ``'X'``) are dropped **before** pairing per the
+          package convention, so the remaining canonical residues form one contiguous chain — an adjacent
+          pair therefore spans over a dropped residue rather than being broken by it.
+        * **Part boundaries**: parts are concatenated into one span (matching
+          :meth:`SequenceFeature.scale_composition`), so when multiple ``list_parts`` are given an adjacent
+          pair **does** cross the boundary between two concatenated parts (the last residue of one part pairs
+          with the first residue of the next).
+        * A sequence whose span has **fewer than two** canonical residues (empty, a single residue, or all
+          non-canonical) has no adjacent pair and yields an all-``NaN`` row; a ``UserWarning`` naming the
+          count is emitted when ``verbose=True``.
+        * This is a no-positional-split composition only; positional splits remain the job of :class:`CPP`.
+
+        See Also
+        --------
+        * :meth:`SequenceFeature.aa_composition` for the single-residue (AAC) baseline.
+        * :meth:`SequenceFeature.scale_composition` for the scale-based composition baseline.
+        * :meth:`SequenceFeature.feature_matrix` for the positional Part-Split-Scale feature matrix.
+
+        Examples
+        --------
+        .. include:: examples/sf_dipeptide_composition.rst
+        """
+        # Check input
+        ut.check_df_seq(df_seq=df_seq)
+        ut.check_bool(name="return_df", val=return_df)
+        list_parts = ut.check_list_parts(list_parts=list_parts, return_default=False, accept_none=True)
+        # Resolve parts: None -> whole TMD-JMD span (jmd_n + tmd + jmd_c, the "tmd_jmd" part)
+        list_parts_used = ["tmd_jmd"] if list_parts is None else list_parts
+        # Build the sequence parts and the dipeptide-composition matrix
+        df_parts = self.get_df_parts(df_seq=df_seq, list_parts=list_parts_used)
+        X, n_pairs = get_dipeptide_composition_(df_parts=df_parts)
+        # Warn about rows that had fewer than two canonical residues (all-NaN output)
+        n_empty = int((n_pairs == 0).sum())
+        if n_empty > 0 and self.verbose:
+            warnings.warn(f"{n_empty} sequence(s) have fewer than two canonical residues in the selected "
+                          f"parts (no adjacent pair); their composition row is all-NaN.")
+        if return_df:
+            list_aa = list(ut.LIST_CANONICAL_AA)
+            columns = [a + b for a in list_aa for b in list_aa]
+            return pd.DataFrame(X, index=df_parts.index, columns=columns)
         return X
 
     def prune_by_variance(self,
