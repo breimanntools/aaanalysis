@@ -9,10 +9,13 @@ from typing import Optional, Literal, Dict, Union, List, Tuple, Type
 
 import aaanalysis.utils as ut
 
-from ._backend.check_feature import check_df_scales, expand_pos_anchors_
+from ._backend.check_feature import (check_df_scales, expand_pos_anchors_,
+                                     check_match_df_scales_features)
 from ._backend.feature_filter import filter_correlation_
 from ._backend.num_feat.extend_alphabet import extend_alphabet_
+from ._backend.num_feat.feature_matrix import get_feature_matrix_num_
 from ._backend.cpp._filters._assign import assign_dict_num_to_parts
+from ._cpp import _derive_dict_part_lens
 
 
 # I Helper Functions
@@ -66,6 +69,37 @@ def check_match_df_seq_dict_num(df_seq=None, dict_num=None) -> None:
         raise ValueError("'dict_num[*]' has D=0; should be >= 1.")
 
 
+def check_dict_num_parts(dict_num_parts=None) -> Tuple[int, int]:
+    """Validate ``dict_num_parts`` (the value source for ``feature_matrix``) and return ``(n_samples, D)``.
+
+    Each value must be a 3-D ``(n_samples, L_part_max, D)`` ndarray, with a
+    consistent ``n_samples`` (axis 0) and ``D`` (axis 2) across all parts — the
+    contract emitted by :meth:`NumericalFeature.get_parts`.
+    """
+    ut.check_dict(name="dict_num_parts", val=dict_num_parts, accept_none=False)
+    if len(dict_num_parts) == 0:
+        raise ValueError("'dict_num_parts' should not be empty; it must map each part name "
+                         "to a (n_samples, L_part_max, D) tensor (see NumericalFeature.get_parts).")
+    n_seen, d_seen = set(), set()
+    for part, arr in dict_num_parts.items():
+        if not hasattr(arr, "shape") or getattr(arr, "ndim", None) != 3:
+            raise ValueError(
+                f"'dict_num_parts[{part!r}]' should be a 3-D ndarray (n_samples, L_part_max, D); "
+                f"got ndim={getattr(arr, 'ndim', None)}."
+            )
+        n_seen.add(arr.shape[0])
+        d_seen.add(arr.shape[2])
+    if len(n_seen) > 1:
+        raise ValueError(f"'dict_num_parts' has inconsistent n_samples (axis 0) across parts: "
+                         f"{sorted(n_seen)} — all parts must share the same number of samples.")
+    if len(d_seen) > 1:
+        raise ValueError(f"'dict_num_parts' has inconsistent D (axis 2) across parts: "
+                         f"{sorted(d_seen)} — all parts must share the same dimensionality.")
+    if d_seen and 0 in d_seen:
+        raise ValueError("'dict_num_parts[*]' has D=0; should be >= 1.")
+    return n_seen.pop(), d_seen.pop()
+
+
 # II Main Functions
 class NumericalFeature:
     """
@@ -75,7 +109,8 @@ class NumericalFeature:
     It provides numeric helpers for the :class:`CPP` feature engineering pipeline:
     extending the amino acid alphabet of a scale DataFrame, slicing per-residue tensors
     into sequence parts (numerical analog of :meth:`SequenceFeature.get_df_parts`),
-    and removing redundant features by Pearson correlation.
+    reconstructing the model matrix ``X`` from :meth:`CPP.run_num`-selected features
+    (:meth:`feature_matrix`), and removing redundant features by Pearson correlation.
 
     .. versionadded:: 0.1.3
     """
@@ -276,6 +311,160 @@ class NumericalFeature:
         # lens are recoverable from df_parts (non-gap char count) in run_num —
         # no need to expose them as a separate output (keeps the API one-shape).
         return df_parts, dict_part_vals
+
+    @staticmethod
+    def feature_matrix(features: Union[ut.ArrayLike1D, pd.DataFrame],
+                       dict_num_parts: Dict[str, np.ndarray],
+                       df_parts: pd.DataFrame,
+                       df_scales: Optional[pd.DataFrame] = None,
+                       n_jobs: Union[int, None] = 1,
+                       ) -> np.ndarray:
+        """
+        Create the numerical-mode feature matrix ``X`` for given feature ids and per-part tensors.
+
+        Numerical analog of :meth:`SequenceFeature.feature_matrix`: for each sample and each
+        feature id, reconstructs the feature value from the pre-sliced per-residue tensors in
+        ``dict_num_parts`` (PLM embeddings, structure, annotations, ...) instead of an
+        amino-acid-to-scale lookup, so per-residue context is preserved. The result is the
+        numerical input ``X`` for a downstream model or for
+        :meth:`NumericalFeature.filter_correlation`. This is the missing step that turns
+        :meth:`CPP.run_num`-selected features back into a model matrix.
+
+        .. versionadded:: 1.1.0
+
+        Parameters
+        ----------
+        features : array-like, shape (n_features,) or pd.DataFrame
+            Ids of features (``'PART-SPLIT-SCALE'``) for which the matrix of feature values should
+            be created. Alternatively, a ``df_feat`` DataFrame (e.g. from :meth:`CPP.run_num`), in
+            which case its ``'feature'`` column is used.
+        dict_num_parts : dict[str, np.ndarray]
+            Per-part NaN-padded numerical tensors, as produced by :meth:`NumericalFeature.get_parts`
+            and consumed by :meth:`CPP.run_num`. Each value has shape ``(n_samples, L_part_max, D)``,
+            row-aligned across parts; must cover every part referenced in ``features``.
+        df_parts : pd.DataFrame, shape (n_samples, n_parts)
+            The string ``df_parts`` returned **alongside** ``dict_num_parts`` by
+            :meth:`NumericalFeature.get_parts` (row-aligned with it). Supplies each part's real
+            residue length via the exact same helper :meth:`CPP.run_num` uses internally (non-gap
+            character count), so every split lands on the residues ``run_num`` selected. Its columns
+            must cover every part in ``dict_num_parts``.
+        df_scales : pd.DataFrame, shape (n_letters, n_scales), optional
+            DataFrame whose columns **name the D dimensions** of ``dict_num_parts`` (the same
+            ``df_scales`` used to construct the :class:`CPP` for :meth:`CPP.run_num`); its column
+            order defines the ``SCALE`` -> D-index mapping. Its row (amino acid) values are unused in
+            numerical mode. Default from :meth:`load_scales` unless specified in
+            ``options['df_scales']`` — pass your own when the D axis is a custom (e.g. embedding)
+            space, since the default AA-scale set will not match a custom ``D``.
+        n_jobs : int, None, or -1, default=1
+            Number of CPU cores (>=1) used for multiprocessing. If ``None``, the number is optimized
+            automatically. If ``-1``, the number is set to all available cores. Overridden by
+            ``options['n_jobs']`` when set.
+
+        Returns
+        -------
+        X : array-like, shape (n_samples, n_features)
+            Feature matrix containing feature values for samples. Column ``i`` corresponds to
+            feature ``i`` in ``features``; values are byte-identical to those :meth:`CPP.run_num`
+            computed for the same feature ids — both take per-part lengths from the same ``df_parts``,
+            so they select identical residues for every split.
+
+        Raises
+        ------
+        ValueError
+            If ``dict_num_parts`` is empty or has inconsistent / non-3D tensors, if ``df_parts`` is
+            missing a part column or its row count / real lengths do not match ``dict_num_parts``, if
+            the ``D`` axis does not match ``len(df_scales.columns)``, if a feature id is malformed or
+            references a part/scale absent from ``dict_num_parts`` / ``df_scales``, or if a feature's
+            split selects only padded (all-NaN) residues (producing a ``NaN`` value).
+
+        Notes
+        -----
+        * **Mapping ``positions`` back to ``dict_num_parts`` — do not index with it.** The
+          ``'positions'`` column of a :meth:`CPP.run_num` ``df_feat`` is a **display numbering** in
+          TMD-JMD coordinate space: positions are offset by the JMD length and use the ``start`` /
+          ``tmd_len`` / ``jmd_n_len`` / ``jmd_c_len`` shown at run time (e.g. a ``jmd_n_len=10`` TMD
+          is numbered ``21..30``, decoupled from the actual per-sample TMD length). These numbers do
+          **not** directly index the ``(L, D)`` per-part array. ``feature_matrix`` therefore does not
+          read ``positions``; it reconstructs each value the same way :meth:`CPP.run_num` does — by
+          re-applying the ``SPLIT`` encoded in the feature id to the part's **0-based residue axis**
+          (``arange(L_part)``, where ``L_part`` is the sample's real residue count taken from
+          ``df_parts``), selecting the ``SCALE`` column along ``D``, and averaging the selected
+          residues (``nanmean``, rounded to 5 decimals). Because the split is applied to the residue
+          axis and not to the display numbering, ``X`` lines up with ``run_num`` by construction.
+        * **Real per-part lengths come from ``df_parts``**, via the very same length rule
+          (non-gap character count of ``df_parts``) that :meth:`CPP.run_num` applies
+          internally — not inferred from the tensor's NaN padding. Passing the ``df_parts`` that
+          :meth:`NumericalFeature.get_parts` returns alongside ``dict_num_parts`` therefore makes
+          ``X`` identical to ``run_num`` in every case, including when a *real* residue is all-NaN
+          across ``D`` (an unresolved structure position or a masked embedding): its length is still
+          counted from the string, exactly as ``run_num`` counts it.
+        * A feature whose split selects only padded (all-NaN) residues yields a ``NaN`` value; this
+          raises a ``ValueError`` rather than returning a silently-``NaN`` column.
+        * Unlike :meth:`SequenceFeature.feature_matrix` there is no ``accept_gaps`` option: a numeric
+          tensor carries no gap characters, and NaN padding is ignored via ``nanmean`` automatically.
+
+        See Also
+        --------
+        * :meth:`SequenceFeature.feature_matrix`: sequence-mode (per-AA scale) equivalent.
+        * :meth:`NumericalFeature.get_parts`: produces the ``dict_num_parts`` consumed here.
+        * :meth:`CPP.run_num`: selects the feature ids whose values this method reconstructs.
+
+        Examples
+        --------
+        .. include:: examples/nf_feature_matrix.rst
+        """
+        # Load defaults
+        if df_scales is None:
+            df_scales = ut.load_default_scales()
+        # Check input
+        _n_samples, D = check_dict_num_parts(dict_num_parts=dict_num_parts)
+        ut.check_df(name="df_parts", df=df_parts, accept_none=False,
+                    cols_required=list(dict_num_parts.keys()))
+        if len(df_parts) != _n_samples:
+            raise ValueError(
+                f"'df_parts' has {len(df_parts)} rows but 'dict_num_parts' has {_n_samples} samples. "
+                f"Pass the 'df_parts' returned alongside 'dict_num_parts' by NumericalFeature.get_parts."
+            )
+        check_df_scales(df_scales=df_scales)
+        n_scales = len(df_scales.columns)
+        if D != n_scales:
+            raise ValueError(
+                f"'dict_num_parts' D={D} should equal len(df_scales.columns)={n_scales}. "
+                f"'df_scales' names the D dimensions in numerical mode — pass the same 'df_scales' "
+                f"used to construct the CPP for 'run_num'."
+            )
+        features = ut.check_features(features=features, list_parts=list(dict_num_parts.keys()),
+                                     list_scales=list(df_scales.columns))
+        check_match_df_scales_features(df_scales=df_scales, features=features)
+        n_jobs = ut.check_n_jobs(n_jobs=n_jobs)
+        # Real per-part lengths from the SAME source CPP.run_num uses (the string 'df_parts',
+        # non-gap character count) rather than the tensor's NaN padding, so each split lands on
+        # exactly the residues run_num selected — identical X even when a real residue is all-NaN.
+        part_lens = _derive_dict_part_lens(df_parts=df_parts)
+        for part, arr in dict_num_parts.items():
+            if part_lens[part].size and int(part_lens[part].max()) > arr.shape[1]:
+                raise ValueError(
+                    f"'df_parts[{part!r}]' has a real residue length exceeding the padded tensor "
+                    f"length L_part_max={arr.shape[1]} in 'dict_num_parts'. Pass 'df_parts' and "
+                    f"'dict_num_parts' from the same NumericalFeature.get_parts call."
+                )
+        # Build the feature matrix (byte-identical to CPP.run_num's value reconstruction)
+        try:
+            X = get_feature_matrix_num_(features=features, dict_num_parts=dict_num_parts,
+                                        part_lens=part_lens, df_scales=df_scales, n_jobs=n_jobs)
+        except IndexError as error:
+            raise ValueError(
+                "A feature's 'SPLIT' references a residue position beyond a part's length in "
+                "'dict_num_parts'. Ensure 'features' were generated for these parts (e.g. via "
+                "CPP.run_num on the same 'dict_num_parts')."
+            ) from error
+        if not np.isfinite(X).all():
+            raise ValueError(
+                "'feature_matrix' produced NaN feature values: at least one feature's split selects "
+                "only padded (all-NaN) residues in 'dict_num_parts'. Drop that feature or widen the "
+                "part/split so it covers real residues."
+            )
+        return X
 
     @staticmethod
     def extend_alphabet(df_scales: pd.DataFrame,

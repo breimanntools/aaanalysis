@@ -69,6 +69,14 @@ Added
   missing / non-canonical residues — the sequence's mean profile in scale-space (the
   scale-based analogue of amino-acid composition). The no-positional-split baseline to
   compare against ``feature_matrix`` / CPP; optional ``return_df=True`` for a labeled frame.
+- :meth:`~aaanalysis.NumericalFeature.feature_matrix`: Turns :meth:`~aaanalysis.CPP.run_num`-selected
+  features back into a model matrix ``X`` — the numerical analog of
+  :meth:`~aaanalysis.SequenceFeature.feature_matrix`. Reconstructs each ``PART-SPLIT-SCALE`` value
+  from the per-residue tensors in ``dict_num_parts``, with per-part lengths taken from ``df_parts``
+  (the same length source :meth:`~aaanalysis.CPP.run_num` uses), re-applying the split to the part's
+  residue axis rather than the JMD-offset ``positions`` display numbering. ``X`` is therefore
+  byte-identical to the values :meth:`~aaanalysis.CPP.run_num` computed and preserves the per-residue
+  context that per-AA-averaged sequence features discard.
 - **SequenceFeature.get_df_parts_from_windows**: Assemble a reference ``df_parts`` from
   per-part window sets (e.g. ``AAWindowSampler.sample_synthetic`` output).
 - **SequenceFeature.get_seq_kws**: Return one protein's ``{jmd_n_seq, tmd_seq, jmd_c_seq}``
