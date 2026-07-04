@@ -95,3 +95,50 @@ def test_check_metric_message_no_none():
     with pytest.raises(ValueError) as e:
         check_metric(metric="not-a-metric")
     assert "None" not in str(e.value)
+
+
+# --- A5: options validation must check the incoming candidate, not the current global ---
+def test_options_validation_not_bypassed_after_value_set():
+    try:
+        aa.options["verbose"] = True
+        with pytest.raises(ValueError):
+            aa.options["verbose"] = "garbage"
+        assert aa.options["verbose"] is True  # garbage was rejected, not stored
+        aa.options["random_state"] = 7
+        with pytest.raises(ValueError):
+            aa.options["random_state"] = "garbage"
+        assert aa.options["random_state"] == 7
+    finally:
+        aa.options["verbose"] = "off"
+        aa.options["random_state"] = "off"
+
+
+# --- A20: name_tmd must be validated like the other name_* options ---
+def test_options_name_tmd_is_validated():
+    try:
+        with pytest.raises(ValueError):
+            aa.options["name_tmd"] = 123
+        assert aa.options["name_tmd"] == "TMD"
+    finally:
+        aa.options["name_tmd"] = "TMD"
+
+
+# --- A12: re-enabling allow_multiprocessing must not leave LOKY_MAX_CPU_COUNT stuck at 1 ---
+def test_allow_multiprocessing_reenable_clears_loky_cap():
+    import os
+    from aaanalysis.config import check_n_jobs
+    prev = os.environ.get("LOKY_MAX_CPU_COUNT")
+    try:
+        aa.options["allow_multiprocessing"] = False
+        check_n_jobs(n_jobs=1)
+        assert os.environ.get("LOKY_MAX_CPU_COUNT") == "1"
+        aa.options["allow_multiprocessing"] = True
+        check_n_jobs(n_jobs=1)
+        assert os.environ.get("LOKY_MAX_CPU_COUNT") != "1"
+    finally:
+        aa.options["allow_multiprocessing"] = True
+        check_n_jobs(n_jobs=1)  # reset the internal cap flag
+        if prev is None:
+            os.environ.pop("LOKY_MAX_CPU_COUNT", None)
+        else:
+            os.environ["LOKY_MAX_CPU_COUNT"] = prev
