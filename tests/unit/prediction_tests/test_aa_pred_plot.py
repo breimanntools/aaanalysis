@@ -35,13 +35,8 @@ def _df_eval_grid(models, metrics):
     return pd.DataFrame(rows)
 
 
-def _is_heatmap(ax):
-    import matplotlib.collections as mc
-    return any(isinstance(c, mc.QuadMesh) for c in ax.collections)
-
-
 def _is_bar(ax):
-    return any(type(p).__name__ == "Rectangle" for p in ax.patches) and not _is_heatmap(ax)
+    return any(type(p).__name__ == "Rectangle" for p in ax.patches)
 
 
 def _scores(seed=0):
@@ -91,34 +86,17 @@ class TestAAPredPlotEval:
         fig, ax = aa.AAPredPlot().eval(_df_eval(), ylabel="Balanced accuracy")
         assert ax.get_ylabel() == "Balanced accuracy"
 
-    def test_2d_data_is_heatmap(self):
-        # >1 model AND >1 metric -> heatmap
-        fig, ax = aa.AAPredPlot().eval(_df_eval_grid(["svm", "rf", "log"], ["acc", "auc", "f1"]))
-        assert _is_heatmap(ax)
+    def test_multi_model_is_bars_with_hue(self):
+        # Comparing methods (multiple models) -> grouped bars, one color (hue) per model.
+        fig, ax = aa.AAPredPlot().eval(_df_eval_grid(["svm", "rf", "log"], ["acc", "auc"]))
+        assert _is_bar(ax)
+        colors = {tuple(round(c, 4) for c in p.get_facecolor())
+                  for p in ax.patches if type(p).__name__ == "Rectangle"}
+        assert len(colors) >= 3  # a distinct hue per model
 
-    def test_1d_single_model_is_bar(self):
+    def test_single_model_is_bars(self):
         fig, ax = aa.AAPredPlot().eval(_df_eval_grid(["svm"], ["acc", "auc", "f1"]))
         assert _is_bar(ax)
-
-    def test_1d_single_metric_is_bar(self):
-        fig, ax = aa.AAPredPlot().eval(_df_eval_grid(["svm", "rf", "log"], ["auc"]))
-        assert _is_bar(ax)
-
-    def test_kind_bar_forces_bar_on_2d(self):
-        fig, ax = aa.AAPredPlot().eval(_df_eval_grid(["svm", "rf"], ["acc", "auc"]), kind="bar")
-        assert _is_bar(ax)
-
-    def test_kind_heatmap_forces_heatmap_on_1d(self):
-        fig, ax = aa.AAPredPlot().eval(_df_eval_grid(["svm"], ["auc"]), kind="heatmap")
-        assert _is_heatmap(ax)
-
-    def test_kind_invalid_raises(self):
-        with pytest.raises(ValueError):
-            aa.AAPredPlot().eval(_df_eval_grid(["svm"], ["auc"]), kind="pie")
-
-    def test_cmap_on_heatmap(self):
-        fig, ax = aa.AAPredPlot().eval(_df_eval_grid(["svm", "rf"], ["acc", "auc"]), cmap="plasma")
-        assert _is_heatmap(ax)
 
 
 def _df_comp():
