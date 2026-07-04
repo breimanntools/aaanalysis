@@ -245,7 +245,7 @@ def load_scales(name: Literal["scales", "scales_raw", "scales_cat", "scales_pc",
     # Check input
     check_name_of_scale(name=name)
     ut.check_bool(name="just_aaindex", val=just_aaindex)
-    ut.check_bool(name="unclassified_in", val=unclassified_out)
+    ut.check_bool(name="unclassified_out", val=unclassified_out)
     top60_n = check_top60_n(name=name, top60_n=top60_n)
     check_top_explain(name=name, top_explain_n=top_explain_n,
                       top_explain_min_th=top_explain_min_th, top60_n=top60_n)

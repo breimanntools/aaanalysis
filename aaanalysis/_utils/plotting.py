@@ -137,10 +137,10 @@ def _check_marker_size(marker_size: Union[int, float, List[Union[int, float]]] =
     if isinstance(marker_size, (int, float)):
         check_number_range(name='marker_size', val=marker_size, min_val=0, accept_none=True, just_int=False)
     elif isinstance(marker_size, list):
+        if len(marker_size) != len(list_cat):
+            raise ValueError(f"Length must match of 'marker_size' (marker_size) and categories ({list_cat}).")
         for i in marker_size:
             check_number_range(name='marker_size', val=i, min_val=0, accept_none=True, just_int=False)
-    elif isinstance(marker_size, list) and len(marker_size) != len(list_cat):
-        raise ValueError(f"Length must match of 'marker_size' (marker_size) and categories ({list_cat}).")
     else:
         raise ValueError(f"'marker_size' has wrong data type: {type(marker_size)}")
     # Create marker_size list

@@ -51,4 +51,5 @@ def load_features(name: Literal["DOM_GSEC"] = "DOM_GSEC") -> pd.DataFrame:
     check_name(name=name)
     # Load features
     df_feat = ut.read_csv_cached(FOLDER_FEATURES + f"FEATURES_{name}.{ut.STR_FILE_TYPE}")
-    return df_feat
+    # Copy the cached frame so a caller's in-place edit can't corrupt the shared cache
+    return df_feat.copy()

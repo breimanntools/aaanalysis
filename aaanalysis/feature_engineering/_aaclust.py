@@ -42,7 +42,7 @@ def check_match_X_n_clusters(X=None, n_clusters=None, accept_none=True) -> None:
     if n_samples < n_clusters:
         raise ValueError(f"n_samples={n_samples} (in 'X') should be >= 'n_clusters' ({n_clusters})")
     if n_unique_samples < n_clusters:
-        raise ValueError(f"'n_clusters' ({n_clusters}) should be >= n_unique_samples={n_unique_samples} (in 'X').")
+        raise ValueError(f"'n_clusters' ({n_clusters}) should be <= n_unique_samples={n_unique_samples} (in 'X').")
 
 
 def check_match_df_seq_X(df_seq=None, X=None) -> None:

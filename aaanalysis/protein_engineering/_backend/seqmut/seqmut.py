@@ -191,7 +191,7 @@ def comp_scan_scores(dX=None, mean_dif=None, weight_vec=None):
 
 
 def build_scan_output(df_plan=None, delta_cpp=None, shift_score=None,
-                      delta_pred=None, wt_pred=None, wt_pred_std=None):
+                      delta_pred=None, wt_pred=None, wt_pred_std=None, sort=True):
     """Assemble the tidy scan output DataFrame, sorted by descending |ΔCPP|.
 
     When ``delta_pred`` is given (a model is bound), the model prediction-shift columns
@@ -209,7 +209,11 @@ def build_scan_output(df_plan=None, delta_cpp=None, shift_score=None,
         df_out[ut.COL_WT_PRED_STD] = wt_pred_std
         cols = cols + [ut.COL_DELTA_PRED, ut.COL_WT_PRED, ut.COL_WT_PRED_STD]
     df_out = df_out[cols]
-    df_out = df_out.sort_values(ut.COL_DELTA_CPP, ascending=False).reset_index(drop=True)
+    if sort:
+        df_out = df_out.sort_values(ut.COL_DELTA_CPP, ascending=False).reset_index(drop=True)
+    else:
+        # Keep df_plan row order so callers can align results positionally (no re-join).
+        df_out = df_out.reset_index(drop=True)
     return df_out
 
 

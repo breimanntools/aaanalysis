@@ -24,7 +24,10 @@ def get_entries_from_fasta(file_path=None, col_id="entry", col_seq="sequence", c
                 if len(list_info) > 1:
                     for i in range(1, len(list_info[1:])+1):
                         dict_current_entry[f'info{i}'] = list_info[i]
-            else:
+            elif line:
+                if not dict_current_entry:
+                    raise ValueError(f"'file_path' ('{file_path}') is not a valid FASTA file: "
+                                     f"sequence data appears before the first '>' header.")
                 dict_current_entry[col_seq] += line
         if dict_current_entry:
             list_entries.append(dict_current_entry)
