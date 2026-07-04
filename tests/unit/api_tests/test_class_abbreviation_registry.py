@@ -49,6 +49,8 @@ REGISTRY = {
     "SeqOpt": "seqopt",
     "SeqOptPlot": "seqopt_plot",
     "TreeModel": "tm",
+    "AAPred": "aapred",
+    "AAPredPlot": "aapred_plot",
     "ShapModel": "sm",
     "StructurePreprocessor": "stp",
     "AnnotationPreprocessor": "ap",

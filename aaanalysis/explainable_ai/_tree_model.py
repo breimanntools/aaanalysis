@@ -453,6 +453,11 @@ class TreeModel(Wrapper):
         .. note::
            :meth:`TreeModel.fit` must be called before using this method.
 
+        .. note::
+           ``TreeModel`` is focused on global Monte-Carlo feature *importance*. For training and
+           deploying prediction models (selecting estimators, tuning, and scoring at the sequence,
+           domain, and window level), :class:`AAPred` is the recommended entry point.
+
         .. versionadded:: 0.1.0
 
         Parameters
