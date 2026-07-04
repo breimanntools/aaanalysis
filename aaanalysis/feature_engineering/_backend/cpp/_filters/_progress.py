@@ -12,6 +12,16 @@ Dev rules (important for macOS/Windows):
   "An attempt has been made to start a new process before the current process has finished..."
 - Create multiprocessing shared objects lazily (only when needed) and only from the main process.
 - Always allow passing shared_* objects explicitly to support true cross-process progress updates.
+
+Graceful-degradation contract:
+- The multiprocessing.Manager only backs a *cosmetic* cross-process progress bar.
+  In some non-interactive contexts (``python -c``, heredocs, certain subprocess
+  shells) the Manager's spawn/pipe handshake fails with EOFError / OSError.
+  Manager creation is therefore best-effort: on failure ``_get_mp_shared()``
+  returns None (leaving all module globals untouched) and ``_resolve_shared()``
+  falls back to the thread-safe ``DEFAULT_SHARED_*`` objects, so the run still
+  completes single-process instead of aborting. When the Manager succeeds,
+  behavior is unchanged.
 """
 import threading
 import multiprocessing as mp
@@ -50,9 +60,22 @@ def _get_mp_shared():
     """
     Lazily create a multiprocessing.Manager + shared objects.
 
+    Returns a ``(shared_max_progress, shared_value_lock, print_lock)`` triple, or
+    None when Manager-backed shared state is unavailable. None is returned when:
+    - called from a spawned worker (must never start a Manager there), or
+    - the Manager could not be created (best-effort; see below).
+
     IMPORTANT:
     - Must only be called from the main process.
     - Never called at import time.
+
+    Best-effort Manager creation: a ``multiprocessing.Manager`` spawns a helper
+    process and talks to it over a pipe. In some non-interactive contexts
+    (``python -c``, heredocs, certain subprocess shells) that handshake fails with
+    EOFError / OSError. Since the Manager only backs a cosmetic cross-process
+    progress bar, such a failure is non-fatal: we return None (leaving every module
+    global untouched and the refcount unbumped) and the caller degrades to the
+    thread-safe ``DEFAULT_SHARED_*`` objects via ``_resolve_shared()``.
     """
     global _MP_MANAGER, _MP_SHARED_MAX_PROGRESS, _MP_SHARED_VALUE_LOCK, _MP_PRINT_LOCK, _MP_MANAGER_REFCOUNT
 
@@ -61,10 +84,31 @@ def _get_mp_shared():
         return None
 
     if _MP_MANAGER is None:
-        _MP_MANAGER = mp.Manager()
-        _MP_SHARED_MAX_PROGRESS = _MP_MANAGER.Value("d", 0.0)
-        _MP_SHARED_VALUE_LOCK = _MP_MANAGER.Lock()
-        _MP_PRINT_LOCK = _MP_MANAGER.Lock()
+        # Build into locals first, commit to globals only on full success, so a
+        # partial failure never leaves half-initialized globals or a bumped
+        # refcount. The broad ``except`` is intentional and scoped to just this
+        # creation block: the Manager only powers a cosmetic progress bar, so any
+        # spawn/handshake failure (EOFError / OSError and friends) must degrade to
+        # the thread-safe defaults instead of aborting the run.
+        manager = None
+        try:
+            manager = mp.Manager()
+            shared_max_progress = manager.Value("d", 0.0)
+            shared_value_lock = manager.Lock()
+            print_lock = manager.Lock()
+        except Exception:
+            # Shut down a half-started Manager process (if any) so it does not leak,
+            # then signal "no shared state" -> caller uses DEFAULT_SHARED_*.
+            if manager is not None:
+                try:
+                    manager.shutdown()
+                except Exception:
+                    pass
+            return None
+        _MP_MANAGER = manager
+        _MP_SHARED_MAX_PROGRESS = shared_max_progress
+        _MP_SHARED_VALUE_LOCK = shared_value_lock
+        _MP_PRINT_LOCK = print_lock
         _MP_MANAGER_REFCOUNT = 0
 
     _MP_MANAGER_REFCOUNT += 1
@@ -117,6 +161,35 @@ def _resolve_shared(shared_max_progress=None, shared_value_lock=None, print_lock
             return mp_shared
 
     return DEFAULT_SHARED_MAX_PROGRESS, DEFAULT_SHARED_VALUE_LOCK, DEFAULT_PRINT_LOCK
+
+
+def _worker_shared(shared_max_progress, shared_value_lock, print_lock):
+    """
+    Adapt resolved progress objects for handing to spawned *process* workers.
+
+    joblib's process backends (loky) pickle whatever is captured in each
+    ``delayed(...)`` call. Manager-backed proxies pickle fine and stay shared
+    across processes, so they are returned unchanged (unified progress bar,
+    byte-identical to the Manager-available path). The thread-safe
+    ``DEFAULT_SHARED_*`` fallbacks (used when the Manager could not be created;
+    see ``_get_mp_shared``) are NOT picklable to spawned processes: a
+    ``threading.Lock`` cannot cross the process boundary. In that degraded case
+    return ``(None, None, None)`` so each worker self-resolves its own
+    process-local defaults instead of aborting the whole run with a
+    ``PicklingError``. Progress then reports per-worker (cosmetic degradation),
+    but the computation still completes.
+
+    Only needed at process-backed dispatch sites; threading-backed parallelism
+    shares the objects in-process and does not pickle them.
+    """
+    is_thread_default = (
+        shared_max_progress is DEFAULT_SHARED_MAX_PROGRESS
+        or shared_value_lock is DEFAULT_SHARED_VALUE_LOCK
+        or print_lock is DEFAULT_PRINT_LOCK
+    )
+    if is_thread_default:
+        return None, None, None
+    return shared_max_progress, shared_value_lock, print_lock
 
 
 def _reset_progress(shared_max_progress, shared_value_lock):
