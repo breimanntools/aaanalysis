@@ -85,10 +85,14 @@ def check_n_jobs(n_jobs=None):
             _loky_capped_by_options = True
         os.environ['LOKY_MAX_CPU_COUNT'] = "1"
     elif _loky_capped_by_options:
-        if _loky_prev_value is None:
-            os.environ.pop('LOKY_MAX_CPU_COUNT', None)
-        else:
-            os.environ['LOKY_MAX_CPU_COUNT'] = _loky_prev_value
+        # Only undo our own cap if it is still in place. If the user set their own
+        # LOKY_MAX_CPU_COUNT (e.g. for another loky/joblib library) while multiprocessing
+        # was disabled, the value is no longer "1" -> leave it untouched.
+        if os.environ.get('LOKY_MAX_CPU_COUNT') == "1":
+            if _loky_prev_value is None:
+                os.environ.pop('LOKY_MAX_CPU_COUNT', None)
+            else:
+                os.environ['LOKY_MAX_CPU_COUNT'] = _loky_prev_value
         _loky_capped_by_options = False
         _loky_prev_value = None
     # Set n_jobs to maximum number of CPUs

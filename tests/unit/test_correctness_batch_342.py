@@ -147,3 +147,26 @@ def test_allow_multiprocessing_restores_user_loky_value():
             os.environ.pop("LOKY_MAX_CPU_COUNT", None)
         else:
             os.environ["LOKY_MAX_CPU_COUNT"] = prev
+
+
+# --- A12 (cont.): a value the user sets DURING the disabled window must not be clobbered ---
+def test_allow_multiprocessing_reenable_preserves_user_change_during_disable():
+    import os
+    from aaanalysis import config as _cfg
+    prev = os.environ.get("LOKY_MAX_CPU_COUNT")
+    try:
+        aa.options["allow_multiprocessing"] = True
+        _cfg.check_n_jobs(n_jobs=1)                 # clean flag state
+        aa.options["allow_multiprocessing"] = False
+        _cfg.check_n_jobs(n_jobs=1)                 # our cap -> "1"
+        os.environ["LOKY_MAX_CPU_COUNT"] = "32"     # user sets their own value while disabled
+        aa.options["allow_multiprocessing"] = True
+        _cfg.check_n_jobs(n_jobs=1)
+        assert os.environ.get("LOKY_MAX_CPU_COUNT") == "32"   # user's value not clobbered
+    finally:
+        aa.options["allow_multiprocessing"] = True
+        _cfg.check_n_jobs(n_jobs=1)
+        if prev is None:
+            os.environ.pop("LOKY_MAX_CPU_COUNT", None)
+        else:
+            os.environ["LOKY_MAX_CPU_COUNT"] = prev
