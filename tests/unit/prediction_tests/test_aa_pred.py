@@ -94,12 +94,11 @@ class TestAAPredFit:
         with pytest.raises(ValueError):
             aa.AAPred(random_state=0).fit(X, labels)
 
-    def test_predict_uses_real_negative_label(self):
+    def test_fit_sets_real_negative_label(self):
         X, labels01 = _data()
         labels = np.where(labels01 == 0, 2, 1)  # classes {1, 2}
         aapred = aa.AAPred(random_state=0).fit(X, labels, label_pos=1)
         assert aapred.label_neg_ == 2
-        assert set(np.unique(aapred.predict(X))).issubset({1, 2})
 
 
 class TestAAPredModelsAndHPO:
@@ -224,43 +223,79 @@ class TestAAPredEval:
         pd.testing.assert_frame_equal(d1, d2)
 
 
+@pytest.fixture(scope="module")
+def seq_fitted():
+    """A fitted AAPred with a bound df_feat, for the sequence-level predict API."""
+    df_seq = aa.load_dataset(name="DOM_GSEC", n=10)
+    labels = df_seq["label"].to_list()
+    df_feat = aa.load_features(name="DOM_GSEC").head(20)
+    sf = aa.SequenceFeature()
+    X = sf.feature_matrix(features=df_feat, df_parts=sf.get_df_parts(df_seq=df_seq))
+    aapred = aa.AAPred(df_feat=df_feat, random_state=42).fit(X, labels)
+    return aapred, df_seq, np.asarray(X)
+
+
 class TestAAPredPredict:
-    def test_predict_proba_shape(self):
-        X, labels = _data()
-        aapred = aa.AAPred(random_state=0).fit(X, labels)
-        pred, pred_std = aapred.predict_proba(X)
-        assert pred.shape == (len(X),) and pred_std.shape == (len(X),)
+    def test_predict_seq_columns(self, seq_fitted):
+        aapred, df_seq, _ = seq_fitted
+        df_pred = aapred.predict(df_seq.head(5), level="seq")
+        assert list(df_pred.columns) == ["entry", "score", "score_std"]
 
-    def test_predict_proba_range(self):
-        X, labels = _data()
-        aapred = aa.AAPred(random_state=0).fit(X, labels)
-        pred, _ = aapred.predict_proba(X)
-        assert pred.min() >= 0 and pred.max() <= 1
+    def test_predict_seq_scores_in_range(self, seq_fitted):
+        aapred, df_seq, _ = seq_fitted
+        df_pred = aapred.predict(df_seq.head(5), level="seq")
+        assert df_pred["score"].between(0, 1).all()
 
-    def test_predict_proba_before_fit_raises(self):
-        X, labels = _data()
+    def test_predict_seq_threshold_adds_predicted_label(self, seq_fitted):
+        aapred, df_seq, _ = seq_fitted
+        df_pred = aapred.predict(df_seq.head(5), level="seq", threshold=0.5)
+        assert "predicted_label" in df_pred.columns
+        assert set(df_pred["predicted_label"]).issubset({aapred.label_pos_, aapred.label_neg_})
+
+    def test_predict_domain_columns(self, seq_fitted):
+        aapred, df_seq, _ = seq_fitted
+        df_pred = aapred.predict(df_seq[df_seq["entry"] == "P05067"], level="domain", window=2)
+        assert list(df_pred.columns) == ["entry", "offset", "score", "is_best"]
+
+    def test_predict_window_columns(self, seq_fitted):
+        aapred, df_seq, _ = seq_fitted
+        one = df_seq[df_seq["entry"] == "P05067"][["entry", "sequence"]]
+        df_pred = aapred.predict(one, level="window", tmd_len=15, step=20)
+        assert list(df_pred.columns) == ["entry", "position", "score", "score_std"]
+
+    def test_predict_window_without_tmd_len_raises(self, seq_fitted):
+        aapred, df_seq, _ = seq_fitted
+        one = df_seq[df_seq["entry"] == "P05067"][["entry", "sequence"]]
         with pytest.raises(ValueError):
-            aa.AAPred().predict_proba(X)
+            aapred.predict(one, level="window")
 
-    def test_predict_labels(self):
-        X, labels = _data()
-        aapred = aa.AAPred(random_state=0).fit(X, labels)
-        pred_labels = aapred.predict(X, threshold=0.5)
-        assert set(np.unique(pred_labels)).issubset({0, 1})
-
-    def test_predict_threshold_extremes(self):
-        X, labels = _data()
-        aapred = aa.AAPred(random_state=0).fit(X, labels)
-        assert (aapred.predict(X, threshold=1.0) == 0).all() or True
-        assert (aapred.predict(X, threshold=0.0) == 1).all()
-
-    def test_predict_invalid_threshold_raises(self):
-        X, labels = _data()
-        aapred = aa.AAPred(random_state=0).fit(X, labels)
+    def test_predict_invalid_level_raises(self, seq_fitted):
+        aapred, df_seq, _ = seq_fitted
         with pytest.raises(ValueError):
-            aapred.predict(X, threshold=2.0)
+            aapred.predict(df_seq.head(3), level="bogus")
+
+    def test_predict_invalid_threshold_raises(self, seq_fitted):
+        aapred, df_seq, _ = seq_fitted
+        with pytest.raises(ValueError):
+            aapred.predict(df_seq.head(3), level="seq", threshold=2.0)
 
     def test_predict_before_fit_raises(self):
-        X, labels = _data()
+        df_seq = aa.load_dataset(name="DOM_GSEC", n=5)
+        df_feat = aa.load_features(name="DOM_GSEC").head(20)
         with pytest.raises(ValueError):
-            aa.AAPred().predict(X)
+            aa.AAPred(df_feat=df_feat).predict(df_seq.head(3), level="seq")
+
+    def test_predict_without_df_feat_raises(self):
+        # Fitted (so not the not-fitted error) but no bound df_feat -> check_featurizer raises.
+        X, labels = _data()
+        aapred = aa.AAPred(random_state=0).fit(X, labels)
+        df_seq = aa.load_dataset(name="DOM_GSEC", n=5)
+        with pytest.raises(ValueError):
+            aapred.predict(df_seq.head(3), level="seq")
+
+    def test_predict_X_raw_ensemble_scores(self, seq_fitted):
+        # The private ensemble scorer that predict() builds on.
+        aapred, _, X = seq_fitted
+        pred, pred_std = aapred._predict_X(X)
+        assert pred.shape == (len(X),) and pred_std.shape == (len(X),)
+        assert pred.min() >= 0 and pred.max() <= 1

@@ -1,5 +1,5 @@
 """
-Backend for AAPredPlot.clustermap: cluster samples by explanation similarity
+Backend for AAPredPlot.predict(kind="clustermap"): cluster samples by explanation similarity
 (Pearson correlation of their per-sample importance/SHAP vectors).
 """
 import numpy as np
