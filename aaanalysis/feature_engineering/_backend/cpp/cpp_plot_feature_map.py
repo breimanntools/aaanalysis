@@ -318,6 +318,9 @@ def plot_feature_map(df_feat=None, df_cat=None,
                                          position=position_bar,
                                          multialignment=multialignment_bar,
                                          weight_annotation="bold")
+        # Intentional: only the max tick is labelled on the cumulative-importance bar.
+        # Do NOT re-key this to imp_bar_label_type (reviewed and rejected: it clutters
+        # every default feature-map figure).
         show_only_max = add_imp_bar_top != "long"
         args_ticks_0 = dict(show_zero=False, show_only_max=show_only_max, precision=1)
         ut.ticks_0(ax_br, **args_ticks_0)

@@ -19,6 +19,7 @@ import aaanalysis.utils as ut
 from .._split import SplitRange
 from ._progress import (
     _resolve_shared,
+    _worker_shared,
     _reset_progress,
     _cleanup_mp_manager,
 )
@@ -337,10 +338,15 @@ def pre_filtering_info(df_parts=None, split_kws=None, dict_part_vals=None,
             prefer_multiprocessing=False,
         )
 
+    # Manager proxies pickle to loky workers unchanged; the thread-safe fallback
+    # (Manager unavailable) is passed as None so each worker uses its own defaults.
+    w_max_progress, w_value_lock, w_print_lock = _worker_shared(
+        shared_max_progress, shared_value_lock, print_lock
+    )
     scale_idx_chunks = np.array_split(np.arange(len(list_scales)), n_jobs)
     with Parallel(n_jobs=n_jobs) as parallel:
         results = parallel(
-            delayed(_mp_pre_filtering_info)(chunk, shared_max_progress, shared_value_lock, print_lock)
+            delayed(_mp_pre_filtering_info)(chunk, w_max_progress, w_value_lock, w_print_lock)
             for chunk in scale_idx_chunks
         )
 

@@ -39,7 +39,7 @@ class TestFitNClustersMatch:
         X = np.array([[1.0, 2.0], [1.0, 2.0], [3.0, 4.0],
                       [5.0, 6.0], [7.0, 8.0]])
         aac = aa.AAclust(verbose=False, random_state=42)
-        with pytest.raises(ValueError, match="should be >= n_unique_samples"):
+        with pytest.raises(ValueError, match="should be <= n_unique_samples"):
             aac.fit(X, n_clusters=5)
 
     @given(n_clusters=some.integers(min_value=2, max_value=6))

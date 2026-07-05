@@ -159,6 +159,8 @@ def plot_settings(font_scale: Union[int, float] = 1,
 
     # Adjust weight of text and lines
     if weight_bold:
+        # weight_bold affects font/label weight only. Do NOT add axes.linewidth or
+        # tick-width settings here (reviewed and rejected: it thickens every bold figure).
         plt.rcParams["axes.labelweight"] = "bold"
         plt.rcParams["axes.titleweight"] = "bold"
     else:

@@ -27,6 +27,12 @@ _dict_options = {
 }
 
 
+# Tracks whether allow_multiprocessing=False set the loky CPU cap, and the user's prior
+# LOKY_MAX_CPU_COUNT value, so re-enabling multiprocessing restores it (never loses it).
+_loky_capped_by_options = False
+_loky_prev_value = None
+
+
 # Check system level (option) parameters or depending on parameters
 def check_verbose(verbose=None):
     """Check if general verbosity is on or off. Adjusted based on options setting and value provided to object"""
@@ -67,12 +73,28 @@ def check_n_jobs(n_jobs=None):
     global_n_jobs = options["n_jobs"]
     if global_n_jobs != "off":
         n_jobs = global_n_jobs
+    global _loky_capped_by_options, _loky_prev_value
     allow_multiprocessing = options["allow_multiprocessing"]
     check_bool(name="allow_multiprocessing (options)", val=allow_multiprocessing)
-    # Disable multiprocessing
+    # Cap loky when multiprocessing is disabled, remembering the user's prior value so it is
+    # restored (not lost) once multiprocessing is re-enabled on the next parallel-capable call.
     if not allow_multiprocessing:
         n_jobs = 1
+        if not _loky_capped_by_options:
+            _loky_prev_value = os.environ.get('LOKY_MAX_CPU_COUNT')
+            _loky_capped_by_options = True
         os.environ['LOKY_MAX_CPU_COUNT'] = "1"
+    elif _loky_capped_by_options:
+        # Only undo our own cap if it is still in place. If the user set their own
+        # LOKY_MAX_CPU_COUNT (e.g. for another loky/joblib library) while multiprocessing
+        # was disabled, the value is no longer "1" -> leave it untouched.
+        if os.environ.get('LOKY_MAX_CPU_COUNT') == "1":
+            if _loky_prev_value is None:
+                os.environ.pop('LOKY_MAX_CPU_COUNT', None)
+            else:
+                os.environ['LOKY_MAX_CPU_COUNT'] = _loky_prev_value
+        _loky_capped_by_options = False
+        _loky_prev_value = None
     # Set n_jobs to maximum number of CPUs
     if n_jobs == -1:
         n_jobs = os.cpu_count()
@@ -130,10 +152,13 @@ def _check_option(name_option="", option=None):
     """Check if option is valid"""
     if name_option == "verbose":
         if option != "off":
-            check_verbose(verbose=option)
+            # Validate the incoming candidate directly (check_verbose resolves against
+            # the current global and would skip validating a new value once one is set).
+            check_bool(name=name_option, val=option)
     if name_option == "random_state":
         if option != "off":
-            check_random_state(random_state=option)
+            check_number_range(name=name_option, val=option, min_val=0,
+                               accept_none=True, just_int=True)
     if name_option == "n_jobs":
         if option != "off":
             # Concrete override: -1 (all cores) or a positive int. None is not a
@@ -144,12 +169,12 @@ def _check_option(name_option="", option=None):
                                    accept_none=False, just_int=True)
     if name_option == "allow_multiprocessing":
         check_bool(name=name_option, val=option)
-    if "jmd" in name_option:
-        if "len" in name_option:
-            check_number_range(name=name_option, val=option,
-                               min_val=0, accept_none=True, just_int=True)
-        if "name" in name_option:
-            check_str(name=name_option, val=option, accept_none=False)
+    if "jmd" in name_option and "len" in name_option:
+        check_number_range(name=name_option, val=option,
+                           min_val=0, accept_none=True, just_int=True)
+    if "name" in name_option:
+        # Covers name_tmd, name_jmd_n, name_jmd_c
+        check_str(name=name_option, val=option, accept_none=False)
     if name_option == "ext_len":
         check_number_range(name=name_option, val=option, min_val=0, accept_none=False, just_int=True)
     if "df" in name_option:

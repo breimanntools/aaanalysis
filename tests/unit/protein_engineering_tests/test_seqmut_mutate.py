@@ -45,6 +45,14 @@ class TestSeqMutMutate:
         df = aa.SeqMut().mutate(df_seq=df_seq_pos, mutations=_muts())
         assert ut.COL_DELTA_CPP not in df.columns
 
+    def test_with_df_feat_duplicate_rows_no_crash(self, df_seq_pos, df_feat):
+        # Two identical (entry, pos, to_aa) rows share the same mutation label; the scored
+        # results must still align row-for-row (no non-unique re-join crash).
+        muts = _muts(("P1", "P1"), (12, 12), ("K", "K"))
+        df = aa.SeqMut().mutate(df_seq=df_seq_pos, mutations=muts, df_feat=df_feat)
+        assert len(df) == 2
+        assert df[ut.COL_DELTA_CPP].iloc[0] == pytest.approx(df[ut.COL_DELTA_CPP].iloc[1], abs=1e-12)
+
     def test_jmd_n_len(self, df_seq_pos, df_feat):
         df = aa.SeqMut().mutate(df_seq=df_seq_pos, mutations=_muts(("P1",), (12,), ("K",)),
                                 df_feat=df_feat, jmd_n_len=8)

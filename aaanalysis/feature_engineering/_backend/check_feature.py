@@ -535,7 +535,8 @@ def check_match_df_parts_df_scales(df_parts=None, df_scales=None, accept_gaps=Fa
             char_scales.append(ut.STR_AA_GAP)
         missing_char = [x for x in char_parts if x not in char_scales]
         # Replace gaps by default amino acid gap
-        if accept_gaps:
+        if accept_gaps and missing_char:
+            df_parts = df_parts.copy()  # copy so we don't mutate the caller's df_parts in place
             for col in list(df_parts):
                 for mc in missing_char:
                     df_parts[col] = df_parts[col].str.replace(mc, ut.STR_AA_GAP)

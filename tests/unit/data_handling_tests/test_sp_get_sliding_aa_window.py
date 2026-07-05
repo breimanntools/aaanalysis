@@ -48,13 +48,23 @@ class TestGetSlidingAAWindow:
             sp.get_sliding_aa_window(seq="ACDEFGHIKLMNPQRSTVWY", slide_start=100, accept_gap=False)
 
     @settings(max_examples=10, deadline=None)
-    @given(slide_stop=st.integers(min_value=1, max_value=50))
+    # window_size defaults to 5, so a valid span needs slide_stop >= 4 (slide_start defaults to 0)
+    @given(slide_stop=st.integers(min_value=4, max_value=50))
     def test_slide_stop_valid(self, slide_stop):
         """Test a valid 'slide_stop' parameter."""
         sp = aa.SequencePreprocessor()
         windows = sp.get_sliding_aa_window(seq="ACDEFGHIKLMNPQRSTVWY", slide_stop=slide_stop)
         assert isinstance(windows, list)
         assert all(isinstance(window, str) for window in windows)
+
+    def test_window_larger_than_span_raises(self):
+        """An explicit slide window larger than the slide span is rejected."""
+        sp = aa.SequencePreprocessor()
+        with pytest.raises(ValueError):
+            sp.get_sliding_aa_window(seq="ACDEFGHIKLMNPQRSTVWY", slide_start=0, slide_stop=2, window_size=100)
+        # a window that exactly fits the span (span + 1) is accepted
+        windows = sp.get_sliding_aa_window(seq="ACDEFGHIKLMNPQRSTVWY", slide_start=0, slide_stop=4, window_size=5)
+        assert isinstance(windows, list) and len(windows) >= 1
 
     def test_slide_stop_invalid(self):
         """Test an invalid 'slide_stop' parameter."""
@@ -144,14 +154,16 @@ class TestGetSlidingAAWindowComplex:
         """Test valid combinations of parameters."""
         sp = aa.SequencePreprocessor()
         if slide_start < slide_stop:
-            windows = sp.get_sliding_aa_window(seq=seq,
-                                               slide_start=slide_start,
-                                               slide_stop=slide_stop,
-                                               window_size=window_size,
-                                               index1=index1,
-                                               gap=gap)
-            assert isinstance(windows, list)
-            assert all(isinstance(window, str) for window in windows)
+            kwargs = dict(seq=seq, slide_start=slide_start, slide_stop=slide_stop,
+                          window_size=window_size, index1=index1, gap=gap)
+            if window_size <= slide_stop - slide_start + 1:
+                windows = sp.get_sliding_aa_window(**kwargs)
+                assert isinstance(windows, list)
+                assert all(isinstance(window, str) for window in windows)
+            else:
+                # a window larger than the slide span is now rejected
+                with pytest.raises(ValueError):
+                    sp.get_sliding_aa_window(**kwargs)
 
     @settings(max_examples=10, deadline=None)
     @given(

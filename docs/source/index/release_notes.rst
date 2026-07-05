@@ -69,6 +69,14 @@ Added
   missing / non-canonical residues — the sequence's mean profile in scale-space (the
   scale-based analogue of amino-acid composition). The no-positional-split baseline to
   compare against ``feature_matrix`` / CPP; optional ``return_df=True`` for a labeled frame.
+- :meth:`~aaanalysis.NumericalFeature.feature_matrix`: Turns :meth:`~aaanalysis.CPP.run_num`-selected
+  features back into a model matrix ``X`` — the numerical analog of
+  :meth:`~aaanalysis.SequenceFeature.feature_matrix`. Reconstructs each ``PART-SPLIT-SCALE`` value
+  from the per-residue tensors in ``dict_num_parts``, with per-part lengths taken from ``df_parts``
+  (the same length source :meth:`~aaanalysis.CPP.run_num` uses), re-applying the split to the part's
+  residue axis rather than the JMD-offset ``positions`` display numbering. ``X`` is therefore
+  byte-identical to the values :meth:`~aaanalysis.CPP.run_num` computed and preserves the per-residue
+  context that per-AA-averaged sequence features discard.
 - **SequenceFeature.get_df_parts_from_windows**: Assemble a reference ``df_parts`` from
   per-part window sets (e.g. ``AAWindowSampler.sample_synthetic`` output).
 - **SequenceFeature.get_seq_kws**: Return one protein's ``{jmd_n_seq, tmd_seq, jmd_c_seq}``
@@ -366,6 +374,13 @@ Changed
 Fixed
 ~~~~~
 
+- :meth:`~aaanalysis.CPP.run` with ``n_jobs > 1`` no longer crashes in non-interactive
+  contexts (e.g. ``python -c``, heredocs, some subprocess shells) where starting a
+  ``multiprocessing.Manager`` for the cross-process progress bar raised ``EOFError`` /
+  ``OSError``. The Manager is now created best-effort: on failure CPP degrades to the
+  thread-safe, single-process progress path and the run completes normally instead of
+  aborting (previously the only workaround was ``n_jobs=1``). When the Manager is
+  available, behavior and output are unchanged.
 - **CPP splits on free peptides / short parts (#338)**: ``aap.find_features`` and the
   ``Pattern`` / ``PeriodicPattern`` splits were unusable on free peptides with no flanking
   context (the linear-epitope case). ``find_features(search="fast")`` and its Stage-3

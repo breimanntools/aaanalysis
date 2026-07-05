@@ -62,7 +62,7 @@ def post_check_df_seq(df_seq=None, n=None, name=None) -> None:
                       f"\nThis maximum value depends on the filtering settings used."
     # Validation of sequence and domain datasets
     if n is not None and len(df_seq) != n*2:
-        warnings.warn(warning_message)
+        warnings.warn(warning_message, UserWarning)
 
 
 # Helper functions
@@ -256,7 +256,9 @@ def load_dataset(name: str = "Overview",
     # Load overview table
     if name == "Overview":
         return ut.read_csv_cached(FOLDER_BENCHMARKS + f"Overview.{ut.STR_FILE_TYPE}").copy()
-    df = ut.read_csv_cached(FOLDER_BENCHMARKS + name + f".{ut.STR_FILE_TYPE}")
+    # Copy the cached frame (like the Overview branch) so downstream filtering /
+    # non-canonical-AA substitution can't mutate the shared cache in place
+    df = ut.read_csv_cached(FOLDER_BENCHMARKS + name + f".{ut.STR_FILE_TYPE}").copy()
     # Filter data
     if min_len is not None:
         n_before = len(df)

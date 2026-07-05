@@ -63,7 +63,7 @@ def comp_seq_sim(seq1: Optional[str] = None,
         ut.check_df(name="df_seq", df=df_seq, accept_none=False, accept_nan=False,
                     cols_required=[ut.COL_SEQ, ut.COL_ENTRY])
         for entry, seq in zip(df_seq[ut.COL_ENTRY], df_seq[ut.COL_SEQ]):
-            ut.check_str(name=f"sequence ({entry}", val=seq, accept_none=False)
+            ut.check_str(name=f"sequence ({entry})", val=seq, accept_none=False)
     if df_seq is None:
         # Compute similarity
         seq_sim = comp_seq_sim_(seq1=seq1, seq2=seq2)

@@ -18,7 +18,7 @@ def post_check_unique_entries(list_entries=None, col_id=None) -> None:
     if len(list_duplicates) > 0:
         str_warning = (f"Entries from '{col_id}' should be unique. "
                        f"\nFollowing entries are duplicated: {list_duplicates}")
-        warnings.warn(str_warning)
+        warnings.warn(str_warning, UserWarning)
 
 
 def post_check_col_db(df_seq=None, col_db=None, sep="|") -> None:
@@ -26,7 +26,7 @@ def post_check_col_db(df_seq=None, col_db=None, sep="|") -> None:
     columns = list(df_seq)
     if col_db is not None and col_db not in columns:
         str_warning = f"'col_db' ('{col_db}') not in 'df_seq'. Check if 'sep' ('{sep}') is matching."
-        warnings.warn(str_warning)
+        warnings.warn(str_warning, UserWarning)
 
 
 def _adjust_columns(df_seq=None, col_seq=None, col_id=None, cols_info=None, col_db=None):
