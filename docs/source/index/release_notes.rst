@@ -371,6 +371,17 @@ Changed
   full-path import such as ``from aaanalysis.protein_design import SeqMut`` must become
   ``from aaanalysis.protein_engineering import SeqMut``.
 
+Fixed
+~~~~~
+
+- :meth:`~aaanalysis.CPP.run` with ``n_jobs > 1`` no longer crashes in non-interactive
+  contexts (e.g. ``python -c``, heredocs, some subprocess shells) where starting a
+  ``multiprocessing.Manager`` for the cross-process progress bar raised ``EOFError`` /
+  ``OSError``. The Manager is now created best-effort: on failure CPP degrades to the
+  thread-safe, single-process progress path and the run completes normally instead of
+  aborting (previously the only workaround was ``n_jobs=1``). When the Manager is
+  available, behavior and output are unchanged.
+
 
 Version 1.0 (Stable Version)
 --------------------------------
