@@ -132,6 +132,35 @@ def _fit_split_kws_to_parts(split_types=None, n_split_max=15, len_max=15, df_par
     return split_kws
 
 
+def _cap_n_split_range(sf=None, df_seq=None, cfg=None):
+    """Clamp the swept ``n_split_max`` values to the longest achievable shortest part, dedupe, warn.
+
+    A ``Segment`` can be split into at most ``L`` pieces on a length-``L`` part, so CPP auto-caps any
+    ``n_split_max`` above the part length. Across the swept parts / JMD lengths the least-constraining
+    configuration has the longest shortest-part ``cap_len``; every swept value above ``cap_len`` would
+    collapse to the same clamped run for **every** configuration, so it is clamped to ``cap_len`` and
+    the list is deduped. Values ``<= cap_len`` are kept (some configuration runs them un-clamped), so
+    on normal (long-part) inputs the sweep is unchanged and no warning fires — the cap only bites on
+    genuinely short parts (free peptides). Mutates ``cfg['n_split_max_vals']`` and returns ``cap_len``.
+    """
+    cap_len = 0
+    for lp in cfg["part_sets"]:
+        for n_jmd in cfg["n_jmd_vals"]:
+            df_parts = sf.get_df_parts(df_seq=df_seq, list_parts=list(lp),
+                                       jmd_n_len=n_jmd, jmd_c_len=n_jmd)
+            m = int(min(df_parts[c].map(len).min() for c in df_parts.columns))
+            cap_len = max(cap_len, m)
+    orig = list(cfg["n_split_max_vals"])
+    capped = sorted({min(v, cap_len) for v in orig})
+    if capped != orig:
+        warnings.warn(
+            f"'find_features': the shortest sequence part (n={cap_len}) caps 'n_split_max'; the "
+            f"swept range {orig} was clamped and deduped to {capped} (values above it collapse to "
+            f"the same clamped run). Add flanking context (n_jmd) to lift the cap.", UserWarning)
+    cfg["n_split_max_vals"] = capped
+    return cap_len
+
+
 def _resolve_model(model, random_state=None):
     """Construct one cross-validation estimator (mirrors the CPP.simplify model presets)."""
     if model == ut.MODEL_SVM:
@@ -233,6 +262,13 @@ def _resolve_config(search="balanced", kws=None):
             cfg["max_cor"] = kws["max_cor"]
         if "max_overlap" in kws:
             cfg["max_overlap"] = kws["max_overlap"]
+    # Free-peptide-like: no flanking context requested (every swept JMD length is 0). The composite
+    # half-parts (jmd_n_tmd_n / tmd_c_jmd_c) then collapse to half-TMD fragments (an 8-aa peptide's
+    # half-part is only 4 aa), needlessly dragging the shortest part length down. Use TMD-only so the
+    # whole peptide is one part and 'n_split_max' can go up to the peptide length.
+    if all(v == 0 for v in cfg["n_jmd_vals"]):
+        cfg["part_sets"] = [["tmd"]]
+        cfg["sweep_parts"] = False
     return cfg
 
 
@@ -342,10 +378,13 @@ def find_features(labels: ut.ArrayLike1D,
         Recognized keys: ``n_explain``, ``n_split_max`` (max ``Segment`` splits), ``len_max`` (max
         ``Pattern`` span), ``n_filter``, ``n_jmd`` (the symmetric JMD length ``jmd_n_len =
         jmd_c_len``), ``simplify_strategy``, ``max_cor``, ``max_overlap``. For **free peptides / short
-        parts** (no flanking context), pass ``kws={"n_jmd": 0}`` so no JMD is carved out; the split
-        config then auto-fits to the shortest part (``Pattern`` / ``PeriodicPattern`` are dropped and
-        ``n_split_max`` is clamped, with a ``UserWarning``). Lower ``n_split_max`` / ``len_max``
-        yourself to control which splits are used.
+        parts** (no flanking context), pass ``kws={"n_jmd": 0}`` so no JMD is carved out; the search
+        then uses **TMD-only** parts (the whole peptide is one part, rather than half-TMD fragments)
+        and **caps the swept ``n_split_max``** range to the shortest part length (deduped), with a
+        ``UserWarning``. The split config also auto-caps to the shortest part (``Pattern`` /
+        ``PeriodicPattern`` that cannot fit are dropped and ``n_split_max`` is clamped). On normal
+        (long-part) inputs the range cap is a no-op. Lower ``n_split_max`` / ``len_max`` yourself to
+        control which splits are used.
     subcategories : list of str, optional
         AAontology subcategories to restrict the scale sets to. If ``None``, all scales of the grade.
     top_n : int, optional
@@ -415,6 +454,10 @@ def find_features(labels: ut.ArrayLike1D,
     models = _resolve_models(model, random_state=random_state)
 
     sf = SequenceFeature(verbose=verbose)
+    # Cap the swept 'n_split_max' range to the shortest achievable part and dedupe, so free peptides
+    # / short parts do not run redundant configs that all collapse to the same clamped value. On
+    # normal (long-part) inputs this is a no-op (no warning, sweep unchanged).
+    _cap_n_split_range(sf=sf, df_seq=df_seq, cfg=cfg)
     df_scales_all = load_scales(name="scales")
     common = dict(sf=sf, labels=labels, df_seq=df_seq, cfg=cfg, simplify=simplify, models=models,
                   cv=cv, metrics=metrics, subcategories=subcategories, label_test=label_test,
@@ -623,9 +666,9 @@ def _run_search(sf=None, labels=None, df_seq=None, cfg=None, simplify=True, mode
     base = _cv_scores(X_win, labels, models=models, cv=cv, metrics=metrics, random_state=random_state)
     rows3 = []
     if simplify:
-        # Rebuild the winner's split_kws (Segment n_split_max / Pattern len_max) so the CPP used for
-        # simplify validates against short / free-peptide parts. simplify operates on the existing
-        # df_feat (it never reads split_kws), so this does not change the result for normal parts.
+        # Rebuild the winner's split_kws (Segment n_split_max / Pattern len_max). CPP auto-caps it to
+        # short / free-peptide parts (no raise); simplify operates on the existing df_feat (it never
+        # reads split_kws), so this does not change the result for normal parts.
         split_kws_win = _split_kws_for(split_types=win2["split_types"],
                                        n_split_max=win2["n_split_max"], len_max=cfg["len_max"])
         cpp_win = CPP(df_parts=df_parts_win, df_scales=df_scales_win, split_kws=split_kws_win,

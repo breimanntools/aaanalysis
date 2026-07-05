@@ -17,7 +17,7 @@ from ._backend.cpp.utils_feature import get_df_parts_
 from ._backend.check_feature import (
     check_split_kws,
     check_parts_len,
-    check_match_df_parts_split_kws,
+    clamp_split_kws_to_parts_,
     check_df_scales,
     check_df_cat,
     check_match_df_parts_df_scales,
@@ -306,7 +306,13 @@ class CPP(Tool):
         df_parts : pd.DataFrame, shape (n_samples, n_parts)
             DataFrame with sequence parts.
         split_kws : dict, optional
-            Dictionary with parameter dictionary for each chosen split_type. Default from :meth:`SequenceFeature.get_split_kws`.
+            Dictionary with parameter dictionary for each chosen split_type. Default from
+            :meth:`SequenceFeature.get_split_kws`. If a sequence part in ``df_parts`` is too short
+            for the requested splits (e.g. a free peptide with no flanking context), the split
+            lengths are **auto-capped** to the shortest part (``Segment`` ``n_split_max`` capped;
+            ``Pattern`` / ``PeriodicPattern`` that cannot fit are dropped) and one ``UserWarning``
+            is emitted; the capped ``split_kws`` is stored as ``self.split_kws``. For parts long
+            enough for the requested splits this is a no-op.
         df_scales : pd.DataFrame, shape (n_letters, n_scales), optional
             DataFrame of scales with letters typically representing amino acids. Default from :meth:`load_scales`
             unless specified in ``options['df_scales']``.
@@ -324,6 +330,15 @@ class CPP(Tool):
         Notes
         -----
         * All scales from ``df_scales`` must be contained in ``df_cat``
+        * **Splits auto-cap to the shortest part.** A sequence part of length ``L`` can carry a
+          ``Segment`` with at most ``n_split_max = L`` pieces, a ``Pattern`` only if ``len_max <= L``,
+          and a ``PeriodicPattern`` only if its first step ``<= L``. When ``df_parts`` contains a
+          part too short for the requested ``split_kws`` (typically free peptides / short domains
+          with no flanking context), CPP caps the ``Segment`` ``n_split_max`` and drops the
+          ``Pattern`` / ``PeriodicPattern`` split types that cannot fit (``Segment`` is always kept),
+          emits one ``UserWarning``, and stores the capped ``split_kws`` as ``self.split_kws`` so
+          both :meth:`run` and :meth:`run_num` use it. This never raises; for parts long enough for
+          the requested splits it is a no-op and the output is unchanged.
         * **CPP is intrinsically binary** (one test group vs one reference group). For
           **multi-class** or **regression** tasks, do not change CPP: transform the target
           into binary contrasts with the ``SequenceFeature.get_labels_*`` helpers and loop
@@ -366,7 +381,18 @@ class CPP(Tool):
         df_parts = check_match_df_parts_df_scales(
             df_parts=df_parts, df_scales=df_scales, accept_gaps=accept_gaps
         )
-        check_match_df_parts_split_kws(df_parts=df_parts, split_kws=split_kws)
+        # Auto-cap the split lengths to the shortest sequence part (free-peptide safety net): a part
+        # shorter than a split's required length cannot carry that split, so cap the Segment
+        # 'n_split_max' and drop Pattern / PeriodicPattern that cannot fit, warning once. For parts
+        # long enough for the requested splits this is a no-op (the original 'split_kws' object is
+        # returned), so self.split_kws — hence run / run_num output — is byte-identical.
+        split_kws, split_changes = clamp_split_kws_to_parts_(df_parts=df_parts, split_kws=split_kws)
+        if split_changes:
+            warnings.warn(
+                f"'df_parts' has a sequence part too short for the requested 'split_kws'; "
+                f"auto-capped so CPP still runs: {'; '.join(split_changes)}. Pass a smaller "
+                f"'n_split_max' / 'len_max' (via SequenceFeature.get_split_kws) or add flanking "
+                f"context (jmd_n/jmd_c) to control this.", UserWarning)
         df_scales, df_cat = check_match_df_scales_df_cat(
             df_cat=df_cat, df_scales=df_scales, verbose=verbose
         )

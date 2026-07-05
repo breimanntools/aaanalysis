@@ -12,7 +12,8 @@ import aaanalysis.pipe as aap
 from aaanalysis.pipe._find_features import (_resolve_config, _resolve_models, _load_scale_spec,
                                             _cv_scores, _pareto_mask, _axis_impact, _MODES,
                                             _PART_SETS, _SPLIT_TYPE_SETS, _KWS_KEYS,
-                                            _fit_split_kws_to_parts, _split_kws_for)
+                                            _fit_split_kws_to_parts, _split_kws_for,
+                                            _cap_n_split_range)
 
 aa.options["verbose"] = False
 
@@ -339,13 +340,16 @@ class TestFindFeaturesComplex:
 
     # #338: free peptides with no flanking context must be usable end to end.
     def test_fast_free_peptides_auto_fits_and_warns(self):
-        # search='fast' with n_jmd=0 (no flanks): the split config auto-fits to the short parts
-        # (Pattern dropped, n_split_max clamped) with a UserWarning, and still returns features.
+        # search='fast' with n_jmd=0 (no flanks): TMD-only parts, the split config auto-fits to the
+        # short parts (Pattern dropped, n_split_max clamped) with a UserWarning, still returns feats.
         with pytest.warns(UserWarning, match="too short"):
             df_feat, _, df_eval = aap.find_features(
                 labels_free, df_seq=df_seq_free, search="fast", plot=False,
                 kws={"n_jmd": 0}, random_state=0, n_jobs=1)
         assert len(df_feat) > 0 and len(df_eval) == 1
+        # TMD-only: the whole 8-aa peptide is one part (not the half-TMD composite fragments).
+        assert df_eval["list_parts"].iloc[0] == "tmd"
+        assert int(df_eval["n_jmd"].iloc[0]) == 0
 
     def test_fast_free_peptides_explicit_kws_runs(self):
         # The len_max / n_split_max kws are honored (threaded into the split_kws) so a user can
@@ -359,7 +363,8 @@ class TestFindFeaturesComplex:
 
     @pytest.mark.slow
     def test_balanced_free_peptides_runs(self):
-        # The staged search reaches Stage 3 (simplify) on free peptides without hard-erroring.
+        # The staged search reaches Stage 3 (simplify) on free peptides without hard-erroring; the
+        # part sweep collapses to TMD-only (no composite half-parts) with n_jmd pinned to 0.
         with warnings.catch_warnings():
             warnings.simplefilter("ignore")
             df_feat, _, df_eval = aap.find_features(
@@ -367,6 +372,8 @@ class TestFindFeaturesComplex:
                 kws={"n_jmd": 0}, random_state=0, n_jobs=1)
         assert len(df_feat) > 0
         assert int(df_eval["is_selected"].sum()) == 1
+        assert df_eval["list_parts"].unique().tolist() == ["tmd"]
+        assert sorted(df_eval["n_jmd"].unique()) == [0]
 
     @pytest.mark.slow
     def test_balanced_ax_eval_publication_figures(self):
@@ -416,6 +423,35 @@ class TestFindFeaturesHelpers:
 
     def test_resolve_config_kws_pins_len_max(self):
         assert _resolve_config(search="balanced", kws={"len_max": 8})["len_max"] == 8
+
+    # #338: TMD-only parts for free peptides (n_jmd == 0) + swept-range cap/dedupe
+    def test_resolve_config_free_peptide_is_tmd_only(self):
+        # n_jmd == 0 collapses the part sweep to TMD-only in every mode (whole peptide is one part).
+        for mode in _MODES:
+            cfg = _resolve_config(search=mode, kws={"n_jmd": 0})
+            assert cfg["part_sets"] == [["tmd"]] and cfg["sweep_parts"] is False
+
+    def test_resolve_config_normal_keeps_composite_parts(self):
+        # Without n_jmd == 0 the default composite parts stay (no TMD-only collapse).
+        cfg = _resolve_config(search="balanced")
+        assert cfg["part_sets"][0] == ["tmd", "jmd_n_tmd_n", "tmd_c_jmd_c"]
+
+    def test_cap_n_split_range_dedupes_on_short_parts(self):
+        # 8-aa TMD-only parts cap the swept n_split_max to <= 8 and dedupe (10,15 -> 8), warning once.
+        cfg = {"part_sets": [["tmd"]], "n_jmd_vals": [0], "n_split_max_vals": [1, 5, 10, 15]}
+        with pytest.warns(UserWarning, match="caps 'n_split_max'"):
+            cap = _cap_n_split_range(sf=sf, df_seq=df_seq_free, cfg=cfg)
+        assert cap == 8
+        assert cfg["n_split_max_vals"] == [1, 5, 8]
+
+    def test_cap_n_split_range_noop_on_long_parts(self):
+        # Normal DOM_GSEC parts are long enough (cap_len >= 15): the sweep is unchanged, no warning.
+        cfg = {"part_sets": [["tmd", "jmd_n_tmd_n", "tmd_c_jmd_c"]], "n_jmd_vals": [6, 10, 14],
+               "n_split_max_vals": [1, 5, 10, 15]}
+        with warnings.catch_warnings():
+            warnings.simplefilter("error")  # any warning would fail here
+            cap = _cap_n_split_range(sf=sf, df_seq=df_seq, cfg=cfg)
+        assert cap >= 15 and cfg["n_split_max_vals"] == [1, 5, 10, 15]
 
     def test_split_kws_for_threads_levers(self):
         skw = _split_kws_for(split_types=_SPLIT_TYPE_SETS[-1], n_split_max=6, len_max=7)

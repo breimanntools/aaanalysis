@@ -371,14 +371,21 @@ Fixed
   context (the linear-epitope case). ``find_features(search="fast")`` and its Stage-3
   simplify step ignored the requested / winning split configuration and always used the
   default (``len_max=15``, ``n_split_max=15``), so any target region shorter than ~15
-  residues raised. The bounded ``kws`` dict now accepts ``len_max`` (and actually honors
-  ``n_split_max``) so shorter ``Pattern`` / ``Segment`` splits can be requested; the fast
-  path auto-fits the split configuration to the shortest part — dropping
-  ``Pattern`` / ``PeriodicPattern`` and clamping ``n_split_max`` with a ``UserWarning`` — so
-  free peptides run out of the box; and the too-short-part ``ValueError`` now names the
-  binding split length and how to fix it (Segment-only splits, lower
-  ``len_max`` / ``n_split_max``, or add ``jmd_n`` / ``jmd_c`` context). Results for flanked
-  inputs are unchanged.
+  residues raised. Now:
+
+  - **CPP auto-caps splits to the shortest part** instead of raising. When a ``df_parts``
+    sequence part is too short for the requested ``split_kws``, :class:`~aaanalysis.CPP`
+    caps the ``Segment`` ``n_split_max`` and drops the ``Pattern`` / ``PeriodicPattern``
+    split types that cannot fit (``Segment`` is always kept), emits one ``UserWarning``, and
+    stores the capped ``split_kws`` as ``self.split_kws`` (used by both :meth:`~aaanalysis.CPP.run`
+    and :meth:`~aaanalysis.CPP.run_num`). For parts long enough for the requested splits this
+    is a no-op, so results for flanked inputs are byte-identical.
+  - **``find_features`` handles free peptides end to end.** The bounded ``kws`` dict now accepts
+    ``len_max`` (and actually honors ``n_split_max``). Passing ``kws={"n_jmd": 0}`` (no flanking
+    context) switches the part sweep to **TMD-only** (the whole peptide is one part, instead of
+    half-TMD composite fragments) and **caps the swept ``n_split_max`` range** to the shortest
+    part length, deduped, with a ``UserWarning``. The staged ``balanced`` / ``exhaustive`` searches
+    no longer hard-error on short parts. On normal (long-part) inputs the range cap is a no-op.
 
 
 Version 1.0 (Stable Version)

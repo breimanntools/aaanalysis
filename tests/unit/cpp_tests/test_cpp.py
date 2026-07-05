@@ -155,9 +155,9 @@ class TestCheckCPP:
 
     def test_invalid_periodic_pattern(self):
         df_parts = get_df_parts()
-        with pytest.raises(ValueError):
-            # Not matching with df_parts
-            aa.CPP(df_parts=df_parts, split_kws=dict(PeriodicPattern=dict(steps=[1000000, 100000000])))
+        # Structurally-invalid PeriodicPattern still raises (check_split_kws); a PeriodicPattern that
+        # merely does not fit df_parts (e.g. steps=[1000000, ...]) is now auto-capped, see
+        # test_periodic_pattern_too_long_step_clamps_and_warns below.
         with pytest.raises(ValueError):
             aa.CPP(df_parts=df_parts, split_kws=dict(PeriodicPattern=dict(steps=None)))
         with pytest.raises(ValueError):
@@ -166,6 +166,16 @@ class TestCheckCPP:
             aa.CPP(df_parts=df_parts, split_kws=dict(PeriodicPattern=dict(steps=[1, None])))
         with pytest.raises(ValueError):
             aa.CPP(df_parts=df_parts, split_kws=dict(PeriodicPattern=dict(stepss=[1, "invalid"])))
+
+    def test_periodic_pattern_too_long_step_clamps_and_warns(self):
+        # #338: a structurally-valid PeriodicPattern whose first step exceeds the part length no
+        # longer raises; CPP drops it (keeping the Segment fallback) and warns once.
+        df_parts = get_df_parts()
+        with pytest.warns(UserWarning, match="too short"):
+            cpp = aa.CPP(df_parts=df_parts,
+                         split_kws=dict(PeriodicPattern=dict(steps=[1000000, 100000000])))
+        assert "PeriodicPattern" not in cpp.split_kws
+        assert "Segment" in cpp.split_kws   # universal fallback keeps >= 1 split type
 
     @settings(max_examples=10, deadline=None)
     @given(val=some.integers(min_value=2, max_value=10))
@@ -177,14 +187,22 @@ class TestCheckCPP:
         with pytest.raises(ValueError):
             aa.CPP(df_parts=df_parts, split_kws=split_kws)
 
-    def test_invalid_df_parts(self):
-        all_data_set_names = ["SEQ_AMYLO", "AA_CASPASE3"]
-        for name in all_data_set_names:
+    def test_short_window_df_parts_clamps_and_warns(self):
+        # #338: window datasets produce very short parts that used to raise for the default
+        # split_kws; CPP now auto-caps them to the shortest part (Segment kept + capped, Pattern /
+        # PeriodicPattern dropped) and warns once instead of raising.
+        for name in ["SEQ_AMYLO", "AA_CASPASE3"]:
             df_seq = aa.load_dataset(name=name, n=10, aa_window_size=5)
             sf = aa.SequenceFeature()
             df_parts = sf.get_df_parts(df_seq=df_seq)
-            with pytest.raises(ValueError):
-                aa.CPP(df_parts=df_parts, accept_gaps=True)
+            min_len = int(min(df_parts[c].map(len).min() for c in df_parts.columns))
+            with pytest.warns(UserWarning, match="too short"):
+                cpp = aa.CPP(df_parts=df_parts, accept_gaps=True)
+            assert isinstance(cpp.df_parts, pd.DataFrame)
+            # Segment survives and is capped to <= the shortest part; Pattern span cannot fit.
+            assert "Segment" in cpp.split_kws
+            assert cpp.split_kws["Segment"]["n_split_max"] <= min_len
+            assert "Pattern" not in cpp.split_kws
 
     def test_invalid_df_scales(self):
         df_parts = get_df_parts()
