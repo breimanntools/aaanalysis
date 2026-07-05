@@ -177,7 +177,7 @@ def _pick_feature_matrix_builder():
 def cpp_run_single(df_parts=None, split_kws=None, df_scales=None, df_cat=None, verbose=None,
                       accept_gaps=True, labels=None, label_test=1, label_ref=0, n_filter=100,
                       n_pre_filter=None, pct_pre_filter=5, max_std_test=0.2, max_overlap=0.5,
-                      max_cor=0.5, check_cat=True, parametric=False, start=1, tmd_len=20,
+                      max_cor=0.5, check_cat=True, redundancy="legacy", parametric=False, start=1, tmd_len=20,
                       jmd_n_len=10, jmd_c_len=10, n_jobs=None, vectorized=True,
                       _staging_shape="A", df_seq=None, dict_num=None,
                       dict_part_vals=None, dict_part_lens=None,
@@ -296,7 +296,7 @@ def cpp_run_single(df_parts=None, split_kws=None, df_scales=None, df_cat=None, v
     if verbose:
         ut.print_out(f"3. CPP filtering algorithm")
     df_feat = filtering(df=df, df_scales=df_scales, n_filter=n_filter, check_cat=check_cat,
-                        max_overlap=max_overlap, max_cor=max_cor)
+                        max_overlap=max_overlap, max_cor=max_cor, redundancy=redundancy)
     df_feat.reset_index(drop=True, inplace=True)
     df_feat[ut.COLS_FEAT_STAT] = df_feat[ut.COLS_FEAT_STAT].round(3)
     df_feat[ut.COL_FEATURE] = df_feat[ut.COL_FEATURE].astype(str)
@@ -312,7 +312,7 @@ def cpp_run_single(df_parts=None, split_kws=None, df_scales=None, df_cat=None, v
 def cpp_run_batch(df_parts=None, split_kws=None, df_scales=None, df_cat=None, verbose=None,
                      accept_gaps=True, labels=None, label_test=1, label_ref=0, n_filter=100,
                      n_pre_filter=None, pct_pre_filter=5, max_std_test=0.2, max_overlap=0.5,
-                     max_cor=0.5, check_cat=True, parametric=False, start=1, tmd_len=20,
+                     max_cor=0.5, check_cat=True, redundancy="legacy", parametric=False, start=1, tmd_len=20,
                      jmd_n_len=10, jmd_c_len=10, n_jobs=None, vectorized=True, n_batches=10,
                      feature_matrix_builder=None):
     """PR2.5 D-chunk batched orchestration with two-pass memory-bounded flow.
@@ -417,7 +417,7 @@ def cpp_run_batch(df_parts=None, split_kws=None, df_scales=None, df_cat=None, ve
     if verbose:
         ut.print_out(f"3. CPP filtering algorithm")
     df_feat = filtering(df=df_merged, df_scales=df_scales, n_filter=n_filter, check_cat=check_cat,
-                        max_overlap=max_overlap, max_cor=max_cor)
+                        max_overlap=max_overlap, max_cor=max_cor, redundancy=redundancy)
     df_feat.reset_index(drop=True, inplace=True)
     df_feat[ut.COLS_FEAT_STAT] = df_feat[ut.COLS_FEAT_STAT].round(3)
     df_feat[ut.COL_FEATURE] = df_feat[ut.COL_FEATURE].astype(str)
@@ -433,7 +433,7 @@ def cpp_run_batch(df_parts=None, split_kws=None, df_scales=None, df_cat=None, ve
 def cpp_run_batch_num(df_parts=None, split_kws=None, df_scales=None, df_cat=None, verbose=None,
                          accept_gaps=True, labels=None, label_test=1, label_ref=0, n_filter=100,
                          n_pre_filter=None, pct_pre_filter=5, max_std_test=0.2, max_overlap=0.5,
-                         max_cor=0.5, check_cat=True, parametric=False, start=1, tmd_len=20,
+                         max_cor=0.5, check_cat=True, redundancy="legacy", parametric=False, start=1, tmd_len=20,
                          jmd_n_len=10, jmd_c_len=10, n_jobs=None, vectorized=True, n_batches=10,
                          dict_part_vals=None, dict_part_lens=None):
     """D-chunk batched orchestration for numerical mode (``CPP.run_num``).
@@ -513,7 +513,7 @@ def cpp_run_batch_num(df_parts=None, split_kws=None, df_scales=None, df_cat=None
     if verbose:
         ut.print_out(f"3. CPP filtering algorithm")
     df_feat = filtering(df=df, df_scales=df_scales, n_filter=n_filter, check_cat=check_cat,
-                        max_overlap=max_overlap, max_cor=max_cor)
+                        max_overlap=max_overlap, max_cor=max_cor, redundancy=redundancy)
     df_feat.reset_index(drop=True, inplace=True)
     df_feat[ut.COLS_FEAT_STAT] = df_feat[ut.COLS_FEAT_STAT].round(3)
     df_feat[ut.COL_FEATURE] = df_feat[ut.COL_FEATURE].astype(str)
@@ -530,6 +530,7 @@ def cpp_run_sample_batched(df_parts=None, split_kws=None, df_scales=None, df_cat
                               verbose=None, accept_gaps=True, labels=None, label_test=1,
                               label_ref=0, n_filter=100, n_pre_filter=None, pct_pre_filter=5,
                               max_std_test=0.2, max_overlap=0.5, max_cor=0.5, check_cat=True,
+                              redundancy="legacy",
                               parametric=False, start=1, tmd_len=20, jmd_n_len=10, jmd_c_len=10,
                               n_jobs=None, vectorized=True, n_sample_batches=10,
                               dict_part_vals=None, dict_part_lens=None):
@@ -683,6 +684,7 @@ def cpp_run_sample_batched(df_parts=None, split_kws=None, df_scales=None, df_cat
     df_feat = filtering(
         df=df, df_scales=df_scales, n_filter=n_filter,
         check_cat=check_cat, max_overlap=max_overlap, max_cor=max_cor,
+        redundancy=redundancy,
     )
     df_feat.reset_index(drop=True, inplace=True)
     df_feat[ut.COLS_FEAT_STAT] = df_feat[ut.COLS_FEAT_STAT].round(3)
