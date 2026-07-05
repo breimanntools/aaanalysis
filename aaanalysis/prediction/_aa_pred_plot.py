@@ -16,14 +16,16 @@ from ._backend.aa_pred.aa_pred_plot_clustermap import plot_clustermap_
 
 
 # I Helper Functions
-# Sample-prediction plot kinds dispatched by :meth:`AAPredPlot.predict`.
-LIST_PREDICT_KINDS = ["window", "domain", "hist", "ranking", "scatter", "cutoff", "clustermap"]
+# Single-protein positional plot kinds dispatched by :meth:`AAPredPlot.predict_sample`.
+LIST_SAMPLE_KINDS = ["window", "domain"]
+# Across-samples plot kinds dispatched by :meth:`AAPredPlot.predict_cohort`.
+LIST_COHORT_KINDS = ["hist", "ranking", "scatter", "cutoff", "clustermap"]
 # Evaluation plot kinds dispatched by :meth:`AAPredPlot.eval`.
 LIST_EVAL_KINDS = ["eval", "comparison"]
-# Per-kind figure-size defaults used when ``figsize=None``.
-_DICT_PREDICT_FIGSIZE = {"window": (10, 4), "domain": (6, 4.5), "hist": (6, 4.5),
-                         "ranking": None, "scatter": (5.5, 5.5), "cutoff": (6, 4.5),
-                         "clustermap": (9, 9)}
+# Per-kind figure-size defaults used when ``figsize=None`` (split by method).
+_DICT_SAMPLE_FIGSIZE = {"window": (10, 4), "domain": (6, 4.5)}
+_DICT_COHORT_FIGSIZE = {"hist": (6, 4.5), "ranking": None, "scatter": (5.5, 5.5),
+                        "cutoff": (6, 4.5), "clustermap": (9, 9)}
 
 
 def _new_ax(ax=None, figsize=(6, 5)):
@@ -51,11 +53,15 @@ class AAPredPlot:
     """
     Plotting class for :class:`AAPred` evaluation and prediction results [Breimann25]_.
 
-    The single home for prediction figures, dispatched by ``kind`` from two methods:
+    The single home for prediction figures, dispatched by ``kind`` from three methods:
 
-    - :meth:`predict` visualizes **sample predictions**: positional profiles
-      (``kind='window'``/``'domain'``), score cohorts (``kind='hist'``/``'ranking'``/
-      ``'scatter'``/``'cutoff'``), and explanation similarity (``kind='clustermap'``).
+    - :meth:`predict_sample` visualizes **single-protein positional predictions**: the
+      per-residue profile (``kind='window'``) and the domain boundary-sensitivity curve
+      (``kind='domain'``).
+    - :meth:`predict_cohort` visualizes **across-samples predictions**: score histograms
+      (``kind='hist'``), ranked candidates (``kind='ranking'``), two-predictor scatters
+      (``kind='scatter'``), survival curves (``kind='cutoff'``), and explanation-similarity
+      clustermaps (``kind='clustermap'``).
     - :meth:`eval` visualizes **model/feature-set evaluation**: metric bars per model
       (``kind='eval'``) and grouped benchmark comparisons (``kind='comparison'``).
 
@@ -79,42 +85,22 @@ class AAPredPlot:
         """
 
     @staticmethod
-    def predict(data: Union[pd.DataFrame, ut.ArrayLike1D, ut.ArrayLike2D],
-                kind: str = "window",
-                ax: Optional[Axes] = None,
-                figsize: Optional[Tuple[Union[int, float], Union[int, float]]] = None,
-                entry: Optional[str] = None,
-                list_annotations: Optional[List[Dict]] = None,
-                threshold: Optional[Union[int, float]] = None,
-                color: Optional[str] = None,
-                labels: Optional[ut.ArrayLike1D] = None,
-                bins: int = 20,
-                thresholds: Optional[Union[int, float, List[Union[int, float]]]] = None,
-                dict_color: Optional[Dict[Union[int, str], str]] = None,
-                col_name: str = "name",
-                col_score: str = "score",
-                col_group: Optional[str] = None,
-                col_std: Optional[str] = None,
-                colors: Optional[Dict[str, str]] = None,
-                cutoffs: Optional[Tuple[Union[int, float], ...]] = (50, 80),
-                top_n: Optional[int] = None,
-                ascending: bool = False,
-                title: Optional[str] = None,
-                scores_y: Optional[ut.ArrayLike1D] = None,
-                marker_size: Union[int, float] = 30,
-                diagonal: bool = True,
-                n_steps: int = 101,
-                names: Optional[List[str]] = None,
-                cmap: str = "GnBu",
-                cbar_label: str = "Pearson correlation (r)",
-                xlabel: Optional[str] = None,
-                ylabel: Optional[str] = None,
-                ) -> Tuple[Figure, Axes]:
+    def predict_sample(data: pd.DataFrame,
+                       kind: str = "window",
+                       ax: Optional[Axes] = None,
+                       figsize: Optional[Tuple[Union[int, float], Union[int, float]]] = None,
+                       entry: Optional[str] = None,
+                       list_annotations: Optional[List[Dict]] = None,
+                       threshold: Optional[Union[int, float]] = None,
+                       color: Optional[str] = None,
+                       xlabel: Optional[str] = None,
+                       ylabel: Optional[str] = None,
+                       ) -> Tuple[Figure, Axes]:
         """
-        Visualize sample predictions, dispatched by ``kind``.
+        Visualize single-protein positional predictions, dispatched by ``kind``.
 
-        One entry point for every sample-prediction figure; ``kind`` selects the renderer and
-        ``data`` is its primary input:
+        One entry point for the two positional figures from :meth:`AAPred.predict`; ``kind``
+        selects the renderer and ``data`` is its prediction frame:
 
         * ``'window'`` — per-residue profile from :meth:`AAPred.predict` (``level='window'``);
           ``data`` is the ``df_window`` frame (columns ``entry``, ``position``, ``score``).
@@ -122,6 +108,100 @@ class AAPredPlot:
         * ``'domain'`` — boundary-sensitivity curve from :meth:`AAPred.predict` (``level='domain'``);
           ``data`` is the ``df_domain`` frame (columns ``entry``, ``offset``, ``score``, ``is_best``).
           Uses ``entry``, ``color``, ``xlabel``, ``ylabel``.
+
+        .. versionadded:: 1.1.0
+
+        Parameters
+        ----------
+        data : pd.DataFrame
+            Prediction frame for the selected ``kind``: the ``df_window`` (``'window'``) or
+            ``df_domain`` (``'domain'``) output of :meth:`AAPred.predict`.
+        kind : str, default="window"
+            Which positional figure to draw; one of ``window``, ``domain``.
+        ax : matplotlib.axes.Axes, optional
+            Axes to draw on. If ``None``, a new figure and axes are created.
+        figsize : tuple, optional
+            Figure size when ``ax`` is ``None``. If ``None``, a per-kind default is used.
+        entry : str, optional
+            Protein to plot; required only when ``data`` holds more than one ``entry``.
+        list_annotations : list of dict, optional
+            (``kind='window'``) Per-residue annotation tracks; each dict has ``values`` (array
+            aligned to the plotted positions), ``label`` (str) and optional ``cmap``.
+        threshold : int or float, optional
+            (``kind='window'``) Score drawn as a horizontal dashed decision line.
+        color : str, optional
+            Line color; defaults to a house color.
+        xlabel : str, optional
+            x-axis label; defaults to a per-kind label.
+        ylabel : str, optional
+            y-axis label; defaults to a per-kind label.
+
+        Returns
+        -------
+        fig : matplotlib.figure.Figure
+            The figure.
+        ax : matplotlib.axes.Axes
+            The axes with the requested plot.
+
+        See Also
+        --------
+        * :meth:`AAPred.predict` for the predictions this visualizes.
+        * :meth:`AAPredPlot.predict_cohort` for across-samples figures.
+        * :meth:`AAPredPlot.eval` for evaluation figures.
+
+        Examples
+        --------
+        .. include:: examples/aapred_plot_sample.rst
+        """
+        if kind not in LIST_SAMPLE_KINDS:
+            raise ValueError(f"'kind' ('{kind}') must be one of {LIST_SAMPLE_KINDS}.")
+        figsize = figsize if figsize is not None else _DICT_SAMPLE_FIGSIZE[kind]
+        if kind == "window":
+            return AAPredPlot._plot_window(
+                df_window=data, entry=entry, list_annotations=list_annotations, threshold=threshold,
+                ax=ax, figsize=figsize, color=color,
+                xlabel=_default(xlabel, "Residue position"),
+                ylabel=_default(ylabel, "Prediction score"))
+        # kind == "domain"
+        return AAPredPlot._plot_domain(
+            df_domain=data, entry=entry, ax=ax, figsize=figsize, color=color,
+            xlabel=_default(xlabel, "Boundary offset [residues]"),
+            ylabel=_default(ylabel, "Prediction score"))
+
+    @staticmethod
+    def predict_cohort(data: Union[pd.DataFrame, ut.ArrayLike1D, ut.ArrayLike2D],
+                       kind: str = "hist",
+                       ax: Optional[Axes] = None,
+                       figsize: Optional[Tuple[Union[int, float], Union[int, float]]] = None,
+                       labels: Optional[ut.ArrayLike1D] = None,
+                       bins: int = 20,
+                       thresholds: Optional[Union[int, float, List[Union[int, float]]]] = None,
+                       dict_color: Optional[Dict[Union[int, str], str]] = None,
+                       col_name: str = "name",
+                       col_score: str = "score",
+                       col_group: Optional[str] = None,
+                       col_std: Optional[str] = None,
+                       colors: Optional[Dict[str, str]] = None,
+                       cutoffs: Optional[Tuple[Union[int, float], ...]] = (50, 80),
+                       top_n: Optional[int] = None,
+                       ascending: bool = False,
+                       title: Optional[str] = None,
+                       scores_y: Optional[ut.ArrayLike1D] = None,
+                       marker_size: Union[int, float] = 30,
+                       diagonal: bool = True,
+                       n_steps: int = 101,
+                       names: Optional[List[str]] = None,
+                       cmap: str = "GnBu",
+                       cbar_label: str = "Pearson correlation (r)",
+                       xlabel: Optional[str] = None,
+                       ylabel: Optional[str] = None,
+                       ) -> Tuple[Figure, Axes]:
+        """
+        Visualize across-samples predictions, dispatched by ``kind``.
+
+        One entry point for every cohort figure; ``kind`` selects the renderer and ``data`` is
+        its primary input:
+
         * ``'hist'`` — class-separated histogram of per-sample scores; ``data`` is the ``scores``
           array. Uses ``labels``, ``bins``, ``thresholds``, ``dict_color``, ``xlabel``, ``ylabel``.
         * ``'ranking'`` — ranked-candidate horizontal bars; ``data`` is a per-sample ``df_pred``.
@@ -131,7 +211,7 @@ class AAPredPlot:
           ``scores_y`` the y-axis. Uses ``labels``, ``dict_color``, ``marker_size``, ``diagonal``,
           ``xlabel``, ``ylabel``.
         * ``'cutoff'`` — survival curve of the scores; ``data`` is the ``scores`` array. Uses
-          ``n_steps``, ``color``, ``thresholds``, ``xlabel``, ``ylabel``.
+          ``n_steps``, ``thresholds``, ``xlabel``, ``ylabel``.
         * ``'clustermap'`` — explanation-similarity clustermap; ``data`` is the per-sample
           importance matrix. Uses ``names``, ``labels``, ``colors``, ``cmap``, ``cbar_label``,
           ``title``, ``figsize`` (``ax`` is ignored: the clustermap owns its figure).
@@ -141,27 +221,17 @@ class AAPredPlot:
         Parameters
         ----------
         data : pd.DataFrame or array-like
-            Primary input for the selected ``kind`` (see above): a prediction frame
-            (``'window'``/``'domain'``/``'ranking'``), a per-sample score array
-            (``'hist'``/``'scatter'``/``'cutoff'``), or an importance matrix (``'clustermap'``).
-        kind : str, default="window"
-            Which sample-prediction figure to draw; one of ``window``, ``domain``, ``hist``,
-            ``ranking``, ``scatter``, ``cutoff``, ``clustermap``.
+            Primary input for the selected ``kind`` (see above): a per-sample score array
+            (``'hist'``/``'scatter'``/``'cutoff'``), a ranking frame (``'ranking'``), or an
+            importance matrix (``'clustermap'``).
+        kind : str, default="hist"
+            Which cohort figure to draw; one of ``hist``, ``ranking``, ``scatter``, ``cutoff``,
+            ``clustermap``.
         ax : matplotlib.axes.Axes, optional
             Axes to draw on. If ``None``, a new figure and axes are created (ignored for
             ``kind='clustermap'``, which always creates its own figure).
         figsize : tuple, optional
             Figure size when ``ax`` is ``None``. If ``None``, a per-kind default is used.
-        entry : str, optional
-            (``kind='window'``/``'domain'``) Protein to plot; required only when ``data`` holds
-            more than one ``entry``.
-        list_annotations : list of dict, optional
-            (``kind='window'``) Per-residue annotation tracks; each dict has ``values`` (array
-            aligned to the plotted positions), ``label`` (str) and optional ``cmap``.
-        threshold : int or float, optional
-            (``kind='window'``) Score drawn as a horizontal dashed decision line.
-        color : str, optional
-            (``kind='window'``/``'domain'``/``'cutoff'``) Line color; defaults to a house color.
         labels : array-like, optional
             (``kind='hist'``/``'scatter'``/``'clustermap'``) Per-sample class labels used to
             color/separate the data (adds a class legend / sidebars).
@@ -220,26 +290,16 @@ class AAPredPlot:
         See Also
         --------
         * :meth:`AAPred.predict` for the predictions this visualizes.
+        * :meth:`AAPredPlot.predict_sample` for single-protein positional figures.
         * :meth:`AAPredPlot.eval` for evaluation figures.
 
         Examples
         --------
-        .. include:: examples/aapred_plot_predict.rst
+        .. include:: examples/aapred_plot_cohort.rst
         """
-        if kind not in LIST_PREDICT_KINDS:
-            raise ValueError(f"'kind' ('{kind}') must be one of {LIST_PREDICT_KINDS}.")
-        figsize = figsize if figsize is not None else _DICT_PREDICT_FIGSIZE[kind]
-        if kind == "window":
-            return AAPredPlot._plot_window(
-                df_window=data, entry=entry, list_annotations=list_annotations, threshold=threshold,
-                ax=ax, figsize=figsize, color=color,
-                xlabel=_default(xlabel, "Residue position"),
-                ylabel=_default(ylabel, "Prediction score"))
-        if kind == "domain":
-            return AAPredPlot._plot_domain(
-                df_domain=data, entry=entry, ax=ax, figsize=figsize, color=color,
-                xlabel=_default(xlabel, "Boundary offset [residues]"),
-                ylabel=_default(ylabel, "Prediction score"))
+        if kind not in LIST_COHORT_KINDS:
+            raise ValueError(f"'kind' ('{kind}') must be one of {LIST_COHORT_KINDS}.")
+        figsize = figsize if figsize is not None else _DICT_COHORT_FIGSIZE[kind]
         if kind == "hist":
             return AAPredPlot._plot_hist(
                 scores=data, labels=labels, ax=ax, figsize=figsize, bins=bins,
@@ -261,7 +321,7 @@ class AAPredPlot:
                 ylabel=_default(ylabel, "Predictor 2 score"))
         if kind == "cutoff":
             return AAPredPlot._plot_cutoff(
-                scores=data, ax=ax, figsize=figsize, n_steps=n_steps, color=color,
+                scores=data, ax=ax, figsize=figsize, n_steps=n_steps, color=None,
                 thresholds=thresholds, xlabel=_default(xlabel, "Score cutoff"),
                 ylabel=_default(ylabel, "Samples above cutoff [%]"))
         # kind == "clustermap"

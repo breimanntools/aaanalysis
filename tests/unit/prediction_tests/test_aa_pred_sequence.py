@@ -161,11 +161,11 @@ class TestPlotWindow:
                               level="window", tmd_len=15, step=step)
 
     def test_returns_fig_ax(self, fitted):
-        fig, ax = aa.AAPredPlot().predict(self._dw(fitted), kind="window")
+        fig, ax = aa.AAPredPlot().predict_sample(self._dw(fitted), kind="window")
         assert fig is not None and ax is not None
 
     def test_threshold(self, fitted):
-        fig, ax = aa.AAPredPlot().predict(self._dw(fitted), kind="window", threshold=0.75)
+        fig, ax = aa.AAPredPlot().predict_sample(self._dw(fitted), kind="window", threshold=0.75)
         assert any(l.get_linestyle() == "--" for l in ax.get_lines())
 
     def test_entry_multi_requires_entry(self, fitted):
@@ -173,24 +173,24 @@ class TestPlotWindow:
         two = df_seq[df_seq["entry"].isin(["P05067", "P14925"])][["entry", "sequence"]]
         dw = aapred.predict(two, level="window", tmd_len=15, step=30)
         with pytest.raises(ValueError):
-            aa.AAPredPlot().predict(dw, kind="window")
-        fig, ax = aa.AAPredPlot().predict(dw, kind="window", entry="P05067")
+            aa.AAPredPlot().predict_sample(dw, kind="window")
+        fig, ax = aa.AAPredPlot().predict_sample(dw, kind="window", entry="P05067")
         assert ax is not None
 
     def test_list_annotations(self, fitted):
         dw = self._dw(fitted)
         tracks = [{"values": np.linspace(0, 1, len(dw)), "label": "pLDDT", "cmap": "RdYlBu"}]
-        fig, ax = aa.AAPredPlot().predict(dw, kind="window", list_annotations=tracks)
+        fig, ax = aa.AAPredPlot().predict_sample(dw, kind="window", list_annotations=tracks)
         assert ax is not None
 
     def test_color_labels(self, fitted):
-        fig, ax = aa.AAPredPlot().predict(self._dw(fitted), kind="window", color="#123456",
+        fig, ax = aa.AAPredPlot().predict_sample(self._dw(fitted), kind="window", color="#123456",
                                           xlabel="Pos", ylabel="P")
         assert ax.get_ylabel() == "P"
 
     def test_ax_figsize(self, fitted):
         fig, ax0 = plt.subplots()
-        fig, ax = aa.AAPredPlot().predict(self._dw(fitted), kind="window", ax=ax0, figsize=(10, 4))
+        fig, ax = aa.AAPredPlot().predict_sample(self._dw(fitted), kind="window", ax=ax0, figsize=(10, 4))
         assert ax is ax0
 
 
@@ -200,19 +200,32 @@ class TestPlotDomain:
         return aapred.predict(df_seq[df_seq["entry"] == "P05067"], level="domain", window=3)
 
     def test_returns_fig_ax(self, fitted):
-        fig, ax = aa.AAPredPlot().predict(self._dd(fitted), kind="domain")
+        fig, ax = aa.AAPredPlot().predict_sample(self._dd(fitted), kind="domain")
         assert fig is not None and ax is not None
 
     def test_best_marked(self, fitted):
-        fig, ax = aa.AAPredPlot().predict(self._dd(fitted), kind="domain")
+        fig, ax = aa.AAPredPlot().predict_sample(self._dd(fitted), kind="domain")
         assert ax.get_legend() is not None
 
     def test_entry_color_labels(self, fitted):
-        fig, ax = aa.AAPredPlot().predict(self._dd(fitted), kind="domain", entry="P05067",
+        fig, ax = aa.AAPredPlot().predict_sample(self._dd(fitted), kind="domain", entry="P05067",
                                           color="#123456", xlabel="Offset", ylabel="Score")
         assert ax.get_xlabel() == "Offset"
 
     def test_ax_figsize(self, fitted):
         fig, ax0 = plt.subplots()
-        fig, ax = aa.AAPredPlot().predict(self._dd(fitted), kind="domain", ax=ax0, figsize=(6, 4))
+        fig, ax = aa.AAPredPlot().predict_sample(self._dd(fitted), kind="domain", ax=ax0, figsize=(6, 4))
         assert ax is ax0
+
+
+class TestPredictSampleInvalidKind:
+    def test_bad_kind_raises(self, fitted):
+        # A cohort kind (or any non-positional kind) must be rejected by predict_sample,
+        # naming only the two valid sample kinds.
+        aapred, df_seq, _ = fitted
+        dw = aapred.predict(df_seq[df_seq["entry"] == "P05067"][["entry", "sequence"]],
+                            level="window", tmd_len=15, step=15)
+        with pytest.raises(ValueError):
+            aa.AAPredPlot().predict_sample(dw, kind="hist")
+        with pytest.raises(ValueError):
+            aa.AAPredPlot().predict_sample(dw, kind="not_a_kind")
