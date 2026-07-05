@@ -426,6 +426,7 @@ class CPP(Tool):
         max_overlap: float = 0.5,
         max_cor: float = 0.5,
         check_cat: bool = True,
+        redundancy: str = "legacy",
         parametric: bool = False,
         start: int = 1,
         tmd_len: int = 20,
@@ -474,6 +475,10 @@ class CPP(Tool):
             Maximum Pearson correlation [0-1] of feature scales used as threshold for filtering.
         check_cat : bool, default=True
             Whether to check for redundancy within scale categories during filtering.
+        redundancy : {'legacy', 'exact'}, default='legacy'
+            Position-overlap criterion of the redundancy-reduction step. ``'legacy'`` (default)
+            keeps results reproducible across versions; ``'exact'`` compares the actual residue
+            positions (see Notes).
         parametric : bool, default=False
             Whether to use parametric (T-test) or non-parametric (Mann-Whitney U test) test for p-value computation.
             This also sets the p-value column name in ``df_feat`` ('p_val_ttest_indep' vs 'p_val_mann_whitney').
@@ -525,6 +530,11 @@ class CPP(Tool):
         -----
         * Pre-filtering can be adjusted by the following parameters: {'n_pre_filter', 'pct_pre_filter', 'max_std_test'}.
         * Filtering can be adjusted by the following parameters: {'n_filter', 'max_overlap', 'max_cor', 'check_cat'}.
+        * ``redundancy='exact'`` is an optional **enhancement** of the redundancy step, not a correctness
+          fix: it compares the true residue positions and tends to yield a more *concentrated* signature
+          (fewer redundant subcategories) rather than higher predictive performance, which stays
+          essentially unchanged. Default ``'legacy'`` keeps prior results reproducible. For a stronger,
+          more efficient redundancy reduction, see :meth:`CPP.simplify`.
         * **Binary by design.** ``run`` compares one test group against one reference group. For
           multi-class or regression tasks, build binary label contrasts with the
           ``SequenceFeature.get_labels_*`` helpers and loop ``run`` over them (see the
@@ -596,6 +606,7 @@ class CPP(Tool):
             allow_other_vals=False,
         )
         ut.check_number_range(name="n_filter", val=n_filter, min_val=1, just_int=True)
+        ut.check_str_options(name="redundancy", val=redundancy, list_str_options=["legacy", "exact"])
         ut.check_number_range(
             name="n_pre_filter",
             val=n_pre_filter,
@@ -682,6 +693,7 @@ class CPP(Tool):
             max_overlap=max_overlap,
             max_cor=max_cor,
             check_cat=check_cat,
+            redundancy=redundancy,
             parametric=parametric,
             start=start,
             tmd_len=tmd_len,
@@ -731,6 +743,7 @@ class CPP(Tool):
         max_overlap: float = 0.5,
         max_cor: float = 0.5,
         check_cat: bool = True,
+        redundancy: str = "legacy",
         parametric: bool = False,
         start: int = 1,
         tmd_len: int = 20,
@@ -784,6 +797,10 @@ class CPP(Tool):
             Maximum Pearson correlation [0-1] of feature scales used as threshold for filtering.
         check_cat : bool, default=True
             Whether to check for redundancy within scale categories during filtering.
+        redundancy : {'legacy', 'exact'}, default='legacy'
+            Position-overlap criterion of the redundancy-reduction step. ``'legacy'`` (default)
+            keeps results reproducible across versions; ``'exact'`` compares the actual residue
+            positions (see Notes).
         parametric : bool, default=False
             Whether to use parametric (T-test) or non-parametric (Mann-Whitney U test) for p-value computation.
         start : int, default=1
@@ -841,6 +858,9 @@ class CPP(Tool):
 
         Notes
         -----
+        * ``redundancy`` behaves exactly as in :meth:`run` (default ``'legacy'`` keeps results
+          reproducible; ``'exact'`` compares the true residue positions — an optional enhancement,
+          not a correctness fix).
         * **Call order — ``get_parts`` then ``run_num``.** ``dict_num_parts`` must come
           from :meth:`NumericalFeature.get_parts` (step 1), which slices a raw
           ``df_seq`` + ``dict_num`` into the per-part tensors consumed here (step 2).
@@ -915,6 +935,7 @@ class CPP(Tool):
             allow_other_vals=False,
         )
         ut.check_number_range(name="n_filter", val=n_filter, min_val=1, just_int=True)
+        ut.check_str_options(name="redundancy", val=redundancy, list_str_options=["legacy", "exact"])
         ut.check_number_range(
             name="n_pre_filter",
             val=n_pre_filter,
@@ -1003,6 +1024,7 @@ class CPP(Tool):
             max_overlap=max_overlap,
             max_cor=max_cor,
             check_cat=check_cat,
+            redundancy=redundancy,
             parametric=parametric,
             start=start,
             tmd_len=tmd_len,

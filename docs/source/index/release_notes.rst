@@ -52,6 +52,12 @@ Added
 - :meth:`~aaanalysis.CPP.run_num`: Numerical mode sourcing per-residue values from a pre-sliced tensor
   (``dict_num_parts``) instead of an amino-acid → scale lookup — embedding / structure /
   annotation features through the same pipeline and output schema as :meth:`~aaanalysis.CPP.run`.
+- **CPP.run ``redundancy='legacy'|'exact'``** (also :meth:`~aaanalysis.CPP.run_num`): Opt-in
+  position-overlap criterion for the redundancy-reduction step. The default ``'legacy'`` is
+  byte-identical to previous versions (published signatures stay reproducible); ``'exact'``
+  compares the actual residue positions — an interpretability enhancement (a more concentrated
+  signature, fewer redundant subcategories) that does not change predictive performance. For a
+  stronger, more efficient reduction, see :meth:`~aaanalysis.CPP.simplify`.
 - **CPP.simplify ``candidate_search='fast'``**: Opt-in heuristic capping the candidate
   scales evaluated per feature, for a large speed-up on big scale pools (mainly
   ``greedy``). The default ``'exact'`` reproduces the previous result; ``'fast'`` is
