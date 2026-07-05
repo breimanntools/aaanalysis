@@ -454,8 +454,9 @@ COL_METRIC = "metric"           # performance metric name (e.g. 'balanced_accura
 COL_PRINCIPLE = "principle"     # evaluation principle: 'cv' (cross-validation) | 'holdout'
 COL_SCORE_STD = "score_std"     # std of the score (across CV folds; NaN for a single holdout estimate)
 COL_GROUP = "group"             # per-sample/per-protein group label used for coloring
-COL_OFFSET = "offset"           # AAPred.predict_domain — boundary shift applied to tmd_start/tmd_stop
-COL_RESIDUE_POS = "position"    # AAPred.predict_window — 1-based anchor position scored
+COL_OFFSET = "offset"           # AAPred.predict(level='domain') — boundary shift applied to tmd_start/tmd_stop
+COL_RESIDUE_POS = "position"    # AAPred.predict(level='window') — 1-based anchor position scored
+COL_PRED_LABEL = "predicted_label"  # AAPred.predict — class label when a threshold is given
 STR_PRINCIPLE_CV = "cv"
 STR_PRINCIPLE_HOLDOUT = "holdout"
 LIST_PRINCIPLES = [STR_PRINCIPLE_CV, STR_PRINCIPLE_HOLDOUT]

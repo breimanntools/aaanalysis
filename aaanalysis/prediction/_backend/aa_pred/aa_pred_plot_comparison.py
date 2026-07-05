@@ -1,5 +1,5 @@
 """
-Backend for AAPredPlot.comparison: a grouped method x condition comparison barplot
+Backend for AAPredPlot.eval(kind="comparison"): a grouped method x condition comparison barplot
 with per-bar value labels and a chance/baseline line.
 """
 from typing import Optional, List, Dict, Union

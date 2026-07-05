@@ -77,7 +77,14 @@ Rules:
 
 ## General
 
-- Cover every public parameter of the demonstrated method (grouped sensibly).
+- **Cover every public parameter of the demonstrated method (grouped sensibly).** This is a
+  hard rule, not a nicety: pass every public param by name in a code cell, related params
+  grouped into a "further parameters" cell. A minimal "call it with one arg" notebook is
+  rejected. **Enforced in CI** by `tests/unit/api_tests/test_notebook_param_coverage.py`
+  (name-based, with a committed `notebook_param_coverage_baseline.txt` backlog ratchet): a
+  new notebook — or any prediction notebook — must have **zero** undemonstrated params, and
+  the baseline may only shrink, never grow. When you add a param to a public signature, add
+  it to the notebook in the same change.
 - Set `aa.options["verbose"] = False` at the top to keep outputs clean.
 - Commit notebooks **with executed outputs** (tables + images), and re-run
   before pushing — a stale/unexecuted notebook is a recurring miss.

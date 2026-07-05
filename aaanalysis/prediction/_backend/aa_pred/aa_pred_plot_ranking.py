@@ -1,5 +1,5 @@
 """
-Backend for AAPredPlot.ranking: horizontal ranked-candidate bars colored by class,
+Backend for AAPredPlot.predict(kind="ranking"): horizontal ranked-candidate bars colored by class,
 with optional per-item error bars and confidence cut-off lines.
 """
 import numpy as np

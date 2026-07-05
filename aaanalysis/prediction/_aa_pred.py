@@ -63,7 +63,7 @@ def check_featurizer(df_feat=None):
     """Check that a feature definition is bound so raw sequences can be featurized."""
     if df_feat is None:
         raise ValueError("'AAPred' has no bound 'df_feat'; pass 'df_feat=...' to the constructor to "
-                         "enable sequence-level prediction (predict_seq/predict_domain/predict_window).")
+                         "enable sequence-level prediction (predict at level 'seq'/'domain'/'window').")
 
 
 def featurize_seq(df_feat=None, df_scales=None, df_seq=None, list_parts=None, **parts_kwargs):
@@ -91,7 +91,7 @@ class AAPred(Wrapper):
     feature matrix ``X`` and ``labels``, it **evaluates** one or more scikit-learn model
     classes across metrics by cross-validation and an optional held-out set (:meth:`eval`),
     and **deploys** them by fitting on all data and exposing prediction scores
-    (:meth:`fit` / :meth:`predict_proba` / :meth:`predict`).
+    (:meth:`fit` / :meth:`predict` / :meth:`eval`).
 
     Unlike :class:`CPPGrid`, which optimizes the *feature space* and scores configurations
     by feature separation, ``AAPred`` takes a *fixed* feature set and trains models that are
@@ -142,7 +142,7 @@ class AAPred(Wrapper):
         df_feat : pd.DataFrame, shape (n_features, n_feature_info), optional
             CPP feature DataFrame (with a ``feature`` column) bound to the model. When given, the
             feature matrix ``X`` is computed internally from a ``df_seq`` by the sequence-level
-            prediction methods (:meth:`predict_seq`, :meth:`predict_domain`, :meth:`predict_window`).
+            :meth:`predict` method (``level='seq'``/``'domain'``/``'window'``).
         df_scales : pd.DataFrame, shape (n_letters, n_scales), optional
             Amino acid scales used for internal featurization. Defaults to the bundled AAontology
             scales when ``None``.
@@ -238,8 +238,8 @@ class AAPred(Wrapper):
         Fit every model on the full dataset for deployment.
 
         Each model class from the constructor is instantiated and fit on all of ``X`` / ``labels``;
-        the fitted estimators are kept in ``list_models_`` and reused by :meth:`predict_proba` /
-        :meth:`predict`.
+        the fitted estimators are kept in ``list_models_`` and reused by :meth:`predict` and
+        :meth:`eval`.
 
         .. versionadded:: 1.1.0
 
@@ -251,7 +251,7 @@ class AAPred(Wrapper):
             Class labels for samples in ``X`` (typically ``1`` for the positive class and
             ``0`` for the negative class).
         label_pos : int, default=1
-            Label of the positive class whose probability :meth:`predict_proba` returns.
+            Label of the positive class whose probability :meth:`predict` scores.
         optimize_hyperparams : bool, default=False
             If ``True``, each model is tuned by ``GridSearchCV`` (``n_cv`` folds) over its
             ``param_grids`` entry, or a built-in default grid when none is given; the best
@@ -372,69 +372,73 @@ class AAPred(Wrapper):
                               X_holdout=X_holdout, labels_holdout=labels_holdout)
         return df_eval
 
-    def predict_proba(self,
-                      X: ut.ArrayLike2D,
-                      ) -> Tuple[np.ndarray, np.ndarray]:
-        """
-        Obtain positive-class prediction scores for samples in ``X``.
-
-        Scores are averaged across all fitted models from ``list_models_``.
-
-        .. note::
-           :meth:`AAPred.fit` must be called before using this method.
-
-        .. versionadded:: 1.1.0
-
-        Parameters
-        ----------
-        X : array-like, shape (n_samples, n_features)
-            Feature matrix. Rows typically correspond to samples and columns to features.
-
-        Returns
-        -------
-        pred : array-like, shape (n_samples,)
-            Average positive-class prediction score for each sample.
-        pred_std : array-like, shape (n_samples,)
-            Standard deviation of the score across models (``0`` for a single model).
-
-        Examples
-        --------
-        .. include:: examples/aapred_predict_proba.rst
-        """
-        # Check input
-        check_is_fitted(list_models=self.list_models_)
-        X = ut.check_X(X=X, min_n_samples=1)
-        # Predict
-        pred, pred_std = predict_proba_models(X=X, list_models=self.list_models_, label_pos=self.label_pos_)
-        return pred, pred_std
-
     def predict(self,
-                X: ut.ArrayLike2D,
-                threshold: Union[int, float] = 0.5,
-                ) -> np.ndarray:
+                df_seq: pd.DataFrame,
+                level: str = "seq",
+                threshold: Optional[Union[int, float]] = None,
+                list_parts: Optional[List[str]] = None,
+                window: int = 3,
+                tmd_len: Optional[int] = None,
+                step: int = 1,
+                jmd_n_len: int = 10,
+                jmd_c_len: int = 10,
+                ) -> pd.DataFrame:
         """
-        Predict positive-class membership by thresholding the prediction score.
+        Predict from raw sequences at a chosen level: whole protein, domain, or residue window.
 
-        The averaged positive-class score from :meth:`predict_proba` is compared against
-        ``threshold``: samples at or above it are labeled ``label_pos`` (from :meth:`fit`), the rest ``0``.
+        One predictor for all three granularities, selected with ``level``:
+
+        * ``'seq'`` — one score per protein (sequence level).
+        * ``'domain'`` — a boundary-sensitivity scan: the TMD boundaries are shifted by every
+          offset in ``[-window, +window]`` and each shifted definition is featurized and scored.
+        * ``'window'`` — a per-residue profile: a length-``tmd_len`` window is slid along each
+          sequence (spaced by ``step``) and scored at every valid position.
+
+        Each level featurizes with the bound ``df_feat`` and averages the fitted-model ensemble.
+        When ``threshold`` is given, a ``predicted_label`` column is added (score at or above the
+        threshold -> ``label_pos`` from :meth:`fit`, else the negative class); with ``threshold=None``
+        (default) only the scores are returned.
 
         .. note::
-           :meth:`AAPred.fit` must be called before using this method.
+           Requires a ``df_feat`` bound at construction and a prior :meth:`fit`.
 
         .. versionadded:: 1.1.0
 
         Parameters
         ----------
-        X : array-like, shape (n_samples, n_features)
-            Feature matrix. Rows typically correspond to samples and columns to features.
-        threshold : int or float, default=0.5
-            Score at or above which a sample is predicted positive (``label_pos`` from :meth:`fit`).
+        df_seq : pd.DataFrame, shape (n_proteins, n_seq_info)
+            DataFrame containing an ``entry`` column of unique protein identifiers and a
+            ``sequence`` column; ``level='domain'`` additionally needs ``tmd_start`` / ``tmd_stop``.
+        level : str, default="seq"
+            Prediction granularity: ``'seq'``, ``'domain'``, or ``'window'``.
+        threshold : int or float, optional
+            If given (in ``[0, 1]``), add a ``predicted_label`` column (score ``>= threshold`` ->
+            ``label_pos``, else the negative class). ``None`` (default) returns scores only.
+        list_parts : list of str, optional
+            Sequence parts to build for featurization. Defaults to the standard CPP parts.
+        window : int, default=3
+            (``level='domain'`` only) Maximum absolute boundary shift, in residues, scanned per side.
+        tmd_len : int, optional
+            (``level='window'`` only, required there) Length in residues of the window anchored at
+            each position.
+        step : int, default=1
+            (``level='window'`` only) Spacing between consecutive anchor positions.
+        jmd_n_len : int, default=10
+            (``level='window'`` only) N-terminal flank required around each window.
+        jmd_c_len : int, default=10
+            (``level='window'`` only) C-terminal flank required around each window.
 
         Returns
         -------
-        pred_labels : array-like, shape (n_samples,)
-            Predicted labels (``label_pos`` where the score is ``>= threshold``, else the
-            negative class label seen during :meth:`fit`).
+        df_pred : pd.DataFrame
+            Long-format predictions; columns depend on ``level``: ``entry`` / ``score`` /
+            ``score_std`` (``'seq'``), ``entry`` / ``offset`` / ``score`` / ``is_best`` (``'domain'``),
+            ``entry`` / ``position`` / ``score`` / ``score_std`` (``'window'``). Plus
+            ``predicted_label`` when ``threshold`` is given.
+
+        See Also
+        --------
+        * :meth:`AAPred.eval` for cross-validated model evaluation (``df_eval``).
 
         Examples
         --------
@@ -442,18 +446,33 @@ class AAPred(Wrapper):
         """
         # Check input
         check_is_fitted(list_models=self.list_models_)
-        X = ut.check_X(X=X, min_n_samples=1)
-        ut.check_number_range(name="threshold", val=threshold, min_val=0, max_val=1, just_int=False)
-        # Predict
-        pred, _ = predict_proba_models(X=X, list_models=self.list_models_, label_pos=self.label_pos_)
-        pred_labels = np.where(pred >= threshold, self.label_pos_, self.label_neg_)
-        return pred_labels
+        check_featurizer(df_feat=self._df_feat)
+        ut.check_df_seq(df_seq=df_seq)
+        if level not in ("seq", "domain", "window"):
+            raise ValueError(f"'level' ('{level}') must be 'seq', 'domain', or 'window'.")
+        if threshold is not None:
+            ut.check_number_range(name="threshold", val=threshold, min_val=0, max_val=1, just_int=False)
+        # Dispatch to the level-specific predictor
+        if level == "seq":
+            df_pred = self._predict_seq(df_seq=df_seq, list_parts=list_parts)
+        elif level == "domain":
+            df_pred = self._predict_domain(df_seq=df_seq, window=window, list_parts=list_parts)
+        else:
+            if tmd_len is None:
+                raise ValueError("'tmd_len' is required for level='window'.")
+            df_pred = self._predict_window(df_seq=df_seq, tmd_len=tmd_len, step=step,
+                                           jmd_n_len=jmd_n_len, jmd_c_len=jmd_c_len, list_parts=list_parts)
+        # Optional class labels from the score
+        if threshold is not None:
+            df_pred[ut.COL_PRED_LABEL] = np.where(df_pred[ut.COL_SCORE] >= threshold,
+                                                  self.label_pos_, self.label_neg_)
+        return df_pred
 
     def _predict_X(self, X):
         """Averaged positive-class score for a feature matrix (fitted-model ensemble)."""
         return predict_proba_models(X=X, list_models=self.list_models_, label_pos=self.label_pos_)
 
-    def predict_seq(self,
+    def _predict_seq(self,
                     df_seq: pd.DataFrame,
                     list_parts: Optional[List[str]] = None,
                     ) -> pd.DataFrame:
@@ -483,9 +502,6 @@ class AAPred(Wrapper):
             One row per protein with columns ``entry``, ``score`` (positive-class score), and
             ``score_std`` (std across models).
 
-        Examples
-        --------
-        .. include:: examples/aapred_predict_seq.rst
         """
         # Check input
         check_is_fitted(list_models=self.list_models_)
@@ -498,7 +514,7 @@ class AAPred(Wrapper):
                                 ut.COL_SCORE: pred, ut.COL_SCORE_STD: pred_std})
         return df_pred
 
-    def predict_domain(self,
+    def _predict_domain(self,
                        df_seq: pd.DataFrame,
                        window: int = 3,
                        list_parts: Optional[List[str]] = None,
@@ -533,9 +549,6 @@ class AAPred(Wrapper):
             ``is_best`` (``True`` for the highest-scoring offset per protein). Offsets whose shifted
             boundary falls outside the sequence are omitted.
 
-        Examples
-        --------
-        .. include:: examples/aapred_predict_domain.rst
         """
         # Check input
         check_is_fitted(list_models=self.list_models_)
@@ -543,7 +556,7 @@ class AAPred(Wrapper):
         ut.check_df_seq(df_seq=df_seq)
         missing = [c for c in [ut.COL_SEQ, ut.COL_TMD_START, ut.COL_TMD_STOP] if c not in df_seq.columns]
         if missing:
-            raise ValueError(f"'df_seq' should contain columns {missing} for 'predict_domain'.")
+            raise ValueError(f"'df_seq' should contain columns {missing} for predict(level='domain').")
         ut.check_number_range(name="window", val=window, min_val=0, just_int=True)
         # Position-based frame (drop precomputed part columns so shifted boundaries recompute)
         cols = [ut.COL_ENTRY, ut.COL_SEQ, ut.COL_TMD_START, ut.COL_TMD_STOP]
@@ -567,7 +580,7 @@ class AAPred(Wrapper):
         df_domain["is_best"] = df_domain.index.isin(idx_best)
         return df_domain
 
-    def predict_window(self,
+    def _predict_window(self,
                        df_seq: pd.DataFrame,
                        tmd_len: int,
                        step: int = 1,
@@ -608,16 +621,13 @@ class AAPred(Wrapper):
             Long-format table with columns ``entry``, ``position`` (1-based anchor), ``score``, and
             ``score_std``. Positions without enough flanking residues for the full window are omitted.
 
-        Examples
-        --------
-        .. include:: examples/aapred_predict_window.rst
         """
         # Check input
         check_is_fitted(list_models=self.list_models_)
         check_featurizer(df_feat=self._df_feat)
         ut.check_df_seq(df_seq=df_seq)
         if ut.COL_SEQ not in df_seq.columns:
-            raise ValueError(f"'df_seq' should contain a '{ut.COL_SEQ}' column for 'predict_window'.")
+            raise ValueError(f"'df_seq' should contain a '{ut.COL_SEQ}' column for predict(level='window').")
         ut.check_number_range(name="tmd_len", val=tmd_len, min_val=1, just_int=True)
         ut.check_number_range(name="step", val=step, min_val=1, just_int=True)
         ut.check_number_range(name="jmd_n_len", val=jmd_n_len, min_val=0, just_int=True)
