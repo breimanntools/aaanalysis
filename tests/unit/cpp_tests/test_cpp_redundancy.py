@@ -1,4 +1,5 @@
 """Tests for the CPP.run redundancy criterion (``redundancy='legacy'|'exact'``)."""
+import hashlib
 import inspect
 import pandas as pd
 import pytest
@@ -14,9 +15,23 @@ def _setup():
     return df_parts, labels
 
 
+def _feature_sha(df_feat):
+    feats = sorted(df_feat[ut.COL_FEATURE])
+    return len(feats), hashlib.sha256("\n".join(feats).encode()).hexdigest()[:16]
+
+
+# Frozen redundancy-reduced feature sets on the canonical DOM_GSEC cell
+# (CPP(random_state=42).run(labels, redundancy=...), n_jobs=1). (n_features, sha256(sorted ids)[:16]).
+# 'legacy' pins byte-identity to prior versions (guards the set(x) branch against silent drift);
+# 'exact' is the T3 regression anchor promised by ADR-0050 / ADR-0032. Regression-marked so it
+# runs in the nightly, not the blocking gate (matches the ADR-0015 exact-value anchor policy).
+_ANCHORS = {"legacy": (100, "70eeb5b3b6633948"), "exact": (100, "5b7cb30d1112de5a")}
+
+
 class TestCPPRedundancy:
     def test_legacy_is_the_default(self):
-        # default and explicit 'legacy' must be byte-identical (reproducibility contract)
+        # Routing check: an unset `redundancy` must route to the 'legacy' branch (default==explicit).
+        # This does NOT prove byte-identity to prior versions on its own — the frozen anchor below does.
         df_parts, labels = _setup()
         cpp = aa.CPP(df_parts=df_parts, verbose=False, random_state=42)
         d_default = cpp.run(labels=labels, n_jobs=1).reset_index(drop=True)
@@ -49,3 +64,13 @@ class TestCPPRedundancy:
         params = inspect.signature(aa.CPP.run_num).parameters
         assert "redundancy" in params
         assert params["redundancy"].default == "legacy"
+
+    @pytest.mark.regression
+    @pytest.mark.parametrize("mode", ["legacy", "exact"])
+    def test_frozen_feature_set_anchor(self, mode):
+        # Pins the exact redundancy-reduced feature set per criterion; any silent reshuffle
+        # (legacy byte-identity break, or exact drift) fails here. See _ANCHORS note above.
+        df_parts, labels = _setup()
+        cpp = aa.CPP(df_parts=df_parts, verbose=False, random_state=42)
+        got = _feature_sha(cpp.run(labels=labels, redundancy=mode, n_jobs=1))
+        assert got == _ANCHORS[mode], f"{mode} feature set drifted: {got} != {_ANCHORS[mode]}"

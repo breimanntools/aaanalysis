@@ -426,7 +426,6 @@ class CPP(Tool):
         max_overlap: float = 0.5,
         max_cor: float = 0.5,
         check_cat: bool = True,
-        redundancy: str = "legacy",
         parametric: bool = False,
         start: int = 1,
         tmd_len: int = 20,
@@ -437,6 +436,7 @@ class CPP(Tool):
         n_batches: Optional[int] = None,
         n_sample_batches: Optional[int] = None,
         return_stats: bool = False,
+        redundancy: str = "legacy",
     ) -> Union[pd.DataFrame, Tuple[pd.DataFrame, dict]]:
         """
         Perform Comparative Physicochemical Profiling (CPP) algorithm: creation and two-step filtering of
@@ -529,7 +529,7 @@ class CPP(Tool):
         Notes
         -----
         * Pre-filtering can be adjusted by the following parameters: {'n_pre_filter', 'pct_pre_filter', 'max_std_test'}.
-        * Filtering can be adjusted by the following parameters: {'n_filter', 'max_overlap', 'max_cor', 'check_cat'}.
+        * Filtering can be adjusted by the following parameters: {'n_filter', 'max_overlap', 'max_cor', 'check_cat', 'redundancy'}.
         * ``redundancy='exact'`` is an optional **enhancement** of the redundancy step, not a correctness
           fix: it compares the true residue positions and tends to yield a more *concentrated* signature
           (fewer redundant subcategories) rather than higher predictive performance, which stays
@@ -743,7 +743,6 @@ class CPP(Tool):
         max_overlap: float = 0.5,
         max_cor: float = 0.5,
         check_cat: bool = True,
-        redundancy: str = "legacy",
         parametric: bool = False,
         start: int = 1,
         tmd_len: int = 20,
@@ -754,6 +753,7 @@ class CPP(Tool):
         n_batches: Optional[int] = None,
         n_sample_batches: Optional[int] = None,
         return_stats: bool = False,
+        redundancy: str = "legacy",
     ) -> Union[pd.DataFrame, Tuple[pd.DataFrame, dict]]:
         """
         Numerical-mode Comparative Physicochemical Profiling (CPP): same algorithm as
