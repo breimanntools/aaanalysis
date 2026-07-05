@@ -357,8 +357,9 @@ class AAPredPlot:
         ylabel : str, optional
             y-axis label; defaults to a per-kind label.
         df_seq : pd.DataFrame, optional
-            Protein ``entry`` / ``sequence`` (and, for ``kind='domain'``, ``tmd_start``) frame used
-            to draw the subcategory profiles and the sequence row. Required for those tracks.
+            DataFrame containing an ``entry`` column of unique protein identifiers and a
+            ``sequence`` column (and, for ``kind='domain'``, ``tmd_start``), used to draw the
+            subcategory profiles and the sequence row. Required for those tracks.
         df_scales : pd.DataFrame, optional
             Amino-acid scale matrix (letters x scales) for the subcategory profiles. Defaults to the
             bundled ``load_scales()`` when ``subcats`` is given and this is ``None``.

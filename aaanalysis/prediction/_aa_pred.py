@@ -407,8 +407,8 @@ class AAPred(Wrapper):
         Parameters
         ----------
         df_seq : pd.DataFrame, shape (n_proteins, n_seq_info)
-            DataFrame with an ``entry`` column of unique protein identifiers and a ``sequence``
-            column; ``level='domain'`` additionally needs ``tmd_start`` / ``tmd_stop``.
+            DataFrame containing an ``entry`` column of unique protein identifiers and a
+            ``sequence`` column; ``level='domain'`` additionally needs ``tmd_start`` / ``tmd_stop``.
         level : str, default="seq"
             Prediction granularity: ``'seq'``, ``'domain'``, or ``'window'``.
         threshold : int or float, optional
