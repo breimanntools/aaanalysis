@@ -48,6 +48,213 @@ def _default(val, fallback):
     return fallback if val is None else val
 
 
+# Multi-track sequence-viewer helpers (shared by the ``window``/``domain`` renderers).
+# The base prediction axes are stacked with optional extra tracks that all share the
+# residue-position x-axis: a CPP-importance profile, per-subcategory scale profiles,
+# user annotation tracks, and a bottom sequence row.
+_SEQ_ROW_MAX = 80  # longest region for which per-residue letters are still drawn
+
+
+def _entry_sequence(df_seq, entry):
+    """Return ``(sequence, tmd_start)`` for ``entry`` in ``df_seq``; either may be ``None``.
+
+    ``sequence`` is the full protein string (needed for subcategory / sequence rows) and
+    ``tmd_start`` its 1-based TMD start (needed to map ``domain`` offsets onto residues).
+    """
+    if df_seq is None or entry is None:
+        return None, None
+    ut.check_df(name="df_seq", df=df_seq, cols_required=[ut.COL_ENTRY])
+    sub = df_seq[df_seq[ut.COL_ENTRY] == entry]
+    if len(sub) == 0:
+        return None, None
+    seq = str(sub[ut.COL_SEQ].iloc[0]) if ut.COL_SEQ in sub.columns else None
+    tmd_start = None
+    if ut.COL_TMD_START in sub.columns and pd.notna(sub[ut.COL_TMD_START].iloc[0]):
+        tmd_start = int(sub[ut.COL_TMD_START].iloc[0])
+    return seq, tmd_start
+
+
+def _residue_indices(kind, x, tmd_start):
+    """1-based protein residue index for each plotted x position, or ``None`` if unmapped.
+
+    * ``window`` — ``x`` already holds 1-based residue (anchor) positions.
+    * ``domain`` — ``x`` holds boundary offsets; residue ``= tmd_start + offset`` (needs
+      ``tmd_start``, else the residue-anchored tracks are omitted).
+    """
+    if kind == "window":
+        return np.asarray(x, dtype=int)
+    if tmd_start is None:
+        return None
+    return np.asarray(tmd_start + np.asarray(x, dtype=int), dtype=int)
+
+
+def _subcat_profile(seq, scale_ids, df_scales):
+    """Per-residue (0-based over ``seq``) mean scale value across ``scale_ids``.
+
+    ``profile[r] = mean_s df_scales.loc[seq[r], s]`` for each requested scale ``s``; ``None``
+    when none of the ``scale_ids`` are present in ``df_scales``.
+    """
+    cols = [s for s in scale_ids if s in df_scales.columns]
+    if len(cols) == 0:
+        return None
+    per_aa = df_scales[cols].mean(axis=1)  # index = amino acid letter -> mean scale value
+    return np.array([per_aa.get(aa, np.nan) for aa in seq], dtype=float)
+
+
+def _importance_profile(df_feat):
+    """Window-frame position -> summed feature importance, spread over each feature's residues.
+
+    Each feature contributes ``importance / n_positions`` to every 1-based position in its
+    ``positions`` column (matching the CPP per-position normalization). Uses
+    ``feat_importance`` when present, else ``abs_auc``. Returns ``(positions, values)`` arrays
+    or ``(None, None)`` when no usable column is available.
+    """
+    col = (ut.COL_FEAT_IMPORT if ut.COL_FEAT_IMPORT in df_feat.columns
+           else ut.COL_ABS_AUC if ut.COL_ABS_AUC in df_feat.columns else None)
+    if col is None or ut.COL_POSITION not in df_feat.columns:
+        return None, None
+    acc = {}
+    for pos_str, weight in zip(df_feat[ut.COL_POSITION].astype(str), df_feat[col].astype(float)):
+        parts = [int(p) for p in pos_str.split(",") if p.strip() != ""]
+        if len(parts) == 0:
+            continue
+        share = float(weight) / len(parts)
+        for p in parts:
+            acc[p] = acc.get(p, 0.0) + share
+    if len(acc) == 0:
+        return None, None
+    positions = np.array(sorted(acc))
+    values = np.array([acc[p] for p in positions], dtype=float)
+    return positions, values
+
+
+def _spread_on_x(x, values):
+    """Map a per-index ``values`` vector onto the plotted x-range by linear interpolation.
+
+    Used to align a window-frame profile (whose length need not equal ``len(x)``) onto the
+    residue x-axis; returned unchanged when the lengths already match.
+    """
+    x = np.asarray(x, dtype=float)
+    values = np.asarray(values, dtype=float)
+    if len(values) == len(x):
+        return values
+    if len(x) < 2 or len(values) == 0:
+        return np.full(len(x), np.nan)
+    grid = np.linspace(float(x.min()), float(x.max()), len(values))
+    return np.interp(x, grid, values)
+
+
+def _is_numeric_values(values):
+    """True if ``values`` can be cast to a float array (numeric -> line track)."""
+    try:
+        np.asarray(values, dtype=float)
+        return True
+    except (ValueError, TypeError):
+        return False
+
+
+def _build_extra_tracks(kind, x, seq, tmd_start, df_scales, df_cat, subcats, df_feat,
+                        list_annotations):
+    """Assemble the ordered extra-track list: importance, subcats, user tracks, sequence.
+
+    A track whose inputs are missing is simply skipped. Numeric user tracks become line
+    profiles; non-numeric ones fall back to an ``imshow`` strip.
+    """
+    tracks = []
+    residues = _residue_indices(kind=kind, x=x, tmd_start=tmd_start)
+    # 1) CPP importance profile (one track)
+    if df_feat is not None:
+        positions, values = _importance_profile(df_feat)
+        if positions is not None:
+            vals = _spread_on_x(x, values)
+            peak = np.nanmax(np.abs(vals)) if np.isfinite(vals).any() else 0.0
+            if peak > 0:
+                vals = vals / peak
+            tracks.append(dict(type="line", values=vals, label="CPP importance",
+                               color=ut.COLOR_FEAT_POS))
+    # 2) Per-subcategory scale profiles (one track per subcat)
+    if subcats and seq is not None and df_scales is not None and df_cat is not None \
+            and residues is not None:
+        clist = ut.plot_get_clist_(n_colors=max(len(subcats), 3))
+        for i, name in enumerate(subcats):
+            scale_ids = df_cat[df_cat[ut.COL_SUBCAT] == name][ut.COL_SCALE_ID].tolist()
+            per_res = _subcat_profile(seq, scale_ids, df_scales)
+            if per_res is None:
+                continue
+            vals = np.array([per_res[r - 1] if 1 <= r <= len(per_res) else np.nan
+                             for r in residues], dtype=float)
+            tracks.append(dict(type="line", values=vals, label=name,
+                               color=clist[i % len(clist)]))
+    # 3) User annotation tracks (numeric -> line, else categorical imshow strip)
+    if list_annotations:
+        for track in list_annotations:
+            values = track["values"]
+            label = track.get("label", "")
+            if _is_numeric_values(values):
+                tracks.append(dict(type="line", values=_spread_on_x(x, values),
+                                   label=label, color=track.get("color")))
+            else:
+                cats = list(dict.fromkeys(values))
+                code = np.array([cats.index(v) for v in values], dtype=float)
+                tracks.append(dict(type="imshow", values=code, label=label,
+                                   cmap=track.get("cmap", "viridis")))
+    # 4) Sequence row at the bottom (letters only when the region is short enough)
+    if seq is not None and residues is not None:
+        letters = [seq[r - 1] if 1 <= r <= len(seq) else "" for r in residues]
+        tracks.append(dict(type="seq", letters=letters, label="Sequence",
+                           show=len(letters) <= _SEQ_ROW_MAX))
+    return tracks
+
+
+def _positional_layout(ax, figsize, tracks):
+    """Return ``(fig, base_ax, [track_axes])`` for the stacked viewer.
+
+    When an explicit ``ax`` is passed only the base profile is drawn on it (no sub-tracks).
+    Otherwise a shared-x stack is created, the figure growing in height per extra track.
+    """
+    if ax is not None:
+        return ax.figure, ax, []
+    if not tracks:
+        fig, base_ax = plt.subplots(figsize=figsize)
+        return fig, base_ax, []
+    heights = [6.0] + [0.5 if t["type"] == "seq" else 0.9 for t in tracks]
+    figsize = (figsize[0], figsize[1] + 0.55 * len(tracks))
+    fig, axes = plt.subplots(len(tracks) + 1, 1, figsize=figsize, sharex=True,
+                             gridspec_kw={"height_ratios": heights})
+    return fig, axes[0], list(axes[1:])
+
+
+def _set_track_label(tax, label):
+    """Left-side, horizontally written track label aligned with the row."""
+    tax.set_ylabel(label, rotation=0, ha="right", va="center", fontsize=8)
+    tax.yaxis.set_label_coords(-0.012, 0.5)
+
+
+def _draw_track(tax, track, x, is_bottom):
+    """Render one extra track onto its sub-axes (line / imshow / sequence row)."""
+    ttype = track["type"]
+    if ttype == "line":
+        tax.plot(x, track["values"], color=track["color"] or ut.COLOR_FEAT_NEG, linewidth=1.1)
+        tax.set_yticks([])
+    elif ttype == "imshow":
+        tax.imshow(track["values"].reshape(1, -1), aspect="auto",
+                   cmap=track.get("cmap", "viridis"),
+                   extent=[float(np.min(x)), float(np.max(x)), 0, 1])
+        tax.set_yticks([])
+    elif ttype == "seq":
+        if track.get("show", True):
+            for xi, letter in zip(x, track["letters"]):
+                tax.text(xi, 0.5, letter, ha="center", va="center",
+                         family=ut.FONT_AA, fontsize=7)
+        tax.set_ylim(0, 1)
+        tax.set_yticks([])
+    _set_track_label(tax, track["label"])
+    if ttype != "imshow":
+        sns.despine(ax=tax, left=True, bottom=not is_bottom)
+    if not is_bottom:
+        tax.tick_params(axis="x", bottom=False)
+
+
 # II Main Functions
 class AAPredPlot:
     """
@@ -95,19 +302,30 @@ class AAPredPlot:
                        color: Optional[str] = None,
                        xlabel: Optional[str] = None,
                        ylabel: Optional[str] = None,
+                       df_seq: Optional[pd.DataFrame] = None,
+                       df_scales: Optional[pd.DataFrame] = None,
+                       df_cat: Optional[pd.DataFrame] = None,
+                       subcats: Optional[List[str]] = None,
+                       df_feat: Optional[pd.DataFrame] = None,
                        ) -> Tuple[Figure, Axes]:
         """
-        Visualize single-protein positional predictions, dispatched by ``kind``.
+        Visualize single-protein positional predictions as a multi-track sequence viewer.
 
         One entry point for the two positional figures from :meth:`AAPred.predict`; ``kind``
-        selects the renderer and ``data`` is its prediction frame:
+        selects the base renderer and ``data`` is its prediction frame. The base profile is
+        stacked, top to bottom, with optional extra tracks that all share the residue-position
+        x-axis: a **CPP-importance** profile (``df_feat``), one **subcategory** scale profile per
+        entry in ``subcats``, the **user annotation** tracks (``list_annotations``), and a
+        **sequence** row at the bottom. Any track whose inputs are not provided is simply omitted.
 
         * ``'window'`` — per-residue profile from :meth:`AAPred.predict` (``level='window'``);
-          ``data`` is the ``df_window`` frame (columns ``entry``, ``position``, ``score``).
-          Uses ``entry``, ``list_annotations``, ``threshold``, ``color``, ``xlabel``, ``ylabel``.
+          ``data`` is the ``df_window`` frame (columns ``entry``, ``position``, ``score``). The
+          x-axis is the residue position, so every extra track aligns residue-by-residue.
         * ``'domain'`` — boundary-sensitivity curve from :meth:`AAPred.predict` (``level='domain'``);
           ``data`` is the ``df_domain`` frame (columns ``entry``, ``offset``, ``score``, ``is_best``).
-          Uses ``entry``, ``color``, ``xlabel``, ``ylabel``.
+          The x-axis is the boundary offset; the residue-anchored tracks (subcategory, sequence)
+          map each offset to residue ``tmd_start + offset`` and therefore need ``df_seq`` with a
+          ``tmd_start`` column.
 
         .. versionadded:: 1.1.0
 
@@ -119,29 +337,47 @@ class AAPredPlot:
         kind : str, default="window"
             Which positional figure to draw; one of ``window``, ``domain``.
         ax : matplotlib.axes.Axes, optional
-            Axes to draw on. If ``None``, a new figure and axes are created.
+            Axes to draw on. If ``None``, a new figure and axes are created. When given, only the
+            base profile is drawn (the stacked extra tracks need their own figure).
         figsize : tuple, optional
-            Figure size when ``ax`` is ``None``. If ``None``, a per-kind default is used.
+            Figure size when ``ax`` is ``None``. If ``None``, a per-kind default is used; the
+            figure grows in height for each extra track.
         entry : str, optional
             Protein to plot; required only when ``data`` holds more than one ``entry``.
         list_annotations : list of dict, optional
-            (``kind='window'``) Per-residue annotation tracks; each dict has ``values`` (array
-            aligned to the plotted positions), ``label`` (str) and optional ``cmap``.
+            Per-position annotation tracks; each dict has ``values`` (aligned to the plotted
+            positions), ``label`` (str), an optional ``color`` (numeric line tracks) and optional
+            ``cmap`` (non-numeric/categorical tracks drawn as an ``imshow`` strip).
         threshold : int or float, optional
             (``kind='window'``) Score drawn as a horizontal dashed decision line.
         color : str, optional
-            Line color; defaults to a house color.
+            Base line color; defaults to a house color.
         xlabel : str, optional
             x-axis label; defaults to a per-kind label.
         ylabel : str, optional
             y-axis label; defaults to a per-kind label.
+        df_seq : pd.DataFrame, optional
+            Protein ``entry`` / ``sequence`` (and, for ``kind='domain'``, ``tmd_start``) frame used
+            to draw the subcategory profiles and the sequence row. Required for those tracks.
+        df_scales : pd.DataFrame, optional
+            Amino-acid scale matrix (letters x scales) for the subcategory profiles. Defaults to the
+            bundled ``load_scales()`` when ``subcats`` is given and this is ``None``.
+        df_cat : pd.DataFrame, optional
+            Scale classification (``scale_id`` / ``subcategory``) mapping each subcategory to its
+            scales. Defaults to the bundled ``load_scales(name='scales_cat')`` when ``subcats`` is
+            given and this is ``None``.
+        subcats : list of str, optional
+            Subcategory names; one scale-profile line track is added per name (needs ``df_seq``).
+        df_feat : pd.DataFrame, optional
+            CPP feature frame (with a ``positions`` column and a ``feat_importance`` or ``abs_auc``
+            column) mapped onto positions to draw the CPP-importance track.
 
         Returns
         -------
         fig : matplotlib.figure.Figure
             The figure.
         ax : matplotlib.axes.Axes
-            The axes with the requested plot.
+            The base-profile axes (the top track).
 
         See Also
         --------
@@ -161,12 +397,15 @@ class AAPredPlot:
                 df_window=data, entry=entry, list_annotations=list_annotations, threshold=threshold,
                 ax=ax, figsize=figsize, color=color,
                 xlabel=_default(xlabel, "Residue position"),
-                ylabel=_default(ylabel, "Prediction score"))
+                ylabel=_default(ylabel, "Prediction score"),
+                df_seq=df_seq, df_scales=df_scales, df_cat=df_cat, subcats=subcats, df_feat=df_feat)
         # kind == "domain"
         return AAPredPlot._plot_domain(
             df_domain=data, entry=entry, ax=ax, figsize=figsize, color=color,
             xlabel=_default(xlabel, "Boundary offset [residues]"),
-            ylabel=_default(ylabel, "Prediction score"))
+            ylabel=_default(ylabel, "Prediction score"),
+            df_seq=df_seq, df_scales=df_scales, df_cat=df_cat, subcats=subcats, df_feat=df_feat,
+            list_annotations=list_annotations)
 
     @staticmethod
     def predict_cohort(data: Union[pd.DataFrame, ut.ArrayLike1D, ut.ArrayLike2D],
@@ -729,10 +968,46 @@ class AAPredPlot:
         return ut.FigAxResult(fig, ax)
 
     @staticmethod
+    def _check_track_inputs(df_seq=None, df_scales=None, df_cat=None, subcats=None, df_feat=None):
+        """Validate and default-resolve the multi-track viewer inputs.
+
+        Returns the (possibly default-loaded) ``(df_scales, df_cat, subcats)`` triple; the
+        bundled scales / classification are loaded only when ``subcats`` is requested and the
+        matching frame is ``None``.
+        """
+        if df_seq is not None:
+            ut.check_df(name="df_seq", df=df_seq, cols_required=[ut.COL_ENTRY])
+        if df_scales is not None:
+            ut.check_df(name="df_scales", df=df_scales)
+        if df_cat is not None:
+            ut.check_df(name="df_cat", df=df_cat, cols_required=[ut.COL_SCALE_ID, ut.COL_SUBCAT])
+        if df_feat is not None:
+            ut.check_df(name="df_feat", df=df_feat, cols_required=[ut.COL_FEATURE])
+        if subcats is not None:
+            subcats = ut.check_list_like(name="subcats", val=subcats, accept_str=True, accept_none=True)
+            if isinstance(subcats, str):
+                subcats = [subcats]
+        if subcats and (df_scales is None or df_cat is None):
+            from aaanalysis.data_handling import load_scales
+            if df_scales is None:
+                df_scales = load_scales(name="scales")
+            if df_cat is None:
+                df_cat = load_scales(name="scales_cat")
+        return df_scales, df_cat, subcats
+
+    @staticmethod
+    def _draw_extra_tracks(track_axes, tracks, x):
+        """Render every extra track and return the bottom-most axes (for the x-label)."""
+        for i, (tax, track) in enumerate(zip(track_axes, tracks)):
+            _draw_track(tax, track, x, is_bottom=(i == len(tracks) - 1))
+        return track_axes[-1] if track_axes else None
+
+    @staticmethod
     def _plot_window(df_window, entry=None, list_annotations=None, threshold=None, ax=None,
                      figsize=(10, 4), color=None, xlabel="Residue position",
-                     ylabel="Prediction score"):
-        """Per-residue prediction profile from AAPred.predict(level='window')."""
+                     ylabel="Prediction score", df_seq=None, df_scales=None, df_cat=None,
+                     subcats=None, df_feat=None):
+        """Per-residue prediction profile from AAPred.predict(level='window'), with extra tracks."""
         # Check input
         ut.check_df(name="df_window", df=df_window,
                     cols_required=[ut.COL_ENTRY, ut.COL_RESIDUE_POS, ut.COL_SCORE])
@@ -745,6 +1020,8 @@ class AAPredPlot:
         ut.check_color(name="color", val=color, accept_none=True)
         ut.check_str(name="xlabel", val=xlabel, accept_none=True)
         ut.check_str(name="ylabel", val=ylabel, accept_none=True)
+        df_scales, df_cat, subcats = AAPredPlot._check_track_inputs(
+            df_seq=df_seq, df_scales=df_scales, df_cat=df_cat, subcats=subcats, df_feat=df_feat)
         # Resolve the entry
         entries = list(dict.fromkeys(df_window[ut.COL_ENTRY].tolist()))
         if entry is None:
@@ -756,51 +1033,46 @@ class AAPredPlot:
         sub = df_window[df_window[ut.COL_ENTRY] == entry].sort_values(ut.COL_RESIDUE_POS)
         pos = sub[ut.COL_RESIDUE_POS].to_numpy()
         score = sub[ut.COL_SCORE].to_numpy()
-        # Layout: profile axes (+ track axes when annotations given)
-        tracks = list(list_annotations) if list_annotations is not None else []
-        if ax is None:
-            if tracks:
-                fig, axes = plt.subplots(len(tracks) + 1, 1, figsize=figsize, sharex=True,
-                                         gridspec_kw={"height_ratios": [6] + [0.6] * len(tracks)})
-                ax, track_axes = axes[0], list(axes[1:])
-            else:
-                fig, ax = plt.subplots(figsize=figsize)
-                track_axes = []
-        else:
-            fig = ax.figure
-            track_axes = []
-        # Draw the profile
+        # Build the extra tracks (importance, subcats, user annotations, sequence) + layout
+        seq, tmd_start = _entry_sequence(df_seq, entry)
+        tracks = _build_extra_tracks(kind="window", x=pos, seq=seq, tmd_start=tmd_start,
+                                     df_scales=df_scales, df_cat=df_cat, subcats=subcats,
+                                     df_feat=df_feat, list_annotations=list_annotations)
+        fig, ax, track_axes = _positional_layout(ax=ax, figsize=figsize, tracks=tracks)
+        # Draw the base profile
         ax.plot(pos, score, color=color or ut.COLOR_FEAT_NEG, linewidth=1.2)
         if threshold is not None:
             ax.axhline(threshold, color="0.4", linestyle="--", linewidth=1.2)
         ax.set_ylim(0, 1)
         ax.set_ylabel(ylabel)
-        ax.set_xlim(pos.min(), pos.max())
-        # Draw annotation tracks
-        for tax, track in zip(track_axes, tracks):
-            values = np.asarray(track["values"], dtype=float).reshape(1, -1)
-            tax.imshow(values, aspect="auto", cmap=track.get("cmap", "viridis"),
-                       extent=[pos.min(), pos.max(), 0, 1])
-            tax.set_yticks([])
-            tax.set_ylabel(track.get("label", ""), rotation=0, ha="right", va="center", fontsize=8)
-        (track_axes[-1] if track_axes else ax).set_xlabel(xlabel)
-        if not track_axes:
-            sns.despine(ax=ax)
+        if len(pos):
+            ax.set_xlim(pos.min(), pos.max())
+        sns.despine(ax=ax, bottom=bool(track_axes))
+        if track_axes:
+            ax.tick_params(axis="x", bottom=False)
+        # Draw the extra tracks; the x-label goes on the bottom-most axes
+        bottom = AAPredPlot._draw_extra_tracks(track_axes, tracks, pos)
+        (bottom if bottom is not None else ax).set_xlabel(xlabel)
         return ut.FigAxResult(fig, ax)
 
     @staticmethod
     def _plot_domain(df_domain, entry=None, ax=None, figsize=(6, 4.5), color=None,
-                     xlabel="Boundary offset [residues]", ylabel="Prediction score"):
-        """Domain boundary-sensitivity plot from AAPred.predict(level='domain')."""
+                     xlabel="Boundary offset [residues]", ylabel="Prediction score",
+                     df_seq=None, df_scales=None, df_cat=None, subcats=None, df_feat=None,
+                     list_annotations=None):
+        """Domain boundary-sensitivity plot from AAPred.predict(level='domain'), with extra tracks."""
         # Check input
         ut.check_df(name="df_domain", df=df_domain,
                     cols_required=[ut.COL_ENTRY, ut.COL_OFFSET, ut.COL_SCORE])
         ut.check_str(name="entry", val=entry, accept_none=True)
+        ut.check_list_like(name="list_annotations", val=list_annotations, accept_none=True)
         ut.check_ax(ax=ax, accept_none=True)
         ut.check_figsize(figsize=figsize, accept_none=True)
         ut.check_color(name="color", val=color, accept_none=True)
         ut.check_str(name="xlabel", val=xlabel, accept_none=True)
         ut.check_str(name="ylabel", val=ylabel, accept_none=True)
+        df_scales, df_cat, subcats = AAPredPlot._check_track_inputs(
+            df_seq=df_seq, df_scales=df_scales, df_cat=df_cat, subcats=subcats, df_feat=df_feat)
         # Resolve the entry
         entries = list(dict.fromkeys(df_domain[ut.COL_ENTRY].tolist()))
         if entry is None:
@@ -812,16 +1084,25 @@ class AAPredPlot:
         sub = df_domain[df_domain[ut.COL_ENTRY] == entry].sort_values(ut.COL_OFFSET)
         offsets = sub[ut.COL_OFFSET].to_numpy()
         score = sub[ut.COL_SCORE].to_numpy()
-        # Draw
-        fig, ax = _new_ax(ax=ax, figsize=figsize)
+        # Build the extra tracks (importance, subcats, user annotations, sequence) + layout
+        seq, tmd_start = _entry_sequence(df_seq, entry)
+        tracks = _build_extra_tracks(kind="domain", x=offsets, seq=seq, tmd_start=tmd_start,
+                                     df_scales=df_scales, df_cat=df_cat, subcats=subcats,
+                                     df_feat=df_feat, list_annotations=list_annotations)
+        fig, ax, track_axes = _positional_layout(ax=ax, figsize=figsize, tracks=tracks)
+        # Draw the base curve
         ax.plot(offsets, score, color=color or ut.COLOR_FEAT_POS, marker="o", linewidth=1.6)
         i_best = int(np.argmax(score))
         ax.scatter([offsets[i_best]], [score[i_best]], s=110, marker="*",
                    color=ut.COLOR_FEAT_POS, edgecolors="black", zorder=5, label="best")
         ax.axvline(0, color="0.6", linestyle="--", linewidth=1)  # annotated boundary
-        ax.set_xlabel(xlabel)
         ax.set_ylabel(ylabel)
         ax.set_ylim(0, 1)
         ax.legend(frameon=False)
-        sns.despine(ax=ax)
+        sns.despine(ax=ax, bottom=bool(track_axes))
+        if track_axes:
+            ax.tick_params(axis="x", bottom=False)
+        # Draw the extra tracks; the x-label goes on the bottom-most axes
+        bottom = AAPredPlot._draw_extra_tracks(track_axes, tracks, offsets)
+        (bottom if bottom is not None else ax).set_xlabel(xlabel)
         return ut.FigAxResult(fig, ax)

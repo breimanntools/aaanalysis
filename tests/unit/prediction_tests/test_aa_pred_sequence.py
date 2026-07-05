@@ -218,6 +218,141 @@ class TestPlotDomain:
         assert ax is ax0
 
 
+@pytest.fixture(scope="module")
+def scales():
+    return aa.load_scales(), aa.load_scales(name="scales_cat")
+
+
+class TestPlotWindowTracks:
+    """Multi-track sequence viewer for kind='window' (importance, subcats, sequence, annotations)."""
+
+    def _dw(self, fitted, step=45):
+        aapred, df_seq, _ = fitted
+        return aapred.predict(df_seq[df_seq["entry"] == "P05067"][["entry", "sequence"]],
+                              level="window", tmd_len=15, step=step)
+
+    def _one(self, fitted):
+        _, df_seq, _ = fitted
+        return df_seq[df_seq["entry"] == "P05067"]
+
+    def test_numeric_annotation_is_line_track(self, fitted):
+        dw = self._dw(fitted)
+        tracks = [{"values": np.linspace(0, 1, len(dw)), "label": "pLDDT", "color": "tab:orange"}]
+        fig, ax = aa.AAPredPlot().predict_sample(dw, kind="window", list_annotations=tracks)
+        # base + one line track; the track carries a Line2D, not an image
+        assert len(fig.axes) == 2
+        assert len(fig.axes[1].images) == 0 and len(fig.axes[1].get_lines()) >= 1
+
+    def test_categorical_annotation_is_imshow_fallback(self, fitted):
+        dw = self._dw(fitted)
+        n = len(dw)
+        cats = ["H"] * (n // 2) + ["E"] * (n - n // 2)
+        tracks = [{"values": cats, "label": "SS", "cmap": "coolwarm"}]
+        fig, ax = aa.AAPredPlot().predict_sample(dw, kind="window", list_annotations=tracks)
+        assert len(fig.axes[1].images) == 1  # categorical -> imshow strip
+
+    def test_subcats_add_line_tracks(self, fitted, scales):
+        aapred, df_seq, df_feat = fitted
+        df_scales, df_cat = scales
+        subcats = list(df_feat["subcategory"].unique()[:2])
+        fig, ax = aa.AAPredPlot().predict_sample(
+            self._dw(fitted), kind="window", entry="P05067", subcats=subcats,
+            df_seq=self._one(fitted), df_scales=df_scales, df_cat=df_cat)
+        # base + one track per subcat + sequence row
+        assert len(fig.axes) == len(subcats) + 2
+
+    def test_subcats_default_load_scales_when_omitted(self, fitted):
+        # df_scales/df_cat omitted -> bundled scales loaded internally
+        aapred, df_seq, df_feat = fitted
+        subcats = list(df_feat["subcategory"].unique()[:1])
+        fig, ax = aa.AAPredPlot().predict_sample(
+            self._dw(fitted), kind="window", entry="P05067", subcats=subcats,
+            df_seq=self._one(fitted))
+        assert len(fig.axes) == 3  # base + 1 subcat + sequence
+
+    def test_df_feat_adds_importance_track(self, fitted):
+        aapred, df_seq, df_feat = fitted
+        fig, ax = aa.AAPredPlot().predict_sample(self._dw(fitted), kind="window", df_feat=df_feat)
+        assert len(fig.axes) == 2  # base + importance
+        assert len(fig.axes[1].get_lines()) >= 1
+
+    def test_sequence_row_renders_letters_when_short(self, fitted):
+        fig, ax = aa.AAPredPlot().predict_sample(
+            self._dw(fitted, step=45), kind="window", entry="P05067", df_seq=self._one(fitted))
+        seq_ax = fig.axes[-1]
+        assert len(seq_ax.texts) > 0  # short region -> per-residue letters drawn
+
+    def test_sequence_row_suppresses_letters_when_long(self, fitted):
+        # step=5 -> many positions (> 80) -> only the position axis, no letters
+        fig, ax = aa.AAPredPlot().predict_sample(
+            self._dw(fitted, step=5), kind="window", entry="P05067", df_seq=self._one(fitted))
+        assert len(fig.axes[-1].texts) == 0
+
+    def test_missing_inputs_omit_tracks(self, fitted):
+        # subcats requested but no df_seq -> no subcat/sequence tracks (base only)
+        aapred, df_seq, df_feat = fitted
+        subcats = list(df_feat["subcategory"].unique()[:1])
+        fig, ax = aa.AAPredPlot().predict_sample(self._dw(fitted), kind="window", subcats=subcats)
+        assert len(fig.axes) == 1
+
+    def test_full_stack_returns_base_axes_on_top(self, fitted, scales):
+        aapred, df_seq, df_feat = fitted
+        df_scales, df_cat = scales
+        n = len(self._dw(fitted))
+        ann = [{"values": np.linspace(0, 1, n), "label": "pLDDT"}]
+        fig, ax = aa.AAPredPlot().predict_sample(
+            self._dw(fitted), kind="window", entry="P05067", threshold=0.5,
+            list_annotations=ann, subcats=list(df_feat["subcategory"].unique()[:1]),
+            df_feat=df_feat, df_seq=self._one(fitted), df_scales=df_scales, df_cat=df_cat)
+        assert ax is fig.axes[0]  # returned axes is the base profile (top track)
+        assert len(fig.axes) == 5  # base + importance + subcat + annotation + sequence
+
+
+class TestPlotDomainTracks:
+    """Multi-track viewer for kind='domain' (offsets mapped to residues via tmd_start)."""
+
+    def _dd(self, fitted, window=5):
+        aapred, df_seq, _ = fitted
+        return aapred.predict(df_seq[df_seq["entry"] == "P05067"], level="domain", window=window)
+
+    def _one(self, fitted):
+        _, df_seq, _ = fitted
+        return df_seq[df_seq["entry"] == "P05067"]
+
+    def test_df_feat_importance_track(self, fitted):
+        aapred, df_seq, df_feat = fitted
+        fig, ax = aa.AAPredPlot().predict_sample(self._dd(fitted), kind="domain", df_feat=df_feat)
+        assert len(fig.axes) == 2 and ax is fig.axes[0]
+
+    def test_subcats_and_sequence_via_tmd_start(self, fitted, scales):
+        aapred, df_seq, df_feat = fitted
+        df_scales, df_cat = scales
+        subcats = list(df_feat["subcategory"].unique()[:1])
+        fig, ax = aa.AAPredPlot().predict_sample(
+            self._dd(fitted), kind="domain", entry="P05067", subcats=subcats,
+            df_seq=self._one(fitted), df_scales=df_scales, df_cat=df_cat)
+        # base + subcat + sequence (offsets -> residues via tmd_start)
+        assert len(fig.axes) == 3
+        assert len(fig.axes[-1].texts) > 0  # short offset span -> residue letters
+
+    def test_user_annotation_line_track(self, fitted):
+        dd = self._dd(fitted)
+        ann = [{"values": np.linspace(0, 1, len(dd)), "label": "cons"}]
+        fig, ax = aa.AAPredPlot().predict_sample(dd, kind="domain", list_annotations=ann)
+        assert len(fig.axes) == 2
+
+    def test_missing_df_seq_omits_residue_tracks(self, fitted):
+        # subcats requested but no df_seq -> subcat/sequence tracks omitted (base only)
+        aapred, df_seq, df_feat = fitted
+        subcats = list(df_feat["subcategory"].unique()[:1])
+        fig, ax = aa.AAPredPlot().predict_sample(self._dd(fitted), kind="domain", subcats=subcats)
+        assert len(fig.axes) == 1
+
+    def test_returns_fig_ax(self, fitted):
+        fig, ax = aa.AAPredPlot().predict_sample(self._dd(fitted), kind="domain")
+        assert fig is not None and ax is not None
+
+
 class TestPredictSampleInvalidKind:
     def test_bad_kind_raises(self, fitted):
         # A cohort kind (or any non-positional kind) must be rejected by predict_sample,
