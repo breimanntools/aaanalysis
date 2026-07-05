@@ -18,13 +18,13 @@ from ._backend.aa_pred.aa_pred_plot_clustermap import plot_clustermap_
 # I Helper Functions
 # Single-protein positional plot kinds dispatched by :meth:`AAPredPlot.predict_sample`.
 LIST_SAMPLE_KINDS = ["window", "domain"]
-# Across-samples plot kinds dispatched by :meth:`AAPredPlot.predict_cohort`.
-LIST_COHORT_KINDS = ["hist", "ranking", "scatter", "cutoff", "clustermap"]
+# Across-samples plot kinds dispatched by :meth:`AAPredPlot.predict_group`.
+LIST_GROUP_KINDS = ["hist", "ranking", "scatter", "cutoff", "clustermap"]
 # Evaluation plot kinds dispatched by :meth:`AAPredPlot.eval`.
 LIST_EVAL_KINDS = ["eval", "comparison"]
 # Per-kind figure-size defaults used when ``figsize=None`` (split by method).
 _DICT_SAMPLE_FIGSIZE = {"window": (10, 4), "domain": (6, 4.5)}
-_DICT_COHORT_FIGSIZE = {"hist": (6, 4.5), "ranking": None, "scatter": (5.5, 5.5),
+_DICT_GROUP_FIGSIZE = {"hist": (6, 4.5), "ranking": None, "scatter": (5.5, 5.5),
                         "cutoff": (6, 4.5), "clustermap": (9, 9)}
 
 
@@ -265,7 +265,7 @@ class AAPredPlot:
     - :meth:`predict_sample` visualizes **single-protein positional predictions**: the
       per-residue profile (``kind='window'``) and the domain boundary-sensitivity curve
       (``kind='domain'``).
-    - :meth:`predict_cohort` visualizes **across-samples predictions**: score histograms
+    - :meth:`predict_group` visualizes **across-samples predictions**: score histograms
       (``kind='hist'``), ranked candidates (``kind='ranking'``), two-predictor scatters
       (``kind='scatter'``), survival curves (``kind='cutoff'``), and explanation-similarity
       clustermaps (``kind='clustermap'``).
@@ -382,7 +382,7 @@ class AAPredPlot:
         See Also
         --------
         * :meth:`AAPred.predict` for the predictions this visualizes.
-        * :meth:`AAPredPlot.predict_cohort` for across-samples figures.
+        * :meth:`AAPredPlot.predict_group` for across-samples figures.
         * :meth:`AAPredPlot.eval` for evaluation figures.
 
         Examples
@@ -408,7 +408,7 @@ class AAPredPlot:
             list_annotations=list_annotations)
 
     @staticmethod
-    def predict_cohort(data: Union[pd.DataFrame, ut.ArrayLike1D, ut.ArrayLike2D],
+    def predict_group(data: Union[pd.DataFrame, ut.ArrayLike1D, ut.ArrayLike2D],
                        kind: str = "hist",
                        ax: Optional[Axes] = None,
                        figsize: Optional[Tuple[Union[int, float], Union[int, float]]] = None,
@@ -438,7 +438,7 @@ class AAPredPlot:
         """
         Visualize across-samples predictions, dispatched by ``kind``.
 
-        One entry point for every cohort figure; ``kind`` selects the renderer and ``data`` is
+        One entry point for every group figure; ``kind`` selects the renderer and ``data`` is
         its primary input:
 
         * ``'hist'`` — class-separated histogram of per-sample scores; ``data`` is the ``scores``
@@ -464,7 +464,7 @@ class AAPredPlot:
             (``'hist'``/``'scatter'``/``'cutoff'``), a ranking frame (``'ranking'``), or an
             importance matrix (``'clustermap'``).
         kind : str, default="hist"
-            Which cohort figure to draw; one of ``hist``, ``ranking``, ``scatter``, ``cutoff``,
+            Which group figure to draw; one of ``hist``, ``ranking``, ``scatter``, ``cutoff``,
             ``clustermap``.
         ax : matplotlib.axes.Axes, optional
             Axes to draw on. If ``None``, a new figure and axes are created (ignored for
@@ -534,11 +534,11 @@ class AAPredPlot:
 
         Examples
         --------
-        .. include:: examples/aapred_plot_cohort.rst
+        .. include:: examples/aapred_plot_group.rst
         """
-        if kind not in LIST_COHORT_KINDS:
-            raise ValueError(f"'kind' ('{kind}') must be one of {LIST_COHORT_KINDS}.")
-        figsize = figsize if figsize is not None else _DICT_COHORT_FIGSIZE[kind]
+        if kind not in LIST_GROUP_KINDS:
+            raise ValueError(f"'kind' ('{kind}') must be one of {LIST_GROUP_KINDS}.")
+        figsize = figsize if figsize is not None else _DICT_GROUP_FIGSIZE[kind]
         if kind == "hist":
             return AAPredPlot._plot_hist(
                 scores=data, labels=labels, ax=ax, figsize=figsize, bins=bins,

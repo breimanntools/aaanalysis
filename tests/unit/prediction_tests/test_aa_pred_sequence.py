@@ -355,7 +355,7 @@ class TestPlotDomainTracks:
 
 class TestPredictSampleInvalidKind:
     def test_bad_kind_raises(self, fitted):
-        # A cohort kind (or any non-positional kind) must be rejected by predict_sample,
+        # A group kind (or any non-positional kind) must be rejected by predict_sample,
         # naming only the two valid sample kinds.
         aapred, df_seq, _ = fitted
         dw = aapred.predict(df_seq[df_seq["entry"] == "P05067"][["entry", "sequence"]],
