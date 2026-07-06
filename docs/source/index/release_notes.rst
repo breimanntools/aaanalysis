@@ -111,6 +111,19 @@ Added
   proteins / embeddings / CPP features via ``X`` (used as-is). The explicit ``X``
   signature is unchanged.
 
+**Prediction**
+
+- :class:`~aaanalysis.ReliabilityModel`: Per-sample **prediction reliability** — quantifies how much
+  to trust a prediction, separately from the score itself (a model can be confident about a ``0.55``
+  and worthless about a ``1.0`` out-of-distribution score). Wraps a fitted predictor (an
+  :class:`~aaanalysis.AAPred`, a :class:`~aaanalysis.TreeModel`, or any scikit-learn classifier) plus
+  its training data and reports, per sample: stability (ensemble/bootstrap ``score_std`` and a
+  confidence interval), an **applicability-domain** out-of-distribution signal (k-NN distance,
+  Mahalanobis, leverage → ``ood_score`` / ``in_domain``), calibrated sharpness (``margin`` /
+  ``entropy``), a marginal split-conformal prediction set that can abstain, and a headline
+  ``reliable`` flag (in-domain, stable, and a confident conformal singleton). ``fit`` / ``predict`` /
+  ``eval``; core scikit-learn only, no new required dependency.
+
 **Explainable AI**
 
 - **ShapModel — accession-based interface** (``[pro]``): ``fit`` accepts entry-keyed
