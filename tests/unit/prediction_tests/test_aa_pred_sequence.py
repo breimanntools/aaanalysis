@@ -497,3 +497,194 @@ class TestPredictSampleHighlightDomain:
             aa.AAPredPlot().predict_sample(self._dd(fitted), kind="domain", highlight=(3, -3))
         with pytest.raises(ValueError):
             aa.AAPredPlot().predict_sample(self._dd(fitted), kind="domain", highlight=(1.5, 2.5))
+
+
+def _track_axes(fig, ax):
+    """Axes that share the residue x-axis with the heatmap ``ax`` (excludes the colorbar)."""
+    return [a for a in fig.axes if a is ax or ax in a.get_shared_x_axes().get_siblings(a)]
+
+
+class TestPredictSampleSequence:
+    """Full-sequence subcategory x residue heatmap (kind='sequence')."""
+
+    def _one(self, fitted):
+        _, df_seq, _ = fitted
+        return df_seq[df_seq["entry"] == "P05067"]
+
+    def _subcats(self, df_feat, n=3):
+        return list(pd.unique(df_feat["subcategory"]))[:n]
+
+    def _seq_len(self, one):
+        return len(one["sequence"].iloc[0])
+
+    def test_registered_kind(self):
+        from aaanalysis.prediction._aa_pred_plot import LIST_SAMPLE_KINDS
+        assert "sequence" in LIST_SAMPLE_KINDS
+
+    def test_returns_fig_ax(self, fitted, scales):
+        aapred, df_seq, df_feat = fitted
+        df_scales, df_cat = scales
+        fig, ax = aa.AAPredPlot().predict_sample(
+            kind="sequence", entry="P05067", df_seq=self._one(fitted),
+            df_scales=df_scales, df_cat=df_cat, subcats=self._subcats(df_feat))
+        assert fig is not None and ax is not None and ax is fig.axes[0]
+
+    def test_rows_equal_n_subcats(self, fitted, scales):
+        aapred, df_seq, df_feat = fitted
+        df_scales, df_cat = scales
+        subcats = self._subcats(df_feat, n=4)
+        fig, ax = aa.AAPredPlot().predict_sample(
+            kind="sequence", entry="P05067", df_seq=self._one(fitted),
+            df_scales=df_scales, df_cat=df_cat, subcats=subcats)
+        matrix = ax.images[0].get_array()
+        assert matrix.shape[0] == len(subcats)  # one heatmap row per subcategory
+
+    def test_columns_span_full_sequence(self, fitted, scales):
+        aapred, df_seq, df_feat = fitted
+        df_scales, df_cat = scales
+        one = self._one(fitted)
+        fig, ax = aa.AAPredPlot().predict_sample(
+            kind="sequence", entry="P05067", df_seq=one,
+            df_scales=df_scales, df_cat=df_cat, subcats=self._subcats(df_feat))
+        matrix = ax.images[0].get_array()
+        assert matrix.shape[1] == self._seq_len(one)  # one column per residue (full sequence)
+
+    def test_subcats_none_uses_all_capped(self, fitted, scales):
+        aapred, df_seq, df_feat = fitted
+        df_scales, df_cat = scales
+        from aaanalysis.prediction._aa_pred_plot import _SUBCAT_ROW_CAP
+        n_all = df_cat["subcategory"].nunique()
+        assert n_all > _SUBCAT_ROW_CAP  # data really has more subcategories than the cap
+        fig, ax = aa.AAPredPlot().predict_sample(
+            kind="sequence", entry="P05067", df_seq=self._one(fitted),
+            df_scales=df_scales, df_cat=df_cat, subcats=None)
+        assert ax.images[0].get_array().shape[0] == _SUBCAT_ROW_CAP
+
+    def test_subcats_none_below_cap_uses_all(self, fitted, scales):
+        # A small df_cat (< cap subcategories) shows all of them, uncapped.
+        aapred, df_seq, df_feat = fitted
+        df_scales, df_cat = scales
+        keep = list(pd.unique(df_cat["subcategory"]))[:5]
+        df_cat_small = df_cat[df_cat["subcategory"].isin(keep)]
+        fig, ax = aa.AAPredPlot().predict_sample(
+            kind="sequence", entry="P05067", df_seq=self._one(fitted),
+            df_scales=df_scales, df_cat=df_cat_small, subcats=None)
+        assert ax.images[0].get_array().shape[0] == 5
+
+    def test_default_loads_scales_when_omitted(self, fitted):
+        # df_scales/df_cat omitted -> bundled scales loaded internally (heatmap still drawn)
+        fig, ax = aa.AAPredPlot().predict_sample(
+            kind="sequence", entry="P05067", df_seq=self._one(fitted),
+            subcats=self._subcats(fitted[2]))
+        assert len(ax.images) == 1
+
+    def test_sequence_row_below_heatmap(self, fitted, scales):
+        aapred, df_seq, df_feat = fitted
+        df_scales, df_cat = scales
+        fig, ax = aa.AAPredPlot().predict_sample(
+            kind="sequence", entry="P05067", df_seq=self._one(fitted),
+            df_scales=df_scales, df_cat=df_cat, subcats=self._subcats(df_feat))
+        tracks = _track_axes(fig, ax)
+        assert len(tracks) == 2  # heatmap + sequence row (colorbar excluded)
+        # the sequence row carries the x-label; the heatmap does not
+        assert tracks[-1].get_xlabel() == "Residue position"
+
+    def test_data_adds_prediction_track_above(self, fitted, scales):
+        aapred, df_seq, df_feat = fitted
+        df_scales, df_cat = scales
+        one = self._one(fitted)
+        dw = aapred.predict(one[["entry", "sequence"]], level="window", tmd_len=15, step=40)
+        fig, ax = aa.AAPredPlot().predict_sample(
+            data=dw, kind="sequence", entry="P05067", df_seq=one,
+            df_scales=df_scales, df_cat=df_cat, subcats=self._subcats(df_feat), threshold=0.5)
+        tracks = _track_axes(fig, ax)
+        assert len(tracks) == 3  # prediction + heatmap + sequence row
+        assert tracks[0] is not ax and len(tracks[0].get_lines()) >= 1  # top track is the profile
+
+    def test_missing_df_seq_raises(self, fitted):
+        _, _, df_feat = fitted
+        with pytest.raises(ValueError):
+            aa.AAPredPlot().predict_sample(kind="sequence", subcats=self._subcats(df_feat))
+
+    def test_data_optional_no_df_seq_still_raises(self, fitted):
+        # data is optional for sequence, but df_seq is not -> still raises without it
+        with pytest.raises(ValueError):
+            aa.AAPredPlot().predict_sample(kind="sequence")
+
+    def test_multi_entry_requires_entry(self, fitted, scales):
+        _, df_seq, df_feat = fitted
+        df_scales, df_cat = scales
+        two = df_seq[df_seq["entry"].isin(["P05067", "P14925"])]
+        with pytest.raises(ValueError):
+            aa.AAPredPlot().predict_sample(kind="sequence", df_seq=two,
+                                           subcats=self._subcats(df_feat))
+        fig, ax = aa.AAPredPlot().predict_sample(kind="sequence", df_seq=two, entry="P05067",
+                                                 subcats=self._subcats(df_feat))
+        assert ax is not None
+
+    def test_unknown_entry_raises(self, fitted):
+        with pytest.raises(ValueError):
+            aa.AAPredPlot().predict_sample(kind="sequence", df_seq=self._one(fitted),
+                                           entry="NOT_A_PROTEIN")
+
+    def test_ax_draws_heatmap_only(self, fitted, scales):
+        aapred, df_seq, df_feat = fitted
+        df_scales, df_cat = scales
+        fig0, ax0 = plt.subplots()
+        fig, ax = aa.AAPredPlot().predict_sample(
+            kind="sequence", entry="P05067", df_seq=self._one(fitted), ax=ax0,
+            df_scales=df_scales, df_cat=df_cat, subcats=self._subcats(df_feat))
+        assert ax is ax0 and len(ax0.images) == 1
+
+
+class TestPredictSampleSequenceHighlight:
+    """Region highlighting + zoom for kind='sequence' (residue-position columns)."""
+
+    def _one(self, fitted):
+        _, df_seq, _ = fitted
+        return df_seq[df_seq["entry"] == "P05067"]
+
+    def _subcats(self, df_feat, n=3):
+        return list(pd.unique(df_feat["subcategory"]))[:n]
+
+    def test_single_tuple_spans_every_track_axes(self, fitted, scales):
+        aapred, df_seq, df_feat = fitted
+        df_scales, df_cat = scales
+        fig, ax = aa.AAPredPlot().predict_sample(
+            kind="sequence", entry="P05067", df_seq=self._one(fitted), df_scales=df_scales,
+            df_cat=df_cat, subcats=self._subcats(df_feat), highlight=(100, 150))
+        tracks = _track_axes(fig, ax)
+        assert all(len(_cyan_spans(a)) == 1 for a in tracks)  # one span on heatmap + sequence row
+
+    def test_list_of_tuples_spans_every_track_axes(self, fitted):
+        fig, ax = aa.AAPredPlot().predict_sample(
+            kind="sequence", entry="P05067", df_seq=self._one(fitted),
+            subcats=self._subcats(fitted[2]), highlight=[(100, 150), (300, 340)])
+        tracks = _track_axes(fig, ax)
+        assert all(len(_cyan_spans(a)) == 2 for a in tracks)
+
+    def test_zoom_restricts_xlim_and_reveals_letters(self, fitted):
+        one = self._one(fitted)
+        subcats = self._subcats(fitted[2])
+        # full view: >80 residues -> sequence letters suppressed
+        full = aa.AAPredPlot().predict_sample(
+            kind="sequence", entry="P05067", df_seq=one, subcats=subcats)
+        seq_ax_full = _track_axes(full[0], full[1])[-1]
+        assert len(seq_ax_full.texts) == 0
+        # zoom into a short region: xlim restricted + per-residue letters drawn
+        fig, ax = aa.AAPredPlot().predict_sample(
+            kind="sequence", entry="P05067", df_seq=one, subcats=subcats,
+            highlight=(690, 720), zoom=True)
+        lo, hi = ax.get_xlim()
+        assert lo <= 690 and hi >= 720
+        assert (hi - lo) < len(one["sequence"].iloc[0])  # genuinely zoomed in
+        seq_ax = _track_axes(fig, ax)[-1]
+        assert len(seq_ax.texts) > 0
+
+    def test_invalid_highlight_raises(self, fitted):
+        with pytest.raises(ValueError):
+            aa.AAPredPlot().predict_sample(kind="sequence", df_seq=self._one(fitted),
+                                           subcats=self._subcats(fitted[2]), highlight=(150, 100))
+        with pytest.raises(ValueError):
+            aa.AAPredPlot().predict_sample(kind="sequence", df_seq=self._one(fitted),
+                                           subcats=self._subcats(fitted[2]), highlight=(10.5, 20.0))
