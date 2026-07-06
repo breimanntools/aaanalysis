@@ -305,6 +305,12 @@ Added
 Changed
 ~~~~~~~
 
+- :class:`~aaanalysis.TreeModel`: **per-round seeding fix** — with a fixed ``random_state`` (or the
+  global ``options["random_state"]``), :meth:`~aaanalysis.TreeModel.fit` now reseeds each round to
+  ``random_state + i`` so the rounds are independent. Previously every round fit identical estimators,
+  so ``feat_importance_std`` (and :meth:`~aaanalysis.TreeModel.predict_proba`'s ``pred_std``) collapsed
+  to exactly ``0`` and rounds 2..N were wasted. Fixed-seed importances change once (degenerate → real
+  Monte-Carlo mean with non-zero std); the ``random_state=None`` default is unchanged.
 - **Uniform plot return contract**: Every public ``*Plot`` method now returns a single
   ``(fig, ax)`` pair (forwarding attribute access to ``ax``, so existing
   ``ax = plot(...); ax.set_title(...)`` code keeps working), replacing the previous mix
