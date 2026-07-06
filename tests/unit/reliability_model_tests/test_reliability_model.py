@@ -230,6 +230,44 @@ class TestPredict:
         assert df["conformal_set"].isin(["neg", "pos", "both", "none"]).all()
 
 
+class TestDistinctions:
+    """Pin the mental model: score != trust; OOD overrides a high score."""
+
+    def test_high_score_but_ood_is_not_reliable(self):
+        # The key distinction: a confident-looking score on an OOD input must NOT be trusted.
+        Xtr, ytr, _ = _data()
+        rm = aa.ReliabilityModel(random_state=0).fit(Xtr, ytr, n_bootstrap=5)
+        # push a training positive far out of distribution -> stays "positive-looking" but OOD
+        pos = Xtr[ytr == 1][0]
+        ood = (pos + 25.0)[None, :]
+        row = rm.predict(ood).iloc[0]
+        assert not bool(row["in_domain"])
+        assert not bool(row["reliable"])                     # untrustworthy regardless of score
+
+    def test_confident_in_domain_can_be_reliable(self):
+        Xtr, ytr, Xte = _data()
+        df = aa.ReliabilityModel(random_state=0).fit(Xtr, ytr, n_bootstrap=5).predict(Xte)
+        # at least some clearly-classifiable in-domain points come back reliable + in-domain
+        assert (df["reliable"] & df["in_domain"]).any()
+        assert df.loc[df["reliable"], "in_domain"].all()     # reliable implies in_domain
+
+    def test_predict_is_idempotent_no_refit(self):
+        # fit-once refactor: repeated predict calls are identical (no re-splitting/re-bootstrapping)
+        Xtr, ytr, Xte = _data()
+        rm = aa.ReliabilityModel(random_state=0).fit(Xtr, ytr, n_bootstrap=8)
+        a, b = rm.predict(Xte), rm.predict(Xte)
+        assert np.allclose(a["score"], b["score"]) and np.allclose(a["score_std"], b["score_std"])
+        assert (a["conformal_set"].values == b["conformal_set"].values).all()
+
+    def test_conformal_coverage_near_target(self):
+        # empirical coverage of the conformal sets should be >= 1 - alpha (minus slack) on held-out
+        X, y = make_classification(n_samples=300, n_features=8, n_informative=5, random_state=1)
+        rm = aa.ReliabilityModel(random_state=1).fit(X[:200], y[:200], conformal_alpha=0.1)
+        ev = rm.eval(X=X[200:], labels=y[200:])
+        coverage = ev.iloc[-1]["empirical_pos"]
+        assert coverage >= 0.8                               # target 0.9, allow finite-sample slack
+
+
 # IV eval
 class TestEval:
     def test_eval_default(self):

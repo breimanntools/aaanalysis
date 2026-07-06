@@ -23,12 +23,14 @@ def _check_df_cols(df, name, cols):
 
 class ReliabilityModelPlot:
     """
-    Plot class for :class:`ReliabilityModel` outputs.
+    Visualize :class:`ReliabilityModel` outputs — calibration and the two trust axes.
 
-    Visualizes the two trust axes and the calibration quality: a calibration curve
-    (:meth:`reliability_diagram`, from :meth:`ReliabilityModel.eval`), the out-of-distribution
+    Turns the tables from :class:`ReliabilityModel` into three diagnostics: a calibration curve
+    (:meth:`reliability_diagram`, from :meth:`ReliabilityModel.eval`), the out-of-distribution score
     distribution (:meth:`ood_hist`), and a score-vs-OOD map colored by the ``reliable`` flag
     (:meth:`trust_map`, both from :meth:`ReliabilityModel.predict`).
+
+    .. versionadded:: 1.1.0
 
     See Also
     --------
@@ -47,6 +49,9 @@ class ReliabilityModelPlot:
                             ) -> Tuple[Figure, Axes]:
         """
         Calibration curve — mean predicted score vs. empirical positive rate, per bin.
+
+        Points on the diagonal are perfectly calibrated; points below it mean the score
+        overstates the true positive rate (over-confident), above it under-confident.
 
         Parameters
         ----------
@@ -86,6 +91,9 @@ class ReliabilityModelPlot:
                  ) -> Tuple[Figure, Axes]:
         """
         Histogram of the out-of-distribution score, with the in-domain boundary at ``1.0``.
+
+        Mass to the right of the boundary is out-of-domain — predictions the model is extrapolating
+        and should not be trusted at face value.
 
         Parameters
         ----------

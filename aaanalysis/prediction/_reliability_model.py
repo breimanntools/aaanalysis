@@ -61,47 +61,73 @@ def check_model(model=None, members=None):
 # II Main Class
 class ReliabilityModel(Wrapper):
     """
-    Prediction-reliability model: quantify **how much to trust** a per-sample prediction.
+    Assess **how much to trust** each prediction — the reliability of a score, not the score itself.
 
-    A prediction score is not the same as its trustworthiness: a model can be confident about a
-    ``0.55`` score (a genuinely ambiguous, in-distribution case) yet worthless about a ``1.0``
-    score on an input unlike anything it was trained on. ``ReliabilityModel`` reports the score
-    **together with** the two orthogonal signals that decide trust — following the aleatoric vs.
-    epistemic distinction ([Huellermeier21]_):
+    A prediction score and its trustworthiness are different things. A model can be *confident*
+    that a case is a ``0.55`` coin-flip (a real, in-distribution ambiguity) and *worthless* on a
+    ``1.0`` for an input unlike anything it was trained on. Reporting only the score hides this;
+    ``ReliabilityModel`` returns the score **together with** the signals that decide whether to
+    believe it.
 
-    - **Stability / uncertainty** (epistemic): spread of the score across an ensemble or
-      bootstrap resamples, as ``score_std`` and a confidence interval.
-    - **Applicability domain** (epistemic / out-of-distribution): distance of the input to the
-      training set (k-NN distance, Mahalanobis, leverage), as ``ood_score`` and an ``in_domain``
-      flag — the QSAR applicability-domain idea ([Sahigara12]_), since features here are a
-      descriptor space.
-    - **Calibrated sharpness** (aleatoric): ``margin`` / ``entropy`` of a calibrated probability
-      — genuine class ambiguity, meaningful only once the score is calibrated.
-    - **Distribution-free validity**: a marginal split-conformal prediction set that can
-      **abstain** ([Angelopoulos23]_).
+    **The mental model — two independent axes** (the aleatoric vs. epistemic distinction,
+    [Huellermeier21]_):
 
-    It wraps an already-fitted binary predictor (an :class:`AAPred`, a
-    :class:`~aaanalysis.TreeModel`, or any scikit-learn classifier) plus its training data, and
-    adds nothing but reliability — the prediction itself stays with the model. A prediction is
-    trustworthy when it is **in-domain, stable, and a confident conformal singleton**
-    (``reliable``).
+    - **Aleatoric** uncertainty is *irreducible ambiguity in the data*. A stable ``0.55`` is
+      genuinely on the boundary — the model is reliably telling you "these classes overlap here,"
+      and more data would not help. Read it from the **sharpness** (``margin`` / ``entropy``) of a
+      **calibrated** score.
+    - **Epistemic** uncertainty is *the model's lack of knowledge* — and it is reducible. It is
+      high where training data is sparse or absent (out-of-distribution). A ``1.0`` far outside the
+      training set is extrapolation, not confidence. Read it from the **applicability domain**
+      (``ood_score`` / ``in_domain``; k-NN distance, Mahalanobis, leverage — the QSAR idea
+      [Sahigara12]_, since features here are a descriptor space) **and** from the **stability** of
+      the score across an ensemble or bootstrap (``score_std``, ``ci_low`` / ``ci_high``).
+
+    The two textbook failure cases then separate cleanly:
+
+    .. list-table::
+       :header-rows: 1
+       :widths: 30 15 15 40
+
+       * - case
+         - epistemic
+         - aleatoric
+         - verdict
+       * - confident about ``0.55``
+         - low
+         - high
+         - trust it *as* "ambiguous"
+       * - worthless about ``1.0`` (out-of-distribution)
+         - high
+         - (irrelevant)
+         - do **not** trust, at any score
+
+    Two more pieces complete the picture:
+
+    - **Calibration is a prerequisite** — a raw ``predict_proba`` is not a confidence until
+      calibrated ([Guo17]_); ``margin`` / ``entropy`` are computed on the calibrated score.
+    - **Distribution-free validity** — a marginal split-conformal set ([Angelopoulos23]_) gives a
+      per-prediction ``1 - alpha`` guarantee and can **abstain** (empty set) or flag ambiguity
+      (both classes).
+
+    ``reliable`` is the one-flag summary: **``in_domain`` and a confident conformal singleton** —
+    inside the model's competence *and* decisive. It wraps an already-fitted binary predictor (an
+    :class:`AAPred`, a :class:`~aaanalysis.TreeModel`, or any scikit-learn classifier) plus its
+    training data and adds nothing but reliability — the prediction itself stays with the model.
+
+    .. versionadded:: 1.1.0
 
     Notes
     -----
-    * References:
-
-      .. [Huellermeier21] Huellermeier & Waegeman (2021),
-         *Aleatoric and epistemic uncertainty in machine learning*, Machine Learning 110:457-506.
-      .. [Sahigara12] Sahigara et al. (2012),
-         *Comparison of Different Approaches to Define the Applicability Domain of QSAR Models*,
-         Molecules 17:4791-4810.
-      .. [Angelopoulos23] Angelopoulos & Bates (2023),
-         *A Gentle Introduction to Conformal Prediction and Distribution-Free Uncertainty
-         Quantification*, Foundations and Trends in Machine Learning.
+    * **Scope.** Binary classification only. The applicability-domain distances ``ad_mahalanobis``
+      and ``ad_leverage`` are auxiliary diagnostics that assume more training samples than
+      features; the ``in_domain`` decision uses the robust k-NN distance and is always valid.
+    * All fitted-state attributes carry a trailing underscore and are set by :meth:`fit`.
 
     See Also
     --------
     * :class:`AAPred` for fitting and deploying the prediction models this class assesses.
+    * :class:`ReliabilityModelPlot` for visualizing the outputs.
     """
 
     def __init__(self,
@@ -186,6 +212,13 @@ class ReliabilityModel(Wrapper):
         ReliabilityModel
             The fitted instance.
 
+        Raises
+        ------
+        ValueError
+            If ``labels`` are not binary, ``label_pos`` is absent from ``labels``, ``model`` is an
+            empty list or lacks ``predict_proba``, a passed :class:`AAPred` is not fitted, or a
+            numeric parameter is out of range.
+
         Examples
         --------
         .. include:: examples/rm_fit.rst
@@ -264,6 +297,11 @@ class ReliabilityModel(Wrapper):
             clone(cloneable_base), np.asarray(X), labels, alpha=conformal_alpha,
             label_pos=label_pos, random_state=self._random_state)
             if cloneable_base is not None else None)
+        if self._verbose:
+            ut.print_out(f"ReliabilityModel fitted (in-domain kNN threshold="
+                         f"{self._ad_state['thr']:.3f}; uncertainty from {len(self._unc_members)} "
+                         f"member(s); calibrated={self._calibrator is not None}; "
+                         f"conformal={self._conf_state is not None}).")
         return self
 
     def predict(self,
@@ -271,6 +309,13 @@ class ReliabilityModel(Wrapper):
                 ) -> pd.DataFrame:
         """
         Score new samples for reliability (one row per sample).
+
+        Applies the references learned by :meth:`fit` (applicability domain, ensemble / bootstrap,
+        calibrator, conformal calibration) — no model is refitted here, so repeated calls are cheap
+        and deterministic. Each column maps to one axis of the mental model: ``score_std`` /
+        ``ci_*`` (stability), ``ood_score`` / ``in_domain`` / ``ad_*`` (applicability domain),
+        ``margin`` / ``entropy`` (calibrated ambiguity), ``conformal_set`` (validity), and
+        ``reliable`` (the headline flag).
 
         Parameters
         ----------
@@ -283,6 +328,13 @@ class ReliabilityModel(Wrapper):
             One row per sample with columns: ``score``, ``score_std``, ``ci_low``, ``ci_high``,
             ``ood_score``, ``in_domain``, ``ad_knn_dist``, ``ad_mahalanobis``, ``ad_leverage``,
             ``score_calibrated``, ``margin``, ``entropy``, ``conformal_set``, ``reliable``.
+
+        Raises
+        ------
+        RuntimeError
+            If called before :meth:`fit`.
+        ValueError
+            If ``X`` has a different number of features than the training data.
 
         Examples
         --------
@@ -331,6 +383,11 @@ class ReliabilityModel(Wrapper):
         """
         Reliability diagnostics: calibration curve, empirical conformal coverage, in-domain rate.
 
+        Aggregates :meth:`predict` over a labeled evaluation set into a compact table — per-bin
+        predicted-vs-empirical positive rate (how well calibrated the score is) plus a summary row
+        with the fraction in the applicability domain and the empirical coverage of the conformal
+        sets (which should track ``1 - conformal_alpha``).
+
         Parameters
         ----------
         X : array-like, optional
@@ -347,6 +404,11 @@ class ReliabilityModel(Wrapper):
             Per-bin rows (``bin``, ``mean_score``, ``empirical_pos``, ``n``) plus a summary row
             with the in-domain fraction (``mean_score``) and the empirical conformal coverage
             (``empirical_pos``).
+
+        Raises
+        ------
+        RuntimeError
+            If called before :meth:`fit`.
 
         Examples
         --------
