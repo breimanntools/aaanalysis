@@ -32,6 +32,34 @@ def _is_fig_ax(res):
     return isinstance(fig, Figure) and isinstance(ax, Axes)
 
 
+class TestRanking:
+    def test_returns_fig_ax(self):
+        assert _is_fig_ax(aa.ReliabilityModelPlot().ranking(df_rel=_df_rel()))
+        plt.close("all")
+
+    def test_params(self):
+        df = _df_rel()
+        fig, ax = plt.subplots()
+        res = aa.ReliabilityModelPlot().ranking(
+            df_rel=df, names=[f"p{i}" for i in range(len(df))], figsize=(5, 6),
+            top_n=5, title="rank", ax=ax)
+        assert res[1] is ax
+        plt.close("all")
+
+    def test_names_length_mismatch_raises(self):
+        with pytest.raises(ValueError):
+            aa.ReliabilityModelPlot().ranking(df_rel=_df_rel(), names=["only-one"])
+
+    @pytest.mark.parametrize("top_n", [0, -2])
+    def test_bad_top_n_raises(self, top_n):
+        with pytest.raises(ValueError):
+            aa.ReliabilityModelPlot().ranking(df_rel=_df_rel(), top_n=top_n)
+
+    def test_missing_col_raises(self):
+        with pytest.raises(ValueError):
+            aa.ReliabilityModelPlot().ranking(df_rel=pd.DataFrame({"score": [0.5]}))
+
+
 class TestReliabilityDiagram:
     def test_returns_fig_ax(self):
         assert _is_fig_ax(aa.ReliabilityModelPlot().reliability_diagram(df_eval=_df_eval()))

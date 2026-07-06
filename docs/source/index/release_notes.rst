@@ -124,7 +124,8 @@ Added
   ``reliable`` flag (in-domain, stable, and a confident conformal singleton). ``fit`` / ``predict`` /
   ``eval``; core scikit-learn only, no new required dependency.
 - :class:`~aaanalysis.ReliabilityModelPlot`: Visualizes :class:`~aaanalysis.ReliabilityModel` output —
-  a calibration curve (``reliability_diagram``), the out-of-distribution score distribution
+  a per-sample ``ranking`` (each prediction's score with its uncertainty interval, colored by trust
+  status), a calibration curve (``reliability_diagram``), the out-of-distribution score distribution
   (``ood_hist``), and a score-vs-OOD ``trust_map`` colored by the ``reliable`` flag.
 
 **Explainable AI**

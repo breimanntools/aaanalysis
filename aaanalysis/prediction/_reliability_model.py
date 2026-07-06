@@ -63,57 +63,49 @@ class ReliabilityModel(Wrapper):
     """
     Assess **how much to trust** each prediction — the reliability of a score, not the score itself.
 
-    A prediction score and its trustworthiness are different things. A model can be *confident*
-    that a case is a ``0.55`` coin-flip (a real, in-distribution ambiguity) and *worthless* on a
-    ``1.0`` for an input unlike anything it was trained on. Reporting only the score hides this;
-    ``ReliabilityModel`` returns the score **together with** the signals that decide whether to
-    believe it.
+    A high score is not the same as a trustworthy one: a model can be right to call a case a
+    ``0.55`` toss-up, and badly wrong to call an input it has never seen a ``1.0``. Reporting only
+    the score hides this. ``ReliabilityModel`` returns the score **together with** the answer to
+    **three plain questions** — the categories that decide trust:
 
-    **The mental model — two independent axes** (the aleatoric vs. epistemic distinction,
-    [Huellermeier21]_):
+    1. **Has the model seen anything like this before?** If the input is unlike the training data,
+       the model is guessing, and the score cannot be trusted no matter how high it is. *(the
+       "applicability domain" — ``ood_score`` / ``in_domain``.)*
+    2. **Do repeated models agree?** If an ensemble, or the same model refit on resampled data,
+       disagree, the score is shaky. *(stability — ``score_std``, ``ci_low`` / ``ci_high``.)*
+    3. **Is the case clear-cut, or a genuine toss-up?** Even a familiar, agreed-on case can be a
+       real 50/50; a well-calibrated score near ``0.5`` means "honestly borderline," not "broken."
+       *(decisiveness — ``margin`` / ``entropy``; the conformal set can also **abstain**.)*
 
-    - **Aleatoric** uncertainty is *irreducible ambiguity in the data*. A stable ``0.55`` is
-      genuinely on the boundary — the model is reliably telling you "these classes overlap here,"
-      and more data would not help. Read it from the **sharpness** (``margin`` / ``entropy``) of a
-      **calibrated** score.
-    - **Epistemic** uncertainty is *the model's lack of knowledge* — and it is reducible. It is
-      high where training data is sparse or absent (out-of-distribution). A ``1.0`` far outside the
-      training set is extrapolation, not confidence. Read it from the **applicability domain**
-      (``ood_score`` / ``in_domain``; k-NN distance, Mahalanobis, leverage — the QSAR idea
-      [Sahigara12]_, since features here are a descriptor space) **and** from the **stability** of
-      the score across an ensemble or bootstrap (``score_std``, ``ci_low`` / ``ci_high``).
-
-    The two textbook failure cases then separate cleanly:
+    So the two classic failures separate cleanly:
 
     .. list-table::
        :header-rows: 1
-       :widths: 30 15 15 40
+       :widths: 32 22 22 38
 
        * - case
-         - epistemic
-         - aleatoric
+         - seen before?
+         - clear-cut?
          - verdict
        * - confident about ``0.55``
-         - low
-         - high
-         - trust it *as* "ambiguous"
-       * - worthless about ``1.0`` (out-of-distribution)
-         - high
-         - (irrelevant)
+         - yes
+         - no (real toss-up)
+         - trust it *as* "borderline"
+       * - worthless about ``1.0``
+         - no (out-of-distribution)
+         - --
          - do **not** trust, at any score
 
-    Two more pieces complete the picture:
+    The headline flag ``reliable`` = **familiar and decisive** (``in_domain`` and a confident
+    conformal singleton). It wraps an already-fitted binary predictor (an :class:`AAPred`, a
+    :class:`~aaanalysis.TreeModel`, or any scikit-learn classifier) plus its training data and adds
+    nothing but reliability — the prediction itself stays with the model.
 
-    - **Calibration is a prerequisite** — a raw ``predict_proba`` is not a confidence until
-      calibrated ([Guo17]_); ``margin`` / ``entropy`` are computed on the calibrated score.
-    - **Distribution-free validity** — a marginal split-conformal set ([Angelopoulos23]_) gives a
-      per-prediction ``1 - alpha`` guarantee and can **abstain** (empty set) or flag ambiguity
-      (both classes).
-
-    ``reliable`` is the one-flag summary: **``in_domain`` and a confident conformal singleton** —
-    inside the model's competence *and* decisive. It wraps an already-fitted binary predictor (an
-    :class:`AAPred`, a :class:`~aaanalysis.TreeModel`, or any scikit-learn classifier) plus its
-    training data and adds nothing but reliability — the prediction itself stays with the model.
+    In uncertainty-quantification terms, questions 1-2 are **epistemic** uncertainty (the model's
+    reducible lack of knowledge) and question 3 is **aleatoric** uncertainty (irreducible ambiguity
+    in the data) [Huellermeier21]_. The applicability domain follows the QSAR idea [Sahigara12]_
+    (features here are a descriptor space), calibration follows [Guo17]_ (a raw ``predict_proba`` is
+    not a confidence until calibrated), and the conformal set follows [Angelopoulos23]_.
 
     .. versionadded:: 1.1.0
 

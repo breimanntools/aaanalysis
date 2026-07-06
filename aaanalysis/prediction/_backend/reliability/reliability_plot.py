@@ -3,9 +3,13 @@ This is a script for the backend of the ReliabilityModelPlot class (reliability 
 """
 import numpy as np
 import matplotlib.pyplot as plt
+from matplotlib.patches import Patch
 import seaborn as sns
 
 import aaanalysis.utils as ut
+
+# Trust status colors (green = trustworthy; amber = familiar but undecided; red = unfamiliar)
+_C_RELIABLE, _C_UNDECIDED, _C_OOD = "tab:green", "tab:orange", "tab:red"
 
 
 def _fig_ax(ax, figsize):
@@ -13,6 +17,40 @@ def _fig_ax(ax, figsize):
         fig, ax = plt.subplots(figsize=figsize)
     else:
         fig = ax.figure
+    return fig, ax
+
+
+def _trust_color(row):
+    if bool(row[ut.COL_RELIABLE]):
+        return _C_RELIABLE
+    return _C_UNDECIDED if bool(row[ut.COL_IN_DOMAIN]) else _C_OOD
+
+
+def plot_ranking_(df_rel, names=None, figsize=None, top_n=None, title=None, ax=None):
+    """Per-sample horizontal bars: score with its uncertainty interval, colored by trust status."""
+    d = df_rel.copy()
+    d["_name"] = list(names) if names is not None else [str(i) for i in range(len(d))]
+    d = d.sort_values(ut.COL_SCORE).reset_index(drop=True)
+    if top_n is not None:
+        d = d.tail(int(top_n)).reset_index(drop=True)          # the top_n highest-scoring samples
+    n = len(d)
+    fig, ax = _fig_ax(ax, figsize or (5, 0.32 * n + 1))
+    colors = [_trust_color(r) for _, r in d.iterrows()]
+    ax.barh(range(n), d[ut.COL_SCORE], color=colors, height=0.75)
+    xerr = np.clip(np.vstack([d[ut.COL_SCORE] - d[ut.COL_CI_LOW],
+                              d[ut.COL_CI_HIGH] - d[ut.COL_SCORE]]), 0, None)
+    ax.errorbar(d[ut.COL_SCORE], range(n), xerr=xerr, fmt="none", ecolor="0.3",
+                elinewidth=1.0, capsize=2.2)
+    ax.set_yticks(range(n)), ax.set_yticklabels(d["_name"], fontsize=9)
+    ax.tick_params(axis="y", length=0)
+    ax.set_xlim(0, 1), ax.set_xlabel("Prediction score"), ax.set_ylim(-0.7, n - 0.3)
+    ax.legend(handles=[Patch(color=_C_RELIABLE, label="reliable"),
+                       Patch(color=_C_UNDECIDED, label="in-domain, undecided"),
+                       Patch(color=_C_OOD, label="out-of-distribution")],
+              frameon=False, fontsize=8, loc="lower right")
+    if title:
+        ax.set_title(title)
+    sns.despine(ax=ax)
     return fig, ax
 
 
