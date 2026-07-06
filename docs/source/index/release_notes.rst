@@ -386,6 +386,11 @@ Changed
 Fixed
 ~~~~~
 
+- **BH-adjusted p-values (#343)**: ``p_val_fdr_bh`` in ``df_feat`` now follows canonical
+  Benjamini–Hochberg — the reverse cumulative-minimum (monotonicity) step was missing, so the
+  reported values could be non-monotone / slightly conservative in non-monotone regions. Only the
+  reported column changes; feature selection and ranking (``abs_auc`` / ``abs_mean_dif``) are
+  unaffected.
 - :meth:`~aaanalysis.CPP.run` with ``n_jobs > 1`` no longer crashes in non-interactive
   contexts (e.g. ``python -c``, heredocs, some subprocess shells) where starting a
   ``multiprocessing.Manager`` for the cross-process progress bar raised ``EOFError`` /
