@@ -73,7 +73,8 @@ def check_match_add_groups(list_df_add=None, names_add=None, colors_add=None, pc
                          f"projected groups in 'df_pu_add' (n={n_add}).")
     for i, df_add in enumerate(list_df_add):
         for pc in [pc_x, pc_y]:
-            if not any(f"PC{pc}" in str(c) and "abs" not in str(c) for c in df_add.columns):
+            # Anchor on the PC token (split on space) so 'PC1' does not match 'PC10'/'PC11'
+            if not any(str(c).split(" ")[0] == f"PC{pc}" for c in df_add.columns):
                 raise ValueError(f"'df_pu_add[{i}]' has no 'PC{pc}' value column; project the extra "
                                  f"group with 'dPULearn.project' so its columns match 'df_pu'.")
 

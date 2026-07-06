@@ -6,8 +6,6 @@ import numpy as np
 import pandas as pd
 from sklearn.linear_model import Ridge
 
-import aaanalysis.utils as ut
-
 
 # I Helper Functions
 def get_pc_value_columns(df_pu=None):
@@ -22,8 +20,9 @@ def project_into_pca_space(X_fit=None, df_pu=None, X_new=None, method="lstsq", a
     dPULearn fits ``PCA().fit(X.T)`` (on the transpose), so ``df_pu`` holds ``pca.components_.T`` and
     there is no exact out-of-sample forward transform for a new sample's feature vector. Each ``method``
     reconstructs a linear map from the fit pairs ``(X_fit, df_pu[PC columns])`` and applies it to
-    ``X_new``. Every map reproduces ``df_pu`` on the fit pool (when n_features >= n_samples), so it is
-    exact for the fitted samples and an approximation (interpolation) for genuinely new points.
+    ``X_new``. The ``lstsq`` and ``components`` maps reproduce ``df_pu`` on the fit pool (when
+    n_features >= n_samples) — exact for the fitted samples, an approximation (interpolation) for new
+    points; the regularized ``ridge`` map only approaches this exactness as ``alpha`` -> 0.
     """
     cols_pc = get_pc_value_columns(df_pu=df_pu)
     Z_fit = df_pu[cols_pc].to_numpy(dtype=float)

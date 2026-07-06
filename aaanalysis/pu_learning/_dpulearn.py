@@ -446,9 +446,10 @@ class dPULearn(Wrapper):
 
         Because dPULearn fits Principal Component Analysis (PCA) on the transposed feature matrix
         (``PCA().fit(X.T)``), there is no exact out-of-sample forward transform; instead a linear map
-        is reconstructed from the fit pairs ``(X, df_pu_)``. Every ``method`` reproduces ``df_pu_`` on
-        the fitted samples (when n_features >= n_samples) and is therefore **exact on the fit pool**
-        and an **approximation for genuinely new samples**. Deterministic (no randomness).
+        is reconstructed from the fit pairs ``(X, df_pu_)``. With ``method='lstsq'`` or ``'components'``
+        the map reproduces ``df_pu_`` on the fitted samples (when n_features >= n_samples) — **exact on
+        the fit pool** — and is an **approximation for genuinely new samples**; the regularized
+        ``'ridge'`` map only approaches this exactness as ``alpha`` decreases. Deterministic (no randomness).
 
         .. versionadded:: 1.1.0
 
@@ -497,7 +498,8 @@ class dPULearn(Wrapper):
         # Check input
         X = ut.check_X(X=X, X_name="X", min_n_samples=1)
         ut.check_str_options(name="method", val=method, list_str_options=LIST_PROJECT_METHODS)
-        ut.check_number_range(name="alpha", val=alpha, min_val=0, exclusive_limits=True, just_int=False)
+        if method == "ridge":
+            ut.check_number_range(name="alpha", val=alpha, min_val=0, exclusive_limits=True, just_int=False)
         check_is_fitted_for_projection(X_fit=self._X_fit, df_pu=self.df_pu_)
         check_match_X_fit_X(X_fit=self._X_fit, X=X)
         # Reconstruct the feature-space -> PC-space map and project the new samples

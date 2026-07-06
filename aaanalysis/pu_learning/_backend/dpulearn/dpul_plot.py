@@ -103,8 +103,9 @@ def plot_pca(df_pu=None, labels=None, figsize=(6, 6),
     # Overlay projected extra groups on top (front z-order), in the given order
     if list_df_add is not None:
         for df_add, name_add, color_add in zip(list_df_add, names_add, colors_add):
-            col_x = [x for x in df_add.columns if f'PC{pc_x}' in str(x) and "abs" not in str(x)][0]
-            col_y = [y for y in df_add.columns if f'PC{pc_y}' in str(y) and "abs" not in str(y)][0]
+            # Anchor on the PC token (split on space) so 'PC1' does not match 'PC10'/'PC11'
+            col_x = [x for x in df_add.columns if str(x).split(" ")[0] == f"PC{pc_x}"][0]
+            col_y = [y for y in df_add.columns if str(y).split(" ")[0] == f"PC{pc_y}"][0]
             plt.scatter(df_add[col_x], df_add[col_y], color=color_add, label=name_add, **args_scatter)
     # Handling mean lines for positive samples
     if show_pos_mean_x or show_pos_mean_y:

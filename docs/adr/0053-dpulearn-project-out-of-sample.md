@@ -30,8 +30,9 @@ Add an **additive** projection method and plot overlay; existing defaults stay b
   `PCi` columns as `df_pu_`. `fit` now retains the fitted feature matrix (`self._X_fit`, rows aligned
   with `df_pu_`) so the map can be rebuilt on demand. Only valid after PCA-based identification
   (`metric=None`); distance-based fits have no PCs to project into.
-- **Three projection methods**, all reconstructed from `(X_fit, df_pu_)` and therefore exact on the
-  fit pool (when n_features >= n_samples), approximate for new samples:
+- **Three projection methods**, all reconstructed from `(X_fit, df_pu_)`. `lstsq` and `components`
+  are exact on the fit pool (when n_features >= n_samples) and approximate for new samples; `ridge`
+  only approaches fit-pool exactness as `alpha -> 0`:
   - `lstsq` (default) — affine least-squares map `[X | 1] -> df_pu_`, the minimum-norm solution.
     Reproduces the use-case hand-rolled projection **byte-for-byte** (regression-tested).
   - `components` — the exact PCA-geometry map: row-center each sample by its own feature mean, then
