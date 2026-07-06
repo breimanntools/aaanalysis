@@ -494,6 +494,9 @@ class AAPredPlot:
         * :meth:`AAPred.predict` for the predictions this visualizes.
         * :meth:`AAPredPlot.predict_group` for across-samples figures.
         * :meth:`AAPredPlot.eval` for evaluation figures.
+        * :meth:`CPPStructurePlot.plot_linked` / :meth:`CPPStructurePlot.map_structure`: pass the
+          same ``highlight`` ``(start, stop)`` regions to mirror the cyan selection shaded here on
+          the 3D protein structure (shared ``COLOR_LINK_HIGHLIGHT``).
 
         Examples
         --------
