@@ -111,9 +111,20 @@ class ReliabilityModel(Wrapper):
 
     Notes
     -----
-    * **Scope.** Binary classification only. The applicability-domain distances ``ad_mahalanobis``
-      and ``ad_leverage`` are auxiliary diagnostics that assume more training samples than
-      features; the ``in_domain`` decision uses the robust k-NN distance and is always valid.
+    * **Scope.** Binary classification only. ``ad_mahalanobis`` / ``ad_leverage`` are auxiliary
+      diagnostics that need more training samples than features (they are ``NaN`` otherwise); the
+      ``in_domain`` decision uses the robust k-NN distance and is always valid.
+    * **``score`` is the member mean** — the ensemble average, or the bootstrap ("bagged") average
+      for a single model — so it is always the centre of ``[ci_low, ci_high]``. Set ``n_bootstrap=0``
+      to report a single model's own probability instead (then ``score_std`` is 0).
+    * **``reliable`` is conformal-based** (``in_domain`` and a confident conformal singleton),
+      whereas ``margin`` / ``entropy`` are a separate calibrated-sharpness readout — they can
+      disagree on a borderline case.
+    * **Calibration** affects ``score_calibrated`` / ``margin`` / ``entropy`` only; ``score`` (and
+      :meth:`ReliabilityModelPlot.reliability_diagram`) stay on the reported model score. For a
+      passed ensemble, the calibrator and conformal reference are built from its first member.
+    * **Reproducibility.** The bootstrap, calibration split, and conformal split are stochastic —
+      set ``random_state`` for identical output across fits.
     * All fitted-state attributes carry a trailing underscore and are set by :meth:`fit`.
 
     See Also
@@ -141,11 +152,9 @@ class ReliabilityModel(Wrapper):
         # Fitted attributes
         self.model_: Optional[object] = None
         self.label_pos_: Optional[int] = None
-        self.label_neg_: Optional[int] = None
         # Internal fitted state
         self._ad_state = None
-        self._score_members = None
-        self._unc_members = None
+        self._members = None
         self._calibrator = None
         self._conf_state = None
         self._ci = 90.0
@@ -190,7 +199,8 @@ class ReliabilityModel(Wrapper):
             Central width (percent) of the reported score confidence interval.
         n_bootstrap : int, default=20
             Bootstrap resamples for uncertainty when ``model`` is a single estimator (not an
-            ensemble). ``0`` disables the bootstrap (``score_std`` = 0).
+            ensemble); ``score`` is then the bagged mean over the resamples (see Notes). ``0``
+            disables the bootstrap and reports the model's own probability (``score_std`` = 0).
         calibrate : bool, default=True
             Fit a probability calibrator (needed for meaningful ``margin`` / ``entropy``).
         calibration_method : str, default="isotonic"
@@ -242,35 +252,29 @@ class ReliabilityModel(Wrapper):
         check_model(model=model, members=members)
 
         self.label_pos_ = label_pos
-        self.label_neg_ = int(next(v for v in classes if v != label_pos))
         self._ci = ci
         self._X_train, self._y_train = np.asarray(X), labels
 
         # Applicability-domain reference (fit once)
         self._ad_state = fit_applicability_domain(np.asarray(X), k=k, percentile=ad_percentile)
 
-        # Resolve model / ensemble and a cloneable base estimator
+        # Resolve the member models. ``score`` is their mean and the interval is their spread, so
+        # both come from the SAME set — the score is always the centre of its own interval.
         if members is not None:
             members = [m if _is_fitted(m) else clone(m).fit(X, labels) for m in members]
             base = clone(members[0]) if _can_clone(members[0]) else None
             self.model_ = members
-            self._score_members = members                    # ensemble mean is the point score
-            self._unc_members = members                       # ensemble spread is the uncertainty
+            self._members = members                           # ensemble: mean = score, spread = uncertainty
         else:
-            if model is None:
-                base = RandomForestClassifier(random_state=self._random_state)
-            else:
-                base = model
+            base = RandomForestClassifier(random_state=self._random_state) if model is None else model
             if not _is_fitted(base):
                 base = clone(base) if _can_clone(base) else base
                 base.fit(X, labels)
             self.model_ = base
-            self._score_members = [base]                      # full-data model is the point score
-            self._unc_members = (fit_bootstrap_models(
-                clone(base), np.asarray(X), labels, n_bootstrap=n_bootstrap,
-                random_state=self._random_state) if (n_bootstrap and _can_clone(base)) else [base])
-            if not self._unc_members:                          # all resamples degenerate
-                self._unc_members = [base]
+            boot = (fit_bootstrap_models(clone(base), np.asarray(X), labels, n_bootstrap=n_bootstrap,
+                                         random_state=self._random_state)
+                    if (n_bootstrap and _can_clone(base)) else [])
+            self._members = boot or [base]                    # score = bagged mean; spread = bootstrap
         cloneable_base = base if (base is not None and _can_clone(base)) else None
 
         # Calibration (fit a calibrated clone on the training data)
@@ -291,7 +295,7 @@ class ReliabilityModel(Wrapper):
             if cloneable_base is not None else None)
         if self._verbose:
             ut.print_out(f"ReliabilityModel fitted (in-domain kNN threshold="
-                         f"{self._ad_state['thr']:.3f}; uncertainty from {len(self._unc_members)} "
+                         f"{self._ad_state['thr']:.3f}; uncertainty from {len(self._members)} "
                          f"member(s); calibrated={self._calibrator is not None}; "
                          f"conformal={self._conf_state is not None}).")
         return self
@@ -341,8 +345,8 @@ class ReliabilityModel(Wrapper):
                              f"{n_feat_train}.")
         lp = self.label_pos_
 
-        score = proba_members(self._score_members, X, label_pos=lp).mean(axis=0)
-        std, lo, hi = comp_uncertainty(proba_members(self._unc_members, X, label_pos=lp), ci=self._ci)
+        proba = proba_members(self._members, X, label_pos=lp)
+        score, (std, lo, hi) = proba.mean(axis=0), comp_uncertainty(proba, ci=self._ci)
         ad = apply_applicability_domain(self._ad_state, X)
 
         if self._calibrator is not None:

@@ -267,6 +267,26 @@ class TestDistinctions:
         coverage = ev.iloc[-1]["empirical_pos"]
         assert coverage >= 0.8                               # target 0.9, allow finite-sample slack
 
+    def test_score_is_centre_of_its_interval(self):
+        # score is the member mean, so it never falls outside [ci_low, ci_high] (even with an
+        # overfitting base model, which previously produced score-outside-CI rows)
+        from sklearn.ensemble import GradientBoostingClassifier
+        Xtr, ytr, Xte = _data(n=180)
+        rm = aa.ReliabilityModel(random_state=3).fit(
+            Xtr, ytr, model=GradientBoostingClassifier().fit(Xtr, ytr), n_bootstrap=25)
+        df = rm.predict(Xte)
+        assert (df["score"] >= df["ci_low"] - 1e-9).all()
+        assert (df["score"] <= df["ci_high"] + 1e-9).all()
+
+    def test_ad_distances_nan_when_features_exceed_samples(self):
+        # p >= n makes Mahalanobis/leverage rank-deficient -> reported as NaN, not a constant;
+        # the robust kNN-based in_domain still works
+        X, y = make_classification(n_samples=40, n_features=30, n_informative=12, random_state=0)
+        rm = aa.ReliabilityModel(random_state=0).fit(X[:14], y[:14], n_bootstrap=3)
+        df = rm.predict(X[14:])
+        assert df["ad_mahalanobis"].isna().all() and df["ad_leverage"].isna().all()
+        assert df["in_domain"].notna().all()
+
 
 # IV eval
 class TestEval:

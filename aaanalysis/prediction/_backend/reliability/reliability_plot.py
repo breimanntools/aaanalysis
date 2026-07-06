@@ -86,8 +86,7 @@ def plot_ood_hist_(df_rel, figsize=(6, 4.5), bins=20, color="tab:gray", title=No
 def plot_trust_map_(df_rel, figsize=(5.5, 5), title=None, ax=None):
     """Score vs. OOD-score scatter, colored by ``reliable`` — the two trust axes at a glance."""
     fig, ax = _fig_ax(ax, figsize)
-    cal = df_rel[ut.COL_SCORE_CAL].to_numpy()
-    x = np.where(np.isnan(cal), df_rel[ut.COL_SCORE].to_numpy(), cal)
+    x = df_rel[ut.COL_SCORE].to_numpy()
     y = df_rel[ut.COL_OOD_SCORE].to_numpy()
     rel = df_rel[ut.COL_RELIABLE].to_numpy().astype(bool)
     kws = dict(s=32, edgecolors="white", linewidths=0.3)

@@ -195,8 +195,7 @@ class ReliabilityModelPlot:
         Parameters
         ----------
         df_rel : pd.DataFrame
-            Output of :meth:`ReliabilityModel.predict` (needs ``score``, ``ood_score``,
-            ``reliable``; uses ``score_calibrated`` when present).
+            Output of :meth:`ReliabilityModel.predict` (needs ``score``, ``ood_score``, ``reliable``).
         figsize : tuple, default=(5.5, 5)
             Figure size (used only when ``ax`` is ``None``).
         title : str, optional
@@ -215,7 +214,6 @@ class ReliabilityModelPlot:
         --------
         .. include:: examples/rm_plot_trust_map.rst
         """
-        _check_df_cols(df_rel, "df_rel",
-                       [ut.COL_SCORE, ut.COL_OOD_SCORE, ut.COL_RELIABLE, ut.COL_SCORE_CAL])
+        _check_df_cols(df_rel, "df_rel", [ut.COL_SCORE, ut.COL_OOD_SCORE, ut.COL_RELIABLE])
         fig, ax = plot_trust_map_(df_rel, figsize=figsize, title=title, ax=ax)
         return ut.FigAxResult(fig, ax)

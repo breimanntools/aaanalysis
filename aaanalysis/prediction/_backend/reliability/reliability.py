@@ -7,6 +7,7 @@ step (score new samples — called per prediction): uncertainty, applicability-d
 (out-of-distribution) distances, calibrated-score sharpness, and marginal split-conformal sets.
 """
 import numpy as np
+from scipy.stats import norm
 from sklearn.base import clone
 from sklearn.preprocessing import StandardScaler
 from sklearn.neighbors import NearestNeighbors
@@ -41,12 +42,17 @@ def fit_bootstrap_models(estimator, X_train, y_train, n_bootstrap=20, random_sta
 
 
 def comp_uncertainty(proba_arr, ci=90.0):
-    """Std and central-``ci``% interval of per-member probabilities, per sample."""
+    """Std and a ``mean +/- z*std`` (Wald) ``ci``% interval of per-member probabilities, per sample.
+
+    The interval is centred on the mean (the reported ``score``) and clipped to ``[0, 1]``, so the
+    score is always inside it — unlike an empirical-percentile band, which need not contain the mean
+    of a skewed member distribution.
+    """
     P = np.asarray(proba_arr, dtype=float)
+    mean = P.mean(axis=0)
     std = P.std(axis=0) if P.shape[0] > 1 else np.zeros(P.shape[1])
-    lo = np.percentile(P, (100 - ci) / 2, axis=0)
-    hi = np.percentile(P, 100 - (100 - ci) / 2, axis=0)
-    return std, lo, hi
+    z = float(norm.ppf(0.5 + ci / 200.0))
+    return std, np.clip(mean - z * std, 0.0, 1.0), np.clip(mean + z * std, 0.0, 1.0)
 
 
 # --- applicability domain (out-of-distribution) ---------------------------------------------
@@ -62,7 +68,10 @@ def fit_applicability_domain(X_train, k=5, percentile=95.0, ridge=1e-6):
     mu = Xtr.mean(axis=0)
     cov = np.atleast_2d(np.cov(Xtr, rowvar=False))
     Xc = Xtr - mu
+    # Mahalanobis / leverage are only meaningful with more samples than features; otherwise the
+    # (pseudo-inverse) covariance is rank-deficient and they collapse to a constant -> report NaN.
     return dict(scaler=scaler, nn=nn, thr=float(np.percentile(train_knn, percentile)), mu=mu,
+                degenerate=(n_feat >= n_train),
                 inv_cov=np.linalg.pinv(cov + ridge * np.eye(n_feat)),
                 gram_inv=np.linalg.pinv(Xc.T @ Xc + ridge * np.eye(n_feat)))
 
@@ -73,8 +82,11 @@ def apply_applicability_domain(state, X_new):
     knn = state["nn"].kneighbors(Xnew)[0].mean(axis=1)
     thr = state["thr"]
     diff = Xnew - state["mu"]
-    maha = np.sqrt(np.clip(np.einsum("ij,jk,ik->i", diff, state["inv_cov"], diff), 0, None))
-    leverage = np.einsum("ij,jk,ik->i", diff, state["gram_inv"], diff)
+    if state.get("degenerate"):
+        maha = leverage = np.full(len(Xnew), np.nan)
+    else:
+        maha = np.sqrt(np.clip(np.einsum("ij,jk,ik->i", diff, state["inv_cov"], diff), 0, None))
+        leverage = np.einsum("ij,jk,ik->i", diff, state["gram_inv"], diff)
     return dict(ood_score=(knn / thr if thr > 0 else knn),
                 in_domain=(knn <= thr if thr > 0 else np.ones(len(Xnew), dtype=bool)),
                 knn=knn, maha=maha, leverage=leverage)
@@ -106,6 +118,8 @@ def fit_conformal(estimator, X_train, y_train, alpha=0.1, label_pos=1, cal_size=
     p_cal = positive_proba(est, Xcal, label_pos=label_pos)
     nonconf = np.where(np.asarray(ycal) == label_pos, 1 - p_cal, p_cal)
     n = len(nonconf)
+    # Canonical split-conformal level; numpy's "higher" convention is ~1 index conservative on a
+    # small calibration split, so coverage is >= 1 - alpha (it over-covers, on the safe side).
     level = min(1.0, np.ceil((n + 1) * (1 - alpha)) / n)
     return dict(model=est, q=float(np.quantile(nonconf, level, method="higher")), label_pos=label_pos)
 
