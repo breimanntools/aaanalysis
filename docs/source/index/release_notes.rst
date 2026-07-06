@@ -169,6 +169,14 @@ Added
   of reliable negatives** — over the rows of ``X_unlabeled`` in the split mode, over ``X``
   otherwise (equal to the manual ``labels_[len(X_pos):] == 0`` result exactly). ``fit`` still
   returns ``self`` and the existing ``fit(X, labels=...)`` path is unchanged.
+- :meth:`~aaanalysis.dPULearn.project`: Projects held-out samples from the same feature space into
+  the **fitted PC space** (the ``PCi`` columns of ``df_pu_``) after PCA-based identification, so new
+  proteins can be placed alongside the identified negatives. ``method`` selects the reconstructed
+  linear map — ``'lstsq'`` (default, affine least-squares) or ``'components'`` (exact PCA-geometry
+  map); both are exact on the fitted samples and interpolate for new ones.
+  :meth:`~aaanalysis.dPULearnPlot.pca` gains ``df_pu_add`` / ``names_add`` / ``colors_add`` to
+  overlay one or more projected groups (a one-call four-group PCA); the default (``df_pu_add=None``)
+  output is unchanged.
 
 **Sequence Analysis**
 

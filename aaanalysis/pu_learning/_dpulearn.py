@@ -11,9 +11,11 @@ from aaanalysis.template_classes import Wrapper
 from ._backend.dpulearn.dpul_fit import (get_neg_via_distance, get_neg_via_pca)
 from ._backend.dpulearn.dpul_eval import eval_identified_negatives
 from ._backend.dpulearn.dpul_compare_sets_neg import compare_sets_negatives_
+from ._backend.dpulearn.dpul_project import project_into_pca_space, get_pc_value_columns
 
 # Settings
 LIST_METRICS = ['euclidean', 'manhattan', 'cosine']
+LIST_PROJECT_METHODS = ['lstsq', 'components']
 
 
 # I Helper Functions
@@ -142,6 +144,25 @@ def check_match_X_pos_X_unlabeled(X_pos=None, X_unlabeled=None) -> None:
                          f"'X_unlabeled' (n={n_features_unl})")
 
 
+def check_is_fitted_for_projection(X_fit=None, df_pu=None) -> None:
+    """Check that the instance was PCA-fitted so that new samples can be projected into its PC space."""
+    if X_fit is None or df_pu is None:
+        raise ValueError("dPULearn is not fitted. Call 'fit' (with PCA-based identification, i.e. "
+                         "metric=None) before 'project'.")
+    if len(get_pc_value_columns(df_pu=df_pu)) == 0:
+        raise ValueError("'project' requires PCA-based identification (fit with metric=None); the "
+                         "fitted 'df_pu_' contains distance columns instead of principal components.")
+
+
+def check_match_X_fit_X(X_fit=None, X=None) -> None:
+    """Check that new samples to project share the feature dimension of the fitted feature matrix."""
+    n_features_fit = X_fit.shape[1]
+    n_features = X.shape[1]
+    if n_features_fit != n_features:
+        raise ValueError(f"'n_features' of 'X' (n={n_features}) does not match the fitted feature "
+                         f"space (n={n_features_fit}). Project samples from the same feature space.")
+
+
 # II Main Functions
 class dPULearn(Wrapper):
     """
@@ -220,6 +241,8 @@ class dPULearn(Wrapper):
         self.labels_ = None
         self.df_pu_ = None
         self.mask_neg_ = None
+        # Fit-time feature matrix retained for projecting new samples into the PC space (see project())
+        self._X_fit = None
 
     # Main method
     def fit(self,
@@ -403,7 +426,76 @@ class dPULearn(Wrapper):
         self.labels_ = np.asarray(new_labels)
         self.df_pu_ = df_pu
         self.mask_neg_ = self.labels_[n_pos:] == 0 if n_pos is not None else self.labels_ == 0
+        # Retain the fitted feature matrix (rows aligned with df_pu_) so project() can rebuild the
+        # feature-space -> PC-space map on demand. Only meaningful for PCA-based identification.
+        self._X_fit = X
         return self
+
+    def project(self,
+                X: ut.ArrayLike2D,
+                method: Literal["lstsq", "components"] = "lstsq",
+                ) -> pd.DataFrame:
+        """
+        Project new samples into the fitted PCA coordinate space (the ``PCi`` columns of ``df_pu_``).
+
+        After PCA-based fitting, this maps held-out samples from the **same feature space** into the
+        principal-component coordinates learned during :meth:`dPULearn.fit`, so new proteins can be
+        placed alongside the identified negatives (e.g. overlaying an extra group in
+        :meth:`dPULearnPlot.pca`).
+
+        Because dPULearn fits Principal Component Analysis (PCA) on the transposed feature matrix
+        (``PCA().fit(X.T)``), there is no exact out-of-sample forward transform; instead a linear map
+        is reconstructed from the fit pairs ``(X, df_pu_)``. Both methods reproduce ``df_pu_`` on the
+        fitted samples (when n_features >= n_samples) and are therefore **exact on the fit pool** and
+        an **approximation for genuinely new samples**. Deterministic (no randomness).
+
+        .. versionadded:: 1.1.0
+
+        Parameters
+        ----------
+        X : array-like, shape (n_new_samples, n_features)
+            Feature matrix of the samples to project. Must have the same number of features
+            (``columns``) as the matrix used in :meth:`dPULearn.fit`.
+        method : {'lstsq', 'components'}, default='lstsq'
+            Projection map reconstructed from the fitted ``(X, df_pu_)`` pairs (both exact on the fit
+            pool, differing only for genuinely new samples):
+
+            * ``lstsq``: affine least-squares map (``[X | 1] -> df_pu_``), the minimum-norm solution.
+              Reproduces the hand-rolled projection used in the use case.
+            * ``components``: exact PCA-geometry map. Row-centers each sample by its own feature mean,
+              then applies the minimum-norm linear map, which equals the fitted PCA's
+              ``U @ inv(Sigma)`` restricted to the stored components.
+
+        Returns
+        -------
+        df_proj : pd.DataFrame, shape (n_new_samples, n_pcs)
+            Projected coordinates with the same ``PCi`` value columns as ``df_pu_`` (in the same
+            order), so it can be passed directly to :meth:`dPULearnPlot.pca` as an extra group.
+
+        Notes
+        -----
+        * Only available after PCA-based identification (``fit`` with ``metric=None``); distance-based
+          identification produces no principal components to project into.
+        * The projection is exact for the samples used in ``fit`` and interpolates for new samples, so
+          points far from the fitted distribution should be interpreted with care.
+
+        See Also
+        --------
+        * :meth:`dPULearn.fit` for the identification that defines the PC space.
+        * :meth:`dPULearnPlot.pca` for overlaying projected groups on the PCA plot.
+
+        Examples
+        --------
+        .. include:: examples/dpul_project.rst
+        """
+        # Check input
+        X = ut.check_X(X=X, X_name="X", min_n_samples=1)
+        ut.check_str_options(name="method", val=method, list_str_options=LIST_PROJECT_METHODS)
+        check_is_fitted_for_projection(X_fit=self._X_fit, df_pu=self.df_pu_)
+        check_match_X_fit_X(X_fit=self._X_fit, X=X)
+        # Reconstruct the feature-space -> PC-space map and project the new samples
+        df_proj = project_into_pca_space(X_fit=self._X_fit, df_pu=self.df_pu_, X_new=X, method=method)
+        return df_proj
 
     @staticmethod
     def eval(X: ut.ArrayLike2D,
