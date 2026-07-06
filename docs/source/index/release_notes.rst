@@ -273,7 +273,16 @@ Added
   the explicit single-CPP path); it returns ``(df_feat, ax, df_eval)`` where ``ax`` also
   carries the publication eval figures (``ax.eval``) and ``df_eval`` has one
   ``<metric>_mean``/``_std`` column per metric plus ``stage`` / ``is_pareto`` / ``rank``
-  / ``is_selected``.
+  / ``is_selected``. A ``baselines`` argument (``True`` = AAC + DPC, or a sequence of k-mer
+  orders 1..4) adds **composition baselines** for the "how much does positional CPP add over
+  plain composition?" comparison: each is cross-validated with the same ``model`` / ``cv`` /
+  ``metric`` and appended to ``df_eval`` as a reference row (``stage="baseline"``,
+  ``is_selected=False``; the returned winner stays the CPP feature set). AAC (k=1) is a genuine
+  CPP ``df_feat`` — a one-hot identity scale set with the whole-part ``Segment(1,1)`` split — so
+  its feature map is attached; DPC / higher k-mers are attached as composition **signal maps**
+  (per-k-mer ``test − ref`` composition on a diverging, feature-map-consistent palette: a 20×20
+  heatmap for k=2, top-N ranked bars for k≥3). The drawn objects are attached as ``ax.baselines``
+  (dict keyed ``AAC`` / ``DPC`` / ``<k>-mer``).
 - **aap.plot_eval**: Publication-ready evaluation figures of a ``find_features`` sweep —
   the high-dimensional Part × Split × Scale grid is **decomposed** into a series of clean
   2D ``viridis`` heatmaps (the two most-informative axes on each panel, the least on the

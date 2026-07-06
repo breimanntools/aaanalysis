@@ -7,7 +7,7 @@ single highest-impact axis against ``n_filter``; Stage 3 refines the winning fea
 configuration across all metrics wins, scored by the average cross-validated performance of one or
 more models.
 """
-from typing import Optional, List, Tuple, Union, Dict
+from typing import Optional, List, Tuple, Union, Dict, Sequence
 import warnings
 import numpy as np
 import pandas as pd
@@ -23,6 +23,8 @@ from aaanalysis.feature_engineering import SequenceFeature, CPP, CPPGrid, CPPPlo
 from aaanalysis.explainable_ai import TreeModel
 from aaanalysis.data_handling import load_scales
 from ._eval_plot import plot_eval
+from ._composition_baseline import (build_aac_df_feat, comp_kmer_signal, plot_composition_map,
+                                    AAC_CAT_COLORS)
 
 
 # I Helper Functions
@@ -318,6 +320,72 @@ def _refine_keep(df_feat_new, X_new, df_feat_cur, base_scores, labels=None, mode
     return df_feat_new.reset_index(drop=True), new, True
 
 
+def _resolve_baselines(baselines):
+    """Resolve the ``baselines`` argument to a sorted list of k-mer orders (empty if disabled)."""
+    if baselines is False or baselines is None:
+        return []
+    if baselines is True:
+        return [1, 2]
+    if isinstance(baselines, (str, bytes)) or not hasattr(baselines, "__iter__"):
+        raise ValueError(f"'baselines' should be True/False or a sequence of ints in 1..4; got {baselines!r}.")
+    ks = list(baselines)
+    for k in ks:
+        if isinstance(k, bool) or not isinstance(k, (int, np.integer)) or int(k) < 1 or int(k) > 4:
+            raise ValueError(f"'baselines' entries should be ints in 1..4 (1=AAC, 2=DPC, ...); got {k!r}.")
+    return sorted({int(k) for k in ks})
+
+
+def _run_baselines(ks=None, sf=None, df_seq=None, labels=None, models=None, cv=5, metrics=None,
+                   label_test=1, label_ref=0, name_test="TEST", name_ref="REF", n_jmd=10,
+                   random_state=None, n_jobs=None, verbose=False, plot=True):
+    """Composition baselines: AAC (k=1) as a CPP ``df_feat`` + feature map; DPC/k-mer as signal maps.
+
+    Returns ``(rows, artifacts)``: one reference ``df_eval`` row per k (scored by the same models/CV as
+    the CPP configs, ``is_selected=False``) and a dict of drawn objects (``df_feat`` + ``ax`` for AAC,
+    the signal array + ``ax`` for DPC/k-mer) keyed by ``AAC`` / ``DPC`` / ``<k>-mer``.
+    """
+    rows, artifacts = [], {}
+    y = np.asarray(labels)
+    for k in ks:
+        label = {1: "AAC", 2: "DPC"}.get(k, f"{k}-mer")
+        if k == 1:
+            df_feat_b, df_parts_b, df_scales_b, df_cat_b = build_aac_df_feat(
+                sf=sf, df_seq=df_seq, labels=labels, jmd_n_len=n_jmd, jmd_c_len=n_jmd,
+                label_test=label_test, label_ref=label_ref, random_state=random_state,
+                n_jobs=n_jobs, verbose=verbose)
+            X = sf.feature_matrix(features=df_feat_b[ut.COL_FEATURE], df_parts=df_parts_b,
+                                  df_scales=df_scales_b, n_jobs=n_jobs)
+            scores = _cv_scores(X, labels, models=models, cv=cv, metrics=metrics, random_state=random_state)
+            n_features = len(df_feat_b)
+            art = {"df_feat": df_feat_b, "df_scales": df_scales_b, "df_cat": df_cat_b, "ax": None}
+            if plot:
+                tm = TreeModel(random_state=random_state, verbose=verbose)
+                tm.fit(X, labels=labels)
+                df_feat_b = tm.add_feat_importance(df_feat=df_feat_b, sort=True)
+                _, ax_b = CPPPlot(df_scales=df_scales_b, df_cat=df_cat_b, jmd_n_len=n_jmd,
+                                  jmd_c_len=n_jmd, verbose=verbose).feature_map(
+                    df_feat=df_feat_b, name_test=name_test, name_ref=name_ref, dict_color=AAC_CAT_COLORS)
+                art["df_feat"], art["ax"] = df_feat_b, ax_b
+        else:
+            signal, kmers = comp_kmer_signal(sf=sf, df_seq=df_seq, labels=labels, k=k,
+                                             label_test=label_test, label_ref=label_ref)
+            X = sf.kmer_composition(df_seq=df_seq, k=k)
+            keep = np.isfinite(X).all(axis=1)                     # drop spans shorter than k (all-NaN)
+            scores = _cv_scores(X[keep], y[keep], models=models, cv=cv, metrics=metrics,
+                                random_state=random_state)
+            n_features = 20 ** k
+            art = {"signal": signal, "kmers": kmers, "ax": None}
+            if plot:
+                art["ax"] = plot_composition_map(signal=signal, k=k, name_test=name_test, name_ref=name_ref)
+        row = {"stage": "baseline", "scale": label, "n_features": n_features,
+               "is_pareto": False, "is_selected": False}
+        for m in metrics:
+            row[m + "_mean"], row[m + "_std"] = scores[m]
+        rows.append(row)
+        artifacts[label] = art
+    return rows, artifacts
+
+
 # II Main Functions
 def find_features(labels: ut.ArrayLike1D,
                   df_seq: pd.DataFrame,
@@ -329,6 +397,7 @@ def find_features(labels: ut.ArrayLike1D,
                   kws: Optional[dict] = None,
                   subcategories: Optional[List[str]] = None,
                   top_n: Optional[int] = None,
+                  baselines: Union[bool, Sequence[int]] = False,
                   label_test: int = 1,
                   label_ref: int = 0,
                   name_test: str = "TEST",
@@ -389,6 +458,17 @@ def find_features(labels: ut.ArrayLike1D,
         AAontology subcategories to restrict the scale sets to. If ``None``, all scales of the grade.
     top_n : int, optional
         If given, keep only the top ``top_n`` features (after importance ranking).
+    baselines : bool or sequence of int, default=False
+        Add composition baselines for the "how much does positional CPP add over plain composition?"
+        comparison. ``True`` adds AAC (k=1) and DPC (k=2); a sequence of ints selects k-mer orders
+        (1..4). Each baseline is cross-validated with the same ``model`` / ``cv`` / ``metric`` and
+        appended to ``df_eval`` as a reference row (``stage="baseline"``, ``is_selected=False``; the
+        returned ``df_feat`` and feature map stay the CPP winner). AAC (k=1) is a genuine CPP
+        ``df_feat`` (a one-hot identity scale set with the whole-part ``Segment(1,1)`` split) whose
+        feature map is attached; DPC / higher k-mers are attached as composition **signal maps**
+        (per-k-mer ``test − ref`` composition: a 20×20 heatmap for k=2, top-N bars for k≥3). When
+        ``plot=True`` the drawn objects are attached as ``ax.baselines`` (dict keyed ``AAC`` / ``DPC``
+        / ``<k>-mer``).
     label_test : int, default=1
         Class label of the test/positive group passed to :meth:`CPP.run`.
     label_ref : int, default=0
@@ -447,6 +527,7 @@ def find_features(labels: ut.ArrayLike1D,
         ut.check_str(name="metric", val=m)
     ut.check_number_range(name="top_n", val=top_n, min_val=1, accept_none=True, just_int=True)
     ut.check_bool(name="plot", val=plot)
+    ks_baseline = _resolve_baselines(baselines)
     ut.check_number_range(name="random_state", val=random_state, min_val=0,
                           accept_none=True, just_int=True)
     ut.check_bool(name="verbose", val=verbose)
@@ -478,10 +559,10 @@ def find_features(labels: ut.ArrayLike1D,
     if top_n is not None:
         df_feat = df_feat.head(top_n)
     ax = None
+    n_jmd_win = int(df_eval.loc[df_eval["is_selected"], "n_jmd"].iloc[0]) if (plot or ks_baseline) else 10
     if plot:
         # Draw the feature map with the winning JMD length so the map geometry matches the parts the
         # winning features were computed on (CPPPlot defaults jmd_n_len = jmd_c_len = 10).
-        n_jmd_win = int(df_eval.loc[df_eval["is_selected"], "n_jmd"].iloc[0])
         _, ax = CPPPlot(df_scales=df_scales_all, jmd_n_len=n_jmd_win, jmd_c_len=n_jmd_win,
                         verbose=verbose).feature_map(
             df_feat=df_feat, name_test=name_test, name_ref=name_ref)
@@ -489,6 +570,17 @@ def find_features(labels: ut.ArrayLike1D,
         # are attached as ``ax.eval`` (a list — empty for a single-configuration ``fast`` search) so
         # the user can save each individually. This keeps the uniform (df_feat, ax, df_eval) triple.
         ax.eval = plot_eval(df_eval)
+    # Composition baselines: AAC (k=1) as a first-class CPP df_feat + feature map, DPC / k-mer as
+    # composition signal maps. Scored by the same models/CV and appended to df_eval as reference rows
+    # (is_selected=False); the drawn objects are attached as ``ax.baselines`` (dict keyed AAC/DPC/<k>-mer).
+    if ks_baseline:
+        base_rows, base_artifacts = _run_baselines(
+            ks=ks_baseline, sf=sf, df_seq=df_seq, labels=labels, models=models, cv=cv, metrics=metrics,
+            label_test=label_test, label_ref=label_ref, name_test=name_test, name_ref=name_ref,
+            n_jmd=n_jmd_win, random_state=random_state, n_jobs=n_jobs, verbose=verbose, plot=plot)
+        df_eval = pd.concat([df_eval, pd.DataFrame(base_rows)], ignore_index=True)
+        if ax is not None:
+            ax.baselines = base_artifacts
     return df_feat, ax, df_eval
 
 
