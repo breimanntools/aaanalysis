@@ -58,4 +58,5 @@ Regenerate this table with:
 | [0048](0048-select-scales-curation-surface.md) | `AAclust.pre_select_scales` for metadata-only scale exclusion | Accepted | 2026-06-29 |  |
 | [0049](0049-cpp-profile-nonnegative-shap-signed.md) | CPP profile y-axis is non-negative; three plot-rendering "fixes" are rejected | Accepted | 2026-07-04 |  |
 | [0050](0050-cpp-redundancy-legacy-exact.md) | CPP redundancy criterion: `legacy` default, `exact` opt-in | Accepted | 2026-07-05 |  |
+| [0051](0051-treemodel-per-round-seeding.md) | TreeModel per-round seeding (fixed seed → independent rounds) | Accepted | 2026-07-06 |  |
 <!-- ADR-INDEX:END -->
