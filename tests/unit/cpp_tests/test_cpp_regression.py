@@ -41,6 +41,11 @@ pytestmark = [
 # Re-freeze ONLY on an intentional, reviewed change to CPP scoring.
 FROZEN_TOP_FEATURE = "TMD_C_JMD_C-Segment(2,3)-CHOP780212"
 FROZEN_TOP_ABS_AUC = 0.328
+# Top feature's BH-adjusted p-value after the canonical monotonicity fix (#343).
+# Pinned here because the perf A/B output digest excludes 'p_val_fdr_bh' until the
+# 1.1.0 release re-baselines it (see tests/benchmarks/test_perf_hot_paths.py), so
+# this anchor is what still guards the exact BH values. Re-freeze on the 1.1.0 release.
+FROZEN_TOP_P_VAL_FDR_BH = 0.0002519268
 N_SAMPLES = 40
 N_SCALES = 20
 N_FILTER = 50
@@ -68,3 +73,10 @@ class TestCPPRegression:
     def test_top_abs_auc_frozen(self):
         df_feat = _run_reference_pipeline()
         assert round(float(df_feat["abs_auc"].iloc[0]), 3) == FROZEN_TOP_ABS_AUC
+
+    def test_top_p_val_fdr_bh_frozen(self):
+        # Guards the exact BH-adjusted p-value (#343 monotonicity fix) while the
+        # perf A/B temporarily excludes 'p_val_fdr_bh' from its byte-exact digest.
+        df_feat = _run_reference_pipeline()
+        assert float(df_feat["p_val_fdr_bh"].iloc[0]) == pytest.approx(
+            FROZEN_TOP_P_VAL_FDR_BH, rel=1e-6)
