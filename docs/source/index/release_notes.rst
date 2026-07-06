@@ -97,6 +97,15 @@ Added
   and cross concatenated part boundaries); each row with at least two canonical residues sums
   to 1. Captures local sequential order that plain composition discards; fully vectorized;
   optional ``return_df=True`` for a labeled frame.
+- **SequenceFeature.kmer_composition**: General k-mer-composition baseline featurizer — the
+  fraction of each of the ``20 ** k`` ordered overlapping k-mers of adjacent canonical residues
+  over a sequence span, a ``(n_seq, 20 ** k)`` matrix (columns in
+  ``itertools.product(ut.LIST_CANONICAL_AA, repeat=k)`` order). ``k`` selects the composition:
+  ``k=1`` is amino-acid composition (identical to ``aa_composition``), ``k=2`` dipeptide
+  composition (identical to ``dipeptide_composition``), and higher ``k`` (up to 4) captures
+  longer local sequential order. Same non-canonical-dropping, gap-free-span, each-row-sums-to-1
+  semantics as the ``k=1`` / ``k=2`` special cases; fully vectorized (one ``bincount`` over
+  base-20 k-mer codes); optional ``return_df=True`` for a labeled frame.
 - **SequenceFeature.get_df_parts_from_windows**: Assemble a reference ``df_parts`` from
   per-part window sets (e.g. ``AAWindowSampler.sample_synthetic`` output).
 - **SequenceFeature.get_seq_kws**: Return one protein's ``{jmd_n_seq, tmd_seq, jmd_c_seq}``

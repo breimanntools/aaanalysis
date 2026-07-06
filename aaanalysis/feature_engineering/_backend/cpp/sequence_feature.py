@@ -208,55 +208,64 @@ def _canonical_codes_(df_parts=None):
     return seq_ids[valid], aa_idx[valid], n_seq
 
 
-def get_aa_composition_(df_parts=None):
-    """Per-sequence amino-acid composition over the concatenated sequence parts (vectorized).
+def get_kmer_composition_(df_parts=None, k=1):
+    """Per-sequence k-mer composition over the concatenated sequence parts (vectorized).
 
-    For each row of ``df_parts`` the parts are concatenated into one span, non-canonical
-    residues are dropped, and the 20 canonical amino acids (``ut.LIST_CANONICAL_AA`` order)
-    are tallied and divided by the kept-residue count, giving the ``(n_seq, 20)`` fraction
-    matrix ``X`` (each row sums to 1). A span with no canonical residue (empty / all
-    non-canonical) becomes an all-``NaN`` row; ``n_kept`` reports the number of counted
-    residues per row so the frontend can warn. One ``np.bincount`` over ``20 * seq + aa``
-    builds the whole count matrix, so there is no per-sequence Python loop.
+    Generalizes :func:`get_aa_composition_` (``k=1``, AAC) and
+    :func:`get_dipeptide_composition_` (``k=2``, DPC): for each row of ``df_parts`` the parts
+    are concatenated into one span, non-canonical residues are dropped, and the ``20 ** k``
+    ordered overlapping k-mers of adjacent canonical residues are counted and divided by the
+    k-mer count, giving the ``(n_seq, 20 ** k)`` fraction matrix ``X`` (each row with at least
+    ``k`` canonical residues sums to 1). A k-mer of residues ``r_0 r_1 ... r_{k-1}`` has the
+    base-20 code ``sum_j r_j * 20 ** (k - 1 - j)`` (``ut.LIST_CANONICAL_AA`` order), so column
+    order matches ``itertools.product(LIST_CANONICAL_AA, repeat=k)``. k-mers are formed on the
+    concatenated, gap-free span (so a window spans dropped non-canonical residues and crosses
+    part boundaries); a same-sequence mask (``seq_ids[i] == seq_ids[i + k - 1]``) drops windows
+    straddling two sequences. A span with fewer than ``k`` canonical residues has no k-mer and
+    becomes an all-``NaN`` row; ``n_kmers`` reports the counted k-mers per row so the frontend
+    can warn. One ``np.bincount`` over ``20 ** k * seq + code`` builds the whole count matrix,
+    so there is no per-sequence Python loop. ``k`` is validated (int, in range) by the frontend.
     """
     seq_ids, aa_idx, n_seq = _canonical_codes_(df_parts=df_parts)
-    counts = np.bincount(seq_ids * 20 + aa_idx,
-                         minlength=n_seq * 20).reshape(n_seq, 20).astype(float)
-    n_kept = counts.sum(axis=1).astype(int)
+    n_codes = 20 ** k
+    m = aa_idx.shape[0]
+    if m < k:                                                      # no window fits in any span
+        return np.full((n_seq, n_codes), np.nan), np.zeros(n_seq, dtype=int)
+    # Overlapping windows of k consecutive flattened residues; keep only same-sequence ones.
+    starts = np.arange(m - k + 1)
+    same = seq_ids[starts] == seq_ids[starts + k - 1]
+    starts = starts[same]
+    win_seq = seq_ids[starts]
+    code = np.zeros(starts.shape[0], dtype=np.int64)
+    for j in range(k):
+        code = code * 20 + aa_idx[starts + j]                     # base-20 k-mer code (0 .. 20**k-1)
+    counts = np.bincount(win_seq * n_codes + code,
+                         minlength=n_seq * n_codes).reshape(n_seq, n_codes).astype(float)
+    n_kmers = counts.sum(axis=1).astype(int)
     with np.errstate(invalid="ignore"):
-        X = counts / n_kept[:, None]                               # 0 / 0 -> NaN (empty rows)
-    return X, n_kept
+        X = counts / n_kmers[:, None]                             # 0 / 0 -> NaN (< k residues)
+    return X, n_kmers
+
+
+def get_aa_composition_(df_parts=None):
+    """Per-sequence amino-acid composition (AAC) — the ``k=1`` case of :func:`get_kmer_composition_`.
+
+    Concatenates each row's parts into one span, drops non-canonical residues, and returns the
+    ``(n_seq, 20)`` fraction matrix ``X`` (``ut.LIST_CANONICAL_AA`` order, each row sums to 1)
+    plus the kept-residue count per row (all-``NaN`` row when a span has no canonical residue).
+    """
+    return get_kmer_composition_(df_parts=df_parts, k=1)
 
 
 def get_dipeptide_composition_(df_parts=None):
-    """Per-sequence dipeptide composition over the concatenated sequence parts (vectorized).
+    """Per-sequence dipeptide composition (DPC) — the ``k=2`` case of :func:`get_kmer_composition_`.
 
-    For each row of ``df_parts`` the parts are concatenated into one span and non-canonical
-    residues are dropped; the remaining canonical residues form one contiguous chain over
-    which the 400 ordered adjacent pairs (``AA, AC, ..., YY`` in ``ut.LIST_CANONICAL_AA``
-    order, pair code ``20 * first + second``) are counted and divided by the pair count,
-    giving the ``(n_seq, 400)`` fraction matrix ``X`` (each row with >= 2 canonical residues
-    sums to 1). Pairs are formed on the concatenated, gap-free span, so an adjacency spans a
-    dropped non-canonical residue and crosses a part boundary. A span with fewer than two
-    canonical residues has no pair and becomes an all-``NaN`` row; ``n_pairs`` reports the
-    counted pairs per row so the frontend can warn.
-
-    Fully vectorized: consecutive flattened residues form candidate pairs, a same-sequence
-    mask (``seq_ids[:-1] == seq_ids[1:]``) drops the cross-sequence junctions, and one
-    ``np.bincount`` over ``400 * seq + pair`` builds the whole count matrix — no per-sequence
-    Python loop.
+    Concatenates each row's parts into one gap-free span, drops non-canonical residues, and
+    returns the ``(n_seq, 400)`` fraction matrix ``X`` of ordered adjacent pairs (``AA, AC, ...,
+    YY`` in ``ut.LIST_CANONICAL_AA`` order, each row with >= 2 canonical residues sums to 1)
+    plus the pair count per row (all-``NaN`` row when a span has fewer than two canonical residues).
     """
-    seq_ids, aa_idx, n_seq = _canonical_codes_(df_parts=df_parts)
-    # Candidate adjacent pairs are consecutive flattened residues; keep only same-sequence ones
-    same = seq_ids[:-1] == seq_ids[1:]
-    pair_seq = seq_ids[:-1][same]
-    pair_code = (aa_idx[:-1][same] * 20 + aa_idx[1:][same])         # 0..399
-    counts = np.bincount(pair_seq * 400 + pair_code,
-                         minlength=n_seq * 400).reshape(n_seq, 400).astype(float)
-    n_pairs = counts.sum(axis=1).astype(int)
-    with np.errstate(invalid="ignore"):
-        X = counts / n_pairs[:, None]                              # 0 / 0 -> NaN (< 2 residues)
-    return X, n_pairs
+    return get_kmer_composition_(df_parts=df_parts, k=2)
 
 
 # Multi-class / regression label conversion

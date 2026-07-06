@@ -3,6 +3,7 @@ This is a script for the frontend of the SequenceFeature class, a supportive cla
 """
 from typing import Literal, Optional, Union, List, Dict, Tuple, Sequence
 import inspect
+import itertools
 import warnings
 import numpy as np
 import pandas as pd
@@ -27,7 +28,7 @@ from ._backend.cpp.utils_feature import (get_df_parts_,
                                          get_df_pos_, get_df_pos_parts_)
 from ._backend.cpp.sequence_feature import (get_split_kws_, get_features_, get_feature_names_,
                                             get_feature_descriptions_, get_df_feat_, get_scale_composition_,
-                                            get_aa_composition_, get_dipeptide_composition_,
+                                            get_aa_composition_, get_dipeptide_composition_, get_kmer_composition_,
                                             get_labels_ovr_, get_labels_ovo_, get_labels_quantile_,
                                             get_labels_tiered_)
 from ._backend.cpp_run import _pick_feature_matrix_builder
@@ -1123,6 +1124,97 @@ class SequenceFeature:
         if return_df:
             list_aa = list(ut.LIST_CANONICAL_AA)
             columns = [a + b for a in list_aa for b in list_aa]
+            return pd.DataFrame(X, index=df_parts.index, columns=columns)
+        return X
+
+    def kmer_composition(self,
+                         df_seq: pd.DataFrame,
+                         k: int = 1,
+                         list_parts: Optional[Union[str, List[str]]] = None,
+                         return_df: bool = False,
+                         ) -> Union[ut.ArrayLike2D, pd.DataFrame]:
+        """
+        Create the k-mer-composition (k-mer) baseline matrix for given sequences.
+
+        Builds the no-positional-split **k-mer-composition baseline** featurization: for each
+        sequence the requested Parts are concatenated into one span and the fraction of each of the
+        ``20 ** k`` ordered overlapping k-mers of adjacent canonical residues is computed, yielding
+        the ``(n_seq, 20 ** k)`` matrix ``X``. Columns are all length-``k`` amino-acid strings in
+        ``ut.LIST_CANONICAL_AA`` order (``itertools.product`` order: ``A, C, ..., Y`` for ``k=1``;
+        ``AA, AC, ..., YY`` for ``k=2``; ...) so column order is stable, and each row with at least
+        ``k`` canonical residues sums to 1. ``k=1`` is amino-acid composition (AAC, identical to
+        :meth:`aa_composition`) and ``k=2`` dipeptide composition (DPC, identical to
+        :meth:`dipeptide_composition`); higher ``k`` captures longer local sequential order. Unlike
+        :meth:`SequenceFeature.feature_matrix`, which averages scales over a specific Part-Split, this
+        method carries no positional information — it is a plain k-mer frequency count.
+
+        **Application.** Use this to build a **baseline feature set** for a prediction model and
+        compare it against a :class:`CPP` :meth:`feature_matrix` (the "composition baseline vs CPP"
+        comparison), quantifying how much the positional Part-Split-Scale features add over a plain
+        k-mer frequency encoding. Larger ``k`` encodes more local order at the cost of a
+        ``20 ** k``-wide, sparser matrix — reach for :class:`CPP` when you need
+        where-along-the-sequence information.
+
+        .. versionadded:: 1.1.0
+
+        Parameters
+        ----------
+        df_seq : pd.DataFrame, shape (n_samples, n_seq_info)
+            DataFrame containing an ``entry`` column with unique protein identifiers and sequence information
+            in a distinct format: **Position-based**, **Part-based**, **Sequence-based**, or **Sequence-TMD-based**
+            (the same input accepted by :meth:`SequenceFeature.get_df_parts`).
+        k : int, default=1
+            k-mer length (``>= 1``). ``1`` gives amino-acid composition (AAC, 20 columns), ``2`` the
+            dipeptide composition (DPC, 400 columns), ``3`` tripeptides (8000), ``4`` tetrapeptides
+            (160000). Capped at ``4`` because the ``20 ** k`` column count grows exponentially.
+        list_parts : str or list of str, optional
+            Sequence Parts concatenated into the span (default ``'tmd_jmd'``, the whole TMD-JMD span),
+            passed to :meth:`SequenceFeature.get_df_parts`.
+        return_df : bool, default=False
+            If ``True``, return a labeled ``pd.DataFrame`` (rows indexed like ``df_parts``, one column
+            per k-mer) instead of a plain array.
+
+        Returns
+        -------
+        X : array-like, shape (n_samples, 20 ** k)
+            k-mer-composition matrix: per sequence, the fraction of each of the ``20 ** k`` ordered
+            k-mers over the span residues (columns in
+            ``itertools.product(ut.LIST_CANONICAL_AA, repeat=k)`` order). A span with fewer than ``k``
+            canonical residues has an all-``NaN`` row. Returned as a ``pd.DataFrame`` (k-mer strings as
+            columns) when ``return_df=True``.
+
+        See Also
+        --------
+        * :meth:`SequenceFeature.aa_composition`: the ``k=1`` amino-acid-composition special case.
+        * :meth:`SequenceFeature.dipeptide_composition`: the ``k=2`` dipeptide-composition special case.
+        * :meth:`SequenceFeature.scale_composition`: the scale-based composition baseline.
+        * :meth:`SequenceFeature.feature_matrix`: the positional Part-Split-Scale feature matrix.
+
+        Examples
+        --------
+        .. include:: examples/sf_kmer_composition.rst
+        """
+        # Check input
+        ut.check_df_seq(df_seq=df_seq)
+        ut.check_bool(name="return_df", val=return_df)
+        if isinstance(k, bool) or not isinstance(k, (int, np.integer)) or int(k) < 1:
+            raise ValueError(f"'k' should be an integer >= 1, got {k!r}.")
+        k = int(k)
+        if k > 4:
+            raise ValueError(f"'k'={k} would create 20**{k} = {20 ** k:,} columns; 'k' is capped at 4 "
+                             f"(k=1 AAC, k=2 DPC, k=3 tripeptides, k=4 tetrapeptides).")
+        list_parts = ut.check_list_parts(list_parts=list_parts, return_default=False, accept_none=True)
+        list_parts_used = ["tmd_jmd"] if list_parts is None else list_parts
+        # Build the sequence parts and the k-mer-composition matrix
+        df_parts = self.get_df_parts(df_seq=df_seq, list_parts=list_parts_used)
+        X, n_kmers = get_kmer_composition_(df_parts=df_parts, k=k)
+        # Warn about rows with fewer than k canonical residues (all-NaN output)
+        n_empty = int((n_kmers == 0).sum())
+        if n_empty > 0 and self.verbose:
+            warnings.warn(f"{n_empty} sequence(s) have fewer than k={k} canonical residues in the "
+                          f"selected parts (no k-mer); their composition row is all-NaN.")
+        if return_df:
+            columns = ["".join(p) for p in itertools.product(ut.LIST_CANONICAL_AA, repeat=k)]
             return pd.DataFrame(X, index=df_parts.index, columns=columns)
         return X
 
