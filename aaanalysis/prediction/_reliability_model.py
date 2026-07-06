@@ -12,18 +12,23 @@ import aaanalysis.utils as ut
 from aaanalysis.template_classes import Wrapper
 
 from ._backend.reliability.reliability import (
-    positive_proba, proba_members_ensemble, proba_members_bootstrap, comp_uncertainty,
-    comp_applicability_domain, comp_sharpness, split_conformal)
+    positive_proba, proba_members, fit_bootstrap_models, comp_uncertainty,
+    fit_applicability_domain, apply_applicability_domain, comp_sharpness,
+    fit_conformal, apply_conformal)
 
 
 # I Helper Functions
 def _resolve_members(model=None):
-    """Return a list of fitted member estimators if ``model`` is an ensemble, else ``None``."""
+    """Return a list of member estimators if ``model`` is an ensemble, else ``None``.
+
+    An unfitted :class:`AAPred` (``list_models_`` is ``None``) is rejected with a clear error.
+    """
     if isinstance(model, (list, tuple)):
         return list(model)
-    list_models = getattr(model, "list_models_", None)   # e.g. a fitted AAPred
-    if list_models:
-        return list(list_models)
+    if hasattr(model, "list_models_"):
+        if not model.list_models_:
+            raise ValueError("The passed AAPred is not fitted; call its 'fit' before passing it.")
+        return list(model.list_models_)
     return None
 
 
@@ -32,10 +37,25 @@ def _is_fitted(estimator):
     return hasattr(estimator, "classes_")
 
 
-def check_match_model_X_labels(model=None, members=None):
-    """A passed ensemble must be non-empty."""
+def _can_clone(estimator):
+    """Whether an estimator can be cloned (scikit-learn API)."""
+    try:
+        clone(estimator)
+        return True
+    except (TypeError, RuntimeError):
+        return False
+
+
+def check_model(model=None, members=None):
+    """A passed ensemble must be non-empty; a single model must support ``predict_proba``."""
     if isinstance(model, (list, tuple)) and len(model) == 0:
         raise ValueError("'model' is an empty list; provide at least one estimator.")
+    if members is not None:
+        for m in members:
+            if not hasattr(m, "predict_proba"):
+                raise ValueError("Every estimator in 'model' must implement 'predict_proba'.")
+    elif model is not None and not hasattr(model, "predict_proba"):
+        raise ValueError("'model' must implement 'predict_proba' (or pass a list / AAPred / None).")
 
 
 # II Main Class
@@ -60,10 +80,11 @@ class ReliabilityModel(Wrapper):
     - **Distribution-free validity**: a marginal split-conformal prediction set that can
       **abstain** ([Angelopoulos23]_).
 
-    It wraps an already-fitted predictor (an :class:`AAPred`, a :class:`~aaanalysis.TreeModel`, or
-    any scikit-learn classifier) plus its training data, and adds nothing but reliability — the
-    prediction itself stays with the model. A prediction is trustworthy when it is
-    **in-domain, stable, and a confident conformal singleton** (``reliable``).
+    It wraps an already-fitted binary predictor (an :class:`AAPred`, a
+    :class:`~aaanalysis.TreeModel`, or any scikit-learn classifier) plus its training data, and
+    adds nothing but reliability — the prediction itself stays with the model. A prediction is
+    trustworthy when it is **in-domain, stable, and a confident conformal singleton**
+    (``reliable``).
 
     Notes
     -----
@@ -104,16 +125,12 @@ class ReliabilityModel(Wrapper):
         self.label_pos_: Optional[int] = None
         self.label_neg_: Optional[int] = None
         # Internal fitted state
-        self._members = None
-        self._base = None
+        self._ad_state = None
+        self._score_members = None
+        self._unc_members = None
         self._calibrator = None
-        self._X_train = None
-        self._y_train = None
-        self._k = 5
-        self._ad_percentile = 95.0
+        self._conf_state = None
         self._ci = 90.0
-        self._n_bootstrap = 20
-        self._alpha = 0.1
 
     def fit(self,
             X: ut.ArrayLike2D,
@@ -131,16 +148,16 @@ class ReliabilityModel(Wrapper):
         """
         Fit the reliability reference from a (fitted or default) model and its training data.
 
-        Records the training feature distribution (applicability domain), the ensemble/bootstrap
-        source of uncertainty, an optional probability calibrator, and the split-conformal
-        calibration — everything :meth:`predict` needs to score new samples for trust.
+        Learns, **once**, everything :meth:`predict` needs: the applicability-domain reference,
+        the ensemble / bootstrap source of uncertainty, an optional probability calibrator, and
+        the split-conformal calibration.
 
         Parameters
         ----------
         X : array-like, shape (n_samples, n_features)
             Training feature matrix the model was fitted on (the applicability-domain reference).
         labels : array-like, shape (n_samples,)
-            Binary training labels.
+            Binary training labels (exactly two classes).
         model : estimator, list of estimators, AAPred, or None
             A fitted scikit-learn classifier (``predict_proba``), a **list** of fitted estimators
             (ensemble; uncertainty = their disagreement), a fitted :class:`AAPred`, or ``None`` to
@@ -190,22 +207,30 @@ class ReliabilityModel(Wrapper):
         ut.check_number_range(name="conformal_alpha", val=conformal_alpha, min_val=0, max_val=1,
                               just_int=False, accept_none=False)
         labels = np.asarray(labels)
-        if label_pos not in set(labels.tolist()):
+        classes = np.unique(labels)
+        if classes.size != 2:
+            raise ValueError(f"ReliabilityModel supports binary labels only; got {classes.size} "
+                             f"classes {classes.tolist()}.")
+        if label_pos not in set(classes.tolist()):
             raise ValueError(f"'label_pos' ({label_pos}) is not present in 'labels'.")
         members = _resolve_members(model)
-        check_match_model_X_labels(model=model, members=members)
+        check_model(model=model, members=members)
 
-        self._X_train, self._y_train = np.asarray(X), labels
         self.label_pos_ = label_pos
-        self.label_neg_ = int(next(v for v in np.unique(labels) if v != label_pos))
-        self._k, self._ad_percentile, self._ci = k, ad_percentile, ci
-        self._n_bootstrap, self._alpha = n_bootstrap, conformal_alpha
+        self.label_neg_ = int(next(v for v in classes if v != label_pos))
+        self._ci = ci
+        self._X_train, self._y_train = np.asarray(X), labels
 
-        # Resolve the model / ensemble and a cloneable base estimator
+        # Applicability-domain reference (fit once)
+        self._ad_state = fit_applicability_domain(np.asarray(X), k=k, percentile=ad_percentile)
+
+        # Resolve model / ensemble and a cloneable base estimator
         if members is not None:
-            self._members = [m if _is_fitted(m) else clone(m).fit(X, labels) for m in members]
-            base = clone(self._members[0]) if _can_clone(self._members[0]) else None
-            self.model_ = self._members
+            members = [m if _is_fitted(m) else clone(m).fit(X, labels) for m in members]
+            base = clone(members[0]) if _can_clone(members[0]) else None
+            self.model_ = members
+            self._score_members = members                    # ensemble mean is the point score
+            self._unc_members = members                       # ensemble spread is the uncertainty
         else:
             if model is None:
                 base = RandomForestClassifier(random_state=self._random_state)
@@ -214,20 +239,31 @@ class ReliabilityModel(Wrapper):
             if not _is_fitted(base):
                 base = clone(base) if _can_clone(base) else base
                 base.fit(X, labels)
-            self._members = None
             self.model_ = base
-        self._base = base if (base is not None and _can_clone(base)) else None
+            self._score_members = [base]                      # full-data model is the point score
+            self._unc_members = (fit_bootstrap_models(
+                clone(base), np.asarray(X), labels, n_bootstrap=n_bootstrap,
+                random_state=self._random_state) if (n_bootstrap and _can_clone(base)) else [base])
+            if not self._unc_members:                          # all resamples degenerate
+                self._unc_members = [base]
+        cloneable_base = base if (base is not None and _can_clone(base)) else None
 
         # Calibration (fit a calibrated clone on the training data)
         self._calibrator = None
-        if calibrate and self._base is not None:
-            n_min = int(np.min(np.bincount(labels.astype(int)))) if labels.dtype.kind in "iu" else 2
+        if calibrate and cloneable_base is not None:
+            n_min = int(np.min(np.bincount((labels == label_pos).astype(int))))
             cv = max(2, min(3, n_min))
             try:
                 self._calibrator = CalibratedClassifierCV(
-                    clone(self._base), method=calibration_method, cv=cv).fit(X, labels)
+                    clone(cloneable_base), method=calibration_method, cv=cv).fit(X, labels)
             except (ValueError, TypeError):
                 self._calibrator = None
+
+        # Split-conformal reference (fit once)
+        self._conf_state = (fit_conformal(
+            clone(cloneable_base), np.asarray(X), labels, alpha=conformal_alpha,
+            label_pos=label_pos, random_state=self._random_state)
+            if cloneable_base is not None else None)
         return self
 
     def predict(self,
@@ -252,45 +288,31 @@ class ReliabilityModel(Wrapper):
         --------
         .. include:: examples/rm_predict.rst
         """
-        if self._X_train is None:
+        if self._ad_state is None:
             raise RuntimeError("Call 'fit' before 'predict'.")
         X = ut.check_X(X=X, min_n_samples=1)
-        if X.shape[1] != self._X_train.shape[1]:
+        n_feat_train = self._ad_state["mu"].shape[0]
+        if X.shape[1] != n_feat_train:
             raise ValueError(f"'X' has {X.shape[1]} features but the model was fit on "
-                             f"{self._X_train.shape[1]}.")
+                             f"{n_feat_train}.")
         lp = self.label_pos_
 
-        # Uncertainty: ensemble disagreement or bootstrap
-        if self._members is not None:
-            proba_members = proba_members_ensemble(self._members, X, label_pos=lp)
-        elif self._base is not None and self._n_bootstrap > 0:
-            proba_members = proba_members_bootstrap(
-                clone(self._base), self._X_train, self._y_train, X, n_bootstrap=self._n_bootstrap,
-                label_pos=lp, random_state=self._random_state)
-        else:
-            proba_members = positive_proba(self.model_, X, label_pos=lp)[None, :]
-        score, std, lo, hi = comp_uncertainty(proba_members, ci=self._ci)
+        score = proba_members(self._score_members, X, label_pos=lp).mean(axis=0)
+        std, lo, hi = comp_uncertainty(proba_members(self._unc_members, X, label_pos=lp), ci=self._ci)
+        ad = apply_applicability_domain(self._ad_state, X)
 
-        # Applicability domain
-        ad = comp_applicability_domain(self._X_train, X, k=self._k, percentile=self._ad_percentile)
-
-        # Calibrated sharpness
         if self._calibrator is not None:
             score_cal = positive_proba(self._calibrator, X, label_pos=lp)
         else:
             score_cal = np.full(len(X), np.nan)
         margin, entropy = comp_sharpness(np.where(np.isnan(score_cal), score, score_cal))
 
-        # Distribution-free validity (marginal split-conformal)
-        conf = None
-        if self._base is not None:
-            conf = split_conformal(clone(self._base), self._X_train, self._y_train, X,
-                                   alpha=self._alpha, label_pos=lp, random_state=self._random_state)
-        if conf is None:
+        if self._conf_state is not None:
+            conf = apply_conformal(self._conf_state, X)
+            singleton = np.isin(conf, [ut.STR_CONF_POS, ut.STR_CONF_NEG])
+        else:
             conf = np.array([ut.STR_CONF_NONE] * len(X), dtype=object)
             singleton = margin >= 0.5                          # fallback when conformal unavailable
-        else:
-            singleton = np.isin(conf, [ut.STR_CONF_POS, ut.STR_CONF_NEG])
         reliable = ad["in_domain"] & singleton
 
         return pd.DataFrame({
@@ -312,7 +334,8 @@ class ReliabilityModel(Wrapper):
         Parameters
         ----------
         X : array-like, optional
-            Evaluation features; the training ``X`` is used if ``None``.
+            Evaluation features; the training ``X`` is used if ``None`` (a held-out labeled set
+            gives an honest estimate — calibration and conformal were fit on the training data).
         labels : array-like, optional
             Evaluation labels; the training labels are used if ``None``.
         n_bins : int, default=5
@@ -322,13 +345,14 @@ class ReliabilityModel(Wrapper):
         -------
         df_eval : pd.DataFrame
             Per-bin rows (``bin``, ``mean_score``, ``empirical_pos``, ``n``) plus a summary row
-            with the empirical conformal coverage and the in-domain fraction.
+            with the in-domain fraction (``mean_score``) and the empirical conformal coverage
+            (``empirical_pos``).
 
         Examples
         --------
         .. include:: examples/rm_eval.rst
         """
-        if self._X_train is None:
+        if self._ad_state is None:
             raise RuntimeError("Call 'fit' before 'eval'.")
         if X is None:
             X, labels = self._X_train, self._y_train
@@ -347,21 +371,9 @@ class ReliabilityModel(Wrapper):
                          "mean_score": float(np.mean(s[m])) if m.any() else np.nan,
                          "empirical_pos": float(np.mean(y[m])) if m.any() else np.nan,
                          "n": int(m.sum())})
-        covered = np.isin(df[ut.COL_CONFORMAL_SET].to_numpy(),
-                          [ut.STR_CONF_POS, ut.STR_CONF_BOTH]) & (y == 1)
-        covered |= np.isin(df[ut.COL_CONFORMAL_SET].to_numpy(),
-                           [ut.STR_CONF_NEG, ut.STR_CONF_BOTH]) & (y == 0)
-        rows.append({"bin": "summary",
-                     "mean_score": float(np.mean(df[ut.COL_IN_DOMAIN])),   # in-domain fraction
-                     "empirical_pos": float(np.mean(covered)),             # conformal coverage
-                     "n": len(X)})
+        sets = df[ut.COL_CONFORMAL_SET].to_numpy()
+        covered = (np.isin(sets, [ut.STR_CONF_POS, ut.STR_CONF_BOTH]) & (y == 1)) | \
+                  (np.isin(sets, [ut.STR_CONF_NEG, ut.STR_CONF_BOTH]) & (y == 0))
+        rows.append({"bin": "summary", "mean_score": float(np.mean(df[ut.COL_IN_DOMAIN])),
+                     "empirical_pos": float(np.mean(covered)), "n": len(X)})
         return pd.DataFrame(rows)
-
-
-def _can_clone(estimator):
-    """Whether an estimator can be cloned (scikit-learn API)."""
-    try:
-        clone(estimator)
-        return True
-    except (TypeError, RuntimeError):
-        return False

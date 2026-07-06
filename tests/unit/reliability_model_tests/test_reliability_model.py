@@ -82,6 +82,26 @@ class TestFit:
         with pytest.raises(ValueError):
             aa.ReliabilityModel().fit(Xtr, ytr, model=[])
 
+    def test_non_binary_labels_raises(self):
+        X, y = make_classification(n_samples=90, n_features=8, n_informative=5, n_classes=3,
+                                   n_clusters_per_class=1, random_state=0)
+        with pytest.raises(ValueError):
+            aa.ReliabilityModel().fit(X, y)
+
+    def test_model_without_predict_proba_raises(self):
+        from sklearn.svm import SVC
+        Xtr, ytr, _ = _data()
+        with pytest.raises(ValueError):                      # SVC() has no predict_proba by default
+            aa.ReliabilityModel().fit(Xtr, ytr, model=SVC().fit(Xtr, ytr))
+
+    def test_unfitted_aapred_rejected(self):
+        Xtr, ytr, _ = _data()
+
+        class _Pred:
+            list_models_ = None                              # unfitted AAPred
+        with pytest.raises(ValueError):
+            aa.ReliabilityModel().fit(Xtr, ytr, model=_Pred())
+
     @pytest.mark.parametrize("k", [1, 3, 10])
     def test_k_valid(self, k):
         Xtr, ytr, _ = _data()
