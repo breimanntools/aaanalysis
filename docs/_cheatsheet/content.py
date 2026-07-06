@@ -223,6 +223,7 @@ CAPABILITY_FAMILIES = [
      "rows": [
          ("Train with positives + unlabeled data", "dPULearn().fit(X, labels)  [Wrapper]", None),
          ("Mine reliable negatives (mask)", "dPULearn().fit(X_pos=, X_unlabeled=).mask_neg_ → mask", None, "v1.1"),
+         ("Project held-out points into PC space", "dPULearn().fit(X, labels).project(X_new) → df_pu", None, "v1.1"),
          ("Train + RFE + MC importance", "TreeModel().fit(X, labels)  [Wrapper]", None),
          ("Per-feature / sample SHAP impact", "ShapModel().fit(X, labels)  [pro]", None),
      ]},

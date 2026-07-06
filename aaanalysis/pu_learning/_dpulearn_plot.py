@@ -62,6 +62,39 @@ def check_match_names_colors(names=None, colors=None) -> None:
         raise ValueError(f"Length of 'names' (n={len(names)}) and 'colors' (n={len(colors)}) does not match.")
 
 
+def check_match_add_groups(list_df_add=None, names_add=None, colors_add=None, pc_x=None, pc_y=None) -> None:
+    """Validate the projected extra groups and that each carries the two selected PC columns."""
+    n_add = len(list_df_add)
+    if len(names_add) != n_add:
+        raise ValueError(f"Length of 'names_add' (n={len(names_add)}) does not match the number of "
+                         f"projected groups in 'df_pu_add' (n={n_add}).")
+    if len(colors_add) != n_add:
+        raise ValueError(f"Length of 'colors_add' (n={len(colors_add)}) does not match the number of "
+                         f"projected groups in 'df_pu_add' (n={n_add}).")
+    for i, df_add in enumerate(list_df_add):
+        for pc in [pc_x, pc_y]:
+            if not any(f"PC{pc}" in str(c) and "abs" not in str(c) for c in df_add.columns):
+                raise ValueError(f"'df_pu_add[{i}]' has no 'PC{pc}' value column; project the extra "
+                                 f"group with 'dPULearn.project' so its columns match 'df_pu'.")
+
+
+def _adjust_add_groups(df_pu_add=None, names_add=None, colors_add=None):
+    """Normalize the optional projected extra groups to aligned lists (df, name, color)."""
+    if df_pu_add is None:
+        return None, None, None
+    list_df_add = df_pu_add if isinstance(df_pu_add, list) else [df_pu_add]
+    n_add = len(list_df_add)
+    if names_add is None:
+        names_add = ["Projected"] if n_add == 1 else [f"Projected {i + 1}" for i in range(n_add)]
+    elif isinstance(names_add, str):
+        names_add = [names_add]
+    if colors_add is None:
+        colors_add = [ut.COLOR_NEG] if n_add == 1 else ut.plot_get_clist_(n_colors=n_add)
+    elif isinstance(colors_add, str):
+        colors_add = [colors_add]
+    return list_df_add, list(names_add), list(colors_add)
+
+
 # II Main Functions
 class dPULearnPlot:
     """
@@ -180,6 +213,9 @@ class dPULearnPlot:
             show_pos_mean_y: bool = True,
             colors: Optional[List[str]] = None,
             names: Optional[List[str]] = None,
+            df_pu_add: Optional[Union[pd.DataFrame, List[pd.DataFrame]]] = None,
+            names_add: Optional[Union[str, List[str]]] = None,
+            colors_add: Optional[Union[str, List[str]]] = None,
             legend: bool = True,
             legend_y: float = -0.15,
             kwargs_scatterplot: Optional[dict] = None,
@@ -215,6 +251,17 @@ class dPULearnPlot:
             List of colors for identified negatives (0), positive samples (1), and unlabeled samples (2).
         names : list of str, optional
             List of dataset names for identified negatives, positive samples, and unlabeled samples.
+        df_pu_add : pd.DataFrame or list of pd.DataFrame, optional
+            One or more groups of held-out samples projected into the fitted PC space (the output of
+            :meth:`dPULearn.project`), each overlaid as an additional group on top of the ``df_pu``
+            samples. Each DataFrame must carry the selected ``PCi`` value columns (same names as
+            ``df_pu``). If ``None`` (default), the plot is byte-identical to the three-group figure.
+        names_add : str or list of str, optional
+            Name(s) for the projected extra group(s) in ``df_pu_add`` (shown in the legend). Defaults
+            to ``"Projected"`` (single group) or ``"Projected i"`` (multiple).
+        colors_add : str or list of str, optional
+            Color(s) for the projected extra group(s) in ``df_pu_add``. Defaults to the ground-truth
+            negative color for a single group, or a distinct color list for multiple groups.
         legend : bool, default=True
             If ``True``, legend is set under dissimilarity measures.
         legend_y : float, default=-0.15
@@ -261,6 +308,15 @@ class dPULearnPlot:
         names = ut.check_list_like(name="names", val=names, accept_none=True, check_all_str_or_convertible=True)
         ut.check_dict(name="kwargs_scatterplot", val=kwargs_scatterplot, accept_none=True)
         check_match_df_pu_labels(df_pu=df_pu, labels=labels)
+        # Normalize and validate the optional projected extra groups (default None -> unchanged plot)
+        list_df_add, names_add, colors_add = _adjust_add_groups(df_pu_add=df_pu_add, names_add=names_add,
+                                                                colors_add=colors_add)
+        if list_df_add is not None:
+            for i, df_add in enumerate(list_df_add):
+                ut.check_df(name=f"df_pu_add[{i}]", df=df_add, accept_none=False, accept_nan=True)
+            ut.check_list_colors(name="colors_add", val=colors_add)
+            check_match_add_groups(list_df_add=list_df_add, names_add=names_add, colors_add=colors_add,
+                                   pc_x=pc_x, pc_y=pc_y)
         # Set defaults colors and names
         default_names =  ["Identified negatives", "Positives", "Unlabeled"]
         default_colors = [ut.COLOR_REL_NEG, ut.COLOR_POS, ut.COLOR_UNL]
@@ -274,6 +330,7 @@ class dPULearnPlot:
                           figsize=figsize, pc_x=pc_x, pc_y=pc_y,
                           show_pos_mean_x=show_pos_mean_x, show_pos_mean_y=show_pos_mean_y,
                           names=names, colors=colors,
+                          list_df_add=list_df_add, names_add=names_add, colors_add=colors_add,
                           legend=legend, legend_y=legend_y, args_scatter=_args_scatter)
         except Exception as e:
             str_error = f"Following error occurred due to plt.scatter() function: {e}"
