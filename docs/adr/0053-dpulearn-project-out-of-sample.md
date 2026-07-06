@@ -25,21 +25,24 @@ Two facts make this a design decision, not a copy-paste port:
 
 Add an **additive** projection method and plot overlay; existing defaults stay byte-identical.
 
-- **`dPULearn.project(X, method='lstsq', alpha=1.0)`** — named `project`, not `transform`, to avoid
-  implying dimensionality-reducer semantics on a negative-miner. Returns a DataFrame with the same
-  `PCi` columns as `df_pu_`. `fit` now retains the fitted feature matrix (`self._X_fit`, rows aligned
-  with `df_pu_`) so the map can be rebuilt on demand. Only valid after PCA-based identification
+- **`dPULearn.project(X, method='lstsq')`** — named `project`, not `transform`, to avoid implying
+  dimensionality-reducer semantics on a negative-miner. Returns a DataFrame with the same `PCi`
+  columns as `df_pu_`. `fit` now retains the fitted feature matrix (`self._X_fit`, rows aligned with
+  `df_pu_`) so the map can be rebuilt on demand. Only valid after PCA-based identification
   (`metric=None`); distance-based fits have no PCs to project into.
-- **Three projection methods**, all reconstructed from `(X_fit, df_pu_)`. `lstsq` and `components`
-  are exact on the fit pool (when n_features >= n_samples) and approximate for new samples; `ridge`
-  only approaches fit-pool exactness as `alpha -> 0`:
+- **Two projection methods**, both reconstructed from `(X_fit, df_pu_)`, exact on the fit pool (when
+  n_features >= n_samples) and approximate for genuinely new samples:
   - `lstsq` (default) — affine least-squares map `[X | 1] -> df_pu_`, the minimum-norm solution.
     Reproduces the use-case hand-rolled projection **byte-for-byte** (regression-tested).
   - `components` — the exact PCA-geometry map: row-center each sample by its own feature mean, then
     the minimum-norm linear map, which equals the fitted PCA's `U @ inv(Sigma)` restricted to the
     stored components (proven equal to `pinv(X_centered) @ Z`).
-  - `ridge` — L2-regularized affine map (`alpha`), stabilizing extrapolation when n_features >>
-    n_samples; converges to `lstsq` on the fit pool as `alpha -> 0`.
+
+  A regularized `ridge` variant (extrapolation robustness, `alpha`) was prototyped and **dropped**:
+  no motivating use case needed it (the γ-secretase overlay uses `lstsq`), it was the only non-exact
+  method, and it added an `alpha` knob that compensates for the transposed-PCA quirk rather than
+  serving a real request. Genuine out-of-sample robustness belongs to a separate, standard-PCA
+  capability, not to more methods on a negative-miner. The projection API stays minimal.
 - **`dPULearnPlot.pca(df_pu_add=, names_add=, colors_add=)`** — overlay one or more projected groups
   (each with its own name/color) on top of the three `df_pu` groups. `df_pu_add=None` (default)
   renders byte-identically to the previous three-group figure.

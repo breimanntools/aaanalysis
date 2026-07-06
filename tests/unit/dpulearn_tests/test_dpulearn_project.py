@@ -45,22 +45,14 @@ class TestdPULearnProject:
         assert list(df_proj.columns) == _pc_cols(dpul.df_pu_)
         assert len(df_proj) == len(X_pos)
 
-    @pytest.mark.parametrize("method", ["lstsq", "components", "ridge"])
+    @pytest.mark.parametrize("method", ["lstsq", "components"])
     def test_method_parameter(self, method):
         X_pos, X_unl = _make_data()
         dpul = _fit(X_pos, X_unl)
         X_new = np.random.default_rng(1).normal(0.2, 1.0, size=(5, X_pos.shape[1]))
-        kwargs = {"alpha": 1e-8} if method == "ridge" else {}
-        df_proj = dpul.project(X_new, method=method, **kwargs)
+        df_proj = dpul.project(X_new, method=method)
         assert df_proj.shape == (5, len(_pc_cols(dpul.df_pu_)))
         assert np.all(np.isfinite(df_proj.to_numpy()))
-
-    @pytest.mark.parametrize("alpha", [1e-6, 0.1, 1.0, 10.0])
-    def test_alpha_parameter(self, alpha):
-        X_pos, X_unl = _make_data()
-        dpul = _fit(X_pos, X_unl)
-        df_proj = dpul.project(X_pos, method="ridge", alpha=alpha)
-        assert df_proj.shape == (len(X_pos), len(_pc_cols(dpul.df_pu_)))
 
     def test_new_samples_shape(self):
         X_pos, X_unl = _make_data()
@@ -81,16 +73,6 @@ class TestdPULearnProjectGoldenValues:
         Z_ref = dpul.df_pu_[_pc_cols(dpul.df_pu_)].to_numpy()
         Z_proj = dpul.project(X_fit, method=method).to_numpy()
         assert np.allclose(Z_proj, Z_ref, atol=1e-8)
-
-    def test_ridge_near_exact_on_fit_pool_small_alpha(self):
-        """With tiny alpha, ridge interpolates the fit pool (reproduces df_pu_). Out-of-sample it
-        differs from lstsq because sklearn's Ridge excludes the intercept from the penalized norm."""
-        X_pos, X_unl = _make_data()
-        dpul = _fit(X_pos, X_unl)
-        X_fit = np.vstack([X_pos, X_unl])
-        Z_ref = dpul.df_pu_[_pc_cols(dpul.df_pu_)].to_numpy()
-        Z_proj = dpul.project(X_fit, method="ridge", alpha=1e-10).to_numpy()
-        assert np.allclose(Z_proj, Z_ref, atol=1e-6)
 
     def test_lstsq_matches_manual_affine_map(self):
         """Reproduce the use-case hand-rolled np.linalg.lstsq affine projection exactly."""
@@ -129,13 +111,6 @@ class TestdPULearnProjectNegative:
         dpul = _fit(X_pos, X_unl)
         with pytest.raises(ValueError):
             dpul.project(X_pos, method="bogus")
-
-    @pytest.mark.parametrize("alpha", [0, -1.0])
-    def test_invalid_alpha(self, alpha):
-        X_pos, X_unl = _make_data()
-        dpul = _fit(X_pos, X_unl)
-        with pytest.raises(ValueError):
-            dpul.project(X_pos, method="ridge", alpha=alpha)
 
     def test_X_none(self):
         X_pos, X_unl = _make_data()

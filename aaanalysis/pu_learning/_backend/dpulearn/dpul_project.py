@@ -4,7 +4,6 @@ fitted PCA coordinate space (the ``PCi`` columns of ``dPULearn.df_pu_``).
 """
 import numpy as np
 import pandas as pd
-from sklearn.linear_model import Ridge
 
 
 # I Helper Functions
@@ -14,15 +13,14 @@ def get_pc_value_columns(df_pu=None):
 
 
 # II Main Functions
-def project_into_pca_space(X_fit=None, df_pu=None, X_new=None, method="lstsq", alpha=1.0):
+def project_into_pca_space(X_fit=None, df_pu=None, X_new=None, method="lstsq"):
     """Project ``X_new`` into the PCA coordinate space fitted on ``X_fit`` and stored in ``df_pu``.
 
     dPULearn fits ``PCA().fit(X.T)`` (on the transpose), so ``df_pu`` holds ``pca.components_.T`` and
     there is no exact out-of-sample forward transform for a new sample's feature vector. Each ``method``
     reconstructs a linear map from the fit pairs ``(X_fit, df_pu[PC columns])`` and applies it to
-    ``X_new``. The ``lstsq`` and ``components`` maps reproduce ``df_pu`` on the fit pool (when
-    n_features >= n_samples) — exact for the fitted samples, an approximation (interpolation) for new
-    points; the regularized ``ridge`` map only approaches this exactness as ``alpha`` -> 0.
+    ``X_new``. Both maps reproduce ``df_pu`` on the fit pool (when n_features >= n_samples) — exact for
+    the fitted samples, an approximation (interpolation) for genuinely new points.
     """
     cols_pc = get_pc_value_columns(df_pu=df_pu)
     Z_fit = df_pu[cols_pc].to_numpy(dtype=float)
@@ -33,18 +31,12 @@ def project_into_pca_space(X_fit=None, df_pu=None, X_new=None, method="lstsq", a
         A_fit = np.hstack([X_fit, np.ones((len(X_fit), 1))])
         W, *_ = np.linalg.lstsq(A_fit, Z_fit, rcond=None)
         Z_new = np.hstack([X_new, np.ones((len(X_new), 1))]) @ W
-    elif method == "components":
-        # Exact PCA-geometry map: row-center by each sample's own feature mean, then min-norm linear
-        # map. This min-norm solution equals the fitted PCA's U @ inv(Sigma) restricted to the stored
+    else:
+        # components: exact PCA-geometry map. Row-center by each sample's own feature mean, then the
+        # min-norm linear map, which equals the fitted PCA's U @ inv(Sigma) restricted to the stored
         # components, so it reproduces df_pu's PCi columns on the fit pool via the actual SVD geometry.
         X_fit_c = X_fit - X_fit.mean(axis=1, keepdims=True)
         M = np.linalg.pinv(X_fit_c) @ Z_fit
         Z_new = (X_new - X_new.mean(axis=1, keepdims=True)) @ M
-    else:
-        # Ridge: L2-regularized affine map; stabilizes extrapolation when n_features >> n_samples and
-        # converges to the "lstsq" map as alpha -> 0. sklearn handles the (unpenalized) intercept.
-        model = Ridge(alpha=alpha)
-        model.fit(X_fit, Z_fit)
-        Z_new = model.predict(X_new)
     df_proj = pd.DataFrame(np.asarray(Z_new, dtype=float), columns=cols_pc)
     return df_proj

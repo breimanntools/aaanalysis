@@ -15,7 +15,7 @@ from ._backend.dpulearn.dpul_project import project_into_pca_space, get_pc_value
 
 # Settings
 LIST_METRICS = ['euclidean', 'manhattan', 'cosine']
-LIST_PROJECT_METHODS = ['lstsq', 'components', 'ridge']
+LIST_PROJECT_METHODS = ['lstsq', 'components']
 
 
 # I Helper Functions
@@ -433,8 +433,7 @@ class dPULearn(Wrapper):
 
     def project(self,
                 X: ut.ArrayLike2D,
-                method: Literal["lstsq", "components", "ridge"] = "lstsq",
-                alpha: Union[int, float] = 1.0,
+                method: Literal["lstsq", "components"] = "lstsq",
                 ) -> pd.DataFrame:
         """
         Project new samples into the fitted PCA coordinate space (the ``PCi`` columns of ``df_pu_``).
@@ -446,10 +445,9 @@ class dPULearn(Wrapper):
 
         Because dPULearn fits Principal Component Analysis (PCA) on the transposed feature matrix
         (``PCA().fit(X.T)``), there is no exact out-of-sample forward transform; instead a linear map
-        is reconstructed from the fit pairs ``(X, df_pu_)``. With ``method='lstsq'`` or ``'components'``
-        the map reproduces ``df_pu_`` on the fitted samples (when n_features >= n_samples) — **exact on
-        the fit pool** — and is an **approximation for genuinely new samples**; the regularized
-        ``'ridge'`` map only approaches this exactness as ``alpha`` decreases. Deterministic (no randomness).
+        is reconstructed from the fit pairs ``(X, df_pu_)``. Both methods reproduce ``df_pu_`` on the
+        fitted samples (when n_features >= n_samples) and are therefore **exact on the fit pool** and
+        an **approximation for genuinely new samples**. Deterministic (no randomness).
 
         .. versionadded:: 1.1.0
 
@@ -458,20 +456,15 @@ class dPULearn(Wrapper):
         X : array-like, shape (n_new_samples, n_features)
             Feature matrix of the samples to project. Must have the same number of features
             (``columns``) as the matrix used in :meth:`dPULearn.fit`.
-        method : {'lstsq', 'components', 'ridge'}, default='lstsq'
-            Projection map reconstructed from the fitted ``(X, df_pu_)`` pairs:
+        method : {'lstsq', 'components'}, default='lstsq'
+            Projection map reconstructed from the fitted ``(X, df_pu_)`` pairs (both exact on the fit
+            pool, differing only for genuinely new samples):
 
             * ``lstsq``: affine least-squares map (``[X | 1] -> df_pu_``), the minimum-norm solution.
-              Exact on the fit pool; reproduces the hand-rolled projection used in the use case.
+              Reproduces the hand-rolled projection used in the use case.
             * ``components``: exact PCA-geometry map. Row-centers each sample by its own feature mean,
               then applies the minimum-norm linear map, which equals the fitted PCA's
               ``U @ inv(Sigma)`` restricted to the stored components.
-            * ``ridge``: L2-regularized affine map (see ``alpha``). Stabilizes extrapolation when
-              n_features >> n_samples; converges to ``lstsq`` as ``alpha`` approaches 0.
-
-        alpha : int or float, default=1.0
-            L2 regularization strength for ``method='ridge'`` (ignored otherwise). Must be > 0. Larger
-            values shrink projected coordinates toward the fit-pool center (more robust extrapolation).
 
         Returns
         -------
@@ -498,13 +491,10 @@ class dPULearn(Wrapper):
         # Check input
         X = ut.check_X(X=X, X_name="X", min_n_samples=1)
         ut.check_str_options(name="method", val=method, list_str_options=LIST_PROJECT_METHODS)
-        if method == "ridge":
-            ut.check_number_range(name="alpha", val=alpha, min_val=0, exclusive_limits=True, just_int=False)
         check_is_fitted_for_projection(X_fit=self._X_fit, df_pu=self.df_pu_)
         check_match_X_fit_X(X_fit=self._X_fit, X=X)
         # Reconstruct the feature-space -> PC-space map and project the new samples
-        df_proj = project_into_pca_space(X_fit=self._X_fit, df_pu=self.df_pu_,
-                                         X_new=X, method=method, alpha=alpha)
+        df_proj = project_into_pca_space(X_fit=self._X_fit, df_pu=self.df_pu_, X_new=X, method=method)
         return df_proj
 
     @staticmethod
