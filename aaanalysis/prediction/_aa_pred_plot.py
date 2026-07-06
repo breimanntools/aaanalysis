@@ -52,7 +52,79 @@ def _default(val, fallback):
 # The base prediction axes are stacked with optional extra tracks that all share the
 # residue-position x-axis: a CPP-importance profile, per-subcategory scale profiles,
 # user annotation tracks, and a bottom sequence row.
-_SEQ_ROW_MAX = 80  # longest region for which per-residue letters are still drawn
+_SEQ_ROW_MAX = 80  # longest visible region for which per-residue letters are still drawn
+_HIGHLIGHT_ALPHA = 0.25  # opacity of a highlight span (kept low so it sits behind the data)
+_ZOOM_PAD = 5  # residues of padding added on each side of a zoomed highlight region
+
+
+def _is_int(val):
+    """True if ``val`` is a plain / numpy integer (``bool`` is rejected)."""
+    return isinstance(val, (int, np.integer)) and not isinstance(val, bool)
+
+
+def _normalize_highlight(highlight):
+    """Normalize ``highlight`` to a list of validated ``(start, stop)`` int tuples.
+
+    Accepts ``None`` (-> ``[]``), a single ``(start, stop)`` tuple, or a list of such
+    tuples (1-based, inclusive residue-position / x-axis bounds). Each ``start`` / ``stop``
+    must be an integer with ``start <= stop``; anything else raises ``ValueError``.
+    """
+    if highlight is None:
+        return []
+    # A length-2 collection of scalars is one region; a list of (start, stop) pairs is many.
+    is_single = (isinstance(highlight, (tuple, list)) and len(highlight) == 2
+                 and not any(isinstance(v, (tuple, list)) for v in highlight))
+    regions = [highlight] if is_single else highlight
+    if not isinstance(regions, (list, tuple)):
+        raise ValueError(f"'highlight' ({highlight!r}) should be a (start, stop) tuple or a "
+                         f"list of (start, stop) tuples.")
+    out = []
+    for region in regions:
+        if not (isinstance(region, (tuple, list)) and len(region) == 2):
+            raise ValueError(f"'highlight' region ({region!r}) should be a (start, stop) tuple.")
+        start, stop = region
+        if not (_is_int(start) and _is_int(stop)):
+            raise ValueError(f"'highlight' region ({region!r}) should have integer 'start' and "
+                             f"'stop' positions.")
+        start, stop = int(start), int(stop)
+        if start > stop:
+            raise ValueError(f"'highlight' region ({start}, {stop}) should have 'start' <= 'stop'.")
+        out.append((start, stop))
+    return out
+
+
+def _count_visible(x, visible_range):
+    """Number of plotted x positions inside ``visible_range`` (all of them if ``None``)."""
+    if visible_range is None:
+        return len(x)
+    lo, hi = visible_range
+    x = np.asarray(x, dtype=float)
+    return int(np.sum((x >= lo) & (x <= hi)))
+
+
+def _visible_range(regions, x, zoom):
+    """``(lo, hi)`` x-window to show when zooming into ``regions``, clamped to the data; else ``None``.
+
+    Spans the minimum ``start`` to the maximum ``stop`` over ``regions`` with a small pad,
+    clamped to the plotted x-range. Returns ``None`` when zoom is off or no region is given.
+    """
+    if not zoom or not regions:
+        return None
+    lo = min(start for start, _ in regions) - _ZOOM_PAD
+    hi = max(stop for _, stop in regions) + _ZOOM_PAD
+    x = np.asarray(x, dtype=float)
+    if len(x):
+        lo = max(lo, float(x.min()))
+        hi = min(hi, float(x.max()))
+    return float(lo), float(hi)
+
+
+def _draw_highlight_spans(axes, regions):
+    """Shade each ``(start, stop)`` region as a vertical span on every axes (behind the data)."""
+    for tax in axes:
+        for start, stop in regions:
+            tax.axvspan(start, stop, color=ut.COLOR_LINK_HIGHLIGHT, alpha=_HIGHLIGHT_ALPHA,
+                        linewidth=0, zorder=0)
 
 
 def _entry_sequence(df_seq, entry):
@@ -154,11 +226,13 @@ def _is_numeric_values(values):
 
 
 def _build_extra_tracks(kind, x, seq, tmd_start, df_scales, df_cat, subcats, df_feat,
-                        list_annotations):
+                        list_annotations, visible_range=None):
     """Assemble the ordered extra-track list: importance, subcats, user tracks, sequence.
 
     A track whose inputs are missing is simply skipped. Numeric user tracks become line
-    profiles; non-numeric ones fall back to an ``imshow`` strip.
+    profiles; non-numeric ones fall back to an ``imshow`` strip. The sequence row draws
+    per-residue letters only when the number of *visible* positions (after any zoom, given
+    by ``visible_range``) is short enough, so zooming reveals the letters automatically.
     """
     tracks = []
     residues = _residue_indices(kind=kind, x=x, tmd_start=tmd_start)
@@ -198,11 +272,11 @@ def _build_extra_tracks(kind, x, seq, tmd_start, df_scales, df_cat, subcats, df_
                 code = np.array([cats.index(v) for v in values], dtype=float)
                 tracks.append(dict(type="imshow", values=code, label=label,
                                    cmap=track.get("cmap", "viridis")))
-    # 4) Sequence row at the bottom (letters only when the region is short enough)
+    # 4) Sequence row at the bottom (letters only when the *visible* region is short enough)
     if seq is not None and residues is not None:
         letters = [seq[r - 1] if 1 <= r <= len(seq) else "" for r in residues]
         tracks.append(dict(type="seq", letters=letters, label="Sequence",
-                           show=len(letters) <= _SEQ_ROW_MAX))
+                           show=_count_visible(x, visible_range) <= _SEQ_ROW_MAX))
     return tracks
 
 
@@ -230,7 +304,7 @@ def _set_track_label(tax, label):
     tax.yaxis.set_label_coords(-0.012, 0.5)
 
 
-def _draw_track(tax, track, x, is_bottom):
+def _draw_track(tax, track, x, is_bottom, visible_range=None):
     """Render one extra track onto its sub-axes (line / imshow / sequence row)."""
     ttype = track["type"]
     if ttype == "line":
@@ -243,9 +317,11 @@ def _draw_track(tax, track, x, is_bottom):
         tax.set_yticks([])
     elif ttype == "seq":
         if track.get("show", True):
+            lo, hi = visible_range if visible_range is not None else (-np.inf, np.inf)
             for xi, letter in zip(x, track["letters"]):
-                tax.text(xi, 0.5, letter, ha="center", va="center",
-                         family=ut.FONT_AA, fontsize=7)
+                if lo <= xi <= hi:
+                    tax.text(xi, 0.5, letter, ha="center", va="center",
+                             family=ut.FONT_AA, fontsize=7)
         tax.set_ylim(0, 1)
         tax.set_yticks([])
     _set_track_label(tax, track["label"])
@@ -307,6 +383,8 @@ class AAPredPlot:
                        df_cat: Optional[pd.DataFrame] = None,
                        subcats: Optional[List[str]] = None,
                        df_feat: Optional[pd.DataFrame] = None,
+                       highlight: Optional[Union[Tuple[int, int], List[Tuple[int, int]]]] = None,
+                       zoom: bool = False,
                        ) -> Tuple[Figure, Axes]:
         """
         Visualize single-protein positional predictions as a multi-track sequence viewer.
@@ -372,6 +450,19 @@ class AAPredPlot:
         df_feat : pd.DataFrame, optional
             CPP feature frame (with a ``positions`` column and a ``feat_importance`` or ``abs_auc``
             column) mapped onto positions to draw the CPP-importance track.
+        highlight : tuple or list of tuple, optional
+            One or more ``(start, stop)`` regions (1-based, inclusive) shaded as a bright-cyan
+            vertical span across **every** track (base, importance, subcategory, annotation and
+            sequence rows), so single or multiple parts are marked consistently down the whole
+            stack. The bounds are given in the plot's x-axis units: residue positions for
+            ``kind='window'`` and boundary offsets for ``kind='domain'``. Each ``start`` / ``stop``
+            must be an integer with ``start <= stop``.
+        zoom : bool, default=False
+            If ``True`` and ``highlight`` is given, restrict the shared x-axis to the highlighted
+            region(s) (from the minimum ``start`` to the maximum ``stop``, padded by a few residues
+            and clamped to the data range). Because the visible window then shortens, the sequence
+            row renders per-residue letters for the zoomed span. Applies to both kinds; a no-op when
+            ``highlight`` is ``None``.
 
         Returns
         -------
@@ -392,6 +483,8 @@ class AAPredPlot:
         """
         if kind not in LIST_SAMPLE_KINDS:
             raise ValueError(f"'kind' ('{kind}') must be one of {LIST_SAMPLE_KINDS}.")
+        ut.check_bool(name="zoom", val=zoom)
+        highlight = _normalize_highlight(highlight)
         figsize = figsize if figsize is not None else _DICT_SAMPLE_FIGSIZE[kind]
         if kind == "window":
             return AAPredPlot._plot_window(
@@ -399,14 +492,15 @@ class AAPredPlot:
                 ax=ax, figsize=figsize, color=color,
                 xlabel=_default(xlabel, "Residue position"),
                 ylabel=_default(ylabel, "Prediction score"),
-                df_seq=df_seq, df_scales=df_scales, df_cat=df_cat, subcats=subcats, df_feat=df_feat)
+                df_seq=df_seq, df_scales=df_scales, df_cat=df_cat, subcats=subcats, df_feat=df_feat,
+                highlight=highlight, zoom=zoom)
         # kind == "domain"
         return AAPredPlot._plot_domain(
             df_domain=data, entry=entry, ax=ax, figsize=figsize, color=color,
             xlabel=_default(xlabel, "Boundary offset [residues]"),
             ylabel=_default(ylabel, "Prediction score"),
             df_seq=df_seq, df_scales=df_scales, df_cat=df_cat, subcats=subcats, df_feat=df_feat,
-            list_annotations=list_annotations)
+            list_annotations=list_annotations, highlight=highlight, zoom=zoom)
 
     @staticmethod
     def predict_group(data: Union[pd.DataFrame, ut.ArrayLike1D, ut.ArrayLike2D],
@@ -997,17 +1091,18 @@ class AAPredPlot:
         return df_scales, df_cat, subcats
 
     @staticmethod
-    def _draw_extra_tracks(track_axes, tracks, x):
+    def _draw_extra_tracks(track_axes, tracks, x, visible_range=None):
         """Render every extra track and return the bottom-most axes (for the x-label)."""
         for i, (tax, track) in enumerate(zip(track_axes, tracks)):
-            _draw_track(tax, track, x, is_bottom=(i == len(tracks) - 1))
+            _draw_track(tax, track, x, is_bottom=(i == len(tracks) - 1),
+                        visible_range=visible_range)
         return track_axes[-1] if track_axes else None
 
     @staticmethod
     def _plot_window(df_window, entry=None, list_annotations=None, threshold=None, ax=None,
                      figsize=(10, 4), color=None, xlabel="Residue position",
                      ylabel="Prediction score", df_seq=None, df_scales=None, df_cat=None,
-                     subcats=None, df_feat=None):
+                     subcats=None, df_feat=None, highlight=None, zoom=False):
         """Per-residue prediction profile from AAPred.predict(level='window'), with extra tracks."""
         # Check input
         ut.check_df(name="df_window", df=df_window,
@@ -1034,11 +1129,15 @@ class AAPredPlot:
         sub = df_window[df_window[ut.COL_ENTRY] == entry].sort_values(ut.COL_RESIDUE_POS)
         pos = sub[ut.COL_RESIDUE_POS].to_numpy()
         score = sub[ut.COL_SCORE].to_numpy()
+        # Resolve the zoom window (min start to max stop, padded), so the sequence row keys
+        # per-residue letters off the *visible* span rather than the full data length.
+        visible_range = _visible_range(highlight, pos, zoom)
         # Build the extra tracks (importance, subcats, user annotations, sequence) + layout
         seq, tmd_start = _entry_sequence(df_seq, entry)
         tracks = _build_extra_tracks(kind="window", x=pos, seq=seq, tmd_start=tmd_start,
                                      df_scales=df_scales, df_cat=df_cat, subcats=subcats,
-                                     df_feat=df_feat, list_annotations=list_annotations)
+                                     df_feat=df_feat, list_annotations=list_annotations,
+                                     visible_range=visible_range)
         fig, ax, track_axes = _positional_layout(ax=ax, figsize=figsize, tracks=tracks)
         # Draw the base profile
         ax.plot(pos, score, color=color or ut.COLOR_FEAT_NEG, linewidth=1.2)
@@ -1046,13 +1145,17 @@ class AAPredPlot:
             ax.axhline(threshold, color="0.4", linestyle="--", linewidth=1.2)
         ax.set_ylim(0, 1)
         ax.set_ylabel(ylabel)
-        if len(pos):
+        # Shade the highlighted region(s) behind the data on every track axes; zoom last.
+        _draw_highlight_spans([ax] + track_axes, highlight)
+        if visible_range is not None:
+            ax.set_xlim(*visible_range)
+        elif len(pos):
             ax.set_xlim(pos.min(), pos.max())
         sns.despine(ax=ax, bottom=bool(track_axes))
         if track_axes:
             ax.tick_params(axis="x", bottom=False)
         # Draw the extra tracks; the x-label goes on the bottom-most axes
-        bottom = AAPredPlot._draw_extra_tracks(track_axes, tracks, pos)
+        bottom = AAPredPlot._draw_extra_tracks(track_axes, tracks, pos, visible_range=visible_range)
         (bottom if bottom is not None else ax).set_xlabel(xlabel)
         return ut.FigAxResult(fig, ax)
 
@@ -1060,7 +1163,7 @@ class AAPredPlot:
     def _plot_domain(df_domain, entry=None, ax=None, figsize=(6, 4.5), color=None,
                      xlabel="Boundary offset [residues]", ylabel="Prediction score",
                      df_seq=None, df_scales=None, df_cat=None, subcats=None, df_feat=None,
-                     list_annotations=None):
+                     list_annotations=None, highlight=None, zoom=False):
         """Domain boundary-sensitivity plot from AAPred.predict(level='domain'), with extra tracks."""
         # Check input
         ut.check_df(name="df_domain", df=df_domain,
@@ -1085,11 +1188,14 @@ class AAPredPlot:
         sub = df_domain[df_domain[ut.COL_ENTRY] == entry].sort_values(ut.COL_OFFSET)
         offsets = sub[ut.COL_OFFSET].to_numpy()
         score = sub[ut.COL_SCORE].to_numpy()
+        # Resolve the zoom window (highlight bounds are boundary offsets here, the x-axis).
+        visible_range = _visible_range(highlight, offsets, zoom)
         # Build the extra tracks (importance, subcats, user annotations, sequence) + layout
         seq, tmd_start = _entry_sequence(df_seq, entry)
         tracks = _build_extra_tracks(kind="domain", x=offsets, seq=seq, tmd_start=tmd_start,
                                      df_scales=df_scales, df_cat=df_cat, subcats=subcats,
-                                     df_feat=df_feat, list_annotations=list_annotations)
+                                     df_feat=df_feat, list_annotations=list_annotations,
+                                     visible_range=visible_range)
         fig, ax, track_axes = _positional_layout(ax=ax, figsize=figsize, tracks=tracks)
         # Draw the base curve
         ax.plot(offsets, score, color=color or ut.COLOR_FEAT_POS, marker="o", linewidth=1.6)
@@ -1100,10 +1206,15 @@ class AAPredPlot:
         ax.set_ylabel(ylabel)
         ax.set_ylim(0, 1)
         ax.legend(frameon=False)
+        # Shade the highlighted region(s) behind the data on every track axes; zoom last.
+        _draw_highlight_spans([ax] + track_axes, highlight)
+        if visible_range is not None:
+            ax.set_xlim(*visible_range)
         sns.despine(ax=ax, bottom=bool(track_axes))
         if track_axes:
             ax.tick_params(axis="x", bottom=False)
         # Draw the extra tracks; the x-label goes on the bottom-most axes
-        bottom = AAPredPlot._draw_extra_tracks(track_axes, tracks, offsets)
+        bottom = AAPredPlot._draw_extra_tracks(track_axes, tracks, offsets,
+                                               visible_range=visible_range)
         (bottom if bottom is not None else ax).set_xlabel(xlabel)
         return ut.FigAxResult(fig, ax)

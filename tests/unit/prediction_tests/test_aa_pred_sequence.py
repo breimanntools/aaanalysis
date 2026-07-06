@@ -6,9 +6,19 @@ import numpy as np
 import pandas as pd
 import pytest
 
+import matplotlib.colors as mcolors
+
 import aaanalysis as aa
 
 aa.options["verbose"] = False
+
+_CYAN = mcolors.to_rgb("#00E5FF")  # ut.COLOR_LINK_HIGHLIGHT, the highlight-span color
+
+
+def _cyan_spans(ax):
+    """Highlight-span patches (bright-cyan axvspans) on ``ax``."""
+    return [p for p in ax.patches
+            if tuple(round(c, 3) for c in p.get_facecolor()[:3]) == tuple(round(c, 3) for c in _CYAN)]
 
 
 @pytest.fixture(scope="module")
@@ -364,3 +374,126 @@ class TestPredictSampleInvalidKind:
             aa.AAPredPlot().predict_sample(dw, kind="hist")
         with pytest.raises(ValueError):
             aa.AAPredPlot().predict_sample(dw, kind="not_a_kind")
+
+
+class TestPredictSampleHighlightWindow:
+    """Region highlighting + zoom for kind='window' (residue-position spans)."""
+
+    def _dw(self, fitted, step=45):
+        aapred, df_seq, _ = fitted
+        return aapred.predict(df_seq[df_seq["entry"] == "P05067"][["entry", "sequence"]],
+                              level="window", tmd_len=15, step=step)
+
+    def _one(self, fitted):
+        _, df_seq, _ = fitted
+        return df_seq[df_seq["entry"] == "P05067"]
+
+    def _mid(self, dw):
+        pos = dw["position"].to_numpy()
+        return int(pos[len(pos) // 2])
+
+    def test_single_tuple_spans_every_track_axes(self, fitted, scales):
+        aapred, df_seq, df_feat = fitted
+        df_scales, df_cat = scales
+        dw = self._dw(fitted)
+        mid = self._mid(dw)
+        subcats = list(df_feat["subcategory"].unique()[:1])
+        fig, ax = aa.AAPredPlot().predict_sample(
+            dw, kind="window", entry="P05067", df_seq=self._one(fitted), df_scales=df_scales,
+            df_cat=df_cat, subcats=subcats, df_feat=df_feat, highlight=(mid, mid + 20))
+        assert len(fig.axes) > 1  # base + several tracks
+        # one cyan span on the base axes and on every track axes
+        assert all(len(_cyan_spans(a)) == 1 for a in fig.axes)
+
+    def test_list_of_tuples_spans_every_track_axes(self, fitted):
+        dw = self._dw(fitted)
+        mid = self._mid(dw)
+        fig, ax = aa.AAPredPlot().predict_sample(
+            dw, kind="window", entry="P05067", df_seq=self._one(fitted),
+            highlight=[(mid, mid + 15), (mid + 30, mid + 45)])
+        assert len(fig.axes) == 2  # base + sequence row
+        assert all(len(_cyan_spans(a)) == 2 for a in fig.axes)  # two regions on every axes
+
+    def test_zoom_restricts_xlim_to_region_plus_pad(self, fitted):
+        dw = self._dw(fitted)
+        mid = self._mid(dw)
+        full = aa.AAPredPlot().predict_sample(dw, kind="window", entry="P05067")[1].get_xlim()
+        fig, ax = aa.AAPredPlot().predict_sample(
+            dw, kind="window", entry="P05067", highlight=(mid, mid + 20), zoom=True)
+        lo, hi = ax.get_xlim()
+        assert lo <= mid and hi >= mid + 20            # region stays inside the view
+        assert lo >= mid - 10 and hi <= mid + 20 + 10  # padded by only a few residues
+        assert (hi - lo) < (full[1] - full[0])         # genuinely zoomed in
+
+    def test_zoom_reveals_sequence_letters_keyed_off_visible_span(self, fitted):
+        # step=5 -> >80 positions: letters suppressed at full view, but the short zoomed
+        # window must render per-residue letters (visible-length keying, not data-length).
+        dw = self._dw(fitted, step=5)
+        mid = self._mid(dw)
+        full = aa.AAPredPlot().predict_sample(
+            dw, kind="window", entry="P05067", df_seq=self._one(fitted))
+        assert len(full[0].axes[-1].texts) == 0
+        zoomed = aa.AAPredPlot().predict_sample(
+            dw, kind="window", entry="P05067", df_seq=self._one(fitted),
+            highlight=(mid, mid + 30), zoom=True)
+        assert len(zoomed[0].axes[-1].texts) > 0
+
+    def test_returns_fig_ax(self, fitted):
+        dw = self._dw(fitted)
+        mid = self._mid(dw)
+        fig, ax = aa.AAPredPlot().predict_sample(
+            dw, kind="window", entry="P05067", highlight=(mid, mid + 20), zoom=True)
+        assert fig is not None and ax is fig.axes[0]
+
+    def test_start_gt_stop_raises(self, fitted):
+        dw = self._dw(fitted)
+        with pytest.raises(ValueError):
+            aa.AAPredPlot().predict_sample(dw, kind="window", highlight=(60, 40))
+
+    def test_non_int_bounds_raise(self, fitted):
+        dw = self._dw(fitted)
+        with pytest.raises(ValueError):
+            aa.AAPredPlot().predict_sample(dw, kind="window", highlight=(50.5, 60.0))
+        with pytest.raises(ValueError):
+            aa.AAPredPlot().predict_sample(dw, kind="window", highlight=[(10, 20), (30, "x")])
+
+
+class TestPredictSampleHighlightDomain:
+    """Region highlighting + zoom for kind='domain' (boundary-offset spans)."""
+
+    def _dd(self, fitted, window=8):
+        aapred, df_seq, _ = fitted
+        return aapred.predict(df_seq[df_seq["entry"] == "P05067"], level="domain", window=window)
+
+    def _one(self, fitted):
+        _, df_seq, _ = fitted
+        return df_seq[df_seq["entry"] == "P05067"]
+
+    def test_single_tuple_spans_every_track_axes(self, fitted, scales):
+        aapred, df_seq, df_feat = fitted
+        df_scales, df_cat = scales
+        subcats = list(df_feat["subcategory"].unique()[:1])
+        fig, ax = aa.AAPredPlot().predict_sample(
+            self._dd(fitted), kind="domain", entry="P05067", df_seq=self._one(fitted),
+            df_scales=df_scales, df_cat=df_cat, subcats=subcats, highlight=(-2, 2))
+        assert len(fig.axes) == 3  # base + subcat + sequence
+        assert all(len(_cyan_spans(a)) == 1 for a in fig.axes)
+
+    def test_list_of_tuples_spans_every_track_axes(self, fitted):
+        fig, ax = aa.AAPredPlot().predict_sample(
+            self._dd(fitted), kind="domain", entry="P05067",
+            highlight=[(-5, -3), (2, 4)])
+        assert all(len(_cyan_spans(a)) == 2 for a in fig.axes)
+
+    def test_zoom_restricts_xlim_and_returns_fig_ax(self, fitted):
+        fig, ax = aa.AAPredPlot().predict_sample(
+            self._dd(fitted), kind="domain", entry="P05067", highlight=(-2, 2), zoom=True)
+        lo, hi = ax.get_xlim()
+        assert lo <= -2 and hi >= 2
+        assert fig is not None and ax is fig.axes[0]
+
+    def test_invalid_highlight_raises(self, fitted):
+        with pytest.raises(ValueError):
+            aa.AAPredPlot().predict_sample(self._dd(fitted), kind="domain", highlight=(3, -3))
+        with pytest.raises(ValueError):
+            aa.AAPredPlot().predict_sample(self._dd(fitted), kind="domain", highlight=(1.5, 2.5))
