@@ -39,7 +39,12 @@ _INCLUDE_RE = re.compile(r"\.\.\s+include::\s+examples/([\w\-]+)\.rst")
 _AMBIENT = {"ax"}
 
 # (symbol, method_or_None, param) -> reason. Only genuine non-demonstrables.
-ALLOWLIST: dict = {}
+ALLOWLIST: dict = {
+    ("ShapModel", "add_feat_impact", "sample_positions"):
+        "deprecated alias for `samples` (removed in 1.2.0); not demonstrated to avoid teaching it",
+    ("ShapModel", "add_sample_mean_dif", "sample_positions"):
+        "deprecated alias for `samples` (removed in 1.2.0); not demonstrated to avoid teaching it",
+}
 
 # Committed backlog of known-undemonstrated params (pyright-style ratchet). NEW notebooks
 # and the prediction notebooks are NOT in it, so they must have zero gaps; existing rows are
