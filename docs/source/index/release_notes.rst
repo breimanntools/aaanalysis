@@ -42,6 +42,13 @@ Added
   single-call form of the recurring ``(df[col] == x).astype(int).to_numpy()`` expression.
 - :func:`~aaanalysis.combine_dict_nums`: Concatenates per-residue tensors (embedding / structure /
   annotation) along the feature axis into one combined :meth:`~aaanalysis.CPP.run_num` input.
+- :meth:`~aaanalysis.SequencePreprocessor.pad_parts`: Pads the sequence-part columns of a
+  ``df_parts`` DataFrame to a uniform length with a gap symbol (``length`` target or each column's
+  per-part max; N-terminal, C-terminal, or symmetric ``both``). The selected ``list_parts`` columns
+  are padded (default all) and a padded copy is returned (non-selected columns and the index
+  unchanged; input never mutated). Enables analyzing short, variable-length parts at a finer,
+  uniform resolution via *pad* → :class:`~aaanalysis.CPP` (``accept_gaps=True``) → larger uniform
+  ``n_split_max`` than the shortest real part allows.
 
 **Feature Engineering**
 
