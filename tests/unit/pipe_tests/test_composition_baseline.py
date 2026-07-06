@@ -18,7 +18,7 @@ import aaanalysis as aa
 import aaanalysis.utils as ut
 from aaanalysis.pipe._find_features import find_features, _resolve_baselines
 from aaanalysis.pipe._composition_baseline import (
-    build_onehot_scales, build_aac_df_feat, comp_kmer_signal, plot_composition_map, AAC_CAT_COLORS)
+    build_aac_df_feat, comp_kmer_signal, comp_kmer_df_feat, plot_composition_map, AAC_CAT_COLORS)
 
 aa.options["verbose"] = False
 warnings.filterwarnings("ignore")
@@ -30,19 +30,30 @@ def data():
     return df_seq, df_seq["label"].to_list()
 
 
-# I one-hot scales
-class TestOnehotScales:
-    def test_identity_shape_and_values(self):
-        df_scales, df_cat = build_onehot_scales()
+# I return_scales (one-hot scales + df_cat)
+class TestReturnScales:
+    def test_k1_identity_scales_and_cat(self, data):
+        df_seq, _ = data
+        sf = aa.SequenceFeature(verbose=False)
+        X, df_scales, df_cat = sf.kmer_composition(df_seq=df_seq, k=1, return_scales=True)
         assert df_scales.shape == (20, 20)
-        assert list(df_scales.index) == list(ut.LIST_CANONICAL_AA)
         assert np.array_equal(df_scales.to_numpy(), np.eye(20))          # one-hot identity
-
-    def test_df_cat_contract(self):
-        _, df_cat = build_onehot_scales()
+        assert list(df_scales.index) == list(ut.LIST_CANONICAL_AA)
         for col in (ut.COL_SCALE_ID, ut.COL_CAT, ut.COL_SUBCAT, ut.COL_SCALE_NAME, ut.COL_SCALE_DES):
             assert col in df_cat.columns
-        assert set(df_cat[ut.COL_CAT]) <= set(AAC_CAT_COLORS)             # every category has a color
+        assert set(df_cat[ut.COL_CAT]) <= set(AAC_CAT_COLORS)            # every category has a color
+
+    def test_k2_no_scales_but_kmer_cat(self, data):
+        df_seq, _ = data
+        sf = aa.SequenceFeature(verbose=False)
+        X, df_scales, df_cat = sf.kmer_composition(df_seq=df_seq, k=2, return_scales=True)
+        assert df_scales is None                                         # a dipeptide is not a scale
+        assert len(df_cat) == 400 and df_cat[ut.COL_SUBCAT].iloc[1].count("-") == 1
+
+    def test_default_return_unchanged(self, data):
+        df_seq, _ = data
+        sf = aa.SequenceFeature(verbose=False)
+        assert isinstance(sf.kmer_composition(df_seq=df_seq, k=1), np.ndarray)   # no tuple by default
 
 
 # II AAC as CPP df_feat
@@ -76,6 +87,31 @@ class TestKmerSignalPlot:
         ax = plot_composition_map(signal=signal, k=k, top_n=15)
         assert ax is not None
         plt.close("all")
+
+
+# III.b CPP-style k-mer filtering
+class TestKmerFilter:
+    def test_df_feat_shape_and_ranking(self, data):
+        df_seq, labels = data
+        sf = aa.SequenceFeature(verbose=False)
+        df = comp_kmer_df_feat(sf=sf, df_seq=df_seq, labels=labels, k=2, n_filter=15)
+        assert len(df) == 15
+        for col in (ut.COL_FEATURE, ut.COL_ABS_AUC, ut.COL_MEAN_DIF, ut.COL_STD_TEST, ut.COL_SUBCAT):
+            assert col in df.columns
+        assert (df[ut.COL_ABS_AUC].diff().dropna() <= 1e-9).all()        # ranked by abs_auc, best first
+
+    def test_correlation_filter_can_only_drop(self, data):
+        df_seq, labels = data
+        sf = aa.SequenceFeature(verbose=False)
+        n_none = len(comp_kmer_df_feat(sf=sf, df_seq=df_seq, labels=labels, k=2, n_filter=400))
+        n_cor = len(comp_kmer_df_feat(sf=sf, df_seq=df_seq, labels=labels, k=2, n_filter=400, max_cor=0.5))
+        assert n_cor <= n_none
+
+    def test_top_features_are_valid_kmers(self, data):
+        df_seq, labels = data
+        sf = aa.SequenceFeature(verbose=False)
+        df = comp_kmer_df_feat(sf=sf, df_seq=df_seq, labels=labels, k=2, n_filter=10)
+        assert all(len(f) == 2 and set(f) <= set(ut.LIST_CANONICAL_AA) for f in df[ut.COL_FEATURE])
 
 
 # IV find_features integration

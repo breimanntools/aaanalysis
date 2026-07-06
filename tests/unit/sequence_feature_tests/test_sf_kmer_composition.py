@@ -94,6 +94,29 @@ class TestKmerComposition:
         with pytest.raises(ValueError):
             sf.kmer_composition(df_seq=_df_seq(["ACDEFGHIK"]), k=1, return_df="yes")
 
+    # return_scales
+    def test_return_scales_k1_onehot(self):
+        sf = aa.SequenceFeature()
+        X, df_scales, df_cat = sf.kmer_composition(df_seq=_df_seq(["ACDEFGHIK", "MKKLLA"]), k=1,
+                                                   return_scales=True)
+        assert X.shape == (2, 20)
+        assert np.array_equal(df_scales.to_numpy(), np.eye(20)) and len(df_cat) == 20
+
+    def test_return_scales_k2_none_scales(self):
+        sf = aa.SequenceFeature()
+        X, df_scales, df_cat = sf.kmer_composition(df_seq=_df_seq(["ACDEFGHIK"]), k=2, return_scales=True)
+        assert df_scales is None and len(df_cat) == 400          # a dipeptide is not a per-residue scale
+
+    def test_return_scales_with_return_df(self):
+        sf = aa.SequenceFeature()
+        out = sf.kmer_composition(df_seq=_df_seq(["ACDEFGHIK"]), k=1, return_df=True, return_scales=True)
+        assert isinstance(out, tuple) and isinstance(out[0], pd.DataFrame)  # (df, df_scales, df_cat)
+
+    def test_invalid_return_scales(self):
+        sf = aa.SequenceFeature()
+        with pytest.raises(ValueError):
+            sf.kmer_composition(df_seq=_df_seq(["ACDEFGHIK"]), k=1, return_scales="yes")
+
 
 # III Equivalence + contract tests
 class TestKmerCompositionContract:

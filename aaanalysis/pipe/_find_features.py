@@ -23,8 +23,8 @@ from aaanalysis.feature_engineering import SequenceFeature, CPP, CPPGrid, CPPPlo
 from aaanalysis.explainable_ai import TreeModel
 from aaanalysis.data_handling import load_scales
 from ._eval_plot import plot_eval
-from ._composition_baseline import (build_aac_df_feat, comp_kmer_signal, plot_composition_map,
-                                    AAC_CAT_COLORS)
+from ._composition_baseline import (build_aac_df_feat, comp_kmer_signal, comp_kmer_df_feat,
+                                    plot_composition_map, AAC_CAT_COLORS)
 
 
 # I Helper Functions
@@ -337,12 +337,14 @@ def _resolve_baselines(baselines):
 
 def _run_baselines(ks=None, sf=None, df_seq=None, labels=None, models=None, cv=5, metrics=None,
                    label_test=1, label_ref=0, name_test="TEST", name_ref="REF", n_jmd=10,
-                   random_state=None, n_jobs=None, verbose=False, plot=True):
-    """Composition baselines: AAC (k=1) as a CPP ``df_feat`` + feature map; DPC/k-mer as signal maps.
+                   n_filter=100, max_cor=None, random_state=None, n_jobs=None, verbose=False, plot=True):
+    """Composition baselines: AAC (k=1) as a CPP ``df_feat`` + feature map; DPC/k-mer CPP-filtered.
 
-    Returns ``(rows, artifacts)``: one reference ``df_eval`` row per k (scored by the same models/CV as
-    the CPP configs, ``is_selected=False``) and a dict of drawn objects (``df_feat`` + ``ax`` for AAC,
-    the signal array + ``ax`` for DPC/k-mer) keyed by ``AAC`` / ``DPC`` / ``<k>-mer``.
+    Each baseline selects up to ``n_filter`` features with CPP's discriminative statistics (AAC via
+    :meth:`CPP.run` over one-hot scales; DPC/k-mer via :func:`comp_kmer_df_feat`), cross-validates that
+    selected set with the same models/CV as the CPP configs, and returns a reference ``df_eval`` row
+    (``is_selected=False``) plus a dict of drawn objects (a ``df_feat`` + feature map for AAC; the
+    signal + composition map + filtered ``df_feat`` table for DPC/k-mer) keyed ``AAC`` / ``DPC`` / ``<k>-mer``.
     """
     rows, artifacts = [], {}
     y = np.asarray(labels)
@@ -351,8 +353,8 @@ def _run_baselines(ks=None, sf=None, df_seq=None, labels=None, models=None, cv=5
         if k == 1:
             df_feat_b, df_parts_b, df_scales_b, df_cat_b = build_aac_df_feat(
                 sf=sf, df_seq=df_seq, labels=labels, jmd_n_len=n_jmd, jmd_c_len=n_jmd,
-                label_test=label_test, label_ref=label_ref, random_state=random_state,
-                n_jobs=n_jobs, verbose=verbose)
+                label_test=label_test, label_ref=label_ref, n_filter=n_filter,
+                random_state=random_state, n_jobs=n_jobs, verbose=verbose)
             X = sf.feature_matrix(features=df_feat_b[ut.COL_FEATURE], df_parts=df_parts_b,
                                   df_scales=df_scales_b, n_jobs=n_jobs)
             scores = _cv_scores(X, labels, models=models, cv=cv, metrics=metrics, random_state=random_state)
@@ -367,16 +369,24 @@ def _run_baselines(ks=None, sf=None, df_seq=None, labels=None, models=None, cv=5
                     df_feat=df_feat_b, name_test=name_test, name_ref=name_ref, dict_color=AAC_CAT_COLORS)
                 art["df_feat"], art["ax"] = df_feat_b, ax_b
         else:
+            # CPP-style discriminative filter of the k-mer composition (positional / scale-category
+            # redundancy do not apply), then CV-score exactly the selected k-mers.
             signal, kmers = comp_kmer_signal(sf=sf, df_seq=df_seq, labels=labels, k=k,
                                              label_test=label_test, label_ref=label_ref)
-            X = sf.kmer_composition(df_seq=df_seq, k=k)
-            keep = np.isfinite(X).all(axis=1)                     # drop spans shorter than k (all-NaN)
-            scores = _cv_scores(X[keep], y[keep], models=models, cv=cv, metrics=metrics,
+            df_kmer = comp_kmer_df_feat(sf=sf, df_seq=df_seq, labels=labels, k=k, label_test=label_test,
+                                        label_ref=label_ref, n_filter=n_filter, max_cor=max_cor)
+            X = np.asarray(sf.kmer_composition(df_seq=df_seq, k=k), dtype=float)
+            col_idx = {km: i for i, km in enumerate(kmers)}
+            sel = [col_idx[km] for km in df_kmer[ut.COL_FEATURE]]
+            X_sel = X[:, sel]
+            keep = np.isfinite(X_sel).all(axis=1)                # drop spans shorter than k (all-NaN)
+            scores = _cv_scores(X_sel[keep], y[keep], models=models, cv=cv, metrics=metrics,
                                 random_state=random_state)
-            n_features = 20 ** k
-            art = {"signal": signal, "kmers": kmers, "ax": None}
+            n_features = len(df_kmer)
+            art = {"signal": signal, "kmers": kmers, "df_feat": df_kmer, "ax": None}
             if plot:
-                art["ax"] = plot_composition_map(signal=signal, k=k, name_test=name_test, name_ref=name_ref)
+                art["ax"] = plot_composition_map(signal=signal, k=k, df_feat=df_kmer,
+                                                 name_test=name_test, name_ref=name_ref)
         row = {"stage": "baseline", "scale": label, "n_features": n_features,
                "is_pareto": False, "is_selected": False}
         for m in metrics:
@@ -574,10 +584,13 @@ def find_features(labels: ut.ArrayLike1D,
     # composition signal maps. Scored by the same models/CV and appended to df_eval as reference rows
     # (is_selected=False); the drawn objects are attached as ``ax.baselines`` (dict keyed AAC/DPC/<k>-mer).
     if ks_baseline:
+        # Match the CPP winner's feature count so the comparison is apples-to-apples; reuse the CPP
+        # redundancy threshold for the k-mer correlation filter.
         base_rows, base_artifacts = _run_baselines(
             ks=ks_baseline, sf=sf, df_seq=df_seq, labels=labels, models=models, cv=cv, metrics=metrics,
             label_test=label_test, label_ref=label_ref, name_test=name_test, name_ref=name_ref,
-            n_jmd=n_jmd_win, random_state=random_state, n_jobs=n_jobs, verbose=verbose, plot=plot)
+            n_jmd=n_jmd_win, n_filter=len(df_feat), max_cor=cfg["max_cor"], random_state=random_state,
+            n_jobs=n_jobs, verbose=verbose, plot=plot)
         df_eval = pd.concat([df_eval, pd.DataFrame(base_rows)], ignore_index=True)
         if ax is not None:
             ax.baselines = base_artifacts

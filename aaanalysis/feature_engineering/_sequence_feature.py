@@ -29,6 +29,7 @@ from ._backend.cpp.utils_feature import (get_df_parts_,
 from ._backend.cpp.sequence_feature import (get_split_kws_, get_features_, get_feature_names_,
                                             get_feature_descriptions_, get_df_feat_, get_scale_composition_,
                                             get_aa_composition_, get_dipeptide_composition_, get_kmer_composition_,
+                                            get_composition_scales_,
                                             get_labels_ovr_, get_labels_ovo_, get_labels_quantile_,
                                             get_labels_tiered_)
 from ._backend.cpp_run import _pick_feature_matrix_builder
@@ -1132,7 +1133,8 @@ class SequenceFeature:
                          k: int = 1,
                          list_parts: Optional[Union[str, List[str]]] = None,
                          return_df: bool = False,
-                         ) -> Union[ut.ArrayLike2D, pd.DataFrame]:
+                         return_scales: bool = False,
+                         ) -> Union[ut.ArrayLike2D, pd.DataFrame, Tuple]:
         """
         Create the k-mer-composition (k-mer) baseline matrix for given sequences.
 
@@ -1173,6 +1175,14 @@ class SequenceFeature:
         return_df : bool, default=False
             If ``True``, return a labeled ``pd.DataFrame`` (rows indexed like ``df_parts``, one column
             per k-mer) instead of a plain array.
+        return_scales : bool, default=False
+            If ``True``, also return the CPP-ready ``(df_scales, df_cat)`` for the composition, i.e.
+            the return becomes the 3-tuple ``(X, df_scales, df_cat)``. For ``k=1`` (AAC) ``df_scales`` is
+            the ``(20, 20)`` one-hot identity scale set — pass it with ``df_cat`` to :meth:`CPP.run`
+            (whole-part ``Segment(1,1)`` split) to obtain amino-acid composition as a real ``df_feat`` /
+            feature map. For ``k>=2`` ``df_scales`` is ``None`` (a k-mer is not a per-residue scale, so
+            it cannot be a CPP scale) and ``df_cat`` categorizes the k-mers by residue class for the
+            composition map's grouping / labels.
 
         Returns
         -------
@@ -1181,7 +1191,8 @@ class SequenceFeature:
             k-mers over the span residues (columns in
             ``itertools.product(ut.LIST_CANONICAL_AA, repeat=k)`` order). A span with fewer than ``k``
             canonical residues has an all-``NaN`` row. Returned as a ``pd.DataFrame`` (k-mer strings as
-            columns) when ``return_df=True``.
+            columns) when ``return_df=True``. When ``return_scales=True`` the return is the 3-tuple
+            ``(X, df_scales, df_cat)`` (``df_scales`` is ``None`` for ``k>=2``).
 
         See Also
         --------
@@ -1197,6 +1208,7 @@ class SequenceFeature:
         # Check input
         ut.check_df_seq(df_seq=df_seq)
         ut.check_bool(name="return_df", val=return_df)
+        ut.check_bool(name="return_scales", val=return_scales)
         if isinstance(k, bool) or not isinstance(k, (int, np.integer)) or int(k) < 1:
             raise ValueError(f"'k' should be an integer >= 1, got {k!r}.")
         k = int(k)
@@ -1215,7 +1227,10 @@ class SequenceFeature:
                           f"selected parts (no k-mer); their composition row is all-NaN.")
         if return_df:
             columns = ["".join(p) for p in itertools.product(ut.LIST_CANONICAL_AA, repeat=k)]
-            return pd.DataFrame(X, index=df_parts.index, columns=columns)
+            X = pd.DataFrame(X, index=df_parts.index, columns=columns)
+        if return_scales:
+            df_scales, df_cat = get_composition_scales_(k=k)
+            return X, df_scales, df_cat
         return X
 
     def prune_by_variance(self,

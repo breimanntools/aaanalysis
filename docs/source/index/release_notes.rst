@@ -105,7 +105,11 @@ Added
   composition (identical to ``dipeptide_composition``), and higher ``k`` (up to 4) captures
   longer local sequential order. Same non-canonical-dropping, gap-free-span, each-row-sums-to-1
   semantics as the ``k=1`` / ``k=2`` special cases; fully vectorized (one ``bincount`` over
-  base-20 k-mer codes); optional ``return_df=True`` for a labeled frame.
+  base-20 k-mer codes); optional ``return_df=True`` for a labeled frame. ``return_scales=True`` also
+  returns the CPP-ready ``(df_scales, df_cat)``: for ``k=1`` the ``(20, 20)`` one-hot identity scale set
+  + amino-acid-class ``df_cat`` (feed to :meth:`~aaanalysis.CPP.run` with a whole-part ``Segment(1,1)``
+  split to get amino-acid composition as a real ``df_feat`` / feature map); for ``k>=2`` ``df_scales`` is
+  ``None`` (a k-mer is not a per-residue scale) and ``df_cat`` categorizes the k-mers by residue class.
 - **SequenceFeature.get_df_parts_from_windows**: Assemble a reference ``df_parts`` from
   per-part window sets (e.g. ``AAWindowSampler.sample_synthetic`` output).
 - **SequenceFeature.get_seq_kws**: Return one protein's ``{jmd_n_seq, tmd_seq, jmd_c_seq}``
@@ -277,12 +281,15 @@ Added
   orders 1..4) adds **composition baselines** for the "how much does positional CPP add over
   plain composition?" comparison: each is cross-validated with the same ``model`` / ``cv`` /
   ``metric`` and appended to ``df_eval`` as a reference row (``stage="baseline"``,
-  ``is_selected=False``; the returned winner stays the CPP feature set). AAC (k=1) is a genuine
-  CPP ``df_feat`` — a one-hot identity scale set with the whole-part ``Segment(1,1)`` split — so
-  its feature map is attached; DPC / higher k-mers are attached as composition **signal maps**
-  (per-k-mer ``test − ref`` composition on a diverging, feature-map-consistent palette: a 20×20
-  heatmap for k=2, top-N ranked bars for k≥3). The drawn objects are attached as ``ax.baselines``
-  (dict keyed ``AAC`` / ``DPC`` / ``<k>-mer``).
+  ``is_selected=False``; the returned winner stays the CPP feature set). Each baseline is **filtered
+  with the same discriminative statistics CPP ranks on** (adjusted AUC, mean difference, test-group
+  std) and reduced to the CPP winner's feature count: AAC (k=1) is a genuine CPP ``df_feat`` — a
+  one-hot identity scale set with the whole-part ``Segment(1,1)`` split — so its feature map is
+  attached; DPC / higher k-mers cannot be per-residue features, so they are scored + top-``n_filter``
+  selected (optionally correlation-deduped) into a ``df_feat``-shaped k-mer table and drawn as
+  composition **signal maps** (per-k-mer ``test − ref`` on a diverging, feature-map-consistent palette:
+  a 20×20 heatmap for k=2 with the selected dipeptides outlined, top-N ranked bars for k≥3). The
+  ``df_feat`` tables + figures are attached as ``ax.baselines`` (dict keyed ``AAC`` / ``DPC`` / ``<k>-mer``).
 - **aap.plot_eval**: Publication-ready evaluation figures of a ``find_features`` sweep —
   the high-dimensional Part × Split × Scale grid is **decomposed** into a series of clean
   2D ``viridis`` heatmaps (the two most-informative axes on each panel, the least on the

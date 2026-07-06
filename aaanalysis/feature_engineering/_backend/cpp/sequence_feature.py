@@ -2,6 +2,7 @@
 This is a script for the backend of the SequenceFeature() object,
 a supportive class for the CPP feature engineering.
 """
+import itertools
 import pandas as pd
 import numpy as np
 
@@ -9,6 +10,12 @@ import aaanalysis.utils as ut
 from .utils_feature import get_positions_, get_feature_matrix_, get_amino_acids_, add_scale_info_
 from ._split import SplitRange
 from ._utils_feature_stat import add_stat_
+
+# Physicochemical grouping of the 20 canonical amino acids — the small, colorable category structure
+# for one-hot AAC scales and k-mer composition maps (independent of the AAontology scale categories).
+_DICT_AA_CLASS = {aa: cls for cls, aas in
+                  {"Nonpolar": "GAVLIPM", "Aromatic": "FWY", "Polar": "STCNQ",
+                   "Positive": "KRH", "Negative": "DE"}.items() for aa in aas}
 
 
 # I Helper Functions
@@ -245,6 +252,32 @@ def get_kmer_composition_(df_parts=None, k=1):
     with np.errstate(invalid="ignore"):
         X = counts / n_kmers[:, None]                             # 0 / 0 -> NaN (< k residues)
     return X, n_kmers
+
+
+def get_composition_scales_(k=1):
+    """Scale set + category table for k-mer composition (feeds ``CPP.run`` / colors the composition map).
+
+    ``k == 1``: the ``(20, 20)`` one-hot identity ``df_scales`` (scale ``<AA>`` = 1 on residue ``AA``,
+    0 elsewhere) plus a ``df_cat`` mapping each amino acid to its physicochemical class — feed both to
+    :meth:`CPP.run` with the whole-part ``Segment(1,1)`` split to obtain amino-acid composition as a
+    real ``df_feat`` / feature map. ``k >= 2``: ``df_scales`` is ``None`` (a k-mer is a property of an
+    adjacent tuple, not a per-residue scale, so it cannot be a CPP scale) and ``df_cat`` categorizes
+    each of the ``20 ** k`` k-mers by its residues' classes — for grouping / labeling the composition
+    map, not for :meth:`CPP.run`.
+    """
+    aa = list(ut.LIST_CANONICAL_AA)
+    kmers = ["".join(p) for p in itertools.product(aa, repeat=k)]
+    subcat = ["-".join(_DICT_AA_CLASS[c] for c in km) for km in kmers]
+    df_cat = pd.DataFrame({
+        ut.COL_SCALE_ID: kmers,
+        ut.COL_CAT: [_DICT_AA_CLASS[km[0]] for km in kmers],       # first-residue class (coarse)
+        ut.COL_SUBCAT: subcat,                                     # per-residue class tuple
+        ut.COL_SCALE_NAME: kmers,
+        ut.COL_SCALE_DES: [f"{k}-mer {km} ({sc})" if k > 1 else f"Amino acid {km} indicator"
+                           for km, sc in zip(kmers, subcat)],
+    })
+    df_scales = pd.DataFrame(np.eye(len(aa)), index=aa, columns=aa) if k == 1 else None
+    return df_scales, df_cat
 
 
 def get_aa_composition_(df_parts=None):
