@@ -86,7 +86,7 @@ def plot_eval(df_eval=None, figsize=None, dict_xlims=None, colors=None, legend=T
 
 def plot_pca(df_pu=None, labels=None, figsize=(6, 6),
              pc_x=1, pc_y=2, show_pos_mean_x=False, show_pos_mean_y=False,
-             names=None, colors=None,
+             names=None, colors=None, list_df_add=None, names_add=None, colors_add=None,
              legend=True, legend_y=-0.15, args_scatter=None):
     """Generates a PCA plot based on provided parameters."""
     plt.figure(figsize=figsize)
@@ -100,6 +100,13 @@ def plot_pca(df_pu=None, labels=None, figsize=(6, 6),
     for label in reversed(sorted((set(labels)))):
         subset = df_pu[labels == label]
         plt.scatter(subset[label_x], subset[label_y], color=dict_color[label], label=label, **args_scatter)
+    # Overlay projected extra groups on top (front z-order), in the given order
+    if list_df_add is not None:
+        for df_add, name_add, color_add in zip(list_df_add, names_add, colors_add):
+            # Anchor on the PC token (split on space) so 'PC1' does not match 'PC10'/'PC11'
+            col_x = [x for x in df_add.columns if str(x).split(" ")[0] == f"PC{pc_x}"][0]
+            col_y = [y for y in df_add.columns if str(y).split(" ")[0] == f"PC{pc_y}"][0]
+            plt.scatter(df_add[col_x], df_add[col_y], color=color_add, label=name_add, **args_scatter)
     # Handling mean lines for positive samples
     if show_pos_mean_x or show_pos_mean_y:
         pos_samples = df_pu[labels == 1]  # Assuming label '1' is for positive samples
@@ -119,7 +126,9 @@ def plot_pca(df_pu=None, labels=None, figsize=(6, 6),
 
     # Legend settings
     if legend:
-        dict_color = {label: color for label, color in zip(names, colors)}
+        legend_names = list(names) + (list(names_add) if list_df_add is not None else [])
+        legend_colors = list(colors) + (list(colors_add) if list_df_add is not None else [])
+        dict_color = {label: color for label, color in zip(legend_names, legend_colors)}
         ut.plot_legend_(ax=plt.gca(), dict_color=dict_color, title="Datasets",
                         n_cols=1, y=legend_y, handletextpad=0.4, fontsize=fs, fontsize_title=fs - 1, weight_title="bold")
     # Labels

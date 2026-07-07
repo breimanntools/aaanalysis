@@ -356,6 +356,9 @@ Rules:
    * - :class:`~aaanalysis.AAPred` / :class:`~aaanalysis.AAPredPlot`
      - ``aapred`` / ``aapred_plot``
      -
+   * - :class:`~aaanalysis.ReliabilityModel` / :class:`~aaanalysis.ReliabilityModelPlot`
+     - ``rm`` / ``rm_plot``
+     -
    * - :class:`~aaanalysis.ShapModel`
      - ``sm``
      - ``pro``

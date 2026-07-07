@@ -108,6 +108,15 @@ def _digest(obj):
 
     def upd(x):
         if isinstance(x, pd.DataFrame):
+            # TEMPORARY (remove when the 1.1.0 release re-baselines the perf A/B):
+            # the canonical BH-monotonicity fix (#343) deliberately changed the
+            # reported ``p_val_fdr_bh`` column vs the 1.0.3 release (it does not
+            # affect feature selection). Exclude ONLY that column from the byte-exact
+            # output A/B so the gate still compares every OTHER column vs the release;
+            # the new ``p_val_fdr_bh`` values are pinned in
+            # tests/unit/cpp_tests/test_cpp_regression.py.
+            if "p_val_fdr_bh" in x.columns:
+                x = x.drop(columns="p_val_fdr_bh")
             h.update(b"DF|"); h.update("|".join(map(str, x.columns)).encode())
             h.update(pd.util.hash_pandas_object(x, index=True).values.tobytes())
         elif isinstance(x, pd.Series):
