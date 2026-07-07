@@ -814,6 +814,16 @@ class ShapModel(Wrapper):
         The calculated differences are added to ``df_feat`` as new columns named ``mean_dif_'name(s)'``,
         corresponding to each sample or group.
 
+        .. note::
+
+           This per-sample column (sample minus the ``label_ref`` group average) is what a sample-level
+           CPP-SHAP map or ranking should be colored by: pass it as ``col_val`` to
+           :meth:`CPPPlot.feature_map`, :meth:`CPPPlot.ranking`, or :meth:`CPPPlot.profile`. It is
+           **not** the group-level ``mean_dif`` from :meth:`CPP.run` (test group minus reference group),
+           which is identical for every sample. Choose ``label_ref`` so the reference group matches the
+           contrast you want each sample explained against (e.g. an ``others`` / unlabeled group rather
+           than a curated negative set).
+
         .. versionadded:: 0.1.0
 
         Parameters
