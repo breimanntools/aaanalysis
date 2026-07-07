@@ -255,7 +255,7 @@ COLS_FEAT_SCALES_FULL = COLS_FEAT_SCALES + [COL_SCALE_DES]  # incl. scale_descri
 COLS_FEAT_STAT = [COL_ABS_AUC, COL_ABS_MEAN_DIF, COL_MEAN_DIF, COL_STD_TEST, COL_STD_REF]
 COLS_FEAT_WEIGHT = [COL_FEAT_IMPORT, COL_FEAT_IMPORT_STD, COL_FEAT_IMPACT]
 
-# Protein design (AAMut / SeqMut) — output column names
+# Protein engineering (AAMut / SeqMut) — output column names
 COL_FROM_AA = "from_aa"             # substituted-from amino acid (single letter)
 COL_TO_AA = "to_aa"                 # substituted-to amino acid (single letter)
 COL_MUTATION = "mutation"           # HGVS-like label "<from_aa><pos><to_aa>", e.g. "M123V"
@@ -287,7 +287,7 @@ COLS_SEQMUT_VARIANT = [COL_ENTRY, COL_VARIANT, COL_N_MUT, COL_SEQ_MUT,
 # SeqMut.suggest — optional weighting of the shift score by a df_feat column
 LIST_SHIFT_WEIGHTS = [COL_FEAT_IMPORT, COL_ABS_AUC]
 
-# Protein design pro (SeqOpt) — multi-objective directed-evolution optimizer.
+# Protein engineering (SeqOpt) — multi-objective directed-evolution optimizer.
 # NSGA-II output columns (COL_RANK is shared, defined in the eval block below; COL_VARIANT,
 # COL_N_MUT, COL_SEQ_MUT, COL_ENTRY are reused from the SeqMut block above).
 COL_GENERATION = "generation"       # SeqOpt — 0-based evolve-score-select round index
@@ -352,7 +352,14 @@ LIST_CANDIDATE_SEARCH = [CANDIDATE_SEARCH_EXACT, CANDIDATE_SEARCH_FAST]
 MODEL_SVM = "svm"
 MODEL_RF = "rf"
 MODEL_LOG_REG = "log_reg"
+MODEL_EXTRA_TREES = "extra_trees"
 LIST_CV_MODELS = [MODEL_SVM, MODEL_RF, MODEL_LOG_REG]
+# Prediction-model registry names (AAPred). Resolved to sklearn estimators by
+# ut.get_cv_model_. Kept deliberately small — the four standard families the package
+# already uses (matching pipe.predict_samples' default set). Any other estimator
+# (MLP, gradient boosting, xgboost, a voting/stacking ensemble, ...) is used by
+# passing a configured sklearn estimator instance instead of a name.
+LIST_PRED_MODELS = [MODEL_SVM, MODEL_RF, MODEL_EXTRA_TREES, MODEL_LOG_REG]
 DICT_VALUE_TYPE = {COL_ABS_AUC: "mean",
                    COL_ABS_MEAN_DIF: "mean",
                    COL_MEAN_DIF: "mean",
@@ -441,6 +448,40 @@ COLS_EVAL_DPULEARN_DISSIMILARITY = [COL_AVG_ABS_AUC_POS, COL_AVG_KLD_POS,
                                     COL_AVG_ABS_AUC_NEG, COL_AVG_KLD_NEG]
 COLS_EVAL_DPULEARN = [COL_N_REL_NEG] + COLS_EVAL_DPULEARN_SIMILARITY + COLS_EVAL_DPULEARN_DISSIMILARITY
 
+# AAPred (model evaluation / deployment)
+COL_MODEL = "model"             # model class short name (e.g. 'RandomForestClassifier')
+COL_METRIC = "metric"           # performance metric name (e.g. 'balanced_accuracy')
+COL_PRINCIPLE = "principle"     # evaluation principle: 'cv' (cross-validation) | 'holdout'
+COL_SCORE_STD = "score_std"     # std of the score (across CV folds; NaN for a single holdout estimate)
+COL_GROUP = "group"             # per-sample/per-protein group label used for coloring
+COL_OFFSET = "offset"           # AAPred.predict(level='domain') — boundary shift applied to tmd_start/tmd_stop
+COL_RESIDUE_POS = "position"    # AAPred.predict(level='window') — 1-based anchor position scored
+COL_PRED_LABEL = "predicted_label"  # AAPred.predict — class label when a threshold is given
+STR_PRINCIPLE_CV = "cv"
+STR_PRINCIPLE_HOLDOUT = "holdout"
+LIST_PRINCIPLES = [STR_PRINCIPLE_CV, STR_PRINCIPLE_HOLDOUT]
+LIST_METRICS_PRED = ["accuracy", "balanced_accuracy", "precision", "recall", "f1", "roc_auc"]
+COLS_EVAL_PRED = [COL_MODEL, COL_METRIC, COL_PRINCIPLE, COL_SCORE, COL_SCORE_STD]
+
+# Prediction reliability (ReliabilityModel) — per-sample trust columns
+COL_CI_LOW = "ci_low"                # lower confidence-interval bound of the score
+COL_CI_HIGH = "ci_high"              # upper confidence-interval bound of the score
+COL_OOD_SCORE = "ood_score"          # applicability-domain distance, relative to the training threshold (1.0 = threshold)
+COL_IN_DOMAIN = "in_domain"          # bool: inside the training applicability domain (ood_score <= 1)
+COL_AD_KNN = "ad_knn_dist"           # mean distance to k nearest training samples (standardized space)
+COL_AD_MAHALANOBIS = "ad_mahalanobis"    # Mahalanobis distance to the training center
+COL_AD_LEVERAGE = "ad_leverage"      # leverage (hat value) relative to the training feature space
+COL_SCORE_CAL = "score_calibrated"   # calibrated positive-class probability (NaN if not calibrated)
+COL_MARGIN = "margin"                # |p - 0.5| * 2 on the calibrated score — aleatoric sharpness (1 = decisive, 0 = coin-flip)
+COL_ENTROPY = "entropy"              # binary entropy of the calibrated score (0 = decisive, 1 = coin-flip)
+COL_CONFORMAL_SET = "conformal_set"  # split-conformal prediction set: 'neg' | 'pos' | 'both' (ambiguous) | 'none' (abstain)
+COL_RELIABLE = "reliable"            # bool headline: in_domain AND a confident conformal singleton
+STR_CONF_NEG, STR_CONF_POS = "neg", "pos"
+STR_CONF_BOTH, STR_CONF_NONE = "both", "none"
+COLS_RELIABILITY = [COL_SCORE, COL_SCORE_STD, COL_CI_LOW, COL_CI_HIGH, COL_OOD_SCORE, COL_IN_DOMAIN,
+                    COL_AD_KNN, COL_AD_MAHALANOBIS, COL_AD_LEVERAGE, COL_SCORE_CAL, COL_MARGIN,
+                    COL_ENTROPY, COL_CONFORMAL_SET, COL_RELIABLE]
+
 # Labels
 LABEL_FEAT_VAL = "Feature value"
 LABEL_HIST_COUNT = "Number of proteins"
@@ -477,6 +518,15 @@ COLOR_POS = "#389d2b"    # (56, 157, 43)
 COLOR_UNL = "tab:gray"
 COLOR_NEG = "#ad4570"   # (173,69,112)
 COLOR_REL_NEG = "#ad9745" # (173, 151, 69)
+
+# Public, named aliases for the canonical sample-group colors (positive / negative /
+# unlabeled / reliable-negative). They mirror the ``DICT_COLOR["SAMPLES_*"]`` entries
+# exactly, so users can reference a named constant (``aa.COLOR_SAMPLES_POS``) instead
+# of indexing ``plot_get_cdict("DICT_COLOR")`` by string key.
+COLOR_SAMPLES_POS = COLOR_POS
+COLOR_SAMPLES_NEG = COLOR_NEG
+COLOR_SAMPLES_UNL = COLOR_UNL
+COLOR_SAMPLES_REL_NEG = COLOR_REL_NEG
 
 DICT_COLOR = {"SHAP_POS": COLOR_SHAP_POS,
               "SHAP_NEG": COLOR_SHAP_NEG,

@@ -36,7 +36,8 @@ def get_min_cor(X, labels=None):
 def get_best_n_clusters(X=None, min_th=0.3, random_state=None):
     """Obtain the best number of clusters based on internal cluster minimum correlation."""
     n_features, _ = X.shape
-    max_n = min([100, n_features-1])
+    # Clamp to >= 1 so a single-feature set does not fall through to KMeans(n_clusters=0)
+    max_n = max(1, min(100, n_features - 1))
     best_n_clusters = max_n
     for n_clusters in range(2, max_n):
         kmeans = KMeans(n_clusters=n_clusters, n_init="auto", random_state=random_state)

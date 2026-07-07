@@ -2,6 +2,7 @@
 This is a script for the frontend of the CPPPlot class.
 """
 from typing import Optional, Dict, Union, List, Tuple, Type, Literal
+import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
 from matplotlib.axes import Axes
@@ -184,6 +185,51 @@ def check_match_ax_seq_len(ax=None, jmd_n_len=10, jmd_c_len=10) -> None:
     if len(tmd_jmd_seq) <= min_len:
         raise ValueError(f"TMD-JMD sequence from 'ax' is shorter than minimum ({min_len}; jmd_n: {jmd_n_len}, tmd:>1, jmd_c: {jmd_c_len}."
                          f"\n Sequence (len: {len(tmd_jmd_seq)}) retrieved from 'ax' is: '{tmd_jmd_seq}'")
+
+
+def resolve_sample_kws(sample=None, df_seq=None, df_parts=None,
+                       jmd_n_seq=None, tmd_seq=None, jmd_c_seq=None,
+                       resolve_seq=True):
+    """Resolve the ``sample=`` shortcut for the SHAP plot methods.
+
+    When ``sample`` is given, the feature-impact column is resolved to ``feat_impact_<entry>``
+    and (for sequence-aware plots) the TMD-JMD parts are read from ``df_parts`` via
+    :meth:`SequenceFeature.get_seq_kws`, so the per-sample ``col_imp`` string-templating and the
+    explicit ``get_seq_kws`` plumbing are no longer needed at the call site. Explicitly passed
+    sequence parts are never overridden.
+
+    The impact column is keyed by the protein **entry name** (as written by
+    :meth:`ShapModel.add_feat_impact`). A ``sample`` given as a row position (int) is therefore
+    mapped to its entry name via ``df_parts``' index; ``ranking`` has no ``df_parts`` to map a
+    position, so it accepts the entry name (str) only.
+    """
+    is_str = isinstance(sample, str)
+    is_int = isinstance(sample, (int, np.integer)) and not isinstance(sample, bool)
+    if not (is_str or is_int):
+        raise ValueError(f"'sample' ({sample}) should be an entry name (str) or a row position (int).")
+    if resolve_seq:
+        if df_seq is None or df_parts is None:
+            raise ValueError("'df_seq' and 'df_parts' are required when 'sample' is given for "
+                             "sequence-level plots, to resolve the TMD-JMD parts.")
+        # Lazy import to avoid a circular import at module load (same subpackage).
+        from aaanalysis.feature_engineering._sequence_feature import SequenceFeature
+        seq_kws = SequenceFeature().get_seq_kws(df_seq=df_seq, df_parts=df_parts, sample=sample)
+        # get_seq_kws validated 'sample'; map an int position to its entry name for 'col_imp'.
+        name = sample if is_str else df_parts.index[int(sample)]
+        if jmd_n_seq is None:
+            jmd_n_seq = seq_kws[f"{ut.COL_JMD_N}_seq"]
+        if tmd_seq is None:
+            tmd_seq = seq_kws[f"{ut.COL_TMD}_seq"]
+        if jmd_c_seq is None:
+            jmd_c_seq = seq_kws[f"{ut.COL_JMD_C}_seq"]
+    else:
+        if not is_str:
+            raise ValueError(f"'sample' ({sample}) must be an entry name (str) for 'ranking'; a row "
+                             f"position is only supported for 'profile' / 'feature_map' (which have "
+                             f"'df_parts' to map it).")
+        name = sample
+    col_imp = f"{ut.COL_FEAT_IMPACT}_{name}"
+    return col_imp, jmd_n_seq, tmd_seq, jmd_c_seq
 
 
 # II Main Functions
@@ -575,6 +621,7 @@ class CPPPlot:
                 xlim_dif: Union[Tuple[Union[int, float], Union[int, float]], None] = (-17.5, 17.5),
                 xlim_rank: Optional[Tuple[Union[int, float], Union[int, float]]] = (0, 4),
                 rank_info_xy: Optional[Tuple[Optional[Union[int, float]], Optional[Union[int, float]]]] = None,
+                sample: Optional[str] = None,
                 ) -> Tuple[Figure, Axes]:
         """
         Plot CPP/-SHAP feature ranking based on feature importance or sample-specific feature impact.
@@ -647,6 +694,11 @@ class CPPPlot:
             - When ``shap_plot=False``: Displays sum of feature importance.
             - When ``shap_plot=True``: Show the sum of the absolute feature impact and the SHAP legend.
 
+        sample : str, optional
+            Convenience shortcut for sample-level CPP-SHAP ranking. When given (a protein entry name),
+            ``col_imp`` is resolved to ``feat_impact_<sample>`` and ``shap_plot`` is set to ``True``
+            automatically, removing the manual ``col_imp=f"feat_impact_<name>"`` string-templating.
+
         Returns
         -------
         fig : Figure
@@ -672,6 +724,10 @@ class CPPPlot:
         --------
         .. include:: examples/cpp_plot_ranking.rst
         """
+        # Resolve sample-level SHAP shortcut: 'sample' sets col_imp='feat_impact_<sample>'
+        if sample is not None:
+            col_imp, _, _, _ = resolve_sample_kws(sample=sample, resolve_seq=False)
+            shap_plot = True
         # Check input
         ut.check_bool(name="shap_plot", val=shap_plot)
         check_col_dif(col_dif=col_dif, shap_plot=shap_plot)
@@ -771,6 +827,9 @@ class CPPPlot:
                 ytick_size: Optional[Union[int, float]] = None,
                 ytick_width: Optional[Union[int, float]] = None,
                 ytick_length: Union[int, float] = 5.0,
+                sample: Optional[Union[str, int]] = None,
+                df_seq: Optional[pd.DataFrame] = None,
+                df_parts: Optional[pd.DataFrame] = None,
                 ) -> Tuple[Figure, Axes]:
         """
         Plot CPP/-SHAP profile showing feature importance/impact per residue position.
@@ -869,6 +928,18 @@ class CPPPlot:
             Width of the y-ticks (>0).
         ytick_length : int or float, default=5.0
             Length of the y-ticks (>0).
+        sample : str or int, optional
+            Convenience shortcut for a sample-level CPP-SHAP profile. When given (an entry name or row
+            position), ``col_imp`` is resolved to ``feat_impact_<sample>``, the TMD-JMD sequence parts
+            (``jmd_n_seq``, ``tmd_seq``, ``jmd_c_seq``) are read from ``df_parts`` via
+            :meth:`SequenceFeature.get_seq_kws`, and ``shap_plot`` is set to ``True`` automatically.
+            Requires ``df_seq`` and ``df_parts``. Explicitly passed sequence parts are not overridden.
+        df_seq : pd.DataFrame, optional
+            DataFrame containing an ``entry`` column with unique protein identifiers; required when
+            ``sample`` is given, to cross-check the resolved TMD-JMD parts.
+        df_parts : pd.DataFrame, optional
+            Sequence parts DataFrame (indexed by ``entry``) as produced by
+            :meth:`SequenceFeature.get_df_parts`; required when ``sample`` is given.
 
         Returns
         -------
@@ -891,6 +962,13 @@ class CPPPlot:
         --------
         .. include:: examples/cpp_plot_profile.rst
         """
+        # Resolve sample-level SHAP shortcut: 'sample' sets col_imp='feat_impact_<sample>'
+        # and the TMD-JMD parts from df_parts (via SequenceFeature.get_seq_kws).
+        if sample is not None:
+            col_imp, jmd_n_seq, tmd_seq, jmd_c_seq = resolve_sample_kws(
+                sample=sample, df_seq=df_seq, df_parts=df_parts,
+                jmd_n_seq=jmd_n_seq, tmd_seq=tmd_seq, jmd_c_seq=jmd_c_seq)
+            shap_plot = True
         # Check primary input
         ut.check_bool(name="shap_plot", val=shap_plot)
         if col_imp is None:
@@ -1293,6 +1371,9 @@ class CPPPlot:
                     xtick_width: Union[int, float] = 2.0,
                     xtick_length: Union[int, float] = 5.0,
                     seq_char_fill: Optional[bool] = None,
+                    sample: Optional[Union[str, int]] = None,
+                    df_seq: Optional[pd.DataFrame] = None,
+                    df_parts: Optional[pd.DataFrame] = None,
                     ) -> Tuple[Figure, Axes]:
         """
         Plot Comparative Physicochemical Profiling (CPP) feature map showing feature value mean
@@ -1335,10 +1416,23 @@ class CPPPlot:
               is given instead, the SHAP impact is shown directly in the heatmap (diverging colormap) and
               the cumulative bars are switched off.
 
+            .. note::
+
+               A sample-level map must be colored by a *sample-specific* difference, i.e. **this one
+               sample (protein) minus the reference group average**, not by the group-level `mean_dif`
+               (test group minus reference group). Compute it per sample with
+               :meth:`ShapModel.add_sample_mean_dif` (which writes a `mean_dif_'name'` column contrasting
+               the selected sample against the ``label_ref`` group) and pass that column as ``col_val``.
+               Reusing the group-level `mean_dif` here would show the group signature under every sample's
+               SHAP impact instead of each protein's own deviation. Set ``name_ref`` to the reference
+               group's name (e.g. ``"others"``) so the colorbar label matches.
+
         col_cat : {'category', 'subcategory', 'scale_name'}, default='subcategory'
             Column name in ``df_feat`` for scale information (y-axis).
         col_val : {'mean_dif', 'abs_mean_dif', 'abs_auc', ``mean_dif_'name'``, ``feat_impact_'name'``}, default='mean_dif'
             Column name in ``df_feat`` for numerical values to display. Must match with the ``shap_plot`` setting.
+            For a sample-level (SHAP) map use a sample-specific ``mean_dif_'name'`` column (sample minus
+            reference group, from :meth:`ShapModel.add_sample_mean_dif`), not the group-level ``'mean_dif'``.
         col_imp :  {``feat_importance``, ``feat_importance_'name'``, ``feat_impact_'name'``}, default='feat_importance'
             Column name in ``df_feat`` for feature importance (group-, subgroup- or sample-level) or, when
             ``shap_plot=True``, for sample-level feature impact. Must match with the ``shap_plot`` setting.
@@ -1452,6 +1546,19 @@ class CPPPlot:
 
             .. versionchanged:: 1.1.0
                 Now defaults to ``True`` (edge-to-edge residue characters).
+        sample : str or int, optional
+            Convenience shortcut for a sample-level CPP-SHAP feature map. When given (an entry name or
+            row position), ``col_imp`` is resolved to ``feat_impact_<entry>`` (an int position is
+            mapped to its entry name via ``df_parts``), the TMD-JMD sequence
+            parts (``jmd_n_seq``, ``tmd_seq``, ``jmd_c_seq``) are read from ``df_parts`` via
+            :meth:`SequenceFeature.get_seq_kws`, and ``shap_plot`` is set to ``True`` automatically.
+            Requires ``df_seq`` and ``df_parts``. Explicitly passed sequence parts are not overridden.
+        df_seq : pd.DataFrame, optional
+            DataFrame containing an ``entry`` column with unique protein identifiers; required when
+            ``sample`` is given, to cross-check the resolved TMD-JMD parts.
+        df_parts : pd.DataFrame, optional
+            Sequence parts DataFrame (indexed by ``entry``) as produced by
+            :meth:`SequenceFeature.get_df_parts`; required when ``sample`` is given.
 
         Returns
         -------
@@ -1480,6 +1587,13 @@ class CPPPlot:
         --------
         .. include:: examples/cpp_plot_feature_map.rst
         """
+        # Resolve sample-level SHAP shortcut: 'sample' sets col_imp='feat_impact_<sample>'
+        # and the TMD-JMD parts from df_parts (via SequenceFeature.get_seq_kws).
+        if sample is not None:
+            col_imp, jmd_n_seq, tmd_seq, jmd_c_seq = resolve_sample_kws(
+                sample=sample, df_seq=df_seq, df_parts=df_parts,
+                jmd_n_seq=jmd_n_seq, tmd_seq=tmd_seq, jmd_c_seq=jmd_c_seq)
+            shap_plot = True
         # Check primary input
         ut.check_bool(name="shap_plot", val=shap_plot)
         ut.check_str_options(name="col_cat", val=col_cat,

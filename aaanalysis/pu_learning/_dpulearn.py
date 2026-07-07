@@ -11,9 +11,11 @@ from aaanalysis.template_classes import Wrapper
 from ._backend.dpulearn.dpul_fit import (get_neg_via_distance, get_neg_via_pca)
 from ._backend.dpulearn.dpul_eval import eval_identified_negatives
 from ._backend.dpulearn.dpul_compare_sets_neg import compare_sets_negatives_
+from ._backend.dpulearn.dpul_project import project_into_pca_space, get_pc_value_columns
 
 # Settings
 LIST_METRICS = ['euclidean', 'manhattan', 'cosine']
+LIST_PROJECT_METHODS = ['lstsq', 'components']
 
 
 # I Helper Functions
@@ -133,6 +135,34 @@ def check_match_X_X_neg(X=None, X_neg=None) -> None:
         raise ValueError(f"'n_features' does not match between 'X' (n={n_features}) and 'X_neg' (n={n_features_neg})")
 
 
+def check_match_X_pos_X_unlabeled(X_pos=None, X_unlabeled=None) -> None:
+    """Check that positive and unlabeled feature matrices share the same feature dimension."""
+    n_features_pos = X_pos.shape[1]
+    n_features_unl = X_unlabeled.shape[1]
+    if n_features_pos != n_features_unl:
+        raise ValueError(f"'n_features' does not match between 'X_pos' (n={n_features_pos}) and "
+                         f"'X_unlabeled' (n={n_features_unl})")
+
+
+def check_is_fitted_for_projection(X_fit=None, df_pu=None) -> None:
+    """Check that the instance was PCA-fitted so that new samples can be projected into its PC space."""
+    if X_fit is None or df_pu is None:
+        raise ValueError("dPULearn is not fitted. Call 'fit' (with PCA-based identification, i.e. "
+                         "metric=None) before 'project'.")
+    if len(get_pc_value_columns(df_pu=df_pu)) == 0:
+        raise ValueError("'project' requires PCA-based identification (fit with metric=None); the "
+                         "fitted 'df_pu_' contains distance columns instead of principal components.")
+
+
+def check_match_X_fit_X(X_fit=None, X=None) -> None:
+    """Check that new samples to project share the feature dimension of the fitted feature matrix."""
+    n_features_fit = X_fit.shape[1]
+    n_features = X.shape[1]
+    if n_features_fit != n_features:
+        raise ValueError(f"'n_features' of 'X' (n={n_features}) does not match the fitted feature "
+                         f"space (n={n_features_fit}). Project samples from the same feature space.")
+
+
 # II Main Functions
 class dPULearn(Wrapper):
     """
@@ -210,11 +240,16 @@ class dPULearn(Wrapper):
         # Output parameters (will be set during model fitting)
         self.labels_ = None
         self.df_pu_ = None
+        self.mask_neg_ = None
+        # Fit-time feature matrix retained for projecting new samples into the PC space (see project())
+        self._X_fit = None
 
     # Main method
     def fit(self,
-            X: ut.ArrayLike2D,
-            labels: ut.ArrayLike1D,
+            X: Optional[ut.ArrayLike2D] = None,
+            labels: Optional[ut.ArrayLike1D] = None,
+            X_pos: Optional[ut.ArrayLike2D] = None,
+            X_unlabeled: Optional[ut.ArrayLike2D] = None,
             label_pos: int = 1,
             label_unl: int = 2,
             label_neg: Optional[int] = None,
@@ -239,15 +274,30 @@ class dPULearn(Wrapper):
 
         .. versionadded:: 0.1.0
 
+        There are two input modes (provide exactly one): pass ``X`` + ``labels`` (a single feature
+        matrix with per-sample markers), or — for the common positives-vs-unlabeled setup — pass the
+        two matrices ``X_pos`` and ``X_unlabeled`` separately, which are stacked internally with the
+        package markers. Either way, after fitting :attr:`dPULearn.mask_neg_` is the boolean mask of
+        reliable negatives (over ``X_unlabeled`` in the split mode, over ``X`` otherwise).
+
         Parameters
         ----------
-        X : array-like, shape (n_samples, n_features)
-            Feature matrix. `Rows` typically correspond to proteins and `columns` to features.
-        labels : array-like, shape (n_samples,)
+        X : array-like, shape (n_samples, n_features), optional
+            Feature matrix. `Rows` typically correspond to proteins and `columns` to features. Provide
+            ``X`` + ``labels``, or ``X_pos`` + ``X_unlabeled`` (exactly one of the two modes).
+        labels : array-like, shape (n_samples,), optional
             Dataset labels of samples in ``X``. Must contain the positive marker (``label_pos``) and the
             unlabeled marker (``label_unl``); pre-labeled negatives (``label_neg``) are optional. By
             default positives are ``1`` and unlabeled are ``2``; set ``label_unl=0`` to pass the standard
             ``{0, 1}`` encoding directly (``0`` = unlabeled, ``1`` = positive).
+        X_pos : array-like, shape (n_pos, n_features), optional
+            Feature matrix of the positive samples (split-input mode). Provided together with
+            ``X_unlabeled`` instead of ``X`` + ``labels``; the two are stacked and marked internally
+            (positives ``label_pos``, unlabeled ``label_unl``), so no manual label vector is needed.
+        X_unlabeled : array-like, shape (n_unl, n_features), optional
+            Feature matrix of the unlabeled candidate pool (split-input mode). Must have the same number
+            of features as ``X_pos``. After fitting, :attr:`dPULearn.mask_neg_` is a boolean mask over its
+            rows marking the identified reliable negatives.
         label_pos : int, default=1
             Value marking positive samples in ``labels``. Must be present.
         label_unl : int, default=2
@@ -322,6 +372,24 @@ class dPULearn(Wrapper):
         --------
         .. include:: examples/dpul_fit.rst
         """
+        # Resolve the input mode: (X, labels) or the positives/unlabeled split. In the split
+        # mode, stack X_pos over X_unlabeled and build the label vector internally with the
+        # package markers, so the caller does not hand-roll the vstack + 1/2 vector + slice.
+        split_mode = X_pos is not None or X_unlabeled is not None
+        n_pos = None
+        if split_mode:
+            if X is not None or labels is not None:
+                raise ValueError("Pass either 'X'/'labels' or 'X_pos'/'X_unlabeled', not both.")
+            if X_pos is None or X_unlabeled is None:
+                raise ValueError("'X_pos' and 'X_unlabeled' must both be given for the split-input mode.")
+            X_pos = ut.check_X(X=X_pos, X_name="X_pos", min_n_samples=1)
+            X_unlabeled = ut.check_X(X=X_unlabeled, X_name="X_unlabeled", min_n_samples=1)
+            check_match_X_pos_X_unlabeled(X_pos=X_pos, X_unlabeled=X_unlabeled)
+            n_pos = X_pos.shape[0]
+            X = np.vstack([X_pos, X_unlabeled])
+            labels = np.array([label_pos] * n_pos + [label_unl] * X_unlabeled.shape[0])
+        elif X is None or labels is None:
+            raise ValueError("'X' and 'labels' are required (or pass 'X_pos' + 'X_unlabeled').")
         # Check input
         X = ut.check_X(X=X)
         check_match_labels_markers(label_pos=label_pos, label_unl=label_unl, label_neg=label_neg)
@@ -353,10 +421,81 @@ class dPULearn(Wrapper):
         # Identify most far away negatives in PCA compressed feature space
         else:
             new_labels, df_pu = get_neg_via_pca(**args, n_components=n_components, **self._model_kwargs)
-        # Set new labels
+        # Set new labels + the reliable-negative mask. In the split-input mode the mask is over
+        # the rows of X_unlabeled (True = mined reliable negative); otherwise over all rows of X.
         self.labels_ = np.asarray(new_labels)
         self.df_pu_ = df_pu
+        self.mask_neg_ = self.labels_[n_pos:] == 0 if n_pos is not None else self.labels_ == 0
+        # Retain the fitted feature matrix (rows aligned with df_pu_) so project() can rebuild the
+        # feature-space -> PC-space map on demand. Only meaningful for PCA-based identification.
+        self._X_fit = X
         return self
+
+    def project(self,
+                X: ut.ArrayLike2D,
+                method: Literal["lstsq", "components"] = "lstsq",
+                ) -> pd.DataFrame:
+        """
+        Project new samples into the fitted PCA coordinate space (the ``PCi`` columns of ``df_pu_``).
+
+        After PCA-based fitting, this maps held-out samples from the **same feature space** into the
+        principal-component coordinates learned during :meth:`dPULearn.fit`, so new proteins can be
+        placed alongside the identified negatives (e.g. overlaying an extra group in
+        :meth:`dPULearnPlot.pca`).
+
+        Because dPULearn fits Principal Component Analysis (PCA) on the transposed feature matrix
+        (``PCA().fit(X.T)``), there is no exact out-of-sample forward transform; instead a linear map
+        is reconstructed from the fit pairs ``(X, df_pu_)``. Both methods reproduce ``df_pu_`` on the
+        fitted samples (when n_features >= n_samples) and are therefore **exact on the fit pool** and
+        an **approximation for genuinely new samples**. Deterministic (no randomness).
+
+        .. versionadded:: 1.1.0
+
+        Parameters
+        ----------
+        X : array-like, shape (n_new_samples, n_features)
+            Feature matrix of the samples to project. Must have the same number of features
+            (``columns``) as the matrix used in :meth:`dPULearn.fit`.
+        method : {'lstsq', 'components'}, default='lstsq'
+            Projection map reconstructed from the fitted ``(X, df_pu_)`` pairs (both exact on the fit
+            pool, differing only for genuinely new samples):
+
+            * ``lstsq``: affine least-squares map (``[X | 1] -> df_pu_``), the minimum-norm solution.
+              Reproduces the hand-rolled projection used in the use case.
+            * ``components``: exact PCA-geometry map. Row-centers each sample by its own feature mean,
+              then applies the minimum-norm linear map, which equals the fitted PCA's
+              ``U @ inv(Sigma)`` restricted to the stored components.
+
+        Returns
+        -------
+        df_proj : pd.DataFrame, shape (n_new_samples, n_pcs)
+            Projected coordinates with the same ``PCi`` value columns as ``df_pu_`` (in the same
+            order), so it can be passed directly to :meth:`dPULearnPlot.pca` as an extra group.
+
+        Notes
+        -----
+        * Only available after PCA-based identification (``fit`` with ``metric=None``); distance-based
+          identification produces no principal components to project into.
+        * The projection is exact for the samples used in ``fit`` and interpolates for new samples, so
+          points far from the fitted distribution should be interpreted with care.
+
+        See Also
+        --------
+        * :meth:`dPULearn.fit` for the identification that defines the PC space.
+        * :meth:`dPULearnPlot.pca` for overlaying projected groups on the PCA plot.
+
+        Examples
+        --------
+        .. include:: examples/dpul_project.rst
+        """
+        # Check input
+        X = ut.check_X(X=X, X_name="X", min_n_samples=1)
+        ut.check_str_options(name="method", val=method, list_str_options=LIST_PROJECT_METHODS)
+        check_is_fitted_for_projection(X_fit=self._X_fit, df_pu=self.df_pu_)
+        check_match_X_fit_X(X_fit=self._X_fit, X=X)
+        # Reconstruct the feature-space -> PC-space map and project the new samples
+        df_proj = project_into_pca_space(X_fit=self._X_fit, df_pu=self.df_pu_, X_new=X, method=method)
+        return df_proj
 
     @staticmethod
     def eval(X: ut.ArrayLike2D,

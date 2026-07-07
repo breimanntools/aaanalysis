@@ -128,7 +128,7 @@ prediction; `pro` extra for heavy deps; semver-strict v1) and the standards in `
 | **API-consistency spine** | ✅ complete | — | #134 ✅ #133 ✅ #132 ✅ all closed — spine done |
 | **`aaanalysis.pipe` ↔ #126/#24** | pipe issue, #126, #24(closed) | pipe issue | pipe API is the #126-ergonomics realization; supersedes the closed #24 wrapper |
 | Output schema | #29, #33, #26 | #29 | serialize behind frozen `LIST_COLS_FEAT`/`sort_cols_feat` |
-| Protein design | #57 → #59 → #60 | #57 | shared mutation API in `protein_design/` |
+| Protein design | #57 → #59 → #60 | #57 | shared mutation API in `protein_engineering/` |
 | Pro structure plots | #119, #120 | #119 | #120 blocked-by #119; share `feature_engineering_pro/` + StructureView (ADR-0028) |
 | Structure/conservation/MSA | #40, #64, #65, #42 | #65 | shared `data_handling_pro` + pending move |
 | Embedding | #22, #23, #47 | #22 | shared embedding surface (`[embed]` input path #145/ADR-0029 landed) |

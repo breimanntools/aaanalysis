@@ -4,8 +4,10 @@ a supportive class for preprocessing protein sequences.
 """
 from typing import Optional, Union, List, Literal, Tuple
 import numpy as np
+import pandas as pd
 
 import aaanalysis.utils as ut
+from ._backend.seq_preproc._utils import pad_sequences
 from ._backend.seq_preproc.encode_one_hot import encode_one_hot
 from ._backend.seq_preproc.encode_integer import encode_integer
 from ._backend.seq_preproc.get_aa_window import get_aa_window
@@ -89,9 +91,9 @@ def check_match_slide_start_slide_stop(slide_start=None, slide_stop=None) -> Non
 def check_match_slide_start_slide_stop_window_size(slide_start=None, slide_stop=None, window_size=None) -> None:
     """Check if one is given"""
     if slide_stop is not None:
-        min_window_size = slide_stop - slide_stop
-        if window_size < min_window_size:
-            raise ValueError(f"'window_size' ('{window_size}') should be smaller then the distance ({min_window_size})"
+        max_window_size = slide_stop - slide_start + 1
+        if window_size > max_window_size:
+            raise ValueError(f"'window_size' ('{window_size}') should be <= the distance ({max_window_size})"
                              f" between 'slide_start' ('{slide_start}') and 'slide_stop' ({slide_stop}).")
 
 
@@ -238,6 +240,99 @@ class SequencePreprocessor:
         # Create encoding
         X, features = encode_integer(list_seq=list_seq, alphabet=alphabet, gap=gap, pad_at=pad_at)
         return X, features
+
+    # Sequence padding
+    @staticmethod
+    def pad_parts(df_parts: pd.DataFrame,
+                  length: Optional[int] = None,
+                  gap: str = "-",
+                  pad_at: Literal["C", "N", "both"] = "C",
+                  list_parts: Optional[Union[List[str], str]] = None,
+                  ) -> pd.DataFrame:
+        """
+        Pad sequence-part columns of a ``df_parts`` DataFrame to a uniform length with a gap symbol.
+
+        **Application**: Padding lets short or variable-length sequence parts (e.g. free peptides or
+        linear epitopes with no flanking context) be analyzed at a uniform, finer resolution than the
+        shortest real part allows. The in-house recipe is *pad* → :class:`CPP` (with ``accept_gaps=True``)
+        → uniform ``n_split_max``: a padded part has a longer string length, so :class:`CPP`'s split
+        validation permits a larger ``n_split_max`` (the ``Segment`` cap equals the part length) than the
+        shortest *original* part would allow. The caveat is that padded positions carry the gap-scale
+        value (``NaN`` is omitted when ``accept_gaps=True``) and therefore still feed into the computed
+        features, so pad only as far as needed for the desired split resolution.
+
+        .. versionadded:: 1.1.0
+
+        Parameters
+        ----------
+        df_parts : pd.DataFrame, shape (n_samples, n_parts)
+            DataFrame of sequence parts whose columns hold the amino acid sequences to pad.
+        length : int, optional
+            Target length (>=1) to pad the selected columns to. If ``None``, each selected column is
+            padded to the maximum string length **within that column** (per-part). A sequence longer
+            than ``length`` raises a ``ValueError`` because padding can only extend a sequence.
+        gap : str, default='-'
+            The single character used to represent gaps (padding).
+        pad_at : str, default='C'
+            Specifies where to add the padding:
+
+            - 'N' for N-terminus (beginning of the sequence),
+            - 'C' for C-terminus (end of the sequence),
+            - 'both' for symmetric (centered) padding: for ``k`` gaps, ``floor(k/2)`` are added
+              at the N-terminus and the remaining ``k - floor(k/2)`` at the C-terminus.
+
+        list_parts : list of str or str, optional
+            The names of the sequence-part column(s) to pad. If ``None`` (default), all columns are
+            padded. Must be a subset of the ``df_parts`` columns; the non-selected columns are returned
+            unchanged.
+
+        Returns
+        -------
+        df_parts_padded : pd.DataFrame, shape (n_samples, n_parts)
+            A copy of ``df_parts`` with the selected columns padded to a uniform length; non-selected
+            columns and the index are unchanged. The input DataFrame is never mutated.
+
+        Raises
+        ------
+        ValueError
+            If ``df_parts`` is not a DataFrame; if ``length`` is smaller than a selected sequence's
+            length (padding can only extend a sequence); if ``list_parts`` names a column not in
+            ``df_parts``; or if a selected column holds non-string values.
+
+        See Also
+        --------
+        * :class:`CPP`: whose ``accept_gaps=True`` mode consumes padded sequence parts to enable a
+          uniform, finer ``n_split_max`` across variable-length sequences.
+
+        Examples
+        --------
+        .. include:: examples/sp_pad_parts.rst
+        """
+        # Check input
+        ut.check_df(name="df_parts", df=df_parts, accept_none=False)
+        ut.check_number_range(name="length", val=length, min_val=1, accept_none=True, just_int=True)
+        check_gap(gap=gap)
+        ut.check_str_options(name="pad_at", val=pad_at, list_str_options=["N", "C", "both"])
+        list_parts = ut.check_list_like(name="list_parts", val=list_parts, accept_none=True,
+                                        accept_str=True, check_all_str_or_convertible=True)
+        if list_parts is None:
+            list_parts = list(df_parts.columns)
+        else:
+            missing = [c for c in list_parts if c not in df_parts.columns]
+            if missing:
+                raise ValueError(f"'list_parts' ({missing}) should be columns of 'df_parts' "
+                                 f"({list(df_parts.columns)})")
+        # Validate the selected columns hold sequence strings
+        for part in list_parts:
+            wrong = [x for x in df_parts[part] if not isinstance(x, str)]
+            if wrong:
+                raise ValueError(f"'df_parts' column '{part}' should contain sequence strings, "
+                                 f"but got non-string value(s) (e.g. {wrong[0]!r}).")
+        # Pad the selected part columns to their per-part max (or 'length') on a copy
+        df_padded = df_parts.copy()
+        for part in list_parts:
+            df_padded[part] = pad_sequences(df_padded[part].tolist(), pad_at=pad_at, gap=gap, length=length)
+        return df_padded
 
     @staticmethod
     def get_aa_window(seq: str,

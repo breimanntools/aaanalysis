@@ -35,8 +35,20 @@ Added
   per-residue PTM and functional-site annotations and encodes them into tensors
   (``fetch_uniprot``, ``ingest``, ``register_feature``, ``encode``, ``build_scales``,
   ``build_cat``, ``to_df_seq``).
+- **combine_dict_nums**: Concatenates per-residue tensors (embedding / structure /
+  annotation) along the feature axis into one combined ``CPP.run_num`` input.
+- **get_labels**: Derives a binary ``int`` label vector from a sequence DataFrame's
+  label column (``positive_label`` mapped to ``1``, everything else to ``0``) — the
+  single-call form of the recurring ``(df[col] == x).astype(int).to_numpy()`` expression.
 - :func:`~aaanalysis.combine_dict_nums`: Concatenates per-residue tensors (embedding / structure /
   annotation) along the feature axis into one combined :meth:`~aaanalysis.CPP.run_num` input.
+- :meth:`~aaanalysis.SequencePreprocessor.pad_parts`: Pads the sequence-part columns of a
+  ``df_parts`` DataFrame to a uniform length with a gap symbol (``length`` target or each column's
+  per-part max; N-terminal, C-terminal, or symmetric ``both``). The selected ``list_parts`` columns
+  are padded (default all) and a padded copy is returned (non-selected columns and the index
+  unchanged; input never mutated). Enables analyzing short, variable-length parts at a finer,
+  uniform resolution via *pad* → :class:`~aaanalysis.CPP` (``accept_gaps=True``) → larger uniform
+  ``n_split_max`` than the shortest real part allows.
 
 **Feature Engineering**
 
@@ -47,6 +59,22 @@ Added
 - :meth:`~aaanalysis.CPP.run_num`: Numerical mode sourcing per-residue values from a pre-sliced tensor
   (``dict_num_parts``) instead of an amino-acid → scale lookup — embedding / structure /
   annotation features through the same pipeline and output schema as :meth:`~aaanalysis.CPP.run`.
+- :meth:`~aaanalysis.CPP.run_composit` (and the :meth:`~aaanalysis.CPP.run_aac` shortcut):
+  Composition mode — build a ``df_feat`` of **composition** features (iFeature-style descriptors
+  [Chen18]_) scored with CPP's discriminative statistics. ``composition="aac"`` (amino-acid
+  composition) *is* positional CPP — a one-hot identity scale set with the whole-part ``Segment(1,1)``
+  split, so it yields ``<PART>-Segment(1,1)-<AA>`` features **with positions** drawn by the feature
+  map. ``composition="dpc"`` (dipeptide) / ``"kmer"`` (general ``k``) are **non-positional** (a k-mer
+  is an adjacent-tuple property, not a per-residue scale): the ``20 ** k`` k-mers are scored and
+  filtered by adjusted AUC (top ``n_filter``), a min-occurrence guard (``min_count``), and optional
+  correlation dedup (``max_cor``). The composition matrices themselves come from
+  :meth:`~aaanalysis.SequenceFeature.kmer_composition` (which documents the compositional approaches).
+- **CPP.run ``redundancy='legacy'|'exact'``** (also :meth:`~aaanalysis.CPP.run_num`): Opt-in
+  position-overlap criterion for the redundancy-reduction step. The default ``'legacy'`` is
+  byte-identical to previous versions (published signatures stay reproducible); ``'exact'``
+  compares the actual residue positions — an interpretability enhancement (a more concentrated
+  signature, fewer redundant subcategories) that does not change predictive performance. For a
+  stronger, more efficient reduction, see :meth:`~aaanalysis.CPP.simplify`.
 - **CPP.simplify ``candidate_search='fast'``**: Opt-in heuristic capping the candidate
   scales evaluated per feature, for a large speed-up on big scale pools (mainly
   ``greedy``). The default ``'exact'`` reproduces the previous result; ``'fast'`` is
@@ -58,6 +86,50 @@ Added
 - **SequenceFeature.get_labels_quantile / get_labels_tiered**: Discretize a continuous
   target into binary ``labels`` — a single quantile cut, or a fixed positive set swept
   against stepwise-lowered negative cuts (each tier row-matched).
+- **SequenceFeature.scale_composition**: Scale-composition baseline featurizer that turns
+  sequences + scales into a ``(n_seq, n_scales)`` matrix by averaging each scale over a
+  sequence span (``list_parts=None`` → whole ``jmd_n`` + ``tmd`` + ``jmd_c``), dropping
+  missing / non-canonical residues — the sequence's mean profile in scale-space (the
+  scale-based analogue of amino-acid composition). The no-positional-split baseline to
+  compare against ``feature_matrix`` / CPP; optional ``return_df=True`` for a labeled frame.
+- :meth:`~aaanalysis.NumericalFeature.feature_matrix`: Turns :meth:`~aaanalysis.CPP.run_num`-selected
+  features back into a model matrix ``X`` — the numerical analog of
+  :meth:`~aaanalysis.SequenceFeature.feature_matrix`. Reconstructs each ``PART-SPLIT-SCALE`` value
+  from the per-residue tensors in ``dict_num_parts``, with per-part lengths taken from ``df_parts``
+  (the same length source :meth:`~aaanalysis.CPP.run_num` uses), re-applying the split to the part's
+  residue axis rather than the JMD-offset ``positions`` display numbering. ``X`` is therefore
+  byte-identical to the values :meth:`~aaanalysis.CPP.run_num` computed and preserves the per-residue
+  context that per-AA-averaged sequence features discard.
+- **SequenceFeature.aa_composition**: Amino-acid-composition (AAC) baseline featurizer that
+  turns sequences into a ``(n_seq, 20)`` matrix — the fraction of each of the 20 canonical
+  amino acids (``ut.LIST_CANONICAL_AA`` column order) over a sequence span
+  (``list_parts=None`` → whole ``jmd_n`` + ``tmd`` + ``jmd_c``), dropping gaps /
+  non-canonical residues so each row sums to 1. Fully vectorized; the no-positional-split
+  residue-frequency baseline to compare against ``feature_matrix`` / CPP; optional
+  ``return_df=True`` for a labeled frame.
+- **SequenceFeature.dipeptide_composition**: Dipeptide-composition (DPC) baseline featurizer
+  that turns sequences into a ``(n_seq, 400)`` matrix — the fraction of each of the 400
+  ordered adjacent canonical amino-acid pairs (``AA, AC, ..., YY``) over a sequence span,
+  dropping gaps / non-canonical residues before pairing (adjacencies span dropped residues
+  and cross concatenated part boundaries); each row with at least two canonical residues sums
+  to 1. Captures local sequential order that plain composition discards; fully vectorized;
+  optional ``return_df=True`` for a labeled frame.
+- **SequenceFeature.kmer_composition**: General k-mer-composition baseline featurizer — the
+  fraction of each of the ``20 ** k`` ordered overlapping k-mers of adjacent canonical residues
+  over a sequence span, a ``(n_seq, 20 ** k)`` matrix (columns in
+  ``itertools.product(ut.LIST_CANONICAL_AA, repeat=k)`` order). ``k`` selects the composition:
+  ``k=1`` is amino-acid composition (identical to ``aa_composition``), ``k=2`` dipeptide
+  composition (identical to ``dipeptide_composition``), and higher ``k`` (up to 4) captures
+  longer local sequential order. Same non-canonical-dropping, gap-free-span, each-row-sums-to-1
+  semantics as the ``k=1`` / ``k=2`` special cases; fully vectorized (one ``bincount`` over
+  base-20 k-mer codes); optional ``return_df=True`` for a labeled frame. ``return_scales=True`` also
+  returns the CPP-ready ``(df_scales, df_cat)``: for ``k=1`` the ``(20, 20)`` one-hot identity scale set
+  + amino-acid-class ``df_cat`` (feed to :meth:`~aaanalysis.CPP.run` with a whole-part ``Segment(1,1)``
+  split to get amino-acid composition as a real ``df_feat`` / feature map); for ``k>=2`` ``df_scales`` is
+  ``None`` (a k-mer is not a per-residue scale) and ``df_cat`` categorizes the k-mers by residue class.
+- **SequenceFeature.get_df_parts_from_windows**: Assemble a reference ``df_parts`` from
+  per-part window sets (e.g. ``AAWindowSampler.sample_synthetic`` output).
+- **SequenceFeature.get_seq_kws**: Return one protein's ``{jmd_n_seq, tmd_seq, jmd_c_seq}``
 - :meth:`~aaanalysis.SequenceFeature.get_df_parts_from_windows`: Assemble a reference ``df_parts`` from
   per-part window sets (e.g. :meth:`~aaanalysis.AAWindowSampler.sample_synthetic` output).
 - :meth:`~aaanalysis.SequenceFeature.get_seq_kws`: Return one protein's ``{jmd_n_seq, tmd_seq, jmd_c_seq}``
@@ -82,6 +154,23 @@ Added
   (transposed internally) instead of ``centers(np.array(df_scales).T, ...)``; pass
   proteins / embeddings / CPP features via ``X`` (used as-is). The explicit ``X``
   signature is unchanged.
+
+**Prediction**
+
+- :class:`~aaanalysis.ReliabilityModel`: Per-sample **prediction reliability** — quantifies how much
+  to trust a prediction, separately from the score itself (a model can be confident about a ``0.55``
+  and worthless about a ``1.0`` out-of-distribution score). Wraps a fitted predictor (an
+  :class:`~aaanalysis.AAPred`, a :class:`~aaanalysis.TreeModel`, or any scikit-learn classifier) plus
+  its training data and reports, per sample: stability (ensemble/bootstrap ``score_std`` and a
+  confidence interval), an **applicability-domain** out-of-distribution signal (k-NN distance,
+  Mahalanobis, leverage → ``ood_score`` / ``in_domain``), calibrated sharpness (``margin`` /
+  ``entropy``), a marginal split-conformal prediction set that can abstain, and a headline
+  ``reliable`` flag (in-domain, stable, and a confident conformal singleton). ``fit`` / ``predict`` /
+  ``eval``; core scikit-learn only, no new required dependency.
+- :class:`~aaanalysis.ReliabilityModelPlot`: Visualizes :class:`~aaanalysis.ReliabilityModel` output —
+  a per-sample ``ranking`` (each prediction's score with its uncertainty interval, colored by trust
+  status), a calibration curve (``reliability_diagram``), the out-of-distribution score distribution
+  (``ood_hist``), and a score-vs-OOD ``trust_map`` colored by the ``reliable`` flag.
 
 **Explainable AI**
 
@@ -132,6 +221,24 @@ Added
   switches the pre-computed prediction per P1 (feature map + structure restyle) with no kernel,
   keeping the column-residue linking (warned past 40 sites, hard-capped at 200).
 
+**PU Learning**
+
+- **dPULearn.fit — positives/unlabeled split input**: for the common positive / unlabeled
+  setup, ``fit`` now accepts ``X_pos`` and ``X_unlabeled`` separately (an alternative to
+  ``X`` + ``labels``) instead of stacking them by hand and building a ``1`` / ``2`` label
+  vector. After fitting, the new ``dPULearn.mask_neg_`` attribute holds the **boolean mask
+  of reliable negatives** — over the rows of ``X_unlabeled`` in the split mode, over ``X``
+  otherwise (equal to the manual ``labels_[len(X_pos):] == 0`` result exactly). ``fit`` still
+  returns ``self`` and the existing ``fit(X, labels=...)`` path is unchanged.
+- :meth:`~aaanalysis.dPULearn.project`: Projects held-out samples from the same feature space into
+  the **fitted PC space** (the ``PCi`` columns of ``df_pu_``) after PCA-based identification, so new
+  proteins can be placed alongside the identified negatives. ``method`` selects the reconstructed
+  linear map — ``'lstsq'`` (default, affine least-squares) or ``'components'`` (exact PCA-geometry
+  map); both are exact on the fitted samples and interpolate for new ones.
+  :meth:`~aaanalysis.dPULearnPlot.pca` gains ``df_pu_add`` / ``names_add`` / ``colors_add`` to
+  overlay one or more projected groups (a one-call four-group PCA); the default (``df_pu_add=None``)
+  output is unchanged.
+
 **Sequence Analysis**
 
 - :class:`~aaanalysis.AAWindowSampler`: Samples fixed-length sequence windows for PU-learning and
@@ -141,7 +248,7 @@ Added
   occurrences via MEME/FIMO, complementing the pure-Python
   :meth:`~aaanalysis.AAWindowSampler.sample_motif_matched` sampler.
 
-**Protein Design**
+**Protein Engineering**
 
 - **SeqOpt — multi-objective protein engineering** (**core**; only ``mode="impact"`` needs
   ``aaanalysis[pro]``): A new :class:`~aaanalysis.SeqOpt` optimizer
@@ -191,6 +298,10 @@ Added
 
 - :func:`~aaanalysis.plot_rank`: Standalone per-protein max-score-vs-rank scatter with group coloring and
   optional threshold lines (pairs with the new ``aa.metrics`` functions).
+- **COLOR_SAMPLES_POS / COLOR_SAMPLES_NEG / COLOR_SAMPLES_UNL / COLOR_SAMPLES_REL_NEG**:
+  Public, named constants for the canonical sample-group colors (positive / negative /
+  unlabeled / reliable-negative). They equal the ``plot_get_cdict("DICT_COLOR")["SAMPLES_*"]``
+  values exactly, so a named constant replaces indexing the color dict by string key.
 
 **Golden Pipelines**
 
@@ -263,6 +374,12 @@ Added
 Changed
 ~~~~~~~
 
+- :class:`~aaanalysis.TreeModel`: **per-round seeding fix** — with a fixed ``random_state`` (or the
+  global ``options["random_state"]``), :meth:`~aaanalysis.TreeModel.fit` now reseeds each round to
+  ``random_state + i`` so the rounds are independent. Previously every round fit identical estimators,
+  so ``feat_importance_std`` (and :meth:`~aaanalysis.TreeModel.predict_proba`'s ``pred_std``) collapsed
+  to exactly ``0`` and rounds 2..N were wasted. Fixed-seed importances change once (degenerate → real
+  Monte-Carlo mean with non-zero std); the ``random_state=None`` default is unchanged.
 - **Uniform plot return contract**: Every public ``*Plot`` method now returns a single
   ``(fig, ax)`` pair (forwarding attribute access to ``ax``, so existing
   ``ax = plot(...); ax.set_title(...)`` code keeps working), replacing the previous mix
@@ -323,6 +440,53 @@ Changed
   (``.github/pyright_baseline.txt``) drives the type-contract count down per subpackage
   (now 887, every public-API signature pyright-clean). None gate a merge or change the
   public API.
+
+Changed
+~~~~~~~
+
+- **Module rename**: the ``protein_design`` subpackage is now ``protein_engineering``,
+  matching its user-facing name (``AAMut`` / ``SeqMut`` / ``SeqOpt`` are amino-acid
+  mutation and directed-evolution tools). The public classes are unchanged and imported
+  the same way (``import aaanalysis as aa`` → :class:`~aaanalysis.AAMut`,
+  :class:`~aaanalysis.SeqMut`, :class:`~aaanalysis.SeqOpt` and their plot classes); only a
+  full-path import such as ``from aaanalysis.protein_design import SeqMut`` must become
+  ``from aaanalysis.protein_engineering import SeqMut``.
+
+Fixed
+~~~~~
+
+- **BH-adjusted p-values (#343)**: ``p_val_fdr_bh`` in ``df_feat`` now follows canonical
+  Benjamini–Hochberg — the reverse cumulative-minimum (monotonicity) step was missing, so the
+  reported values could be non-monotone / slightly conservative in non-monotone regions. Only the
+  reported column changes; feature selection and ranking (``abs_auc`` / ``abs_mean_dif``) are
+  unaffected.
+- :meth:`~aaanalysis.CPP.run` with ``n_jobs > 1`` no longer crashes in non-interactive
+  contexts (e.g. ``python -c``, heredocs, some subprocess shells) where starting a
+  ``multiprocessing.Manager`` for the cross-process progress bar raised ``EOFError`` /
+  ``OSError``. The Manager is now created best-effort: on failure CPP degrades to the
+  thread-safe, single-process progress path and the run completes normally instead of
+  aborting (previously the only workaround was ``n_jobs=1``). When the Manager is
+  available, behavior and output are unchanged.
+- **CPP splits on free peptides / short parts (#338)**: ``aap.find_features`` and the
+  ``Pattern`` / ``PeriodicPattern`` splits were unusable on free peptides with no flanking
+  context (the linear-epitope case). ``find_features(search="fast")`` and its Stage-3
+  simplify step ignored the requested / winning split configuration and always used the
+  default (``len_max=15``, ``n_split_max=15``), so any target region shorter than ~15
+  residues raised. Now:
+
+  - **CPP auto-caps splits to the shortest part** instead of raising. When a ``df_parts``
+    sequence part is too short for the requested ``split_kws``, :class:`~aaanalysis.CPP`
+    caps the ``Segment`` ``n_split_max`` and drops the ``Pattern`` / ``PeriodicPattern``
+    split types that cannot fit (``Segment`` is always kept), emits one ``UserWarning``, and
+    stores the capped ``split_kws`` as ``self.split_kws`` (used by both :meth:`~aaanalysis.CPP.run`
+    and :meth:`~aaanalysis.CPP.run_num`). For parts long enough for the requested splits this
+    is a no-op, so results for flanked inputs are byte-identical.
+  - **``find_features`` handles free peptides end to end.** The bounded ``kws`` dict now accepts
+    ``len_max`` (and actually honors ``n_split_max``). Passing ``kws={"n_jmd": 0}`` (no flanking
+    context) switches the part sweep to **TMD-only** (the whole peptide is one part, instead of
+    half-TMD composite fragments) and **caps the swept ``n_split_max`` range** to the shortest
+    part length, deduped, with a ``UserWarning``. The staged ``balanced`` / ``exhaustive`` searches
+    no longer hard-error on short parts. On normal (long-part) inputs the range cap is a no-op.
 
 
 Version 1.0 (Stable Version)

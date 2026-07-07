@@ -68,6 +68,7 @@ from ._utils.check_data import (check_X,
 from ._utils.check_models import (check_mode_class,
                                   check_model_kwargs,
                                   check_match_list_model_classes_kwargs)
+from ._utils.models import get_cv_model_
 from ._utils.check_plots import (check_fig,
                                  check_ax,
                                  check_figsize,

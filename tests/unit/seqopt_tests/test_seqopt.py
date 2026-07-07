@@ -14,7 +14,7 @@ import hypothesis.strategies as some
 import aaanalysis as aa
 import aaanalysis.utils as ut
 
-from aaanalysis.protein_design import SeqOpt, SeqOptPlot
+from aaanalysis.protein_engineering import SeqOpt, SeqOptPlot
 
 settings.register_profile("ci", deadline=None)
 settings.load_profile("ci")
@@ -204,7 +204,7 @@ class TestSeqOptInit:
     def test_seqopt_is_core(self):
         # SeqOpt is a core class (not pro-gated): the real class, exported, not a stub.
         assert "SeqOpt" in aa.__all__ and "SeqOptPlot" in aa.__all__
-        assert aa.SeqOpt.__module__ == "aaanalysis.protein_design._seqopt"
+        assert aa.SeqOpt.__module__ == "aaanalysis.protein_engineering._seqopt"
 
     def test_impact_without_shap_raises_pro_hint(self, model, wt, monkeypatch):
         # mode="impact" imports ShapModel lazily; without the pro dependency it raises a

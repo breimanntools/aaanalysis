@@ -188,6 +188,7 @@ CAPABILITY_FAMILIES = [
          ("Load benchmark sequences", "load_dataset(name) → df_seq", None),
          ("Load AAontology scales", "load_scales() → df_scales", None),
          ("Load precomputed features", "load_features(name) → df_feat", None),
+         ("Binary labels from df column", "get_labels(df, positive_label) → labels", None, "v1.1"),
          ("Read / write FASTA", "read_fasta(file) → df_seq", None),
          ("Cluster redundant homologs", "filter_seq(df_seq) → df_clust  [pro]", None),
      ]},
@@ -221,6 +222,8 @@ CAPABILITY_FAMILIES = [
     {"name": "Modeling & Explainability", "tag": "PU · classify · SHAP",
      "rows": [
          ("Train with positives + unlabeled data", "dPULearn().fit(X, labels)  [Wrapper]", None),
+         ("Mine reliable negatives (mask)", "dPULearn().fit(X_pos=, X_unlabeled=).mask_neg_ → mask", None, "v1.1"),
+         ("Project held-out points into PC space", "dPULearn().fit(X, labels).project(X_new) → df_pu", None, "v1.1"),
          ("Train + RFE + MC importance", "TreeModel().fit(X, labels)  [Wrapper]", None),
          ("Per-feature / sample SHAP impact", "ShapModel().fit(X, labels)  [pro]", None),
      ]},

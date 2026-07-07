@@ -45,7 +45,11 @@ def _bh_corrected_pvalues(pvals):
     sorted_pvals = pvals[sorted_indices]
     ranks = np.arange(1, n+1)
     corrected_pvals = sorted_pvals * n / ranks
-    corrected_pvals[corrected_pvals > 1] = 1  # p-values cannot exceed 1
+    # BH monotonicity: reverse cumulative minimum (the canonical step-up procedure, matching
+    # statsmodels' multipletests('fdr_bh')). Without it the adjusted p-values can be non-monotone
+    # in p-value order. Affects only the reported ``p_val_fdr_bh`` column, not feature selection.
+    corrected_pvals = np.minimum.accumulate(corrected_pvals[::-1])[::-1]
+    corrected_pvals = np.minimum(corrected_pvals, 1.0)  # p-values cannot exceed 1
     # Reorder to the original order
     corrected_pvals_original_order = np.empty(n, dtype=float)
     corrected_pvals_original_order[sorted_indices] = corrected_pvals

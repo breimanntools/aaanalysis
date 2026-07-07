@@ -25,6 +25,7 @@ from joblib import Parallel, delayed
 import aaanalysis.utils as ut
 from ._progress import (
     _resolve_shared,
+    _worker_shared,
     _reset_progress,
     _cleanup_mp_manager,
 )
@@ -244,10 +245,15 @@ def assign_scale_values_to_seq(df_parts=None, df_scales=None, verbose=False, n_j
             prefer_multiprocessing=False,
         )
 
+    # Manager proxies pickle to loky workers unchanged; the thread-safe fallback
+    # (Manager unavailable) is passed as None so each worker uses its own defaults.
+    w_max_progress, w_value_lock, w_print_lock = _worker_shared(
+        shared_max_progress, shared_value_lock, print_lock
+    )
     scale_chunks = np.array_split(list(dict_all_scales.keys()), n_jobs)
     with Parallel(n_jobs=n_jobs) as parallel:
         results = parallel(
-            delayed(_mp_scale_assignment)(chunk, shared_max_progress, shared_value_lock, print_lock)
+            delayed(_mp_scale_assignment)(chunk, w_max_progress, w_value_lock, w_print_lock)
             for chunk in scale_chunks
         )
 

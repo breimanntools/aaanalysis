@@ -52,7 +52,7 @@ class TestPreviewOptionsInErrors:
     """
 
     def test_seqmut_lists_available_entries(self):
-        from aaanalysis.protein_design._seqmut import check_match_mutations_df_seq
+        from aaanalysis.protein_engineering._seqmut import check_match_mutations_df_seq
 
         df_seq = pd.DataFrame({ut.COL_ENTRY: ["P1", "P2"], ut.COL_SEQ: ["ACDE", "MKLW"]})
         mutations = pd.DataFrame(

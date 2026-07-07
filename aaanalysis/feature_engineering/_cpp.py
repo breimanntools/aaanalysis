@@ -12,12 +12,13 @@ import aaanalysis.utils as ut
 from aaanalysis.template_classes import Tool
 
 # Import supportive class (exception for importing from same sub-package)
-from ._backend.cpp.sequence_feature import get_split_kws_
+from ._backend.cpp.sequence_feature import get_split_kws_, get_composition_scales_
 from ._backend.cpp.utils_feature import get_df_parts_
+from ._backend.cpp.composition import get_kmer_composit_df_feat_
 from ._backend.check_feature import (
     check_split_kws,
     check_parts_len,
-    check_match_df_parts_split_kws,
+    clamp_split_kws_to_parts_,
     check_df_scales,
     check_df_cat,
     check_match_df_parts_df_scales,
@@ -306,7 +307,13 @@ class CPP(Tool):
         df_parts : pd.DataFrame, shape (n_samples, n_parts)
             DataFrame with sequence parts.
         split_kws : dict, optional
-            Dictionary with parameter dictionary for each chosen split_type. Default from :meth:`SequenceFeature.get_split_kws`.
+            Dictionary with parameter dictionary for each chosen split_type. Default from
+            :meth:`SequenceFeature.get_split_kws`. If a sequence part in ``df_parts`` is too short
+            for the requested splits (e.g. a free peptide with no flanking context), the split
+            lengths are **auto-capped** to the shortest part (``Segment`` ``n_split_max`` capped;
+            ``Pattern`` / ``PeriodicPattern`` that cannot fit are dropped) and one ``UserWarning``
+            is emitted; the capped ``split_kws`` is stored as ``self.split_kws``. For parts long
+            enough for the requested splits this is a no-op.
         df_scales : pd.DataFrame, shape (n_letters, n_scales), optional
             DataFrame of scales with letters typically representing amino acids. Default from :meth:`load_scales`
             unless specified in ``options['df_scales']``.
@@ -315,6 +322,9 @@ class CPP(Tool):
             Default from :meth:`load_scales` with ``name='scales_cat'``, unless specified in ``options['df_cat']``.
         accept_gaps : bool, default=False
             Whether to accept missing values by enabling omitting for computations (if ``True``).
+            Combined with :meth:`SequencePreprocessor.pad_parts`, this enables analyzing short,
+            variable-length sequences at a uniform, finer ``n_split_max`` than the shortest real
+            sequence allows (a padded part is longer, so more splits fit).
         verbose : bool, default=True
             If ``True``, verbose outputs are enabled.
         random_state : int, optional
@@ -324,6 +334,15 @@ class CPP(Tool):
         Notes
         -----
         * All scales from ``df_scales`` must be contained in ``df_cat``
+        * **Splits auto-cap to the shortest part.** A sequence part of length ``L`` can carry a
+          ``Segment`` with at most ``n_split_max = L`` pieces, a ``Pattern`` only if ``len_max <= L``,
+          and a ``PeriodicPattern`` only if its first step ``<= L``. When ``df_parts`` contains a
+          part too short for the requested ``split_kws`` (typically free peptides / short domains
+          with no flanking context), CPP caps the ``Segment`` ``n_split_max`` and drops the
+          ``Pattern`` / ``PeriodicPattern`` split types that cannot fit (``Segment`` is always kept),
+          emits one ``UserWarning``, and stores the capped ``split_kws`` as ``self.split_kws`` so
+          both :meth:`run` and :meth:`run_num` use it. This never raises; for parts long enough for
+          the requested splits it is a no-op and the output is unchanged.
         * **CPP is intrinsically binary** (one test group vs one reference group). For
           **multi-class** or **regression** tasks, do not change CPP: transform the target
           into binary contrasts with the ``SequenceFeature.get_labels_*`` helpers and loop
@@ -366,7 +385,20 @@ class CPP(Tool):
         df_parts = check_match_df_parts_df_scales(
             df_parts=df_parts, df_scales=df_scales, accept_gaps=accept_gaps
         )
-        check_match_df_parts_split_kws(df_parts=df_parts, split_kws=split_kws)
+        # Auto-cap the split lengths to the shortest sequence part (free-peptide safety net): a part
+        # shorter than a split's required length cannot carry that split, so cap the Segment
+        # 'n_split_max' and drop Pattern / PeriodicPattern that cannot fit, warning once. For parts
+        # long enough for the requested splits this is a no-op (the original 'split_kws' object is
+        # returned), so self.split_kws — hence run / run_num output — is byte-identical.
+        split_kws, split_changes = clamp_split_kws_to_parts_(df_parts=df_parts, split_kws=split_kws)
+        if split_changes:
+            warnings.warn(
+                f"'df_parts' has a sequence part too short for the requested 'split_kws'; "
+                f"auto-capped so CPP still runs: {'; '.join(split_changes)}. Pass a smaller "
+                f"'n_split_max' / 'len_max' (via SequenceFeature.get_split_kws) or add flanking "
+                f"context (jmd_n/jmd_c) to control this. To keep finer splits, pad short parts "
+                f"to a uniform length first with SequencePreprocessor.pad_parts (then "
+                f"CPP(accept_gaps=True)).", UserWarning)
         df_scales, df_cat = check_match_df_scales_df_cat(
             df_cat=df_cat, df_scales=df_scales, verbose=verbose
         )
@@ -410,6 +442,7 @@ class CPP(Tool):
         n_batches: Optional[int] = None,
         n_sample_batches: Optional[int] = None,
         return_stats: bool = False,
+        redundancy: str = "legacy",
     ) -> Union[pd.DataFrame, Tuple[pd.DataFrame, dict]]:
         """
         Perform Comparative Physicochemical Profiling (CPP) algorithm: creation and two-step filtering of
@@ -448,6 +481,10 @@ class CPP(Tool):
             Maximum Pearson correlation [0-1] of feature scales used as threshold for filtering.
         check_cat : bool, default=True
             Whether to check for redundancy within scale categories during filtering.
+        redundancy : {'legacy', 'exact'}, default='legacy'
+            Position-overlap criterion of the redundancy-reduction step. ``'legacy'`` (default)
+            keeps results reproducible across versions; ``'exact'`` compares the actual residue
+            positions (see Notes).
         parametric : bool, default=False
             Whether to use parametric (T-test) or non-parametric (Mann-Whitney U test) test for p-value computation.
             This also sets the p-value column name in ``df_feat`` ('p_val_ttest_indep' vs 'p_val_mann_whitney').
@@ -498,7 +535,12 @@ class CPP(Tool):
         Notes
         -----
         * Pre-filtering can be adjusted by the following parameters: {'n_pre_filter', 'pct_pre_filter', 'max_std_test'}.
-        * Filtering can be adjusted by the following parameters: {'n_filter', 'max_overlap', 'max_cor', 'check_cat'}.
+        * Filtering can be adjusted by the following parameters: {'n_filter', 'max_overlap', 'max_cor', 'check_cat', 'redundancy'}.
+        * ``redundancy='exact'`` is an optional **enhancement** of the redundancy step, not a correctness
+          fix: it compares the true residue positions and tends to yield a more *concentrated* signature
+          (fewer redundant subcategories) rather than higher predictive performance, which stays
+          essentially unchanged. Default ``'legacy'`` keeps prior results reproducible. For a stronger,
+          more efficient redundancy reduction, see :meth:`CPP.simplify`.
         * **Binary by design.** ``run`` compares one test group against one reference group. For
           multi-class or regression tasks, build binary label contrasts with the
           ``SequenceFeature.get_labels_*`` helpers and loop ``run`` over them (see the
@@ -570,6 +612,7 @@ class CPP(Tool):
             allow_other_vals=False,
         )
         ut.check_number_range(name="n_filter", val=n_filter, min_val=1, just_int=True)
+        ut.check_str_options(name="redundancy", val=redundancy, list_str_options=["legacy", "exact"])
         ut.check_number_range(
             name="n_pre_filter",
             val=n_pre_filter,
@@ -656,6 +699,7 @@ class CPP(Tool):
             max_overlap=max_overlap,
             max_cor=max_cor,
             check_cat=check_cat,
+            redundancy=redundancy,
             parametric=parametric,
             start=start,
             tmd_len=tmd_len,
@@ -715,6 +759,7 @@ class CPP(Tool):
         n_batches: Optional[int] = None,
         n_sample_batches: Optional[int] = None,
         return_stats: bool = False,
+        redundancy: str = "legacy",
     ) -> Union[pd.DataFrame, Tuple[pd.DataFrame, dict]]:
         """
         Numerical-mode Comparative Physicochemical Profiling (CPP): same algorithm as
@@ -758,6 +803,10 @@ class CPP(Tool):
             Maximum Pearson correlation [0-1] of feature scales used as threshold for filtering.
         check_cat : bool, default=True
             Whether to check for redundancy within scale categories during filtering.
+        redundancy : {'legacy', 'exact'}, default='legacy'
+            Position-overlap criterion of the redundancy-reduction step. ``'legacy'`` (default)
+            keeps results reproducible across versions; ``'exact'`` compares the actual residue
+            positions (see Notes).
         parametric : bool, default=False
             Whether to use parametric (T-test) or non-parametric (Mann-Whitney U test) for p-value computation.
         start : int, default=1
@@ -815,6 +864,9 @@ class CPP(Tool):
 
         Notes
         -----
+        * ``redundancy`` behaves exactly as in :meth:`run` (default ``'legacy'`` keeps results
+          reproducible; ``'exact'`` compares the true residue positions — an optional enhancement,
+          not a correctness fix).
         * **Call order — ``get_parts`` then ``run_num``.** ``dict_num_parts`` must come
           from :meth:`NumericalFeature.get_parts` (step 1), which slices a raw
           ``df_seq`` + ``dict_num`` into the per-part tensors consumed here (step 2).
@@ -889,6 +941,7 @@ class CPP(Tool):
             allow_other_vals=False,
         )
         ut.check_number_range(name="n_filter", val=n_filter, min_val=1, just_int=True)
+        ut.check_str_options(name="redundancy", val=redundancy, list_str_options=["legacy", "exact"])
         ut.check_number_range(
             name="n_pre_filter",
             val=n_pre_filter,
@@ -977,6 +1030,7 @@ class CPP(Tool):
             max_overlap=max_overlap,
             max_cor=max_cor,
             check_cat=check_cat,
+            redundancy=redundancy,
             parametric=parametric,
             start=start,
             tmd_len=tmd_len,
@@ -1024,6 +1078,181 @@ class CPP(Tool):
             )
         self.last_filter_stats_ = df_feat.attrs.get("last_filter_stats")
         return _finalize_run_output(df_feat=df_feat, return_stats=return_stats)
+
+    def run_composit(self,
+                     labels: ut.ArrayLike1D,
+                     composition: Literal["aac", "dpc", "kmer"] = "aac",
+                     k: int = 3,
+                     n_filter: int = 100,
+                     max_cor: Optional[float] = None,
+                     min_count: int = 1,
+                     label_test: int = 1,
+                     label_ref: int = 0,
+                     parametric: bool = False,
+                     start: int = 1,
+                     tmd_len: int = 20,
+                     jmd_n_len: int = 10,
+                     jmd_c_len: int = 10,
+                     n_jobs: Optional[int] = None,
+                     ) -> pd.DataFrame:
+        """
+        Composition-mode CPP: build a ``df_feat`` of composition features (a special, non-positional
+        feature type) instead of positional Part-Split-Scale features.
+
+        Composition descriptors (iFeature-style [Chen18]_) summarize a sequence as fixed-length
+        residue-frequency vectors with no positional split — the baseline CPP's positional features
+        are meant to beat. This turns them into a CPP ``df_feat`` with the same discriminative
+        statistics CPP ranks on:
+
+        * ``composition="aac"`` (**amino-acid composition**, k=1) *is* positional CPP: it runs over a
+          one-hot identity scale set with the whole-part ``Segment(1,1)`` split, giving genuine
+          ``<PART>-Segment(1,1)-<AA>`` features **with positions** that :meth:`CPPPlot.feature_map` draws.
+        * ``composition="dpc"`` (**dipeptide composition**, k=2) / ``composition="kmer"`` (general
+          ``k``) are **non-positional**: a k-mer is a property of an adjacent residue tuple, not a
+          per-residue scale, so the returned ``df_feat`` has no ``positions`` (not feature-map-able).
+          The ``20 ** k`` k-mers are scored with CPP's statistics and filtered by adjusted AUC (top
+          ``n_filter``), a min-occurrence guard (``min_count``), and optional correlation dedup (``max_cor``).
+
+        .. versionadded:: 1.1.0
+
+        Parameters
+        ----------
+        labels : array-like, shape (n_samples,)
+            Class labels for samples in the sequence DataFrame (typically, test=1, reference=0).
+        composition : str, default="aac"
+            Composition descriptor: ``"aac"`` (amino-acid, positional), ``"dpc"`` (dipeptide), or
+            ``"kmer"`` (general k-mer of length ``k``).
+        k : int, default=3
+            k-mer length for ``composition="kmer"`` (1 to 4; ``20 ** k`` grows exponentially). Ignored
+            for ``"aac"`` (k=1) and ``"dpc"`` (k=2).
+        n_filter : int, default=100
+            Number of top composition features (by adjusted AUC) to keep.
+        max_cor : float, optional
+            If given, drop k-mers correlating above this with an already-kept, higher-AUC k-mer (the
+            composition-space analog of the CPP ``max_cor`` redundancy filter). ``k >= 2`` only.
+        min_count : int, default=1
+            A k-mer must be present (non-zero) in at least this many sequences to be eligible for
+            ranking (drops sparse presence/absence noise; matters at higher ``k``). ``k >= 2`` only.
+        label_test : int, default=1
+            Class label of the test group.
+        label_ref : int, default=0
+            Class label of the reference group.
+        parametric : bool, default=False
+            Whether the p-value is parametric (T-test) or non-parametric (Mann-Whitney U).
+        start : int, default=1
+            Position label of the first residue (AAC feature ids only).
+        tmd_len : int, default=20
+            TMD length for the AAC position labelling (AAC only).
+        jmd_n_len : int, default=10
+            JMD-N length for the AAC position labelling (AAC only).
+        jmd_c_len : int, default=10
+            JMD-C length for the AAC position labelling (AAC only).
+        n_jobs : int, None, or -1, default=None
+            Number of CPU cores used for the statistics.
+
+        Returns
+        -------
+        df_feat : pd.DataFrame
+            Composition features with CPP statistics, ranked by ``abs_auc``. For ``"aac"`` the features
+            are positional (``<PART>-Segment(1,1)-<AA>``, drawn by the feature map); for ``"dpc"`` /
+            ``"kmer"`` the ``feature`` column holds the k-mer string and there is no ``positions`` column.
+
+        See Also
+        --------
+        * :meth:`SequenceFeature.kmer_composition`: the underlying composition matrices (and their
+          iFeature context / compositional-approach explanation).
+        * :meth:`CPP.run`: positional Part-Split-Scale feature engineering.
+
+        Examples
+        --------
+        .. include:: examples/cpp_run_composit.rst
+        """
+        # Check input
+        ut.check_str_options(name="composition", val=composition, list_str_options=["aac", "dpc", "kmer"])
+        ut.check_number_range(name="n_filter", val=n_filter, min_val=1, just_int=True)
+        ut.check_number_range(name="min_count", val=min_count, min_val=1, just_int=True)
+        if composition == "kmer":
+            ut.check_number_range(name="k", val=k, min_val=1, max_val=4, just_int=True)
+        if composition == "aac":
+            # Positional: one-hot identity AA scales + whole-part Segment(1,1) through the full pipeline.
+            df_scales, df_cat = get_composition_scales_(k=1)
+            split_kws = get_split_kws_(split_types=[ut.STR_SEGMENT], n_split_min=1, n_split_max=1)
+            cpp = CPP(df_parts=self.df_parts, split_kws=split_kws, df_scales=df_scales, df_cat=df_cat,
+                      verbose=self._verbose, random_state=self._random_state)
+            return cpp.run(labels=labels, label_test=label_test, label_ref=label_ref, n_filter=n_filter,
+                           parametric=parametric, start=start, tmd_len=tmd_len, jmd_n_len=jmd_n_len,
+                           jmd_c_len=jmd_c_len, n_jobs=n_jobs)
+        # Non-positional: k-mer composition + CPP discriminative stats + filtering.
+        k_use = 2 if composition == "dpc" else int(k)
+        n_jobs = ut.check_n_jobs(n_jobs=n_jobs)
+        return get_kmer_composit_df_feat_(df_parts=self.df_parts, labels=labels, k=k_use,
+                                          label_test=label_test, label_ref=label_ref, n_filter=n_filter,
+                                          max_cor=max_cor, min_count=min_count, parametric=parametric,
+                                          n_jobs=n_jobs)
+
+    def run_aac(self,
+                labels: ut.ArrayLike1D,
+                n_filter: int = 100,
+                label_test: int = 1,
+                label_ref: int = 0,
+                parametric: bool = False,
+                start: int = 1,
+                tmd_len: int = 20,
+                jmd_n_len: int = 10,
+                jmd_c_len: int = 10,
+                n_jobs: Optional[int] = None,
+                ) -> pd.DataFrame:
+        """
+        Amino-acid composition (AAC) as a positional CPP ``df_feat``.
+
+        Convenience wrapper for :meth:`run_composit` with ``composition="aac"``: runs CPP over a
+        one-hot identity amino-acid scale set with the whole-part ``Segment(1,1)`` split, giving
+        feature-map-able ``<PART>-Segment(1,1)-<AA>`` features. See :meth:`run_composit` for the full
+        parameter descriptions and the dipeptide / k-mer (non-positional) composition modes.
+
+        .. versionadded:: 1.1.0
+
+        Parameters
+        ----------
+        labels : array-like, shape (n_samples,)
+            Class labels for samples (typically, test=1, reference=0).
+        n_filter : int, default=100
+            Number of top amino-acid features (by adjusted AUC) to keep.
+        label_test : int, default=1
+            Class label of the test group.
+        label_ref : int, default=0
+            Class label of the reference group.
+        parametric : bool, default=False
+            Whether the p-value is parametric (T-test) or non-parametric (Mann-Whitney U).
+        start : int, default=1
+            Position label of the first residue.
+        tmd_len : int, default=20
+            TMD length for the position labelling.
+        jmd_n_len : int, default=10
+            JMD-N length for the position labelling.
+        jmd_c_len : int, default=10
+            JMD-C length for the position labelling.
+        n_jobs : int, None, or -1, default=None
+            Number of CPU cores used for the statistics.
+
+        Returns
+        -------
+        df_feat : pd.DataFrame
+            Positional amino-acid-composition features (``<PART>-Segment(1,1)-<AA>``) with CPP
+            statistics, ranked by ``abs_auc`` and drawable by :meth:`CPPPlot.feature_map`.
+
+        See Also
+        --------
+        * :meth:`CPP.run_composit`: the general composition-mode entry point (aac / dpc / kmer).
+
+        Examples
+        --------
+        .. include:: examples/cpp_run_composit.rst
+        """
+        return self.run_composit(labels=labels, composition="aac", n_filter=n_filter,
+                                 label_test=label_test, label_ref=label_ref, parametric=parametric,
+                                 start=start, tmd_len=tmd_len, jmd_n_len=jmd_n_len, jmd_c_len=jmd_c_len,
+                                 n_jobs=n_jobs)
 
     def eval(
         self,

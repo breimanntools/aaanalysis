@@ -1,6 +1,7 @@
 """
 This is a script for the common SequenceFeature and CPP checking functions
 """
+import copy
 import pandas as pd
 import numpy as np
 import warnings
@@ -27,22 +28,88 @@ def _get_max_pos_split(split=None):
     return n_max
 
 
+def _get_split_kws_requirements(split_kws=None):
+    """Get per-split-type minimum part length required by split_kws.
+
+    Each split type imposes a minimum length on every sequence part: a ``Segment``
+    needs at least ``n_split_max`` residues (it cannot be split into more pieces than
+    it has residues), a ``Pattern`` at least ``len_max`` residues, and a
+    ``PeriodicPattern`` at least its first step (``steps[0]``). Returns a dict
+    ``{split_type: (required_len, param_name)}`` so callers can name the exact
+    parameter that binds the requirement.
+    """
+    reqs = {}
+    if ut.STR_SEGMENT in split_kws:
+        reqs[ut.STR_SEGMENT] = (split_kws[ut.STR_SEGMENT]["n_split_max"], "n_split_max")
+    if ut.STR_PATTERN in split_kws:
+        reqs[ut.STR_PATTERN] = (split_kws[ut.STR_PATTERN]["len_max"], "len_max")
+    if ut.STR_PERIODIC_PATTERN in split_kws:
+        reqs[ut.STR_PERIODIC_PATTERN] = (split_kws[ut.STR_PERIODIC_PATTERN]["steps"][0], "steps[0]")
+    return reqs
+
+
 def _get_max_pos_split_kws(split_kws=None):
     """Get maximum position required for splits basd on split_kws"""
-    list_n_max = []
-    if ut.STR_SEGMENT in split_kws:
-        n_max = split_kws[ut.STR_SEGMENT]["n_split_max"]
-        list_n_max.append(n_max)
-    if ut.STR_PATTERN in split_kws:
-        n_max = split_kws[ut.STR_PATTERN]["len_max"]
-        list_n_max.append(n_max)
-    if ut.STR_PERIODIC_PATTERN in split_kws:
-        n_max = split_kws[ut.STR_PERIODIC_PATTERN]["steps"][0]
-        list_n_max.append(n_max)
-    if len(list_n_max) == 0:
+    reqs = _get_split_kws_requirements(split_kws=split_kws)
+    if len(reqs) == 0:
         raise ValueError(f"Wrong 'split_kws' ({split_kws})")
-    n_max = max(list_n_max)
+    n_max = max(val for val, _ in reqs.values())
     return n_max
+
+
+def clamp_split_kws_to_parts_(df_parts=None, split_kws=None):
+    """Auto-cap ``split_kws`` to the shortest sequence part (free-peptide safety net).
+
+    A sequence part of length ``L`` can only carry a ``Segment`` split with ``n_split_max <= L``
+    (it cannot be split into more pieces than it has residues), a ``Pattern`` with ``len_max <= L``,
+    and a ``PeriodicPattern`` with its first step ``steps[0] <= L``. When the shortest part across
+    ``df_parts`` is too short for the given ``split_kws``, the ``Segment`` ``n_split_max`` (and
+    ``n_split_min``) is capped to the shortest-part length and the ``Pattern`` / ``PeriodicPattern``
+    split types that cannot fit are dropped; ``Segment`` is the universal fallback (works down to
+    ``n=1``) and is always kept (inserted if every other type was dropped).
+
+    Returns ``(split_kws_clamped, changes)`` where ``changes`` is a list of human-readable
+    descriptions of what was capped/dropped. When nothing needs capping (every split fits the
+    shortest part) the **original** ``split_kws`` object is returned unchanged with an empty
+    ``changes`` list, so downstream feature engineering is byte-identical.
+    """
+    changes = []
+    if df_parts is None or split_kws is None:
+        return split_kws, changes
+    min_len = int(min(df_parts[part].map(len).min() for part in list(df_parts)))
+    clamped = copy.deepcopy(split_kws)
+    # Segment: cap so it never asks for more pieces than the shortest part has residues.
+    if ut.STR_SEGMENT in clamped:
+        seg = clamped[ut.STR_SEGMENT]
+        if seg["n_split_max"] > min_len:
+            new_max = max(1, min_len)
+            changes.append(f"capped Segment 'n_split_max' {seg['n_split_max']} -> {new_max} "
+                           f"(shortest part n={min_len})")
+            seg["n_split_max"] = new_max
+            seg["n_split_min"] = min(seg["n_split_min"], new_max)
+    # Pattern: drop when its span ('len_max') cannot fit the shortest part.
+    if ut.STR_PATTERN in clamped and clamped[ut.STR_PATTERN]["len_max"] > min_len:
+        changes.append(f"dropped 'Pattern' (len_max={clamped[ut.STR_PATTERN]['len_max']} "
+                       f"> shortest part n={min_len})")
+        del clamped[ut.STR_PATTERN]
+    # PeriodicPattern: drop when the shortest part is shorter than its first step.
+    if ut.STR_PERIODIC_PATTERN in clamped:
+        step0 = clamped[ut.STR_PERIODIC_PATTERN]["steps"][0]
+        if min_len < step0:
+            changes.append(f"dropped 'PeriodicPattern' (needs >= {step0} residues, "
+                           f"shortest part n={min_len})")
+            del clamped[ut.STR_PERIODIC_PATTERN]
+    # Never leave zero split types; Segment is the universal fallback (works down to n=1). Only
+    # insert it when every split type was dropped (an empty dict) — a surviving Segment-less config
+    # (e.g. a PeriodicPattern-only split_kws that still fits) is kept untouched.
+    if not clamped:
+        new_max = max(1, min_len)
+        clamped[ut.STR_SEGMENT] = {"n_split_min": 1, "n_split_max": new_max}
+        changes.append(f"added 'Segment' fallback (n_split_max={new_max}) so at least one "
+                       f"split type remains")
+    if not changes:
+        return split_kws, []
+    return clamped, changes
 
 
 # II Main Functions
@@ -372,22 +439,30 @@ def check_match_df_parts_features(df_parts=None, features=None):
 
 
 def check_match_df_parts_split_kws(df_parts=None, split_kws=None):
-    """Check if df_parts and split_kws match regarding the sequence size"""
+    """Check if df_parts and split_kws match regarding the sequence size (raise on too-short parts).
+
+    Retained as a strict validator, but no longer called by ``CPP.__init__`` — which now auto-caps
+    too-short parts via :func:`clamp_split_kws_to_parts_` (cap + one ``UserWarning``) instead of
+    raising, so free peptides / short parts stay usable. Kept for callers that want the hard-fail
+    contract and for its actionable message.
+    """
     n_max = _get_max_pos_split_kws(split_kws=split_kws)
+    reqs = _get_split_kws_requirements(split_kws=split_kws)
+    # Name the split type(s) whose required length binds 'n_max' so the message can point at the
+    # exact parameter to lower (or split type to drop) rather than only reporting the number.
+    driver = "/".join(f"{st} ({param}={val})" for st, (val, param) in reqs.items() if val == n_max)
     for part in list(df_parts):
-        if any(df_parts[part.lower()].map(len) < n_max):
-            mask = df_parts[part.lower()].map(len) < n_max
-            list_seq = df_parts[mask][part.lower()].to_list()
-            if len(list_seq) == 1:
-                seq = list_seq[0]
-                raise ValueError(
-                    f"'{part}' part contains too short sequence ('{seq}', n={len(seq)})"
-                    f"\n  for '{split_kws}' split_kws (n_max={n_max})")
-            else:
-                seq = list_seq[0]
-                raise ValueError(
-                    f"For split_kws (n_max={n_max}): '{split_kws}',"
-                    f"\n  following '{part}' part contains too short sequences (e.g., '{seq}', n={len(seq)}).")
+        lengths = df_parts[part.lower()].map(len)
+        if any(lengths < n_max):
+            list_seq = df_parts[lengths < n_max][part.lower()].to_list()
+            seq = list_seq[0]
+            count = "a sequence" if len(list_seq) == 1 else f"{len(list_seq)} sequences"
+            raise ValueError(
+                f"'{part}' part contains {count} too short (e.g. '{seq}', n={len(seq)}) for the "
+                f"{driver} split length (n_max={n_max})."
+                f"\n  For free peptides with no flanking context, use Segment-only splits or reduce "
+                f"'len_max'/'n_split_max' (via SequenceFeature.get_split_kws),"
+                f"\n  or add flanking context (jmd_n/jmd_c).")
 
 
 # Check df_scales & df_cat
@@ -460,7 +535,8 @@ def check_match_df_parts_df_scales(df_parts=None, df_scales=None, accept_gaps=Fa
             char_scales.append(ut.STR_AA_GAP)
         missing_char = [x for x in char_parts if x not in char_scales]
         # Replace gaps by default amino acid gap
-        if accept_gaps:
+        if accept_gaps and missing_char:
+            df_parts = df_parts.copy()  # copy so we don't mutate the caller's df_parts in place
             for col in list(df_parts):
                 for mc in missing_char:
                     df_parts[col] = df_parts[col].str.replace(mc, ut.STR_AA_GAP)

@@ -20,7 +20,7 @@ import aaanalysis.utils as ut
 
 
 # I Helper Functions
-def filtering_info_(df=None, df_scales=None, check_cat=True):
+def filtering_info_(df=None, df_scales=None, check_cat=True, redundancy="legacy"):
     """Get datasets structures for filtering."""
     # DEV: ``check_cat`` controls scale-category-aware redundancy gating.
     # When True, ``dict_c`` maps every feature id to its scale category so the
@@ -36,15 +36,23 @@ def filtering_info_(df=None, df_scales=None, check_cat=True):
         dict_c = dict(zip(df[ut.COL_FEATURE], df[ut.COL_CAT]))
     else:
         dict_c = dict()
-    dict_p = dict(zip(df[ut.COL_FEATURE], [set(x) for x in df[ut.COL_POSITION]]))
+    # ``redundancy`` selects the position-overlap criterion of the greedy loop:
+    # - "legacy" (default): the position strings ("11,12,...") are compared as
+    #   character sets. This is the original criterion and stays the default so
+    #   results reproduce byte-identically across versions.
+    # - "exact": the actual residue positions are compared (positions split on ",").
+    if redundancy == "exact":
+        dict_p = dict(zip(df[ut.COL_FEATURE], [set(str(x).split(",")) for x in df[ut.COL_POSITION]]))
+    else:
+        dict_p = dict(zip(df[ut.COL_FEATURE], [set(x) for x in df[ut.COL_POSITION]]))
     df_cor = df_scales.corr()
     return dict_c, dict_p, df_cor
 
 
 # II Main Functions
-def filtering(df=None, df_scales=None, max_overlap=0.5, max_cor=0.5, n_filter=100, check_cat=True):
+def filtering(df=None, df_scales=None, max_overlap=0.5, max_cor=0.5, n_filter=100, check_cat=True, redundancy="legacy"):
     """CPP filtering algorithm based on redundancy reduction in descending order of absolute AUC."""
-    dict_c, dict_p, df_cor = filtering_info_(df=df, df_scales=df_scales, check_cat=check_cat)
+    dict_c, dict_p, df_cor = filtering_info_(df=df, df_scales=df_scales, check_cat=check_cat, redundancy=redundancy)
     df = df.sort_values(by=[ut.COL_ABS_AUC, ut.COL_ABS_MEAN_DIF], ascending=False).copy().reset_index(drop=True)
     list_feat = list(df[ut.COL_FEATURE])
     list_top_feat = [list_feat.pop(0)]

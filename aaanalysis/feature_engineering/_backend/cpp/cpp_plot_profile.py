@@ -107,6 +107,10 @@ def _plot_profile(df_pos=None, shap_plot=False, ax=None,
     ax.set_xlim(x_lim)
     if ylim is None:
         ymin, ymax = ax.get_ylim()
+        # CPP profiles are non-negative: keep the baseline at 0 with no downward padding.
+        # min(0, ...) is a deliberate no-op for a standard axis; do NOT change it to max(0, ...)
+        # (that pushes an all-positive profile below 0). CPP-SHAP profiles are signed and are
+        # padded symmetrically via _scale_ylim above.
         y_space = min(0, (ymax - ymin) * 0.25)
         y_lim = (ymin - y_space, ymax + y_space)
         ax.set_ylim(y_lim)

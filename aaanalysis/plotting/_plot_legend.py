@@ -153,10 +153,10 @@ def plot_legend(ax: Optional[Axes] = None,
     ut.check_number_val(name="lw", val=lw, accept_none=True, just_int=False)
     args_non_neg = {"labelspacing": labelspacing, "columnspacing": columnspacing,
                     "handletextpad": handletextpad, "handlelength": handlelength,
-                    "fontsize": fontsize, "fontsize_legend": fontsize_title}
+                    "fontsize": fontsize, "fontsize_title": fontsize_title}
     for key in args_non_neg:
         ut.check_number_range(name=key, val=args_non_neg[key], min_val=0, accept_none=True, just_int=False)
-    ut.check_bool(name="add_legend", val=keep_legend, accept_none=False)
+    ut.check_bool(name="keep_legend", val=keep_legend, accept_none=False)
     # Create new legend
     ax = ut.plot_legend_(ax=ax, dict_color=dict_color, list_cat=list_cat, labels=labels,
                          loc=loc, loc_out=loc_out, y=y, x=x, n_cols=n_cols,

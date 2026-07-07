@@ -22,6 +22,7 @@ from aaanalysis.feature_engineering._backend.check_feature import (
     check_match_df_scales_features,
     check_match_df_parts_features,
     check_match_df_parts_split_kws,
+    clamp_split_kws_to_parts_,
     check_match_df_scales_df_cat,
     check_match_df_parts_df_scales,
     check_df_cat,
@@ -245,11 +246,71 @@ class TestCheckMatchPartsAndCat:
     def test_match_df_parts_features_none_skips(self):
         assert check_match_df_parts_features(df_parts=None, features=["x"]) is None
 
-    def test_match_df_parts_split_kws_too_short(self):
-        kws = {"Pattern": {"len_max": 15, "n_max": 4, "n_min": 2, "steps": [3, 4]}}
-        with pytest.raises(ValueError, match="too short"):
-            check_match_df_parts_split_kws(
-                df_parts=self._df_parts(["AC"]), split_kws=kws)
+    def test_check_match_split_kws_retained_validator_still_raises(self):
+        # check_match_df_parts_split_kws is retained as a strict validator (no longer called by
+        # CPP.__init__, which now clamps): it must still raise + stay actionable for callers using it.
+        kws = {"Segment": {"n_split_min": 1, "n_split_max": 15},
+               "Pattern": {"len_max": 15, "n_max": 4, "n_min": 2, "steps": [3, 4]},
+               "PeriodicPattern": {"steps": [3, 4]}}
+        with pytest.raises(ValueError) as exc:
+            check_match_df_parts_split_kws(df_parts=self._df_parts(["PQFTIFGT"]), split_kws=kws)
+        msg = str(exc.value)
+        assert "n_max=15" in msg and "len_max=15" in msg and "n=8" in msg
+        assert "Segment-only" in msg and "n_split_max" in msg
+
+    # --- #338: CPP core now auto-caps split_kws to the shortest part instead of raising ---
+    def test_clamp_split_kws_too_short_drops_and_caps(self):
+        # Default split_kws on an 8-aa free peptide: Segment capped to 8, Pattern dropped (len_max=15
+        # > 8), PeriodicPattern kept (steps[0]=3 <= 8). Changes name each adaptation.
+        kws = {"Segment": {"n_split_min": 1, "n_split_max": 15},
+               "Pattern": {"len_max": 15, "n_max": 4, "n_min": 2, "steps": [3, 4]},
+               "PeriodicPattern": {"steps": [3, 4]}}
+        clamped, changes = clamp_split_kws_to_parts_(
+            df_parts=self._df_parts(["PQFTIFGT", "AIVMWFLL"]), split_kws=kws)
+        assert clamped["Segment"]["n_split_max"] == 8
+        assert "Pattern" not in clamped
+        assert "PeriodicPattern" in clamped
+        assert changes  # non-empty
+        joined = "; ".join(changes)
+        assert "capped Segment 'n_split_max' 15 -> 8" in joined and "dropped 'Pattern'" in joined
+        # the input dict is not mutated
+        assert kws["Segment"]["n_split_max"] == 15 and "Pattern" in kws
+
+    def test_clamp_split_kws_caps_segment_only(self):
+        # Segment n_split_max=12 on a 5-aa part -> capped to 5 (and n_split_min stays valid).
+        kws = {"Segment": {"n_split_min": 1, "n_split_max": 12}}
+        clamped, changes = clamp_split_kws_to_parts_(
+            df_parts=self._df_parts(["ACDEF"]), split_kws=kws)
+        assert clamped["Segment"]["n_split_max"] == 5
+        assert clamped["Segment"]["n_split_min"] <= clamped["Segment"]["n_split_max"]
+        assert any("capped Segment 'n_split_max' 12 -> 5" in c for c in changes)
+
+    def test_clamp_split_kws_drops_periodic_pattern(self):
+        # PeriodicPattern needs steps[0] residues; a 2-aa part (< 3) drops it, Segment fallback added.
+        kws = {"PeriodicPattern": {"steps": [3, 4]}}
+        clamped, changes = clamp_split_kws_to_parts_(
+            df_parts=self._df_parts(["AC"]), split_kws=kws)
+        assert "PeriodicPattern" not in clamped
+        assert "Segment" in clamped  # universal fallback keeps >= 1 split type
+        assert any("dropped 'PeriodicPattern'" in c for c in changes)
+        assert any("added 'Segment' fallback" in c for c in changes)
+
+    def test_clamp_split_kws_noop_segment_only_fits(self):
+        # No-op: Segment-only with n_split_max <= part length -> original object, empty changes.
+        kws = {"Segment": {"n_split_min": 1, "n_split_max": 8}}
+        clamped, changes = clamp_split_kws_to_parts_(
+            df_parts=self._df_parts(["PQFTIFGT", "AIVMWFLL"]), split_kws=kws)
+        assert changes == []
+        assert clamped is kws  # byte-exact invariant: same object returned when nothing to cap
+
+    def test_clamp_split_kws_noop_reduced_len_max_fits(self):
+        # No-op: a user-reduced len_max/n_split_max already fits the 8-aa parts (all types kept).
+        kws = {"Segment": {"n_split_min": 1, "n_split_max": 8},
+               "Pattern": {"len_max": 8, "n_max": 4, "n_min": 2, "steps": [3, 4]},
+               "PeriodicPattern": {"steps": [3, 4]}}
+        clamped, changes = clamp_split_kws_to_parts_(
+            df_parts=self._df_parts(["PQFTIFGT", "AIVMWFLL"]), split_kws=kws)
+        assert changes == [] and clamped is kws
 
     def test_match_df_parts_df_scales_missing_char(self):
         # 'B' is not a canonical AA in df_scales index -> missing char, no gaps

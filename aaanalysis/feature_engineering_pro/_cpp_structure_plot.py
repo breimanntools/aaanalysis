@@ -19,7 +19,7 @@ from ._backend.cpp_struct.mapping import compute_residue_impact
 from ._backend.cpp_struct.structure import (load_structure, extract_chain_residues,
                                             residue_numbers)
 from ._backend.cpp_struct.render import (render_py3dmol, py3dmol_available,
-                                         _stick_radius, _read_structure_text)
+                                         _stick_radius, _read_structure_text, _expand_regions)
 from ._backend.cpp_struct.colors import impact_to_hex, plddt_to_hex
 from ._backend.cpp_struct.view import StructureView, CombinedView, LinkedView
 from ._backend.cpp_struct.linked_html import (build_linked_html, build_linked_html_multi,
@@ -201,6 +201,7 @@ class CPPStructurePlot:
                       focus_region: Optional[Union[Tuple[int, int], List[Tuple[int, int]]]] = None,
                       size_by_impact: bool = True,
                       normalize_by_span: bool = False,
+                      highlight: Optional[Union[Tuple[int, int], List[Tuple[int, int]]]] = None,
                       ) -> StructureView:
         """
         Paint per-residue CPP feature impact onto an interactive 3D protein structure.
@@ -253,6 +254,14 @@ class CPPStructurePlot:
             (app-fidelity colouring). If ``True``, divide each feature's impact by its span
             count first (the span-normalized sum of :meth:`CPPPlot.profile` and the
             :meth:`CPPPlot.feature_map` top per-position bar).
+        highlight : tuple or list of tuple, optional
+            One or more ``(start, stop)`` residue ranges (1-based, inclusive, absolute structure
+            numbering) whose residues are all painted in ``COLOR_LINK_HIGHLIGHT`` (cyan) on top of
+            the impact colouring. This is the same ``highlight`` shape as
+            :meth:`AAPredPlot.predict_sample`, so a region marked cyan on the sequence plot can be
+            mirrored on the structure with the identical argument. Distinct from ``focus_region``,
+            which frames (zoom / fade) rather than colours; each ``start`` / ``stop`` must be an
+            integer with ``start <= stop``.
 
         Returns
         -------
@@ -265,6 +274,12 @@ class CPPStructurePlot:
         -----
         ``tmd_len``, ``start``, ``jmd_n_len`` and ``jmd_c_len`` must match the geometry used when
         the features were generated, otherwise the impact lands on the wrong residues.
+
+        See Also
+        --------
+        * :meth:`AAPredPlot.predict_sample`: shades the same ``highlight`` ``(start, stop)``
+          regions cyan on the sequence viewer; pass the identical ``highlight`` here to mirror
+          the selection in 3D (shared ``COLOR_LINK_HIGHLIGHT``).
 
         Raises
         ------
@@ -294,6 +309,9 @@ class CPPStructurePlot:
         if sequence is not None:
             ut.check_str(name="sequence", val=sequence)
         focus_region = check_focus_region(focus_region=focus_region)
+        # Validate + expand the cyan highlight regions up front (fail-fast); the styling helper
+        # intersects with the structure's residues, so no upper clamp is needed here.
+        highlight_resis = _expand_regions(highlight)
         if (pdb is None) == (uniprot is None):
             raise ValueError("Exactly one of 'pdb' or 'uniprot' should be given "
                              f"(got pdb={pdb}, uniprot={uniprot})")
@@ -316,7 +334,7 @@ class CPPStructurePlot:
             view = render_py3dmol(pdb_path=pdb_path, records=records, dict_impact=dict_impact,
                                   max_abs=max_abs, mode=mode, focus=focus,
                                   window_resis=window_resis, size_by_impact=size_by_impact,
-                                  chain_id=chain_id)
+                                  chain_id=chain_id, highlight_resis=highlight_resis)
 
         if self._verbose:
             struct_resis = residue_numbers(records)
@@ -534,6 +552,7 @@ class CPPStructurePlot:
                     focus_region: Optional[Union[Tuple[int, int], List[Tuple[int, int]]]] = None,
                     size_by_impact: bool = True,
                     normalize_by_span: bool = False,
+                    highlight: Optional[Union[Tuple[int, int], List[Tuple[int, int]]]] = None,
                     tmd_seq: Optional[str] = None,
                     jmd_n_seq: Optional[str] = None,
                     jmd_c_seq: Optional[str] = None,
@@ -590,6 +609,13 @@ class CPPStructurePlot:
             Scale each impact residue's stick by ``|impact|`` (impact mode).
         normalize_by_span : bool, default=False
             Per-residue aggregation for the structure colouring; see :meth:`map_structure`.
+        highlight : tuple or list of tuple, optional
+            One or more ``(start, stop)`` residue ranges (1-based, inclusive, absolute structure
+            numbering) whose residues are all painted in ``COLOR_LINK_HIGHLIGHT`` (cyan) on top of
+            the impact colouring. Same shape as :meth:`AAPredPlot.predict_sample`'s ``highlight``,
+            so a region shaded cyan on the sequence plot mirrors here with the identical argument.
+            Distinct from ``focus_region`` (which zooms / fades); each ``start`` / ``stop`` must be
+            an integer with ``start <= stop``.
         tmd_seq, jmd_n_seq, jmd_c_seq : str, optional
             Part sequences shown along the feature-map x-axis.
         feature_map_dpi : int, default=150
@@ -618,6 +644,9 @@ class CPPStructurePlot:
         --------
         * :meth:`plot_combined`: the same two panels as a static side-by-side (no live linking).
         * :meth:`explore`: pass ``sites=[...]`` to bake a multi-site *live* linked HTML.
+        * :meth:`AAPredPlot.predict_sample`: shades the same ``highlight`` ``(start, stop)``
+          regions cyan on the sequence viewer; pass the identical ``highlight`` here to mirror
+          the selection in 3D (shared ``COLOR_LINK_HIGHLIGHT``).
 
         Examples
         --------
@@ -644,6 +673,9 @@ class CPPStructurePlot:
         if sequence is not None:
             ut.check_str(name="sequence", val=sequence)
         focus_region = check_focus_region(focus_region=focus_region)
+        # Validate + expand the cyan highlight regions up front (fail-fast); intersected with the
+        # structure's residues below, so no upper clamp is needed here.
+        highlight_resis = _expand_regions(highlight)
         if (pdb is None) == (uniprot is None):
             raise ValueError("Exactly one of 'pdb' or 'uniprot' should be given "
                              f"(got pdb={pdb}, uniprot={uniprot})")
@@ -677,6 +709,13 @@ class CPPStructurePlot:
         faded = focus != "whole" and bool(in_focus)
         residue_styles = self._linked_residue_styles(records, dict_impact, max_abs, mode,
                                                      size_by_impact, faded, in_focus)
+        # Cyan highlight regions: append [resi, COLOR_LINK_HIGHLIGHT, 0.0] rows after the impact
+        # rows so the linked HTML's per-residue setStyle paints them last (overriding the impact
+        # colour), mirroring AAPredPlot.predict_sample's shaded region. Only residues present in
+        # the structure are styled.
+        residue_styles = residue_styles + [
+            [resi, ut.COLOR_LINK_HIGHLIGHT, 0.0]
+            for resi in sorted(highlight_resis & present)]
         zoom_resis = sorted(in_focus) if (focus == "zoom" and in_focus) else None
 
         uid = "%04d" % next(_LINKED_UID)

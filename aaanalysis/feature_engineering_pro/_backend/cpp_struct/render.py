@@ -68,11 +68,68 @@ def _sel(resi, chain_id):
     return sel
 
 
+def _is_int(val):
+    """True if ``val`` is a plain / numpy integer (``bool`` is rejected)."""
+    return isinstance(val, (int, np.integer)) and not isinstance(val, bool)
+
+
+def _expand_regions(highlight, seq_len=None):
+    """Expand ``highlight`` region(s) to the set of 1-based residue numbers they cover.
+
+    Accepts ``None`` (-> empty set), a single ``(start, stop)`` tuple, or a list of such
+    tuples (1-based, inclusive). Each region contributes ``range(start, stop + 1)``; the
+    union is clamped to ``[1, seq_len]`` (only the lower bound of ``1`` when ``seq_len`` is
+    ``None``). Every ``start`` / ``stop`` must be an integer with ``start <= stop``; anything
+    else raises ``ValueError``. This mirrors the ``highlight`` shape of
+    :meth:`AAPredPlot.predict_sample`, so a region marked on the sequence plot maps to the
+    same residues on the structure. Pure (no py3Dmol), so it is unit-testable.
+    """
+    if highlight is None:
+        return set()
+    # A length-2 collection of scalars is one region; a list of (start, stop) pairs is many.
+    is_single = (isinstance(highlight, (tuple, list)) and len(highlight) == 2
+                 and not any(isinstance(v, (tuple, list)) for v in highlight))
+    regions = [highlight] if is_single else highlight
+    if not isinstance(regions, (list, tuple)):
+        raise ValueError(f"'highlight' ({highlight!r}) should be a (start, stop) tuple or a "
+                         f"list of (start, stop) tuples.")
+    hi_bound = int(seq_len) if seq_len is not None else None
+    resis = set()
+    for region in regions:
+        if not (isinstance(region, (tuple, list)) and len(region) == 2):
+            raise ValueError(f"'highlight' region ({region!r}) should be a (start, stop) tuple.")
+        start, stop = region
+        if not (_is_int(start) and _is_int(stop)):
+            raise ValueError(f"'highlight' region ({region!r}) should have integer 'start' and "
+                             f"'stop' positions.")
+        start, stop = int(start), int(stop)
+        if start > stop:
+            raise ValueError(f"'highlight' region ({start}, {stop}) should have 'start' <= 'stop'.")
+        lo = max(1, start)
+        hi = stop if hi_bound is None else min(stop, hi_bound)
+        resis.update(range(lo, hi + 1))
+    return resis
+
+
+def _highlight_style_specs(highlight_resis, present_resis, chain_id=None):
+    """py3Dmol ``(selection, style)`` specs colouring each highlighted, present residue cyan.
+
+    ``highlight_resis`` is the residue set from :func:`_expand_regions`; only residues that
+    actually exist in the structure (``present_resis``) are styled. Each spec sets the residue's
+    cartoon to ``ut.COLOR_LINK_HIGHLIGHT`` (the shared linked-selection colour that
+    :meth:`AAPredPlot.predict_sample` shades its feature-map region with), so a region picked on
+    the sequence plot reads as the same selection here. Returned sorted by residue and pure (no
+    view), so it is unit-testable without a live 3D render.
+    """
+    resis = sorted(set(highlight_resis or set()) & set(present_resis))
+    return [(_sel(r, chain_id), {"cartoon": {"color": _HIGHLIGHT_COLOR}}) for r in resis]
+
+
 # II Main Functions
 def render_py3dmol(pdb_path, records, dict_impact, max_abs, mode,
                    focus, window_resis, size_by_impact, chain_id=None,
                    color_pos=None, color_neg=None, width=600, height=450,
-                   highlight_resi=None):
+                   highlight_resi=None, highlight_resis=None):
     """Build a py3Dmol cartoon view and wrap it in a StructureView, mirroring the app.
 
     The cartoon gets a neutral gray base; impact residues are then painted on the
@@ -82,6 +139,11 @@ def render_py3dmol(pdb_path, records, dict_impact, max_abs, mode,
     opacity so the feature window stands out, and ``'zoom'`` points the camera at it.
     ``addModel`` loads the whole (possibly multi-chain) structure, so every selection is
     qualified by ``chain_id`` — otherwise residue 50 would be coloured on every chain.
+
+    ``highlight_resis`` (from :func:`_expand_regions`) paints whole ``(start, stop)`` residue
+    ranges in ``ut.COLOR_LINK_HIGHLIGHT`` on top of the impact colouring, mirroring the region a
+    user shaded on :meth:`AAPredPlot.predict_sample`; it is distinct from the single-pick
+    ``highlight_resi`` marker (a bold stick + sphere for one hovered residue).
     """
     import py3Dmol
     pdb_text, fmt = _read_structure_text(pdb_path)
@@ -122,6 +184,14 @@ def render_py3dmol(pdb_path, records, dict_impact, max_abs, mode,
             if radius > 0:
                 style["stick"] = {"radius": radius, "color": color}
             view.setStyle(_sel(resi, chain_id), style)
+
+    # Region highlight: paint whole (start, stop) residue ranges cyan (COLOR_LINK_HIGHLIGHT),
+    # the same colour AAPredPlot.predict_sample shades its feature-map region with, so a region
+    # selected on the sequence plot mirrors here. Applied on top of the impact styling (and at
+    # full opacity even when the context is faded); only residues present in the structure are
+    # styled. Distinct from the single-pick `highlight_resi` marker below.
+    for sel_spec, style_spec in _highlight_style_specs(highlight_resis, present_resis, chain_id):
+        view.setStyle(sel_spec, style_spec)
 
     # Linked-selection marker: a bold highlight stick + sphere on the selected residue, added on
     # top of the impact styling (and full opacity even when the context is faded) so the residue

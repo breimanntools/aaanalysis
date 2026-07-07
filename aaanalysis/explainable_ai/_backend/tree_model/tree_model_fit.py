@@ -6,6 +6,28 @@ from sklearn.ensemble import RandomForestClassifier
 import aaanalysis.utils as ut
 
 
+# I Helper Functions
+def _seed_model_kwargs(list_model_kwargs, random_state=None, round_idx=0):
+    """Per-round-seeded copies of the importance-model kwargs.
+
+    With a fixed ``random_state`` round ``i`` uses ``random_state + i`` so the rounds differ
+    (the multi-round importance average is a real Monte-Carlo mean with non-zero std) yet stay
+    reproducible. With ``random_state=None`` the kwargs are returned unchanged, so every fit
+    re-draws fresh entropy. Only models that already carry a ``random_state`` (added by
+    ``check_model_kwargs`` when the estimator supports it) are reseeded. Mirrors ``ShapModel``'s
+    per-round reseeding.
+    """
+    if random_state is None:
+        return [dict(model_kwargs) for model_kwargs in list_model_kwargs]
+    seeded = []
+    for model_kwargs in list_model_kwargs:
+        model_kwargs = dict(model_kwargs)
+        if "random_state" in model_kwargs:
+            model_kwargs["random_state"] = random_state + round_idx
+        seeded.append(model_kwargs)
+    return seeded
+
+
 # II Main methods
 # 1. Step: Recursive feature elimination (RFE)
 def _recursive_feature_elimination(X, labels=None, step=None, n_feat_max=50, n_feat_min=25, n_cv=5, scoring="f1",
@@ -81,6 +103,9 @@ def fit_tree_based_models(X=None, labels=None,
                          f"to obtain {str_n_sets} of {n_feat_min} to {n_feat_max} features.")
         ut.print_start_progress(start_message=start_message)
     for i in range(n_rounds):
+        # Per-round reseed so a fixed random_state yields DIFFERENT rounds (real Monte-Carlo
+        # averaging with a non-zero importance std); no-op when random_state is None.
+        random_state_round = random_state + i if random_state is not None else None
         if is_preselected is not None:
             is_selected = is_preselected.astype(bool)
         else:
@@ -88,14 +113,15 @@ def fit_tree_based_models(X=None, labels=None,
         # 1. Step: Recursive feature elimination
         if use_rfe:
             args = dict(labels=labels, n_feat_min=n_feat_min, n_feat_max=n_feat_max, n_cv=n_cv, scoring=metric,
-                        step=step, random_state=random_state, verbose=verbose, i=i, n_rounds=n_rounds,
+                        step=step, random_state=random_state_round, verbose=verbose, i=i, n_rounds=n_rounds,
                         is_preselected=is_selected)
             is_selected = _recursive_feature_elimination(X, **args)
         is_selected_rounds[i, :] = is_selected
-        # 2. Step: Compute feature importance
+        # 2. Step: Compute feature importance (reseed the importance models per round too)
+        round_model_kwargs = _seed_model_kwargs(list_model_kwargs, random_state=random_state, round_idx=i)
         avg_importance, list_models = _compute_feature_importance(X, labels=labels, is_selected=is_selected,
                                                                   list_model_classes=list_model_classes,
-                                                                  list_model_kwargs=list_model_kwargs)
+                                                                  list_model_kwargs=round_model_kwargs)
         feature_importance[i, :] = avg_importance
         list_models_rounds.append(list_models)
     if verbose and use_rfe:
