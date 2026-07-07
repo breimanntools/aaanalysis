@@ -2,6 +2,7 @@
 This is a script for the backend of the SequenceFeature() object,
 a supportive class for the CPP feature engineering.
 """
+import itertools
 import pandas as pd
 import numpy as np
 
@@ -9,6 +10,12 @@ import aaanalysis.utils as ut
 from .utils_feature import get_positions_, get_feature_matrix_, get_amino_acids_, add_scale_info_
 from ._split import SplitRange
 from ._utils_feature_stat import add_stat_
+
+# Physicochemical grouping of the 20 canonical amino acids — the small, colorable category structure
+# for one-hot AAC scales and k-mer composition maps (independent of the AAontology scale categories).
+_DICT_AA_CLASS = {aa: cls for cls, aas in
+                  {"Nonpolar": "GAVLIPM", "Aromatic": "FWY", "Polar": "STCNQ",
+                   "Positive": "KRH", "Negative": "DE"}.items() for aa in aas}
 
 
 # I Helper Functions
@@ -178,6 +185,120 @@ def get_scale_composition_(df_parts=None, df_scales=None):
     with np.errstate(invalid="ignore"):
         X = sums / n_kept[:, None]                                 # 0 / 0 -> NaN (empty rows)
     return X, n_kept
+
+
+def _canonical_codes_(df_parts=None):
+    """Flatten every residue of every span to a canonical index (0..19), dropping non-canonical.
+
+    The part strings of each row are concatenated into one span (in ``df_parts`` column order,
+    matching :func:`get_scale_composition_`), every residue is mapped through a 256-entry byte
+    lookup to its position in ``ut.LIST_CANONICAL_AA``, and gaps / non-canonical symbols (byte
+    lookup ``-1``, incl. codepoints above 255 which ``latin-1`` "replace" turns into ``'?'``)
+    are dropped. Returns the per-residue owning-sequence ids ``seq_ids`` and canonical indices
+    ``aa_idx`` (both 1-D, aligned) plus the sequence count ``n_seq`` — the shared vectorized
+    front half of the AAC and DPC composition featurizers (no per-sequence Python loop).
+    """
+    n_seq = len(df_parts)
+    list_aa = list(ut.LIST_CANONICAL_AA)
+    # Byte -> canonical index lookup (-1 = non-canonical)
+    lut = np.full(256, -1, dtype=np.intp)
+    for idx, aa in enumerate(list_aa):
+        lut[ord(aa)] = idx
+    # Flatten every residue of every span, tracking its owning sequence
+    # (df_parts columns are guaranteed str by the frontend's get_df_parts)
+    spans = df_parts.agg("".join, axis=1).to_list()
+    lengths = np.fromiter((len(s) for s in spans), dtype=np.intp, count=n_seq)
+    codes = np.frombuffer("".join(spans).encode("latin-1", "replace"), dtype=np.uint8)
+    seq_ids = np.repeat(np.arange(n_seq), lengths)
+    aa_idx = lut[codes]                                             # canonical index per residue
+    valid = aa_idx >= 0
+    return seq_ids[valid], aa_idx[valid], n_seq
+
+
+def get_kmer_composition_(df_parts=None, k=1):
+    """Per-sequence k-mer composition over the concatenated sequence parts (vectorized).
+
+    Generalizes :func:`get_aa_composition_` (``k=1``, AAC) and
+    :func:`get_dipeptide_composition_` (``k=2``, DPC): for each row of ``df_parts`` the parts
+    are concatenated into one span, non-canonical residues are dropped, and the ``20 ** k``
+    ordered overlapping k-mers of adjacent canonical residues are counted and divided by the
+    k-mer count, giving the ``(n_seq, 20 ** k)`` fraction matrix ``X`` (each row with at least
+    ``k`` canonical residues sums to 1). A k-mer of residues ``r_0 r_1 ... r_{k-1}`` has the
+    base-20 code ``sum_j r_j * 20 ** (k - 1 - j)`` (``ut.LIST_CANONICAL_AA`` order), so column
+    order matches ``itertools.product(LIST_CANONICAL_AA, repeat=k)``. k-mers are formed on the
+    concatenated, gap-free span (so a window spans dropped non-canonical residues and crosses
+    part boundaries); a same-sequence mask (``seq_ids[i] == seq_ids[i + k - 1]``) drops windows
+    straddling two sequences. A span with fewer than ``k`` canonical residues has no k-mer and
+    becomes an all-``NaN`` row; ``n_kmers`` reports the counted k-mers per row so the frontend
+    can warn. One ``np.bincount`` over ``20 ** k * seq + code`` builds the whole count matrix,
+    so there is no per-sequence Python loop. ``k`` is validated (int, in range) by the frontend.
+    """
+    seq_ids, aa_idx, n_seq = _canonical_codes_(df_parts=df_parts)
+    n_codes = 20 ** k
+    m = aa_idx.shape[0]
+    if m < k:                                                      # no window fits in any span
+        return np.full((n_seq, n_codes), np.nan), np.zeros(n_seq, dtype=int)
+    # Overlapping windows of k consecutive flattened residues; keep only same-sequence ones.
+    starts = np.arange(m - k + 1)
+    same = seq_ids[starts] == seq_ids[starts + k - 1]
+    starts = starts[same]
+    win_seq = seq_ids[starts]
+    code = np.zeros(starts.shape[0], dtype=np.int64)
+    for j in range(k):
+        code = code * 20 + aa_idx[starts + j]                     # base-20 k-mer code (0 .. 20**k-1)
+    counts = np.bincount(win_seq * n_codes + code,
+                         minlength=n_seq * n_codes).reshape(n_seq, n_codes).astype(float)
+    n_kmers = counts.sum(axis=1).astype(int)
+    with np.errstate(invalid="ignore"):
+        X = counts / n_kmers[:, None]                             # 0 / 0 -> NaN (< k residues)
+    return X, n_kmers
+
+
+def get_composition_scales_(k=1):
+    """Scale set + category table for k-mer composition (feeds ``CPP.run`` / colors the composition map).
+
+    ``k == 1``: the ``(20, 20)`` one-hot identity ``df_scales`` (scale ``<AA>`` = 1 on residue ``AA``,
+    0 elsewhere) plus a ``df_cat`` mapping each amino acid to its physicochemical class — feed both to
+    :meth:`CPP.run` with the whole-part ``Segment(1,1)`` split to obtain amino-acid composition as a
+    real ``df_feat`` / feature map. ``k >= 2``: ``df_scales`` is ``None`` (a k-mer is a property of an
+    adjacent tuple, not a per-residue scale, so it cannot be a CPP scale) and ``df_cat`` categorizes
+    each of the ``20 ** k`` k-mers by its residues' classes — for grouping / labeling the composition
+    map, not for :meth:`CPP.run`.
+    """
+    aa = list(ut.LIST_CANONICAL_AA)
+    kmers = ["".join(p) for p in itertools.product(aa, repeat=k)]
+    subcat = ["-".join(_DICT_AA_CLASS[c] for c in km) for km in kmers]
+    df_cat = pd.DataFrame({
+        ut.COL_SCALE_ID: kmers,
+        ut.COL_CAT: [_DICT_AA_CLASS[km[0]] for km in kmers],       # first-residue class (coarse)
+        ut.COL_SUBCAT: subcat,                                     # per-residue class tuple
+        ut.COL_SCALE_NAME: kmers,
+        ut.COL_SCALE_DES: [f"{k}-mer {km} ({sc})" if k > 1 else f"Amino acid {km} indicator"
+                           for km, sc in zip(kmers, subcat)],
+    })
+    df_scales = pd.DataFrame(np.eye(len(aa)), index=aa, columns=aa) if k == 1 else None
+    return df_scales, df_cat
+
+
+def get_aa_composition_(df_parts=None):
+    """Per-sequence amino-acid composition (AAC) — the ``k=1`` case of :func:`get_kmer_composition_`.
+
+    Concatenates each row's parts into one span, drops non-canonical residues, and returns the
+    ``(n_seq, 20)`` fraction matrix ``X`` (``ut.LIST_CANONICAL_AA`` order, each row sums to 1)
+    plus the kept-residue count per row (all-``NaN`` row when a span has no canonical residue).
+    """
+    return get_kmer_composition_(df_parts=df_parts, k=1)
+
+
+def get_dipeptide_composition_(df_parts=None):
+    """Per-sequence dipeptide composition (DPC) — the ``k=2`` case of :func:`get_kmer_composition_`.
+
+    Concatenates each row's parts into one gap-free span, drops non-canonical residues, and
+    returns the ``(n_seq, 400)`` fraction matrix ``X`` of ordered adjacent pairs (``AA, AC, ...,
+    YY`` in ``ut.LIST_CANONICAL_AA`` order, each row with >= 2 canonical residues sums to 1)
+    plus the pair count per row (all-``NaN`` row when a span has fewer than two canonical residues).
+    """
+    return get_kmer_composition_(df_parts=df_parts, k=2)
 
 
 # Multi-class / regression label conversion

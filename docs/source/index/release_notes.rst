@@ -59,6 +59,16 @@ Added
 - :meth:`~aaanalysis.CPP.run_num`: Numerical mode sourcing per-residue values from a pre-sliced tensor
   (``dict_num_parts``) instead of an amino-acid → scale lookup — embedding / structure /
   annotation features through the same pipeline and output schema as :meth:`~aaanalysis.CPP.run`.
+- :meth:`~aaanalysis.CPP.run_composit` (and the :meth:`~aaanalysis.CPP.run_aac` shortcut):
+  Composition mode — build a ``df_feat`` of **composition** features (iFeature-style descriptors
+  [Chen18]_) scored with CPP's discriminative statistics. ``composition="aac"`` (amino-acid
+  composition) *is* positional CPP — a one-hot identity scale set with the whole-part ``Segment(1,1)``
+  split, so it yields ``<PART>-Segment(1,1)-<AA>`` features **with positions** drawn by the feature
+  map. ``composition="dpc"`` (dipeptide) / ``"kmer"`` (general ``k``) are **non-positional** (a k-mer
+  is an adjacent-tuple property, not a per-residue scale): the ``20 ** k`` k-mers are scored and
+  filtered by adjusted AUC (top ``n_filter``), a min-occurrence guard (``min_count``), and optional
+  correlation dedup (``max_cor``). The composition matrices themselves come from
+  :meth:`~aaanalysis.SequenceFeature.kmer_composition` (which documents the compositional approaches).
 - **CPP.run ``redundancy='legacy'|'exact'``** (also :meth:`~aaanalysis.CPP.run_num`): Opt-in
   position-overlap criterion for the redundancy-reduction step. The default ``'legacy'`` is
   byte-identical to previous versions (published signatures stay reproducible); ``'exact'``
@@ -90,6 +100,33 @@ Added
   residue axis rather than the JMD-offset ``positions`` display numbering. ``X`` is therefore
   byte-identical to the values :meth:`~aaanalysis.CPP.run_num` computed and preserves the per-residue
   context that per-AA-averaged sequence features discard.
+- **SequenceFeature.aa_composition**: Amino-acid-composition (AAC) baseline featurizer that
+  turns sequences into a ``(n_seq, 20)`` matrix — the fraction of each of the 20 canonical
+  amino acids (``ut.LIST_CANONICAL_AA`` column order) over a sequence span
+  (``list_parts=None`` → whole ``jmd_n`` + ``tmd`` + ``jmd_c``), dropping gaps /
+  non-canonical residues so each row sums to 1. Fully vectorized; the no-positional-split
+  residue-frequency baseline to compare against ``feature_matrix`` / CPP; optional
+  ``return_df=True`` for a labeled frame.
+- **SequenceFeature.dipeptide_composition**: Dipeptide-composition (DPC) baseline featurizer
+  that turns sequences into a ``(n_seq, 400)`` matrix — the fraction of each of the 400
+  ordered adjacent canonical amino-acid pairs (``AA, AC, ..., YY``) over a sequence span,
+  dropping gaps / non-canonical residues before pairing (adjacencies span dropped residues
+  and cross concatenated part boundaries); each row with at least two canonical residues sums
+  to 1. Captures local sequential order that plain composition discards; fully vectorized;
+  optional ``return_df=True`` for a labeled frame.
+- **SequenceFeature.kmer_composition**: General k-mer-composition baseline featurizer — the
+  fraction of each of the ``20 ** k`` ordered overlapping k-mers of adjacent canonical residues
+  over a sequence span, a ``(n_seq, 20 ** k)`` matrix (columns in
+  ``itertools.product(ut.LIST_CANONICAL_AA, repeat=k)`` order). ``k`` selects the composition:
+  ``k=1`` is amino-acid composition (identical to ``aa_composition``), ``k=2`` dipeptide
+  composition (identical to ``dipeptide_composition``), and higher ``k`` (up to 4) captures
+  longer local sequential order. Same non-canonical-dropping, gap-free-span, each-row-sums-to-1
+  semantics as the ``k=1`` / ``k=2`` special cases; fully vectorized (one ``bincount`` over
+  base-20 k-mer codes); optional ``return_df=True`` for a labeled frame. ``return_scales=True`` also
+  returns the CPP-ready ``(df_scales, df_cat)``: for ``k=1`` the ``(20, 20)`` one-hot identity scale set
+  + amino-acid-class ``df_cat`` (feed to :meth:`~aaanalysis.CPP.run` with a whole-part ``Segment(1,1)``
+  split to get amino-acid composition as a real ``df_feat`` / feature map); for ``k>=2`` ``df_scales`` is
+  ``None`` (a k-mer is not a per-residue scale) and ``df_cat`` categorizes the k-mers by residue class.
 - **SequenceFeature.get_df_parts_from_windows**: Assemble a reference ``df_parts`` from
   per-part window sets (e.g. ``AAWindowSampler.sample_synthetic`` output).
 - **SequenceFeature.get_seq_kws**: Return one protein's ``{jmd_n_seq, tmd_seq, jmd_c_seq}``
