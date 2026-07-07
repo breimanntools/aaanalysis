@@ -1384,10 +1384,23 @@ class CPPPlot:
               is given instead, the SHAP impact is shown directly in the heatmap (diverging colormap) and
               the cumulative bars are switched off.
 
+            .. note::
+
+               A sample-level map must be colored by a *sample-specific* difference, i.e. **this one
+               sample (protein) minus the reference group average**, not by the group-level `mean_dif`
+               (test group minus reference group). Compute it per sample with
+               :meth:`ShapModel.add_sample_mean_dif` (which writes a `mean_dif_'name'` column contrasting
+               the selected sample against the ``label_ref`` group) and pass that column as ``col_val``.
+               Reusing the group-level `mean_dif` here would show the group signature under every sample's
+               SHAP impact instead of each protein's own deviation. Set ``name_ref`` to the reference
+               group's name (e.g. ``"others"``) so the colorbar label matches.
+
         col_cat : {'category', 'subcategory', 'scale_name'}, default='subcategory'
             Column name in ``df_feat`` for scale information (y-axis).
         col_val : {'mean_dif', 'abs_mean_dif', 'abs_auc', ``mean_dif_'name'``, ``feat_impact_'name'``}, default='mean_dif'
             Column name in ``df_feat`` for numerical values to display. Must match with the ``shap_plot`` setting.
+            For a sample-level (SHAP) map use a sample-specific ``mean_dif_'name'`` column (sample minus
+            reference group, from :meth:`ShapModel.add_sample_mean_dif`), not the group-level ``'mean_dif'``.
         col_imp :  {``feat_importance``, ``feat_importance_'name'``, ``feat_impact_'name'``}, default='feat_importance'
             Column name in ``df_feat`` for feature importance (group-, subgroup- or sample-level) or, when
             ``shap_plot=True``, for sample-level feature impact. Must match with the ``shap_plot`` setting.
