@@ -1157,6 +1157,22 @@ class SequenceFeature:
         ``20 ** k``-wide, sparser matrix — reach for :class:`CPP` when you need
         where-along-the-sequence information.
 
+        **Compositional descriptors (iFeature parity).** These non-positional, fixed-length
+        residue-frequency vectors are the classic *composition* descriptors of tools such as
+        **iFeature** [Chen18]_. The supported approaches:
+
+        * **AAC** (amino-acid composition, ``k=1``) — the fraction of each of the 20 amino acids
+          (20-D). The simplest composition; captures *which* residues, not order.
+        * **DPC** (dipeptide composition, ``k=2``) — the fraction of each ordered adjacent pair
+          (400-D). Adds local *sequential order* (which residue follows which).
+        * **k-mer** (``k >= 3``) — the general ``20 ** k``-D extension to longer motifs; grows
+          exponentially and sparsifies quickly, so it is most reliable at low ``k``.
+
+        Other iFeature-style descriptors (CTD — composition/transition/distribution of
+        physicochemical groups, PAAC — pseudo amino-acid composition, DDE, ...) are the natural
+        follow-ups to complete the family. To turn any of these into a :class:`CPP` ``df_feat`` (AAC
+        positional; DPC/k-mer non-positional), see :meth:`CPP.run_composit`.
+
         .. versionadded:: 1.1.0
 
         Parameters

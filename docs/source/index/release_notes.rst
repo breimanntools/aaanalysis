@@ -52,6 +52,16 @@ Added
 - :meth:`~aaanalysis.CPP.run_num`: Numerical mode sourcing per-residue values from a pre-sliced tensor
   (``dict_num_parts``) instead of an amino-acid → scale lookup — embedding / structure /
   annotation features through the same pipeline and output schema as :meth:`~aaanalysis.CPP.run`.
+- :meth:`~aaanalysis.CPP.run_composit` (and the :meth:`~aaanalysis.CPP.run_aac` shortcut):
+  Composition mode — build a ``df_feat`` of **composition** features (iFeature-style descriptors
+  [Chen18]_) scored with CPP's discriminative statistics. ``composition="aac"`` (amino-acid
+  composition) *is* positional CPP — a one-hot identity scale set with the whole-part ``Segment(1,1)``
+  split, so it yields ``<PART>-Segment(1,1)-<AA>`` features **with positions** drawn by the feature
+  map. ``composition="dpc"`` (dipeptide) / ``"kmer"`` (general ``k``) are **non-positional** (a k-mer
+  is an adjacent-tuple property, not a per-residue scale): the ``20 ** k`` k-mers are scored and
+  filtered by adjusted AUC (top ``n_filter``), a min-occurrence guard (``min_count``), and optional
+  correlation dedup (``max_cor``). The composition matrices themselves come from
+  :meth:`~aaanalysis.SequenceFeature.kmer_composition` (which documents the compositional approaches).
 - **CPP.run ``redundancy='legacy'|'exact'``** (also :meth:`~aaanalysis.CPP.run_num`): Opt-in
   position-overlap criterion for the redundancy-reduction step. The default ``'legacy'`` is
   byte-identical to previous versions (published signatures stay reproducible); ``'exact'``
@@ -277,23 +287,7 @@ Added
   the explicit single-CPP path); it returns ``(df_feat, ax, df_eval)`` where ``ax`` also
   carries the publication eval figures (``ax.eval``) and ``df_eval`` has one
   ``<metric>_mean``/``_std`` column per metric plus ``stage`` / ``is_pareto`` / ``rank``
-  / ``is_selected``. A ``baselines`` argument (``True`` = AAC + DPC, or a sequence of k-mer
-  orders 1..4) adds **composition baselines** for the "how much does positional CPP add over
-  plain composition?" comparison: each is cross-validated with the same ``model`` / ``cv`` /
-  ``metric`` and appended to ``df_eval`` as a reference row (``stage="baseline"``,
-  ``is_selected=False``; the returned winner stays the CPP feature set). Each baseline is **filtered
-  with the same discriminative statistics CPP ranks on** (adjusted AUC, mean difference, test-group
-  std) and reduced to the CPP winner's feature count: AAC (k=1) is a genuine CPP ``df_feat`` — a
-  one-hot identity scale set with the whole-part ``Segment(1,1)`` split — so its feature map is
-  attached; DPC / higher k-mers cannot be per-residue features, so they are scored + top-``n_filter``
-  selected (optionally correlation-deduped) into a ``df_feat``-shaped k-mer table and drawn as
-  composition **signal maps** (per-k-mer ``test − ref`` on a diverging, feature-map-consistent palette:
-  a 20×20 heatmap for k=2 with the selected dipeptides outlined, top-N ranked bars for k≥3). The
-  ``df_feat`` tables + figures are attached as ``ax.baselines`` (dict keyed ``AAC`` / ``DPC`` / ``<k>-mer``).
-  A ``baseline_min_count`` guard (default ``1``) drops k-mers present in fewer than that many sequences
-  before ranking — higher ``k`` is dominated by sparse presence/absence noise, so raising it keeps
-  noise-only k-mers out of the selection (ranking uses the scale-free adjusted AUC, not the k-dependent
-  ``mean_dif`` magnitude, so selection stays meaningful across ``k``).
+  / ``is_selected``.
 - **aap.plot_eval**: Publication-ready evaluation figures of a ``find_features`` sweep —
   the high-dimensional Part × Split × Scale grid is **decomposed** into a series of clean
   2D ``viridis`` heatmaps (the two most-informative axes on each panel, the least on the

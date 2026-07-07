@@ -37,6 +37,11 @@ AAanalysis Algorithms
    *Charting γ-secretase substrates by explainable AI*,
    `Nature Communications <https://www.nature.com/articles/s41467-025-60638-z>`__.
 
+.. [Chen18] Chen *et al.* (2018),
+   *iFeature: a Python package and web server for features extraction and selection from protein and
+   peptide sequences*,
+   `Bioinformatics <https://academic.oup.com/bioinformatics/article/34/14/2499/4924718>`__.
+
 Sequence Algorithms
 -------------------
 .. [Li06] Li W., Godzik A. (2006),
