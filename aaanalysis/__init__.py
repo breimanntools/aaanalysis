@@ -7,7 +7,7 @@ from .seq_analysis import AAlogo, AAlogoPlot, AAWindowSampler
 from .feature_engineering import AAclust, AAclustPlot, SequenceFeature, NumericalFeature, CPP, CPPGrid, CPPPlot
 from .pu_learning import dPULearn, dPULearnPlot
 from .explainable_ai import TreeModel
-from .prediction import AAPred, AAPredPlot
+from .prediction import AAPred, AAPredPlot, ReliabilityModel, ReliabilityModelPlot
 from .protein_engineering import AAMut, AAMutPlot, SeqMut, SeqMutPlot, SeqOpt, SeqOptPlot
 from .plotting import (plot_get_clist, plot_get_cmap, plot_get_cdict,
                        plot_settings, plot_legend, plot_gcfs, plot_rank)
@@ -63,6 +63,8 @@ __all__ = [
     "TreeModel",
     "AAPred",
     "AAPredPlot",
+    "ReliabilityModel",
+    "ReliabilityModelPlot",
     # "ShapModel"       # SHAP
     "plot_get_clist",
     "plot_get_cmap",

@@ -51,6 +51,8 @@ REGISTRY = {
     "TreeModel": "tm",
     "AAPred": "aapred",
     "AAPredPlot": "aapred_plot",
+    "ReliabilityModel": "rm",
+    "ReliabilityModelPlot": "rm_plot",
     "ShapModel": "sm",
     "StructurePreprocessor": "stp",
     "AnnotationPreprocessor": "ap",

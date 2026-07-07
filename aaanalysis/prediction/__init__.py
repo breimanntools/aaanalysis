@@ -1,7 +1,7 @@
 """
 Prediction: evaluate and deploy sequence-based prediction models.
 
-Public objects: AAPred, AAPredPlot.
+Public objects: AAPred, AAPredPlot, ReliabilityModel, ReliabilityModelPlot.
 Downstream of feature engineering (``CPP`` / ``CPPGrid`` produce ``df_feat`` and the feature
 matrix ``X``): ``AAPred`` evaluates one or more scikit-learn models across metrics by
 cross-validation and an optional held-out set (``eval``), and fits them for deployment, then
@@ -14,8 +14,12 @@ See ``.claude/rules/code-conventions.md`` for conventions and ``CONTEXT.md`` for
 """
 from ._aa_pred import AAPred
 from ._aa_pred_plot import AAPredPlot
+from ._reliability_model import ReliabilityModel
+from ._reliability_model_plot import ReliabilityModelPlot
 
 __all__ = [
     "AAPred",
     "AAPredPlot",
+    "ReliabilityModel",
+    "ReliabilityModelPlot",
 ]

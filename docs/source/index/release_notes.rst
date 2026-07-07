@@ -42,6 +42,13 @@ Added
   single-call form of the recurring ``(df[col] == x).astype(int).to_numpy()`` expression.
 - :func:`~aaanalysis.combine_dict_nums`: Concatenates per-residue tensors (embedding / structure /
   annotation) along the feature axis into one combined :meth:`~aaanalysis.CPP.run_num` input.
+- :meth:`~aaanalysis.SequencePreprocessor.pad_parts`: Pads the sequence-part columns of a
+  ``df_parts`` DataFrame to a uniform length with a gap symbol (``length`` target or each column's
+  per-part max; N-terminal, C-terminal, or symmetric ``both``). The selected ``list_parts`` columns
+  are padded (default all) and a padded copy is returned (non-selected columns and the index
+  unchanged; input never mutated). Enables analyzing short, variable-length parts at a finer,
+  uniform resolution via *pad* → :class:`~aaanalysis.CPP` (``accept_gaps=True``) → larger uniform
+  ``n_split_max`` than the shortest real part allows.
 
 **Feature Engineering**
 
@@ -111,6 +118,23 @@ Added
   proteins / embeddings / CPP features via ``X`` (used as-is). The explicit ``X``
   signature is unchanged.
 
+**Prediction**
+
+- :class:`~aaanalysis.ReliabilityModel`: Per-sample **prediction reliability** — quantifies how much
+  to trust a prediction, separately from the score itself (a model can be confident about a ``0.55``
+  and worthless about a ``1.0`` out-of-distribution score). Wraps a fitted predictor (an
+  :class:`~aaanalysis.AAPred`, a :class:`~aaanalysis.TreeModel`, or any scikit-learn classifier) plus
+  its training data and reports, per sample: stability (ensemble/bootstrap ``score_std`` and a
+  confidence interval), an **applicability-domain** out-of-distribution signal (k-NN distance,
+  Mahalanobis, leverage → ``ood_score`` / ``in_domain``), calibrated sharpness (``margin`` /
+  ``entropy``), a marginal split-conformal prediction set that can abstain, and a headline
+  ``reliable`` flag (in-domain, stable, and a confident conformal singleton). ``fit`` / ``predict`` /
+  ``eval``; core scikit-learn only, no new required dependency.
+- :class:`~aaanalysis.ReliabilityModelPlot`: Visualizes :class:`~aaanalysis.ReliabilityModel` output —
+  a per-sample ``ranking`` (each prediction's score with its uncertainty interval, colored by trust
+  status), a calibration curve (``reliability_diagram``), the out-of-distribution score distribution
+  (``ood_hist``), and a score-vs-OOD ``trust_map`` colored by the ``reliable`` flag.
+
 **Explainable AI**
 
 - **ShapModel — accession-based interface** (``[pro]``): ``fit`` accepts entry-keyed
@@ -169,6 +193,14 @@ Added
   of reliable negatives** — over the rows of ``X_unlabeled`` in the split mode, over ``X``
   otherwise (equal to the manual ``labels_[len(X_pos):] == 0`` result exactly). ``fit`` still
   returns ``self`` and the existing ``fit(X, labels=...)`` path is unchanged.
+- :meth:`~aaanalysis.dPULearn.project`: Projects held-out samples from the same feature space into
+  the **fitted PC space** (the ``PCi`` columns of ``df_pu_``) after PCA-based identification, so new
+  proteins can be placed alongside the identified negatives. ``method`` selects the reconstructed
+  linear map — ``'lstsq'`` (default, affine least-squares) or ``'components'`` (exact PCA-geometry
+  map); both are exact on the fitted samples and interpolate for new ones.
+  :meth:`~aaanalysis.dPULearnPlot.pca` gains ``df_pu_add`` / ``names_add`` / ``colors_add`` to
+  overlay one or more projected groups (a one-call four-group PCA); the default (``df_pu_add=None``)
+  output is unchanged.
 
 **Sequence Analysis**
 

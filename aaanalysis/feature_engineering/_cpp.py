@@ -321,6 +321,9 @@ class CPP(Tool):
             Default from :meth:`load_scales` with ``name='scales_cat'``, unless specified in ``options['df_cat']``.
         accept_gaps : bool, default=False
             Whether to accept missing values by enabling omitting for computations (if ``True``).
+            Combined with :meth:`SequencePreprocessor.pad_parts`, this enables analyzing short,
+            variable-length sequences at a uniform, finer ``n_split_max`` than the shortest real
+            sequence allows (a padded part is longer, so more splits fit).
         verbose : bool, default=True
             If ``True``, verbose outputs are enabled.
         random_state : int, optional
@@ -392,7 +395,9 @@ class CPP(Tool):
                 f"'df_parts' has a sequence part too short for the requested 'split_kws'; "
                 f"auto-capped so CPP still runs: {'; '.join(split_changes)}. Pass a smaller "
                 f"'n_split_max' / 'len_max' (via SequenceFeature.get_split_kws) or add flanking "
-                f"context (jmd_n/jmd_c) to control this.", UserWarning)
+                f"context (jmd_n/jmd_c) to control this. To keep finer splits, pad short parts "
+                f"to a uniform length first with SequencePreprocessor.pad_parts (then "
+                f"CPP(accept_gaps=True)).", UserWarning)
         df_scales, df_cat = check_match_df_scales_df_cat(
             df_cat=df_cat, df_scales=df_scales, verbose=verbose
         )

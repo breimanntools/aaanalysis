@@ -103,6 +103,8 @@ Prediction
 
     AAPred
     AAPredPlot
+    ReliabilityModel
+    ReliabilityModelPlot
 
 .. _protein_engineering_api:
 

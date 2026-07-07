@@ -107,6 +107,24 @@ Machine Learning
    *Cluster analysis and display of genome-wide expression patterns*,
    `PNAS <https://doi.org/10.1073/pnas.95.25.14863>`__.
 
+Prediction Reliability and Uncertainty
+--------------------------------------
+.. [Huellermeier21] Hüllermeier and Waegeman (2021),
+   *Aleatoric and epistemic uncertainty in machine learning: an introduction to concepts and methods*,
+   `Machine Learning <https://doi.org/10.1007/s10994-021-05946-3>`__.
+
+.. [Guo17] Guo, Pleiss, Sun, and Weinberger (2017),
+   *On calibration of modern neural networks*,
+   `ICML <https://proceedings.mlr.press/v70/guo17a.html>`__.
+
+.. [Sahigara12] Sahigara, Mansouri, Ballabio, Mauri, Consonni, and Todeschini (2012),
+   *Comparison of different approaches to define the applicability domain of QSAR models*,
+   `Molecules <https://doi.org/10.3390/molecules17054791>`__.
+
+.. [Angelopoulos23] Angelopoulos and Bates (2023),
+   *A gentle introduction to conformal prediction and distribution-free uncertainty quantification*,
+   `Foundations and Trends in Machine Learning <https://doi.org/10.1561/2200000101>`__.
+
 Positive-Unlabeled Learning
 ---------------------------
 .. [ElkanNoto08] Elkan and Noto (2008),

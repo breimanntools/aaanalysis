@@ -463,6 +463,25 @@ LIST_PRINCIPLES = [STR_PRINCIPLE_CV, STR_PRINCIPLE_HOLDOUT]
 LIST_METRICS_PRED = ["accuracy", "balanced_accuracy", "precision", "recall", "f1", "roc_auc"]
 COLS_EVAL_PRED = [COL_MODEL, COL_METRIC, COL_PRINCIPLE, COL_SCORE, COL_SCORE_STD]
 
+# Prediction reliability (ReliabilityModel) — per-sample trust columns
+COL_CI_LOW = "ci_low"                # lower confidence-interval bound of the score
+COL_CI_HIGH = "ci_high"              # upper confidence-interval bound of the score
+COL_OOD_SCORE = "ood_score"          # applicability-domain distance, relative to the training threshold (1.0 = threshold)
+COL_IN_DOMAIN = "in_domain"          # bool: inside the training applicability domain (ood_score <= 1)
+COL_AD_KNN = "ad_knn_dist"           # mean distance to k nearest training samples (standardized space)
+COL_AD_MAHALANOBIS = "ad_mahalanobis"    # Mahalanobis distance to the training center
+COL_AD_LEVERAGE = "ad_leverage"      # leverage (hat value) relative to the training feature space
+COL_SCORE_CAL = "score_calibrated"   # calibrated positive-class probability (NaN if not calibrated)
+COL_MARGIN = "margin"                # |p - 0.5| * 2 on the calibrated score — aleatoric sharpness (1 = decisive, 0 = coin-flip)
+COL_ENTROPY = "entropy"              # binary entropy of the calibrated score (0 = decisive, 1 = coin-flip)
+COL_CONFORMAL_SET = "conformal_set"  # split-conformal prediction set: 'neg' | 'pos' | 'both' (ambiguous) | 'none' (abstain)
+COL_RELIABLE = "reliable"            # bool headline: in_domain AND a confident conformal singleton
+STR_CONF_NEG, STR_CONF_POS = "neg", "pos"
+STR_CONF_BOTH, STR_CONF_NONE = "both", "none"
+COLS_RELIABILITY = [COL_SCORE, COL_SCORE_STD, COL_CI_LOW, COL_CI_HIGH, COL_OOD_SCORE, COL_IN_DOMAIN,
+                    COL_AD_KNN, COL_AD_MAHALANOBIS, COL_AD_LEVERAGE, COL_SCORE_CAL, COL_MARGIN,
+                    COL_ENTROPY, COL_CONFORMAL_SET, COL_RELIABLE]
+
 # Labels
 LABEL_FEAT_VAL = "Feature value"
 LABEL_HIST_COUNT = "Number of proteins"

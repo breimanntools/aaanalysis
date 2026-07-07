@@ -171,11 +171,14 @@ class TestCheckCPP:
         # #338: a structurally-valid PeriodicPattern whose first step exceeds the part length no
         # longer raises; CPP drops it (keeping the Segment fallback) and warns once.
         df_parts = get_df_parts()
-        with pytest.warns(UserWarning, match="too short"):
+        with pytest.warns(UserWarning, match="too short") as record:
             cpp = aa.CPP(df_parts=df_parts,
                          split_kws=dict(PeriodicPattern=dict(steps=[1000000, 100000000])))
         assert "PeriodicPattern" not in cpp.split_kws
         assert "Segment" in cpp.split_kws   # universal fallback keeps >= 1 split type
+        # #338 follow-up: the auto-cap warning points users at the pad_parts -> CPP(accept_gaps=True) recipe.
+        msg = "\n".join(str(w.message) for w in record)
+        assert "SequencePreprocessor.pad_parts" in msg
 
     @settings(max_examples=10, deadline=None)
     @given(val=some.integers(min_value=2, max_value=10))
