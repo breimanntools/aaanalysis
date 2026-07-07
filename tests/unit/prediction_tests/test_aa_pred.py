@@ -238,17 +238,17 @@ def seq_fitted():
 class TestAAPredPredict:
     def test_predict_seq_columns(self, seq_fitted):
         aapred, df_seq, _ = seq_fitted
-        df_pred = aapred.predict(df_seq.head(5), level="seq")
+        df_pred = aapred.predict(df_seq.head(5), level="sequence")
         assert list(df_pred.columns) == ["entry", "score", "score_std"]
 
     def test_predict_seq_scores_in_range(self, seq_fitted):
         aapred, df_seq, _ = seq_fitted
-        df_pred = aapred.predict(df_seq.head(5), level="seq")
+        df_pred = aapred.predict(df_seq.head(5), level="sequence")
         assert df_pred["score"].between(0, 1).all()
 
     def test_predict_seq_threshold_adds_predicted_label(self, seq_fitted):
         aapred, df_seq, _ = seq_fitted
-        df_pred = aapred.predict(df_seq.head(5), level="seq", threshold=0.5)
+        df_pred = aapred.predict(df_seq.head(5), level="sequence", threshold=0.5)
         assert "predicted_label" in df_pred.columns
         assert set(df_pred["predicted_label"]).issubset({aapred.label_pos_, aapred.label_neg_})
 
@@ -277,13 +277,13 @@ class TestAAPredPredict:
     def test_predict_invalid_threshold_raises(self, seq_fitted):
         aapred, df_seq, _ = seq_fitted
         with pytest.raises(ValueError):
-            aapred.predict(df_seq.head(3), level="seq", threshold=2.0)
+            aapred.predict(df_seq.head(3), level="sequence", threshold=2.0)
 
     def test_predict_before_fit_raises(self):
         df_seq = aa.load_dataset(name="DOM_GSEC", n=5)
         df_feat = aa.load_features(name="DOM_GSEC").head(20)
         with pytest.raises(ValueError):
-            aa.AAPred(df_feat=df_feat).predict(df_seq.head(3), level="seq")
+            aa.AAPred(df_feat=df_feat).predict(df_seq.head(3), level="sequence")
 
     def test_predict_without_df_feat_raises(self):
         # Fitted (so not the not-fitted error) but no bound df_feat -> check_featurizer raises.
@@ -291,7 +291,7 @@ class TestAAPredPredict:
         aapred = aa.AAPred(random_state=0).fit(X, labels)
         df_seq = aa.load_dataset(name="DOM_GSEC", n=5)
         with pytest.raises(ValueError):
-            aapred.predict(df_seq.head(3), level="seq")
+            aapred.predict(df_seq.head(3), level="sequence")
 
     def test_predict_X_raw_ensemble_scores(self, seq_fitted):
         # The private ensemble scorer that predict() builds on.

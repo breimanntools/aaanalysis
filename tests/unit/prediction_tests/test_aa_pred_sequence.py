@@ -45,41 +45,41 @@ class TestFeaturizerBinding:
         # fit on a dummy X so it is "fitted" but has no df_feat
         aapred.fit(np.random.RandomState(0).rand(20, 10), np.array([0, 1] * 10))
         with pytest.raises(ValueError):
-            aapred.predict(df_seq.head(3), level="seq")
+            aapred.predict(df_seq.head(3), level="sequence")
 
 
 class TestPredictSeq:
     def test_columns(self, fitted):
         aapred, df_seq, _ = fitted
-        df_pred = aapred.predict(df_seq.head(5), level="seq")
+        df_pred = aapred.predict(df_seq.head(5), level="sequence")
         assert list(df_pred.columns) == ["entry", "score", "score_std"]
 
     def test_one_row_per_protein(self, fitted):
         aapred, df_seq, _ = fitted
-        df_pred = aapred.predict(df_seq.head(5), level="seq")
+        df_pred = aapred.predict(df_seq.head(5), level="sequence")
         assert len(df_pred) == 5
 
     def test_scores_in_range(self, fitted):
         aapred, df_seq, _ = fitted
-        df_pred = aapred.predict(df_seq.head(5), level="seq")
+        df_pred = aapred.predict(df_seq.head(5), level="sequence")
         assert df_pred["score"].between(0, 1).all()
 
     def test_threshold_adds_predicted_label(self, fitted):
         aapred, df_seq, _ = fitted
-        df_pred = aapred.predict(df_seq.head(5), level="seq", threshold=0.5)
+        df_pred = aapred.predict(df_seq.head(5), level="sequence", threshold=0.5)
         assert "predicted_label" in df_pred.columns
         assert set(df_pred["predicted_label"]).issubset({aapred.label_pos_, aapred.label_neg_})
 
     def test_list_parts(self, fitted):
         aapred, df_seq, _ = fitted
-        df_pred = aapred.predict(df_seq.head(3), level="seq",
+        df_pred = aapred.predict(df_seq.head(3), level="sequence",
                                  list_parts=["tmd", "jmd_n_tmd_n", "tmd_c_jmd_c"])
         assert len(df_pred) == 3
 
     def test_before_fit_raises(self, fitted):
         _, df_seq, df_feat = fitted
         with pytest.raises(ValueError):
-            aa.AAPred(df_feat=df_feat).predict(df_seq.head(3), level="seq")
+            aa.AAPred(df_feat=df_feat).predict(df_seq.head(3), level="sequence")
 
     def test_invalid_level_raises(self, fitted):
         aapred, df_seq, _ = fitted

@@ -63,7 +63,7 @@ def check_featurizer(df_feat=None):
     """Check that a feature definition is bound so raw sequences can be featurized."""
     if df_feat is None:
         raise ValueError("'AAPred' has no bound 'df_feat'; pass 'df_feat=...' to the constructor to "
-                         "enable sequence-level prediction (predict at level 'seq'/'domain'/'window').")
+                         "enable sequence-level prediction (predict at level 'sequence'/'domain'/'window').")
 
 
 def featurize_seq(df_feat=None, df_scales=None, df_seq=None, list_parts=None, **parts_kwargs):
@@ -142,7 +142,7 @@ class AAPred(Wrapper):
         df_feat : pd.DataFrame, shape (n_features, n_feature_info), optional
             CPP feature DataFrame (with a ``feature`` column) bound to the model. When given, the
             feature matrix ``X`` is computed internally from a ``df_seq`` by the sequence-level
-            :meth:`predict` method (``level='seq'``/``'domain'``/``'window'``).
+            :meth:`predict` method (``level='sequence'``/``'domain'``/``'window'``).
         df_scales : pd.DataFrame, shape (n_letters, n_scales), optional
             Amino acid scales used for internal featurization. Defaults to the bundled AAontology
             scales when ``None``.
@@ -374,7 +374,7 @@ class AAPred(Wrapper):
 
     def predict(self,
                 df_seq: pd.DataFrame,
-                level: str = "seq",
+                level: str = "sequence",
                 threshold: Optional[Union[int, float]] = None,
                 list_parts: Optional[List[str]] = None,
                 window: int = 3,
@@ -388,7 +388,7 @@ class AAPred(Wrapper):
 
         One predictor for all three granularities, selected with ``level``:
 
-        * ``'seq'`` — one score per protein (sequence level).
+        * ``'sequence'`` — one score per protein (sequence level).
         * ``'domain'`` — a boundary-sensitivity scan: the TMD boundaries are shifted by every
           offset in ``[-window, +window]`` and each shifted definition is featurized and scored.
         * ``'window'`` — a per-residue profile: a length-``tmd_len`` window is slid along each
@@ -409,8 +409,8 @@ class AAPred(Wrapper):
         df_seq : pd.DataFrame, shape (n_proteins, n_seq_info)
             DataFrame containing an ``entry`` column of unique protein identifiers and a
             ``sequence`` column; ``level='domain'`` additionally needs ``tmd_start`` / ``tmd_stop``.
-        level : str, default="seq"
-            Prediction granularity: ``'seq'``, ``'domain'``, or ``'window'``.
+        level : str, default="sequence"
+            Prediction granularity: ``'sequence'``, ``'domain'``, or ``'window'``.
         threshold : int or float, optional
             If given (in ``[0, 1]``), add a ``predicted_label`` column (score ``>= threshold`` ->
             ``label_pos``, else the negative class). ``None`` (default) returns scores only.
@@ -432,7 +432,7 @@ class AAPred(Wrapper):
         -------
         df_pred : pd.DataFrame
             Long-format predictions; columns depend on ``level``: ``entry`` / ``score`` /
-            ``score_std`` (``'seq'``), ``entry`` / ``offset`` / ``score`` / ``is_best`` (``'domain'``),
+            ``score_std`` (``'sequence'``), ``entry`` / ``offset`` / ``score`` / ``is_best`` (``'domain'``),
             ``entry`` / ``position`` / ``score`` / ``score_std`` (``'window'``). Plus
             ``predicted_label`` when ``threshold`` is given.
 
@@ -448,12 +448,12 @@ class AAPred(Wrapper):
         check_is_fitted(list_models=self.list_models_)
         check_featurizer(df_feat=self._df_feat)
         ut.check_df_seq(df_seq=df_seq)
-        if level not in ("seq", "domain", "window"):
-            raise ValueError(f"'level' ('{level}') must be 'seq', 'domain', or 'window'.")
+        if level not in ("sequence", "domain", "window"):
+            raise ValueError(f"'level' ('{level}') must be 'sequence', 'domain', or 'window'.")
         if threshold is not None:
             ut.check_number_range(name="threshold", val=threshold, min_val=0, max_val=1, just_int=False)
         # Dispatch to the level-specific predictor
-        if level == "seq":
+        if level == "sequence":
             df_pred = self._predict_seq(df_seq=df_seq, list_parts=list_parts)
         elif level == "domain":
             df_pred = self._predict_domain(df_seq=df_seq, window=window, list_parts=list_parts)
