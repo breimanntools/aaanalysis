@@ -113,6 +113,14 @@ class TestKmerFilter:
         df = comp_kmer_df_feat(sf=sf, df_seq=df_seq, labels=labels, k=2, n_filter=10)
         assert all(len(f) == 2 and set(f) <= set(ut.LIST_CANONICAL_AA) for f in df[ut.COL_FEATURE])
 
+    def test_min_count_guard_drops_sparse_kmers(self, data):
+        """A higher min-occurrence guard keeps only k-mers present in many sequences (fewer eligible)."""
+        df_seq, labels = data
+        sf = aa.SequenceFeature(verbose=False)
+        n_lo = len(comp_kmer_df_feat(sf=sf, df_seq=df_seq, labels=labels, k=3, n_filter=8000, min_count=1))
+        n_hi = len(comp_kmer_df_feat(sf=sf, df_seq=df_seq, labels=labels, k=3, n_filter=8000, min_count=8))
+        assert n_hi <= n_lo                                              # guard can only reduce the pool
+
 
 # IV find_features integration
 class TestFindFeaturesBaselines:
@@ -146,6 +154,13 @@ class TestFindFeaturesBaselines:
         df_seq, labels = data
         with pytest.raises(ValueError):
             find_features(labels=labels, df_seq=df_seq, search="fast", plot=False, baselines=bad, n_jobs=1)
+
+    @pytest.mark.parametrize("bad", [0, -1, 2.5])
+    def test_invalid_baseline_min_count(self, data, bad):
+        df_seq, labels = data
+        with pytest.raises(ValueError):
+            find_features(labels=labels, df_seq=df_seq, search="fast", plot=False, baselines=[2],
+                          baseline_min_count=bad, n_jobs=1)
 
 
 # V resolver

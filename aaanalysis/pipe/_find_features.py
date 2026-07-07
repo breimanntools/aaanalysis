@@ -337,7 +337,8 @@ def _resolve_baselines(baselines):
 
 def _run_baselines(ks=None, sf=None, df_seq=None, labels=None, models=None, cv=5, metrics=None,
                    label_test=1, label_ref=0, name_test="TEST", name_ref="REF", n_jmd=10,
-                   n_filter=100, max_cor=None, random_state=None, n_jobs=None, verbose=False, plot=True):
+                   n_filter=100, max_cor=None, min_count=1, random_state=None, n_jobs=None,
+                   verbose=False, plot=True):
     """Composition baselines: AAC (k=1) as a CPP ``df_feat`` + feature map; DPC/k-mer CPP-filtered.
 
     Each baseline selects up to ``n_filter`` features with CPP's discriminative statistics (AAC via
@@ -374,7 +375,8 @@ def _run_baselines(ks=None, sf=None, df_seq=None, labels=None, models=None, cv=5
             signal, kmers = comp_kmer_signal(sf=sf, df_seq=df_seq, labels=labels, k=k,
                                              label_test=label_test, label_ref=label_ref)
             df_kmer = comp_kmer_df_feat(sf=sf, df_seq=df_seq, labels=labels, k=k, label_test=label_test,
-                                        label_ref=label_ref, n_filter=n_filter, max_cor=max_cor)
+                                        label_ref=label_ref, n_filter=n_filter, max_cor=max_cor,
+                                        min_count=min_count)
             X = np.asarray(sf.kmer_composition(df_seq=df_seq, k=k), dtype=float)
             col_idx = {km: i for i, km in enumerate(kmers)}
             sel = [col_idx[km] for km in df_kmer[ut.COL_FEATURE]]
@@ -408,6 +410,7 @@ def find_features(labels: ut.ArrayLike1D,
                   subcategories: Optional[List[str]] = None,
                   top_n: Optional[int] = None,
                   baselines: Union[bool, Sequence[int]] = False,
+                  baseline_min_count: int = 1,
                   label_test: int = 1,
                   label_ref: int = 0,
                   name_test: str = "TEST",
@@ -479,6 +482,12 @@ def find_features(labels: ut.ArrayLike1D,
         (per-k-mer ``test − ref`` composition: a 20×20 heatmap for k=2, top-N bars for k≥3). When
         ``plot=True`` the drawn objects are attached as ``ax.baselines`` (dict keyed ``AAC`` / ``DPC``
         / ``<k>-mer``).
+    baseline_min_count : int, default=1
+        Min-occurrence guard for the k-mer (k>=2) baselines: a k-mer must be present (non-zero) in at
+        least this many sequences to be eligible for ranking. Higher ``k`` is dominated by sparse
+        presence/absence noise (at k=3 most k-mers are zero in nearly every sequence), so raising this
+        keeps noise-only k-mers out of the top-``n_filter`` selection. Only affects ``baselines`` with
+        ``k>=2``.
     label_test : int, default=1
         Class label of the test/positive group passed to :meth:`CPP.run`.
     label_ref : int, default=0
@@ -538,6 +547,7 @@ def find_features(labels: ut.ArrayLike1D,
     ut.check_number_range(name="top_n", val=top_n, min_val=1, accept_none=True, just_int=True)
     ut.check_bool(name="plot", val=plot)
     ks_baseline = _resolve_baselines(baselines)
+    ut.check_number_range(name="baseline_min_count", val=baseline_min_count, min_val=1, just_int=True)
     ut.check_number_range(name="random_state", val=random_state, min_val=0,
                           accept_none=True, just_int=True)
     ut.check_bool(name="verbose", val=verbose)
@@ -589,8 +599,8 @@ def find_features(labels: ut.ArrayLike1D,
         base_rows, base_artifacts = _run_baselines(
             ks=ks_baseline, sf=sf, df_seq=df_seq, labels=labels, models=models, cv=cv, metrics=metrics,
             label_test=label_test, label_ref=label_ref, name_test=name_test, name_ref=name_ref,
-            n_jmd=n_jmd_win, n_filter=len(df_feat), max_cor=cfg["max_cor"], random_state=random_state,
-            n_jobs=n_jobs, verbose=verbose, plot=plot)
+            n_jmd=n_jmd_win, n_filter=len(df_feat), max_cor=cfg["max_cor"], min_count=baseline_min_count,
+            random_state=random_state, n_jobs=n_jobs, verbose=verbose, plot=plot)
         df_eval = pd.concat([df_eval, pd.DataFrame(base_rows)], ignore_index=True)
         if ax is not None:
             ax.baselines = base_artifacts

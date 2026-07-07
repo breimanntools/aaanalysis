@@ -290,6 +290,10 @@ Added
   composition **signal maps** (per-k-mer ``test − ref`` on a diverging, feature-map-consistent palette:
   a 20×20 heatmap for k=2 with the selected dipeptides outlined, top-N ranked bars for k≥3). The
   ``df_feat`` tables + figures are attached as ``ax.baselines`` (dict keyed ``AAC`` / ``DPC`` / ``<k>-mer``).
+  A ``baseline_min_count`` guard (default ``1``) drops k-mers present in fewer than that many sequences
+  before ranking — higher ``k`` is dominated by sparse presence/absence noise, so raising it keeps
+  noise-only k-mers out of the selection (ranking uses the scale-free adjusted AUC, not the k-dependent
+  ``mean_dif`` magnitude, so selection stays meaningful across ``k``).
 - **aap.plot_eval**: Publication-ready evaluation figures of a ``find_features`` sweep —
   the high-dimensional Part × Split × Scale grid is **decomposed** into a series of clean
   2D ``viridis`` heatmaps (the two most-informative axes on each panel, the least on the

@@ -17,6 +17,7 @@ plain k-mer frequency encoding. Two representations are produced, both keyed off
   ``test − ref`` signal (1x20 strip / 20x20 heatmap / top-N bars) and marks / ranks the filtered set.
 """
 import itertools
+import warnings
 import numpy as np
 import pandas as pd
 from matplotlib.colors import TwoSlopeNorm
@@ -78,7 +79,7 @@ def comp_kmer_signal(sf=None, df_seq=None, labels=None, k=2, list_parts=None,
 
 
 def comp_kmer_df_feat(sf=None, df_seq=None, labels=None, k=2, list_parts=None, label_test=1,
-                      label_ref=0, n_filter=100, max_cor=None):
+                      label_ref=0, n_filter=100, max_cor=None, min_count=1):
     """CPP-style discriminative filtering of k-mer composition into a ranked ``df_feat``-like table.
 
     Scores every k-mer with the statistics CPP ranks on — adjusted AUC (``abs_auc`` via
@@ -89,6 +90,11 @@ def comp_kmer_df_feat(sf=None, df_seq=None, labels=None, k=2, list_parts=None, l
     (``max_overlap``) and scale-category redundancy filters do not apply (a k-mer has no residue
     position and is not a per-residue scale). Returns a ``df_feat``-shaped table (``feature`` = k-mer,
     ``category`` / ``subcategory`` = residue class, plus the stat columns), ranked best-first.
+
+    ``min_count`` is a min-occurrence guard: a k-mer must be **present (non-zero) in at least
+    ``min_count`` sequences** to be eligible. Higher ``k`` is dominated by sparse presence/absence
+    noise (at ``k=3`` most k-mers are zero in almost every sequence), so this keeps noise-only k-mers
+    out of the ranking; a ``UserWarning`` is emitted when the eligible set cannot fill ``n_filter``.
     """
     X, _df_scales, df_cat = sf.kmer_composition(df_seq=df_seq, k=k, list_parts=list_parts,
                                                 return_scales=True)
@@ -96,6 +102,7 @@ def comp_kmer_df_feat(sf=None, df_seq=None, labels=None, k=2, list_parts=None, l
     y = np.asarray(labels)
     keep_rows = np.isfinite(X).all(axis=1)                     # drop spans shorter than k (all-NaN)
     Xk, yk = X[keep_rows], y[keep_rows]
+    eligible = (Xk > 0).sum(axis=0) >= max(1, int(min_count))  # min-occurrence guard
     auc = np.abs(np.asarray(comp_auc_adjusted(Xk, yk, label_test=label_test, label_ref=label_ref)))
     mean_dif = Xk[yk == label_test].mean(axis=0) - Xk[yk == label_ref].mean(axis=0)
     std_test = Xk[yk == label_test].std(axis=0)
@@ -108,7 +115,12 @@ def comp_kmer_df_feat(sf=None, df_seq=None, labels=None, k=2, list_parts=None, l
         ut.COL_ABS_MEAN_DIF: np.abs(mean_dif),
         ut.COL_STD_TEST: std_test,
     })
-    order = np.argsort(-auc)                                   # best AUC first
+    df, Xk = df[eligible].reset_index(drop=True), Xk[:, eligible]
+    if len(df) < n_filter:
+        warnings.warn(f"only {len(df)} of {20 ** k} {k}-mer(s) occur in >= {min_count} sequence(s); "
+                      f"the k={k} composition is too sparse to fill n_filter={n_filter} (higher k is "
+                      f"mostly presence/absence noise — raise 'min_count' or lower 'k').")
+    order = np.argsort(-df[ut.COL_ABS_AUC].to_numpy())         # best AUC first (scale-free across k)
     df, Xk = df.iloc[order].reset_index(drop=True), Xk[:, order]
     if max_cor is not None:
         keep = np.asarray(NumericalFeature.filter_correlation(Xk, max_cor=max_cor), dtype=bool)
