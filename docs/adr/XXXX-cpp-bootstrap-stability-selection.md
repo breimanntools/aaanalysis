@@ -31,14 +31,14 @@ Two design questions were settled with the maintainer before implementation:
 ## Decision
 
 **D1. A boolean gate turns the mode on; the tuned config carries good defaults; the output *size*
-stays per-run.** A boolean `bootstrap` (default `False` = off) is the switch, in front of four tuned
+stays per-run.** A boolean `bootstrap` (default `False` = off) is the switch, in front of three tuned
 constructor parameters — `n_bootstrap` (default `20`), `resample` (`"reference"` default / `"both"` /
-`"test"`), `bootstrap_frac` (default `0.8`), and `min_freq` (default `0.25`). `bootstrap=True` applies
-them; `bootstrap=False` ignores them and runs the single pass. Separating the *switch* (a bool) from
-the *round count* (`n_bootstrap`) is deliberate: with a single `n_bootstrap=0`-means-off integer the
-tuned value (`20`) could never be the default (the default must be the off state), so the good number
-would live only in the user's memory. `n_filter` (the final output size) remains a per-call argument.
-"How to select robustly" is object config; "how many to keep" is per call.
+`"test"`), and `bootstrap_frac` (default `0.8`). `bootstrap=True` applies them; `bootstrap=False`
+ignores them and runs the single pass. Separating the *switch* (a bool) from the *round count*
+(`n_bootstrap`) is deliberate: with a single `n_bootstrap=0`-means-off integer the tuned value (`20`)
+could never be the default (the default must be the off state), so the good number would live only in
+the user's memory. `n_filter` (the final output size) remains a per-call argument. "How to select
+robustly" is object config; "how many to keep" is per call.
 
 **D2. Bootstrap is a thin wrapper (candidate generator), not a new algorithm.** With
 `bootstrap=True`, `run` / `run_num` route to `cpp_run_bootstrap`, which:
@@ -47,13 +47,14 @@ would live only in the user's memory. `n_filter` (the final output size) remains
   (`cpp_run_single`) `n_bootstrap` times, each on a bootstrap resample of the rows — **sampled with
   replacement** per group at `round(bootstrap_frac · n_group)` rows; `resample` chooses which
   group(s) are resampled and which are passed through unchanged. Tally how often each feature is
-  selected; `selection_frequency = count / n_bootstrap`. Every feature whose `selection_frequency`
-  reaches the threshold `min_freq` (a *fraction of the rounds*, not a count) is a stable candidate.
-- **Phase 2 (full-data authoritative).** Recompute statistics for the candidates on the **complete**
-  test + reference set, then let CPP's own filters decide the output: the `max_std_test` pre-filter
-  threshold and the redundancy filter (`max_overlap` / `max_cor` / `n_filter`). The result is ordered
-  by `abs_auc` exactly like a normal run and carries an extra `selection_frequency` column appended
-  after `positions`.
+  selected; `selection_frequency = count / n_bootstrap`. **Every feature selected in at least one
+  round is a candidate** — the resampling-vetted candidate pool. `selection_frequency` is reported,
+  **not** used as a selection threshold.
+- **Phase 2 (full-data authoritative; `n_filter` is the final cut).** Recompute statistics for the
+  candidates on the **complete** test + reference set, then let CPP's own filters decide the output:
+  the `max_std_test` pre-filter threshold and the redundancy filter (`max_overlap` / `max_cor` /
+  `n_filter`, the final selection criterion). The result is ordered by `abs_auc` exactly like a normal
+  run and carries an extra `selection_frequency` column appended after `positions`.
 
 **D3. Default is byte-identical.** `bootstrap=False` keeps the existing single-pass dispatch untouched,
 so the default output (and the perf A/B output digest) is unchanged; the feature is purely additive
@@ -74,11 +75,14 @@ scope for this change; the constructor placement future-proofs wiring them later
 - **`n_bootstrap=0`-means-off as the only switch (no `bootstrap` bool).** Rejected: it forces the
   round count and the on/off state to share one parameter, so the tuned count (`20`) can never be the
   default. A boolean gate lets the *on* state carry the good defaults.
-- **A `min_freq` *fraction* threshold vs a top-N-by-frequency *count*.** The stability filter keeps
-  features whose `selection_frequency ≥ min_freq` (a fraction of the rounds), **not** the top-N most
-  frequent. A count is dataset-size-dependent and less interpretable; a fraction reads directly
-  against the `selection_frequency` column ("selected in ≥ X% of rounds") and is consistent with
-  `bootstrap_frac`.
+- **A `selection_frequency` cut-off (a `min_freq` threshold, or a top-N-by-frequency count) as the
+  feature selector.** Rejected: `selection_frequency` is reported, but it does **not** decide the
+  output — `n_filter` (the ordinary full-data filter) is the final selection criterion. A frequency
+  threshold empirically **over-prunes** (see the sweep below: `min_freq=0.5` keeps only ~8 features
+  and is *less* reproducible, because CPP's signal is distributed over many weak-but-real features),
+  and a top-N-by-frequency count is dataset-size-dependent. Bootstrapping instead restricts the
+  candidate pool to the features that survive resampling and annotates each with how reproducible it
+  is; the normal filter makes the cut.
 - **Sub-sample without replacement (Meinshausen–Bühlmann stability selection).** A defensible
   alternative that matches `bootstrap_frac<1` literally, but the maintainer chose classic
   bootstrap-with-replacement per group; `bootstrap_frac` scales the per-group draw size.
@@ -105,29 +109,26 @@ reproducible the selection is. Higher is more stable.
 
   | n_bootstrap | run-to-run Jaccard | wall-clock |
   |---|---|---|
-  | 5  | 0.25 | 1x |
-  | 10 | 0.34 | 2x |
-  | 20 | 0.46 | 4x |
-  | 50 | 0.53 | 11x |
+  | 5  | 0.33 | 1x |
+  | 10 | 0.45 | 2x |
+  | 20 | 0.58 | 4x |
+  | 50 | 0.71 | 10x |
 
-  Even 5 rounds already lifts reproducibility ~4x over single-pass; 20 rounds is a practical
-  stability/cost knee. (Measured at the default `min_freq=0.25`; a lighter threshold lifts every
-  number a little.)
-- **`bootstrap_frac` in the 0.8–0.9 range is best.** Sweeping the per-group resample fraction at
-  `n_bootstrap=20`, run-to-run Jaccard rises to a broad optimum then drops at a full resample
-  (0.5 -> 0.29, 0.6 -> 0.35, 0.7 -> 0.35, **0.8 -> 0.46**, 0.9 -> 0.52, 1.0 -> 0.41): too small a
-  fraction starves each round of data, while a full resample makes the rounds too similar to average
-  out sampling noise. `0.8` (the conventional stability-selection sub-sample size) sits in that
-  optimum and is the default.
-- **A strict `min_freq` over-prunes; the default `0.25` is a light filter.** Sweeping the stability
-  threshold at `n_bootstrap=20` (features kept / run-to-run Jaccard): `0.0` -> 100 / 0.58, `0.2` ->
-  86 / 0.54, `0.3` -> 48 / 0.46, `0.5` -> 8 / 0.27, `0.7` -> 3 / 0.25, `≥0.8` -> 0. Because CPP's
-  signal is distributed over many weak-but-real features, a high threshold collapses the signature to
-  a handful of *borderline* features that are **less** reproducible, not more. The default `0.25`
-  drops the noise tail (features selected in under a quarter of the rounds) while keeping the broad,
-  stable signature; users wanting a smaller high-confidence set can raise it, mindful of the trade-off.
-- **Optimum for this dataset:** the shipped `bootstrap=True` defaults — `n_bootstrap=20`,
-  `bootstrap_frac=0.8`, `resample="reference"`, `min_freq=0.25`.
+  Even 5 rounds already lifts reproducibility ~6x over single-pass; 20 rounds is a practical
+  stability/cost knee (~10x the single-pass overlap).
+- **`bootstrap_frac=0.8` is a robust default, not a sharp optimum.** Because the full-data `n_filter`
+  filter makes the final cut, the per-group resample fraction has only a modest effect on the selected
+  set (sweeping 0.5–1.0 at `n_bootstrap=20` stays in a noisy ~0.5–0.72 band with no clean peak). `0.8`
+  is the conventional stability-selection sub-sample size and is kept as the default.
+- **Why there is no `selection_frequency` threshold (D2 / rejected alternatives).** A prototype
+  `min_freq` threshold was swept at `n_bootstrap=20` (kept as `min_freq` / features kept / run-to-run
+  Jaccard): `0.0` -> 100 / 0.58, `0.2` -> 86 / 0.54, `0.3` -> 48 / 0.46, `0.5` -> 8 / 0.27, `0.7` ->
+  3 / 0.25, `≥0.8` -> 0. Because CPP's signal is distributed over many weak-but-real features, any
+  strict threshold collapses the signature to a handful of *borderline* features that are **less**
+  reproducible, not more. So the threshold was dropped: `selection_frequency` is reported, and
+  `n_filter` (the ordinary full-data filter) makes the cut.
+- **Shipped defaults for this dataset:** `bootstrap=True` with `n_bootstrap=20`, `bootstrap_frac=0.8`,
+  `resample="reference"`.
 
 ## Consequences
 

@@ -317,7 +317,6 @@ class CPP(Tool):
         n_bootstrap: int = 20,
         resample: str = "reference",
         bootstrap_frac: float = 0.8,
-        min_freq: float = 0.25,
     ):
         """
         Parameters
@@ -352,10 +351,11 @@ class CPP(Tool):
         bootstrap : bool, default=False
             Whether to use **bootstrap stability feature selection**. ``False`` (default) runs the single-pass
             selection, so :meth:`run` / :meth:`run_num` behave exactly as before (output byte-identical) and the
-            ``n_bootstrap`` / ``resample`` / ``bootstrap_frac`` / ``min_freq`` settings are ignored. ``True`` turns
+            ``n_bootstrap`` / ``resample`` / ``bootstrap_frac`` settings are ignored. ``True`` turns
             the mode on with the tuned defaults below: each round re-selects features on a resample of the data,
             features are scored by how often they are selected (a ``selection_frequency`` column, 0 to 1, is added
-            to ``df_feat``), and only stable features are returned.
+            to ``df_feat``), and the resampling-vetted candidates are cut to the final ``n_filter`` by CPP's own
+            filter (see :meth:`run`).
         n_bootstrap : int, default=20
             Number of bootstrap resampling rounds (>=1; only used when ``bootstrap=True``). More rounds give a more
             reproducible selection at a roughly linear cost; ~20 is a practical sweet spot, ~50 converges the ranking.
@@ -366,15 +366,8 @@ class CPP(Tool):
             resamples only the test group.
         bootstrap_frac : float, default=0.8
             Per-group resample size as a fraction of the group's samples (``0<frac<=1``), drawn with replacement each
-            bootstrap round (only used when ``bootstrap=True``). ``0.8`` is empirically the most stable.
-        min_freq : float, default=0.25
-            Stability threshold in ``[0, 1]`` (only used when ``bootstrap=True``): a feature is kept as a stable
-            candidate only if its ``selection_frequency`` (fraction of rounds it was selected) is at least
-            ``min_freq``. The surviving candidates are then re-evaluated and filtered on the full dataset
-            (see :meth:`run`). The default ``0.25`` drops the noise tail (features selected in under a quarter of the
-            rounds) while keeping CPP's broad, distributed signature; raise it for a smaller, higher-confidence set,
-            but a strict threshold **over-prunes** (few features, and paradoxically *less* reproducible, since the
-            survivors are the borderline ones).
+            bootstrap round (only used when ``bootstrap=True``). ``0.8`` is the conventional sub-sample size and a
+            robust default; with ``n_filter`` as the final cut the exact fraction only modestly affects the result.
 
         Notes
         -----
@@ -382,18 +375,20 @@ class CPP(Tool):
         * **Stability selection (``bootstrap=True``) is a cross-cutting selection mode**, configured once on the
           object and applied uniformly by :meth:`run` and :meth:`run_num` — the size of each run's output
           (``n_filter``) stays a per-call argument. A single-pass CPP selection is sensitive to the specific
-          training sample; resampling the data, re-selecting each time, and keeping the features selected most often
-          yields a more reproducible, less sample-fragile feature list plus a per-feature ``selection_frequency``.
-          It improves **stability / interpretability**, not predictive accuracy. To keep any downstream
-          cross-validation leakage-safe, run CPP (bootstrapped or not) **inside** each training fold, never on the
-          full dataset before splitting.
+          training sample; resampling the data and re-selecting each time restricts the candidate pool to the
+          features that survive resampling, yields a more reproducible, less sample-fragile feature list, and adds a
+          per-feature ``selection_frequency`` (how often it was selected). The final cut to ``n_filter`` is still
+          CPP's own full-data filter (``selection_frequency`` is reported, not a selection threshold). It improves
+          **stability / interpretability**, not predictive accuracy. To keep any downstream cross-validation
+          leakage-safe, run CPP (bootstrapped or not) **inside** each training fold, never on the full dataset before
+          splitting.
         * **Choosing the settings.** ``bootstrap=True`` uses tuned defaults (``n_bootstrap=20``,
-          ``bootstrap_frac=0.8``, ``resample='reference'``, ``min_freq=0.25``); override any of them to tune.
+          ``bootstrap_frac=0.8``, ``resample='reference'``); override any of them to tune.
           Stability rises steadily with ``n_bootstrap`` at a roughly constant per-round cost (~20 is a practical
           sweet spot, ~50 converges the ranking). On the bundled ``DOM_GSEC`` benchmark, run-to-run overlap of the
-          selected set is ~0.06 for a single pass versus ~0.5 at 20 rounds, and is best for ``bootstrap_frac`` in the
-          ``0.8``–``0.9`` range — a full resample (``1.0``) makes the rounds too alike, a small one starves each
-          round of data.
+          selected set is ~0.06 for a single pass versus ~0.58 at 20 rounds and ~0.71 at 50; ``bootstrap_frac=0.8``
+          is a robust default (the fraction has only a modest effect once the full-data ``n_filter`` filter makes
+          the cut).
         * **Splits auto-cap to the shortest part.** A sequence part of length ``L`` can carry a
           ``Segment`` with at most ``n_split_max = L`` pieces, a ``Pattern`` only if ``len_max <= L``,
           and a ``PeriodicPattern`` only if its first step ``<= L``. When ``df_parts`` contains a
@@ -453,8 +448,6 @@ class CPP(Tool):
             raise ValueError(
                 f"'bootstrap_frac' ({bootstrap_frac}) should be > 0 and <= 1."
             )
-        ut.check_number_range(name="min_freq", val=min_freq, min_val=0.0, max_val=1.0,
-                              just_int=False)
         df_parts = check_match_df_parts_df_scales(
             df_parts=df_parts, df_scales=df_scales, accept_gaps=accept_gaps
         )
@@ -484,7 +477,6 @@ class CPP(Tool):
         self._n_bootstrap = n_bootstrap
         self._resample = resample
         self._bootstrap_frac = bootstrap_frac
-        self._min_freq = min_freq
         # Feature components: Scales + Part + Split
         self.df_cat = df_cat.copy()
         self.df_scales = df_scales.copy()
@@ -541,7 +533,7 @@ class CPP(Tool):
         .. versionchanged:: 1.1.0
             When the constructor enables bootstrap stability selection (``CPP(bootstrap=True)``), ``df_feat`` gains a
             ``selection_frequency`` column and only stable features are returned (see the ``bootstrap`` /
-            ``n_bootstrap`` / ``resample`` / ``bootstrap_frac`` / ``min_freq`` constructor parameters and the Notes
+            ``n_bootstrap`` / ``resample`` / ``bootstrap_frac`` constructor parameters and the Notes
             below).
 
         Parameters
@@ -629,14 +621,15 @@ class CPP(Tool):
           more efficient redundancy reduction, see :meth:`CPP.simplify`.
         * **Bootstrap stability selection** (``CPP(bootstrap=True)``) wraps this run: the data is
           resampled ``n_bootstrap`` times (per ``resample`` / ``bootstrap_frac``), features are
-          re-selected each round, and every feature whose ``selection_frequency`` reaches ``min_freq``
-          is carried forward. Their statistics are then recomputed on the **full** dataset and the same
-          ``max_std_test`` and redundancy (``max_overlap`` / ``max_cor`` / ``n_filter``) filters
-          decide the output — so a feature that looked good in subsamples but fails the full-data
-          std or redundancy check is dropped. ``df_feat`` gains a ``selection_frequency`` column
-          (0 to 1) appended after ``positions``; the run is otherwise unchanged
-          (``bootstrap=False``, the default, is byte-identical to the non-bootstrap run). Bootstrap is
-          not combinable with ``n_batches`` / ``n_sample_batches``.
+          re-selected each round, and every feature selected in at least one round becomes a candidate.
+          Their statistics are then recomputed on the **full** dataset and the same ``max_std_test``
+          and redundancy (``max_overlap`` / ``max_cor`` / ``n_filter``) filters make the final
+          selection — so a feature that looked good in subsamples but fails the full-data std or
+          redundancy check is dropped, and ``n_filter`` is the final selection criterion.
+          ``df_feat`` gains a ``selection_frequency`` column (0 to 1, how often each feature was
+          selected) appended after ``positions``; the run is otherwise unchanged (``bootstrap=False``,
+          the default, is byte-identical to the non-bootstrap run). Bootstrap is not combinable with
+          ``n_batches`` / ``n_sample_batches``.
         * **Binary by design.** ``run`` compares one test group against one reference group. For
           multi-class or regression tasks, build binary label contrasts with the
           ``SequenceFeature.get_labels_*`` helpers and loop ``run`` over them (see the
@@ -817,7 +810,6 @@ class CPP(Tool):
                 n_bootstrap=self._n_bootstrap,
                 resample=self._resample,
                 bootstrap_frac=self._bootstrap_frac,
-                min_freq=self._min_freq,
                 random_state=self._random_state,
                 aa_lookup_cache=self._aa_lookup_cache,
                 feature_matrix_builder=builder,
@@ -1164,7 +1156,6 @@ class CPP(Tool):
                 n_bootstrap=self._n_bootstrap,
                 resample=self._resample,
                 bootstrap_frac=self._bootstrap_frac,
-                min_freq=self._min_freq,
                 random_state=self._random_state,
                 aa_lookup_cache=None,  # numerical path doesn't use AA lookup
                 feature_matrix_builder=builder,

@@ -494,8 +494,8 @@ A seeded percentile confidence interval over a per-protein metric vector, for ho
 _Avoid_: confidence band (plotting term), error bar.
 
 **stability selection** (CPP):
-Opt-in `CPP(bootstrap=True)` mode: resample the data `n_bootstrap` times (`resample`/`bootstrap_frac`), re-select features each round, keep features whose `selection_frequency` reaches `min_freq` (a fraction of rounds) as stable candidates, then let the full dataset decide the final statistics + filtering. Adds a per-feature `selection_frequency` to `df_feat`. Improves reproducibility of the feature list, not accuracy; unrelated to [bootstrap CI] (which is a *score* interval, not feature selection).
-_Avoid_: "bootstrap" alone (ambiguous with the score CI), calling `selection_frequency` an importance/probability, expressing `min_freq` as a count.
+Opt-in `CPP(bootstrap=True)` mode: resample the data `n_bootstrap` times (`resample`/`bootstrap_frac`), re-select features each round; every feature selected in ≥1 round is a candidate, then the full dataset decides the final statistics + filtering (`n_filter` is the final cut). Adds a per-feature `selection_frequency` to `df_feat` (reported, not a selection threshold). Improves reproducibility of the feature list, not accuracy; unrelated to [bootstrap CI] (which is a *score* interval, not feature selection).
+_Avoid_: "bootstrap" alone (ambiguous with the score CI), calling `selection_frequency` an importance/probability or using it as a selection threshold (a strict frequency cut-off over-prunes).
 
 **peak-preserving smoothing**:
 NaN-aware triangular/gaussian smoothing of a per-residue score track that takes `max(smoothed, raw)` so true peaks are never attenuated — for windowed protease/PTM prediction where positional jitter is universal. Pure-numpy, seeded where stochastic. `aa.smooth_scores`.

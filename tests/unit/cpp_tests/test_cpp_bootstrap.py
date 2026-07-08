@@ -29,12 +29,12 @@ def _fixture(n=5, n_scales=10):
     return df_parts, labels, split_kws, df_scales
 
 
-def _make_cpp(n_bootstrap=4, resample="reference", bootstrap_frac=0.8, min_freq=0.1,
+def _make_cpp(n_bootstrap=4, resample="reference", bootstrap_frac=0.8,
               random_state=42, bootstrap=True, **kwargs):
     df_parts, labels, split_kws, df_scales = _fixture()
     cpp = aa.CPP(df_parts=df_parts, split_kws=split_kws, df_scales=df_scales, verbose=False,
                  random_state=random_state, bootstrap=bootstrap, n_bootstrap=n_bootstrap,
-                 resample=resample, bootstrap_frac=bootstrap_frac, min_freq=min_freq, **kwargs)
+                 resample=resample, bootstrap_frac=bootstrap_frac, **kwargs)
     return cpp, labels
 
 
@@ -63,15 +63,6 @@ class TestCPPBootstrap:
         df_feat = cpp.run(labels=labels, n_filter=15, n_jobs=1)
         assert COL_FREQ in df_feat.columns
 
-    @settings(max_examples=4, deadline=None)
-    @given(min_freq=some.floats(min_value=0.0, max_value=0.4))
-    def test_min_freq_positive(self, min_freq):
-        cpp, labels = _make_cpp(n_bootstrap=4, min_freq=min_freq)
-        df_feat = cpp.run(labels=labels, n_filter=40, n_jobs=1)
-        # Every kept feature clears the stability threshold.
-        if len(df_feat):
-            assert (df_feat[COL_FREQ] >= min_freq - 1e-9).all()
-
     def test_bootstrap_flag_toggles_mode(self):
         cpp, labels = _make_cpp(bootstrap=True)
         assert COL_FREQ in cpp.run(labels=labels, n_filter=15, n_jobs=1).columns
@@ -98,6 +89,10 @@ class TestCPPBootstrap:
         cpp, labels = _make_cpp(n_bootstrap=4)
         df_feat = cpp.run(labels=labels, n_filter=15, n_jobs=1)
         assert (df_feat["std_test"] <= 0.2).all()
+
+    def test_n_filter_is_the_final_cut(self):
+        cpp, labels = _make_cpp(n_bootstrap=4)
+        assert len(cpp.run(labels=labels, n_filter=8, n_jobs=1)) <= 8
 
     def test_default_off_has_no_frequency_column(self):
         df_parts, labels, split_kws, df_scales = _fixture()
@@ -134,13 +129,6 @@ class TestCPPBootstrap:
             aa.CPP(df_parts=df_parts, split_kws=split_kws, df_scales=df_scales,
                    bootstrap=True, bootstrap_frac=bootstrap_frac)
 
-    @pytest.mark.parametrize("min_freq", [-0.1, 1.5, 2.0, "0.5"])
-    def test_min_freq_negative(self, min_freq):
-        df_parts, labels, split_kws, df_scales = _fixture()
-        with pytest.raises(ValueError):
-            aa.CPP(df_parts=df_parts, split_kws=split_kws, df_scales=df_scales,
-                   bootstrap=True, min_freq=min_freq)
-
 
 class TestCPPBootstrapComplex:
     """Combination and edge-interaction tests."""
@@ -163,15 +151,8 @@ class TestCPPBootstrapComplex:
                       verbose=False, random_state=42).run(labels=labels, n_filter=15, n_jobs=1)
         cpp = aa.CPP(df_parts=df_parts, split_kws=split_kws, df_scales=df_scales, verbose=False,
                      random_state=42, bootstrap=False, n_bootstrap=17, resample="test",
-                     bootstrap_frac=0.5, min_freq=0.9)
+                     bootstrap_frac=0.5)
         assert base.equals(cpp.run(labels=labels, n_filter=15, n_jobs=1))
-
-    def test_lower_min_freq_keeps_at_least_as_many(self):
-        cpp_lo, labels = _make_cpp(n_bootstrap=5, min_freq=0.0)
-        cpp_hi, _ = _make_cpp(n_bootstrap=5, min_freq=0.6)
-        n_lo = len(cpp_lo.run(labels=labels, n_filter=40, n_jobs=1))
-        n_hi = len(cpp_hi.run(labels=labels, n_filter=40, n_jobs=1))
-        assert n_lo >= n_hi
 
     def test_run_num_bootstrap(self):
         df_seq = aa.load_dataset(name="DOM_GSEC", n=5)
@@ -187,7 +168,7 @@ class TestCPPBootstrapComplex:
         df_parts, dict_num_parts = nf.get_parts(df_seq=df_seq, dict_num=dict_num,
                                                 jmd_n_len=10, jmd_c_len=10)
         cpp = aa.CPP(df_parts=df_parts, df_scales=df_scales, verbose=False, random_state=1,
-                     bootstrap=True, n_bootstrap=3, resample="reference", min_freq=0.1)
+                     bootstrap=True, n_bootstrap=3, resample="reference")
         df_feat = cpp.run_num(dict_num_parts=dict_num_parts, labels=labels, n_filter=12, n_jobs=1)
         assert COL_FREQ in df_feat.columns
         assert df_feat[COL_FREQ].between(0.0, 1.0).all()
@@ -199,7 +180,7 @@ class TestCPPBootstrapComplex:
         assert COL_FREQ in df_feat.columns
 
     def test_n_bootstrap_one(self):
-        cpp, labels = _make_cpp(n_bootstrap=1, min_freq=0.5)
+        cpp, labels = _make_cpp(n_bootstrap=1)
         df_feat = cpp.run(labels=labels, n_filter=15, n_jobs=1)
         # A single round: every kept feature was selected in that round -> frequency 1.0.
         assert (df_feat[COL_FREQ] == 1.0).all()
@@ -207,39 +188,23 @@ class TestCPPBootstrapComplex:
     def test_verbose_bootstrap_runs(self):
         df_parts, labels, split_kws, df_scales = _fixture()
         cpp = aa.CPP(df_parts=df_parts, split_kws=split_kws, df_scales=df_scales, verbose=True,
-                     random_state=0, bootstrap=True, n_bootstrap=3, resample="both", min_freq=0.1)
+                     random_state=0, bootstrap=True, n_bootstrap=3, resample="both")
         df_feat = cpp.run(labels=labels, n_filter=15, n_jobs=1)
         assert COL_FREQ in df_feat.columns
 
     def test_accept_gaps_bootstrap(self):
         df_parts, labels, split_kws, df_scales = _fixture()
         cpp = aa.CPP(df_parts=df_parts, split_kws=split_kws, df_scales=df_scales, verbose=False,
-                     random_state=0, bootstrap=True, n_bootstrap=3, min_freq=0.1, accept_gaps=True)
+                     random_state=0, bootstrap=True, n_bootstrap=3, accept_gaps=True)
         df_feat = cpp.run(labels=labels, n_filter=15, n_jobs=1)
         assert COL_FREQ in df_feat.columns
         assert df_feat[COL_FREQ].between(0.0, 1.0).all()
 
-    def test_high_min_freq_returns_empty_schema(self):
-        # min_freq=1.0 keeps only features selected in EVERY round; on noisy resamples that is
-        # typically none. The result must be a schema-correct empty df_feat (full column set), not
-        # a crash — the candidate set is empty before the full-data stat pass.
-        df_seq = aa.load_dataset(name="DOM_GSEC", n=15)
-        labels = df_seq["label"].to_list()
-        df_parts = aa.SequenceFeature().get_df_parts(df_seq=df_seq, list_parts=["tmd_jmd"])
-        df_scales = aa.load_scales().T.head(15).T
-        split_kws = aa.SequenceFeature().get_split_kws(
-            split_types=["Segment"], n_split_min=1, n_split_max=3)
-        cpp = aa.CPP(df_parts=df_parts, split_kws=split_kws, df_scales=df_scales, verbose=False,
-                     random_state=0, bootstrap=True, n_bootstrap=6, min_freq=1.0)
-        df_feat = cpp.run(labels=labels, n_filter=20, n_jobs=1)
-        assert len(df_feat) == 0  # no feature selected in all rounds
-        assert "abs_auc" in df_feat.columns and COL_FREQ in df_feat.columns  # full schema
-
     def test_all_candidates_dropped_by_full_data_std_returns_empty_schema(self):
         # resample='test' resamples the test group, so a candidate's in-round std can pass
-        # max_std_test while its full-data std does not. With a tight max_std_test EVERY stable
-        # candidate is dropped on the full data — the greedy redundancy filter must not be handed
-        # an empty frame (would raise IndexError); instead a schema-correct empty df_feat returns.
+        # max_std_test while its full-data std does not. With a tight max_std_test EVERY candidate
+        # is dropped on the full data — the greedy redundancy filter must not be handed an empty
+        # frame (would raise IndexError); instead a schema-correct empty df_feat returns.
         df_seq = aa.load_dataset(name="DOM_GSEC", n=8)
         labels = df_seq["label"].to_list()
         df_parts = aa.SequenceFeature().get_df_parts(df_seq=df_seq, list_parts=["tmd_jmd"])
@@ -248,7 +213,7 @@ class TestCPPBootstrapComplex:
             split_types=["Segment"], n_split_min=1, n_split_max=3)
         cpp = aa.CPP(df_parts=df_parts, split_kws=split_kws, df_scales=df_scales, verbose=False,
                      random_state=3, bootstrap=True, n_bootstrap=4, resample="test",
-                     bootstrap_frac=0.5, min_freq=0.1)
+                     bootstrap_frac=0.5)
         df_feat = cpp.run(labels=labels, n_filter=15, max_std_test=0.03, n_jobs=1)  # no crash
         assert "abs_auc" in df_feat.columns and COL_FREQ in df_feat.columns  # full schema
         assert (df_feat["std_test"] <= 0.03).all()  # every kept feature (if any) respects it
@@ -278,7 +243,7 @@ class TestCPPBootstrapComplex:
         df_parts, dict_num_parts = nf.get_parts(df_seq=df_seq, dict_num=dict_num,
                                                 jmd_n_len=10, jmd_c_len=10)
         cpp = aa.CPP(df_parts=df_parts, df_scales=df_scales, verbose=False, random_state=1,
-                     bootstrap=True, n_bootstrap=3, min_freq=0.1)
+                     bootstrap=True, n_bootstrap=3)
         with pytest.raises(ValueError, match="bootstrap"):
             cpp.run_num(dict_num_parts=dict_num_parts, labels=labels, n_filter=12, n_batches=2)
 
@@ -288,7 +253,7 @@ class TestCPPBootstrapGoldenValues:
 
     def test_frequency_values_are_multiples_of_inverse_n_bootstrap(self):
         n_bootstrap = 4
-        cpp, labels = _make_cpp(n_bootstrap=n_bootstrap, min_freq=0.0)
+        cpp, labels = _make_cpp(n_bootstrap=n_bootstrap)
         df_feat = cpp.run(labels=labels, n_filter=15, n_jobs=1)
         counts = np.rint(df_feat[COL_FREQ].values * n_bootstrap)
         assert np.allclose(df_feat[COL_FREQ].values, counts / n_bootstrap, atol=1e-9)
@@ -301,7 +266,7 @@ class TestCPPBootstrapGoldenValues:
         assert list(df_feat.columns).index("positions") < list(df_feat.columns).index(COL_FREQ)
 
     def test_output_never_exceeds_n_filter(self):
-        cpp, labels = _make_cpp(n_bootstrap=3, min_freq=0.0)
+        cpp, labels = _make_cpp(n_bootstrap=3)
         df_feat = cpp.run(labels=labels, n_filter=10, n_jobs=1)
         assert len(df_feat) <= 10
 

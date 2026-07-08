@@ -728,7 +728,7 @@ def cpp_run_bootstrap(df_parts=None, split_kws=None, df_scales=None, df_cat=None
                       n_pre_filter=None, pct_pre_filter=5, max_std_test=0.2, max_overlap=0.5,
                       max_cor=0.5, check_cat=True, redundancy="legacy", parametric=False, start=1,
                       tmd_len=20, jmd_n_len=10, jmd_c_len=10, n_jobs=None, vectorized=True,
-                      n_bootstrap=20, resample="reference", bootstrap_frac=0.8, min_freq=0.25,
+                      n_bootstrap=20, resample="reference", bootstrap_frac=0.8,
                       random_state=None, aa_lookup_cache=None, feature_matrix_builder=None,
                       dict_part_vals=None, dict_part_lens=None):
     """Bootstrap / stability feature selection wrapped around the single-pass CPP selection.
@@ -739,14 +739,13 @@ def cpp_run_bootstrap(df_parts=None, split_kws=None, df_scales=None, df_cat=None
        (:func:`cpp_run_single`) ``n_bootstrap`` times, each on a bootstrap resample of the rows
        (``_resample_row_indices``, with replacement per group per ``resample``). Tally how often
        each feature is selected; ``selection_frequency`` is that count over ``n_bootstrap``. Every
-       feature whose ``selection_frequency`` is at least ``min_freq`` (the stability threshold, a
-       fraction of the rounds) is a stable candidate.
+       feature selected in at least one round is a candidate (the resampling-vetted candidate pool).
     2. **Full-data filtering (authoritative).** Statistics for the candidates are (re)computed on
        the **complete** test + reference set, then CPP's own filters decide the output: the
        ``max_std_test`` pre-filter threshold (a feature stable in subsamples but with too-high
        ``std_test`` on the full data is dropped) and the redundancy filter
-       (``max_overlap`` / ``max_cor`` / ``n_filter``). The result is ordered by ``abs_auc`` like a
-       normal run and carries an extra ``selection_frequency`` column.
+       (``max_overlap`` / ``max_cor`` / ``n_filter``, the final selection criterion). The result is
+       ordered by ``abs_auc`` like a normal run and carries an extra ``selection_frequency`` column.
 
     Numerical mode (``dict_part_vals`` / ``dict_part_lens`` supplied) resamples along the sample
     axis of the per-part tensors; sequence mode resamples the ``df_parts`` rows.
@@ -802,17 +801,19 @@ def cpp_run_bootstrap(df_parts=None, split_kws=None, df_scales=None, df_cat=None
 
     freq = {f: c / n_bootstrap for f, c in counts.items()}
     # Deterministic rank: selection frequency desc, then feature id asc (reproducible tie-break).
-    candidates = sorted((f for f, fr in freq.items() if fr >= min_freq),
-                        key=lambda f: (-freq[f], f))
+    # Every feature selected in at least one round is a candidate; the full-data filter below
+    # (max_std_test + redundancy -> n_filter) makes the final cut. Ordered by frequency for
+    # determinism only (the full-data filter re-sorts by abs_auc).
+    candidates = sorted(freq, key=lambda f: (-freq[f], f))
     if verbose:
-        ut.print_out(f"2. CPP bootstrap selected {len(freq)} distinct features across "
-                     f"{n_bootstrap} rounds; keeping the {len(candidates)} stable ones "
-                     f"('selection_frequency' >= 'min_freq'={min_freq}) for full-data filtering")
+        ut.print_out(f"2. CPP bootstrap selected {len(candidates)} distinct candidate features "
+                     f"across {n_bootstrap} rounds; passing them to full-data filtering")
 
     # --- Phase 2: full-data statistics + authoritative filtering on the stable candidates ----
-    # A high 'min_freq' can leave no feature above the stability threshold; return the
-    # schema-correct empty df_feat rather than proceeding into the full-data stat pass.
-    if not candidates:
+    # Defensive: with valid inputs every round returns >= 1 feature (a round that would select none
+    # instead raises upstream in cpp_run_single), so the candidate union is never empty here. The
+    # guard keeps the return schema-correct (full column set) should that ever change.
+    if not candidates:  # pragma: no cover
         df_feat = pd.DataFrame(columns=list(ut.LIST_COLS_FEAT) + [ut.COL_SELECTION_FREQUENCY])
         return _attach_filter_stats(
             df_feat=df_feat, n_candidates=n_feat_total, n_after_prefilter=0,
