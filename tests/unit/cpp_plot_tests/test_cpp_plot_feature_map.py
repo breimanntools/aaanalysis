@@ -867,28 +867,30 @@ class TestCCPlotFeatureMapShap:
         assert bar_rows == expected_rows, (sorted(bar_rows), "expected", sorted(expected_rows))
         plt.close()
 
-    def test_importance_bar_labels_extend_outward_not_clipped(self):
-        # The cumulative-importance % labels must extend outward (to the right of the bar
-        # tip), never left past the x=0 baseline into the heatmap where they'd be hidden/
-        # clipped. Regression guard for the inside-bar (right-anchored, white) rendering
-        # that cut the leading digit of short-bar labels.
+    def test_importance_bar_labels_inside_bars(self):
+        # The cumulative-importance % labels sit INSIDE the bars (right-aligned at each bar
+        # tip, white), not outside to the right of the tip. Guard: every % label's right
+        # edge is at/inside the bar region (<= the axis max), so it does not spill out past
+        # the bar tip. Only bars at/above the threshold are annotated (long enough to hold it).
         cpp_plot = aa.CPPPlot()
         df_feat = get_df_feat()
         fig, hm = cpp_plot.feature_map(df_feat=df_feat)
         fig.canvas.draw()
         renderer = fig.canvas.get_renderer()
         hm_x0 = hm.get_position().x0
-        left_edges = []
+        checked = 0
         for a in fig.axes:  # the right importance bar: narrow + tall, right of the heatmap
             p = a.get_position()
             if a is hm or p.x0 <= hm_x0 + 0.1 or p.width >= 0.2 or p.height <= 0.4:
                 continue
+            x_max = a.get_xlim()[1]
             for t in a.texts:
                 if t.get_text().strip().endswith("%"):
                     ext = t.get_window_extent(renderer)
-                    left_edges.append(a.transData.inverted().transform((ext.x0, ext.y0))[0])
-        assert left_edges, "no % importance-bar labels found"
-        assert min(left_edges) >= -1e-6, f"a label extends left of the baseline: {min(left_edges)}"
+                    right = a.transData.inverted().transform((ext.x1, ext.y0))[0]
+                    assert right <= x_max + 1e-6, f"label spills right past the bar region: {right} > {x_max}"
+                    checked += 1
+        assert checked, "no % importance-bar labels found"
         plt.close()
 
     def test_default_bars_are_gray_not_signed(self):

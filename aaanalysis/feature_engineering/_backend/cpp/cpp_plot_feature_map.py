@@ -71,23 +71,19 @@ def plot_feat_importance_bars_subcat(ax=None,
     ax.set_xlabel(label, size=fontsize_label, weight="bold",
                   ha=ha, position=position, multialignment=multialignment)
     ax.xaxis.set_label_position("top")
-    # Add annotations (only for non-signed cumulative importance bars). Anchor the
-    # label inside each bar at its tip (ha="right", white text) so the high-impact
-    # bars stand out and read immediately. Only bars at/above the threshold are
-    # annotated, so they are long enough for the label to sit inside the bar.
+    # Add annotations (only for non-signed cumulative importance bars). Draw the % label
+    # INSIDE each bar, right-aligned at the bar tip in white, so high-impact features read
+    # immediately with the label sitting on the bar rather than outside it. Only bars
+    # at/above the threshold are annotated, so they are long enough to hold the label.
     if not shap_plot:
         v_max = int(np.ceil(max(list_imp)))
         annotation_th = v_max / 2 if annotation_th is None else annotation_th
         for i, val in enumerate(list_imp):
             if val >= annotation_th:
-                # Label just OUTSIDE the bar tip (ha="left" -> extends right, away from the
-                # heatmap) with clip_on=False, so it is never cut. Drawing it inside the bar
-                # (right-anchored, white) clips the leading digit on short bars, hiding it
-                # under the heatmap (e.g. "2.0%" -> "0%"); this restores the never-cut form.
-                ax.text(val, i + 0.45, f" {round(val, 1)}%",
-                        va="center", ha="left",
+                ax.text(val, i + 0.45, f"{round(val, 1)}% ",
+                        va="center", ha="right",
                         weight=weight_annotation,
-                        clip_on=False,
+                        color="white",
                         size=fontsize_imp_bar)
 
     # Adjust ticks
