@@ -27,6 +27,7 @@ import aaanalysis as aa
 from aaanalysis.feature_engineering._backend.cpp._utils_cpp_plot_sizing import (
     CELL_W_IN,
     CELL_H_IN,
+    HEATMAP_CELL_H_IN,
 )
 
 from ._text_overlap import get_label_overlaps, make_dense_df_feat
@@ -123,10 +124,12 @@ class TestConstantCellSize:
 
     @pytest.mark.parametrize("n_subcat", [55, 74])
     def test_heatmap_cell_size_is_target(self, n_subcat):
+        # The standalone heatmap uses a taller target cell height (HEATMAP_CELL_H_IN) than
+        # the feature map, so its subcategory row labels do not overlap; width matches.
         fig, ax = aa.CPPPlot().heatmap(make_dense_df_feat(n_subcat))
         cw, ch = _cell_size(fig, ax, n_subcat, N_POSITIONS)
         assert abs(cw - CELL_W_IN) <= CELL_W_IN * CELL_TOL, cw
-        assert abs(ch - CELL_H_IN) <= CELL_H_IN * CELL_TOL, ch
+        assert abs(ch - HEATMAP_CELL_H_IN) <= HEATMAP_CELL_H_IN * CELL_TOL, ch
 
     def test_cell_size_constant_across_densities(self):
         # The whole point: the cell does NOT shrink as the grid gets denser (above the floor).

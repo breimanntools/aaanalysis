@@ -27,6 +27,13 @@ import numpy as np
 CELL_W_IN = 0.16
 CELL_H_IN = 0.176
 
+#: Taller target cell height (inches) for the STANDALONE heatmap. The heatmap grid
+#: fills a larger fraction of its figure than the feature map (no top importance-bar
+#: panel), so at ``CELL_H_IN`` its rows come out shorter and the subcategory labels
+#: overlap. A taller cell makes the heatmap figure a bit higher than wide and gives
+#: each row enough height for its label. Feature map keeps ``CELL_H_IN`` (unchanged).
+HEATMAP_CELL_H_IN = 0.30
+
 #: Hard upper bound on either figure dimension. Reaching it means the grid is far
 #: larger than anything sensible to render in one figure; we clamp and warn rather
 #: than silently shrink the cells (which would reintroduce the overlap auto_font
