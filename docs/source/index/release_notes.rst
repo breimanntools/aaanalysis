@@ -172,9 +172,11 @@ Added
   status), a calibration curve (``reliability_diagram``), the out-of-distribution score distribution
   (``ood_hist``), and a score-vs-OOD ``trust_map`` colored by the ``reliable`` flag.
 - :meth:`~aaanalysis.AAPredPlot.eval`: New ``kind='heatmap'`` that renders any 2D score grid
-  (rows x columns are the two sweep axes) as a square annotated heatmap and boxes the optimal cell
-  (``highlight``, ``vmin`` / ``vmax`` / ``cmap`` / ``cbar_label``) — one call for the recurring
-  "grid of scores -> seaborn heatmap -> mark the best configuration" block.
+  (rows x columns are the two sweep axes) as a square annotated heatmap and boxes the best cell(s)
+  with a full-cell frame — ``highlight`` selects how many (a positive int for the top-N,
+  ``"max"`` / ``"min"``, an explicit ``(row, col)`` / list, or ``None``); ``vmin`` / ``vmax`` /
+  ``cmap`` / ``cbar_label`` style the color scale and its tick-side-edged colorbar. One call for the
+  recurring "grid of scores -> seaborn heatmap -> mark the best configuration" block.
 - :meth:`~aaanalysis.AAPredPlot.predict_group`: New ``band=True`` mode for ``kind='hist'`` that colors
   each bar by the confidence band it falls into (delimited by ``thresholds``) instead of by class
   ``labels`` — for scoring unlabeled candidates. Both additions are purely additive; existing default
