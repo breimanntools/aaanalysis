@@ -181,6 +181,38 @@ class TestCPPBootstrapComplex:
         # A single round: every kept feature was selected in that round -> frequency 1.0.
         assert (df_feat[COL_FREQ] == 1.0).all()
 
+    def test_verbose_bootstrap_runs(self):
+        df_parts, labels, split_kws, df_scales = _fixture()
+        cpp = aa.CPP(df_parts=df_parts, split_kws=split_kws, df_scales=df_scales, verbose=True,
+                     random_state=0, n_bootstrap=3, resample="both", n_freq=20)
+        df_feat = cpp.run(labels=labels, n_filter=15, n_jobs=1)
+        assert COL_FREQ in df_feat.columns
+
+    def test_accept_gaps_bootstrap(self):
+        df_parts, labels, split_kws, df_scales = _fixture()
+        cpp = aa.CPP(df_parts=df_parts, split_kws=split_kws, df_scales=df_scales, verbose=False,
+                     random_state=0, n_bootstrap=3, n_freq=20, accept_gaps=True)
+        df_feat = cpp.run(labels=labels, n_filter=15, n_jobs=1)
+        assert COL_FREQ in df_feat.columns
+        assert df_feat[COL_FREQ].between(0.0, 1.0).all()
+
+    def test_all_candidates_dropped_by_full_data_std_returns_empty_schema(self):
+        # resample='test' resamples the test group, so a candidate's in-round std can pass
+        # max_std_test while its full-data std does not. With a tight max_std_test EVERY stable
+        # candidate is dropped on the full data — the greedy redundancy filter must not be handed
+        # an empty frame (would raise IndexError); instead a schema-correct empty df_feat returns.
+        df_seq = aa.load_dataset(name="DOM_GSEC", n=8)
+        labels = df_seq["label"].to_list()
+        df_parts = aa.SequenceFeature().get_df_parts(df_seq=df_seq, list_parts=["tmd_jmd"])
+        df_scales = aa.load_scales().T.head(12).T
+        split_kws = aa.SequenceFeature().get_split_kws(
+            split_types=["Segment"], n_split_min=1, n_split_max=3)
+        cpp = aa.CPP(df_parts=df_parts, split_kws=split_kws, df_scales=df_scales, verbose=False,
+                     random_state=3, n_bootstrap=4, resample="test", bootstrap_frac=0.5, n_freq=30)
+        df_feat = cpp.run(labels=labels, n_filter=15, max_std_test=0.03, n_jobs=1)  # no crash
+        assert "abs_auc" in df_feat.columns and COL_FREQ in df_feat.columns  # full schema
+        assert (df_feat["std_test"] <= 0.03).all()  # every kept feature (if any) respects it
+
     # ---- Negative combinations -----------------------------------------------------------
     def test_bootstrap_incompatible_with_n_batches(self):
         cpp, labels = _make_cpp(n_bootstrap=3)

@@ -809,9 +809,11 @@ def cpp_run_bootstrap(df_parts=None, split_kws=None, df_scales=None, df_cat=None
                      f"(top 'n_freq'={n_freq}) for full-data filtering")
 
     # --- Phase 2: full-data statistics + authoritative filtering on the stable candidates ----
-    if not candidates:
-        df_feat = pd.DataFrame({ut.COL_FEATURE: pd.Series(dtype=str)})
-        df_feat[ut.COL_SELECTION_FREQUENCY] = pd.Series(dtype=float)
+    # Defensive: with valid inputs every round returns >= 1 feature (a round that would select
+    # none instead raises upstream in cpp_run_single), so the union is never empty here. The guard
+    # keeps the return schema-correct (full column set) should that ever change.
+    if not candidates:  # pragma: no cover
+        df_feat = pd.DataFrame(columns=list(ut.LIST_COLS_FEAT) + [ut.COL_SELECTION_FREQUENCY])
         return _attach_filter_stats(
             df_feat=df_feat, n_candidates=n_feat_total, n_after_prefilter=0,
             n_after_redundancy=0, n_requested=None, verbose=verbose,
@@ -831,19 +833,27 @@ def cpp_run_bootstrap(df_parts=None, split_kws=None, df_scales=None, df_cat=None
                   label_test=label_test, label_ref=label_ref, n_jobs=n_jobs, vectorized=vectorized)
     # Full-data pre-filter threshold: the full data is authoritative, so a candidate whose
     # full-data std_test exceeds max_std_test (or whose abs_mean_dif is NaN under accept_gaps) is
-    # dropped even if it was stable across subsamples.
-    df = df[df[ut.COL_STD_TEST] <= max_std_test]
+    # dropped even if it was stable across subsamples. .copy() so the position assignment below
+    # writes to an owned frame (no SettingWithCopyWarning on the boolean-filtered slice).
+    df = df[df[ut.COL_STD_TEST] <= max_std_test].copy()
     if accept_gaps:
-        df = df[~df[ut.COL_ABS_MEAN_DIF].isna()]
+        df = df[~df[ut.COL_ABS_MEAN_DIF].isna()].copy()
     features_kept = df[ut.COL_FEATURE].to_list()
     df[ut.COL_POSITION] = get_positions_(features=features_kept, start=start, **args_len)
     df = add_scale_info_(df_feat=df, df_cat=df_cat)
 
-    if verbose:
-        ut.print_out("3. CPP full-data redundancy filtering on the stable candidates")
-    df_feat = filtering(df=df, df_scales=df_scales, n_filter=n_filter, check_cat=check_cat,
-                        max_overlap=max_overlap, max_cor=max_cor, redundancy=redundancy)
-    df_feat.reset_index(drop=True, inplace=True)
+    # The full-data max_std_test filter can drop every candidate (reachable under
+    # resample='both'/'test', where a candidate's in-round std passes while its full-data std does
+    # not). The greedy redundancy filter assumes >= 1 row (it pops the first feature), so skip it
+    # on an empty frame and return the schema-correct empty df_feat.
+    if df.empty:
+        df_feat = df
+    else:
+        if verbose:
+            ut.print_out("3. CPP full-data redundancy filtering on the stable candidates")
+        df_feat = filtering(df=df, df_scales=df_scales, n_filter=n_filter, check_cat=check_cat,
+                            max_overlap=max_overlap, max_cor=max_cor, redundancy=redundancy)
+    df_feat = df_feat.reset_index(drop=True)
     df_feat[ut.COLS_FEAT_STAT] = df_feat[ut.COLS_FEAT_STAT].round(3)
     df_feat[ut.COL_FEATURE] = df_feat[ut.COL_FEATURE].astype(str)
     df_feat[ut.COL_SELECTION_FREQUENCY] = [round(freq[f], 3) for f in df_feat[ut.COL_FEATURE]]

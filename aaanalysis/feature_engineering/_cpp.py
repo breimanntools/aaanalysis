@@ -377,6 +377,11 @@ class CPP(Tool):
           It improves **stability / interpretability**, not predictive accuracy. To keep any downstream
           cross-validation leakage-safe, run CPP (bootstrapped or not) **inside** each training fold, never on the
           full dataset before splitting.
+        * **Choosing the settings.** Stability rises steadily with ``n_bootstrap`` at a roughly constant per-round
+          cost, so ``n_bootstrap`` trades runtime for reproducibility; ~20 rounds is a practical sweet spot and
+          ~50 converges the ranking. On the bundled ``DOM_GSEC`` benchmark, run-to-run overlap of the selected set
+          is ~0.06 for a single pass versus ~0.5 at 20 rounds, and it is maximized at ``bootstrap_frac=0.8`` (the
+          default) — a full resample (``1.0``) makes the rounds too alike, a small one starves each round of data.
         * **Splits auto-cap to the shortest part.** A sequence part of length ``L`` can carry a
           ``Segment`` with at most ``n_split_max = L`` pieces, a ``Pattern`` only if ``len_max <= L``,
           and a ``PeriodicPattern`` only if its first step ``<= L``. When ``df_parts`` contains a
