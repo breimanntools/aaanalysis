@@ -24,6 +24,7 @@ _dict_options = {
     'jmd_c_len': None,
     'df_scales': None,
     'df_cat': None,
+    'auto_font': True,
 }
 
 
@@ -120,6 +121,18 @@ def resolve_n_jobs(n_jobs=None, n_work=None):
     return min(os.cpu_count() or 1, max(int(n_work / 10), 1))
 
 
+def check_auto_font():
+    """Return whether package-wide automatic plot sizing/fonts are enabled.
+
+    Global toggle (no per-call argument). When ``True``, dense plots may derive
+    their figure size from the data shape; when ``False`` (default) plots behave
+    exactly as before (byte-identical output).
+    """
+    auto_font = options["auto_font"]
+    check_bool(name="auto_font (option)", val=auto_font)
+    return auto_font
+
+
 def check_jmd_n_len(jmd_n_len=None):
     """Check if general JMD-N length is given and adjust it globally."""
     global_jmd_n_len = options["jmd_n_len"]
@@ -168,6 +181,8 @@ def _check_option(name_option="", option=None):
                 check_number_range(name=name_option, val=option, min_val=1,
                                    accept_none=False, just_int=True)
     if name_option == "allow_multiprocessing":
+        check_bool(name=name_option, val=option)
+    if name_option == "auto_font":
         check_bool(name=name_option, val=option)
     if "jmd" in name_option and "len" in name_option:
         check_number_range(name=name_option, val=option,
@@ -229,6 +244,16 @@ class Settings:
     df_cat : DataFrame, optional
         Scale category DataFrame used in CPP algorithm. Adjust on system level if non-default scale categories are used.
         If ``None``, AAanalysis framework will use the scale category DataFrame loaded by :func:`load_scales` with ``name='scales_cat'``.
+    auto_font : bool, default=True
+        Global toggle for automatic, size-stable plot sizing. When ``True`` (default),
+        the composite CPP plots (:meth:`CPPPlot.feature_map`, :meth:`CPPPlot.heatmap`,
+        :meth:`CPPPlot.profile`) hold each grid cell at a constant physical size and grow
+        the *figure* with the data (number of scale subcategories and residue positions),
+        so subcategory labels, position ticks and residue letters stay at a constant,
+        legible font regardless of grid size — no manual ``plot_settings(font_scale=...)``
+        needed. An explicit ``figsize`` always wins (auto-sizing is skipped). When
+        ``False``, plots keep their fixed default figure size, reproducing the previous
+        (pre-auto-font) output.
 
     See Also
     --------

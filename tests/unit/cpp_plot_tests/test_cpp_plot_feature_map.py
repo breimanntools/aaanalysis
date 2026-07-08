@@ -1027,3 +1027,48 @@ class TestCCPlotFeatureMapShap:
         with pytest.raises(ValueError):
             cpp_plot.feature_map(df_feat=df_feat, shap_plot=False, col_imp=COL_FEAT_IMPACT_TEST)
         plt.close()
+
+
+class TestFeatureMapSeqCharFill:
+    """seq_char_fill: opt-in edge-to-edge residue characters (no whitespace, no overlap)."""
+
+    @staticmethod
+    def _seq_kws():
+        df = aa.load_dataset(name="DOM_GSEC", n=6)
+        seq = df["sequence"][0]
+        return dict(tmd_seq=seq[10:30], jmd_n_seq=seq[:10], jmd_c_seq=seq[30:40])
+
+    def _max_seq_fs(self, ax):
+        fs = [t.get_fontsize() for t in ax.get_xticklabels(minor=True)]
+        fs += [t.get_fontsize() for t in ax.get_xticklabels()]
+        return max(fs)
+
+    def test_fill_true_grows_font(self):
+        df_feat = aa.load_features(name="DOM_GSEC").head(40)
+        cpp = aa.CPPPlot(df_scales=aa.load_scales())
+        kws = self._seq_kws()
+        _, ax_off = cpp.feature_map(df_feat=df_feat, add_imp_bar_top=False, seq_char_fill=False, **kws)
+        off = self._max_seq_fs(ax_off); plt.close("all")
+        _, ax_on = cpp.feature_map(df_feat=df_feat, add_imp_bar_top=False, seq_char_fill=True, **kws)
+        on = self._max_seq_fs(ax_on); plt.close("all")
+        assert on >= off  # fill never shrinks; grows toward touching characters
+
+    def test_fill_default_is_true(self):
+        # Default is edge-to-edge fill (seq_char_fill=True): default matches fill=True,
+        # and is at least as large as the explicit no-fill spacing.
+        df_feat = aa.load_features(name="DOM_GSEC").head(40)
+        cpp = aa.CPPPlot(df_scales=aa.load_scales())
+        kws = self._seq_kws()
+        _, ax_def = cpp.feature_map(df_feat=df_feat, add_imp_bar_top=False, **kws)
+        def_fs = self._max_seq_fs(ax_def); plt.close("all")
+        _, ax_on = cpp.feature_map(df_feat=df_feat, add_imp_bar_top=False, seq_char_fill=True, **kws)
+        on_fs = self._max_seq_fs(ax_on); plt.close("all")
+        _, ax_off = cpp.feature_map(df_feat=df_feat, add_imp_bar_top=False, seq_char_fill=False, **kws)
+        off_fs = self._max_seq_fs(ax_off); plt.close("all")
+        assert def_fs == on_fs and def_fs >= off_fs
+
+    def test_fill_bad_type_raises(self):
+        df_feat = aa.load_features(name="DOM_GSEC").head(40)
+        cpp = aa.CPPPlot(df_scales=aa.load_scales())
+        with pytest.raises(ValueError):
+            cpp.feature_map(df_feat=df_feat, seq_char_fill="yes", **self._seq_kws())

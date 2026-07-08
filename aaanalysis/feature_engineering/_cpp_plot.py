@@ -34,6 +34,8 @@ from ._backend.cpp.cpp_plot_ranking import plot_ranking
 from ._backend.cpp.cpp_plot_profile import plot_profile
 from ._backend.cpp.cpp_plot_heatmap import plot_heatmap
 from ._backend.cpp.cpp_plot_feature_map import plot_feature_map
+from ._backend.cpp._utils_cpp_plot_sizing import (fit_cells_by_rescale, fit_width_by_rescale,
+                                                  ranking_figheight)
 from ._backend.cpp.cpp_plot_update_seq_size import get_tmd_jmd_seq, update_seq_size_, update_tmd_jmd_labels
 
 
@@ -755,6 +757,11 @@ class CPPPlot:
                        accept_none=True, check_number=True)
 
         # DEV: No match check for features and tmd (check_match_features_seq_parts) necessary
+        # Under auto_font (default figsize only), grow the figure height with the number
+        # of ranked features so each row keeps a constant height (the notebook's
+        # figsize=(width, 0.22*n + 1) rule); width and fonts stay fixed. Off -> unchanged.
+        if ut.check_auto_font() and (figsize is None or tuple(figsize) == (7, 5)):
+            figsize = (7, ranking_figheight(n_top))
         # Plot ranking
         fig, axes = plot_ranking(df_feat=df_feat.copy(),
                                  n_top=n_top, rank=rank,
@@ -1005,6 +1012,9 @@ class CPPPlot:
         ut.check_lim(name="ylim", val=ylim, accept_none=True)
         args_xtick = check_args_xtick(xtick_size=xtick_size, xtick_width=xtick_width, xtick_length=xtick_length)
         args_ytick = check_args_ytick(ytick_size=ytick_size, ytick_width=ytick_width, ytick_length=ytick_length)
+        # Normalize figsize=None to the default so it works regardless of auto_font state.
+        if figsize is None:
+            figsize = (7, 5)
 
         # Plot profile
         fig, ax = plot_profile(df_feat=df_feat, df_cat=self._df_cat, shap_plot=shap_plot,
@@ -1023,6 +1033,14 @@ class CPPPlot:
         with warnings.catch_warnings():
             warnings.simplefilter("ignore", category=UserWarning)
             plt.tight_layout()
+        # Constant per-position column width under auto_font (default figsize only):
+        # the profile widens with sequence length; height and fonts stay fixed.
+        # Off (default) -> byte-identical.
+        if ut.check_auto_font() and (figsize is None or tuple(figsize) == (7, 5)):
+            n_positions = tmd_len + (jmd_n_len or 0) + (jmd_c_len or 0)
+            _, capped = fit_width_by_rescale(fig=fig, ax_grid=ax, n_cols=n_positions)
+            if capped and self._verbose:
+                ut.print_out("auto_font: sequence exceeds the max figure width; layout may be constrained.")
         if tmd_seq is not None and seq_size is None:
             ax, seq_size = update_seq_size_(ax=ax, **args_seq, **args_part_color, **args_seq_color)
             if self._verbose:
@@ -1255,12 +1273,17 @@ class CPPPlot:
                        check_number=True, accept_none_number=True)
         args_xtick = check_args_xtick(xtick_size=xtick_size, xtick_width=xtick_width, xtick_length=xtick_length)
 
+        # Normalize figsize=None to the default so it works regardless of auto_font state.
+        if figsize is None:
+            figsize = (8, 8)
+        # Shrink-labels fallback only when auto_font is on but figsize is forced.
+        optimize_labels = ut.check_auto_font() and tuple(figsize) != (8, 8)
         # Plot heatmap
         fig, ax = plot_heatmap(df_feat=df_feat, df_cat=self._df_cat,
                                shap_plot=shap_plot,
                                col_cat=col_cat, col_val=col_val,
                                name_test=name_test, name_ref=name_ref,
-                               figsize=figsize,
+                               figsize=figsize, optimize_labels=optimize_labels,
                                start=start, **args_len, **args_seq,
                                **args_part_color, **args_seq_color,
                                **args_fs, weight_tmd_jmd=weight_tmd_jmd,
@@ -1277,6 +1300,14 @@ class CPPPlot:
         with warnings.catch_warnings():
             warnings.simplefilter("ignore", category=UserWarning)
             fig.tight_layout()
+        # Constant-cell-size grid under auto_font (default figsize only); grows the
+        # figure so cells/fonts stay fixed. Off (default) -> byte-identical.
+        if ut.check_auto_font() and tuple(figsize) == (8, 8):
+            n_positions = tmd_len + (jmd_n_len or 0) + (jmd_c_len or 0)
+            n_subcat = int(df_feat[col_cat].nunique())
+            _, _, capped = fit_cells_by_rescale(fig=fig, ax_grid=ax, n_rows=n_subcat, n_cols=n_positions)
+            if capped and self._verbose:
+                ut.print_out("auto_font: grid exceeds the max figure size; cells may be smaller than target.")
         if tmd_seq is not None and seq_size is None:
             ax, seq_size = update_seq_size_(ax=ax, **args_seq, **args_part_color, **args_seq_color)
             if self._verbose:
@@ -1292,7 +1323,7 @@ class CPPPlot:
                     col_imp: str = "feat_importance",
                     name_test: str = "TEST",
                     name_ref: str = "REF",
-                    figsize: Tuple[Union[int, float], Union[int, float]] = (8, 8),
+                    figsize: Optional[Tuple[Union[int, float], Union[int, float]]] = None,
 
                     # Feature importance
                     add_imp_bar_top: bool = True,
@@ -1339,6 +1370,7 @@ class CPPPlot:
                     xtick_size: Union[int, float] = 11.0,
                     xtick_width: Union[int, float] = 2.0,
                     xtick_length: Union[int, float] = 5.0,
+                    seq_char_fill: Optional[bool] = None,
                     sample: Optional[Union[str, int]] = None,
                     df_seq: Optional[pd.DataFrame] = None,
                     df_parts: Optional[pd.DataFrame] = None,
@@ -1408,8 +1440,17 @@ class CPPPlot:
             Name for the test dataset.
         name_ref : str, default="REF"
             Name for the reference dataset.
-        figsize : tuple, default=(8, 8)
-            Figure dimensions (width, height) in inches.
+        figsize : tuple, optional
+            Figure dimensions (width, height) in inches. When ``None`` (default) and the global
+            ``auto_font`` option is enabled (see :class:`aaanalysis.options`), the size is derived
+            automatically from the grid shape (number of scale subcategories and residue
+            positions). Any explicit ``figsize`` (including ``(8, 8)``) is honored as a fixed size
+            and wins over ``auto_font`` — pass one to pin a predictable size (e.g. when embedding
+            the figure). With ``auto_font`` disabled, ``None`` falls back to ``(8, 8)``.
+
+            .. versionchanged:: 1.1.0
+                Auto-derived from the grid shape when ``auto_font`` is enabled and ``figsize`` is
+                omitted; an explicit ``figsize`` always wins.
         add_imp_bar_top : bool, default=True
             If ``True``, add bars for cumulative feature importance per position (top).
         imp_bar_th : int or float, optional
@@ -1495,6 +1536,16 @@ class CPPPlot:
             Width of the x-ticks (>0).
         xtick_length : int or float, default=5.0
             Length of the x-ticks (>0).
+        seq_char_fill : bool, optional
+            If ``True`` and ``seq_size`` is auto-optimized (``None``), grow the sequence
+            characters until adjacent residues touch (no whitespace between them) while
+            still never overlapping, so the residue letters fill the cells. If ``False``,
+            keep a small gap between characters (the previous spacing). If ``None`` (default),
+            follows the ``auto_font`` option: on when auto-sizing is enabled, off otherwise
+            (so the ``auto_font=False`` output stays unchanged).
+
+            .. versionchanged:: 1.1.0
+                Now defaults to ``True`` (edge-to-edge residue characters).
         sample : str or int, optional
             Convenience shortcut for a sample-level CPP-SHAP feature map. When given (an entry name or
             row position), ``col_imp`` is resolved to ``feat_impact_<entry>`` (an int position is
@@ -1603,7 +1654,32 @@ class CPPPlot:
                        check_number=True, accept_none_number=True)
         ut.check_tuple(name="legend_imp_xy", val=legend_imp_xy, n=2, accept_none=False,
                        check_number=True, accept_none_number=True)
+        # seq_char_fill=None follows auto_font: edge-to-edge residue letters under the
+        # (default) auto path, off when auto_font is disabled so that path stays
+        # byte-identical to the pre-auto_font output. Explicit True/False always wins.
+        if seq_char_fill is None:
+            seq_char_fill = ut.check_auto_font()
+        ut.check_bool(name="seq_char_fill", val=seq_char_fill)
         args_xtick = check_args_xtick(xtick_size=xtick_size, xtick_width=xtick_width, xtick_length=xtick_length)
+
+        # Auto-sizing applies only when the caller OMITS figsize (figsize is None, the
+        # signature default). Any explicit figsize -- including (8, 8) -- is honored as a
+        # fixed size and wins over auto_font, so embedded consumers can pin a predictable
+        # size. Capture "omitted" before normalizing None to the default footprint.
+        figsize_omitted = figsize is None
+        if figsize is None:
+            figsize = (8, 8)
+        # Constant-cell-size grid when auto_font is on and figsize was omitted: laid out at
+        # the default size first, then rescaled (after tight_layout) so every cell hits a
+        # constant physical size; the figure grows with the grid while fonts stay fixed.
+        auto_grid = ut.check_auto_font() and figsize_omitted
+        # Fallback: auto_font on but the caller forced a fixed figsize, so the figure cannot
+        # be grown -> fall back to shrinking labels to fit.
+        optimize_labels = ut.check_auto_font() and not figsize_omitted
+        if auto_grid:
+            # jmd lengths are validated non-None above; `or 0` keeps the sum typed.
+            n_positions = tmd_len + (jmd_n_len or 0) + (jmd_c_len or 0)
+            n_subcat = int(df_feat[col_cat].nunique())
 
         # Plot feature map
         fig, ax = plot_feature_map(df_feat=df_feat, df_cat=self._df_cat,
@@ -1625,9 +1701,9 @@ class CPPPlot:
                                    cmap=cmap, cmap_n_colors=cmap_n_colors,
                                    cbar_pct=cbar_pct, cbar_kws=cbar_kws, cbar_xywh=cbar_xywh,
                                    dict_color=dict_color, legend_kws=legend_kws, legend_xy=legend_xy,
-                                   legend_imp_xy=legend_imp_xy,
+                                   legend_imp_xy=legend_imp_xy, seq_char_fill=seq_char_fill,
+                                   optimize_labels=optimize_labels,
                                    **args_xtick)
-
         # Adjust plot. Leave a little more room on the right than the heatmap needs
         # so the cumulative-importance bar column's label ("Cumulative feature
         # importance") and its per-category percentage annotations are not clipped at
@@ -1636,6 +1712,16 @@ class CPPPlot:
             warnings.simplefilter("ignore", category=UserWarning)
             fig.tight_layout()
             plt.subplots_adjust(right=0.92)
+        # Constant-cell-size: rescale the whole figure so every heatmap cell hits a
+        # fixed physical size (the figure grows with the grid; the point-based fonts
+        # stay fixed and the sibling axes keep their fractions, so nothing crams or
+        # balloons). Done after tight_layout (fractions are final) and before the
+        # residue-letter fit below, so letters are sized to the final column width.
+        if auto_grid:
+            _, _, capped = fit_cells_by_rescale(fig=fig, ax_grid=ax,
+                                                n_rows=n_subcat, n_cols=n_positions)
+            if capped and self._verbose:
+                ut.print_out("auto_font: grid exceeds the max figure size; cells may be smaller than target.")
         # Pin the scale-category legend to a fixed position in figure coordinates,
         # in the left zone clear of the centred "Feature value" colorbar. The legend
         # is otherwise anchored to the heatmap axes, which tight_layout pushes right
@@ -1648,9 +1734,23 @@ class CPPPlot:
         if cat_legend is not None and tuple(legend_xy) == (-0.1, -0.01):
             cat_legend.set_bbox_to_anchor((0.23, 0.183), transform=fig.transFigure)
         if tmd_seq is not None and seq_size is None:
-            ax, seq_size = update_seq_size_(ax=ax, **args_seq, **args_part_color, **args_seq_color)
+            ax, seq_size = update_seq_size_(ax=ax, **args_seq, **args_part_color, **args_seq_color,
+                                            fill=seq_char_fill)
             if self._verbose:
                 ut.print_out(f"Optimized sequence character fontsize is: {seq_size}")
+        # The top importance bar shares the position x-axis with the heatmap, so it
+        # redundantly repeats the position ticks (1/10/30/40) ABOVE the grid — and
+        # set_box_aspect makes it worse. Keep the position ticks on the heatmap
+        # (bottom) only by hiding the x-tick labels of every top-row axis (the top
+        # importance bar and the empty top-right cell). The tall right importance
+        # bar (which legitimately labels its own scale at the top) is left alone.
+        # Done last so tight_layout cannot re-show them.
+        top_edge = ax.get_position().y1
+        for other in fig.axes:
+            if other is not ax and other.get_position().y0 >= top_edge - 0.05:
+                other.tick_params(axis="x", labelbottom=False, labeltop=False, length=0)
+                for lbl in other.get_xticklabels():
+                    lbl.set_visible(False)
         return ut.FigAxResult(fig, ax)
 
     def update_seq_size(self,

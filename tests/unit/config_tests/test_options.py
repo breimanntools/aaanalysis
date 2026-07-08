@@ -11,6 +11,7 @@ import aaanalysis as aa
 from aaanalysis.config import (
     check_verbose,
     check_random_state,
+    check_auto_font,
     check_jmd_n_len,
     check_jmd_c_len,
     options,
@@ -88,6 +89,18 @@ class TestCheckOptionBranches:
         aa.options["df_scales"] = df
         assert aa.options["df_scales"] is df
 
+    def test_auto_font_default_on(self):
+        assert aa.options["auto_font"] is True
+        assert check_auto_font() is True
+
+    def test_set_auto_font(self):
+        try:
+            aa.options["auto_font"] = True
+            assert aa.options["auto_font"] is True
+            assert check_auto_font() is True
+        finally:
+            aa.options["auto_font"] = False
+
     # Negative: invalid values rejected at assignment time
     def test_invalid_random_state(self):
         with pytest.raises(ValueError):
@@ -112,6 +125,10 @@ class TestCheckOptionBranches:
     def test_invalid_df_scales_type(self):
         with pytest.raises(ValueError):
             aa.options["df_scales"] = "not_a_df"
+
+    def test_invalid_auto_font_type(self):
+        with pytest.raises(ValueError):
+            aa.options["auto_font"] = "yes"
 
 
 class TestSettingsDunders:
