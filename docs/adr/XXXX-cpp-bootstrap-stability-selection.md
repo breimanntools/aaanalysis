@@ -24,9 +24,9 @@ Two design questions were settled with the maintainer before implementation:
    whole selection-filter parameter block; adding bootstrap parameters to each method would
    triplicate an already-duplicated block. Bootstrapping is a *cross-cutting selection behaviour*,
    and it needs the RNG seed that already lives on the constructor (`random_state`).
-2. **What bootstrap actually decides.** Bootstrapping should select *stable candidates*; the **full
-   dataset stays authoritative** for statistics and filtering. A feature that looks good in a
-   subsample but fails the full-data `max_std_test` or redundancy check must still be dropped.
+2. **Whether bootstrap changes the selection or only annotates it.** Resolved in favour of a thin
+   *annotate* wrapper (D2): bootstrap reports a per-feature `selection_frequency` on the ordinary
+   full-data run; it does not change which features are selected (`n_filter` stays the criterion).
 
 ## Decision
 
@@ -40,102 +40,87 @@ could never be the default (the default must be the off state), so the good numb
 the user's memory. `n_filter` (the final output size) remains a per-call argument. "How to select
 robustly" is object config; "how many to keep" is per call.
 
-**D2. Bootstrap is a thin wrapper (candidate generator), not a new algorithm.** With
-`bootstrap=True`, `run` / `run_num` route to `cpp_run_bootstrap`, which:
-
-- **Phase 1 (resampled candidate generation).** Repeat the existing single-pass selection
-  (`cpp_run_single`) `n_bootstrap` times, each on a bootstrap resample of the rows — **sampled with
-  replacement** per group at `round(bootstrap_frac · n_group)` rows; `resample` chooses which
-  group(s) are resampled and which are passed through unchanged. Tally how often each feature is
-  selected; `selection_frequency = count / n_bootstrap`. **Every feature selected in at least one
-  round is a candidate** — the resampling-vetted candidate pool. `selection_frequency` is reported,
-  **not** used as a selection threshold.
-- **Phase 2 (full-data authoritative; `n_filter` is the final cut).** Recompute statistics for the
-  candidates on the **complete** test + reference set, then let CPP's own filters decide the output:
-  the `max_std_test` pre-filter threshold and the redundancy filter (`max_overlap` / `max_cor` /
-  `n_filter`, the final selection criterion). The result is ordered by `abs_auc` exactly like a normal
-  run and carries an extra `selection_frequency` column appended after `positions`.
+**D2. Bootstrap is a thin wrapper that ANNOTATES the ordinary run — it does not change the
+selection.** With `bootstrap=True`, `run` / `run_num` / `run_composit` loop the *ordinary* selection
+on `n_bootstrap` bootstrap resamples of the rows (via fresh `CPP(bootstrap=False)` instances, so it
+literally re-uses the public run methods rather than a parallel backend pipeline) to tally each
+feature's `selection_frequency = count / n_bootstrap`, then return the **ordinary full-data run** with
+a `selection_frequency` column appended after `positions`. The selected feature list is exactly that
+of a non-bootstrap run (`n_filter` is the selection criterion); bootstrapping adds the per-feature
+stability annotation, it does **not** restrict the candidate pool or change which features are
+selected. Resampling is **with replacement** per group at `round(bootstrap_frac · n_group)` rows;
+`resample` chooses which group(s) are resampled and which pass through unchanged.
 
 **D3. Default is byte-identical.** `bootstrap=False` keeps the existing single-pass dispatch untouched,
 so the default output (and the perf A/B output digest) is unchanged; the feature is purely additive
 and opt-in.
 
 **D4. Reproducibility.** The resampling RNG is seeded from the constructor `random_state`
-(`np.random.default_rng`), so a fixed `random_state` reproduces the frequencies and the output
-bit-for-bit; `random_state=None` is truly random, per the package contract.
+(`np.random.default_rng`), so a fixed `random_state` reproduces the frequencies bit-for-bit;
+`random_state=None` is truly random, per the package contract.
 
-**D5. Scope + interaction.** Bootstrap is wired into `run` and `run_num` (the positional-selection
-methods the evidence is about). It is **not** combinable with the memory-batching modes
-(`n_batches` / `n_sample_batches`) — each bootstrap round runs single-pass — and that combination
-raises a `ValueError`. `run_composit` / `run_aac` (a different, composition feature type) are out of
-scope for this change; the constructor placement future-proofs wiring them later.
+**D5. Scope + interaction.** The wrapper is method-agnostic and is wired into `run`, `run_num`, **and**
+`run_composit`. It is **not** combinable with the memory-batching modes (`n_batches` /
+`n_sample_batches`) — each round runs a full single pass — and that combination raises a `ValueError`.
+The redundant `run_aac` convenience method (a pure `run_composit(composition="aac")` alias, added in
+the same unreleased cycle) is **removed** here — `run_composit` covers it.
 
 ## Rejected alternatives
 
+- **A dedicated backend pipeline that changes the selected list (candidate-restriction / stability
+  selection proper).** An earlier draft made bootstrap a candidate generator: candidates = features
+  ever selected across rounds, then a full-data filter cuts to `n_filter`, producing a
+  stability-*informed* (different, more reproducible) list. Rejected in favour of the thin annotate
+  wrapper: the maintainer wanted bootstrap to be a simple wrapper over the existing run methods, not a
+  parallel "method for itself." **Accepted trade-off:** the annotate design does **not** make the
+  feature *list* more reproducible (the list equals a normal run) — it reports which of the selected
+  features are reproducible. Making the list itself more robust would require the rejected
+  candidate-restriction.
+- **A `selection_frequency` cut-off (a `min_freq` threshold, or a top-N-by-frequency count) as the
+  feature selector.** Rejected: `n_filter` (the ordinary filter) is the selection criterion. A
+  frequency threshold empirically **over-prunes** (sweep below), and a top-N-by-frequency count is
+  dataset-size-dependent.
 - **`n_bootstrap=0`-means-off as the only switch (no `bootstrap` bool).** Rejected: it forces the
   round count and the on/off state to share one parameter, so the tuned count (`20`) can never be the
   default. A boolean gate lets the *on* state carry the good defaults.
-- **A `selection_frequency` cut-off (a `min_freq` threshold, or a top-N-by-frequency count) as the
-  feature selector.** Rejected: `selection_frequency` is reported, but it does **not** decide the
-  output — `n_filter` (the ordinary full-data filter) is the final selection criterion. A frequency
-  threshold empirically **over-prunes** (see the sweep below: `min_freq=0.5` keeps only ~8 features
-  and is *less* reproducible, because CPP's signal is distributed over many weak-but-real features),
-  and a top-N-by-frequency count is dataset-size-dependent. Bootstrapping instead restricts the
-  candidate pool to the features that survive resampling and annotates each with how reproducible it
-  is; the normal filter makes the cut.
 - **Sub-sample without replacement (Meinshausen–Bühlmann stability selection).** A defensible
-  alternative that matches `bootstrap_frac<1` literally, but the maintainer chose classic
-  bootstrap-with-replacement per group; `bootstrap_frac` scales the per-group draw size.
-- **Rank the final output by `selection_frequency`.** Rejected: frequency is a *stability filter*
-  (which candidates survive), not the ranking key. The output is ordered by `abs_auc` like a normal
-  run so `df_feat` composes unchanged with downstream models and plots.
-- **Round-averaged statistics.** Rejected: reporting stats averaged over the resampled subsets would
-  diverge from a normal run's semantics. The full dataset is authoritative for every statistic and
-  every filter; only `selection_frequency` comes from the rounds.
+  alternative matching `bootstrap_frac<1` literally, but the maintainer chose classic
+  bootstrap-with-replacement per group.
+- **Round-averaged statistics.** Rejected: the returned stats are the normal full-data run's; only
+  `selection_frequency` comes from the rounds.
 - **Bootstrap parameters per `run*` method.** Rejected: triplicates the already-duplicated
   selection-filter block and cannot reuse the constructor `random_state`.
 
 ## Empirical validation (DOM_GSEC / gamma-secretase)
 
-Measured on the bundled `DOM_GSEC` dataset (80 sequences, 40 substrate / 40 non-substrate; 50
-scales; `resample="reference"`). "Run-to-run Jaccard" is the Jaccard overlap of the selected feature
-set between two different `random_state`s at the same setting — the direct measure of how
-reproducible the selection is. Higher is more stable.
+Measured on the bundled `DOM_GSEC` dataset (80 sequences, 40 substrate / 40 non-substrate; 50 scales;
+`resample="reference"`).
 
-- **Single-pass selection is highly unstable.** Two single-pass CPP selections on two data resamples
-  overlap by a Jaccard of only **0.06** — a different sample gives a largely different feature list.
-- **Bootstrapping stabilises monotonically with rounds** (per-round cost is linear, ~constant per
-  round):
-
-  | n_bootstrap | run-to-run Jaccard | wall-clock |
-  |---|---|---|
-  | 5  | 0.33 | 1x |
-  | 10 | 0.45 | 2x |
-  | 20 | 0.58 | 4x |
-  | 50 | 0.71 | 10x |
-
-  Even 5 rounds already lifts reproducibility ~6x over single-pass; 20 rounds is a practical
-  stability/cost knee (~10x the single-pass overlap).
-- **`bootstrap_frac=0.8` is a robust default, not a sharp optimum.** Because the full-data `n_filter`
-  filter makes the final cut, the per-group resample fraction has only a modest effect on the selected
-  set (sweeping 0.5–1.0 at `n_bootstrap=20` stays in a noisy ~0.5–0.72 band with no clean peak). `0.8`
-  is the conventional stability-selection sub-sample size and is kept as the default.
-- **Why there is no `selection_frequency` threshold (D2 / rejected alternatives).** A prototype
-  `min_freq` threshold was swept at `n_bootstrap=20` (kept as `min_freq` / features kept / run-to-run
-  Jaccard): `0.0` -> 100 / 0.58, `0.2` -> 86 / 0.54, `0.3` -> 48 / 0.46, `0.5` -> 8 / 0.27, `0.7` ->
-  3 / 0.25, `≥0.8` -> 0. Because CPP's signal is distributed over many weak-but-real features, any
-  strict threshold collapses the signature to a handful of *borderline* features that are **less**
-  reproducible, not more. So the threshold was dropped: `selection_frequency` is reported, and
-  `n_filter` (the ordinary full-data filter) makes the cut.
-- **Shipped defaults for this dataset:** `bootstrap=True` with `n_bootstrap=20`, `bootstrap_frac=0.8`,
+- **Motivation — single-pass selection is sample-fragile.** Two single-pass CPP selections on two data
+  resamples overlap by a Jaccard of only **~0.06**: a different sample gives a largely different list.
+  Knowing *which* of a run's selected features are reproducible under resampling is therefore useful —
+  which is exactly what `selection_frequency` reports.
+- **The list does not change; the annotation does.** Because bootstrap returns the ordinary full-data
+  run, the selected features are deterministic (identical across `random_state`s). What varies with
+  more rounds is the *precision* of the `selection_frequency` estimate — ~20 rounds is a practical
+  sweet spot, ~50 converges it; cost is ~linear in `n_bootstrap`. `bootstrap_frac=0.8` is the
+  conventional sub-sample size and a robust default.
+- **Why frequency is reported, not thresholded.** A prototype `min_freq` threshold was swept at
+  `n_bootstrap=20` (threshold / features kept / cross-seed set Jaccard): `0.0` -> 100 / 0.58,
+  `0.2` -> 86 / 0.54, `0.3` -> 48 / 0.46, `0.5` -> 8 / 0.27, `0.7` -> 3 / 0.25, `≥0.8` -> 0. A strict
+  threshold collapses CPP's distributed signal to a handful of *borderline* features that are **less**
+  reproducible — so frequency is annotated, never used to filter.
+- **Shipped defaults:** `bootstrap=True` with `n_bootstrap=20`, `bootstrap_frac=0.8`,
   `resample="reference"`.
 
 ## Consequences
 
 - `df_feat` gains an optional `selection_frequency` column (registered in `DICT_DF_FEAT` as
   non-required; appended by `sort_cols_feat` after `positions`), present only when `bootstrap=True`.
-- Cost scales ~`n_bootstrap ×` a single run (rounds run serially with the existing inner `n_jobs`
-  parallelism over scales); ~20–50 rounds is enough for the top-150 ranking to converge.
-- Stability selection improves reproducibility/interpretability, **not** predictive accuracy — the
-  docstrings say so, and mandate fold-internal use to stay leakage-safe. It is complementary to
-  ADR-0054 (marginal-by-design filter; joint effects belong to the downstream model).
+  The other columns and the selected rows are byte-identical to a normal run.
+- Cost scales ~`n_bootstrap ×` a single run (each round constructs a fresh `CPP` and calls the public
+  run method on a resample; rounds run serially with the existing inner `n_jobs` parallelism).
+- Bootstrap annotates **interpretability / trust**, **not** the list's robustness or predictive
+  accuracy — the docstrings say so, and mandate fold-internal use to stay leakage-safe. Complementary
+  to ADR-0054 (marginal-by-design filter; joint effects belong to the downstream model).
+- `run_aac` is removed (redundant alias of `run_composit(composition="aac")`).

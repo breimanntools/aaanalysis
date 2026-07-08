@@ -30,7 +30,7 @@ from ._backend.cpp_run import (
     cpp_run_batch,
     cpp_run_batch_num,
     cpp_run_sample_batched,
-    cpp_run_bootstrap,
+    _resample_row_indices,
     _pick_feature_matrix_builder,
 )
 from ._backend.cpp._filters._get_feature_matrix_fast import AALookupCache
@@ -349,16 +349,17 @@ class CPP(Tool):
             consistent, enabling reproducibility. If ``None``, stochastic processes will be truly random. Also seeds the
             bootstrap resampling (``bootstrap=True``).
         bootstrap : bool, default=False
-            Whether to use **bootstrap stability feature selection**. ``False`` (default) runs the single-pass
-            selection, so :meth:`run` / :meth:`run_num` behave exactly as before (output byte-identical) and the
-            ``n_bootstrap`` / ``resample`` / ``bootstrap_frac`` settings are ignored. ``True`` turns
-            the mode on with the tuned defaults below: each round re-selects features on a resample of the data,
-            features are scored by how often they are selected (a ``selection_frequency`` column, 0 to 1, is added
-            to ``df_feat``), and the resampling-vetted candidates are cut to the final ``n_filter`` by CPP's own
-            filter (see :meth:`run`).
+            Whether to add **bootstrap stability annotation** to the selection. ``False`` (default) runs the
+            single-pass selection, so :meth:`run` / :meth:`run_num` / :meth:`run_composit` behave exactly as before
+            (output byte-identical) and the ``n_bootstrap`` / ``resample`` / ``bootstrap_frac`` settings are ignored.
+            ``True`` wraps the ordinary run: the data is resampled ``n_bootstrap`` times and re-selected each round to
+            score how often each feature is selected, then the **ordinary full-data selection is returned with a
+            ``selection_frequency`` column** (0 to 1) added. The selected features are exactly those of a normal run
+            (``n_filter`` is the selection criterion) — bootstrapping annotates their stability, it does not change
+            which features are selected.
         n_bootstrap : int, default=20
             Number of bootstrap resampling rounds (>=1; only used when ``bootstrap=True``). More rounds give a more
-            reproducible selection at a roughly linear cost; ~20 is a practical sweet spot, ~50 converges the ranking.
+            precise ``selection_frequency`` estimate at a roughly linear cost; ~20 to ~50 is typically enough.
         resample : {'both', 'reference', 'test'}, default='reference'
             Which class group is resampled each bootstrap round (only used when ``bootstrap=True``). ``'reference'``
             (default) fixes the test group and resamples only the reference group, which isolates the dominant source
@@ -372,23 +373,20 @@ class CPP(Tool):
         Notes
         -----
         * All scales from ``df_scales`` must be contained in ``df_cat``
-        * **Stability selection (``bootstrap=True``) is a cross-cutting selection mode**, configured once on the
-          object and applied uniformly by :meth:`run` and :meth:`run_num` — the size of each run's output
-          (``n_filter``) stays a per-call argument. A single-pass CPP selection is sensitive to the specific
-          training sample; resampling the data and re-selecting each time restricts the candidate pool to the
-          features that survive resampling, yields a more reproducible, less sample-fragile feature list, and adds a
-          per-feature ``selection_frequency`` (how often it was selected). The final cut to ``n_filter`` is still
-          CPP's own full-data filter (``selection_frequency`` is reported, not a selection threshold). It improves
-          **stability / interpretability**, not predictive accuracy. To keep any downstream cross-validation
-          leakage-safe, run CPP (bootstrapped or not) **inside** each training fold, never on the full dataset before
-          splitting.
+        * **Stability annotation (``bootstrap=True``) is a cross-cutting wrapper**, configured once on the object
+          and applied uniformly by :meth:`run`, :meth:`run_num`, and :meth:`run_composit`. It is a thin wrapper: it
+          re-runs the ordinary selection on ``n_bootstrap`` resamples of the data to score how often each feature is
+          selected, then returns the **ordinary full-data selection** with a per-feature ``selection_frequency``
+          (0 to 1) added. The selected feature list is exactly a normal run (``n_filter`` is the criterion); the
+          annotation flags which of those features are reproducible under resampling vs sample-specific — a
+          **trust / interpretability** aid, not a change to the list or to predictive accuracy. To keep any
+          downstream cross-validation leakage-safe, run CPP (bootstrapped or not) **inside** each training fold,
+          never on the full dataset before splitting.
         * **Choosing the settings.** ``bootstrap=True`` uses tuned defaults (``n_bootstrap=20``,
-          ``bootstrap_frac=0.8``, ``resample='reference'``); override any of them to tune.
-          Stability rises steadily with ``n_bootstrap`` at a roughly constant per-round cost (~20 is a practical
-          sweet spot, ~50 converges the ranking). On the bundled ``DOM_GSEC`` benchmark, run-to-run overlap of the
-          selected set is ~0.06 for a single pass versus ~0.58 at 20 rounds and ~0.71 at 50; ``bootstrap_frac=0.8``
-          is a robust default (the fraction has only a modest effect once the full-data ``n_filter`` filter makes
-          the cut).
+          ``bootstrap_frac=0.8``, ``resample='reference'``); override any of them to tune. ``n_bootstrap`` controls
+          how precisely ``selection_frequency`` is estimated (~20 is a practical sweet spot, ~50 converges the
+          estimate) at a roughly linear cost; ``bootstrap_frac=0.8`` is the conventional sub-sample size and a robust
+          default; ``resample='reference'`` resamples only the (usually larger, noisier) reference group.
         * **Splits auto-cap to the shortest part.** A sequence part of length ``L`` can carry a
           ``Segment`` with at most ``n_split_max = L`` pieces, a ``Pattern`` only if ``len_max <= L``,
           and a ``PeriodicPattern`` only if its first step ``<= L``. When ``df_parts`` contains a
@@ -490,6 +488,47 @@ class CPP(Tool):
         # (sklearn trailing-underscore convention: set during the call).
         self.last_filter_stats_ = None
 
+    # Bootstrap stability selection (thin wrapper around run / run_num / run_composit)
+    def _fresh_bootstrap_cpp(self, idx=None):
+        """A CPP identical to this one but with bootstrap OFF, optionally on a row subset.
+
+        Used per bootstrap round so the wrapper re-uses the ordinary ``run`` / ``run_num`` /
+        ``run_composit`` methods (``bootstrap=False`` avoids re-entering this wrapper). ``idx=None``
+        keeps the full data; otherwise ``df_parts`` is sliced to those rows.
+        """
+        df_parts = self.df_parts if idx is None else self.df_parts.iloc[idx].reset_index(drop=True)
+        return CPP(df_parts=df_parts, split_kws=self.split_kws, df_scales=self.df_scales,
+                   df_cat=self.df_cat, accept_gaps=self._accept_gaps, verbose=False,
+                   random_state=self._random_state)
+
+    def _bootstrap_run(self, run_on=None, labels=None, label_test=1, label_ref=0):
+        """Tally ``selection_frequency`` over ``n_bootstrap`` resamples, then return a normal
+        full-data selection with that column added.
+
+        ``run_on(idx)`` runs the chosen selection method (``run`` / ``run_num`` / ``run_composit``)
+        on the bootstrap resample given by row indices ``idx`` and returns its ``df_feat``;
+        ``run_on(None)`` runs it on the full data. The final selection is exactly the ordinary
+        full-data run (``n_filter`` is the selection criterion); ``selection_frequency`` (fraction of
+        rounds each feature was selected) is reported alongside it.
+        """
+        labels_arr = np.asarray(labels)
+        idx_test = np.where(labels_arr == label_test)[0]
+        idx_ref = np.where(labels_arr == label_ref)[0]
+        rng = np.random.default_rng(self._random_state)
+        counts: Dict[str, int] = {}
+        for _ in range(self._n_bootstrap):
+            idx = _resample_row_indices(idx_test=idx_test, idx_ref=idx_ref,
+                                        resample=self._resample,
+                                        bootstrap_frac=self._bootstrap_frac, rng=rng)
+            for feat in run_on(idx)[ut.COL_FEATURE]:
+                counts[feat] = counts.get(feat, 0) + 1
+        df_feat = run_on(None)  # ordinary full-data selection; n_filter is the criterion
+        freq = {f: c / self._n_bootstrap for f, c in counts.items()}
+        df_feat[ut.COL_SELECTION_FREQUENCY] = [
+            round(freq.get(f, 0.0), 3) for f in df_feat[ut.COL_FEATURE]
+        ]
+        return df_feat
+
     # Main method
     def run(
         self,
@@ -531,10 +570,9 @@ class CPP(Tool):
             Added the ``n_sample_batches`` parameter for sample-axis batching (memory bounded by batch size, not n).
 
         .. versionchanged:: 1.1.0
-            When the constructor enables bootstrap stability selection (``CPP(bootstrap=True)``), ``df_feat`` gains a
-            ``selection_frequency`` column and only stable features are returned (see the ``bootstrap`` /
-            ``n_bootstrap`` / ``resample`` / ``bootstrap_frac`` constructor parameters and the Notes
-            below).
+            When the constructor enables bootstrap stability annotation (``CPP(bootstrap=True)``), ``df_feat`` gains a
+            ``selection_frequency`` column (the selected features are unchanged; see the ``bootstrap`` /
+            ``n_bootstrap`` / ``resample`` / ``bootstrap_frac`` constructor parameters and the Notes below).
 
         Parameters
         ----------
@@ -619,17 +657,14 @@ class CPP(Tool):
           (fewer redundant subcategories) rather than higher predictive performance, which stays
           essentially unchanged. Default ``'legacy'`` keeps prior results reproducible. For a stronger,
           more efficient redundancy reduction, see :meth:`CPP.simplify`.
-        * **Bootstrap stability selection** (``CPP(bootstrap=True)``) wraps this run: the data is
-          resampled ``n_bootstrap`` times (per ``resample`` / ``bootstrap_frac``), features are
-          re-selected each round, and every feature selected in at least one round becomes a candidate.
-          Their statistics are then recomputed on the **full** dataset and the same ``max_std_test``
-          and redundancy (``max_overlap`` / ``max_cor`` / ``n_filter``) filters make the final
-          selection — so a feature that looked good in subsamples but fails the full-data std or
-          redundancy check is dropped, and ``n_filter`` is the final selection criterion.
-          ``df_feat`` gains a ``selection_frequency`` column (0 to 1, how often each feature was
-          selected) appended after ``positions``; the run is otherwise unchanged (``bootstrap=False``,
-          the default, is byte-identical to the non-bootstrap run). Bootstrap is not combinable with
-          ``n_batches`` / ``n_sample_batches``.
+        * **Bootstrap stability annotation** (``CPP(bootstrap=True)``) wraps this run: the data is
+          resampled ``n_bootstrap`` times (per ``resample`` / ``bootstrap_frac``) and re-selected each
+          round to score how often each feature is selected, then **this ordinary full-data run is
+          returned with a ``selection_frequency`` column** (0 to 1) appended after ``positions``. The
+          selected features are exactly those of the non-bootstrap run (``n_filter`` is the selection
+          criterion); ``selection_frequency`` flags which are reproducible under resampling. The run is
+          otherwise unchanged (``bootstrap=False``, the default, is byte-identical). Not combinable
+          with ``n_batches`` / ``n_sample_batches``.
         * **Binary by design.** ``run`` compares one test group against one reference group. For
           multi-class or regression tasks, build binary label contrasts with the
           ``SequenceFeature.get_labels_*`` helpers and loop ``run`` over them (see the
@@ -805,15 +840,21 @@ class CPP(Tool):
             )
         if self._bootstrap:
             _check_bootstrap_batching(n_batches=n_batches, n_sample_batches=n_sample_batches)
-            df_feat = cpp_run_bootstrap(
-                **args,
-                n_bootstrap=self._n_bootstrap,
-                resample=self._resample,
-                bootstrap_frac=self._bootstrap_frac,
-                random_state=self._random_state,
-                aa_lookup_cache=self._aa_lookup_cache,
-                feature_matrix_builder=builder,
-            )
+            labels_arr = np.asarray(labels)
+
+            def _run_on(idx):
+                cpp = self._fresh_bootstrap_cpp(idx)
+                lab = labels_arr if idx is None else labels_arr[idx]
+                return cpp.run(
+                    labels=lab, label_test=label_test, label_ref=label_ref, n_filter=n_filter,
+                    n_pre_filter=n_pre_filter, pct_pre_filter=pct_pre_filter, max_std_test=max_std_test,
+                    max_overlap=max_overlap, max_cor=max_cor, check_cat=check_cat, redundancy=redundancy,
+                    parametric=parametric, start=start, tmd_len=tmd_len, jmd_n_len=jmd_n_len,
+                    jmd_c_len=jmd_c_len, n_jobs=n_jobs, vectorized=vectorized,
+                )
+
+            df_feat = self._bootstrap_run(run_on=_run_on, labels=labels,
+                                          label_test=label_test, label_ref=label_ref)
         elif n_sample_batches is not None:
             df_feat = cpp_run_sample_batched(
                 **args,
@@ -876,8 +917,9 @@ class CPP(Tool):
         .. versionadded:: 1.1.0
 
         .. versionchanged:: 1.1.0
-            Honors bootstrap stability selection (``CPP(bootstrap=True)``) exactly like :meth:`run`, resampling
-            along the sample axis of ``dict_num_parts`` and adding a ``selection_frequency`` column to ``df_feat``.
+            Honors bootstrap stability annotation (``CPP(bootstrap=True)``) exactly like :meth:`run`, resampling
+            along the sample axis of ``dict_num_parts`` and adding a ``selection_frequency`` column to ``df_feat``
+            (the selected features are unchanged).
 
         Parameters
         ----------
@@ -1150,17 +1192,24 @@ class CPP(Tool):
         builder = _pick_feature_matrix_builder()
         if self._bootstrap:
             _check_bootstrap_batching(n_batches=n_batches, n_sample_batches=n_sample_batches)
-            df_feat = cpp_run_bootstrap(
-                dict_part_vals=dict_num_parts,
-                dict_part_lens=dict_part_lens,
-                n_bootstrap=self._n_bootstrap,
-                resample=self._resample,
-                bootstrap_frac=self._bootstrap_frac,
-                random_state=self._random_state,
-                aa_lookup_cache=None,  # numerical path doesn't use AA lookup
-                feature_matrix_builder=builder,
-                **args,
-            )
+            labels_arr = np.asarray(labels)
+
+            def _run_on(idx):
+                cpp = self._fresh_bootstrap_cpp(idx)
+                lab = labels_arr if idx is None else labels_arr[idx]
+                dnp = (dict_num_parts if idx is None
+                       else {p: v[idx] for p, v in dict_num_parts.items()})
+                return cpp.run_num(
+                    dict_num_parts=dnp, labels=lab, label_test=label_test, label_ref=label_ref,
+                    n_filter=n_filter, n_pre_filter=n_pre_filter, pct_pre_filter=pct_pre_filter,
+                    max_std_test=max_std_test, max_overlap=max_overlap, max_cor=max_cor,
+                    check_cat=check_cat, redundancy=redundancy, parametric=parametric, start=start,
+                    tmd_len=tmd_len, jmd_n_len=jmd_n_len, jmd_c_len=jmd_c_len, n_jobs=n_jobs,
+                    vectorized=vectorized,
+                )
+
+            df_feat = self._bootstrap_run(run_on=_run_on, labels=labels,
+                                          label_test=label_test, label_ref=label_ref)
         elif n_sample_batches is not None:
             # Batch the sample axis: each batch slices the resident tensor and
             # bounds the per-batch working set (stat intermediates + pass-2
@@ -1232,6 +1281,11 @@ class CPP(Tool):
 
         .. versionadded:: 1.1.0
 
+        .. versionchanged:: 1.1.0
+            Honors bootstrap stability annotation (``CPP(bootstrap=True)``): the composition features are
+            re-selected on ``n_bootstrap`` resamples and this run gains a ``selection_frequency`` column (the
+            selected features are unchanged).
+
         Parameters
         ----------
         labels : array-like, shape (n_samples,)
@@ -1290,6 +1344,21 @@ class CPP(Tool):
         ut.check_number_range(name="min_count", val=min_count, min_val=1, just_int=True)
         if composition == "kmer":
             ut.check_number_range(name="k", val=k, min_val=1, max_val=4, just_int=True)
+        if self._bootstrap:
+            labels_arr = np.asarray(labels)
+
+            def _run_on(idx):
+                cpp = self._fresh_bootstrap_cpp(idx)
+                lab = labels_arr if idx is None else labels_arr[idx]
+                return cpp.run_composit(
+                    labels=lab, composition=composition, k=k, n_filter=n_filter, max_cor=max_cor,
+                    min_count=min_count, label_test=label_test, label_ref=label_ref,
+                    parametric=parametric, start=start, tmd_len=tmd_len, jmd_n_len=jmd_n_len,
+                    jmd_c_len=jmd_c_len, n_jobs=n_jobs,
+                )
+
+            return self._bootstrap_run(run_on=_run_on, labels=labels,
+                                       label_test=label_test, label_ref=label_ref)
         if composition == "aac":
             # Positional: one-hot identity AA scales + whole-part Segment(1,1) through the full pipeline.
             df_scales, df_cat = get_composition_scales_(k=1)
@@ -1306,70 +1375,6 @@ class CPP(Tool):
                                           label_test=label_test, label_ref=label_ref, n_filter=n_filter,
                                           max_cor=max_cor, min_count=min_count, parametric=parametric,
                                           n_jobs=n_jobs)
-
-    def run_aac(self,
-                labels: ut.ArrayLike1D,
-                n_filter: int = 100,
-                label_test: int = 1,
-                label_ref: int = 0,
-                parametric: bool = False,
-                start: int = 1,
-                tmd_len: int = 20,
-                jmd_n_len: int = 10,
-                jmd_c_len: int = 10,
-                n_jobs: Optional[int] = None,
-                ) -> pd.DataFrame:
-        """
-        Amino-acid composition (AAC) as a positional CPP ``df_feat``.
-
-        Convenience wrapper for :meth:`run_composit` with ``composition="aac"``: runs CPP over a
-        one-hot identity amino-acid scale set with the whole-part ``Segment(1,1)`` split, giving
-        feature-map-able ``<PART>-Segment(1,1)-<AA>`` features. See :meth:`run_composit` for the full
-        parameter descriptions and the dipeptide / k-mer (non-positional) composition modes.
-
-        .. versionadded:: 1.1.0
-
-        Parameters
-        ----------
-        labels : array-like, shape (n_samples,)
-            Class labels for samples (typically, test=1, reference=0).
-        n_filter : int, default=100
-            Number of top amino-acid features (by adjusted AUC) to keep.
-        label_test : int, default=1
-            Class label of the test group.
-        label_ref : int, default=0
-            Class label of the reference group.
-        parametric : bool, default=False
-            Whether the p-value is parametric (T-test) or non-parametric (Mann-Whitney U).
-        start : int, default=1
-            Position label of the first residue.
-        tmd_len : int, default=20
-            TMD length for the position labelling.
-        jmd_n_len : int, default=10
-            JMD-N length for the position labelling.
-        jmd_c_len : int, default=10
-            JMD-C length for the position labelling.
-        n_jobs : int, None, or -1, default=None
-            Number of CPU cores used for the statistics.
-
-        Returns
-        -------
-        df_feat : pd.DataFrame
-            Positional amino-acid-composition features (``<PART>-Segment(1,1)-<AA>``) with CPP
-            statistics, ranked by ``abs_auc`` and drawable by :meth:`CPPPlot.feature_map`.
-
-        See Also
-        --------
-        * :meth:`CPP.run_composit`: the general composition-mode entry point (aac / dpc / kmer).
-
-        Examples
-        --------
-        .. include:: examples/cpp_run_composit.rst
-        """
-        return self.run_composit(labels=labels, composition="aac", n_filter=n_filter,
-                                 label_test=label_test, label_ref=label_ref, parametric=parametric,
-                                 start=start, tmd_len=tmd_len, jmd_n_len=jmd_n_len, jmd_c_len=jmd_c_len,
-                                 n_jobs=n_jobs)
 
     def eval(
         self,

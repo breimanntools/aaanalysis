@@ -1,4 +1,4 @@
-"""Tests for CPP.run_composit() / CPP.run_aac().
+"""Tests for CPP.run_composit().
 
 run_composit builds a composition df_feat: composition="aac" is positional (one-hot AA scales +
 whole-part Segment(1,1) -> feature-map-able df_feat with positions), while composition="dpc"/"kmer"
@@ -36,12 +36,6 @@ class TestRunCompositAAC:
         assert ut.COL_POSITION in df.columns                       # positional
         assert all("Segment(1,1)" in f for f in df[ut.COL_FEATURE])
         assert ut.COL_ABS_AUC in df.columns
-
-    def test_run_aac_alias(self, cpp_data):
-        cpp, labels = cpp_data
-        a = cpp.run_aac(labels=labels, n_filter=20, n_jobs=1)
-        b = cpp.run_composit(labels=labels, composition="aac", n_filter=20, n_jobs=1)
-        assert list(a[ut.COL_FEATURE]) == list(b[ut.COL_FEATURE])
 
 
 # II DPC / k-mer (non-positional)
