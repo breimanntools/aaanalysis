@@ -185,7 +185,9 @@ def predict_samples(list_df_feat: FeatArg,
 
         .. versionadded:: 1.1.0
     dict_color : dict, optional
-        Mapping ``model -> color`` for the comparison-plot bars; defaults to the house palette.
+        Mapping ``model -> color`` for the comparison-plot bars; defaults to the house palette. When
+        more than one feature set is compared, the bars are labelled ``"<feature_set> · <model>"``,
+        so keys must match those composite labels.
 
         .. versionadded:: 1.1.0
     baseline : int or float, optional

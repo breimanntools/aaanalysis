@@ -262,11 +262,14 @@ class TestPredictSamplesPlot:
         _, ax, _ = aap.predict_samples(df_feat, df_seq, labels, models=["rf"], random_state=0,
                                        figsize=(6, 4), dict_color={"rf": "tab:green"}, baseline=0.5)
         assert any(l.get_linestyle() == "--" for l in ax.get_lines())  # baseline chance line
+        assert tuple(ax.figure.get_size_inches()) == (6.0, 4.0)         # figsize took effect
 
     def test_multi_feature_sets_distinct_bars(self):
+        # 2 feature sets x 1 model x 6 metrics -> 12 distinct bars (labels prefixed by feature set)
         _, ax, _ = aap.predict_samples({"a": df_feat, "b": df_feat.head(4)}, df_seq, labels,
                                        models=["rf"], random_state=0, plot=True)
         assert isinstance(ax, Axes)
+        assert sum(1 for p in ax.patches if type(p).__name__ == "Rectangle") == 12
 
     # Negative tests
     def test_invalid_plot(self):
