@@ -72,33 +72,53 @@ def _band_index(left_edge, sorted_thresholds):
     return int(np.searchsorted(sorted_thresholds, left_edge, side="right"))
 
 
-def _check_highlight_cell(highlight, data):
-    """Resolve/validate the eval-heatmap ``highlight`` to a ``(row, col)`` tuple or ``None``.
+def _check_highlight_cells(highlight, data):
+    """Resolve/validate the eval-heatmap ``highlight`` to a list of ``(row, col)`` cells to box.
 
-    ``"max"`` / ``"min"`` resolve to the argmax / argmin cell (NaNs ignored); an explicit
-    ``(row, col)`` is bounds-checked; ``None`` boxes nothing.
+    - ``None`` -> ``[]`` (box nothing).
+    - a positive ``int`` N -> the ``N`` highest-value cells, best first (NaNs ignored).
+    - ``"max"`` / ``"min"`` -> the single best / worst cell (aliases for ``1`` / worst).
+    - a ``(row, col)`` tuple, or a list of them -> those explicit cells (bounds-checked).
     """
     if highlight is None:
-        return None
+        return []
     n_rows, n_cols = data.shape
+
+    def _rank_cells(n, worst=False):
+        flat = data.ravel()
+        valid = np.where(~np.isnan(flat))[0]
+        if valid.size == 0:
+            raise ValueError("'highlight' (top-N / 'max' / 'min') needs at least one non-NaN cell "
+                             "in 'df_eval'.")
+        order = valid[np.argsort(flat[valid], kind="stable")]  # ascending (worst first)
+        if not worst:
+            order = order[::-1]                                # best first
+        return [tuple(int(v) for v in np.unravel_index(k, data.shape)) for k in order[:min(n, order.size)]]
+
     if isinstance(highlight, str):
-        if highlight not in ("max", "min"):
-            raise ValueError(f"'highlight' ('{highlight}') should be 'max', 'min', a (row, col) "
-                             f"tuple, or None.")
-        if np.all(np.isnan(data)):
-            raise ValueError("'highlight' ('max'/'min') needs at least one non-NaN cell in 'df_eval'.")
-        flat = int(np.nanargmax(data) if highlight == "max" else np.nanargmin(data))
-        return tuple(int(v) for v in np.unravel_index(flat, data.shape))
-    if not (isinstance(highlight, (tuple, list)) and len(highlight) == 2):
-        raise ValueError(f"'highlight' ({highlight}) should be 'max', 'min', a (row, col) tuple, "
-                         f"or None.")
-    i, j = highlight
-    if not (_is_int(i) and _is_int(j)):
-        raise ValueError(f"'highlight' ({highlight}) cell indices should be integers.")
-    if not (0 <= i < n_rows and 0 <= j < n_cols):
-        raise ValueError(f"'highlight' ({highlight}) should index a cell within the grid "
-                         f"(shape {(n_rows, n_cols)}).")
-    return (int(i), int(j))
+        if highlight == "max":
+            return _rank_cells(1, worst=False)
+        if highlight == "min":
+            return _rank_cells(1, worst=True)
+        raise ValueError(f"'highlight' ('{highlight}') should be a positive int (top-N), 'max', "
+                         f"'min', a (row, col) tuple/list, or None.")
+    if _is_int(highlight):
+        if highlight < 1:
+            raise ValueError(f"'highlight' ({highlight}) as an int should be >= 1 (number of top "
+                             f"cells to box).")
+        return _rank_cells(int(highlight), worst=False)
+    # explicit (row, col) or a list of them
+    cells = highlight if (isinstance(highlight, list) and highlight
+                          and isinstance(highlight[0], (tuple, list))) else [highlight]
+    out = []
+    for cell in cells:
+        if not (isinstance(cell, (tuple, list)) and len(cell) == 2 and _is_int(cell[0]) and _is_int(cell[1])):
+            raise ValueError(f"'highlight' cell ({cell}) should be a (row, col) integer tuple.")
+        i, j = int(cell[0]), int(cell[1])
+        if not (0 <= i < n_rows and 0 <= j < n_cols):
+            raise ValueError(f"'highlight' cell ({i}, {j}) is outside the grid (shape {(n_rows, n_cols)}).")
+        out.append((i, j))
+    return out
 
 
 # Multi-track sequence-viewer helpers (shared by the ``window``/``domain`` renderers).
@@ -780,7 +800,7 @@ class AAPredPlot:
              ylim: Optional[Tuple[Union[int, float], Union[int, float]]] = None,
              fontsize_annotations: Union[int, float] = 10,
              xtick_rotation: Union[int, float] = 0,
-             highlight: Optional[Union[str, Tuple[int, int]]] = "max",
+             highlight: Optional[Union[int, str, Tuple[int, int], List[Tuple[int, int]]]] = 1,
              vmin: Optional[Union[int, float]] = None,
              vmax: Optional[Union[int, float]] = None,
              cmap: str = "viridis",
@@ -803,9 +823,9 @@ class AAPredPlot:
           ``fontsize_annotations``, ``xtick_rotation``.
         * ``'heatmap'`` — square annotated heatmap of a 2D score grid (``df_eval`` is a wide
           DataFrame whose rows x columns are the two sweep axes and whose cells are the scores),
-          with the optimal cell boxed. Consolidates the recurring "grid of scores -> seaborn
-          heatmap -> box the best configuration" block. Uses ``annotate``, ``annotation_fmt``,
-          ``highlight``, ``vmin``, ``vmax``, ``cmap``, ``cbar_label``, ``title``.
+          with the best cell(s) boxed (``highlight`` selects how many). Consolidates the recurring
+          "grid of scores -> seaborn heatmap -> box the best configuration" block. Uses ``annotate``,
+          ``annotation_fmt``, ``highlight``, ``vmin``, ``vmax``, ``cmap``, ``cbar_label``, ``title``.
 
         To compare **CPP parameter combinations** instead, use the feature-optimization protocol
         :func:`aaanalysis.pipe.find_features` and its evaluation-grid :func:`aaanalysis.pipe.plot_eval`.
@@ -867,9 +887,11 @@ class AAPredPlot:
             (``kind='comparison'``) Font size of the per-bar value labels.
         xtick_rotation : int or float, default=0
             (``kind='comparison'``) Rotation (degrees) of the cluster tick labels.
-        highlight : str or tuple, default="max"
-            (``kind='heatmap'``) Which cell to box: ``"max"`` (best), ``"min"`` (worst), an explicit
-            ``(row, col)`` integer position, or ``None`` to box nothing.
+        highlight : int, str, tuple, or list, default=1
+            (``kind='heatmap'``) Which cell(s) to box with a bold frame: a positive int ``N`` boxes
+            the ``N`` best (highest-value) cells (``1`` = the single best), ``"max"`` / ``"min"`` box
+            the single best / worst cell, an explicit ``(row, col)`` (or list of them) boxes those
+            cells, and ``None`` boxes nothing.
 
             .. versionadded:: 1.1.0
         vmin : int or float, optional
@@ -998,7 +1020,7 @@ class AAPredPlot:
             raise ValueError("'df_eval' (for kind='heatmap') should contain only numeric scores.")
         if data.size == 0:
             raise ValueError("'df_eval' (empty) should have at least one cell for kind='heatmap'.")
-        highlight = _check_highlight_cell(highlight=highlight, data=data)
+        highlight_cells = _check_highlight_cells(highlight=highlight, data=data)
         if annotation_fmt is None:
             # [0, 1]-scaled scores need decimals; percent-scaled ones read best as integers.
             finite = data[np.isfinite(data)]
@@ -1011,18 +1033,15 @@ class AAPredPlot:
         ax.tick_params(left=False, bottom=False)
         plt.setp(ax.get_yticklabels(), rotation=0)
         plt.setp(ax.get_xticklabels(), rotation=0)
-        # Box the selected cell
-        if highlight is not None:
-            i, j = highlight
-            ax.add_patch(plt.Rectangle((j + 0.04, i + 0.04), 0.92, 0.92, fill=False,
-                                       edgecolor="black", lw=3, clip_on=False))
-        # Colorbar tracking the axes height, with only the tick-side spine drawn
+        # Box the selected cell(s) with a full-cell frame flush to the grid lines
+        for i, j in highlight_cells:
+            ax.add_patch(plt.Rectangle((j, i), 1, 1, fill=False, edgecolor="black", lw=3,
+                                       clip_on=False))
+        # Colorbar tracking the axes height, with an edge drawn on the tick (right) side
         cb = fig.colorbar(ax.collections[-1], ax=ax, fraction=0.046, pad=0.04, label=cbar_label)
         cb.outline.set_visible(False)
-        for side in ["left", "top", "bottom"]:
-            cb.ax.spines[side].set_visible(False)
-        cb.ax.spines["right"].set_visible(True)
-        cb.ax.spines["right"].set_linewidth(plt.rcParams["ytick.major.width"])
+        cb.ax.add_line(plt.Line2D([1, 1], [0, 1], transform=cb.ax.transAxes, color="black",
+                                  linewidth=plt.rcParams["axes.linewidth"], clip_on=False))
         if title is not None:
             ax.set_title(title)
         return ut.FigAxResult(fig, ax)
