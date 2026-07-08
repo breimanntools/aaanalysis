@@ -912,13 +912,13 @@ class TestCCPlotFeatureMapShap:
         assert _rgba(FEAT_IMP_GRAY) not in colors
         plt.close()
 
-    def test_shap_bars_are_signed_diverging(self):
-        """SHAP impact bars are signed and diverge from the zero baseline: positive impact
-        extends one way, negative the other. The right per-subcategory bars diverge
-        horizontally (some negative width); the top per-position bars diverge vertically
-        (some negative height). (Regression guard: a magnitude-only 'one direction' stack
-        would fold net-negative rows/positions the wrong way -- checked on get_width()/
-        get_height(), since barh/bar keep the signed extent there, not in get_x()/get_y().)"""
+    def test_shap_bars_are_stacked_one_direction(self):
+        """SHAP impact bars are cumulative stacks in ONE direction, not diverging: every
+        red (positive) / blue (negative) segment has a non-negative extent -- the right
+        per-subcategory bars never extend left of the baseline (no negative width) and the
+        top per-position bars never extend down (no negative height). Positive and negative
+        feature impacts pile up as stacked segments rather than extending opposite ways.
+        (Both colors being present is guarded by test_shap_bars_are_red_and_blue.)"""
         cpp_plot = aa.CPPPlot()
         df_feat = get_df_feat_shap()  # alternating +/- impact -> both signs present
         fig, _ = cpp_plot.feature_map(df_feat=df_feat, shap_plot=True,
@@ -931,8 +931,8 @@ class TestCCPlotFeatureMapShap:
                     widths.append(round(p.get_width(), 6))
                     heights.append(round(p.get_height(), 6))
         assert widths and heights
-        assert any(w < 0 for w in widths), "expected left-extending (negative) subcategory bars"
-        assert any(h < 0 for h in heights), "expected down-extending (negative) position bars"
+        assert all(w >= 0 for w in widths), "subcategory bars must not extend left (negative width)"
+        assert all(h >= 0 for h in heights), "position bars must not extend down (negative height)"
         plt.close()
 
     def test_shap_markers_present(self):

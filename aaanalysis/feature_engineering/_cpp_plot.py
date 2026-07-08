@@ -35,7 +35,7 @@ from ._backend.cpp.cpp_plot_profile import plot_profile
 from ._backend.cpp.cpp_plot_heatmap import plot_heatmap
 from ._backend.cpp.cpp_plot_feature_map import plot_feature_map
 from ._backend.cpp._utils_cpp_plot_sizing import (fit_cells_by_rescale, fit_width_by_rescale,
-                                                  ranking_figheight)
+                                                  ranking_figheight, HEATMAP_CELL_H_IN)
 from ._backend.cpp.cpp_plot_update_seq_size import get_tmd_jmd_seq, update_seq_size_, update_tmd_jmd_labels
 
 
@@ -759,9 +759,11 @@ class CPPPlot:
         # DEV: No match check for features and tmd (check_match_features_seq_parts) necessary
         # Under auto_font (default figsize only), grow the figure height with the number
         # of ranked features so each row keeps a constant height (the notebook's
-        # figsize=(width, 0.22*n + 1) rule); width and fonts stay fixed. Off -> unchanged.
+        # figsize=(width, 0.22*n + 1) rule); width and fonts stay fixed. Grow-only:
+        # floored at the default height (5) so a short ranking keeps the roomier default
+        # bar spacing rather than shrinking. Off -> unchanged.
         if ut.check_auto_font() and (figsize is None or tuple(figsize) == (7, 5)):
-            figsize = (7, ranking_figheight(n_top))
+            figsize = (7, max(5, ranking_figheight(n_top)))
         # Plot ranking
         fig, axes = plot_ranking(df_feat=df_feat.copy(),
                                  n_top=n_top, rank=rank,
@@ -1305,7 +1307,8 @@ class CPPPlot:
         if ut.check_auto_font() and tuple(figsize) == (8, 8):
             n_positions = tmd_len + (jmd_n_len or 0) + (jmd_c_len or 0)
             n_subcat = int(df_feat[col_cat].nunique())
-            _, _, capped = fit_cells_by_rescale(fig=fig, ax_grid=ax, n_rows=n_subcat, n_cols=n_positions)
+            _, _, capped = fit_cells_by_rescale(fig=fig, ax_grid=ax, n_rows=n_subcat, n_cols=n_positions,
+                                                cell_h=HEATMAP_CELL_H_IN)
             if capped and self._verbose:
                 ut.print_out("auto_font: grid exceeds the max figure size; cells may be smaller than target.")
         if tmd_seq is not None and seq_size is None:

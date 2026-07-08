@@ -38,19 +38,27 @@ def plot_feat_importance_bars_subcat(ax=None,
                                     list_cat=df_feat[col_cat].to_list(),
                                     col_cat=col_cat)
     if shap_plot:
-        # Stack signed feature impact per category (positive=red right, negative=blue left).
-        # Build one value PER category in list_cat (row) order -- categories with no impact
-        # get 0 -- and pass the whole ordered list to a single ax.barh call, so every bar
-        # reserves its own row slot and stays aligned with the heatmap rows. (Drawing bars
-        # one category at a time by name lets matplotlib's categorical converter compact the
-        # non-empty ones onto the top rows -- see test_shap_impact_bar_aligns_with_correct_row.)
+        # Cumulative feature impact per subcategory, stacked in ONE direction (matching the
+        # top per-position bars): one thin white-edged segment per contributing feature
+        # (red=positive, blue=negative). Index each row numerically (row i in list_cat order,
+        # every row reserves its slot even with no impact) so bars stay aligned with the
+        # heatmap rows -- see test_shap_impact_bar_aligns_with_correct_row.
         df = df_feat[[col_cat, col_imp]]
-        s_pos = df[df[col_imp] > 0].groupby(by=col_cat)[col_imp].sum()
-        s_neg = df[df[col_imp] < 0].groupby(by=col_cat)[col_imp].sum()
-        list_pos = [s_pos.get(x, 0) for x in list_cat]
-        list_neg = [s_neg.get(x, 0) for x in list_cat]
-        ax.barh(list_cat, list_pos, color=ut.COLOR_SHAP_POS, edgecolor=None, align="edge")
-        ax.barh(list_cat, list_neg, color=ut.COLOR_SHAP_NEG, edgecolor=None, align="edge")
+        totals = []
+        for i, cat in enumerate(list_cat):
+            vals = df.loc[df[col_cat] == cat, col_imp].values
+            left = 0.0
+            for v in vals:
+                if v > 0:
+                    ax.barh(i, v, left=left, color=ut.COLOR_SHAP_POS,
+                            edgecolor="white", linewidth=0.3, align="edge")
+                    left += v
+            for v in vals:
+                if v < 0:
+                    ax.barh(i, abs(v), left=left, color=ut.COLOR_SHAP_NEG,
+                            edgecolor="white", linewidth=0.3, align="edge")
+                    left += abs(v)
+            totals.append(left)
     else:
         # Get feature importance per scale class
         df_imp = df_feat[[col_cat, col_imp]].groupby(by=col_cat).sum()
@@ -90,7 +98,7 @@ def plot_feat_importance_bars_subcat(ax=None,
         label.set_visible(False)
 
     if shap_plot:
-        ax.set_xlim(min(list_neg + [0]), max(list_pos + [0]))
+        ax.set_xlim(0, max(totals + [0]))
     else:
         ax.set_xlim(0, v_max)
 
@@ -113,16 +121,24 @@ def plot_feat_importance_bars_pos(ax=None,
                            value_type="sum", normalize=False)
     # Plot bars
     if shap_plot:
-        # Stack signed feature impact per position (positive=red up, negative=blue down).
-        # Kept consistent with the per-subcategory (right) bars: both are signed and
-        # diverging, so a net-negative position reads as a downward blue bar rather than
-        # being folded into an upward magnitude sum.
-        list_pos = list(df_pos[df_pos > 0].sum())
-        list_neg = list(df_pos[df_pos < 0].sum())
-        x_ticks = list(range(0, len(list_pos)))
-        ax.bar(x_ticks, list_pos, color=ut.COLOR_SHAP_POS, edgecolor=None, align="edge")
-        ax.bar(x_ticks, list_neg, color=ut.COLOR_SHAP_NEG, edgecolor=None, align="edge")
-        ax.set_ylim(min(list_neg + [0]), max(list_pos + [0]))
+        # Cumulative feature impact per position, stacked in one direction with one
+        # thin white-edged segment per contributing feature (red=positive, blue=negative).
+        totals = []
+        for j in range(df_pos.shape[1]):
+            vals = df_pos.iloc[:, j].values
+            bottom = 0.0
+            for v in vals:
+                if v > 0:
+                    ax.bar(j, v, bottom=bottom, color=ut.COLOR_SHAP_POS,
+                           edgecolor="white", linewidth=0.3, align="edge")
+                    bottom += v
+            for v in vals:
+                if v < 0:
+                    ax.bar(j, abs(v), bottom=bottom, color=ut.COLOR_SHAP_NEG,
+                           edgecolor="white", linewidth=0.3, align="edge")
+                    bottom += abs(v)
+            totals.append(bottom)
+        ax.set_ylim(0, max(totals + [0]))
     else:
         list_imp = list(df_pos.sum())
         x_ticks = list(range(0, len(list_imp)))
