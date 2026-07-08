@@ -229,7 +229,7 @@ DICT_DF_SCHEMAS = {
                                  example="Charge of the C-terminal TMD segment."),
             COL_SELECTION_FREQUENCY: _field(
                 "float", "Bootstrap selection frequency (fraction of resampling rounds a "
-                "feature was selected); present only when CPP(n_bootstrap>0).",
+                "feature was selected); present only when CPP(bootstrap=True).",
                 required=False, range=[0, 1], example=0.9),
             COL_FEAT_IMPORT: _field("float", "Feature importance from TreeModel.fit "
                                     "(post-fit).", required=False, range=[0, None],

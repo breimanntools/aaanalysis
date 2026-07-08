@@ -70,16 +70,19 @@ Added
   correlation dedup (``max_cor``). The composition matrices themselves come from
   :meth:`~aaanalysis.SequenceFeature.kmer_composition` (which documents the compositional approaches).
 - **CPP bootstrap / stability feature selection** (:class:`~aaanalysis.CPP` constructor:
-  ``n_bootstrap``, ``resample``, ``bootstrap_frac``, ``n_freq``): Opt-in resampling-based
-  selection applied uniformly by :meth:`~aaanalysis.CPP.run` and :meth:`~aaanalysis.CPP.run_num`.
-  With ``n_bootstrap>0`` the data is resampled ``n_bootstrap`` times (``resample='reference'`` fixes
-  the test group and resamples only the reference group; also ``'both'`` / ``'test'``; per-group draw
-  size ``bootstrap_frac``, with replacement), features are re-selected each round, and the ``n_freq``
-  most-frequently-selected features are carried forward. Their statistics are recomputed on the full
+  ``bootstrap``, ``n_bootstrap``, ``resample``, ``bootstrap_frac``, ``min_freq``): Opt-in
+  resampling-based selection applied uniformly by :meth:`~aaanalysis.CPP.run` and
+  :meth:`~aaanalysis.CPP.run_num`. With ``bootstrap=True`` the data is resampled ``n_bootstrap`` times
+  (``resample='reference'`` fixes the test group and resamples only the reference group; also
+  ``'both'`` / ``'test'``; per-group draw size ``bootstrap_frac``, with replacement), features are
+  re-selected each round and scored by ``selection_frequency`` (fraction of rounds selected), and every
+  feature reaching ``min_freq`` is carried forward. Their statistics are recomputed on the full
   dataset, where the ``max_std_test`` and redundancy (``max_overlap`` / ``max_cor`` / ``n_filter``)
   filters decide the output, and ``df_feat`` gains a ``selection_frequency`` column (0 to 1). This
-  improves the **stability / reproducibility** of the feature list (not predictive accuracy). Default
-  ``n_bootstrap=0`` is byte-identical to previous versions. Reuses the constructor ``random_state``.
+  improves the **stability / reproducibility** of the feature list (not predictive accuracy).
+  ``bootstrap=True`` applies tuned defaults (``n_bootstrap=20``, ``bootstrap_frac=0.8``,
+  ``resample='reference'``, ``min_freq=0.25``); the default ``bootstrap=False`` is byte-identical to
+  previous versions. Reuses the constructor ``random_state``.
 - **CPP.run ``redundancy='legacy'|'exact'``** (also :meth:`~aaanalysis.CPP.run_num`): Opt-in
   position-overlap criterion for the redundancy-reduction step. The default ``'legacy'`` is
   byte-identical to previous versions (published signatures stay reproducible); ``'exact'``

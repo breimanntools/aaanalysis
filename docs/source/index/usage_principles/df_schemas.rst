@@ -391,7 +391,7 @@ CPP feature table (the primary downstream contract; see also the simple DICT_DF_
      - no
      - no
      - no
-     - Bootstrap selection frequency (fraction of resampling rounds a feature was selected); present only when CPP(n_bootstrap>0).
+     - Bootstrap selection frequency (fraction of resampling rounds a feature was selected); present only when CPP(bootstrap=True).
      - range: [0, 1]; e.g. 0.9
    * - ``feat_importance``
      - float
