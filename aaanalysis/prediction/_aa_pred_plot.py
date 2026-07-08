@@ -59,9 +59,9 @@ def _resolve_band_colors(colors, cmap, n_bands):
     band is the low end of the colormap and the high-score band the high end.
     """
     if colors is not None:
-        if isinstance(colors, dict) or len(colors) != n_bands:
-            raise ValueError(f"'colors' must be a list of {n_bands} colors (one per band delimited "
-                             f"by 'thresholds') when 'band=True'; got {colors}.")
+        if not isinstance(colors, (list, tuple)) or len(colors) != n_bands:
+            raise ValueError(f"'colors' ({colors}) should be a list of {n_bands} colors (one per "
+                             f"band delimited by 'thresholds') when 'band=True'.")
         return list(colors)
     cmap_obj = plt.get_cmap(cmap)
     return [cmap_obj(x) for x in np.linspace(0.15, 0.85, n_bands)]
@@ -845,7 +845,8 @@ class AAPredPlot:
             (``kind='heatmap'``) If ``True``, write each cell's value inside it.
         annotation_fmt : str, optional
             (``kind='comparison'``) Format string for the value labels; auto-chosen when ``None``.
-            (``kind='heatmap'``) Cell-value format; defaults to ``".0f"``.
+            (``kind='heatmap'``) Cell-value format; when ``None``, ``".2f"`` for ``[0, 1]``-scaled
+            scores and ``".0f"`` otherwise.
         group_order : list of str, optional
             (``kind='comparison'``) Order of the groups (bars within a cluster).
         condition_order : list of str, optional
@@ -914,7 +915,7 @@ class AAPredPlot:
         if kind == "heatmap":
             return AAPredPlot._plot_heatmap(
                 df_eval=df_eval, ax=ax, figsize=_default(figsize, (6, 5)),
-                annotate=annotate, annotation_fmt=_default(annotation_fmt, ".0f"),
+                annotate=annotate, annotation_fmt=annotation_fmt,
                 highlight=highlight, vmin=vmin, vmax=vmax, cmap=cmap,
                 cbar_label=_default(cbar_label, "Score"), title=title)
         # kind == "comparison"
@@ -976,7 +977,7 @@ class AAPredPlot:
         return ut.FigAxResult(fig, ax)
 
     @staticmethod
-    def _plot_heatmap(df_eval, ax=None, figsize=(6, 5), annotate=True, annotation_fmt=".0f",
+    def _plot_heatmap(df_eval, ax=None, figsize=(6, 5), annotate=True, annotation_fmt=None,
                       highlight="max", vmin=None, vmax=None, cmap="viridis", cbar_label="Score",
                       title=None):
         """Square annotated heatmap of a 2D score grid, boxing the optimal cell."""
@@ -985,7 +986,7 @@ class AAPredPlot:
         ut.check_ax(ax=ax, accept_none=True)
         ut.check_figsize(figsize=figsize, accept_none=True)
         ut.check_bool(name="annotate", val=annotate)
-        ut.check_str(name="annotation_fmt", val=annotation_fmt, accept_none=False)
+        ut.check_str(name="annotation_fmt", val=annotation_fmt, accept_none=True)
         ut.check_number_val(name="vmin", val=vmin, accept_none=True)
         ut.check_number_val(name="vmax", val=vmax, accept_none=True)
         ut.check_str(name="cmap", val=cmap, accept_none=False)
@@ -995,8 +996,15 @@ class AAPredPlot:
             data = np.asarray(df_eval.to_numpy(), dtype=float)
         except (ValueError, TypeError):
             raise ValueError("'df_eval' (for kind='heatmap') should contain only numeric scores.")
+        if data.size == 0:
+            raise ValueError("'df_eval' (empty) should have at least one cell for kind='heatmap'.")
         highlight = _check_highlight_cell(highlight=highlight, data=data)
-        # Draw the square annotated heatmap without seaborn's own colorbar
+        if annotation_fmt is None:
+            # [0, 1]-scaled scores need decimals; percent-scaled ones read best as integers.
+            finite = data[np.isfinite(data)]
+            annotation_fmt = ".2f" if finite.size and np.max(np.abs(finite)) <= 1.5 else ".0f"
+        # Draw the square annotated heatmap; let matplotlib place a layout-robust colorbar (a
+        # free-floating cax positioned from draw-time coords would detach under tight_layout).
         fig, ax = _new_ax(ax=ax, figsize=figsize)
         sns.heatmap(df_eval, vmin=vmin, vmax=vmax, cmap=cmap, annot=annotate, fmt=annotation_fmt,
                     square=True, linewidth=0.1, cbar=False, ax=ax)
@@ -1008,13 +1016,8 @@ class AAPredPlot:
             i, j = highlight
             ax.add_patch(plt.Rectangle((j + 0.04, i + 0.04), 0.92, 0.92, fill=False,
                                        edgecolor="black", lw=3, clip_on=False))
-        # Colorbar spanning the grid height, with only the tick-side spine drawn
-        fig.canvas.draw()
-        inv = fig.transFigure.inverted()
-        tl = inv.transform(ax.transData.transform((0, 0)))
-        br = inv.transform(ax.transData.transform((data.shape[1], data.shape[0])))
-        cax = fig.add_axes([br[0] + 0.015, min(tl[1], br[1]), 0.02, abs(tl[1] - br[1])])
-        cb = fig.colorbar(ax.collections[0], cax=cax, label=cbar_label)
+        # Colorbar tracking the axes height, with only the tick-side spine drawn
+        cb = fig.colorbar(ax.collections[-1], ax=ax, fraction=0.046, pad=0.04, label=cbar_label)
         cb.outline.set_visible(False)
         for side in ["left", "top", "bottom"]:
             cb.ax.spines[side].set_visible(False)

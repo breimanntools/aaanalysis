@@ -162,29 +162,52 @@ def _grid(n_rows=4, n_cols=5, seed=0):
                         columns=[f"c{j}" for j in range(n_cols)])
 
 
+def _box_cell(ax):
+    """Return the (row, col) of the single unfilled Rectangle box, or None if absent."""
+    boxes = [p for p in ax.patches if type(p).__name__ == "Rectangle" and p.get_fill() is False]
+    if not boxes:
+        return None
+    assert len(boxes) == 1
+    x, y = boxes[0].get_xy()
+    return round(y - 0.04), round(x - 0.04)  # Rectangle placed at (col + 0.04, row + 0.04)
+
+
 class TestAAPredPlotEvalHeatmap:
     def test_returns_fig_ax(self):
         r = aa.AAPredPlot().eval(_grid(), kind="heatmap")
         assert r.fig is not None and r.ax is not None
 
     def test_boxes_optimal_cell_by_default(self):
-        # highlight defaults to "max": exactly one unfilled Rectangle patch (the box).
-        r = aa.AAPredPlot().eval(_grid(), kind="heatmap")
-        boxes = [p for p in r.ax.patches if type(p).__name__ == "Rectangle" and p.get_fill() is False]
-        assert len(boxes) == 1
+        # highlight defaults to "max": the box lands on the argmax cell.
+        g = _grid()
+        r = aa.AAPredPlot().eval(g, kind="heatmap")
+        i, j = np.unravel_index(np.argmax(g.to_numpy()), g.shape)
+        assert _box_cell(r.ax) == (int(i), int(j))
 
     def test_highlight_min(self):
-        r = aa.AAPredPlot().eval(_grid(), kind="heatmap", highlight="min")
-        assert r.ax is not None
+        g = _grid()
+        r = aa.AAPredPlot().eval(g, kind="heatmap", highlight="min")
+        i, j = np.unravel_index(np.argmin(g.to_numpy()), g.shape)
+        assert _box_cell(r.ax) == (int(i), int(j))
 
     def test_highlight_explicit_cell(self):
         r = aa.AAPredPlot().eval(_grid(), kind="heatmap", highlight=(1, 2))
-        assert r.ax is not None
+        assert _box_cell(r.ax) == (1, 2)
+
+    def test_highlight_max_ignores_nan(self):
+        g = _grid()
+        g.iloc[0, 0] = np.nan  # NaN must not be picked as the max
+        r = aa.AAPredPlot().eval(g, kind="heatmap", highlight="max")
+        i, j = np.unravel_index(np.nanargmax(g.to_numpy()), g.shape)
+        assert _box_cell(r.ax) == (int(i), int(j))
 
     def test_highlight_none_draws_no_box(self):
         r = aa.AAPredPlot().eval(_grid(), kind="heatmap", highlight=None)
-        boxes = [p for p in r.ax.patches if type(p).__name__ == "Rectangle" and p.get_fill() is False]
-        assert len(boxes) == 0
+        assert _box_cell(r.ax) is None
+
+    def test_empty_grid_raises(self):
+        with pytest.raises(ValueError):
+            aa.AAPredPlot().eval(pd.DataFrame(columns=["a", "b"]), kind="heatmap", highlight=None)
 
     def test_vmin_vmax_cmap_cbar_label(self):
         r = aa.AAPredPlot().eval(_grid(), kind="heatmap", vmin=50, vmax=100, cmap="magma",
