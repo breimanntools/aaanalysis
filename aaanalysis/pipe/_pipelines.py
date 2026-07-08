@@ -8,6 +8,7 @@ with a tidy comparison table — a convenience facade over the explicit
 from typing import Optional, List, Dict, Tuple, Union
 import numpy as np
 import pandas as pd
+from matplotlib.axes import Axes
 from sklearn.base import BaseEstimator, clone
 from sklearn.svm import SVC
 from sklearn.ensemble import RandomForestClassifier, ExtraTreesClassifier
@@ -16,6 +17,7 @@ from sklearn.model_selection import cross_validate
 
 import aaanalysis.utils as ut
 from aaanalysis.feature_engineering import SequenceFeature
+from aaanalysis.prediction import AAPredPlot
 
 # Comparison metrics scored in one cross_validate pass (sklearn scoring keys); balanced_accuracy is
 # the headline (imbalance-aware, the paper's bACC). Each becomes a <metric>_mean / <metric>_std
@@ -114,16 +116,38 @@ def _cv_row(est, X, labels, n_cv=5):
     return {m: (float(np.mean(res["test_" + m])), float(np.std(res["test_" + m]))) for m in _METRICS}
 
 
+def _comparison_long(df_eval):
+    """Reshape the wide ``predict_samples`` table into the long ``AAPredPlot.eval(kind='eval')`` form.
+
+    Emits one row per ``(model, metric)`` with the ``COLS_EVAL_PRED`` columns. When more than one
+    feature set is compared, the model label is prefixed with the feature-set name so each
+    ``(feature_set, model)`` cell is a distinct hued bar.
+    """
+    metrics = [c[:-len("_mean")] for c in df_eval.columns if c.endswith("_mean")]
+    multi = df_eval["feature_set"].nunique() > 1
+    rows = []
+    for _, r in df_eval.iterrows():
+        model = f"{r['feature_set']} · {r['model']}" if multi else r["model"]
+        for m in metrics:
+            rows.append({ut.COL_MODEL: model, ut.COL_METRIC: m, ut.COL_PRINCIPLE: ut.STR_PRINCIPLE_CV,
+                         ut.COL_SCORE: r[m + "_mean"], ut.COL_SCORE_STD: r[m + "_std"]})
+    return pd.DataFrame(rows)
+
+
 # II Main Functions
 def predict_samples(list_df_feat: FeatArg,
                     df_seq: pd.DataFrame,
                     labels: ut.ArrayLike1D,
                     models: Optional[ModelsArg] = None,
                     n_cv: int = 5,
+                    plot: bool = True,
+                    figsize: Optional[Tuple[Union[int, float], Union[int, float]]] = None,
+                    dict_color: Optional[Dict[str, str]] = None,
+                    baseline: Optional[Union[int, float]] = None,
                     random_state: Optional[int] = None,
                     n_jobs: Optional[int] = None,
                     verbose: bool = False,
-                    ) -> Tuple[Dict[Tuple[str, str], BaseEstimator], None, pd.DataFrame]:
+                    ) -> Tuple[Dict[Tuple[str, str], BaseEstimator], Optional[Axes], pd.DataFrame]:
     """
     Train and compare predictors across feature sets and models in one call.
 
@@ -151,6 +175,23 @@ def predict_samples(list_df_feat: FeatArg,
         compared: random forest, extra trees, SVM, and logistic regression.
     n_cv : int, default=5
         Number of cross-validation folds, must be > 1 and <= the smallest class count.
+    plot : bool, default=True
+        If ``True``, draw the model comparison bar plot (hue = model, one bar group per metric,
+        with cross-validation ``std`` error bars) from the comparison table and return its ``Axes``.
+
+        .. versionadded:: 1.1.0
+    figsize : tuple, optional
+        Figure size of the comparison plot; a per-kind default is used when ``None``.
+
+        .. versionadded:: 1.1.0
+    dict_color : dict, optional
+        Mapping ``model -> color`` for the comparison-plot bars; defaults to the house palette.
+
+        .. versionadded:: 1.1.0
+    baseline : int or float, optional
+        y-value of a dashed chance line on the comparison plot (e.g. ``0.5``); none when ``None``.
+
+        .. versionadded:: 1.1.0
     random_state : int, optional
         The seed used by the random number generator. If a positive integer, results of stochastic
         processes are reproducible. Injected into each model only where the estimator exposes a
@@ -166,9 +207,9 @@ def predict_samples(list_df_feat: FeatArg,
     predictors : dict
         The fitted predictors, keyed by ``(feature_set, model)``. Each value is the corresponding
         scikit-learn estimator refit on all samples.
-    figs : None
-        Always ``None`` — prediction draws no plot by default (the slot reserved for a future
-        comparison plot keeps the uniform ``(results, figs, evals)`` pipeline return shape).
+    fig_ax : matplotlib.axes.Axes or None
+        The comparison-plot ``Axes`` when ``plot=True``, else ``None`` (keeping the uniform
+        ``(results, figs, evals)`` pipeline return shape).
     df_eval : pd.DataFrame, shape (n_feature_sets * n_models, n_eval_info)
         Comparison table, one row per ``(feature_set, model)``: the descriptors, ``n_features``, one
         ``<metric>_mean`` / ``<metric>_std`` column pair per metric (balanced_accuracy, accuracy,
@@ -189,6 +230,10 @@ def predict_samples(list_df_feat: FeatArg,
     # Validate (thin facade: the wrapped primitives validate the rest)
     ut.check_df_seq(df_seq=df_seq)
     ut.check_number_range(name="n_cv", val=n_cv, min_val=2, just_int=True)
+    ut.check_bool(name="plot", val=plot)
+    ut.check_figsize(figsize=figsize, accept_none=True)
+    ut.check_dict_color(name="dict_color", val=dict_color, accept_none=True)
+    ut.check_number_val(name="baseline", val=baseline, accept_none=True)
     ut.check_number_range(name="random_state", val=random_state, min_val=0, just_int=True, accept_none=True)
     ut.check_bool(name="verbose", val=verbose)
     dict_df_feat = _resolve_named_feat(list_df_feat=list_df_feat)
@@ -217,5 +262,9 @@ def predict_samples(list_df_feat: FeatArg,
     df_eval = pd.DataFrame(rows)
     best = int(df_eval["balanced_accuracy_mean"].to_numpy().argmax())
     df_eval["is_best"] = [i == best for i in range(len(df_eval))]
-    # Uniform (results, figs, evals) pipeline return triple; figs=None (no plot drawn)
-    return predictors, None, df_eval
+    # Uniform (results, figs, evals) pipeline return triple; draw the model comparison when plot=True
+    ax = None
+    if plot:
+        _, ax = AAPredPlot().eval(_comparison_long(df_eval), kind="eval", figsize=figsize,
+                                  dict_color=dict_color, baseline=baseline)
+    return predictors, ax, df_eval

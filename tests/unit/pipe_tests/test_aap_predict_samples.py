@@ -1,9 +1,13 @@
 """This is a script to test the aaanalysis.pipe.predict_samples() golden pipeline."""
+import matplotlib
+matplotlib.use("Agg")
+import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
 import pytest
 from hypothesis import given, settings
 import hypothesis.strategies as st
+from matplotlib.axes import Axes
 from sklearn.ensemble import RandomForestClassifier, ExtraTreesClassifier
 from sklearn.svm import SVC
 from sklearn.linear_model import LogisticRegression
@@ -13,6 +17,12 @@ import aaanalysis.pipe as aap
 
 settings.register_profile("ci", deadline=None)
 settings.load_profile("ci")
+
+
+@pytest.fixture(autouse=True)
+def _close_figs():
+    yield
+    plt.close("all")
 
 # Every test here runs cross-validated model fits (tens of seconds each), so the whole module is
 # the `slow` tier: deselected from the fast PR unit matrix (-m "not slow"), run by coverage + nightly.
@@ -30,7 +40,7 @@ class TestPredictSamples:
 
     # Positive tests
     def test_returns_triple(self):
-        result = aap.predict_samples(df_feat, df_seq, labels, models=["rf"], random_state=0)
+        result = aap.predict_samples(df_feat, df_seq, labels, models=["rf"], random_state=0, plot=False)
         assert isinstance(result, tuple) and len(result) == 3
         predictors, figs, df_eval = result
         assert isinstance(predictors, dict)
@@ -227,3 +237,42 @@ class TestPredictSamplesComplex:
     def test_invalid_labels_in_grid(self):
         with pytest.raises(ValueError):
             aap.predict_samples({"a": df_feat, "b": df_feat.head(4)}, df_seq, labels[:-2], models=["rf"])
+
+
+class TestPredictSamplesPlot:
+    """The plot=True model-comparison figure and its parameters."""
+
+    # Positive tests
+    def test_plot_true_returns_axes(self):
+        _, ax, _ = aap.predict_samples(df_feat, df_seq, labels, models=["rf", "svm"], random_state=0, plot=True)
+        assert isinstance(ax, Axes)
+        # one hued bar per (model x metric): 2 models x 6 metrics = 12 bars
+        assert sum(1 for p in ax.patches if type(p).__name__ == "Rectangle") == 12
+
+    def test_plot_false_returns_none(self):
+        _, ax, _ = aap.predict_samples(df_feat, df_seq, labels, models=["rf"], random_state=0, plot=False)
+        assert ax is None
+
+    def test_plot_does_not_change_table(self):
+        _, _, e_plot = aap.predict_samples(df_feat, df_seq, labels, models=["rf"], random_state=0, plot=True)
+        _, _, e_noplot = aap.predict_samples(df_feat, df_seq, labels, models=["rf"], random_state=0, plot=False)
+        assert e_plot.equals(e_noplot)
+
+    def test_figsize_dict_color_baseline(self):
+        _, ax, _ = aap.predict_samples(df_feat, df_seq, labels, models=["rf"], random_state=0,
+                                       figsize=(6, 4), dict_color={"rf": "tab:green"}, baseline=0.5)
+        assert any(l.get_linestyle() == "--" for l in ax.get_lines())  # baseline chance line
+
+    def test_multi_feature_sets_distinct_bars(self):
+        _, ax, _ = aap.predict_samples({"a": df_feat, "b": df_feat.head(4)}, df_seq, labels,
+                                       models=["rf"], random_state=0, plot=True)
+        assert isinstance(ax, Axes)
+
+    # Negative tests
+    def test_invalid_plot(self):
+        with pytest.raises(ValueError):
+            aap.predict_samples(df_feat, df_seq, labels, models=["rf"], plot="yes")
+
+    def test_invalid_baseline(self):
+        with pytest.raises(ValueError):
+            aap.predict_samples(df_feat, df_seq, labels, models=["rf"], baseline="mid")
