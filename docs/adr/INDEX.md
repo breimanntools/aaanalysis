@@ -61,4 +61,5 @@ Regenerate this table with:
 | [0051](0051-treemodel-per-round-seeding.md) | TreeModel per-round seeding (fixed seed → independent rounds) | Accepted | 2026-07-06 |  |
 | [0052](0052-bh-pvalue-monotonicity.md) | BH-adjusted p-value monotonicity (canonical Benjamini–Hochberg) | Accepted | 2026-07-06 |  |
 | [0053](0053-dpulearn-project-out-of-sample.md) | dPULearn.project: out-of-sample projection into the fitted PC space | Accepted | 2026-07-06 |  |
+| [0054](0054-reject-distributed-signal-diagnostic.md) | Reject the distributed-signal (joint-vs-marginal lift) diagnostic | Accepted | 2026-07-08 |  |
 <!-- ADR-INDEX:END -->
