@@ -162,14 +162,19 @@ def _grid(n_rows=4, n_cols=5, seed=0):
                         columns=[f"c{j}" for j in range(n_cols)])
 
 
-def _box_cell(ax):
-    """Return the (row, col) of the single unfilled Rectangle box, or None if absent."""
+def _box_cells(ax):
+    """Return the set of (row, col) full-cell boxes (unfilled Rectangles placed at (col, row))."""
     boxes = [p for p in ax.patches if type(p).__name__ == "Rectangle" and p.get_fill() is False]
-    if not boxes:
+    return {(round(p.get_xy()[1]), round(p.get_xy()[0])) for p in boxes}
+
+
+def _box_cell(ax):
+    """Return the single boxed (row, col), or None if none."""
+    cells = _box_cells(ax)
+    if not cells:
         return None
-    assert len(boxes) == 1
-    x, y = boxes[0].get_xy()
-    return round(y - 0.04), round(x - 0.04)  # Rectangle placed at (col + 0.04, row + 0.04)
+    assert len(cells) == 1
+    return next(iter(cells))
 
 
 class TestAAPredPlotEvalHeatmap:
@@ -177,12 +182,23 @@ class TestAAPredPlotEvalHeatmap:
         r = aa.AAPredPlot().eval(_grid(), kind="heatmap")
         assert r.fig is not None and r.ax is not None
 
-    def test_boxes_optimal_cell_by_default(self):
-        # highlight defaults to "max": the box lands on the argmax cell.
+    def test_boxes_best_cell_by_default(self):
+        # highlight defaults to 1: the box lands on the argmax cell, flush to the cell (no inset).
         g = _grid()
         r = aa.AAPredPlot().eval(g, kind="heatmap")
         i, j = np.unravel_index(np.argmax(g.to_numpy()), g.shape)
         assert _box_cell(r.ax) == (int(i), int(j))
+        box = [p for p in r.ax.patches if type(p).__name__ == "Rectangle" and p.get_fill() is False][0]
+        assert box.get_width() == 1 and box.get_height() == 1  # full-cell frame
+
+    def test_highlight_top_n(self):
+        # highlight=3 boxes the three highest-value cells.
+        g = _grid()
+        r = aa.AAPredPlot().eval(g, kind="heatmap", highlight=3)
+        flat = g.to_numpy().ravel()
+        top3 = {tuple(int(v) for v in np.unravel_index(k, g.shape))
+                for k in np.argsort(flat)[::-1][:3]}
+        assert _box_cells(r.ax) == top3
 
     def test_highlight_min(self):
         g = _grid()
@@ -194,6 +210,10 @@ class TestAAPredPlotEvalHeatmap:
         r = aa.AAPredPlot().eval(_grid(), kind="heatmap", highlight=(1, 2))
         assert _box_cell(r.ax) == (1, 2)
 
+    def test_highlight_explicit_cell_list(self):
+        r = aa.AAPredPlot().eval(_grid(), kind="heatmap", highlight=[(0, 0), (3, 4)])
+        assert _box_cells(r.ax) == {(0, 0), (3, 4)}
+
     def test_highlight_max_ignores_nan(self):
         g = _grid()
         g.iloc[0, 0] = np.nan  # NaN must not be picked as the max
@@ -204,6 +224,10 @@ class TestAAPredPlotEvalHeatmap:
     def test_highlight_none_draws_no_box(self):
         r = aa.AAPredPlot().eval(_grid(), kind="heatmap", highlight=None)
         assert _box_cell(r.ax) is None
+
+    def test_highlight_zero_raises(self):
+        with pytest.raises(ValueError):
+            aa.AAPredPlot().eval(_grid(), kind="heatmap", highlight=0)
 
     def test_empty_grid_raises(self):
         with pytest.raises(ValueError):
