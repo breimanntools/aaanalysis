@@ -124,8 +124,8 @@ def resolve_n_jobs(n_jobs=None, n_work=None):
 def check_auto_font():
     """Return whether package-wide automatic plot sizing/fonts are enabled.
 
-    Global toggle (no per-call argument). When ``True``, dense plots may derive
-    their figure size from the data shape; when ``False`` (default) plots behave
+    Global toggle (no per-call argument). When ``True`` (default), dense plots may
+    derive their figure size from the data shape; when ``False`` plots behave
     exactly as before (byte-identical output).
     """
     auto_font = options["auto_font"]
