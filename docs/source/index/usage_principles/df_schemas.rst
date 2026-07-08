@@ -386,6 +386,13 @@ CPP feature table (the primary downstream contract; see also the simple DICT_DF_
      - no
      - Optional readable one-sentence feature description.
      - e.g. Charge of the C-terminal TMD segment.
+   * - ``selection_frequency``
+     - float
+     - no
+     - no
+     - no
+     - Bootstrap selection frequency (fraction of resampling rounds a feature was selected); present only when CPP(n_bootstrap>0).
+     - range: [0, 1]; e.g. 0.9
    * - ``feat_importance``
      - float
      - no

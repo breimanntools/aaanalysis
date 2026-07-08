@@ -173,6 +173,29 @@ def _pick_feature_matrix_builder():
     return get_feature_matrix_fast_
 
 
+def _resample_row_indices(idx_test=None, idx_ref=None, resample="reference",
+                          bootstrap_frac=0.8, rng=None):
+    """Draw one bootstrap resample of row indices (sampling with replacement per group).
+
+    ``idx_test`` / ``idx_ref`` are the row positions of the test / reference group in the full
+    ``labels`` vector. Per ``resample``, one or both groups are resampled with replacement to
+    ``round(bootstrap_frac * n_group)`` rows (at least 1); the other group is passed through
+    unchanged. ``resample='reference'`` fixes the test group and resamples only the reference,
+    isolating the dominant instability source.
+    """
+    def _draw(idx):
+        size = max(1, int(round(bootstrap_frac * len(idx))))
+        return rng.choice(idx, size=size, replace=True)
+
+    if resample == ut.RESAMPLE_BOTH:
+        test_s, ref_s = _draw(idx_test), _draw(idx_ref)
+    elif resample == ut.RESAMPLE_REFERENCE:
+        test_s, ref_s = idx_test, _draw(idx_ref)
+    else:  # ut.RESAMPLE_TEST
+        test_s, ref_s = _draw(idx_test), idx_ref
+    return np.concatenate([test_s, ref_s])
+
+
 # II Main Functions
 def cpp_run_single(df_parts=None, split_kws=None, df_scales=None, df_cat=None, verbose=None,
                       accept_gaps=True, labels=None, label_test=1, label_ref=0, n_filter=100,
@@ -697,4 +720,138 @@ def cpp_run_sample_batched(df_parts=None, split_kws=None, df_scales=None, df_cat
         ut.print_out(
             f"5. CPP returns df of {len(df_feat)} unique features with general information and statistics"
         )
+    return df_feat
+
+
+def cpp_run_bootstrap(df_parts=None, split_kws=None, df_scales=None, df_cat=None, verbose=None,
+                      accept_gaps=True, labels=None, label_test=1, label_ref=0, n_filter=100,
+                      n_pre_filter=None, pct_pre_filter=5, max_std_test=0.2, max_overlap=0.5,
+                      max_cor=0.5, check_cat=True, redundancy="legacy", parametric=False, start=1,
+                      tmd_len=20, jmd_n_len=10, jmd_c_len=10, n_jobs=None, vectorized=True,
+                      n_bootstrap=50, resample="reference", bootstrap_frac=0.8, n_freq=50,
+                      random_state=None, aa_lookup_cache=None, feature_matrix_builder=None,
+                      dict_part_vals=None, dict_part_lens=None):
+    """Bootstrap / stability feature selection wrapped around the single-pass CPP selection.
+
+    Two phases:
+
+    1. **Candidate generation (resampled).** Repeat the single-pass selection
+       (:func:`cpp_run_single`) ``n_bootstrap`` times, each on a bootstrap resample of the rows
+       (``_resample_row_indices``, with replacement per group per ``resample``). Tally how often
+       each feature is selected; ``selection_frequency`` is that count over ``n_bootstrap``. The
+       ``n_freq`` most-frequently-selected features (across the union of all rounds) are the
+       stable candidate set.
+    2. **Full-data filtering (authoritative).** Statistics for the candidates are (re)computed on
+       the **complete** test + reference set, then CPP's own filters decide the output: the
+       ``max_std_test`` pre-filter threshold (a feature stable in subsamples but with too-high
+       ``std_test`` on the full data is dropped) and the redundancy filter
+       (``max_overlap`` / ``max_cor`` / ``n_filter``). The result is ordered by ``abs_auc`` like a
+       normal run and carries an extra ``selection_frequency`` column.
+
+    Numerical mode (``dict_part_vals`` / ``dict_part_lens`` supplied) resamples along the sample
+    axis of the per-part tensors; sequence mode resamples the ``df_parts`` rows.
+    """
+    list_scales = list(df_scales)
+    args_len = dict(tmd_len=tmd_len, jmd_n_len=jmd_n_len, jmd_c_len=jmd_c_len)
+    labels_arr = np.asarray(labels)
+    is_numerical = dict_part_vals is not None and dict_part_lens is not None
+
+    # Row positions per group. labels are exactly {label_test, label_ref} and both are present
+    # (frontend-guaranteed by ut.check_labels), so both index arrays are non-empty.
+    idx_test = np.where(labels_arr == label_test)[0]
+    idx_ref = np.where(labels_arr == label_ref)[0]
+    rng = np.random.default_rng(random_state)
+
+    # Candidate-feature count (parts x split_kws x scales expansion) — stable across rounds; used
+    # only for the funnel stats.
+    n_feat_total = len(get_features_(list_parts=list(df_parts), split_kws=split_kws,
+                                     list_scales=list_scales))
+
+    # --- Phase 1: bootstrap candidate generation ---------------------------------------------
+    counts = {}
+    for b in range(n_bootstrap):
+        if verbose:
+            ut.print_out(f"1.{b + 1} CPP bootstrap round {b + 1}/{n_bootstrap} "
+                         f"(resample='{resample}', frac={bootstrap_frac})")
+        idx_b = _resample_row_indices(idx_test=idx_test, idx_ref=idx_ref, resample=resample,
+                                      bootstrap_frac=bootstrap_frac, rng=rng)
+        df_parts_b = df_parts.iloc[idx_b].reset_index(drop=True)
+        labels_b = labels_arr[idx_b].tolist()
+        round_kwargs = dict(
+            df_parts=df_parts_b, split_kws=split_kws, df_scales=df_scales, df_cat=df_cat,
+            verbose=False, accept_gaps=accept_gaps, labels=labels_b, label_test=label_test,
+            label_ref=label_ref, n_filter=n_filter, n_pre_filter=n_pre_filter,
+            pct_pre_filter=pct_pre_filter, max_std_test=max_std_test, max_overlap=max_overlap,
+            max_cor=max_cor, check_cat=check_cat, redundancy=redundancy, parametric=parametric,
+            start=start, tmd_len=tmd_len, jmd_n_len=jmd_n_len, jmd_c_len=jmd_c_len, n_jobs=n_jobs,
+            vectorized=vectorized, df_seq=None, dict_num=None,
+            feature_matrix_builder=feature_matrix_builder,
+        )
+        if is_numerical:
+            df_feat_b = cpp_run_single(
+                dict_part_vals={p: v[idx_b] for p, v in dict_part_vals.items()},
+                dict_part_lens={p: l[idx_b] for p, l in dict_part_lens.items()},
+                aa_lookup_cache=None, **round_kwargs,
+            )
+        else:
+            # aa_lookup_cache is row-aligned to the full df_parts, so it cannot be reused on a
+            # resampled subset — the seq-mode builder rebuilds it from df_parts_b.
+            df_feat_b = cpp_run_single(aa_lookup_cache=None, **round_kwargs)
+        for f in df_feat_b[ut.COL_FEATURE]:
+            counts[f] = counts.get(f, 0) + 1
+
+    freq = {f: c / n_bootstrap for f, c in counts.items()}
+    # Deterministic rank: selection frequency desc, then feature id asc (reproducible tie-break).
+    candidates = sorted(freq, key=lambda f: (-freq[f], f))[:n_freq]
+    if verbose:
+        ut.print_out(f"2. CPP bootstrap selected {len(freq)} distinct features across "
+                     f"{n_bootstrap} rounds; keeping the {len(candidates)} most stable "
+                     f"(top 'n_freq'={n_freq}) for full-data filtering")
+
+    # --- Phase 2: full-data statistics + authoritative filtering on the stable candidates ----
+    if not candidates:
+        df_feat = pd.DataFrame({ut.COL_FEATURE: pd.Series(dtype=str)})
+        df_feat[ut.COL_SELECTION_FREQUENCY] = pd.Series(dtype=float)
+        return _attach_filter_stats(
+            df_feat=df_feat, n_candidates=n_feat_total, n_after_prefilter=0,
+            n_after_redundancy=0, n_requested=None, verbose=verbose,
+        )
+
+    df = pd.DataFrame({ut.COL_FEATURE: candidates})
+    if is_numerical:
+        X_full = recompute_feature_matrix(
+            dict_part_vals=dict_part_vals, dict_part_lens=dict_part_lens,
+            list_scales=list_scales, features=candidates, split_kws=split_kws,
+        )
+    else:
+        builder = feature_matrix_builder or get_feature_matrix_fast_
+        X_full = builder(features=candidates, df_parts=df_parts, df_scales=df_scales,
+                         accept_gaps=accept_gaps, n_jobs=n_jobs, aa_lookup_cache=aa_lookup_cache)
+    df = add_stat(df_feat=df, X_cached=X_full, labels=labels, parametric=parametric,
+                  label_test=label_test, label_ref=label_ref, n_jobs=n_jobs, vectorized=vectorized)
+    # Full-data pre-filter threshold: the full data is authoritative, so a candidate whose
+    # full-data std_test exceeds max_std_test (or whose abs_mean_dif is NaN under accept_gaps) is
+    # dropped even if it was stable across subsamples.
+    df = df[df[ut.COL_STD_TEST] <= max_std_test]
+    if accept_gaps:
+        df = df[~df[ut.COL_ABS_MEAN_DIF].isna()]
+    features_kept = df[ut.COL_FEATURE].to_list()
+    df[ut.COL_POSITION] = get_positions_(features=features_kept, start=start, **args_len)
+    df = add_scale_info_(df_feat=df, df_cat=df_cat)
+
+    if verbose:
+        ut.print_out("3. CPP full-data redundancy filtering on the stable candidates")
+    df_feat = filtering(df=df, df_scales=df_scales, n_filter=n_filter, check_cat=check_cat,
+                        max_overlap=max_overlap, max_cor=max_cor, redundancy=redundancy)
+    df_feat.reset_index(drop=True, inplace=True)
+    df_feat[ut.COLS_FEAT_STAT] = df_feat[ut.COLS_FEAT_STAT].round(3)
+    df_feat[ut.COL_FEATURE] = df_feat[ut.COL_FEATURE].astype(str)
+    df_feat[ut.COL_SELECTION_FREQUENCY] = [round(freq[f], 3) for f in df_feat[ut.COL_FEATURE]]
+    df_feat = _attach_filter_stats(
+        df_feat=df_feat, n_candidates=n_feat_total, n_after_prefilter=len(candidates),
+        n_after_redundancy=len(df_feat), n_requested=None, verbose=verbose,
+    )
+    if verbose:
+        ut.print_out(f"4. CPP returns df of {len(df_feat)} stable features with statistics "
+                     f"and 'selection_frequency'")
     return df_feat

@@ -243,6 +243,7 @@ COL_POSITION = "positions"
 COL_AA_TEST = "amino_acids_test"
 COL_AA_REF = "amino_acids_ref"
 COL_FEAT_DES = "feature_description"  # optional, additive: one readable sentence per feature id
+COL_SELECTION_FREQUENCY = "selection_frequency"  # optional: bootstrap stability score [0-1], present only when n_bootstrap>0
 
 # Columns for df_feat after processing with explainable AI methods
 COL_FEAT_IMPORT = "feat_importance"
@@ -329,6 +330,15 @@ STRATEGY_THRESHOLD = "threshold"
 STRATEGY_FREQUENCY = "frequency"
 LIST_SELECTION_STRATEGIES = [STRATEGY_TOP_K, STRATEGY_THRESHOLD, STRATEGY_FREQUENCY]
 
+# CPP bootstrap / stability selection (CPP.__init__ n_bootstrap>0) — which class group is
+# resampled per round. 'reference' fixes the (usually smaller/cleaner) test group and resamples
+# only the reference group, isolating the dominant instability source; 'both' resamples both
+# groups; 'test' fixes the reference group and resamples only the test group.
+RESAMPLE_BOTH = "both"
+RESAMPLE_REFERENCE = "reference"
+RESAMPLE_TEST = "test"
+LIST_RESAMPLE = [RESAMPLE_BOTH, RESAMPLE_REFERENCE, RESAMPLE_TEST]
+
 # CPP.simplify — interpretability-guided scale swapping
 STRATEGY_GREEDY = "greedy"            # per-feature swap, RF+CV non-regression gate
 STRATEGY_CONSOLIDATE = "consolidate"  # set-level consolidation (staged)
@@ -399,6 +409,7 @@ DICT_DF_FEAT = {
     COL_AA_TEST:         ("str",   False, False, "Amino acids at the feature positions in the test group (diagnostic)."),
     COL_AA_REF:          ("str",   False, False, "Amino acids at the feature positions in the reference group (diagnostic)."),
     COL_FEAT_DES:        ("str",   False, True,  "Optional readable one-sentence feature description."),
+    COL_SELECTION_FREQUENCY: ("float", False, False, "Bootstrap selection frequency in [0, 1] (fraction of resampling rounds a feature was selected); present only when CPP(n_bootstrap>0)."),
     COL_FEAT_IMPORT:     ("float", False, False, "Feature importance from TreeModel.fit (post-fit)."),
     COL_FEAT_IMPORT_STD: ("float", False, False, "Standard deviation of the feature importance across CV rounds (post-fit)."),
     COL_FEAT_IMPACT:     ("float", False, False, "SHAP-based signed feature impact from ShapModel (post-fit, pro)."),
