@@ -155,6 +155,68 @@ class TestAAPredPlotEvalComparison:
         assert r.ax is ax
 
 
+def _grid(n_rows=4, n_cols=5, seed=0):
+    rng = np.random.RandomState(seed)
+    return pd.DataFrame(rng.uniform(50, 100, (n_rows, n_cols)),
+                        index=[f"r{i}" for i in range(n_rows)],
+                        columns=[f"c{j}" for j in range(n_cols)])
+
+
+class TestAAPredPlotEvalHeatmap:
+    def test_returns_fig_ax(self):
+        r = aa.AAPredPlot().eval(_grid(), kind="heatmap")
+        assert r.fig is not None and r.ax is not None
+
+    def test_boxes_optimal_cell_by_default(self):
+        # highlight defaults to "max": exactly one unfilled Rectangle patch (the box).
+        r = aa.AAPredPlot().eval(_grid(), kind="heatmap")
+        boxes = [p for p in r.ax.patches if type(p).__name__ == "Rectangle" and p.get_fill() is False]
+        assert len(boxes) == 1
+
+    def test_highlight_min(self):
+        r = aa.AAPredPlot().eval(_grid(), kind="heatmap", highlight="min")
+        assert r.ax is not None
+
+    def test_highlight_explicit_cell(self):
+        r = aa.AAPredPlot().eval(_grid(), kind="heatmap", highlight=(1, 2))
+        assert r.ax is not None
+
+    def test_highlight_none_draws_no_box(self):
+        r = aa.AAPredPlot().eval(_grid(), kind="heatmap", highlight=None)
+        boxes = [p for p in r.ax.patches if type(p).__name__ == "Rectangle" and p.get_fill() is False]
+        assert len(boxes) == 0
+
+    def test_vmin_vmax_cmap_cbar_label(self):
+        r = aa.AAPredPlot().eval(_grid(), kind="heatmap", vmin=50, vmax=100, cmap="magma",
+                                 cbar_label="Balanced accuracy [%]")
+        assert r.ax is not None
+
+    def test_annotate_and_fmt(self):
+        r = aa.AAPredPlot().eval(_grid(), kind="heatmap", annotate=True, annotation_fmt=".1f")
+        assert r.ax is not None
+
+    def test_annotate_false(self):
+        r = aa.AAPredPlot().eval(_grid(), kind="heatmap", annotate=False)
+        assert r.ax is not None
+
+    def test_title_and_ax(self):
+        fig, ax = plt.subplots()
+        r = aa.AAPredPlot().eval(_grid(), kind="heatmap", ax=ax, title="t")
+        assert r.ax is ax and ax.get_title() == "t"
+
+    def test_bad_highlight_string_raises(self):
+        with pytest.raises(ValueError):
+            aa.AAPredPlot().eval(_grid(), kind="heatmap", highlight="best")
+
+    def test_highlight_out_of_bounds_raises(self):
+        with pytest.raises(ValueError):
+            aa.AAPredPlot().eval(_grid(), kind="heatmap", highlight=(9, 9))
+
+    def test_non_numeric_grid_raises(self):
+        with pytest.raises(ValueError):
+            aa.AAPredPlot().eval(pd.DataFrame({"a": ["x", "y"]}), kind="heatmap")
+
+
 def _df_rank(n=8):
     rng = np.random.RandomState(0)
     return pd.DataFrame({"name": [f"G{i}" for i in range(n)],
@@ -297,6 +359,45 @@ class TestAAPredPlotPredictHist:
         fig, ax0 = plt.subplots()
         fig, ax = aa.AAPredPlot().predict_group(scores, kind="hist", ax=ax0, figsize=(6, 4))
         assert ax is ax0
+
+    def test_band_colors_bars_by_confidence(self):
+        scores, labels = _scores()
+        fig, ax = aa.AAPredPlot().predict_group(scores, kind="hist", band=True,
+                                                thresholds=[0.3, 0.7])
+        # Three bands (2 thresholds) -> bars fall into at most three distinct face colors,
+        # and at least two bands are populated for a spread score distribution.
+        face_colors = {tuple(np.round(p.get_facecolor(), 4)) for p in ax.patches
+                       if type(p).__name__ == "Rectangle"}
+        assert 2 <= len(face_colors) <= 3
+
+    def test_band_custom_colors(self):
+        scores, labels = _scores()
+        fig, ax = aa.AAPredPlot().predict_group(scores, kind="hist", band=True,
+                                                thresholds=[0.5], colors=["#cccccc", "#4477aa"])
+        assert ax is not None
+
+    def test_band_cmap(self):
+        scores, labels = _scores()
+        fig, ax = aa.AAPredPlot().predict_group(scores, kind="hist", band=True,
+                                                thresholds=[0.3, 0.7], cmap="magma")
+        assert ax is not None
+
+    def test_band_requires_thresholds(self):
+        scores, labels = _scores()
+        with pytest.raises(ValueError):
+            aa.AAPredPlot().predict_group(scores, kind="hist", band=True)
+
+    def test_band_mutually_exclusive_with_labels(self):
+        scores, labels = _scores()
+        with pytest.raises(ValueError):
+            aa.AAPredPlot().predict_group(scores, kind="hist", band=True,
+                                          thresholds=[0.5], labels=labels)
+
+    def test_band_bad_colors_length_raises(self):
+        scores, labels = _scores()
+        with pytest.raises(ValueError):
+            aa.AAPredPlot().predict_group(scores, kind="hist", band=True,
+                                          thresholds=[0.3, 0.7], colors=["#000000"])
 
 
 class TestAAPredPlotPredictScatter:
