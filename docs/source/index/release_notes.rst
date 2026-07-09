@@ -330,6 +330,12 @@ Added
   carries the publication eval figures (``ax.eval``) and ``df_eval`` has one
   ``<metric>_mean``/``_std`` column per metric plus ``stage`` / ``is_pareto`` / ``rank``
   / ``is_selected``.
+- **aap.predict_samples**: Trains and cross-validates every ``(feature set × model)`` combination
+  over one ``df_seq`` in a single call, returning the refit predictors and a tidy comparison table.
+  With ``plot=True`` (the default) it now also draws the **model comparison** bar plot (hue = model,
+  one bar group per metric, cross-validation ``std`` error bars) and returns its ``Axes`` in the
+  previously-unused middle slot, completing the ``(results, fig, evals)`` symmetry with
+  ``find_features`` / ``explain_features`` (``figsize`` / ``dict_color`` / ``baseline`` style it).
 - **aap.plot_eval**: Publication-ready evaluation figures of a ``find_features`` sweep —
   the high-dimensional Part × Split × Scale grid is **decomposed** into a series of clean
   2D ``viridis`` heatmaps (the two most-informative axes on each panel, the least on the
