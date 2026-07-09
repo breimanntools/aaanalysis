@@ -24,13 +24,9 @@ def _score_holdout(fitted_model, X_holdout, labels_holdout, metric):
     return float(scorer(fitted_model, X_holdout, labels_holdout)), float("nan")
 
 
-# II Main Functions
-def eval_models(X, labels, list_estimators=None, list_models=None, metrics=None, n_cv=5,
-                random_state=None, X_holdout=None, labels_holdout=None):
-    """Score every model x metric by cross-validation and (optionally) on a held-out set.
-
-    Returns a long-format ``df_eval`` with one row per (model, metric, principle).
-    """
+def _eval_one(X, labels, list_estimators, list_models, metrics, n_cv, random_state,
+              X_holdout, labels_holdout):
+    """Rows [model, metric, principle, score, score_std] for one feature matrix ``X``."""
     rows = []
     for i, estimator in enumerate(list_estimators):
         model_name = type(estimator).__name__
@@ -42,5 +38,27 @@ def eval_models(X, labels, list_estimators=None, list_models=None, metrics=None,
                 score, score_std = _score_holdout(fitted_model=list_models[i], X_holdout=X_holdout,
                                                   labels_holdout=labels_holdout, metric=metric)
                 rows.append([model_name, metric, ut.STR_PRINCIPLE_HOLDOUT, score, score_std])
-    df_eval = pd.DataFrame(rows, columns=ut.COLS_EVAL_PRED)
-    return df_eval
+    return rows
+
+
+# II Main Functions
+def eval_models(X, labels, list_estimators=None, list_models=None, metrics=None, n_cv=5,
+                random_state=None, X_holdout=None, labels_holdout=None, dict_X_baseline=None):
+    """Score every model x metric by cross-validation and (optionally) on a held-out set.
+
+    Returns a long-format ``df_eval`` with one row per (model, metric, principle). When
+    ``dict_X_baseline`` (``{kind: X_baseline}``) is given, the bound-feature rows are tagged
+    ``'cpp'`` and each baseline matrix is scored (cross-validation only, same models/folds) and
+    appended, tagged by its kind, under a leading ``features`` column.
+    """
+    rows = _eval_one(X, labels, list_estimators, list_models, metrics, n_cv, random_state,
+                     X_holdout, labels_holdout)
+    if not dict_X_baseline:
+        return pd.DataFrame(rows, columns=ut.COLS_EVAL_PRED)
+    # Baseline-comparison mode: tag the bound-feature rows, then append CV rows per baseline.
+    tagged = [[ut.STR_FEATURES_CPP] + row for row in rows]
+    for kind, X_baseline in dict_X_baseline.items():
+        base_rows = _eval_one(X_baseline, labels, list_estimators, None, metrics, n_cv,
+                              random_state, None, None)
+        tagged += [[kind] + row for row in base_rows]
+    return pd.DataFrame(tagged, columns=ut.COLS_EVAL_PRED_FEATURES)

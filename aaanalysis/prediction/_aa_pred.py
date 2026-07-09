@@ -82,6 +82,54 @@ def featurize_seq(df_feat=None, df_scales=None, df_seq=None, list_parts=None, **
     return np.asarray(X)
 
 
+def check_baseline(baseline=None):
+    """Resolve the ``baseline`` selector into an ordered, de-duplicated list of kinds (or None).
+
+    ``None``/``False`` -> no baseline; ``True`` -> the scale-composition default; a str or list
+    of strs -> those kinds (each validated against ``LIST_BASELINE_KINDS``).
+    """
+    if baseline is None or baseline is False:
+        return None
+    if baseline is True:
+        return [ut.STR_BASELINE_SCALE]
+    if isinstance(baseline, str):
+        baseline = [baseline]
+    baseline = ut.check_list_like(name="baseline", val=baseline, accept_str=True, min_len=1)
+    wrong = [b for b in baseline if b not in ut.LIST_BASELINE_KINDS]
+    if len(wrong) != 0:
+        raise ValueError(f"'baseline' ({wrong}) should each be one of: {ut.LIST_BASELINE_KINDS}")
+    return list(dict.fromkeys(baseline))
+
+
+def build_baseline_matrices(df_seq=None, list_kinds=None, df_scales=None, list_parts=None):
+    """Build the ``{kind: X}`` baseline feature matrices from raw sequences (SequenceFeature).
+
+    Each baseline is a non-positional, fixed-length sequence descriptor row-aligned with
+    ``df_seq``; the caller guarantees ``df_seq`` matches the ``X`` / ``labels`` samples.
+    A featurizer yields an all-``NaN`` row for a sequence with no scored/canonical residue in
+    the selected span; such a matrix cannot be cross-validated, so raise a clear error naming
+    the offending baseline rather than letting it reach ``cross_val_score``.
+    """
+    from aaanalysis.feature_engineering import SequenceFeature
+    sf = SequenceFeature()
+    dict_X_baseline = {}
+    for kind in list_kinds:
+        if kind == ut.STR_BASELINE_SCALE:
+            X_baseline = sf.scale_composition(df_seq=df_seq, df_scales=df_scales, list_parts=list_parts)
+        elif kind == ut.STR_BASELINE_AAC:
+            X_baseline = sf.aa_composition(df_seq=df_seq, list_parts=list_parts)
+        else:  # ut.STR_BASELINE_DPC
+            X_baseline = sf.dipeptide_composition(df_seq=df_seq, list_parts=list_parts)
+        X_baseline = np.asarray(X_baseline)
+        if np.isnan(X_baseline).any():
+            n_bad = int(np.isnan(X_baseline).any(axis=1).sum())
+            raise ValueError(f"'baseline' ({kind}) produced {n_bad} all-invalid row(s) "
+                             f"(sequence with no scored residue in the selected span); "
+                             f"drop or fix those 'df_seq' entries before evaluating.")
+        dict_X_baseline[kind] = X_baseline
+    return dict_X_baseline
+
+
 # II Main Functions
 class AAPred(Wrapper):
     """
@@ -310,6 +358,9 @@ class AAPred(Wrapper):
              labels_holdout: Optional[ut.ArrayLike1D] = None,
              metrics: Optional[List[str]] = None,
              n_cv: int = 5,
+             df_seq: Optional[pd.DataFrame] = None,
+             baseline: Optional[Union[bool, str, List[str]]] = None,
+             list_parts: Optional[Union[str, List[str]]] = None,
              ) -> pd.DataFrame:
         """
         Evaluate every model across metrics by cross-validation and an optional held-out set.
@@ -318,6 +369,12 @@ class AAPred(Wrapper):
         ``X``) and, when a held-out set is provided, ``holdout`` (models fit on ``X`` and scored
         on ``X_holdout``). The result is a long-format table with one row per
         (model, metric, principle).
+
+        Set ``baseline`` to compare the bound features against simple, non-positional
+        **baseline featurizers** (amino-acid / dipeptide / scale composition) built internally
+        from ``df_seq``: each baseline is cross-validated with the same models and folds and its
+        rows are appended, so the whole "CPP vs baseline" comparison comes from one call. This
+        quantifies how much the positional CPP features add over a plain composition encoding.
 
         .. versionadded:: 1.1.0
 
@@ -335,12 +392,33 @@ class AAPred(Wrapper):
             Performance metrics to compute. Defaults to ``list_metrics`` from the constructor.
         n_cv : int, default=5
             Number of stratified cross-validation folds (must not exceed the smallest class count).
+        df_seq : pd.DataFrame, shape (n_samples, n_seq_info), optional
+            DataFrame containing an ``entry`` column with unique protein identifiers and sequence
+            information (the same input accepted by :meth:`SequenceFeature.get_df_parts`). Must be
+            **row-aligned with** ``X`` / ``labels`` (row *i* is the same sample) and built with the
+            **same part geometry** as ``X`` for a fair comparison — the alignment cannot be verified
+            from the opaque ``X``, only ``len(df_seq) == len(labels)`` is checked. Required when
+            ``baseline`` is set, ignored otherwise.
+        baseline : bool, str, or list of str, optional
+            Baseline featurizer(s) to cross-validate alongside the bound features. ``True`` uses
+            the scale-composition baseline (``'scale'``); a str or list selects among
+            ``'scale'`` (:meth:`SequenceFeature.scale_composition`), ``'aac'``
+            (:meth:`SequenceFeature.aa_composition`), and ``'dpc'``
+            (:meth:`SequenceFeature.dipeptide_composition`). ``None`` (default) adds no baseline.
+            Baselines average over ``list_parts`` with :meth:`SequenceFeature.get_df_parts`' default
+            JMD lengths; match the geometry used to build ``X`` so the comparison is not confounded.
+        list_parts : str or list of str, optional
+            Sequence parts averaged into each baseline (passed to the featurizers). Defaults to
+            the whole ``tmd_jmd`` span. Used only when ``baseline`` is set.
 
         Returns
         -------
-        df_eval : pd.DataFrame, shape (n_rows, 5)
+        df_eval : pd.DataFrame, shape (n_rows, 5) — or (n_rows, 6) in baseline mode
             Long-format evaluation table with columns ``model``, ``metric``, ``principle``,
             ``score``, and ``score_std`` (``score_std`` is ``NaN`` for the ``holdout`` principle).
+            When ``baseline`` is given, a leading ``features`` column is added (``'cpp'`` for the
+            bound-feature rows, the baseline kind for each baseline's cross-validation rows);
+            with ``baseline=None`` the table is unchanged (5 columns).
 
         Examples
         --------
@@ -364,12 +442,23 @@ class AAPred(Wrapper):
             list_models = fit_models(X=X, labels=labels, list_estimators=self._list_estimators)
         elif labels_holdout is not None:
             raise ValueError("'labels_holdout' was given without 'X_holdout'.")
+        # Resolve the optional baseline-featurizer comparison (built internally from df_seq)
+        list_kinds = check_baseline(baseline=baseline)
+        dict_X_baseline = None
+        if list_kinds is not None:
+            ut.check_df_seq(df_seq=df_seq)
+            if len(df_seq) != len(labels):
+                raise ValueError(f"'df_seq' n_samples ({len(df_seq)}) should match "
+                                 f"'labels' n_samples ({len(labels)}).")
+            dict_X_baseline = build_baseline_matrices(df_seq=df_seq, list_kinds=list_kinds,
+                                                      df_scales=self._df_scales, list_parts=list_parts)
         # Evaluate
         df_eval = eval_models(X=X, labels=labels,
                               list_estimators=self._list_estimators,
                               list_models=list_models, metrics=metrics, n_cv=n_cv,
                               random_state=self._random_state,
-                              X_holdout=X_holdout, labels_holdout=labels_holdout)
+                              X_holdout=X_holdout, labels_holdout=labels_holdout,
+                              dict_X_baseline=dict_X_baseline)
         return df_eval
 
     def predict(self,

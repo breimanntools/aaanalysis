@@ -476,6 +476,16 @@ LIST_PRINCIPLES = [STR_PRINCIPLE_CV, STR_PRINCIPLE_HOLDOUT]
 LIST_METRICS_PRED = ["accuracy", "balanced_accuracy", "precision", "recall", "f1", "roc_auc"]
 COLS_EVAL_PRED = [COL_MODEL, COL_METRIC, COL_PRINCIPLE, COL_SCORE, COL_SCORE_STD]
 
+# Baseline-featurizer comparison in AAPred.eval(baseline=...): tag each df_eval row with the
+# feature set behind it ('cpp' for the bound CPP features vs a non-positional baseline).
+COL_FEATURES = "features"       # feature set behind a df_eval row: 'cpp' | a baseline kind
+STR_FEATURES_CPP = "cpp"        # tag for the bound CPP-feature rows when baselines are compared
+STR_BASELINE_SCALE = "scale"    # SequenceFeature.scale_composition (scale-average baseline)
+STR_BASELINE_AAC = "aac"        # SequenceFeature.aa_composition (amino-acid composition)
+STR_BASELINE_DPC = "dpc"        # SequenceFeature.dipeptide_composition (dipeptide composition)
+LIST_BASELINE_KINDS = [STR_BASELINE_SCALE, STR_BASELINE_AAC, STR_BASELINE_DPC]
+COLS_EVAL_PRED_FEATURES = [COL_FEATURES] + COLS_EVAL_PRED
+
 # Prediction reliability (ReliabilityModel) — per-sample trust columns
 COL_CI_LOW = "ci_low"                # lower confidence-interval bound of the score
 COL_CI_HIGH = "ci_high"              # upper confidence-interval bound of the score
