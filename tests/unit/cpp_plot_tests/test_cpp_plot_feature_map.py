@@ -1096,6 +1096,32 @@ class TestFeatureMapSeqCharFill:
         off_fs = self._max_seq_fs(ax_off); plt.close("all")
         assert def_fs == on_fs and def_fs >= off_fs
 
+    def test_fill_draws_seamless_full_width_cells(self):
+        # seq_char_fill=True paints one full-width (1.0 data unit) colored cell per residue
+        # behind the letters, so the sequence band is gap-free and aligned with the heatmap
+        # columns. The legacy glyph-sized text bbox left hairline gaps between narrow residues.
+        from matplotlib.patches import Rectangle
+        df_feat = aa.load_features(name="DOM_GSEC").head(40)
+        cpp = aa.CPPPlot(df_scales=aa.load_scales())
+        kws = self._seq_kws()
+        n_res = sum(len(kws[k]) for k in ("jmd_n_seq", "tmd_seq", "jmd_c_seq"))
+
+        def _full_cells(ax):
+            ax.figure.canvas.draw()
+            return [p for p in ax.patches if isinstance(p, Rectangle) and abs(p.get_width() - 1.0) < 1e-6]
+
+        _, ax_on = cpp.feature_map(df_feat=df_feat, add_imp_bar_top=False, seq_char_fill=True, **kws)
+        cells = _full_cells(ax_on)
+        lefts = sorted(round(p.get_x(), 3) for p in cells)
+        plt.close("all")
+        assert len(cells) == n_res                          # one seamless cell per residue
+        assert lefts == [float(i) for i in range(n_res)]    # contiguous 0..n-1 -> no gaps
+
+        _, ax_off = cpp.feature_map(df_feat=df_feat, add_imp_bar_top=False, seq_char_fill=False, **kws)
+        cells_off = _full_cells(ax_off)
+        plt.close("all")
+        assert len(cells_off) == 0                          # fill=False keeps the legacy glyph bbox
+
     def test_fill_bad_type_raises(self):
         df_feat = aa.load_features(name="DOM_GSEC").head(40)
         cpp = aa.CPPPlot(df_scales=aa.load_scales())

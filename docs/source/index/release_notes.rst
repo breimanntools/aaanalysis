@@ -504,6 +504,13 @@ Changed
 Fixed
 ~~~~~
 
+- **Sequence bar in CPP-SHAP plots**: with ``seq_char_fill=True`` (the auto_font default),
+  :meth:`~aaanalysis.CPPPlot.feature_map`, :meth:`~aaanalysis.CPPPlot.heatmap`, and
+  :meth:`~aaanalysis.CPPPlot.profile` drew each residue's colored background as a glyph-sized text
+  box, so narrow letters left hairline white gaps and the TMD/JMD band read as ragged against the
+  heatmap grid. Each residue now gets a seamless full-width (one-column) colored cell, centered on
+  its column, so the sequence band is gap-free and aligned. ``seq_char_fill=False`` keeps the
+  legacy glyph-box rendering unchanged.
 - **BH-adjusted p-values (#343)**: ``p_val_fdr_bh`` in ``df_feat`` now follows canonical
   Benjamini–Hochberg — the reverse cumulative-minimum (monotonicity) step was missing, so the
   reported values could be non-monotone / slightly conservative in non-monotone regions. Only the
