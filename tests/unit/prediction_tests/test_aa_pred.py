@@ -224,6 +224,109 @@ class TestAAPredEval:
 
 
 @pytest.fixture(scope="module")
+def baseline_data():
+    """A real df_seq (sequences + TMD boundaries) with labels and a stand-in CPP X."""
+    df_seq = aa.load_dataset(name="DOM_GSEC", n=8)
+    labels = df_seq["label"].to_list()
+    rng = np.random.RandomState(0)
+    X = rng.normal(size=(len(labels), 6))
+    return df_seq, labels, X
+
+
+class TestAAPredEvalBaseline:
+    """AAPred.eval(baseline=...) — compare bound features vs composition baselines (#335)."""
+
+    def test_baseline_none_is_byte_identical(self, baseline_data):
+        df_seq, labels, X = baseline_data
+        d_none = aa.AAPred(models=["rf"], random_state=0).eval(X, labels, metrics=["accuracy"])
+        d_default = aa.AAPred(models=["rf"], random_state=0).eval(X, labels, metrics=["accuracy"],
+                                                                  baseline=None)
+        pd.testing.assert_frame_equal(d_none, d_default)
+        assert "features" not in d_none.columns
+
+    def test_baseline_false_is_none(self, baseline_data):
+        df_seq, labels, X = baseline_data
+        df_eval = aa.AAPred(models=["rf"], random_state=0).eval(X, labels, metrics=["accuracy"],
+                                                                df_seq=df_seq, baseline=False)
+        assert "features" not in df_eval.columns
+
+    def test_baseline_true_adds_features_column(self, baseline_data):
+        df_seq, labels, X = baseline_data
+        df_eval = aa.AAPred(models=["rf"], random_state=0).eval(X, labels, metrics=["accuracy"],
+                                                                df_seq=df_seq, baseline=True)
+        assert df_eval.columns[0] == "features"
+        assert set(df_eval["features"]) == {"cpp", "scale"}
+
+    def test_baseline_string_selects_one_kind(self, baseline_data):
+        df_seq, labels, X = baseline_data
+        df_eval = aa.AAPred(models=["rf"], random_state=0).eval(X, labels, metrics=["accuracy"],
+                                                                df_seq=df_seq, baseline="aac")
+        assert set(df_eval["features"]) == {"cpp", "aac"}
+
+    def test_baseline_list_appends_one_block_per_kind(self, baseline_data):
+        df_seq, labels, X = baseline_data
+        ap = aa.AAPred(models=["rf"], random_state=0)
+        d_cpp = ap.eval(X, labels, metrics=["accuracy"])
+        d_base = ap.eval(X, labels, metrics=["accuracy"], df_seq=df_seq, baseline=["aac", "dpc"])
+        assert set(d_base["features"]) == {"cpp", "aac", "dpc"}
+        # the cpp block is unchanged in size; each baseline adds an equal-sized CV-only block
+        assert (d_base["features"] == "cpp").sum() == len(d_cpp)
+        assert (d_base["features"] == "aac").sum() == len(d_cpp)
+
+    def test_baseline_deduplicates_kinds(self, baseline_data):
+        df_seq, labels, X = baseline_data
+        df_eval = aa.AAPred(models=["rf"], random_state=0).eval(X, labels, metrics=["accuracy"],
+                                                                df_seq=df_seq, baseline=["aac", "aac"])
+        assert (df_eval["features"] == "aac").sum() == (df_eval["features"] == "cpp").sum()
+
+    def test_baseline_rows_are_cv_only(self, baseline_data):
+        df_seq, labels, X = baseline_data
+        X_hold, labels_hold = _data(n_per_class=6, seed=1)
+        # holdout only applies to the bound (cpp) features; baselines stay cross-validation-only
+        df_eval = aa.AAPred(models=["rf"], random_state=0).eval(
+            X, labels, metrics=["accuracy"], df_seq=df_seq, baseline="aac")
+        assert set(df_eval[df_eval["features"] == "aac"]["principle"]) == {"cv"}
+
+    def test_baseline_reproduces_manual_featurize_then_eval(self, baseline_data):
+        # KPI: a baseline's rows equal a standalone eval of the same featurizer matrix.
+        df_seq, labels, X = baseline_data
+        d_base = aa.AAPred(models=["rf"], random_state=0).eval(
+            X, labels, metrics=["accuracy", "f1"], df_seq=df_seq, baseline="aac")
+        X_aac = np.asarray(aa.SequenceFeature().aa_composition(df_seq=df_seq))
+        d_manual = aa.AAPred(models=["rf"], random_state=0).eval(X_aac, labels,
+                                                                 metrics=["accuracy", "f1"])
+        aac_rows = d_base[d_base["features"] == "aac"].reset_index(drop=True)
+        merged = aac_rows.merge(d_manual, on=["model", "metric", "principle"], suffixes=("_b", "_m"))
+        assert len(merged) == len(d_manual)
+        assert np.allclose(merged["score_b"], merged["score_m"])
+        assert np.allclose(merged["score_std_b"], merged["score_std_m"])
+
+    def test_baseline_reproducible(self, baseline_data):
+        df_seq, labels, X = baseline_data
+        d1 = aa.AAPred(models=["rf"], random_state=7).eval(X, labels, metrics=["accuracy"],
+                                                           df_seq=df_seq, baseline=["aac", "scale"])
+        d2 = aa.AAPred(models=["rf"], random_state=7).eval(X, labels, metrics=["accuracy"],
+                                                           df_seq=df_seq, baseline=["aac", "scale"])
+        pd.testing.assert_frame_equal(d1, d2)
+
+    def test_baseline_requires_df_seq(self, baseline_data):
+        df_seq, labels, X = baseline_data
+        with pytest.raises(ValueError):
+            aa.AAPred(models=["rf"], random_state=0).eval(X, labels, baseline=True)
+
+    def test_baseline_df_seq_length_mismatch_raises(self, baseline_data):
+        df_seq, labels, X = baseline_data
+        with pytest.raises(ValueError):
+            aa.AAPred(models=["rf"], random_state=0).eval(X, labels, df_seq=df_seq.head(3),
+                                                          baseline=True)
+
+    def test_baseline_invalid_kind_raises(self, baseline_data):
+        df_seq, labels, X = baseline_data
+        with pytest.raises(ValueError):
+            aa.AAPred(models=["rf"], random_state=0).eval(X, labels, df_seq=df_seq, baseline="nope")
+
+
+@pytest.fixture(scope="module")
 def seq_fitted():
     """A fitted AAPred with a bound df_feat, for the sequence-level predict API."""
     df_seq = aa.load_dataset(name="DOM_GSEC", n=10)

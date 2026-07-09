@@ -186,6 +186,15 @@ Added
   a per-sample ``ranking`` (each prediction's score with its uncertainty interval, colored by trust
   status), a calibration curve (``reliability_diagram``), the out-of-distribution score distribution
   (``ood_hist``), and a score-vs-OOD ``trust_map`` colored by the ``reliable`` flag.
+- :meth:`~aaanalysis.AAPred.eval`: New ``baseline`` option to compare the bound (CPP) features
+  against simple, non-positional **composition baselines** built internally from ``df_seq`` —
+  ``'scale'`` (:meth:`~aaanalysis.SequenceFeature.scale_composition`), ``'aac'``
+  (:meth:`~aaanalysis.SequenceFeature.aa_composition`), and ``'dpc'``
+  (:meth:`~aaanalysis.SequenceFeature.dipeptide_composition`); ``baseline=True`` selects the scale
+  baseline. Each baseline is cross-validated with the same models and folds and appended to
+  ``df_eval`` under a new leading ``features`` column (``'cpp'`` for the bound rows), so the whole
+  "CPP vs baseline" comparison comes from one call. Purely additive: with ``baseline=None``
+  (default) ``df_eval`` is byte-identical to before (no ``features`` column).
 - :meth:`~aaanalysis.AAPredPlot.eval`: New ``kind='heatmap'`` that renders any 2D score grid
   (rows x columns are the two sweep axes) as a square annotated heatmap and boxes the best cell(s)
   with a full-cell frame — ``highlight`` selects how many (a positive int for the top-N,
