@@ -21,7 +21,7 @@ LIST_SAMPLE_KINDS = ["window", "domain", "sequence"]
 # Across-samples plot kinds dispatched by :meth:`AAPredPlot.predict_group`.
 LIST_GROUP_KINDS = ["hist", "ranking", "scatter", "cutoff", "clustermap"]
 # Evaluation plot kinds dispatched by :meth:`AAPredPlot.eval`.
-LIST_EVAL_KINDS = ["eval", "comparison"]
+LIST_EVAL_KINDS = ["eval", "comparison", "heatmap"]
 # Per-kind figure-size defaults used when ``figsize=None`` (split by method).
 _DICT_SAMPLE_FIGSIZE = {"window": (10, 4), "domain": (6, 4.5), "sequence": (12, 6)}
 # Cap on the number of subcategory rows drawn in the ``kind='sequence'`` heatmap when
@@ -49,6 +49,76 @@ def check_match_scores_labels(scores=None, labels=None):
 def _default(val, fallback):
     """Return ``val`` unless it is ``None``, then ``fallback`` (per-kind default resolution)."""
     return fallback if val is None else val
+
+
+def _resolve_band_colors(colors, cmap, n_bands):
+    """Resolve one color per confidence band (low score -> high score).
+
+    ``colors`` (a list of length ``n_bands``) is used verbatim if given; otherwise
+    ``n_bands`` colors are sampled across the inner range of ``cmap`` so the low-score
+    band is the low end of the colormap and the high-score band the high end.
+    """
+    if colors is not None:
+        if not isinstance(colors, (list, tuple)) or len(colors) != n_bands:
+            raise ValueError(f"'colors' ({colors}) should be a list of {n_bands} colors (one per "
+                             f"band delimited by 'thresholds') when 'band=True'.")
+        return list(colors)
+    cmap_obj = plt.get_cmap(cmap)
+    return [cmap_obj(x) for x in np.linspace(0.15, 0.85, n_bands)]
+
+
+def _band_index(left_edge, sorted_thresholds):
+    """Band index (0-based, low -> high) of a bar whose left edge is ``left_edge``."""
+    return int(np.searchsorted(sorted_thresholds, left_edge, side="right"))
+
+
+def _check_highlight_cells(highlight, data):
+    """Resolve/validate the eval-heatmap ``highlight`` to a list of ``(row, col)`` cells to box.
+
+    - ``None`` -> ``[]`` (box nothing).
+    - a positive ``int`` N -> the ``N`` highest-value cells, best first (NaNs ignored).
+    - ``"max"`` / ``"min"`` -> the single best / worst cell (aliases for ``1`` / worst).
+    - a ``(row, col)`` tuple, or a list of them -> those explicit cells (bounds-checked).
+    """
+    if highlight is None:
+        return []
+    n_rows, n_cols = data.shape
+
+    def _rank_cells(n, worst=False):
+        flat = data.ravel()
+        valid = np.where(~np.isnan(flat))[0]
+        if valid.size == 0:
+            raise ValueError("'highlight' (top-N / 'max' / 'min') needs at least one non-NaN cell "
+                             "in 'df_eval'.")
+        order = valid[np.argsort(flat[valid], kind="stable")]  # ascending (worst first)
+        if not worst:
+            order = order[::-1]                                # best first
+        return [tuple(int(v) for v in np.unravel_index(k, data.shape)) for k in order[:min(n, order.size)]]
+
+    if isinstance(highlight, str):
+        if highlight == "max":
+            return _rank_cells(1, worst=False)
+        if highlight == "min":
+            return _rank_cells(1, worst=True)
+        raise ValueError(f"'highlight' ('{highlight}') should be a positive int (top-N), 'max', "
+                         f"'min', a (row, col) tuple/list, or None.")
+    if _is_int(highlight):
+        if highlight < 1:
+            raise ValueError(f"'highlight' ({highlight}) as an int should be >= 1 (number of top "
+                             f"cells to box).")
+        return _rank_cells(int(highlight), worst=False)
+    # explicit (row, col) or a list of them
+    cells = highlight if (isinstance(highlight, list) and highlight
+                          and isinstance(highlight[0], (tuple, list))) else [highlight]
+    out = []
+    for cell in cells:
+        if not (isinstance(cell, (tuple, list)) and len(cell) == 2 and _is_int(cell[0]) and _is_int(cell[1])):
+            raise ValueError(f"'highlight' cell ({cell}) should be a (row, col) integer tuple.")
+        i, j = int(cell[0]), int(cell[1])
+        if not (0 <= i < n_rows and 0 <= j < n_cols):
+            raise ValueError(f"'highlight' cell ({i}, {j}) is outside the grid (shape {(n_rows, n_cols)}).")
+        out.append((i, j))
+    return out
 
 
 # Multi-track sequence-viewer helpers (shared by the ``window``/``domain`` renderers).
@@ -541,12 +611,13 @@ class AAPredPlot:
                        labels: Optional[ut.ArrayLike1D] = None,
                        bins: int = 20,
                        thresholds: Optional[Union[int, float, List[Union[int, float]]]] = None,
+                       band: bool = False,
                        dict_color: Optional[Dict[Union[int, str], str]] = None,
                        col_name: str = "name",
                        col_score: str = "score",
                        col_group: Optional[str] = None,
                        col_std: Optional[str] = None,
-                       colors: Optional[Dict[str, str]] = None,
+                       colors: Optional[Union[Dict[str, str], List[str]]] = None,
                        cutoffs: Optional[Tuple[Union[int, float], ...]] = (50, 80),
                        top_n: Optional[int] = None,
                        ascending: bool = False,
@@ -567,8 +638,11 @@ class AAPredPlot:
         One entry point for every group figure; ``kind`` selects the renderer and ``data`` is
         its primary input:
 
-        * ``'hist'`` — class-separated histogram of per-sample scores; ``data`` is the ``scores``
-          array. Uses ``labels``, ``bins``, ``thresholds``, ``dict_color``, ``xlabel``, ``ylabel``.
+        * ``'hist'`` — histogram of per-sample scores; ``data`` is the ``scores`` array. By default
+          class-separated by ``labels``; with ``band=True`` the bars are instead colored by the
+          confidence band they fall into (delimited by ``thresholds``), for scoring unlabeled
+          samples. Uses ``labels``, ``bins``, ``thresholds``, ``band``, ``dict_color``, ``colors``,
+          ``cmap``, ``xlabel``, ``ylabel``.
         * ``'ranking'`` — ranked-candidate horizontal bars; ``data`` is a per-sample ``df_pred``.
           Uses ``col_name``, ``col_score``, ``col_group``, ``col_std``, ``colors``, ``cutoffs``,
           ``top_n``, ``ascending``, ``xlabel``, ``title``.
@@ -603,7 +677,14 @@ class AAPredPlot:
         bins : int, default=20
             (``kind='hist'``) Number of histogram bins.
         thresholds : int, float, or list, optional
-            (``kind='hist'``/``'cutoff'``) One or more score values drawn as vertical dashed lines.
+            (``kind='hist'``/``'cutoff'``) One or more score values drawn as vertical dashed lines;
+            with ``kind='hist'`` and ``band=True`` they also delimit the confidence bands.
+        band : bool, default=False
+            (``kind='hist'``) If ``True``, color each histogram bar by the confidence band it falls
+            into (bands delimited by ``thresholds``) instead of splitting by ``labels``. Requires
+            ``thresholds`` and is mutually exclusive with ``labels``.
+
+            .. versionadded:: 1.1.0
         dict_color : dict, optional
             (``kind='hist'``/``'scatter'``) Mapping ``label -> color``; defaults to the locked
             positive/negative sample palette.
@@ -615,9 +696,10 @@ class AAPredPlot:
             (``kind='ranking'``) Column whose distinct values color the bars (adds a class legend).
         col_std : str, optional
             (``kind='ranking'``) Column with per-item standard deviations, drawn as error bars.
-        colors : dict, optional
+        colors : dict or list, optional
             (``kind='ranking'``/``'clustermap'``) A ``group/label -> color`` mapping; defaults to
-            the house categorical palette.
+            the house categorical palette. (``kind='hist'`` with ``band=True``) A list of one color
+            per band (low to high score); defaults to a sampling of ``cmap``.
         cutoffs : tuple, optional
             (``kind='ranking'``) x-positions of dashed confidence cut-off lines.
         top_n : int, optional
@@ -637,7 +719,8 @@ class AAPredPlot:
         names : list of str, optional
             (``kind='clustermap'``) Per-sample tick labels; defaults to positional indices.
         cmap : str, default="GnBu"
-            (``kind='clustermap'``) Colormap for the correlation heatmap.
+            (``kind='clustermap'``) Colormap for the correlation heatmap. (``kind='hist'`` with
+            ``band=True`` and no ``colors``) Colormap sampled for the per-band colors.
         cbar_label : str, default="Pearson correlation (r)"
             (``kind='clustermap'``) Label of the colorbar.
         xlabel : str, optional
@@ -668,7 +751,7 @@ class AAPredPlot:
         if kind == "hist":
             return AAPredPlot._plot_hist(
                 scores=data, labels=labels, ax=ax, figsize=figsize, bins=bins,
-                thresholds=thresholds, dict_color=dict_color,
+                thresholds=thresholds, band=band, dict_color=dict_color, colors=colors, cmap=cmap,
                 xlabel=_default(xlabel, "Prediction score"),
                 ylabel=_default(ylabel, "Number of samples"))
         if kind == "ranking":
@@ -717,11 +800,16 @@ class AAPredPlot:
              ylim: Optional[Tuple[Union[int, float], Union[int, float]]] = None,
              fontsize_annotations: Union[int, float] = 10,
              xtick_rotation: Union[int, float] = 0,
+             highlight: Optional[Union[int, str, Tuple[int, int], List[Tuple[int, int]]]] = 1,
+             vmin: Optional[Union[int, float]] = None,
+             vmax: Optional[Union[int, float]] = None,
+             cmap: str = "viridis",
+             cbar_label: Optional[str] = None,
              ) -> Tuple[Figure, Axes]:
         """
         Visualize model / feature-set evaluation, dispatched by ``kind``.
 
-        Two evaluation figures share one entry point:
+        Three evaluation figures share one entry point:
 
         * ``'eval'`` — grouped bar plot comparing **models** across metrics (hue = model), from the
           long-format ``df_eval`` of :meth:`AAPred.eval` (columns ``model``, ``metric``,
@@ -733,6 +821,11 @@ class AAPredPlot:
           ``baseline_label``, ``annotate``, ``annotation_fmt``, ``group_order``, ``condition_order``,
           ``colors``, ``bar_width``, ``xlabel``, ``ylabel``, ``title``, ``ylim``,
           ``fontsize_annotations``, ``xtick_rotation``.
+        * ``'heatmap'`` — square annotated heatmap of a 2D score grid (``df_eval`` is a wide
+          DataFrame whose rows x columns are the two sweep axes and whose cells are the scores),
+          with the best cell(s) boxed (``highlight`` selects how many). Consolidates the recurring
+          "grid of scores -> seaborn heatmap -> box the best configuration" block. Uses ``annotate``,
+          ``annotation_fmt``, ``highlight``, ``vmin``, ``vmax``, ``cmap``, ``cbar_label``, ``title``.
 
         To compare **CPP parameter combinations** instead, use the feature-optimization protocol
         :func:`aaanalysis.pipe.find_features` and its evaluation-grid :func:`aaanalysis.pipe.plot_eval`.
@@ -744,9 +837,11 @@ class AAPredPlot:
         df_eval : pd.DataFrame
             Evaluation table. For ``kind='eval'`` the :meth:`AAPred.eval` output (columns ``model``,
             ``metric``, ``principle``, ``score``, ``score_std``); for ``kind='comparison'`` a tidy
-            frame with the ``group`` / ``condition`` / ``value`` columns.
+            frame with the ``group`` / ``condition`` / ``value`` columns; for ``kind='heatmap'`` a
+            wide numeric grid whose row index and columns are the two sweep axes and whose cells are
+            the scores.
         kind : str, default="eval"
-            Which evaluation figure to draw; one of ``eval``, ``comparison``.
+            Which evaluation figure to draw; one of ``eval``, ``comparison``, ``heatmap``.
         ax : matplotlib.axes.Axes, optional
             Axes to draw on. If ``None``, a new figure and axes are created.
         figsize : tuple, optional
@@ -767,8 +862,11 @@ class AAPredPlot:
             ``"chance (<baseline>)"``; ``""`` draws the line without a legend entry.
         annotate : bool, default=True
             (``kind='comparison'``) If ``True``, write each bar's value above it.
+            (``kind='heatmap'``) If ``True``, write each cell's value inside it.
         annotation_fmt : str, optional
             (``kind='comparison'``) Format string for the value labels; auto-chosen when ``None``.
+            (``kind='heatmap'``) Cell-value format; when ``None``, ``".2f"`` for ``[0, 1]``-scaled
+            scores and ``".0f"`` otherwise.
         group_order : list of str, optional
             (``kind='comparison'``) Order of the groups (bars within a cluster).
         condition_order : list of str, optional
@@ -782,13 +880,36 @@ class AAPredPlot:
         ylabel : str, default="Score"
             y-axis label.
         title : str, optional
-            (``kind='comparison'``) Axes title.
+            (``kind='comparison'``/``'heatmap'``) Axes title.
         ylim : tuple, optional
             (``kind='comparison'``) y-axis limits ``(bottom, top)``.
         fontsize_annotations : int or float, default=10
             (``kind='comparison'``) Font size of the per-bar value labels.
         xtick_rotation : int or float, default=0
             (``kind='comparison'``) Rotation (degrees) of the cluster tick labels.
+        highlight : int, str, tuple, or list, default=1
+            (``kind='heatmap'``) Which cell(s) to box with a bold frame: a positive int ``N`` boxes
+            the ``N`` best (highest-value) cells (``1`` = the single best), ``"max"`` / ``"min"`` box
+            the single best / worst cell, an explicit ``(row, col)`` (or list of them) boxes those
+            cells, and ``None`` boxes nothing.
+
+            .. versionadded:: 1.1.0
+        vmin : int or float, optional
+            (``kind='heatmap'``) Lower bound of the color scale; auto-scaled when ``None``.
+
+            .. versionadded:: 1.1.0
+        vmax : int or float, optional
+            (``kind='heatmap'``) Upper bound of the color scale; auto-scaled when ``None``.
+
+            .. versionadded:: 1.1.0
+        cmap : str, default="viridis"
+            (``kind='heatmap'``) Colormap for the heatmap cells.
+
+            .. versionadded:: 1.1.0
+        cbar_label : str, optional
+            (``kind='heatmap'``) Label of the colorbar; defaults to ``"Score"``.
+
+            .. versionadded:: 1.1.0
 
         Returns
         -------
@@ -813,6 +934,12 @@ class AAPredPlot:
             return AAPredPlot._eval_bars(
                 df_eval=df_eval, ax=ax, figsize=_default(figsize, (7, 5)),
                 dict_color=dict_color, baseline=baseline, ylabel=ylabel)
+        if kind == "heatmap":
+            return AAPredPlot._plot_heatmap(
+                df_eval=df_eval, ax=ax, figsize=_default(figsize, (6, 5)),
+                annotate=annotate, annotation_fmt=annotation_fmt,
+                highlight=highlight, vmin=vmin, vmax=vmax, cmap=cmap,
+                cbar_label=_default(cbar_label, "Score"), title=title)
         # kind == "comparison"
         return AAPredPlot._plot_comparison(
             df_eval=df_eval, group=group, condition=condition, value=value, baseline=baseline,
@@ -869,6 +996,54 @@ class AAPredPlot:
         ax.set_ylabel(ylabel)
         ax.legend(frameon=False, fontsize=8)
         sns.despine(ax=ax)
+        return ut.FigAxResult(fig, ax)
+
+    @staticmethod
+    def _plot_heatmap(df_eval, ax=None, figsize=(6, 5), annotate=True, annotation_fmt=None,
+                      highlight="max", vmin=None, vmax=None, cmap="viridis", cbar_label="Score",
+                      title=None):
+        """Square annotated heatmap of a 2D score grid, boxing the optimal cell."""
+        # Check input
+        ut.check_df(name="df_eval", df=df_eval, accept_none=False, accept_nan=True)
+        ut.check_ax(ax=ax, accept_none=True)
+        ut.check_figsize(figsize=figsize, accept_none=True)
+        ut.check_bool(name="annotate", val=annotate)
+        ut.check_str(name="annotation_fmt", val=annotation_fmt, accept_none=True)
+        ut.check_number_val(name="vmin", val=vmin, accept_none=True)
+        ut.check_number_val(name="vmax", val=vmax, accept_none=True)
+        ut.check_str(name="cmap", val=cmap, accept_none=False)
+        ut.check_str(name="cbar_label", val=cbar_label, accept_none=True)
+        ut.check_str(name="title", val=title, accept_none=True)
+        try:
+            data = np.asarray(df_eval.to_numpy(), dtype=float)
+        except (ValueError, TypeError):
+            raise ValueError("'df_eval' (for kind='heatmap') should contain only numeric scores.")
+        if data.size == 0:
+            raise ValueError("'df_eval' (empty) should have at least one cell for kind='heatmap'.")
+        highlight_cells = _check_highlight_cells(highlight=highlight, data=data)
+        if annotation_fmt is None:
+            # [0, 1]-scaled scores need decimals; percent-scaled ones read best as integers.
+            finite = data[np.isfinite(data)]
+            annotation_fmt = ".2f" if finite.size and np.max(np.abs(finite)) <= 1.5 else ".0f"
+        # Draw the square annotated heatmap; let matplotlib place a layout-robust colorbar (a
+        # free-floating cax positioned from draw-time coords would detach under tight_layout).
+        fig, ax = _new_ax(ax=ax, figsize=figsize)
+        sns.heatmap(df_eval, vmin=vmin, vmax=vmax, cmap=cmap, annot=annotate, fmt=annotation_fmt,
+                    square=True, linewidth=0.1, cbar=False, ax=ax)
+        ax.tick_params(left=False, bottom=False)
+        plt.setp(ax.get_yticklabels(), rotation=0)
+        plt.setp(ax.get_xticklabels(), rotation=0)
+        # Box the selected cell(s) with a full-cell frame flush to the grid lines
+        for i, j in highlight_cells:
+            ax.add_patch(plt.Rectangle((j, i), 1, 1, fill=False, edgecolor="black", lw=3,
+                                       clip_on=False))
+        # Colorbar tracking the axes height, with an edge drawn on the tick (right) side
+        cb = fig.colorbar(ax.collections[-1], ax=ax, fraction=0.046, pad=0.04, label=cbar_label)
+        cb.outline.set_visible(False)
+        cb.ax.add_line(plt.Line2D([1, 1], [0, 1], transform=cb.ax.transAxes, color="black",
+                                  linewidth=plt.rcParams["axes.linewidth"], clip_on=False))
+        if title is not None:
+            ax.set_title(title)
         return ut.FigAxResult(fig, ax)
 
     @staticmethod
@@ -977,8 +1152,9 @@ class AAPredPlot:
 
     @staticmethod
     def _plot_hist(scores, labels=None, ax=None, figsize=(6, 4.5), bins=20, thresholds=None,
-                   dict_color=None, xlabel="Prediction score", ylabel="Number of samples"):
-        """Class-separated histogram of per-sample prediction scores."""
+                   band=False, dict_color=None, colors=None, cmap="viridis",
+                   xlabel="Prediction score", ylabel="Number of samples"):
+        """Histogram of per-sample prediction scores, class-separated or confidence-banded."""
         # Check input
         scores = ut.check_array_like(name="scores", val=scores, expected_dim=1)
         labels = ut.check_labels(labels=labels) if labels is not None else None
@@ -986,7 +1162,9 @@ class AAPredPlot:
         ut.check_ax(ax=ax, accept_none=True)
         ut.check_figsize(figsize=figsize, accept_none=True)
         ut.check_number_range(name="bins", val=bins, min_val=1, just_int=True)
+        ut.check_bool(name="band", val=band)
         ut.check_dict_color(name="dict_color", val=dict_color, accept_none=True)
+        ut.check_str(name="cmap", val=cmap, accept_none=False)
         ut.check_str(name="xlabel", val=xlabel, accept_none=True)
         ut.check_str(name="ylabel", val=ylabel, accept_none=True)
         list_thresholds = []
@@ -994,13 +1172,26 @@ class AAPredPlot:
             list_thresholds = list(thresholds) if isinstance(thresholds, (list, tuple)) else [thresholds]
             for i, t in enumerate(list_thresholds):
                 ut.check_number_val(name=f"thresholds[{i}]", val=t, just_int=False)
+        if band:
+            if not list_thresholds:
+                raise ValueError("'band' (True) should be used with 'thresholds' delimiting the "
+                                 "confidence bands.")
+            if labels is not None:
+                raise ValueError("'band' (True) colors bars by score band and should be used with "
+                                 "'labels' (None); pass one or the other, not both.")
         # Resolve colors
         dict_color = dict(dict_color) if dict_color is not None else {}
         default_cycle = [ut.COLOR_POS, ut.COLOR_NEG, ut.COLOR_REL_NEG, ut.COLOR_UNL]
         # Draw
         fig, ax = _new_ax(ax=ax, figsize=figsize)
         bin_edges = np.linspace(float(np.min(scores)), float(np.max(scores)), bins + 1)
-        if labels is None:
+        if band:
+            sorted_ths = sorted(list_thresholds)
+            band_colors = _resolve_band_colors(colors=colors, cmap=cmap, n_bands=len(sorted_ths) + 1)
+            _, edges, patches = ax.hist(scores, bins=bin_edges, edgecolor="black", linewidth=0.6)
+            for patch, left in zip(patches, edges[:-1]):
+                patch.set_facecolor(band_colors[_band_index(left, sorted_ths)])
+        elif labels is None:
             ax.hist(scores, bins=bin_edges, color=ut.COLOR_POS, edgecolor="black", linewidth=0.6)
         else:
             for i, lab in enumerate(sorted(set(labels))):
