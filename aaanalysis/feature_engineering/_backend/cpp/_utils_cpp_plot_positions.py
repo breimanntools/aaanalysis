@@ -105,18 +105,28 @@ def _add_seq_cell_backgrounds(ax=None, labels=None, colors=None, x_shift=0.0):
     """Paint a seamless, full-width colored cell behind each residue letter (``fill`` mode).
 
     The per-letter text bbox is glyph-sized, so narrow residues leave hairline gaps and the
-    colored band reads as ragged against the uniform heatmap grid. Drawing one full-width
-    (1.0 data unit) rectangle per residue -- centered on the tick, so it lines up exactly with
-    the heatmap column above -- makes the band gap-free and aligned.
+    colored band reads as ragged against the uniform heatmap grid. Draw one rectangle per
+    residue instead: full-width (1.0 data unit) and centered on the tick so it lines up exactly
+    with the heatmap column, its **top flush against the heatmap edge** and a symmetric margin
+    below the letters, so the band is gap-free on every side.
     """
     fig = ax.figure
     fig.canvas.draw()
     renderer = fig.canvas.get_renderer()
     inv = ax.transData.inverted()
-    # Uniform vertical band spanning the tallest letter (data coordinates).
+    # Letter band in data coordinates (uniform, spanning the tallest letter).
     exts = [l.get_window_extent(renderer).transformed(inv) for l in labels]
-    y0 = min(e.y0 for e in exts)
-    y1 = max(e.y1 for e in exts)
+    lo = min(e.y0 for e in exts)
+    hi = max(e.y1 for e in exts)
+    # The sequence band sits just outside the heatmap; snap its inner edge to the nearest axis
+    # limit (the heatmap border) so there is no gap between the cells and the grid, then mirror
+    # that margin past the far side of the letters so top and bottom margins match.
+    center = 0.5 * (lo + hi)
+    edge = min(ax.get_ylim(), key=lambda v: abs(v - center))
+    near, far = (lo, hi) if abs(lo - edge) <= abs(hi - edge) else (hi, lo)
+    margin = abs(near - edge)
+    y_far = far + margin * (1 if far >= near else -1)
+    y0, y1 = sorted((edge, y_far))
     for i, c in enumerate(colors):
         rect = mpl.patches.Rectangle((i + x_shift - 0.5, y0), width=1.0, height=y1 - y0,
                                      facecolor=c, edgecolor="none", linewidth=0,
