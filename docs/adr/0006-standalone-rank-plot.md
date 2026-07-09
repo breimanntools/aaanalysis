@@ -1,6 +1,12 @@
 # ADR-0006 — Per-protein rank plot ships as a standalone `aa.plot_rank`, not a `*Plot` method
 
-Status: Accepted — 2026-05-31
+Status: Superseded by ADR-0056 — 2026-07-09
+
+> **Superseded.** The premise below ("this chart has no logic-class twin") no longer holds:
+> the `AAPred` / `AAPredPlot` subpackage now owns the evaluate-and-deploy path, so the
+> per-protein rank scatter moved to `AAPredPlot.predict_group(kind="rank_scatter")` and the
+> standalone `aa.plot_rank` was removed. See ADR-0056. The original decision is kept below for
+> the record.
 
 ## Context
 

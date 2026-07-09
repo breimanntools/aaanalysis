@@ -203,10 +203,12 @@ Added
   ``"max"`` / ``"min"``, an explicit ``(row, col)`` / list, or ``None``); ``vmin`` / ``vmax`` /
   ``cmap`` / ``cbar_label`` style the color scale and its tick-side-edged colorbar. One call for the
   recurring "grid of scores -> seaborn heatmap -> mark the best configuration" block.
-- :meth:`~aaanalysis.AAPredPlot.predict_group`: New ``band=True`` mode for ``kind='hist'`` that colors
-  each bar by the confidence band it falls into (delimited by ``thresholds``) instead of by class
-  ``labels`` — for scoring unlabeled candidates. Both additions are purely additive; existing default
-  outputs are unchanged.
+- :meth:`~aaanalysis.AAPredPlot.predict_group`: New ``kind='rank_scatter'`` — a per-protein rank
+  scatter (proteins ranked by their maximum score and colored by group, with optional threshold
+  lines), the standard sanity check for a deployed per-protein predictor. Plus a new ``band=True``
+  mode for ``kind='hist'`` that colors each bar by the confidence band it falls into (delimited by
+  ``thresholds``) instead of by class ``labels`` — for scoring unlabeled candidates. Both additions
+  are purely additive; existing default outputs are unchanged.
 
 **Explainable AI**
 
@@ -332,8 +334,6 @@ Added
 
 **Plotting**
 
-- :func:`~aaanalysis.plot_rank`: Standalone per-protein max-score-vs-rank scatter with group coloring and
-  optional threshold lines (pairs with the new ``aa.metrics`` functions).
 - **COLOR_SAMPLES_POS / COLOR_SAMPLES_NEG / COLOR_SAMPLES_UNL / COLOR_SAMPLES_REL_NEG**:
   Public, named constants for the canonical sample-group colors (positive / negative /
   unlabeled / reliable-negative). They equal the ``plot_get_cdict("DICT_COLOR")["SAMPLES_*"]``
@@ -427,8 +427,8 @@ Changed
   a fixed size, so "explicit figsize wins" holds package-wide (matching :meth:`~aaanalysis.CPPPlot.feature_map`);
   omitting ``figsize`` auto-sizes as before. :meth:`~aaanalysis.CPPPlot.heatmap` / :meth:`~aaanalysis.CPPPlot.profile`
   gain the ``seq_char_fill`` residue-spacing option already on :meth:`~aaanalysis.CPPPlot.feature_map`, and
-  :func:`~aaanalysis.plot_rank` joins ``auto_font`` — its width grows with the number of ranked proteins when
-  ``figsize`` is omitted.
+  :meth:`~aaanalysis.AAPredPlot.predict_group` (``kind='rank_scatter'``) joins ``auto_font`` — its width grows
+  with the number of ranked proteins when ``figsize`` is omitted.
 - **Uniform plot return contract**: Every public ``*Plot`` method now returns a single
   ``(fig, ax)`` pair (forwarding attribute access to ``ax``, so existing
   ``ax = plot(...); ax.set_title(...)`` code keeps working), replacing the previous mix

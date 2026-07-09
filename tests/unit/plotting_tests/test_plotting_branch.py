@@ -168,40 +168,46 @@ class TestPlotSettingsBranch:
 
 
 # --------------------------------------------------------------------------
-# plotting/_plot_rank.py line 153 -- empty subgroup (continue) + group_order.
+# prediction rank scatter -- empty subgroup (continue) + group_order, via
+# AAPredPlot.predict_group(kind="rank_scatter").
 # --------------------------------------------------------------------------
 def _df_rank():
     return pd.DataFrame({"score": [3.0, 1.0, 2.0, 0.5],
                          "group": ["x", "x", "y", "y"]})
 
 
-class TestPlotRankBranch:
+def _rank_scatter(df, **kwargs):
+    kwargs.setdefault("col_group", "group")
+    return aa.AAPredPlot.predict_group(df, kind="rank_scatter", **kwargs)
+
+
+class TestRankScatterBranch:
     def test_group_order_with_absent_group(self):
-        # 153: a group in group_order with no rows -> continue arm
+        # a group in group_order with no rows -> continue arm
         df = _df_rank()
-        fig, ax = aa.plot_rank(df_rank=df, group_order=["x", "y", "z"])
+        fig, ax = _rank_scatter(df, group_order=["x", "y", "z"])
         plt.close("all")
 
     def test_group_order_default(self):
         df = _df_rank()
-        aa.plot_rank(df_rank=df)
+        _rank_scatter(df)
         plt.close("all")
 
     def test_group_order_missing_raises(self):
         df = _df_rank()
         with pytest.raises(ValueError, match="missing groups"):
-            aa.plot_rank(df_rank=df, group_order=["x"])
+            _rank_scatter(df, group_order=["x"])
         plt.close("all")
 
     def test_threshold_list(self):
         df = _df_rank()
-        aa.plot_rank(df_rank=df, threshold=[1.0, 2.0])
+        _rank_scatter(df, thresholds=[1.0, 2.0])
         plt.close("all")
 
     def test_ax_provided(self):
         df = _df_rank()
         ax = _ax()
-        aa.plot_rank(df_rank=df, ax=ax)
+        _rank_scatter(df, ax=ax)
         plt.close("all")
 
 

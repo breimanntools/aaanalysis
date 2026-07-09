@@ -12,6 +12,7 @@ from matplotlib.figure import Figure
 import aaanalysis.utils as ut
 from ._backend.aa_pred.aa_pred_plot_comparison import plot_comparison_
 from ._backend.aa_pred.aa_pred_plot_ranking import plot_ranking_
+from ._backend.aa_pred.aa_pred_plot_rank_scatter import plot_rank_scatter_
 from ._backend.aa_pred.aa_pred_plot_clustermap import plot_clustermap_
 
 
@@ -19,7 +20,7 @@ from ._backend.aa_pred.aa_pred_plot_clustermap import plot_clustermap_
 # Single-protein positional plot kinds dispatched by :meth:`AAPredPlot.predict_sample`.
 LIST_SAMPLE_KINDS = ["window", "domain", "sequence"]
 # Across-samples plot kinds dispatched by :meth:`AAPredPlot.predict_group`.
-LIST_GROUP_KINDS = ["hist", "ranking", "scatter", "cutoff", "clustermap"]
+LIST_GROUP_KINDS = ["hist", "ranking", "rank_scatter", "scatter", "cutoff", "clustermap"]
 # Evaluation plot kinds dispatched by :meth:`AAPredPlot.eval`.
 LIST_EVAL_KINDS = ["eval", "comparison", "heatmap"]
 # Per-kind figure-size defaults used when ``figsize=None`` (split by method).
@@ -27,8 +28,8 @@ _DICT_SAMPLE_FIGSIZE = {"window": (10, 4), "domain": (6, 4.5), "sequence": (12, 
 # Cap on the number of subcategory rows drawn in the ``kind='sequence'`` heatmap when
 # ``subcats=None`` (so a full 74-subcategory classification does not produce a wall of rows).
 _SUBCAT_ROW_CAP = 25
-_DICT_GROUP_FIGSIZE = {"hist": (6, 4.5), "ranking": None, "scatter": (5.5, 5.5),
-                        "cutoff": (6, 4.5), "clustermap": (9, 9)}
+_DICT_GROUP_FIGSIZE = {"hist": (6, 4.5), "ranking": None, "rank_scatter": None,
+                        "scatter": (5.5, 5.5), "cutoff": (6, 4.5), "clustermap": (9, 9)}
 
 
 def _new_ax(ax=None, figsize=(6, 5)):
@@ -426,7 +427,6 @@ class AAPredPlot:
     See Also
     --------
     * :class:`AAPred`: the logic class whose results this visualizes.
-    * :func:`aaanalysis.plot_rank` for the per-protein rank scatter companion.
     """
 
     def __init__(self):
@@ -617,6 +617,7 @@ class AAPredPlot:
                        col_score: str = "score",
                        col_group: Optional[str] = None,
                        col_std: Optional[str] = None,
+                       group_order: Optional[List[str]] = None,
                        colors: Optional[Union[Dict[str, str], List[str]]] = None,
                        cutoffs: Optional[Tuple[Union[int, float], ...]] = (50, 80),
                        top_n: Optional[int] = None,
@@ -646,6 +647,11 @@ class AAPredPlot:
         * ``'ranking'`` — ranked-candidate horizontal bars; ``data`` is a per-sample ``df_pred``.
           Uses ``col_name``, ``col_score``, ``col_group``, ``col_std``, ``colors``, ``cutoffs``,
           ``top_n``, ``ascending``, ``xlabel``, ``title``.
+        * ``'rank_scatter'`` — per-protein rank scatter: proteins ranked by their maximum score
+          (x-axis = rank, y-axis = score) and colored by group, the standard sanity check for a
+          deployed per-protein predictor; ``data`` is a per-protein ``df_rank``. Uses
+          ``col_score``, ``col_group`` (required here), ``group_order``, ``dict_color``,
+          ``thresholds`` (drawn as horizontal score lines), ``marker_size``, ``xlabel``, ``ylabel``.
         * ``'scatter'`` — two-predictor agreement scatter; ``data`` is ``scores_x`` and the required
           ``scores_y`` the y-axis. Uses ``labels``, ``dict_color``, ``marker_size``, ``diagonal``,
           ``xlabel``, ``ylabel``.
@@ -661,11 +667,12 @@ class AAPredPlot:
         ----------
         data : pd.DataFrame or array-like
             Primary input for the selected ``kind`` (see above): a per-sample score array
-            (``'hist'``/``'scatter'``/``'cutoff'``), a ranking frame (``'ranking'``), or an
-            importance matrix (``'clustermap'``).
+            (``'hist'``/``'scatter'``/``'cutoff'``), a per-sample ranking frame (``'ranking'``), a
+            per-protein ranking frame (``'rank_scatter'``), or an importance matrix
+            (``'clustermap'``).
         kind : str, default="hist"
-            Which group figure to draw; one of ``hist``, ``ranking``, ``scatter``, ``cutoff``,
-            ``clustermap``.
+            Which group figure to draw; one of ``hist``, ``ranking``, ``rank_scatter``, ``scatter``,
+            ``cutoff``, ``clustermap``.
         ax : matplotlib.axes.Axes, optional
             Axes to draw on. If ``None``, a new figure and axes are created (ignored for
             ``kind='clustermap'``, which always creates its own figure).
@@ -679,6 +686,7 @@ class AAPredPlot:
         thresholds : int, float, or list, optional
             (``kind='hist'``/``'cutoff'``) One or more score values drawn as vertical dashed lines;
             with ``kind='hist'`` and ``band=True`` they also delimit the confidence bands.
+            (``kind='rank_scatter'``) Drawn as horizontal dashed lines on the score axis.
         band : bool, default=False
             (``kind='hist'``) If ``True``, color each histogram bar by the confidence band it falls
             into (bands delimited by ``thresholds``) instead of splitting by ``labels``. Requires
@@ -687,15 +695,23 @@ class AAPredPlot:
             .. versionadded:: 1.1.0
         dict_color : dict, optional
             (``kind='hist'``/``'scatter'``) Mapping ``label -> color``; defaults to the locked
-            positive/negative sample palette.
+            positive/negative sample palette. (``kind='rank_scatter'``) Mapping ``group -> color``;
+            canonical group names (``substrate``, ``non-substrate``, ``hold-out``) default to the
+            locked sample palette, with a fallback palette for other groups.
         col_name : str, default="name"
             (``kind='ranking'``) Column with the per-item labels shown as y-tick labels.
         col_score : str, default="score"
             (``kind='ranking'``) Column with the numeric prediction score used to rank the bars.
+            (``kind='rank_scatter'``) Column with the per-protein max score ranked on the y-axis.
         col_group : str, optional
             (``kind='ranking'``) Column whose distinct values color the bars (adds a class legend).
+            (``kind='rank_scatter'``) Column with the per-protein group label used for coloring
+            (required for this kind).
         col_std : str, optional
             (``kind='ranking'``) Column with per-item standard deviations, drawn as error bars.
+        group_order : list of str, optional
+            (``kind='rank_scatter'``) Order in which groups are colored, drawn, and legended;
+            defaults to first-appearance order in ``data``.
         colors : dict or list, optional
             (``kind='ranking'``/``'clustermap'``) A ``group/label -> color`` mapping; defaults to
             the house categorical palette. (``kind='hist'`` with ``band=True``) A list of one color
@@ -711,7 +727,7 @@ class AAPredPlot:
         scores_y : array-like, optional
             (``kind='scatter'``, required there) Per-sample scores of the second predictor (y-axis).
         marker_size : int or float, default=30
-            (``kind='scatter'``) Scatter marker size.
+            (``kind='scatter'``/``'rank_scatter'``) Scatter marker size.
         diagonal : bool, default=True
             (``kind='scatter'``) If ``True``, draw the ``y = x`` agreement line.
         n_steps : int, default=101
@@ -759,6 +775,12 @@ class AAPredPlot:
                 df_pred=data, col_name=col_name, col_score=col_score, col_group=col_group,
                 col_std=col_std, colors=colors, cutoffs=cutoffs, top_n=top_n, ascending=ascending,
                 ax=ax, figsize=figsize, xlabel=_default(xlabel, "Prediction score"), title=title)
+        if kind == "rank_scatter":
+            return AAPredPlot._plot_rank_scatter(
+                df_rank=data, col_score=col_score, col_group=col_group, group_order=group_order,
+                dict_color=dict_color, thresholds=thresholds, marker_size=marker_size, ax=ax,
+                figsize=figsize, xlabel=_default(xlabel, "Protein rank"),
+                ylabel=_default(ylabel, "Max score per protein"))
         if kind == "scatter":
             if scores_y is None:
                 raise ValueError("'kind'='scatter' requires 'scores_y' (the second predictor's scores).")
@@ -1140,6 +1162,45 @@ class AAPredPlot:
                                 col_group=col_group, col_std=col_std, colors=colors,
                                 cutoffs=cutoffs, top_n=top_n, ascending=ascending, ax=ax,
                                 figsize=figsize, xlabel=xlabel, title=title)
+        return ut.FigAxResult(fig, ax)
+
+    @staticmethod
+    def _plot_rank_scatter(df_rank, col_score="score", col_group=None, group_order=None,
+                           dict_color=None, thresholds=None, marker_size=25, ax=None,
+                           figsize=None, xlabel="Protein rank", ylabel="Max score per protein"):
+        """Per-protein rank scatter: max-score-per-protein sorted by score, colored by group."""
+        # Check input
+        if col_group is None:
+            raise ValueError("'kind'='rank_scatter' requires 'col_group' (the per-protein group "
+                             "column used for coloring).")
+        ut.check_str(name="col_score", val=col_score)
+        ut.check_str(name="col_group", val=col_group)
+        ut.check_df(name="df_rank", df=df_rank, cols_required=[col_score, col_group])
+        if len(df_rank) == 0:
+            raise ValueError("'df_rank' (0 rows) should contain at least one protein.")
+        if not pd.api.types.is_numeric_dtype(df_rank[col_score]):
+            raise ValueError(f"'{col_score}' column of 'df_rank' should be numeric.")
+        ut.check_list_like(name="group_order", val=group_order, accept_none=True)
+        ut.check_dict_color(name="dict_color", val=dict_color, accept_none=True)
+        ut.check_number_range(name="marker_size", val=marker_size, min_val=0, just_int=False)
+        ut.check_ax(ax=ax, accept_none=True)
+        ut.check_figsize(figsize=figsize, accept_none=True)
+        ut.check_str(name="xlabel", val=xlabel, accept_none=True)
+        ut.check_str(name="ylabel", val=ylabel, accept_none=True)
+        list_thresholds = []
+        if thresholds is not None:
+            list_thresholds = list(thresholds) if isinstance(thresholds, (list, tuple)) else [thresholds]
+            for i, t in enumerate(list_thresholds):
+                ut.check_number_val(name=f"thresholds[{i}]", val=t, just_int=False)
+        if group_order is not None:
+            missing = set(df_rank[col_group]) - set(group_order)
+            if missing:
+                raise ValueError(f"'group_order' is missing groups present in 'df_rank': {missing}")
+        # Plot
+        fig, ax = plot_rank_scatter_(df_rank=df_rank, col_score=col_score, col_group=col_group,
+                                     group_order=group_order, dict_color=dict_color,
+                                     thresholds=list_thresholds, ax=ax, figsize=figsize,
+                                     marker_size=marker_size, xlabel=xlabel, ylabel=ylabel)
         return ut.FigAxResult(fig, ax)
 
     @staticmethod
