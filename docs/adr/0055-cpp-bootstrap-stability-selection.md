@@ -1,4 +1,4 @@
-# ADR-XXXX — CPP bootstrap / stability feature selection
+# ADR-0055 — CPP bootstrap / stability annotation
 
 Status: Accepted — 2026-07-08
 

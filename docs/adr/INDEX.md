@@ -62,4 +62,5 @@ Regenerate this table with:
 | [0052](0052-bh-pvalue-monotonicity.md) | BH-adjusted p-value monotonicity (canonical Benjamini–Hochberg) | Accepted | 2026-07-06 |  |
 | [0053](0053-dpulearn-project-out-of-sample.md) | dPULearn.project: out-of-sample projection into the fitted PC space | Accepted | 2026-07-06 |  |
 | [0054](0054-reject-distributed-signal-diagnostic.md) | Reject the distributed-signal (joint-vs-marginal lift) diagnostic | Accepted | 2026-07-08 |  |
+| [0055](0055-cpp-bootstrap-stability-selection.md) | CPP bootstrap / stability annotation | Accepted | 2026-07-08 |  |
 <!-- ADR-INDEX:END -->
