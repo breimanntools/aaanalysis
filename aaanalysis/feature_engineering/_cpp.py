@@ -86,6 +86,37 @@ def _check_bootstrap_batching(n_batches=None, n_sample_batches=None):
         )
 
 
+def _resolve_bootstrap_kws(bootstrap_kws=None):
+    """Validate ``bootstrap_kws`` and merge with the tuned defaults.
+
+    Returns ``(rounds, resample, frac)``. ``None`` yields all defaults; a dict may set any subset of
+    ``{'rounds', 'resample', 'frac'}`` (unset keys keep their default). Unknown keys or out-of-range
+    values raise ``ValueError``.
+    """
+    if bootstrap_kws is None:
+        bootstrap_kws = {}
+    if not isinstance(bootstrap_kws, dict):
+        raise ValueError(
+            f"'bootstrap_kws' ({type(bootstrap_kws).__name__}) should be a dict with keys "
+            f"{sorted(ut.DICT_BOOTSTRAP_DEFAULTS)} (any subset) or None."
+        )
+    unknown = set(bootstrap_kws) - set(ut.DICT_BOOTSTRAP_DEFAULTS)
+    if unknown:
+        raise ValueError(
+            f"'bootstrap_kws' has unknown key(s) {sorted(unknown)}; allowed keys are "
+            f"{sorted(ut.DICT_BOOTSTRAP_DEFAULTS)}."
+        )
+    cfg = {**ut.DICT_BOOTSTRAP_DEFAULTS, **bootstrap_kws}
+    ut.check_number_range(name="bootstrap_kws['rounds']", val=cfg["rounds"], min_val=1, just_int=True)
+    ut.check_str_options(name="bootstrap_kws['resample']", val=cfg["resample"],
+                         list_str_options=ut.LIST_RESAMPLE)
+    ut.check_number_range(name="bootstrap_kws['frac']", val=cfg["frac"], min_val=0.0, max_val=1.0,
+                          just_int=False)
+    if cfg["frac"] == 0:
+        raise ValueError(f"'bootstrap_kws['frac']' ({cfg['frac']}) should be > 0 and <= 1.")
+    return cfg["rounds"], cfg["resample"], cfg["frac"]
+
+
 def check_sample_in_df_seq(sample_name=None, df_seq=None) -> None:
     """Check if sample name in df_seq"""
     list_names = list(df_seq[ut.COL_NAME])
@@ -294,14 +325,10 @@ class CPP(Tool):
 
     Attributes
     ----------
-    df_parts
-        DataFrame with sequence **Parts**.
-    split_kws
-        Nested dictionary defining **Splits** with parameter dictionary for each chosen split_type.
-    df_scales
-        DataFrame with amino acid **Scales**.
-    df_cat
-        DataFrame with categories for physicochemical amino acid **Scales**.
+    last_filter_stats_ : dict
+        Filter-funnel counts from the most recent :meth:`run` / :meth:`run_num` / :meth:`run_composit`
+        (``n_candidates``, ``n_after_prefilter``, ``n_after_redundancy``, ``n_final``); ``None`` before
+        the first call.
     """
 
     def __init__(
@@ -314,9 +341,7 @@ class CPP(Tool):
         verbose: bool = True,
         random_state: Optional[int] = None,
         bootstrap: bool = False,
-        n_bootstrap: int = 20,
-        resample: str = "reference",
-        bootstrap_frac: float = 0.8,
+        bootstrap_kws: Optional[dict] = None,
     ):
         """
         Parameters
@@ -351,42 +376,42 @@ class CPP(Tool):
         bootstrap : bool, default=False
             Whether to add **bootstrap stability annotation** to the selection. ``False`` (default) runs the
             single-pass selection, so :meth:`run` / :meth:`run_num` / :meth:`run_composit` behave exactly as before
-            (output byte-identical) and the ``n_bootstrap`` / ``resample`` / ``bootstrap_frac`` settings are ignored.
-            ``True`` wraps the ordinary run: the data is resampled ``n_bootstrap`` times and re-selected each round to
-            score how often each feature is selected, then the **ordinary full-data selection is returned with a
-            ``selection_frequency`` column** (0 to 1) added. The selected features are exactly those of a normal run
-            (``n_filter`` is the selection criterion) — bootstrapping annotates their stability, it does not change
-            which features are selected.
-        n_bootstrap : int, default=20
-            Number of bootstrap resampling rounds (>=1; only used when ``bootstrap=True``). More rounds give a more
-            precise ``selection_frequency`` estimate at a roughly linear cost; ~20 to ~50 is typically enough.
-        resample : {'both', 'reference', 'test'}, default='reference'
-            Which class group is resampled each bootstrap round (only used when ``bootstrap=True``). ``'reference'``
-            (default) fixes the test group and resamples only the reference group, which isolates the dominant source
-            of selection instability; ``'both'`` resamples both groups; ``'test'`` fixes the reference group and
-            resamples only the test group.
-        bootstrap_frac : float, default=0.8
-            Per-group resample size as a fraction of the group's samples (``0<frac<=1``), drawn with replacement each
-            bootstrap round (only used when ``bootstrap=True``). ``0.8`` is the conventional sub-sample size and a
-            robust default; with ``n_filter`` as the final cut the exact fraction only modestly affects the result.
+            (output byte-identical) and ``bootstrap_kws`` is ignored. ``True`` wraps the ordinary run: the data is
+            resampled ``bootstrap_kws['rounds']`` times and re-selected each round to score how often each feature is
+            selected, then the **ordinary full-data selection is returned with a ``selection_frequency`` column**
+            (0 to 1) added. The selected features are exactly those of a normal run (``n_filter`` is the selection
+            criterion) — bootstrapping annotates their stability, it does not change which features are selected.
+        bootstrap_kws : dict, optional
+            Bootstrap configuration (only used when ``bootstrap=True``). A dict with any subset of these keys; unset
+            keys keep their tuned default, and ``None`` uses all defaults:
+
+            * ``'rounds'`` (int, default ``20``): number of resampling rounds (>=1). More rounds give a more precise
+              ``selection_frequency`` estimate at a roughly linear cost; ~20 to ~50 is typically enough.
+            * ``'resample'`` ({'both', 'reference', 'test'}, default ``'reference'``): which class group is resampled
+              each round. ``'reference'`` fixes the test group and resamples only the reference group (isolating the
+              dominant source of selection instability); ``'both'`` resamples both; ``'test'`` resamples only the test
+              group.
+            * ``'frac'`` (float, default ``0.8``): per-group resample size as a fraction of the group's samples
+              (``0<frac<=1``), drawn with replacement each round. ``0.8`` is the conventional sub-sample size; with
+              ``n_filter`` as the final cut the exact fraction only modestly affects the result.
 
         Notes
         -----
         * All scales from ``df_scales`` must be contained in ``df_cat``
         * **Stability annotation (``bootstrap=True``) is a cross-cutting wrapper**, configured once on the object
           and applied uniformly by :meth:`run`, :meth:`run_num`, and :meth:`run_composit`. It is a thin wrapper: it
-          re-runs the ordinary selection on ``n_bootstrap`` resamples of the data to score how often each feature is
-          selected, then returns the **ordinary full-data selection** with a per-feature ``selection_frequency``
-          (0 to 1) added. The selected feature list is exactly a normal run (``n_filter`` is the criterion); the
-          annotation flags which of those features are reproducible under resampling vs sample-specific — a
-          **trust / interpretability** aid, not a change to the list or to predictive accuracy. To keep any
-          downstream cross-validation leakage-safe, run CPP (bootstrapped or not) **inside** each training fold,
-          never on the full dataset before splitting.
-        * **Choosing the settings.** ``bootstrap=True`` uses tuned defaults (``n_bootstrap=20``,
-          ``bootstrap_frac=0.8``, ``resample='reference'``); override any of them to tune. ``n_bootstrap`` controls
-          how precisely ``selection_frequency`` is estimated (~20 is a practical sweet spot, ~50 converges the
-          estimate) at a roughly linear cost; ``bootstrap_frac=0.8`` is the conventional sub-sample size and a robust
-          default; ``resample='reference'`` resamples only the (usually larger, noisier) reference group.
+          re-runs the ordinary selection on ``bootstrap_kws['rounds']`` resamples of the data to score how often each
+          feature is selected, then returns the **ordinary full-data selection** with a per-feature
+          ``selection_frequency`` (0 to 1) added. The selected feature list is exactly a normal run (``n_filter`` is
+          the criterion); the annotation flags which of those features are reproducible under resampling vs
+          sample-specific — a **trust / interpretability** aid, not a change to the list or to predictive accuracy.
+          To keep any downstream cross-validation leakage-safe, run CPP (bootstrapped or not) **inside** each training
+          fold, never on the full dataset before splitting.
+        * **Choosing the settings.** ``bootstrap=True`` uses the tuned defaults in ``bootstrap_kws``
+          (``rounds=20``, ``frac=0.8``, ``resample='reference'``); pass a dict to override any of them.
+          ``rounds`` controls how precisely ``selection_frequency`` is estimated (~20 is a practical sweet spot, ~50
+          converges the estimate) at a roughly linear cost; ``frac=0.8`` is the conventional sub-sample size and a
+          robust default; ``resample='reference'`` resamples only the (usually larger, noisier) reference group.
         * **Splits auto-cap to the shortest part.** A sequence part of length ``L`` can carry a
           ``Segment`` with at most ``n_split_max = L`` pieces, a ``Pattern`` only if ``len_max <= L``,
           and a ``PeriodicPattern`` only if its first step ``<= L``. When ``df_parts`` contains a
@@ -436,16 +461,7 @@ class CPP(Tool):
         check_df_cat(df_cat=df_cat)
         ut.check_bool(name="accept_gaps", val=accept_gaps)
         ut.check_bool(name="bootstrap", val=bootstrap)
-        ut.check_number_range(name="n_bootstrap", val=n_bootstrap, min_val=1, just_int=True)
-        ut.check_str_options(name="resample", val=resample, list_str_options=ut.LIST_RESAMPLE)
-        ut.check_number_range(
-            name="bootstrap_frac", val=bootstrap_frac, min_val=0.0, max_val=1.0,
-            just_int=False, exclusive_limits=False,
-        )
-        if bootstrap_frac == 0:
-            raise ValueError(
-                f"'bootstrap_frac' ({bootstrap_frac}) should be > 0 and <= 1."
-            )
+        n_bootstrap, resample, bootstrap_frac = _resolve_bootstrap_kws(bootstrap_kws)
         df_parts = check_match_df_parts_df_scales(
             df_parts=df_parts, df_scales=df_scales, accept_gaps=accept_gaps
         )
@@ -502,7 +518,7 @@ class CPP(Tool):
                    random_state=self._random_state)
 
     def _bootstrap_run(self, run_on=None, labels=None, label_test=1, label_ref=0):
-        """Tally ``selection_frequency`` over ``n_bootstrap`` resamples, then return a normal
+        """Tally ``selection_frequency`` over the bootstrap resampling rounds, then return a normal
         full-data selection with that column added.
 
         ``run_on(idx)`` runs the chosen selection method (``run`` / ``run_num`` / ``run_composit``)
@@ -572,7 +588,7 @@ class CPP(Tool):
         .. versionchanged:: 1.1.0
             When the constructor enables bootstrap stability annotation (``CPP(bootstrap=True)``), ``df_feat`` gains a
             ``selection_frequency`` column (the selected features are unchanged; see the ``bootstrap`` /
-            ``n_bootstrap`` / ``resample`` / ``bootstrap_frac`` constructor parameters and the Notes below).
+            ``bootstrap_kws`` constructor parameters and the Notes below).
 
         Parameters
         ----------
@@ -658,7 +674,7 @@ class CPP(Tool):
           essentially unchanged. Default ``'legacy'`` keeps prior results reproducible. For a stronger,
           more efficient redundancy reduction, see :meth:`CPP.simplify`.
         * **Bootstrap stability annotation** (``CPP(bootstrap=True)``) wraps this run: the data is
-          resampled ``n_bootstrap`` times (per ``resample`` / ``bootstrap_frac``) and re-selected each
+          resampled ``bootstrap_kws['rounds']`` times (per ``bootstrap_kws``) and re-selected each
           round to score how often each feature is selected, then **this ordinary full-data run is
           returned with a ``selection_frequency`` column** (0 to 1) appended after ``positions``. The
           selected features are exactly those of the non-bootstrap run (``n_filter`` is the selection
@@ -1283,8 +1299,8 @@ class CPP(Tool):
 
         .. versionchanged:: 1.1.0
             Honors bootstrap stability annotation (``CPP(bootstrap=True)``): the composition features are
-            re-selected on ``n_bootstrap`` resamples and this run gains a ``selection_frequency`` column (the
-            selected features are unchanged).
+            re-selected on ``bootstrap_kws['rounds']`` resamples and this run gains a ``selection_frequency``
+            column (the selected features are unchanged).
 
         Parameters
         ----------

@@ -338,6 +338,8 @@ RESAMPLE_BOTH = "both"
 RESAMPLE_REFERENCE = "reference"
 RESAMPLE_TEST = "test"
 LIST_RESAMPLE = [RESAMPLE_BOTH, RESAMPLE_REFERENCE, RESAMPLE_TEST]
+# Tuned defaults for CPP(bootstrap=True)'s ``bootstrap_kws`` config dict.
+DICT_BOOTSTRAP_DEFAULTS = {"rounds": 20, "resample": RESAMPLE_REFERENCE, "frac": 0.8}
 
 # CPP.simplify — interpretability-guided scale swapping
 STRATEGY_GREEDY = "greedy"            # per-feature swap, RF+CV non-regression gate
