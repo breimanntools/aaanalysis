@@ -35,6 +35,22 @@ class TestPlotRank:
         fig, ax = plot_rank(df_rank=_df())
         assert isinstance(fig, plt.Figure) and isinstance(ax, plt.Axes)
 
+    def test_auto_font_width_grows_with_n_else_fixed(self):
+        # Omitted figsize participates in auto_font: on -> width grows with the number of
+        # ranked proteins; explicit figsize or auto_font off -> the fixed (7, 5) default.
+        def width(n):
+            plot_rank(df_rank=_df(n_sub=n, n_hold=0, n_non=0))
+            w = float(plt.gcf().get_size_inches()[0]); plt.close("all"); return w
+        aa.options["auto_font"] = True
+        assert width(600) > width(20)                                  # grows with N
+        plot_rank(df_rank=_df(n_sub=300, n_hold=0, n_non=0), figsize=(7, 5))
+        assert round(float(plt.gcf().get_size_inches()[0]), 1) == 7.0   # explicit honored
+        plt.close("all")
+        aa.options["auto_font"] = False
+        plot_rank(df_rank=_df(n_sub=300, n_hold=0, n_non=0))
+        assert round(float(plt.gcf().get_size_inches()[0]), 1) == 7.0   # off -> fixed
+        aa.options["auto_font"] = True
+
     def test_one_collection_per_group(self):
         fig, ax = plot_rank(df_rank=_df())
         assert len(ax.collections) == 3

@@ -184,6 +184,16 @@ Added
   a per-sample ``ranking`` (each prediction's score with its uncertainty interval, colored by trust
   status), a calibration curve (``reliability_diagram``), the out-of-distribution score distribution
   (``ood_hist``), and a score-vs-OOD ``trust_map`` colored by the ``reliable`` flag.
+- :meth:`~aaanalysis.AAPredPlot.eval`: New ``kind='heatmap'`` that renders any 2D score grid
+  (rows x columns are the two sweep axes) as a square annotated heatmap and boxes the best cell(s)
+  with a full-cell frame — ``highlight`` selects how many (a positive int for the top-N,
+  ``"max"`` / ``"min"``, an explicit ``(row, col)`` / list, or ``None``); ``vmin`` / ``vmax`` /
+  ``cmap`` / ``cbar_label`` style the color scale and its tick-side-edged colorbar. One call for the
+  recurring "grid of scores -> seaborn heatmap -> mark the best configuration" block.
+- :meth:`~aaanalysis.AAPredPlot.predict_group`: New ``band=True`` mode for ``kind='hist'`` that colors
+  each bar by the confidence band it falls into (delimited by ``thresholds``) instead of by class
+  ``labels`` — for scoring unlabeled candidates. Both additions are purely additive; existing default
+  outputs are unchanged.
 
 **Explainable AI**
 
@@ -333,6 +343,12 @@ Added
   carries the publication eval figures (``ax.eval``) and ``df_eval`` has one
   ``<metric>_mean``/``_std`` column per metric plus ``stage`` / ``is_pareto`` / ``rank``
   / ``is_selected``.
+- **aap.predict_samples**: Trains and cross-validates every ``(feature set × model)`` combination
+  over one ``df_seq`` in a single call, returning the refit predictors and a tidy comparison table.
+  With ``plot=True`` (the default) it now also draws the **model comparison** bar plot (hue = model,
+  one bar group per metric, cross-validation ``std`` error bars) and returns its ``Axes`` in the
+  previously-unused middle slot, completing the ``(results, fig, evals)`` symmetry with
+  ``find_features`` / ``explain_features`` (``figsize`` / ``dict_color`` / ``baseline`` style it).
 - **aap.plot_eval**: Publication-ready evaluation figures of a ``find_features`` sweep —
   the high-dimensional Part × Split × Scale grid is **decomposed** into a series of clean
   2D ``viridis`` heatmaps (the two most-informative axes on each panel, the least on the
@@ -393,6 +409,13 @@ Changed
   so ``feat_importance_std`` (and :meth:`~aaanalysis.TreeModel.predict_proba`'s ``pred_std``) collapsed
   to exactly ``0`` and rounds 2..N were wasted. Fixed-seed importances change once (degenerate → real
   Monte-Carlo mean with non-zero std); the ``random_state=None`` default is unchanged.
+- **Consistent auto_font sizing**: :meth:`~aaanalysis.CPPPlot.heatmap` / :meth:`~aaanalysis.CPPPlot.profile` /
+  :meth:`~aaanalysis.CPPPlot.ranking` now default to ``figsize=None`` and honor any explicit ``figsize`` as
+  a fixed size, so "explicit figsize wins" holds package-wide (matching :meth:`~aaanalysis.CPPPlot.feature_map`);
+  omitting ``figsize`` auto-sizes as before. :meth:`~aaanalysis.CPPPlot.heatmap` / :meth:`~aaanalysis.CPPPlot.profile`
+  gain the ``seq_char_fill`` residue-spacing option already on :meth:`~aaanalysis.CPPPlot.feature_map`, and
+  :func:`~aaanalysis.plot_rank` joins ``auto_font`` — its width grows with the number of ranked proteins when
+  ``figsize`` is omitted.
 - **Uniform plot return contract**: Every public ``*Plot`` method now returns a single
   ``(fig, ax)`` pair (forwarding attribute access to ``ax``, so existing
   ``ax = plot(...); ax.set_title(...)`` code keeps working), replacing the previous mix
