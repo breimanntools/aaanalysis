@@ -325,6 +325,16 @@ class TestAAPredEvalBaseline:
         with pytest.raises(ValueError):
             aa.AAPred(models=["rf"], random_state=0).eval(X, labels, df_seq=df_seq, baseline="nope")
 
+    def test_baseline_all_invalid_row_raises_clear_error(self, baseline_data):
+        # A sequence with no canonical residue in the span yields an all-NaN featurizer row;
+        # it must raise a clear AAPred-level ValueError, not a cryptic sklearn NaN crash.
+        df_seq, labels, X = baseline_data
+        df_bad = df_seq.copy().reset_index(drop=True)
+        col = df_bad.columns.get_loc("sequence")
+        df_bad.iloc[0, col] = "X" * len(df_bad.iloc[0]["sequence"])
+        with pytest.raises(ValueError):
+            aa.AAPred(models=["rf"], random_state=0).eval(X, labels, df_seq=df_bad, baseline="aac")
+
 
 @pytest.fixture(scope="module")
 def seq_fitted():

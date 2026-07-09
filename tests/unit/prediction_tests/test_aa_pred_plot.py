@@ -102,6 +102,28 @@ class TestAAPredPlotEval:
         fig, ax = aa.AAPredPlot().eval(_df_eval_grid(["svm"], ["acc", "auc", "f1"]))
         assert _is_bar(ax)
 
+    def test_features_column_is_not_averaged(self):
+        # A baseline df_eval (AAPred.eval(baseline=...)) carries a 'features' column with two
+        # rows per (model, metric, principle): the bars plot must render cpp and the baseline as
+        # separate hued bars, never their mean (the #335 code-review regression).
+        import aaanalysis.utils as ut
+        df_eval = pd.DataFrame({
+            ut.COL_FEATURES: ["cpp", "cpp", "aac", "aac"],
+            ut.COL_MODEL: ["RandomForestClassifier"] * 4,
+            ut.COL_METRIC: ["accuracy", "f1", "accuracy", "f1"],
+            ut.COL_PRINCIPLE: ["cv"] * 4,
+            ut.COL_SCORE: [0.90, 0.80, 0.60, 0.50],
+            ut.COL_SCORE_STD: [0.01, 0.02, 0.03, 0.04],
+        })
+        fig, ax = aa.AAPredPlot().eval(df_eval, kind="eval")
+        legend = {t.get_text() for t in ax.get_legend().get_texts()}
+        assert {"cpp", "aac"} <= legend
+        heights = sorted(round(p.get_height(), 2) for p in ax.patches
+                         if type(p).__name__ == "Rectangle")
+        # the true per-feature scores are drawn; the averaged 0.75 (cpp/aac accuracy) is NOT
+        assert 0.90 in heights and 0.60 in heights
+        assert 0.75 not in heights
+
 
 def _df_comp():
     return pd.DataFrame({"group": ["A", "A", "B", "B"],

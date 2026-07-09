@@ -963,32 +963,49 @@ class AAPredPlot:
         if baseline is not None:
             ut.check_number_val(name="baseline", val=baseline, just_int=False)
         ut.check_str(name="ylabel", val=ylabel, accept_none=True)
-        # Grouped bar plot: metrics on the x-axis, one hued bar per model
+        # Grouped bar plot: metrics on the x-axis, one bar per (feature set x) model x principle.
+        # A ``features`` column (from AAPred.eval(baseline=...)) splits each group into the compared
+        # feature sets ('cpp' vs the baselines) so their rows are NEVER averaged together; it then
+        # becomes the hue. Without it the plot is unchanged (one hued bar per model).
+        has_features = ut.COL_FEATURES in df_eval.columns
         metrics = list(dict.fromkeys(df_eval[ut.COL_METRIC].tolist()))
         models = list(dict.fromkeys(df_eval[ut.COL_MODEL].tolist()))
         principles = list(dict.fromkeys(df_eval[ut.COL_PRINCIPLE].tolist()))
+        feature_sets = list(dict.fromkeys(df_eval[ut.COL_FEATURES].tolist())) if has_features else [None]
         fig, ax = _new_ax(ax=ax, figsize=figsize)
-        clist = ut.plot_get_clist_(n_colors=max(len(models), 2))
         dict_color = dict(dict_color) if dict_color is not None else {}
-        dict_model_color = {m: dict_color.get(m, clist[i % len(clist)]) for i, m in enumerate(models)}
-        n_groups = len(models) * len(principles)
+        hue_keys = feature_sets if has_features else models
+        clist = ut.plot_get_clist_(n_colors=max(len(hue_keys), 2))
+        dict_hue_color = {k: dict_color.get(k, clist[i % len(clist)]) for i, k in enumerate(hue_keys)}
+        n_groups = len(models) * len(principles) * len(feature_sets)
         width = 0.8 / max(n_groups, 1)
         x = np.arange(len(metrics))
         idx = 0
-        for model in models:
-            for principle in principles:
-                sub = df_eval[(df_eval[ut.COL_MODEL] == model) & (df_eval[ut.COL_PRINCIPLE] == principle)]
-                heights = [float(sub[sub[ut.COL_METRIC] == m][ut.COL_SCORE].mean()) for m in metrics]
-                errs = [float(sub[sub[ut.COL_METRIC] == m][ut.COL_SCORE_STD].mean()) for m in metrics]
-                errs = [0 if np.isnan(e) else e for e in errs]
-                hatch = "//" if principle == ut.STR_PRINCIPLE_HOLDOUT else None
-                label = model if principle == principles[0] else f"{model} ({principle})"
-                if len(principles) > 1:
-                    label = f"{model} ({principle})"
-                ax.bar(x + (idx - (n_groups - 1) / 2) * width, heights, width=width,
-                       color=dict_model_color[model], edgecolor="black", linewidth=0.6,
-                       hatch=hatch, yerr=errs, capsize=2.5, label=label)
-                idx += 1
+        for feat in feature_sets:
+            for model in models:
+                for principle in principles:
+                    mask = (df_eval[ut.COL_MODEL] == model) & (df_eval[ut.COL_PRINCIPLE] == principle)
+                    if has_features:
+                        mask = mask & (df_eval[ut.COL_FEATURES] == feat)
+                    sub = df_eval[mask]
+                    heights = [float(sub[sub[ut.COL_METRIC] == m][ut.COL_SCORE].mean()) for m in metrics]
+                    errs = [float(sub[sub[ut.COL_METRIC] == m][ut.COL_SCORE_STD].mean()) for m in metrics]
+                    errs = [0 if np.isnan(e) else e for e in errs]
+                    hatch = "//" if principle == ut.STR_PRINCIPLE_HOLDOUT else None
+                    color = dict_hue_color[feat] if has_features else dict_hue_color[model]
+                    if has_features:
+                        parts = [str(feat)]
+                        if len(models) > 1:
+                            parts.append(model)
+                        if len(principles) > 1:
+                            parts.append(principle)
+                        label = " · ".join(parts)
+                    else:
+                        label = model if len(principles) == 1 else f"{model} ({principle})"
+                    ax.bar(x + (idx - (n_groups - 1) / 2) * width, heights, width=width,
+                           color=color, edgecolor="black", linewidth=0.6,
+                           hatch=hatch, yerr=errs, capsize=2.5, label=label)
+                    idx += 1
         if baseline is not None:
             ax.axhline(baseline, color="grey", linestyle="--", linewidth=1)
         ax.set_xticks(x)

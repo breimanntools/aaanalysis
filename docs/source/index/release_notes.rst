@@ -195,6 +195,8 @@ Added
   ``df_eval`` under a new leading ``features`` column (``'cpp'`` for the bound rows), so the whole
   "CPP vs baseline" comparison comes from one call. Purely additive: with ``baseline=None``
   (default) ``df_eval`` is byte-identical to before (no ``features`` column).
+  :meth:`~aaanalysis.AAPredPlot.eval` (bar plot) reads the ``features`` column as the hue, so it
+  draws the ``cpp`` and baseline bars side by side instead of averaging them.
 - :meth:`~aaanalysis.AAPredPlot.eval`: New ``kind='heatmap'`` that renders any 2D score grid
   (rows x columns are the two sweep axes) as a square annotated heatmap and boxes the best cell(s)
   with a full-cell frame — ``highlight`` selects how many (a positive int for the top-N,
