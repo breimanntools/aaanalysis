@@ -31,7 +31,7 @@ from ._constants import (
     COL_N_SCALES_AAINDEX, COL_SUBCAT_DES, COL_KEY_REFERENCES,
     COL_FEATURE, COL_ABS_AUC, COL_ABS_MEAN_DIF, COL_MEAN_DIF, COL_STD_TEST,
     COL_STD_REF, COL_PVAL_MW, COL_PVAL_TTEST, COL_PVAL_FDR, COL_POSITION,
-    COL_AA_TEST, COL_AA_REF, COL_FEAT_DES,
+    COL_AA_TEST, COL_AA_REF, COL_FEAT_DES, COL_SELECTION_FREQUENCY,
     COL_FEAT_IMPORT, COL_FEAT_IMPORT_STD, COL_FEAT_IMPACT, COL_FEAT_IMPACT_STD,
     COL_FROM_AA, COL_TO_AA, COL_MUTATION, COL_DELTA, COL_ABS_DELTA,
     COL_POS, COL_REGION, COL_DELTA_CPP, COL_SHIFT_SCORE,
@@ -227,6 +227,10 @@ DICT_DF_SCHEMAS = {
             COL_FEAT_DES: _field("str", "Optional readable one-sentence feature "
                                  "description.", required=False, nullable=True,
                                  example="Charge of the C-terminal TMD segment."),
+            COL_SELECTION_FREQUENCY: _field(
+                "float", "Bootstrap selection frequency (fraction of resampling rounds a "
+                "feature was selected); present only when CPP(bootstrap=True).",
+                required=False, range=[0, 1], example=0.9),
             COL_FEAT_IMPORT: _field("float", "Feature importance from TreeModel.fit "
                                     "(post-fit).", required=False, range=[0, None],
                                     example=0.97),

@@ -173,6 +173,29 @@ def _pick_feature_matrix_builder():
     return get_feature_matrix_fast_
 
 
+def _resample_row_indices(idx_test=None, idx_ref=None, resample="reference",
+                          bootstrap_frac=0.8, rng=None):
+    """Draw one bootstrap resample of row indices (sampling with replacement per group).
+
+    ``idx_test`` / ``idx_ref`` are the row positions of the test / reference group in the full
+    ``labels`` vector. Per ``resample``, one or both groups are resampled with replacement to
+    ``round(bootstrap_frac * n_group)`` rows (at least 1); the other group is passed through
+    unchanged. ``resample='reference'`` fixes the test group and resamples only the reference,
+    isolating the dominant instability source.
+    """
+    def _draw(idx):
+        size = max(1, int(round(bootstrap_frac * len(idx))))
+        return rng.choice(idx, size=size, replace=True)
+
+    if resample == ut.RESAMPLE_BOTH:
+        test_s, ref_s = _draw(idx_test), _draw(idx_ref)
+    elif resample == ut.RESAMPLE_REFERENCE:
+        test_s, ref_s = idx_test, _draw(idx_ref)
+    else:  # ut.RESAMPLE_TEST
+        test_s, ref_s = _draw(idx_test), idx_ref
+    return np.concatenate([test_s, ref_s])
+
+
 # II Main Functions
 def cpp_run_single(df_parts=None, split_kws=None, df_scales=None, df_cat=None, verbose=None,
                       accept_gaps=True, labels=None, label_test=1, label_ref=0, n_filter=100,
