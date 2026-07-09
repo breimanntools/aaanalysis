@@ -607,7 +607,7 @@ class CPPPlot:
                 col_imp: str = "feat_importance",
                 rank: bool = True,
                 n_top: int = 15,
-                figsize: Tuple[Union[int, float], Union[int, float]] = (7, 5),
+                figsize: Optional[Tuple[Union[int, float], Union[int, float]]] = None,
                 tmd_len: int = 20,
                 tmd_jmd_space: int = 2,
                 tmd_color: str = "mediumspringgreen",
@@ -661,8 +661,14 @@ class CPPPlot:
             If ``True``, features will be ranked in descending order of ``col_imp`` values.
         n_top : int, default=15
             The number of top features to display. Should be 1 < ``n_top`` <= ``n_features``.
-        figsize : tuple, default=(7, 5)
-            Figure dimensions (width, height) in inches.
+        figsize : tuple, optional
+            Figure dimensions (width, height) in inches. When ``None`` (default) and the global
+            ``auto_font`` option is enabled, the height grows with ``n_top`` (width and fonts
+            fixed); any explicit ``figsize`` is honored as a fixed size. With ``auto_font``
+            disabled, ``None`` falls back to ``(7, 5)``.
+
+            .. versionchanged:: 1.1.0
+                Defaults to ``None`` and participates in ``auto_font``; explicit ``figsize`` wins.
         tmd_len : int, default=20
             Length of target middle domain (TMD) to be depicted (>0).
         tmd_jmd_space : int, default=2
@@ -757,13 +763,14 @@ class CPPPlot:
                        accept_none=True, check_number=True)
 
         # DEV: No match check for features and tmd (check_match_features_seq_parts) necessary
-        # Under auto_font (default figsize only), grow the figure height with the number
-        # of ranked features so each row keeps a constant height (the notebook's
-        # figsize=(width, 0.22*n + 1) rule); width and fonts stay fixed. Grow-only:
-        # floored at the default height (5) so a short ranking keeps the roomier default
-        # bar spacing rather than shrinking. Off -> unchanged.
-        if ut.check_auto_font() and (figsize is None or tuple(figsize) == (7, 5)):
-            figsize = (7, max(5, ranking_figheight(n_top)))
+        # Auto-sizing applies only when the caller OMITS figsize (figsize is None, the
+        # signature default); any explicit figsize is honored as a fixed size (same sentinel
+        # as feature_map/heatmap/profile). Under auto_font the figure height grows with the
+        # number of ranked features (the notebook's figsize=(width, 0.22*n + 1) rule); width
+        # and fonts stay fixed. Grow-only: floored at the default height (5) so a short
+        # ranking keeps the roomier default bar spacing rather than shrinking.
+        if figsize is None:
+            figsize = (7, max(5, ranking_figheight(n_top))) if ut.check_auto_font() else (7, 5)
         # Plot ranking
         fig, axes = plot_ranking(df_feat=df_feat.copy(),
                                  n_top=n_top, rank=rank,
@@ -796,7 +803,7 @@ class CPPPlot:
                 col_imp: Union[str, None] = "feat_importance",
                 normalize: bool = True,
                 ax: Optional[Axes] = None,
-                figsize: Tuple[Union[int, float], Union[int, float]] = (7, 5),
+                figsize: Optional[Tuple[Union[int, float], Union[int, float]]] = None,
 
                 # Appearance of Parts (TMD-JMD)
                 start: int = 1,
@@ -809,6 +816,7 @@ class CPPPlot:
                 tmd_seq_color: str = "black",
                 jmd_seq_color: str = "white",
                 seq_size: Optional[Union[int, float]] = None,
+                seq_char_fill: Optional[bool] = None,
                 fontsize_tmd_jmd: Optional[Union[int, float]] = None,
                 weight_tmd_jmd: Literal['normal', 'bold'] = "normal",
                 add_xticks_pos: bool = False,
@@ -869,8 +877,14 @@ class CPPPlot:
             If ``True``, normalizes aggregated numerical values to a total of 100%.
         ax : Axes, optional
             Pre-defined Axes object to plot on. If ``None``, a new Axes object is created.
-        figsize : tuple, default=(7, 5)
-            Figure dimensions (width, height) in inches.
+        figsize : tuple, optional
+            Figure dimensions (width, height) in inches. When ``None`` (default) and the global
+            ``auto_font`` option is enabled, the width grows with the sequence length (height and
+            fonts fixed); any explicit ``figsize`` is honored as a fixed size. With ``auto_font``
+            disabled, ``None`` falls back to ``(7, 5)``.
+
+            .. versionchanged:: 1.1.0
+                Defaults to ``None`` and participates in ``auto_font``; explicit ``figsize`` wins.
         start : int, default=1
             Position label of first residue position (starting at N-terminus).
         tmd_len : int, default=20
@@ -893,6 +907,13 @@ class CPPPlot:
             Color for JMD sequence.
         seq_size : int or float, optional
             Font size (>=0) for sequence characters. If ``None``, optimized automatically.
+        seq_char_fill : bool, optional
+            If ``True`` and ``seq_size`` is auto-optimized (``None``), grow the residue
+            characters until adjacent letters touch (no whitespace) while never overlapping, so
+            they fill the width. If ``False``, keep a small gap. If ``None`` (default), follows
+            the ``auto_font`` option (on when auto-sizing is enabled, off otherwise).
+
+            .. versionadded:: 1.1.0
         fontsize_tmd_jmd : int or float, optional
             Font size (>=0) for the part labels: 'JMD-N', 'TMD', 'JMD-C'. If ``None``, optimized automatically.
         weight_tmd_jmd : {'normal', 'bold'}, default='normal'
@@ -1014,7 +1035,15 @@ class CPPPlot:
         ut.check_lim(name="ylim", val=ylim, accept_none=True)
         args_xtick = check_args_xtick(xtick_size=xtick_size, xtick_width=xtick_width, xtick_length=xtick_length)
         args_ytick = check_args_ytick(ytick_size=ytick_size, ytick_width=ytick_width, ytick_length=ytick_length)
-        # Normalize figsize=None to the default so it works regardless of auto_font state.
+        # seq_char_fill=None follows auto_font (edge-to-edge residue letters on the auto
+        # path, off when auto_font is disabled). Explicit True/False always wins.
+        if seq_char_fill is None:
+            seq_char_fill = ut.check_auto_font()
+        ut.check_bool(name="seq_char_fill", val=seq_char_fill)
+        # Auto-sizing applies only when the caller OMITS figsize (figsize is None, the
+        # signature default); any explicit figsize is honored as a fixed size (same
+        # sentinel as feature_map/heatmap/ranking).
+        figsize_omitted = figsize is None
         if figsize is None:
             figsize = (7, 5)
 
@@ -1035,16 +1064,17 @@ class CPPPlot:
         with warnings.catch_warnings():
             warnings.simplefilter("ignore", category=UserWarning)
             plt.tight_layout()
-        # Constant per-position column width under auto_font (default figsize only):
+        # Constant per-position column width under auto_font (omitted figsize only):
         # the profile widens with sequence length; height and fonts stay fixed.
         # Off (default) -> byte-identical.
-        if ut.check_auto_font() and (figsize is None or tuple(figsize) == (7, 5)):
+        if ut.check_auto_font() and figsize_omitted:
             n_positions = tmd_len + (jmd_n_len or 0) + (jmd_c_len or 0)
             _, capped = fit_width_by_rescale(fig=fig, ax_grid=ax, n_cols=n_positions)
             if capped and self._verbose:
                 ut.print_out("auto_font: sequence exceeds the max figure width; layout may be constrained.")
         if tmd_seq is not None and seq_size is None:
-            ax, seq_size = update_seq_size_(ax=ax, **args_seq, **args_part_color, **args_seq_color)
+            ax, seq_size = update_seq_size_(ax=ax, **args_seq, **args_part_color, **args_seq_color,
+                                            fill=seq_char_fill)
             if self._verbose:
                 ut.print_out(f"Optimized sequence character fontsize is: {seq_size}")
         return ut.FigAxResult(fig, ax)
@@ -1057,7 +1087,7 @@ class CPPPlot:
                 col_val: str = "mean_dif",
                 name_test: str = "TEST",
                 name_ref: str = "REF",
-                figsize: Tuple[Union[int, float], Union[int, float]] = (8, 8),
+                figsize: Optional[Tuple[Union[int, float], Union[int, float]]] = None,
 
                 # Appearance of Parts (TMD-JMD)
                 start: int = 1,
@@ -1070,6 +1100,7 @@ class CPPPlot:
                 tmd_seq_color: str = "black",
                 jmd_seq_color: str = "white",
                 seq_size: Optional[Union[int, float]] = None,
+                seq_char_fill: Optional[bool] = None,
                 fontsize_tmd_jmd: Optional[Union[int, float]] = None,
                 weight_tmd_jmd: Literal['normal', 'bold'] = "normal",
                 fontsize_labels: Union[int, float] = 12,
@@ -1131,8 +1162,14 @@ class CPPPlot:
             Name for the test dataset.
         name_ref : str, default="REF"
             Name for the reference dataset.
-        figsize : tuple, default=(8, 8)
-            Figure dimensions (width, height) in inches.
+        figsize : tuple, optional
+            Figure dimensions (width, height) in inches. When ``None`` (default) and the global
+            ``auto_font`` option is enabled, the size is derived from the grid shape so cells stay
+            a constant size; any explicit ``figsize`` (including ``(8, 8)``) is honored as a fixed
+            size. With ``auto_font`` disabled, ``None`` falls back to ``(8, 8)``.
+
+            .. versionchanged:: 1.1.0
+                Defaults to ``None`` and participates in ``auto_font``; explicit ``figsize`` wins.
         start : int, default=1
             Position label of first residue position (starting at N-terminus).
         tmd_len : int, default=20
@@ -1155,6 +1192,13 @@ class CPPPlot:
             Color for JMD sequence.
         seq_size : int or float, optional
             Font size (>=0) for sequence characters. If ``None``, optimized automatically.
+        seq_char_fill : bool, optional
+            If ``True`` and ``seq_size`` is auto-optimized (``None``), grow the residue
+            characters until adjacent letters touch (no whitespace) while never overlapping, so
+            they fill the cells. If ``False``, keep a small gap. If ``None`` (default), follows
+            the ``auto_font`` option (on when auto-sizing is enabled, off otherwise).
+
+            .. versionadded:: 1.1.0
         fontsize_tmd_jmd : int or float, optional
             Font size (>=0) for the part labels: 'JMD-N', 'TMD', 'JMD-C'. If ``None``, optimized automatically.
         weight_tmd_jmd : {'normal', 'bold'}, default='normal'
@@ -1275,11 +1319,21 @@ class CPPPlot:
                        check_number=True, accept_none_number=True)
         args_xtick = check_args_xtick(xtick_size=xtick_size, xtick_width=xtick_width, xtick_length=xtick_length)
 
-        # Normalize figsize=None to the default so it works regardless of auto_font state.
+        # seq_char_fill=None follows auto_font: edge-to-edge residue letters under the
+        # (default) auto path, off when auto_font is disabled so that path stays
+        # byte-identical to the pre-auto_font output. Explicit True/False always wins.
+        if seq_char_fill is None:
+            seq_char_fill = ut.check_auto_font()
+        ut.check_bool(name="seq_char_fill", val=seq_char_fill)
+        # Auto-sizing applies only when the caller OMITS figsize (figsize is None, the
+        # signature default); any explicit figsize -- including (8, 8) -- is honored as a
+        # fixed size. Same sentinel as feature_map/profile/ranking, so "explicit figsize
+        # wins" holds package-wide.
+        figsize_omitted = figsize is None
         if figsize is None:
             figsize = (8, 8)
         # Shrink-labels fallback only when auto_font is on but figsize is forced.
-        optimize_labels = ut.check_auto_font() and tuple(figsize) != (8, 8)
+        optimize_labels = ut.check_auto_font() and not figsize_omitted
         # Plot heatmap
         fig, ax = plot_heatmap(df_feat=df_feat, df_cat=self._df_cat,
                                shap_plot=shap_plot,
@@ -1302,9 +1356,9 @@ class CPPPlot:
         with warnings.catch_warnings():
             warnings.simplefilter("ignore", category=UserWarning)
             fig.tight_layout()
-        # Constant-cell-size grid under auto_font (default figsize only); grows the
+        # Constant-cell-size grid under auto_font (omitted figsize only); grows the
         # figure so cells/fonts stay fixed. Off (default) -> byte-identical.
-        if ut.check_auto_font() and tuple(figsize) == (8, 8):
+        if ut.check_auto_font() and figsize_omitted:
             n_positions = tmd_len + (jmd_n_len or 0) + (jmd_c_len or 0)
             n_subcat = int(df_feat[col_cat].nunique())
             _, _, capped = fit_cells_by_rescale(fig=fig, ax_grid=ax, n_rows=n_subcat, n_cols=n_positions,
@@ -1312,7 +1366,8 @@ class CPPPlot:
             if capped and self._verbose:
                 ut.print_out("auto_font: grid exceeds the max figure size; cells may be smaller than target.")
         if tmd_seq is not None and seq_size is None:
-            ax, seq_size = update_seq_size_(ax=ax, **args_seq, **args_part_color, **args_seq_color)
+            ax, seq_size = update_seq_size_(ax=ax, **args_seq, **args_part_color, **args_seq_color,
+                                            fill=seq_char_fill)
             if self._verbose:
                 ut.print_out(f"Optimized sequence character fontsize is: {seq_size}")
         return ut.FigAxResult(fig, ax)
