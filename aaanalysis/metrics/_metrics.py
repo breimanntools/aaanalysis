@@ -407,7 +407,8 @@ def comp_smooth_scores(scores: ut.ArrayLike1D,
 
     See Also
     --------
-    * :func:`plot_rank` for visualizing per-protein score tracks.
+    * :meth:`AAPredPlot.predict_group` (``kind='rank_scatter'``) for visualizing per-protein
+      score tracks.
 
     Examples
     --------

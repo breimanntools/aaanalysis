@@ -14,7 +14,7 @@ Regenerate this table with:
 | [0003](0003-residue-annotation-layer.md) | Residue-level annotation layer (AnnotationPreprocessor) | Accepted | 2026-05-25 |  |
 | [0004](0004-domain-segmentation-wrapper.md) | Domain segmentation: wrap ChainSaw + AFragmenter; Merizo stays BYO | Accepted | 2026-05-25 |  |
 | [0005](0005-feature-preprocessor-family.md) | Feature-preprocessor family: consolidate into `data_handling_pro`, unify the protocol | Accepted | 2026-05-29 | partially superseded by ADR-0011, 2026-06-01 |
-| [0006](0006-standalone-rank-plot.md) | Per-protein rank plot ships as a standalone `aa.plot_rank`, not a `*Plot` method | Accepted | 2026-05-31 |  |
+| [0006](0006-standalone-rank-plot.md) | Per-protein rank plot ships as a standalone `aa.plot_rank`, not a `*Plot` method | Superseded |  |  |
 | [0007](0007-cppgrid-across-configs.md) | `CPPGrid`: a class that sweeps across configurations on a threads-default backend | Accepted | 2026-05-31 |  |
 | [0008](0008-n-jobs-semantics.md) | Unified `n_jobs` contract: `None` means optimized | Accepted | 2026-05-31 |  |
 | [0009](0009-discard-cppstate-for-lru.md) | Reuse scale tensors via an internal content-hash LRU, not a public `CPPState` | Accepted | 2026-05-31 | D2 superseded by ADR-0014, 2026-06-03 |
@@ -63,4 +63,5 @@ Regenerate this table with:
 | [0053](0053-dpulearn-project-out-of-sample.md) | dPULearn.project: out-of-sample projection into the fitted PC space | Accepted | 2026-07-06 |  |
 | [0054](0054-reject-distributed-signal-diagnostic.md) | Reject the distributed-signal (joint-vs-marginal lift) diagnostic | Accepted | 2026-07-08 |  |
 | [0055](0055-cpp-bootstrap-stability-selection.md) | CPP bootstrap / stability annotation | Accepted | 2026-07-08 |  |
+| [0056](0056-rank-plot-into-aapredplot.md) | Per-protein rank scatter moves into `AAPredPlot.predict_group(kind="rank_scatter")` | Accepted | 2026-07-09 |  |
 <!-- ADR-INDEX:END -->

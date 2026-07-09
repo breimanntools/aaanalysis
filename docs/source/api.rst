@@ -142,5 +142,4 @@ Utility Functions
     plot_get_clist
     plot_get_cmap
     plot_legend
-    plot_rank
     plot_settings

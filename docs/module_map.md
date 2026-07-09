@@ -60,7 +60,7 @@ flowchart LR
 ```
 
 **Cross-cutting (used by many, not a pipeline stage):** `plotting`
-(`plot_settings`/colors/`plot_legend`/`plot_rank`) styles every `*Plot`; `metrics`
+(`plot_settings`/colors/`plot_legend`) styles every `*Plot`; `metrics`
 (`comp_*`) scores model/clustering outputs.
 
 **Convenience facade (wraps the whole flow):** `pipe` — imported as

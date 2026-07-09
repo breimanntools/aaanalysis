@@ -501,9 +501,9 @@ _Avoid_: "bootstrap" alone (ambiguous with the score CI), calling `selection_fre
 NaN-aware triangular/gaussian smoothing of a per-residue score track that takes `max(smoothed, raw)` so true peaks are never attenuated — for windowed protease/PTM prediction where positional jitter is universal. Pure-numpy, seeded where stochastic. `aa.smooth_scores`.
 _Avoid_: denoising, blurring (attenuates peaks).
 
-**rank plot**:
-A per-protein **max-score-vs-rank** scatter colored by group (substrate / hold-out / non-substrate) with optional threshold lines — the standard deployed-predictor sanity check. A standalone `aa.plot_rank` (deliberately not a `*Plot` method; pairs with the standalone `aa.metrics` functions).
-_Avoid_: ranking plot (collides with `CPPPlot.ranking`, which ranks *features* from `df_feat`).
+**rank scatter**:
+A per-protein **max-score-vs-rank** scatter colored by group (substrate / hold-out / non-substrate) with optional threshold lines — the standard deployed-predictor sanity check. Lives on `AAPredPlot.predict_group(kind="rank_scatter")` (its logic twin is `AAPred`, which produces the per-protein scores it visualizes).
+_Avoid_: the standalone `aa.plot_rank` (removed — folded into `AAPredPlot`); `kind="ranking"` (the per-candidate leaderboard **bars**, a different figure); `CPPPlot.ranking` (ranks *features* from `df_feat`).
 
 ### Feature selection vocabulary
 

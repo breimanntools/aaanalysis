@@ -277,7 +277,8 @@ class TestCheckTypeBranch:
         # check_type.py:128 — check_tuple n + check_number via check_figsize
         df_rank = pd.DataFrame({"score": [1.0, 2.0, 3.0], "group": ["a", "b", "a"]})
         with pytest.raises(ValueError, match="float or an integer"):
-            aa.plot_rank(df_rank=df_rank, figsize=("a", "b"))
+            aa.AAPredPlot.predict_group(df_rank, kind="rank_scatter", col_group="group",
+                                        figsize=("a", "b"))
 
     def test_list_contains_none(self):
         # check_type.py:162 — check_all_non_none via encode_integer
