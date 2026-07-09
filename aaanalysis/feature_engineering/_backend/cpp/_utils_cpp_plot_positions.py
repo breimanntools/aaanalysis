@@ -101,6 +101,29 @@ def _adjust_xticks_labels(xticks=None, xtick_labels=None, add_xtick_pos=True,
     return xticks, xtick_labels
 
 
+def _add_seq_cell_backgrounds(ax=None, labels=None, colors=None, x_shift=0.0):
+    """Paint a seamless, full-width colored cell behind each residue letter (``fill`` mode).
+
+    The per-letter text bbox is glyph-sized, so narrow residues leave hairline gaps and the
+    colored band reads as ragged against the uniform heatmap grid. Drawing one full-width
+    (1.0 data unit) rectangle per residue -- centered on the tick, so it lines up exactly with
+    the heatmap column above -- makes the band gap-free and aligned.
+    """
+    fig = ax.figure
+    fig.canvas.draw()
+    renderer = fig.canvas.get_renderer()
+    inv = ax.transData.inverted()
+    # Uniform vertical band spanning the tallest letter (data coordinates).
+    exts = [l.get_window_extent(renderer).transformed(inv) for l in labels]
+    y0 = min(e.y0 for e in exts)
+    y1 = max(e.y1 for e in exts)
+    for i, c in enumerate(colors):
+        rect = mpl.patches.Rectangle((i + x_shift - 0.5, y0), width=1.0, height=y1 - y0,
+                                     facecolor=c, edgecolor="none", linewidth=0,
+                                     zorder=0.1, clip_on=False)
+        ax.add_patch(rect)
+
+
 def _add_part_seq(ax=None, jmd_n_seq=None, tmd_seq=None, jmd_c_seq=None, x_shift=0.0, seq_size=None,
                   tmd_color="mediumspringgreen", jmd_color="blue", tmd_seq_color="black", jmd_seq_color="white",
                   fill=False):
@@ -126,13 +149,19 @@ def _add_part_seq(ax=None, jmd_n_seq=None, tmd_seq=None, jmd_c_seq=None, x_shift
     # Adjust font size to prevent overlap
     if seq_size is None:
         seq_size = _get_optimal_fontsize(ax=ax, labels=labels, fill=fill)
-    # Set colored box around sequence to indicate TMD, JMD
+    # Color the sequence to indicate TMD, JMD. With fill=True the glyph-sized text bbox leaves
+    # hairline gaps between narrow letters (and reads as ragged against the uniform heatmap grid),
+    # so paint a seamless full-width cell per residue instead and keep each letter's own box
+    # transparent. fill=False keeps the legacy glyph bbox (byte-identical to the pre-auto_font path).
     lw = plt.gcf().get_size_inches()[0]/5
     for l, c in zip(labels, colors):
         l.set_fontsize(seq_size)
-        l.set_bbox(dict(facecolor=c, edgecolor=c, zorder=0.1, alpha=1, clip_on=False,
+        box_color = "none" if fill else c
+        l.set_bbox(dict(facecolor=box_color, edgecolor=box_color, zorder=0.1, alpha=1, clip_on=False,
                         pad=0, linewidth=lw))
         l.set_color(dict_seq_color[c])
+    if fill:
+        _add_seq_cell_backgrounds(ax=ax, labels=labels, colors=colors, x_shift=x_shift)
     return seq_size
 
 
