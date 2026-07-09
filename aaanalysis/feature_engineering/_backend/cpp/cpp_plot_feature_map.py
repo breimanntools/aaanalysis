@@ -40,24 +40,23 @@ def plot_feat_importance_bars_subcat(ax=None,
     if shap_plot:
         # Cumulative feature impact per subcategory, stacked in ONE direction (matching the
         # top per-position bars): one thin white-edged segment per contributing feature
-        # (red=positive, blue=negative). Index each row numerically (row i in list_cat order,
-        # every row reserves its slot even with no impact) so bars stay aligned with the
-        # heatmap rows -- see test_shap_impact_bar_aligns_with_correct_row.
+        # (red=positive, blue=negative), stacked in the feature order (NOT grouped by sign),
+        # so red and blue interleave as they occur rather than piling all negatives at the
+        # tail. Index each row numerically (row i in list_cat order, every row reserves its
+        # slot even with no impact) so bars stay aligned with the heatmap rows -- see
+        # test_shap_impact_bar_aligns_with_correct_row.
         df = df_feat[[col_cat, col_imp]]
         totals = []
         for i, cat in enumerate(list_cat):
             vals = df.loc[df[col_cat] == cat, col_imp].values
             left = 0.0
             for v in vals:
-                if v > 0:
-                    ax.barh(i, v, left=left, color=ut.COLOR_SHAP_POS,
-                            edgecolor="white", linewidth=0.3, align="edge")
-                    left += v
-            for v in vals:
-                if v < 0:
-                    ax.barh(i, abs(v), left=left, color=ut.COLOR_SHAP_NEG,
-                            edgecolor="white", linewidth=0.3, align="edge")
-                    left += abs(v)
+                if v == 0:
+                    continue
+                color = ut.COLOR_SHAP_POS if v > 0 else ut.COLOR_SHAP_NEG
+                ax.barh(i, abs(v), left=left, color=color,
+                        edgecolor="white", linewidth=0.3, align="edge")
+                left += abs(v)
             totals.append(left)
     else:
         # Get feature importance per scale class
@@ -117,22 +116,21 @@ def plot_feat_importance_bars_pos(ax=None,
                            value_type="sum", normalize=False)
     # Plot bars
     if shap_plot:
-        # Cumulative feature impact per position, stacked in one direction with one
-        # thin white-edged segment per contributing feature (red=positive, blue=negative).
+        # Cumulative feature impact per position, stacked in one direction with one thin
+        # white-edged segment per contributing feature (red=positive, blue=negative), stacked
+        # in the subcategory order (NOT grouped by sign), so red and blue interleave as they
+        # occur rather than piling all negatives at the top.
         totals = []
         for j in range(df_pos.shape[1]):
             vals = df_pos.iloc[:, j].values
             bottom = 0.0
             for v in vals:
-                if v > 0:
-                    ax.bar(j, v, bottom=bottom, color=ut.COLOR_SHAP_POS,
-                           edgecolor="white", linewidth=0.3, align="edge")
-                    bottom += v
-            for v in vals:
-                if v < 0:
-                    ax.bar(j, abs(v), bottom=bottom, color=ut.COLOR_SHAP_NEG,
-                           edgecolor="white", linewidth=0.3, align="edge")
-                    bottom += abs(v)
+                if v == 0:
+                    continue
+                color = ut.COLOR_SHAP_POS if v > 0 else ut.COLOR_SHAP_NEG
+                ax.bar(j, abs(v), bottom=bottom, color=color,
+                       edgecolor="white", linewidth=0.3, align="edge")
+                bottom += abs(v)
             totals.append(bottom)
         ax.set_ylim(0, max(totals + [0]))
     else:

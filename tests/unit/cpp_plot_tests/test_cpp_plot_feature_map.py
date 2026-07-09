@@ -937,6 +937,33 @@ class TestCCPlotFeatureMapShap:
         assert all(h >= 0 for h in heights), "position bars must not extend down (negative height)"
         plt.close()
 
+    def test_shap_bars_interleave_by_feature_order_not_grouped(self):
+        """Segments stack in feature order (red/blue interleaved), NOT grouped all-positive-
+        then-all-negative. Six alternating-sign features in one subcategory must render a
+        right bar whose segments alternate along the axis -- i.e. a blue segment precedes a
+        later red one, which sign-grouping (all reds, then all blues) could never produce."""
+        cpp_plot = aa.CPPPlot()
+        df_feat = get_df_feat(n=6).reset_index(drop=True)
+        df_feat["category"] = df_feat["category"].iloc[0]
+        df_feat["subcategory"] = df_feat["subcategory"].iloc[0]
+        df_feat[COL_FEAT_IMPACT_TEST] = [3.0, -3.0, 3.0, -3.0, 3.0, -3.0]
+        fig, hm = cpp_plot.feature_map(df_feat=df_feat, shap_plot=True,
+                                       col_val=COL_MEAN_DIF_TEST, col_imp=COL_FEAT_IMPACT_TEST)
+        fig.canvas.draw()
+        hm_x0 = hm.get_position().x0
+        bar_ax = next(a for a in fig.get_axes()
+                      if a is not hm and a.get_position().x0 > hm_x0 + 0.1
+                      and a.get_position().width < 0.2 and a.get_position().height > 0.4)
+        code = {_rgba(SHAP_POS): "R", _rgba(SHAP_NEG): "B"}
+        segs = sorted((p for p in bar_ax.patches
+                       if _rgba(p.get_facecolor()) in code and p.get_width() > 0.01),
+                      key=lambda p: p.get_x())
+        seq = "".join(code[_rgba(p.get_facecolor())] for p in segs)
+        assert seq.count("R") >= 2 and seq.count("B") >= 2, seq
+        assert any(seq[k] == "B" and "R" in seq[k + 1:] for k in range(len(seq))), \
+            f"segments grouped by sign, not interleaved: {seq}"
+        plt.close()
+
     def test_shap_markers_present(self):
         """Magnitude markers (squares) are still drawn in SHAP mode."""
         cpp_plot = aa.CPPPlot()
