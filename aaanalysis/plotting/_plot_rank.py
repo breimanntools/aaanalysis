@@ -13,6 +13,15 @@ from aaanalysis import utils as ut
 from ._plot_get_clist import plot_get_clist
 
 # I Helper Functions
+#: auto_font width sizing for the rank scatter: grow the width with the number of ranked
+#: proteins (per-protein inches) so markers do not crowd, floored at the default width and
+#: clamped. Height and fonts stay fixed — the auto_font analog for a point plot with no grid.
+_RANK_W_PER_PROTEIN_IN = 0.05
+_RANK_W_MIN_IN = 7.0
+_RANK_W_CAP_IN = 24.0
+_RANK_H_IN = 5.0
+
+
 # Canonical group -> color defaults (overridable via dict_color); leans on the
 # locked sample palette so substrate/non-substrate read green/magenta out of the box.
 _DEFAULT_GROUP_COLORS = {
@@ -52,7 +61,7 @@ def plot_rank(df_rank: pd.DataFrame,
               dict_color: Optional[Dict[str, str]] = None,
               threshold: Optional[Union[int, float, List[Union[int, float]]]] = None,
               ax: Optional[Axes] = None,
-              figsize: Tuple[Union[int, float], Union[int, float]] = (7, 5),
+              figsize: Optional[Tuple[Union[int, float], Union[int, float]]] = None,
               marker_size: Union[int, float] = 25,
               xlabel: str = "Protein rank",
               ylabel: str = "Max score per protein",
@@ -85,8 +94,14 @@ def plot_rank(df_rank: pd.DataFrame,
         One or more y-values drawn as horizontal threshold lines.
     ax : matplotlib.axes.Axes, optional
         Axes to draw on. If ``None``, a new figure and axes are created.
-    figsize : tuple, default=(7, 5)
-        Figure size when ``ax`` is ``None``.
+    figsize : tuple, optional
+        Figure size when ``ax`` is ``None``. If omitted (``None``, the default), the global
+        ``auto_font`` option controls it: on (the default) the width grows with the number of
+        ranked proteins so markers do not crowd (height and fonts fixed); off falls back to
+        ``(7, 5)``. Any explicit ``figsize`` is honored as a fixed size.
+
+        .. versionchanged:: 1.1.0
+           ``figsize`` defaults to ``None`` and participates in the global ``auto_font`` option.
     marker_size : int or float, default=25
         Scatter marker size.
     xlabel, ylabel : str
@@ -147,6 +162,16 @@ def plot_rank(df_rank: pd.DataFrame,
 
     # Draw
     if ax is None:
+        # Auto-sizing applies only when the caller OMITS figsize (figsize is None, the
+        # signature default); any explicit figsize is honored as a fixed size. Under
+        # auto_font the width grows with the number of ranked proteins so markers do not
+        # crowd; height and fonts stay fixed. Off (or explicit figsize) -> the (7, 5) default.
+        if figsize is None:
+            if ut.check_auto_font():
+                width = min(_RANK_W_CAP_IN, max(_RANK_W_MIN_IN, _RANK_W_PER_PROTEIN_IN * len(df)))
+                figsize = (width, _RANK_H_IN)
+            else:
+                figsize = (_RANK_W_MIN_IN, _RANK_H_IN)
         fig, ax = plt.subplots(figsize=figsize)
     else:
         fig = ax.figure

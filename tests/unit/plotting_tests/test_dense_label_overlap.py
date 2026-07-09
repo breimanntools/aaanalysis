@@ -312,3 +312,51 @@ class TestOptionIsolation:
 
     def test_auto_font_defaults_true_each_test(self):
         assert aa.options["auto_font"] is True
+
+
+class TestFigsizeSentinel:
+    """'Explicit figsize wins' holds for every composite CPP plot: passing a figsize -- even the
+    old per-method default -- is honored as a fixed size; omitting it (None) triggers auto-sizing."""
+
+    def setup_method(self):
+        aa.options["verbose"] = False
+
+    def teardown_method(self):
+        plt.close("all")
+
+    def test_explicit_figsize_is_honored(self):
+        cpp = aa.CPPPlot()
+        df = aa.load_features(name="DOM_GSEC").head(40)
+        for name, fs in [("feature_map", (8, 8)), ("heatmap", (8, 8)),
+                         ("profile", (7, 5)), ("ranking", (7, 5))]:
+            getattr(cpp, name)(df, figsize=fs)
+            w, h = plt.gcf().get_size_inches()
+            assert (round(float(w), 1), round(float(h), 1)) == fs, (name, w, h)
+            plt.close("all")
+
+    def test_omitted_figsize_autosizes_heatmap(self):
+        # Omitted figsize -> auto: a dense grid grows taller than the fixed (8, 8) default.
+        aa.CPPPlot().heatmap(aa.load_features(name="DOM_GSEC").head(40))
+        assert plt.gcf().get_size_inches()[1] > 8.0
+
+
+class TestSeqCharFill:
+    """seq_char_fill is accepted by heatmap and profile (not only feature_map)."""
+
+    def setup_method(self):
+        aa.options["verbose"] = False
+
+    def teardown_method(self):
+        plt.close("all")
+
+    def test_heatmap_profile_accept_seq_char_fill(self):
+        df = aa.load_features(name="DOM_GSEC")
+        df_seq = aa.load_dataset(name="DOM_GSEC", n=1)
+        sf = aa.SequenceFeature()
+        seq_kws = sf.get_seq_kws(df_seq=df_seq, df_parts=sf.get_df_parts(df_seq=df_seq),
+                                 sample=df_seq["entry"].iloc[0])
+        cpp = aa.CPPPlot()
+        for name in ("heatmap", "profile"):
+            for fill in (True, False):
+                getattr(cpp, name)(df, seq_char_fill=fill, **seq_kws)
+                plt.close("all")

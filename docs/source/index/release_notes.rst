@@ -396,6 +396,13 @@ Changed
   so ``feat_importance_std`` (and :meth:`~aaanalysis.TreeModel.predict_proba`'s ``pred_std``) collapsed
   to exactly ``0`` and rounds 2..N were wasted. Fixed-seed importances change once (degenerate → real
   Monte-Carlo mean with non-zero std); the ``random_state=None`` default is unchanged.
+- **Consistent auto_font sizing**: :meth:`~aaanalysis.CPPPlot.heatmap` / :meth:`~aaanalysis.CPPPlot.profile` /
+  :meth:`~aaanalysis.CPPPlot.ranking` now default to ``figsize=None`` and honor any explicit ``figsize`` as
+  a fixed size, so "explicit figsize wins" holds package-wide (matching :meth:`~aaanalysis.CPPPlot.feature_map`);
+  omitting ``figsize`` auto-sizes as before. :meth:`~aaanalysis.CPPPlot.heatmap` / :meth:`~aaanalysis.CPPPlot.profile`
+  gain the ``seq_char_fill`` residue-spacing option already on :meth:`~aaanalysis.CPPPlot.feature_map`, and
+  :func:`~aaanalysis.plot_rank` joins ``auto_font`` — its width grows with the number of ranked proteins when
+  ``figsize`` is omitted.
 - **Uniform plot return contract**: Every public ``*Plot`` method now returns a single
   ``(fig, ax)`` pair (forwarding attribute access to ``ax``, so existing
   ``ax = plot(...); ax.set_title(...)`` code keeps working), replacing the previous mix
