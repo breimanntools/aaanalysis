@@ -70,17 +70,19 @@ Added
   correlation dedup (``max_cor``). The composition matrices themselves come from
   :meth:`~aaanalysis.SequenceFeature.kmer_composition` (which documents the compositional approaches).
 - **CPP bootstrap / stability annotation** (:class:`~aaanalysis.CPP` constructor: ``bootstrap``,
-  ``n_bootstrap``, ``resample``, ``bootstrap_frac``): Opt-in resampling-based **stability annotation**,
-  a thin wrapper applied uniformly by :meth:`~aaanalysis.CPP.run`, :meth:`~aaanalysis.CPP.run_num`, and
-  :meth:`~aaanalysis.CPP.run_composit`. With ``bootstrap=True`` the data is resampled ``n_bootstrap``
-  times (``resample='reference'`` fixes the test group and resamples only the reference group; also
-  ``'both'`` / ``'test'``; per-group draw size ``bootstrap_frac``, with replacement) and re-selected
-  each round to score how often each feature is selected, then the **ordinary full-data run is returned
-  with a ``selection_frequency`` column** (0 to 1) added. The selected features are exactly those of a
-  normal run (``n_filter`` stays the selection criterion); ``selection_frequency`` flags which are
-  reproducible under resampling — a trust / interpretability aid, not a change to the list or accuracy.
-  ``bootstrap=True`` applies tuned defaults (``n_bootstrap=20``, ``bootstrap_frac=0.8``,
-  ``resample='reference'``); the default ``bootstrap=False`` is byte-identical to previous versions.
+  ``bootstrap_kws``): Opt-in resampling-based **stability annotation**, a thin wrapper applied uniformly
+  by :meth:`~aaanalysis.CPP.run`, :meth:`~aaanalysis.CPP.run_num`, and
+  :meth:`~aaanalysis.CPP.run_composit`. With ``bootstrap=True`` the data is resampled
+  ``bootstrap_kws['rounds']`` times (``bootstrap_kws['resample']='reference'`` fixes the test group and
+  resamples only the reference group; also ``'both'`` / ``'test'``; per-group draw size
+  ``bootstrap_kws['frac']``, with replacement) and re-selected each round to score how often each feature
+  is selected, then the **ordinary full-data run is returned with a ``selection_frequency`` column** (0
+  to 1) added. The selected features are exactly those of a normal run (``n_filter`` stays the selection
+  criterion); ``selection_frequency`` flags which are reproducible under resampling — a trust /
+  interpretability aid, not a change to the list or accuracy. The tuned config lives in one
+  ``bootstrap_kws`` dict (keys ``rounds`` / ``resample`` / ``frac``, parallel to ``split_kws``);
+  ``bootstrap=True`` defaults to ``dict(rounds=20, resample='reference', frac=0.8)`` and any omitted key
+  falls back to its default. The default ``bootstrap=False`` is byte-identical to previous versions.
   Reuses the constructor ``random_state``.
 - **CPP.run ``redundancy='legacy'|'exact'``** (also :meth:`~aaanalysis.CPP.run_num`): Opt-in
   position-overlap criterion for the redundancy-reduction step. The default ``'legacy'`` is
