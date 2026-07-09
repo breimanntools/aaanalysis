@@ -40,6 +40,24 @@ class TestRanking:
         assert isinstance(axes[0], plt.Axes)
         plt.close()
 
+    def test_sum_annotation_in_headroom_not_on_bar_rows(self):
+        # Regression: the "Σ=..%" summary (and, in SHAP mode, the +/- legend) sits in the
+        # headroom ABOVE the top bar (y < 0), never on a bar row (y in [0, n_top-1]) where it
+        # would overlap the per-bar % labels.
+        for shap_plot in (False, True):
+            df_feat = create_df_feat().copy()
+            kws = {}
+            if shap_plot:
+                df_feat["feat_impact_x"] = np.sign(df_feat["mean_dif"]) * df_feat["feat_importance"]
+                kws = dict(shap_plot=True, col_imp="feat_impact_x", col_dif="mean_dif")
+            cpp_plot = aa.CPPPlot()
+            fig, axes = cpp_plot.ranking(df_feat=df_feat, n_top=15, **kws)
+            sums = [t for t in axes[2].texts if t.get_text().startswith("Σ")]
+            assert sums, "no Σ summary annotation found"
+            assert all(t.get_position()[1] < 0 for t in sums), \
+                f"Σ summary not in headroom (expected y<0): {[t.get_position() for t in sums]}"
+            plt.close()
+
     @settings(max_examples=3, deadline=None)
     @given(n_top=st.integers(min_value=2, max_value=20))
     def test_n_top(self, n_top):
