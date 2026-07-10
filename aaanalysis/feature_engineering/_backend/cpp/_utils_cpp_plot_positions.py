@@ -101,14 +101,25 @@ def _adjust_xticks_labels(xticks=None, xtick_labels=None, add_xtick_pos=True,
     return xticks, xtick_labels
 
 
+# Colored sequence cell: fraction of the (heatmap-edge) top margin mirrored below the letters.
+# 1.0 = symmetric; smaller keeps the band flush to the grid on top but slim underneath.
+_SEQ_CELL_BOTTOM_MARGIN_FRAC = 0.4
+
+# Gap (points) between the heatmap grid and the sequence band, via the x-tick pad.
+_SEQ_HEATMAP_GAP_PT = 4.0
+
+# Extra offset (points) of the JMD-N/TMD/JMD-C part labels below the sequence band.
+_JMD_LABEL_GAP_PT = 3.0
+
+
 def _add_seq_cell_backgrounds(ax=None, labels=None, colors=None, x_shift=0.0):
     """Paint a seamless, full-width colored cell behind each residue letter (``fill`` mode).
 
     The per-letter text bbox is glyph-sized, so narrow residues leave hairline gaps and the
     colored band reads as ragged against the uniform heatmap grid. Draw one rectangle per
     residue instead: full-width (1.0 data unit) and centered on the tick so it lines up exactly
-    with the heatmap column, its **top flush against the heatmap edge** and a symmetric margin
-    below the letters, so the band is gap-free on every side.
+    with the heatmap column, its **top flush against the heatmap edge** and a slim margin below
+    the letters, so the band is gap-free without piling excess color under the residues.
     """
     fig = ax.figure
     fig.canvas.draw()
@@ -124,7 +135,7 @@ def _add_seq_cell_backgrounds(ax=None, labels=None, colors=None, x_shift=0.0):
     center = 0.5 * (lo + hi)
     edge = min(ax.get_ylim(), key=lambda v: abs(v - center))
     near, far = (lo, hi) if abs(lo - edge) <= abs(hi - edge) else (hi, lo)
-    margin = abs(near - edge)
+    margin = abs(near - edge) * _SEQ_CELL_BOTTOM_MARGIN_FRAC
     y_far = far + margin * (1 if far >= near else -1)
     y0, y1 = sorted((edge, y_far))
     for i, c in enumerate(colors):
@@ -151,7 +162,8 @@ def _add_part_seq(ax=None, jmd_n_seq=None, tmd_seq=None, jmd_c_seq=None, x_shift
                      fontname=ut.FONT_AA, zorder=2)
     ax.set_xticklabels(labels=[tmd_jmd[i] for i in minor_xticks], minor=True, **kws_ticks)
     ax.set_xticklabels(labels=[tmd_jmd[i] for i in major_xticks], minor=False, **kws_ticks)
-    ax.tick_params(axis="x", length=0, which="both")
+    # `pad` opens a small gap between the heatmap grid and the sequence band (like the cheat sheet).
+    ax.tick_params(axis="x", length=0, which="both", pad=_SEQ_HEATMAP_GAP_PT)
     # Get labels in order of sequence (separate between minor and major ticks)
     dict_pos_label = dict(zip(minor_xticks, ax.xaxis.get_ticklabels(which="minor")))
     dict_pos_label.update(dict(zip(major_xticks, ax.xaxis.get_ticklabels(which="major"))))
@@ -185,8 +197,8 @@ def _add_part_seq_second_ticks(ax2=None, seq_size=11.0, xticks=None, xtick_label
     # Move twinned axis ticks and label from top to bottom
     ax2.xaxis.set_ticks_position("bottom")
     ax2.xaxis.set_label_position("bottom")
-    # Offset the twin axis below the host
-    y_pos = 5 if heatmap else 7
+    # Offset the twin axis below the host (extra gap so the part labels clear the sequence band)
+    y_pos = (5 + _JMD_LABEL_GAP_PT) if heatmap else 7
     ax2.spines["bottom"].set_position(("outward", seq_size+y_pos))
     ax2.set_xticks([x + x_shift for x in xticks])
     ax2.set_xticklabels(xtick_labels, size=xtick_size, rotation=0, color="black", ha="center", va="top")

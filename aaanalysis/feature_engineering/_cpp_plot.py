@@ -38,6 +38,15 @@ from ._backend.cpp._utils_cpp_plot_sizing import (fit_cells_by_rescale, fit_widt
                                                   ranking_figheight, HEATMAP_CELL_H_IN)
 from ._backend.cpp.cpp_plot_update_seq_size import get_tmd_jmd_seq, update_seq_size_, update_tmd_jmd_labels
 
+# Points below the heatmap grid at which the scale-category legend is anchored (feature_map).
+# Kept in points (not a figure fraction) so the legend sits in the same place at any figure size.
+_LEGEND_BELOW_GRID_PT = 70.0
+
+# Absolute width (inches) reserved on the right for the "Cumulative feature importance" label
+# and its axis tick, so it never clips (a fixed right-fraction reserves too few inches when narrow).
+# Generous on purpose: bbox_inches="tight" trims any unused margin at save time.
+_RIGHT_LABEL_IN = 2.0
+
 
 # I Helper Functions
 # Checks for eval plot
@@ -1769,7 +1778,11 @@ class CPPPlot:
         with warnings.catch_warnings():
             warnings.simplefilter("ignore", category=UserWarning)
             fig.tight_layout()
-            plt.subplots_adjust(right=0.92)
+            # Reserve a CONSTANT ABSOLUTE width (inches) on the right for the multi-line
+            # "Cumulative feature importance" label, not a fixed 8% fraction: at a narrow
+            # figure (short sequence / few subcats) 8% is too few inches and the label clips.
+            _right = max(0.6, 1.0 - _RIGHT_LABEL_IN / fig.get_size_inches()[0])
+            plt.subplots_adjust(right=_right)
         # Constant-cell-size: rescale the whole figure so every heatmap cell hits a
         # fixed physical size (the figure grows with the grid; the point-based fonts
         # stay fixed and the sibling axes keep their fractions, so nothing crams or
@@ -1790,7 +1803,15 @@ class CPPPlot:
         # both SHAP layouts). Skip only when the user supplied a custom legend_xy.
         cat_legend = ax.get_legend()
         if cat_legend is not None and tuple(legend_xy) == (-0.1, -0.01):
-            cat_legend.set_bbox_to_anchor((0.23, 0.183), transform=fig.transFigure)
+            # Anchor the scale-category legend to the heatmap's OWN position (its bottom-left),
+            # a fixed points-distance below the grid, rather than a fixed figure fraction. A fixed
+            # fraction drifts to a different place whenever the figure size/aspect changes (which is
+            # exactly what auto_font / cell_size do), so the legend appeared "all over the place";
+            # tracking the heatmap keeps it in the same spot at every size.
+            _grid_pos = ax.get_position()
+            _y_below = _LEGEND_BELOW_GRID_PT / (fig.get_size_inches()[1] * 72.0)
+            cat_legend.set_loc("upper left")
+            cat_legend.set_bbox_to_anchor((_grid_pos.x0, _grid_pos.y0 - _y_below), transform=fig.transFigure)
         if tmd_seq is not None and seq_size is None:
             ax, seq_size = update_seq_size_(ax=ax, **args_seq, **args_part_color, **args_seq_color,
                                             fill=seq_char_fill)
