@@ -101,14 +101,20 @@ def _adjust_xticks_labels(xticks=None, xtick_labels=None, add_xtick_pos=True,
     return xticks, xtick_labels
 
 
+# Colored sequence cell: fraction of the (heatmap-edge) top margin mirrored below the letters.
+# 1.0 = symmetric; smaller keeps the band flush to the grid on top but slim underneath.
+_SEQ_CELL_BOTTOM_MARGIN_FRAC = 0.4
+
+
 def _add_seq_cell_backgrounds(ax=None, labels=None, colors=None, x_shift=0.0):
     """Paint a seamless, full-width colored cell behind each residue letter (``fill`` mode).
 
     The per-letter text bbox is glyph-sized, so narrow residues leave hairline gaps and the
     colored band reads as ragged against the uniform heatmap grid. Draw one rectangle per
     residue instead: full-width (1.0 data unit) and centered on the tick so it lines up exactly
-    with the heatmap column, its **top flush against the heatmap edge** and a symmetric margin
-    below the letters, so the band is gap-free on every side.
+    with the heatmap column, its **top flush against the heatmap edge** and a slim margin below
+    the letters, so the band is gap-free on every side without piling excess color under the
+    residues.
     """
     fig = ax.figure
     fig.canvas.draw()
@@ -119,12 +125,13 @@ def _add_seq_cell_backgrounds(ax=None, labels=None, colors=None, x_shift=0.0):
     lo = min(e.y0 for e in exts)
     hi = max(e.y1 for e in exts)
     # The sequence band sits just outside the heatmap; snap its inner edge to the nearest axis
-    # limit (the heatmap border) so there is no gap between the cells and the grid, then mirror
-    # that margin past the far side of the letters so top and bottom margins match.
+    # limit (the heatmap border) so there is no gap between the cells and the grid. Extend the
+    # far edge only a fraction of that top margin past the letters, so the band stays flush to the
+    # grid on top but does not carry a heavy block of color under the (descender-free) residues.
     center = 0.5 * (lo + hi)
     edge = min(ax.get_ylim(), key=lambda v: abs(v - center))
     near, far = (lo, hi) if abs(lo - edge) <= abs(hi - edge) else (hi, lo)
-    margin = abs(near - edge)
+    margin = abs(near - edge) * _SEQ_CELL_BOTTOM_MARGIN_FRAC
     y_far = far + margin * (1 if far >= near else -1)
     y0, y1 = sorted((edge, y_far))
     for i, c in enumerate(colors):

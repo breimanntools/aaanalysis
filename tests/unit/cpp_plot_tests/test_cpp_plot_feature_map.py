@@ -1122,6 +1122,24 @@ class TestFeatureMapSeqCharFill:
         plt.close("all")
         assert len(cells_off) == 0                          # fill=False keeps the legacy glyph bbox
 
+    def test_fill_cell_flush_to_heatmap_edge(self):
+        # The colored cell's inner edge snaps exactly onto a heatmap border (a y-limit), so there
+        # is no gap between the sequence band and the grid above it. (The band's far edge is a slim
+        # margin past the letters; that margin is a visual constant, not asserted here because the
+        # font's bounding box includes empty descender space below the caps.)
+        from matplotlib.patches import Rectangle
+        df_feat = aa.load_features(name="DOM_GSEC").head(40)
+        cpp = aa.CPPPlot(df_scales=aa.load_scales())
+        _, ax = cpp.feature_map(df_feat=df_feat, add_imp_bar_top=False, seq_char_fill=True, **self._seq_kws())
+        ax.figure.canvas.draw()
+        cells = [p for p in ax.patches if isinstance(p, Rectangle) and abs(p.get_width() - 1.0) < 1e-6]
+        ys = [p.get_y() for p in cells] + [p.get_y() + p.get_height() for p in cells]
+        cy0, cy1 = min(ys), max(ys)
+        ylim = ax.get_ylim()
+        plt.close("all")
+        flush = min(min(abs(cy0 - e), abs(cy1 - e)) for e in ylim)
+        assert flush < 1e-6                                       # one band edge is flush to the grid
+
     def test_fill_bad_type_raises(self):
         df_feat = aa.load_features(name="DOM_GSEC").head(40)
         cpp = aa.CPPPlot(df_scales=aa.load_scales())
