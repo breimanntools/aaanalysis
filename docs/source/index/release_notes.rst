@@ -440,8 +440,10 @@ Changed
   sparse grid yields a *smaller* figure (previously it floored at the default and the cells ballooned),
   a dense grid a larger one, and nothing clips at the figure edge at any size. The TMD/JMD part labels
   are capped in size and held a constant distance below the sequence band (they previously rode the
-  residue-letter size and could grow huge or collide with the sequence), and the colorbar is pinned a
-  constant distance below the grid so it never overlaps the sequence on a sparse grid.
+  residue-letter size and could grow huge or collide with the sequence). The bottom furniture is laid
+  out as one aligned row — the scale-category legend flush to the figure's left edge, the colorbar
+  centred, the feature-importance legend flush to the right edge, all tops on a single line — so it no
+  longer scatters or overlaps the sequence on a sparse grid.
 - **Uniform plot return contract**: Every public ``*Plot`` method now returns a single
   ``(fig, ax)`` pair (forwarding attribute access to ``ax``, so existing
   ``ax = plot(...); ax.set_title(...)`` code keeps working), replacing the previous mix

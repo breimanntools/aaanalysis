@@ -38,7 +38,8 @@ from ._backend.cpp.cpp_plot_feature_map import plot_feature_map
 from ._backend.cpp._utils_cpp_plot_sizing import (fit_cells_by_rescale, fit_width_by_rescale,
                                                   grow_to_fit, ranking_figheight,
                                                   CELL_W_IN, CELL_H_IN, HEATMAP_CELL_H_IN)
-from ._backend.cpp._utils_cpp_plot_positions import finalize_part_labels_, place_colorbar_below_grid_
+from ._backend.cpp._utils_cpp_plot_positions import (finalize_part_labels_, place_colorbar_below_grid_,
+                                                     align_bottom_furniture_)
 from ._backend.cpp.cpp_plot_update_seq_size import get_tmd_jmd_seq, update_seq_size_, update_tmd_jmd_labels
 
 # Points below the heatmap grid at which the scale-category legend is anchored (feature_map).
@@ -1436,10 +1437,14 @@ class CPPPlot:
             finalize_part_labels_(fig=fig, ax=ax, fontsize_tmd_jmd=fontsize_tmd_jmd,
                                   weight_tmd_jmd=weight_tmd_jmd)
             place_colorbar_below_grid_(fig=fig, ax=ax)
-        # Stage 2 -- grow the canvas by any tight-bbox spill and translate the axes inward, so
-        # the point-sized furniture never clips while the cells stay exactly on target.
+        # Stage 2 -- grow the canvas by any tight-bbox spill and translate the axes inward, so the
+        # point-sized furniture never clips while the cells stay exactly on target; then lay the
+        # scale-category legend and colorbar out as one aligned bottom row (a second grow/align pass
+        # absorbs any spill the re-placed row introduces).
         if size_grid:
-            grow_to_fit(fig=fig)
+            for _ in range(2):
+                grow_to_fit(fig=fig)
+                align_bottom_furniture_(fig=fig, ax=ax)
         return ut.FigAxResult(fig, ax)
 
     def feature_map(self,
@@ -1914,9 +1919,13 @@ class CPPPlot:
                     lbl.set_visible(False)
         # Stage 2 -- absorb any furniture that overflows the shrunken figure: grow the canvas by
         # the tight-bbox spill and translate every axes inward. A translation preserves the cell
-        # size, so the grid stays exactly on target while nothing clips the figure edge.
+        # size, so the grid stays exactly on target while nothing clips the figure edge. Then lay
+        # the scale-category legend, colorbar and importance legend out as one aligned bottom row;
+        # a second grow/align pass absorbs any spill the re-placed row introduces.
         if size_grid:
-            grow_to_fit(fig=fig)
+            for _ in range(2):
+                grow_to_fit(fig=fig)
+                align_bottom_furniture_(fig=fig, ax=ax)
         return ut.FigAxResult(fig, ax)
 
     def update_seq_size(self,

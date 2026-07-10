@@ -283,6 +283,73 @@ def place_colorbar_below_grid_(fig=None, ax=None, gap_in=_CBAR_BELOW_GRID_IN):
     cbar_ax.set_position([cbar_pos.x0, new_bottom, cbar_pos.width, cbar_pos.height])
 
 
+def align_bottom_furniture_(fig=None, ax=None, gap_in=0.28, margin_in=0.04, clear_in=0.12):
+    """Lay the scale-category legend, colorbar and feature-importance legend as one bottom row.
+
+    Tops aligned on a single horizontal line a constant ``gap_in`` below the sequence/part-label
+    block; the category legend flush to the figure's left edge, the importance legend flush to the
+    right edge, and the 'Feature value' colorbar centred. When the figure is too narrow for the
+    colorbar to sit at the centre without touching a neighbour, it is nudged into the clear gap
+    between them (keeping ``clear_in`` inches of space). Run as the final step, after ``grow_to_fit``
+    has fixed the figure size, in figure coordinates. Missing items (e.g. no importance legend on
+    the standalone heatmap) are skipped.
+    """
+    fig.canvas.draw()
+    renderer = fig.canvas.get_renderer()
+    dpi = fig.dpi
+    w_in, h_in = (float(v) for v in fig.get_size_inches())
+    cat_legend = ax.get_legend()
+    cbar = ax.collections[0].colorbar if (ax.collections and ax.collections[0].colorbar) else None
+    cbar_ax = cbar.ax if cbar is not None else None
+    imp_legend = cbar_ax.get_legend() if cbar_ax is not None else None
+    # Common top: a constant gap below the lowest grid-attached furniture (the part-label twin,
+    # else the sequence letters on the grid axes).
+    names = {ut.options["name_tmd"], ut.options["name_jmd_n"], ut.options["name_jmd_c"]}
+    part_ax = next((a for a in fig.axes if a is not ax
+                    and any(t.get_text() in names for t in a.get_xticklabels())), None)
+    if part_ax is not None:
+        labels = [t for t in part_ax.get_xticklabels() if t.get_text() in names]
+        low_disp = min(t.get_window_extent(renderer).y0 for t in labels) if labels \
+            else ax.get_window_extent(renderer).y0
+    else:
+        low_disp = ax.get_window_extent(renderer).y0
+    top_in = low_disp / dpi - gap_in
+    top_frac = top_in / h_in
+    # Category legend flush left, importance legend flush right, tops on the common line.
+    if cat_legend is not None:
+        # Drop the fixed-height blank-line padding on the title (an old positioning hack) so the
+        # legend's true top aligns with the row rather than the empty lines above the title.
+        title = cat_legend.get_title()
+        title.set_text(title.get_text().lstrip("\n"))
+        cat_legend.set_loc("upper left")
+        cat_legend.set_bbox_to_anchor((margin_in / w_in, top_frac), transform=fig.transFigure)
+    if imp_legend is not None:
+        imp_legend.set_loc("upper right")
+        imp_legend.set_bbox_to_anchor((1 - margin_in / w_in, top_frac), transform=fig.transFigure)
+    fig.canvas.draw()  # realize the legend positions before measuring the clear gap
+    if cbar_ax is not None:
+        pos = cbar_ax.get_position()
+        if imp_legend is not None:
+            imp_legend.set_visible(False)  # exclude from the colorbar's own tight bbox
+            fig.canvas.draw()
+        label_above_in = cbar_ax.get_tightbbox(renderer).y1 / dpi - pos.y1 * h_in
+        if imp_legend is not None:
+            imp_legend.set_visible(True)
+            fig.canvas.draw()
+        gap_lo = cat_legend.get_window_extent(renderer).x1 / dpi if cat_legend is not None else margin_in
+        gap_hi = imp_legend.get_window_extent(renderer).x0 / dpi if imp_legend is not None else (w_in - margin_in)
+        cbar_w_in = pos.width * w_in
+        # Centre at the figure middle, but nudge into the clear gap if that would overlap a neighbour.
+        lo = gap_lo + clear_in + 0.5 * cbar_w_in
+        hi = gap_hi - clear_in - 0.5 * cbar_w_in
+        center = 0.5 * w_in
+        center = min(max(center, lo), hi) if lo <= hi else 0.5 * (gap_lo + gap_hi)
+        bar_top_in = top_in - label_above_in
+        new_bottom = (bar_top_in - pos.height * h_in) / h_in
+        new_left = (center - 0.5 * cbar_w_in) / w_in
+        cbar_ax.set_position([new_left, new_bottom, pos.width, pos.height])
+
+
 def _get_new_axis(ax=None):
     """Get new axis object with same y-axis as input ax"""
     ax_new = ax.figure.add_subplot(ax.get_subplotspec(), frameon=False, yticks=[])
