@@ -176,23 +176,17 @@ def plot_feature_rank(ax=None, df_feat=None, n=20, xlim=(0, 4),
     plt.xlim(xlim)
 
     _add_annotation_right(sub_fig=sub_fig, text_size=fontsize_annotation, an_in_val=x_max/2, max_val=xlim[1])
-    # Add legend. Every bar row carries a % label (the short low bars' labels reach nearly to
-    # the panel edge), so there is no in-grid whitespace for the summary. Open a small
-    # headroom band ABOVE the top bar (extend the y-limit; the title sits above that) and put
-    # the summary there, right-aligned, clear of both the title and every per-bar label. The
-    # SHAP +/- entries stack just under it, still inside the headroom band.
-    n_head = 2.7 if shap_plot else 1.4
-    ax.set_ylim(n - 0.5, -n_head)
+    # Add legend
     str_sum = f"Σ={round(df_feat[col_imp].sum(), 1)}%"
-    args = dict(ha="right", size=fontsize_annotation, clip_on=False)
-    rank_info_xy_default = (xlim[1], -0.7)
+    args = dict(ha="right", size=fontsize_annotation)
+    rank_info_xy_default = (xlim[1]*1.1, n-2.5)
     _rank_info_xy = ut.adjust_tuple_elements(tuple_in=rank_info_xy,
                                             tuple_default=rank_info_xy_default)
     x, y = _rank_info_xy
-    plt.text(x, y, str_sum, weight="normal", va="bottom", **args)
+    plt.text(x, y, str_sum, weight="normal", **args)
     if shap_plot:
-        plt.text(x, y - 0.8, "negative", weight="bold", color=ut.COLOR_SHAP_NEG, va="bottom", **args)
-        plt.text(x, y - 1.6, "positive", weight="bold", color=ut.COLOR_SHAP_POS, va="bottom", **args)
+        plt.text(x, y+1, "negative", weight="bold", color=ut.COLOR_SHAP_NEG, va="top", **args)
+        plt.text(x, y+1, "positive", weight="bold", color=ut.COLOR_SHAP_POS, va="bottom", **args)
 
 
 # II Main Functions
