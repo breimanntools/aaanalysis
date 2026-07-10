@@ -334,6 +334,11 @@ Added
 
 **Plotting**
 
+- **cell_size** on :meth:`~aaanalysis.CPPPlot.feature_map` / :meth:`~aaanalysis.CPPPlot.heatmap` /
+  :meth:`~aaanalysis.CPPPlot.profile`: a ``(width, height)`` inches tuple that holds every grid
+  cell at that exact physical size — the figure shrinks for a small grid and grows for a large one,
+  and nothing clips the figure edge — for any sequence length or number of scale subcategories.
+  ``figsize`` seeds the layout; ``cell_size`` sets the cell (the profile uses only the width).
 - **COLOR_SAMPLES_POS / COLOR_SAMPLES_NEG / COLOR_SAMPLES_UNL / COLOR_SAMPLES_REL_NEG**:
   Public, named constants for the canonical sample-group colors (positive / negative /
   unlabeled / reliable-negative). They equal the ``plot_get_cdict("DICT_COLOR")["SAMPLES_*"]``
@@ -429,6 +434,14 @@ Changed
   gain the ``seq_char_fill`` residue-spacing option already on :meth:`~aaanalysis.CPPPlot.feature_map`, and
   :meth:`~aaanalysis.AAPredPlot.predict_group` (``kind='rank_scatter'``) joins ``auto_font`` — its width grows
   with the number of ranked proteins when ``figsize`` is omitted.
+- **Constant-cell sizing shrinks as well as grows**: on the ``auto_font`` path (and whenever
+  ``cell_size`` is set), :meth:`~aaanalysis.CPPPlot.feature_map` / :meth:`~aaanalysis.CPPPlot.heatmap` /
+  :meth:`~aaanalysis.CPPPlot.profile` now size the figure so each cell hits the target exactly — a
+  sparse grid yields a *smaller* figure (previously it floored at the default and the cells ballooned),
+  a dense grid a larger one, and nothing clips at the figure edge at any size. The TMD/JMD part labels
+  are capped in size and held a constant distance below the sequence band (they previously rode the
+  residue-letter size and could grow huge or collide with the sequence), and the colorbar is pinned a
+  constant distance below the grid so it never overlaps the sequence on a sparse grid.
 - **Uniform plot return contract**: Every public ``*Plot`` method now returns a single
   ``(fig, ax)`` pair (forwarding attribute access to ``ax``, so existing
   ``ax = plot(...); ax.set_title(...)`` code keeps working), replacing the previous mix

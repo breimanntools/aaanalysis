@@ -108,8 +108,18 @@ _SEQ_CELL_BOTTOM_MARGIN_FRAC = 0.4
 # Gap (points) between the heatmap grid and the sequence band, via the x-tick pad.
 _SEQ_HEATMAP_GAP_PT = 4.0
 
-# Extra offset (points) of the JMD-N/TMD/JMD-C part labels below the sequence band.
+# Constant gap (points) between the sequence band and the JMD-N/TMD/JMD-C part labels.
 _JMD_LABEL_GAP_PT = 3.0
+
+# Upper bound (points) on the auto-sized part-label font. The part labels otherwise
+# default to the residue-letter size, which balloons on short/wide grids; the cap keeps
+# them readable-but-bounded. An explicit ``fontsize_tmd_jmd`` is honored uncapped.
+_JMD_LABEL_MAX_PT = 12.0
+
+# Distance (inches) from the heatmap grid bottom to the colorbar top, matching the look of a
+# dense feature map. Holding it constant keeps the colorbar clear of the sequence band on a
+# sparse grid (small figure), where the figure-bottom-anchored default would ride up into it.
+_CBAR_BELOW_GRID_IN = 1.4
 
 
 def _add_seq_cell_backgrounds(ax=None, labels=None, colors=None, x_shift=0.0):
@@ -213,6 +223,64 @@ def _add_part_seq_second_ticks(ax2=None, seq_size=11.0, xticks=None, xtick_label
         elif name_jmd_n in text or name_jmd_c in text:
             l.set_size(fontsize_tmd_jmd)
             l.set_weight(weight_tmd_jmd)
+
+
+def finalize_part_labels_(fig=None, ax=None, gap_pt=_JMD_LABEL_GAP_PT, cap=_JMD_LABEL_MAX_PT,
+                          fontsize_tmd_jmd=None, weight_tmd_jmd="normal"):
+    """Cap the TMD/JMD part-label font and pin it a constant gap below the sequence band.
+
+    Re-places the JMD-N/TMD/JMD-C part labels AFTER the residue letters are final (so the
+    measurement reflects the letters the user sees): the label font is capped at ``cap``
+    (unless ``fontsize_tmd_jmd`` is given, which is honored uncapped), and the label row is
+    put a constant ``gap_pt`` points below the MEASURED bottom of the sequence letters.
+    Both the label size and the label-to-sequence distance otherwise ride the residue-letter
+    size, which balloons on short/wide grids; pinning them here keeps them constant across
+    sequence length and subcategory count. ``ax`` is the grid/profile axes carrying the
+    sequence letters; the part labels live on a sibling twin axes. No-op if either is absent.
+    """
+    name_tmd = ut.options["name_tmd"]
+    name_jmd_n = ut.options["name_jmd_n"]
+    name_jmd_c = ut.options["name_jmd_c"]
+    names = {name_tmd, name_jmd_n, name_jmd_c}
+    part_ax = next((a for a in fig.axes
+                    if any(t.get_text() in names for t in a.get_xticklabels())), None)
+    if part_ax is None:
+        return
+    fig.canvas.draw()
+    renderer = fig.canvas.get_renderer()
+    seq_labels = [t for t in ax.get_xticklabels(which="both") if t.get_text().strip()]
+    if not seq_labels:
+        return
+    seq_size = max(t.get_fontsize() for t in seq_labels)
+    band_bottom = min(t.get_window_extent(renderer).y0 for t in seq_labels)
+    ax_bottom = ax.get_window_extent(renderer).y0
+    band_below_pt = max(0.0, (ax_bottom - band_bottom) / fig.dpi * 72.0)
+    size = fontsize_tmd_jmd if fontsize_tmd_jmd is not None else min(seq_size, cap)
+    part_ax.spines["bottom"].set_position(("outward", band_below_pt + gap_pt))
+    for label in part_ax.get_xticklabels():
+        if label.get_text() in names:
+            label.set_size(size)
+            label.set_weight(weight_tmd_jmd)
+
+
+def place_colorbar_below_grid_(fig=None, ax=None, gap_in=_CBAR_BELOW_GRID_IN):
+    """Re-place the heatmap colorbar a constant distance below the grid (grid-relative).
+
+    The colorbar is otherwise anchored near the figure bottom, which sits below the sequence
+    only when the grid fills the figure; on a sparse grid (small figure) that anchor rides up
+    into the sequence band. Pinning the colorbar's top ``gap_in`` inches below the grid bottom
+    keeps it clear of the sequence at any grid size, and its importance-dot legend (anchored to
+    the colorbar axes) follows. No-op if the grid has no attached colorbar.
+    """
+    if not ax.collections or ax.collections[0].colorbar is None:
+        return
+    cbar_ax = ax.collections[0].colorbar.ax
+    w_in, h_in = (float(v) for v in fig.get_size_inches())
+    grid_pos = ax.get_position()
+    cbar_pos = cbar_ax.get_position()
+    top_in = grid_pos.y0 * h_in - gap_in
+    new_bottom = (top_in - cbar_pos.height * h_in) / h_in
+    cbar_ax.set_position([cbar_pos.x0, new_bottom, cbar_pos.width, cbar_pos.height])
 
 
 def _get_new_axis(ax=None):

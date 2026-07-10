@@ -89,6 +89,23 @@ def _rgba(color):
     return tuple(round(x, 3) for x in color)
 
 
+def _right_importance_bar(fig, hm):
+    """The narrow importance bar to the RIGHT of the heatmap, robust to figure size.
+
+    It is glued to the heatmap's right edge and shares its vertical extent (sharey), so
+    identify it by that y-extent match rather than an absolute height fraction -- the latter
+    changes as the constant-cell sizer resizes the figure. Returns the axes, or None."""
+    hp = hm.get_position()
+    for a in fig.get_axes():
+        if a is hm:
+            continue
+        p = a.get_position()
+        if (p.x0 >= hp.x1 - 0.02 and p.width < hp.width
+                and abs(p.y0 - hp.y0) < 0.02 and abs(p.height - hp.height) < 0.02):
+            return a
+    return None
+
+
 class TestCCPlotFeatureMap:
     """Normal test cases for the heatmap method, focusing on individual parameters."""
 
@@ -834,10 +851,8 @@ class TestCCPlotFeatureMapShap:
         fig.canvas.draw()
         ylabels = [t.get_text() for t in hm.get_yticklabels()]
         row = ylabels.index(target)
-        hm_x0 = hm.get_position().x0
-        bar_ax = next(a for a in fig.get_axes()
-                      if a is not hm and a.get_position().x0 > hm_x0 + 0.1
-                      and a.get_position().width < 0.2 and a.get_position().height > 0.4)
+        bar_ax = _right_importance_bar(fig, hm)
+        assert bar_ax is not None, "right importance bar not found"
         y_centers = {round(p.get_y() + p.get_height() / 2)
                      for p in bar_ax.patches if getattr(p, "get_width", lambda: 0)() > 0.01}
         assert y_centers == {row}, (y_centers, "expected only row", row)
@@ -858,10 +873,8 @@ class TestCCPlotFeatureMapShap:
         fig.canvas.draw()
         ylabels = [t.get_text() for t in hm.get_yticklabels()]
         expected_rows = {ylabels.index(t) for t in targets}
-        hm_x0 = hm.get_position().x0
-        bar_ax = next(a for a in fig.get_axes()
-                      if a is not hm and a.get_position().x0 > hm_x0 + 0.1
-                      and a.get_position().width < 0.2 and a.get_position().height > 0.4)
+        bar_ax = _right_importance_bar(fig, hm)
+        assert bar_ax is not None, "right importance bar not found"
         bar_rows = {round(p.get_y() + p.get_height() / 2)
                     for p in bar_ax.patches if getattr(p, "get_width", lambda: 0)() > 0.01}
         assert bar_rows == expected_rows, (sorted(bar_rows), "expected", sorted(expected_rows))
@@ -877,19 +890,16 @@ class TestCCPlotFeatureMapShap:
         fig, hm = cpp_plot.feature_map(df_feat=df_feat)
         fig.canvas.draw()
         renderer = fig.canvas.get_renderer()
-        hm_x0 = hm.get_position().x0
+        a = _right_importance_bar(fig, hm)  # narrow bar glued to the heatmap's right edge
+        assert a is not None, "right importance bar not found"
         checked = 0
-        for a in fig.axes:  # the right importance bar: narrow + tall, right of the heatmap
-            p = a.get_position()
-            if a is hm or p.x0 <= hm_x0 + 0.1 or p.width >= 0.2 or p.height <= 0.4:
-                continue
-            x_max = a.get_xlim()[1]
-            for t in a.texts:
-                if t.get_text().strip().endswith("%"):
-                    ext = t.get_window_extent(renderer)
-                    right = a.transData.inverted().transform((ext.x1, ext.y0))[0]
-                    assert right <= x_max + 1e-6, f"label spills right past the bar region: {right} > {x_max}"
-                    checked += 1
+        x_max = a.get_xlim()[1]
+        for t in a.texts:
+            if t.get_text().strip().endswith("%"):
+                ext = t.get_window_extent(renderer)
+                right = a.transData.inverted().transform((ext.x1, ext.y0))[0]
+                assert right <= x_max + 1e-6, f"label spills right past the bar region: {right} > {x_max}"
+                checked += 1
         assert checked, "no % importance-bar labels found"
         plt.close()
 
@@ -950,10 +960,8 @@ class TestCCPlotFeatureMapShap:
         fig, hm = cpp_plot.feature_map(df_feat=df_feat, shap_plot=True,
                                        col_val=COL_MEAN_DIF_TEST, col_imp=COL_FEAT_IMPACT_TEST)
         fig.canvas.draw()
-        hm_x0 = hm.get_position().x0
-        bar_ax = next(a for a in fig.get_axes()
-                      if a is not hm and a.get_position().x0 > hm_x0 + 0.1
-                      and a.get_position().width < 0.2 and a.get_position().height > 0.4)
+        bar_ax = _right_importance_bar(fig, hm)
+        assert bar_ax is not None, "right importance bar not found"
         code = {_rgba(SHAP_POS): "R", _rgba(SHAP_NEG): "B"}
         segs = sorted((p for p in bar_ax.patches
                        if _rgba(p.get_facecolor()) in code and p.get_width() > 0.01),
@@ -1121,6 +1129,24 @@ class TestFeatureMapSeqCharFill:
         cells_off = _full_cells(ax_off)
         plt.close("all")
         assert len(cells_off) == 0                          # fill=False keeps the legacy glyph bbox
+
+    def test_fill_cell_flush_to_heatmap_edge(self):
+        # The colored cell's inner edge snaps exactly onto a heatmap border (a y-limit), so there
+        # is no gap between the sequence band and the grid above it. (The band's far edge is a slim
+        # margin past the letters; that margin is a visual constant, not asserted here because the
+        # font's bounding box includes empty descender space below the caps.)
+        from matplotlib.patches import Rectangle
+        df_feat = aa.load_features(name="DOM_GSEC").head(40)
+        cpp = aa.CPPPlot(df_scales=aa.load_scales())
+        _, ax = cpp.feature_map(df_feat=df_feat, add_imp_bar_top=False, seq_char_fill=True, **self._seq_kws())
+        ax.figure.canvas.draw()
+        cells = [p for p in ax.patches if isinstance(p, Rectangle) and abs(p.get_width() - 1.0) < 1e-6]
+        ys = [p.get_y() for p in cells] + [p.get_y() + p.get_height() for p in cells]
+        cy0, cy1 = min(ys), max(ys)
+        ylim = ax.get_ylim()
+        plt.close("all")
+        flush = min(min(abs(cy0 - e), abs(cy1 - e)) for e in ylim)
+        assert flush < 1e-6                                       # one band edge is flush to the grid
 
     def test_fill_bad_type_raises(self):
         df_feat = aa.load_features(name="DOM_GSEC").head(40)
