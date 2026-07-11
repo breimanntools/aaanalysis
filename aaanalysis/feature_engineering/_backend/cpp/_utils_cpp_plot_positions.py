@@ -158,11 +158,27 @@ def _add_seq_cell_backgrounds(ax=None, labels=None, colors=None, x_shift=0.0):
     margin = abs(near - edge) * _SEQ_CELL_BOTTOM_MARGIN_FRAC
     y_far = far + margin * (1 if far >= near else -1)
     y0, y1 = sorted((edge, y_far))
-    for i, c in enumerate(colors):
-        rect = mpl.patches.Rectangle((i + x_shift - 0.5, y0), width=1.0, height=y1 - y0,
+    # Center each cell on its residue's own data-x (glyph center = tick), so the band frames the
+    # letters regardless of x_shift and can be repainted around any (re-fitted) letter size.
+    for e, c in zip(exts, colors):
+        xc = 0.5 * (e.x0 + e.x1)
+        rect = mpl.patches.Rectangle((xc - 0.5, y0), width=1.0, height=y1 - y0,
                                      facecolor=c, edgecolor="none", linewidth=0,
-                                     zorder=0.1, clip_on=False)
+                                     zorder=0.1, clip_on=False, gid="_seq_cell")
         ax.add_patch(rect)
+
+
+def repaint_seq_cell_backgrounds_(ax=None, labels=None, colors=None):
+    """Re-draw the full-width residue cells to frame the FINAL (re-fitted) letters (``fill`` mode).
+
+    The initial cells are painted at the seed layout; once the constant-cell sizer rescales the
+    figure and ``update_seq_size_`` re-fits the residue letters, those seed cells no longer frame
+    the letters (the band reads too thin and clips them). Remove the tagged cells and repaint around
+    the current letters, so the gap-free band always fully covers the transparent-boxed residues.
+    """
+    for p in [p for p in ax.patches if p.get_gid() == "_seq_cell"]:
+        p.remove()
+    _add_seq_cell_backgrounds(ax=ax, labels=labels, colors=colors)
 
 
 def _add_part_seq(ax=None, jmd_n_seq=None, tmd_seq=None, jmd_c_seq=None, x_shift=0.0, seq_size=None,

@@ -98,6 +98,17 @@ def _row_label_fonts(fig, subcats):
             if t.get_text().strip() in subcats and t.get_visible()]
 
 
+def _seq_letter_overlaps(fig, ax):
+    """(#residue letters, worst px overlap between adjacent letters). >0 px means glyphs collide."""
+    fig.canvas.draw()
+    r = fig.canvas.get_renderer()
+    labs = [t for t in ax.xaxis.get_ticklabels(which="both") if len(t.get_text().strip()) == 1]
+    labs = sorted(labs, key=lambda t: t.get_window_extent(r).x0)
+    boxes = [t.get_window_extent(r) for t in labs]
+    worst = max((a.x1 - b.x0 for a, b in zip(boxes, boxes[1:])), default=0.0)
+    return len(labs), worst
+
+
 _NUMERIC = re.compile(r"^\[?-?\d+(\.\d+)?%?\]?$")
 
 
@@ -487,3 +498,46 @@ class TestSeqCharFill:
             for fill in (True, False):
                 getattr(cpp, name)(df, seq_char_fill=fill, **seq_kws)
                 plt.close("all")
+
+
+class TestSeqCharNeverOverlap:
+    """The sequence residue letters must NEVER overlap, at any grid width; the colored band
+    stays gap-free (one full-width cell per residue in fill mode)."""
+
+    _SEQ = "ACDEFGHIKLMNPQRSTVWY" * 10
+
+    def setup_method(self):
+        aa.options["verbose"] = False
+
+    def teardown_method(self):
+        plt.close("all")
+        aa.options["auto_font"] = True
+
+    @pytest.mark.parametrize("n_subcat", [5, 25, 40])
+    @pytest.mark.parametrize("tmd_len", [6, 20, 95, 150])
+    def test_feature_map_no_seq_overlap(self, tmd_len, n_subcat):
+        fig, ax = aa.CPPPlot().feature_map(
+            _df_feat_len(n_subcat, tmd_len), tmd_len=tmd_len, add_imp_bar_top=False,
+            tmd_seq=self._SEQ[:tmd_len], jmd_n_seq=self._SEQ[:10], jmd_c_seq=self._SEQ[:10])
+        n, worst = _seq_letter_overlaps(fig, ax)
+        assert n == tmd_len + 20, n
+        assert worst <= 1.0, f"seq letters overlap by {worst:.1f}px (tmd={tmd_len}, nsub={n_subcat})"
+
+    @pytest.mark.parametrize("figsize", [None, (10, 7), (20, 9)])
+    def test_no_seq_overlap_across_figsize(self, figsize):
+        # All-W/M: the widest glyphs, the worst case for adjacent-letter collision.
+        seq = "WM" * 90
+        fig, ax = aa.CPPPlot().feature_map(
+            _df_feat_len(25, 95), tmd_len=95, add_imp_bar_top=False, figsize=figsize,
+            tmd_seq=seq[:95], jmd_n_seq=seq[:10], jmd_c_seq=seq[:10])
+        _, worst = _seq_letter_overlaps(fig, ax)
+        assert worst <= 1.0, f"seq letters overlap by {worst:.1f}px (figsize={figsize})"
+
+    def test_seq_band_one_cell_per_residue(self):
+        # fill mode (auto_font on): a full-width colored cell behind every residue = gap-free band.
+        aa.options["auto_font"] = True
+        fig, ax = aa.CPPPlot().feature_map(
+            _df_feat_len(25, 95), tmd_len=95, add_imp_bar_top=False,
+            tmd_seq=self._SEQ[:95], jmd_n_seq=self._SEQ[:10], jmd_c_seq=self._SEQ[:10])
+        n_cells = sum(1 for p in ax.patches if p.get_gid() == "_seq_cell")
+        assert n_cells == 95 + 20, n_cells
