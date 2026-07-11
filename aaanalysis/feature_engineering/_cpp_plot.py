@@ -52,6 +52,12 @@ _LEGEND_BELOW_GRID_PT = 70.0
 # Generous on purpose: bbox_inches="tight" trims any unused margin at save time.
 _RIGHT_LABEL_IN = 2.0
 
+# Cap on the residue-letter size, as a fraction of the cell height (points = cell_h_in * 72 * frac).
+# The letters otherwise fill the cell WIDTH, which for a taller-than-wide cell makes them exceed the
+# cell height and dwarf the point-sized labels; capping to the cell height keeps them in proportion
+# while still scaling with a larger cell_size. The colored per-residue cells stay full width.
+_SEQ_MAX_CELL_FRAC = 0.95
+
 
 # I Helper Functions
 # Checks for eval plot
@@ -1111,8 +1117,11 @@ class CPPPlot:
             if capped and self._verbose:
                 ut.print_out("cell_size: sequence exceeds the max figure width; layout may be constrained.")
         if tmd_seq is not None and seq_size is None:
+            # Cap the residue letters to the per-position column width (the profile has no cell rows);
+            # keeps them from filling the column and dwarfing the labels.
+            _seq_max = cell_w * 72.0 * 1.2 if size_grid else None
             ax, seq_size = update_seq_size_(ax=ax, **args_seq, **args_part_color, **args_seq_color,
-                                            fill=seq_char_fill)
+                                            fill=seq_char_fill, max_size=_seq_max)
             if self._verbose:
                 ut.print_out(f"Optimized sequence character fontsize is: {seq_size}")
         # Cap the TMD/JMD part labels and pin them a constant gap below the sequence band.
@@ -1427,8 +1436,9 @@ class CPPPlot:
             if capped and self._verbose:
                 ut.print_out("cell_size: grid exceeds the max figure size; cells may be smaller than target.")
         if tmd_seq is not None and seq_size is None:
+            _seq_max = cell_h * 72.0 * _SEQ_MAX_CELL_FRAC if size_grid else None
             ax, seq_size = update_seq_size_(ax=ax, **args_seq, **args_part_color, **args_seq_color,
-                                            fill=seq_char_fill)
+                                            fill=seq_char_fill, max_size=_seq_max)
             if self._verbose:
                 ut.print_out(f"Optimized sequence character fontsize is: {seq_size}")
         # Cap the TMD/JMD part labels and pin them a constant gap below the sequence band, and
@@ -1891,8 +1901,9 @@ class CPPPlot:
             cat_legend.set_loc("upper left")
             cat_legend.set_bbox_to_anchor((_x_left, 0.0), transform=ax.transAxes + _below)
         if tmd_seq is not None and seq_size is None:
+            _seq_max = cell_h * 72.0 * _SEQ_MAX_CELL_FRAC if size_grid else None
             ax, seq_size = update_seq_size_(ax=ax, **args_seq, **args_part_color, **args_seq_color,
-                                            fill=seq_char_fill)
+                                            fill=seq_char_fill, max_size=_seq_max)
             if self._verbose:
                 ut.print_out(f"Optimized sequence character fontsize is: {seq_size}")
         # Cap the TMD/JMD part-label font and pin it a constant gap below the sequence band, so

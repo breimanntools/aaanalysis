@@ -261,7 +261,7 @@ def plot_heatmap_(df_feat=None, df_cat=None,
     pe.add_subcat_bars(ax=ax, df_pos=df_pos, df_feat=df_feat,
                        col_cat=col_cat, dict_color=dict_color,
                        bar_width=bar_width, bar_spacing=bar_width*0.75,
-                       optimize_labels=optimize_labels)
+                       optimize_labels=optimize_labels, fontsize_labels=fontsize_labels)
 
     # Add scale legend
     ut.plot_legend_(ax=ax, dict_color=dict_color, **legend_kws)

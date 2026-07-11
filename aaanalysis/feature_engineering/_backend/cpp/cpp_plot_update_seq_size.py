@@ -30,11 +30,14 @@ def get_tmd_jmd_seq(ax=None, jmd_n_len=10, jmd_c_len=10):
 def update_seq_size_(ax=None, tmd_seq=None, jmd_n_seq=None, jmd_c_seq=None,
                      max_x_dist=0.1,
                      tmd_color="mediumspringgreen", jmd_color="blue",
-                     tmd_seq_color="black", jmd_seq_color="white", fill=False):
+                     tmd_seq_color="black", jmd_seq_color="white", fill=False, max_size=None):
     """Update the font size of the sequence characters to prevent overlap.
 
     With ``fill=True`` the characters grow until adjacent residues touch (no whitespace
-    between them) while still never overlapping.
+    between them) while still never overlapping. ``max_size`` (points) caps the result so the
+    letters fit inside their grid cell instead of overflowing it (they otherwise fill the cell
+    width, which for a cell taller-than-wide makes them exceed the cell height); the colored
+    per-residue cells stay full width (gap-free) regardless.
     """
     colors = [jmd_color] * len(jmd_n_seq) + [tmd_color] * len(tmd_seq) + [jmd_color] * len(jmd_c_seq)
     dict_seq_color = {tmd_color: tmd_seq_color, jmd_color: jmd_seq_color}
@@ -43,6 +46,8 @@ def update_seq_size_(ax=None, tmd_seq=None, jmd_n_seq=None, jmd_c_seq=None,
     # Adjust font size to prevent overlap
     pp = PlotPartPositions()
     seq_size = pp.get_optimal_fontsize(ax=ax, labels=labels, max_x_dist=max_x_dist, fill=fill)
+    if max_size is not None:
+        seq_size = min(seq_size, max_size)
     lw = plt.gcf().get_size_inches()[0]/5
     for l, c in zip(labels, colors):
         l.set_fontsize(seq_size)

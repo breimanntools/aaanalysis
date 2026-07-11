@@ -443,7 +443,10 @@ Changed
   residue-letter size and could grow huge or collide with the sequence). The bottom furniture is laid
   out as one aligned row — the scale-category legend flush to the figure's left edge, the colorbar
   centred, the feature-importance legend flush to the right edge, all tops on a single line — so it no
-  longer scatters or overlaps the sequence on a sparse grid.
+  longer scatters or overlaps the sequence on a sparse grid. The residue letters are capped to fit
+  inside the cell (they otherwise filled the cell width and overflowed its height, dwarfing the
+  labels; the colored per-residue cells stay gap-free), and the subcategory row labels are lifted to
+  the colorbar/legend size so they are no longer a step smaller than the rest.
 - **Uniform plot return contract**: Every public ``*Plot`` method now returns a single
   ``(fig, ax)`` pair (forwarding attribute access to ``ax``, so existing
   ``ax = plot(...); ax.set_title(...)`` code keeps working), replacing the previous mix
