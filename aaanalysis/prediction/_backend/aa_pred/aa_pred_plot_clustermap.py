@@ -35,8 +35,8 @@ def _titled_legend(fig, dict_color, title, anchor_y):
 
 
 # II Main Functions
-def plot_clustermap_(data=None, names=None, labels=None, colors=None, legend_title="Class",
-                     labels_row=None, colors_row=None, legend_title_row=None,
+def plot_clustermap_(data=None, names=None, labels=None, dict_color=None, legend_title="Class",
+                     labels_row=None, dict_color_row=None, legend_title_row=None,
                      cmap="GnBu", figsize=(11, 11), cbar_label="Pearson correlation (r)",
                      title=None):
     """Two-annotation correlation clustermap of per-sample vectors. Returns (fig, ax_heatmap)."""
@@ -56,10 +56,10 @@ def plot_clustermap_(data=None, names=None, labels=None, colors=None, legend_tit
     col_dict = row_dict = None
     col_colors = row_colors = None
     if labels is not None:
-        col_dict = _resolve_label_colors(list(labels), colors)
+        col_dict = _resolve_label_colors(list(labels), dict_color)
         col_colors = pd.Series([col_dict[lbl] for lbl in labels], index=list(names), name="")
     if labels_row is not None:
-        row_dict = _resolve_label_colors(list(labels_row), colors_row)
+        row_dict = _resolve_label_colors(list(labels_row), dict_color_row)
         row_colors = pd.Series([row_dict[lbl] for lbl in labels_row], index=list(names), name="")
     elif labels is not None:
         row_colors = col_colors

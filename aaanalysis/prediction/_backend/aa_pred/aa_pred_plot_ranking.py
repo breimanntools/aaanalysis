@@ -3,6 +3,7 @@ Backend for AAPredPlot.predict(kind="ranking"): horizontal ranked-candidate bars
 with optional per-item error bars and confidence cut-off lines.
 """
 import numpy as np
+import seaborn as sns
 from matplotlib import pyplot as plt
 
 import aaanalysis.utils as ut
@@ -28,10 +29,19 @@ def _resolve_group_colors(groups, colors):
 
 # II Main Functions
 def plot_ranking_(df_pred=None, col_name="name", col_score="score", col_group=None,
-                  col_std=None, colors=None, cutoffs=(50, 80), top_n=None, ascending=False,
-                  ax=None, figsize=None, xlabel="Prediction score", title=None):
+                  col_std=None, dict_color=None, thresholds=(50, 80), top_n=None, ascending=False,
+                  ax=None, figsize=None, xlabel="Prediction score", title=None,
+                  sort="score", group_order=None):
     """Draw the ranked-candidate horizontal bar plot. Returns (fig, ax)."""
-    d = df_pred.sort_values(col_score, ascending=ascending).reset_index(drop=True)
+    if col_group is not None and sort == "group":
+        # Cluster bars by group (following `group_order`), ranked by score within each group.
+        order = list(group_order) if group_order is not None else list(dict.fromkeys(df_pred[col_group].tolist()))
+        grank = {g: i for i, g in enumerate(order)}
+        d = df_pred.assign(_grank=df_pred[col_group].map(lambda g: grank.get(g, len(order))))
+        d = d.sort_values(["_grank", col_score], ascending=[True, ascending])
+        d = d.drop(columns="_grank").reset_index(drop=True)
+    else:
+        d = df_pred.sort_values(col_score, ascending=ascending).reset_index(drop=True)
     if top_n is not None:
         d = d.head(top_n)
     n = len(d)
@@ -43,7 +53,7 @@ def plot_ranking_(df_pred=None, col_name="name", col_score="score", col_group=No
         fig = ax.figure
     y = np.arange(n)[::-1]  # highest score on top
     if col_group is not None:
-        dict_color = _resolve_group_colors(d[col_group].tolist(), colors)
+        dict_color = _resolve_group_colors(d[col_group].tolist(), dict_color)
         bar_colors = [dict_color[g] for g in d[col_group]]
     else:
         bar_colors = ut.plot_get_clist_(n_colors=2)[0]
@@ -52,14 +62,17 @@ def plot_ranking_(df_pred=None, col_name="name", col_score="score", col_group=No
             xerr=xerr, capsize=2.5, error_kw=dict(lw=1))
     ax.set_yticks(y)
     ax.set_yticklabels(d[col_name].astype(str).tolist(), fontsize=9)
-    for c in (cutoffs or []):
+    for c in (thresholds or []):
         ax.axvline(c, ls="--", color="0.3", lw=1.2)
     ax.set_xlabel(xlabel)
     if title is not None:
         ax.set_title(title)
     if col_group is not None:
-        handles = [plt.Rectangle((0, 0), 1, 1, color=dict_color[g]) for g in dict_color]
-        ax.legend(handles, list(dict_color), frameon=False, fontsize=9,
-                  loc="lower right")
+        # Legend shows only the groups actually drawn in this panel, in their draw order
+        # (so a per-group panel does not advertise the whole palette).
+        present = list(dict.fromkeys(d[col_group].tolist()))
+        handles = [plt.Rectangle((0, 0), 1, 1, color=dict_color[g]) for g in present]
+        ax.legend(handles, present, frameon=False, fontsize=9, loc="lower right")
     ax.margins(y=0.01)
+    sns.despine(ax=ax)
     return fig, ax
