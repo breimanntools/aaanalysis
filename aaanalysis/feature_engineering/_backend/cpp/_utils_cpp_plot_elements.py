@@ -105,8 +105,15 @@ class PlotElements:
         labels = list(df_pos.index)
         colors = _get_colors_for_col_cat(labels=labels, df_feat=df_feat, col_cat=col_cat, dict_color=dict_color)
         before = list(ax.texts)
+        before_patches = list(ax.patches)
         ut.plot_add_bars(ax=ax, labels=labels, colors=colors,
                          bar_width=bar_width, bar_spacing=bar_spacing, label_spacing_factor=2)
+        # Paint each category as a solid block: match the row edge to its fill so consecutive
+        # subcategories of one category read as one bar (the shared helper draws a white edge when
+        # every row shares a color, which otherwise leaves white hairlines between same-category rows).
+        for p in ax.patches:
+            if p not in before_patches:
+                p.set_edgecolor(p.get_facecolor())
         row_labels = [t for t in ax.texts if t not in before]
         if fontsize_labels is not None:
             for t in row_labels:

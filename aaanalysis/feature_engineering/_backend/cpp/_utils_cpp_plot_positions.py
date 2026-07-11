@@ -121,6 +121,16 @@ _JMD_LABEL_MAX_PT = 12.0
 # sparse grid (small figure), where the figure-bottom-anchored default would ride up into it.
 _CBAR_BELOW_GRID_IN = 1.4
 
+# Fixed colorbar thickness (inches). The backend sizes it as a figure fraction, which collapses
+# to a thin line once the figure shrinks; pinning it to a constant inch height keeps a proper
+# gradient bar at any figure size (the cheat-sheet look).
+_CBAR_HEIGHT_IN = 0.16
+
+# Compact gap (inches) between the sequence/part-label block and the bottom furniture row, and
+# between the colorbar and the importance legend beside it.
+_FURNITURE_GAP_IN = 0.12
+_FURNITURE_ITEM_GAP_IN = 0.25
+
 
 def _add_seq_cell_backgrounds(ax=None, labels=None, colors=None, x_shift=0.0):
     """Paint a seamless, full-width colored cell behind each residue letter (``fill`` mode).
@@ -283,16 +293,14 @@ def place_colorbar_below_grid_(fig=None, ax=None, gap_in=_CBAR_BELOW_GRID_IN):
     cbar_ax.set_position([cbar_pos.x0, new_bottom, cbar_pos.width, cbar_pos.height])
 
 
-def align_bottom_furniture_(fig=None, ax=None, gap_in=0.28, margin_in=0.04, clear_in=0.12):
-    """Lay the scale-category legend, colorbar and feature-importance legend as one bottom row.
+def align_bottom_furniture_(fig=None, ax=None, gap_in=_FURNITURE_GAP_IN, item_gap_in=_FURNITURE_ITEM_GAP_IN):
+    """Lay the scale-category legend, colorbar and importance legend as one COMPACT bottom row.
 
-    Tops aligned on a single horizontal line a constant ``gap_in`` below the sequence/part-label
-    block; the category legend flush to the figure's left edge, the importance legend flush to the
-    right edge, and the 'Feature value' colorbar centred. When the figure is too narrow for the
-    colorbar to sit at the centre without touching a neighbour, it is nudged into the clear gap
-    between them (keeping ``clear_in`` inches of space). Run as the final step, after ``grow_to_fit``
-    has fixed the figure size, in figure coordinates. Missing items (e.g. no importance legend on
-    the standalone heatmap) are skipped.
+    Clustered near the grid centre in left / middle / right order with small ``item_gap_in`` gaps,
+    a small ``gap_in`` below the sequence/part-label block, tops on one line. The colorbar is a
+    fixed-inch-thick, fixed-inch-wide gradient bar (the backend sizes it as a figure fraction, which
+    collapses when the figure shrinks). Run after ``grow_to_fit``, in figure coordinates. Missing
+    items (e.g. no importance legend on the standalone heatmap) are skipped.
     """
     fig.canvas.draw()
     renderer = fig.canvas.get_renderer()
@@ -302,52 +310,51 @@ def align_bottom_furniture_(fig=None, ax=None, gap_in=0.28, margin_in=0.04, clea
     cbar = ax.collections[0].colorbar if (ax.collections and ax.collections[0].colorbar) else None
     cbar_ax = cbar.ax if cbar is not None else None
     imp_legend = cbar_ax.get_legend() if cbar_ax is not None else None
-    # Common top: a constant gap below the lowest grid-attached furniture (the part-label twin,
-    # else the sequence letters on the grid axes).
-    names = {ut.options["name_tmd"], ut.options["name_jmd_n"], ut.options["name_jmd_c"]}
-    part_ax = next((a for a in fig.axes if a is not ax
-                    and any(t.get_text() in names for t in a.get_xticklabels())), None)
-    if part_ax is not None:
-        labels = [t for t in part_ax.get_xticklabels() if t.get_text() in names]
-        low_disp = min(t.get_window_extent(renderer).y0 for t in labels) if labels \
-            else ax.get_window_extent(renderer).y0
-    else:
-        low_disp = ax.get_window_extent(renderer).y0
+    grid = ax.get_position()
+    # Lowest grid-attached content = min bottom of the grid axes' own tight bbox (position ticks,
+    # sequence letters, row labels; the legend is hidden so it does not feed back) and any sibling
+    # twin sharing the grid position (the part-label JMD/TMD axis, whose spine is pushed below).
+    if cat_legend is not None:
+        cat_legend.set_visible(False)
+    fig.canvas.draw()
+    low_disp = ax.get_tightbbox(renderer).y0
+    for a in fig.axes:
+        if a is ax or a is cbar_ax:
+            continue
+        p = a.get_position()
+        if abs(p.x0 - grid.x0) < 0.02 and abs(p.width - grid.width) < 0.02:
+            low_disp = min(low_disp, a.get_tightbbox(renderer).y0)
+    if cat_legend is not None:
+        cat_legend.set_visible(True)
     top_in = low_disp / dpi - gap_in
     top_frac = top_in / h_in
-    # Category legend flush left, importance legend flush right, tops on the common line.
-    if cat_legend is not None:
-        # Drop the fixed-height blank-line padding on the title (an old positioning hack) so the
-        # legend's true top aligns with the row rather than the empty lines above the title.
+    if cat_legend is not None:  # drop the blank-line title padding (an old positioning hack)
         title = cat_legend.get_title()
         title.set_text(title.get_text().lstrip("\n"))
-        cat_legend.set_loc("upper left")
-        cat_legend.set_bbox_to_anchor((margin_in / w_in, top_frac), transform=fig.transFigure)
-    if imp_legend is not None:
-        imp_legend.set_loc("upper right")
-        imp_legend.set_bbox_to_anchor((1 - margin_in / w_in, top_frac), transform=fig.transFigure)
-    fig.canvas.draw()  # realize the legend positions before measuring the clear gap
+    # Colorbar: fixed thickness AND width (inches), centred on the grid, top-aligned.
+    cbar_left_in = cbar_right_in = None
     if cbar_ax is not None:
         pos = cbar_ax.get_position()
         if imp_legend is not None:
-            imp_legend.set_visible(False)  # exclude from the colorbar's own tight bbox
+            imp_legend.set_visible(False)
             fig.canvas.draw()
         label_above_in = cbar_ax.get_tightbbox(renderer).y1 / dpi - pos.y1 * h_in
         if imp_legend is not None:
             imp_legend.set_visible(True)
-            fig.canvas.draw()
-        gap_lo = cat_legend.get_window_extent(renderer).x1 / dpi if cat_legend is not None else margin_in
-        gap_hi = imp_legend.get_window_extent(renderer).x0 / dpi if imp_legend is not None else (w_in - margin_in)
-        cbar_w_in = pos.width * w_in
-        # Centre at the figure middle, but nudge into the clear gap if that would overlap a neighbour.
-        lo = gap_lo + clear_in + 0.5 * cbar_w_in
-        hi = gap_hi - clear_in - 0.5 * cbar_w_in
-        center = 0.5 * w_in
-        center = min(max(center, lo), hi) if lo <= hi else 0.5 * (gap_lo + gap_hi)
-        bar_top_in = top_in - label_above_in
-        new_bottom = (bar_top_in - pos.height * h_in) / h_in
-        new_left = (center - 0.5 * cbar_w_in) / w_in
-        cbar_ax.set_position([new_left, new_bottom, pos.width, pos.height])
+        cbar_w_in = min(max((grid.x1 - grid.x0) * w_in * 0.42, 1.4), 3.0)
+        cbar_left_in = 0.5 * (grid.x0 + grid.x1) * w_in - 0.5 * cbar_w_in
+        cbar_right_in = cbar_left_in + cbar_w_in
+        bottom = (top_in - label_above_in - _CBAR_HEIGHT_IN) / h_in
+        cbar_ax.set_position([cbar_left_in / w_in, bottom, cbar_w_in / w_in, _CBAR_HEIGHT_IN / h_in])
+    # Category legend just LEFT of the colorbar; importance legend just RIGHT of it.
+    if cat_legend is not None:
+        right_edge = (cbar_left_in - item_gap_in) if cbar_left_in is not None else (grid.x0 * w_in - item_gap_in)
+        cat_legend.set_loc("upper right")
+        cat_legend.set_bbox_to_anchor((right_edge / w_in, top_frac), transform=fig.transFigure)
+    if imp_legend is not None:
+        left_edge = (cbar_right_in + item_gap_in) if cbar_right_in is not None else (grid.x1 * w_in + item_gap_in)
+        imp_legend.set_loc("upper left")
+        imp_legend.set_bbox_to_anchor((left_edge / w_in, top_frac), transform=fig.transFigure)
 
 
 def _get_new_axis(ax=None):

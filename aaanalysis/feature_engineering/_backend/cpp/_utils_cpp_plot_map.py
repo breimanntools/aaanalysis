@@ -59,11 +59,13 @@ def _get_vmin_vmax(df_pos=None, vmin=None, vmax=None):
 
 
 def _get_bar_width(fig=None, len_seq=None):
-    """Get consistent bar width to for category bars"""
-    width, height = fig.get_size_inches()
-    width_factor = 1 / width * 8
-    bar_width = len_seq / WIDTH_NORM_FACTOR * width_factor
-    return bar_width
+    """Category-sidebar bar width in DATA (column) units.
+
+    A constant number of columns wide, so its physical width scales with the grid cell size (not
+    with the figure): the previous figure-relative width collapsed to a hairline once the constant-
+    cell sizer shrank/widened the figure. ~0.7 columns reads as a solid category strip.
+    """
+    return 0.7
 
 
 # Get colormap
