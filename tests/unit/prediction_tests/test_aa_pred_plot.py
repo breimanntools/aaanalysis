@@ -159,7 +159,7 @@ class TestAAPredPlotEvalComparison:
 
     def test_orders_and_colors(self):
         r = aa.AAPredPlot().eval(_df_comp(), kind="comparison", group_order=["B", "A"],
-                                 condition_order=["c2", "c1"], colors=["red", "blue"])
+                                 condition_order=["c2", "c1"], dict_color=["red", "blue"])
         assert r.ax is not None
 
     def test_bar_width_and_rotation(self):
@@ -320,9 +320,9 @@ class TestAAPredPlotPredictRanking:
         r = aa.AAPredPlot().predict_group(_df_rank(), kind="ranking", top_n=3, ascending=True)
         assert len(r.ax.patches) == 3
 
-    def test_cutoffs_and_colors(self):
+    def test_thresholds_and_dict_color(self):
         r = aa.AAPredPlot().predict_group(_df_rank(), kind="ranking", col_group="group",
-                                    colors={"sub": "red", "non": "blue"}, cutoffs=(60,))
+                                    dict_color={"sub": "red", "non": "blue"}, thresholds=(60,))
         assert any(line.get_linestyle() == "--" for line in r.ax.get_lines())
 
     def test_figsize_height_scales_with_items(self):
@@ -362,6 +362,65 @@ class TestAAPredPlotPredictRanking:
     def test_panel_col_title_prefixes_panels(self):
         r = aa.AAPredPlot().predict_group(_df_rank(), kind="ranking", panel_col="group", title="Rank")
         assert any("Rank:" in a.get_title() for a in np.ravel(r.ax))
+
+    # --- panels dict + sort='group' ---
+    def test_panels_dict_two_panels(self):
+        r = aa.AAPredPlot().predict_group(_df_rank(), kind="ranking", col_group="group",
+                                          panels={"Subs": ["sub"], "Nons": ["non"]})
+        assert np.size(r.ax) == 2
+
+    def test_panels_dict_titles_from_keys(self):
+        r = aa.AAPredPlot().predict_group(_df_rank(), kind="ranking", col_group="group",
+                                          panels={"Subs": ["sub"], "Nons": ["non"]})
+        assert {"Subs", "Nons"} <= {a.get_title() for a in np.ravel(r.ax)}
+
+    def test_panels_dict_single_panel_multi_group(self):
+        r = aa.AAPredPlot().predict_group(_df_rank(8), kind="ranking", col_group="group",
+                                          panels={"All": ["sub", "non"]})
+        assert np.size(r.ax) == 1 and len(np.ravel(r.ax)[0].patches) == 8
+
+    def test_panels_and_panel_col_mutually_exclusive(self):
+        with pytest.raises(ValueError):
+            aa.AAPredPlot().predict_group(_df_rank(), kind="ranking", col_group="group",
+                                          panels={"S": ["sub"]}, panel_col="group")
+
+    def test_panels_requires_col_group(self):
+        with pytest.raises(ValueError):
+            aa.AAPredPlot().predict_group(_df_rank(), kind="ranking", panels={"S": ["sub"]})
+
+    def test_panels_unknown_group_raises(self):
+        with pytest.raises(ValueError):
+            aa.AAPredPlot().predict_group(_df_rank(), kind="ranking", col_group="group",
+                                          panels={"S": ["nope"]})
+
+    def test_panels_not_dict_raises(self):
+        with pytest.raises(ValueError):
+            aa.AAPredPlot().predict_group(_df_rank(), kind="ranking", col_group="group",
+                                          panels=[["sub"], ["non"]])
+
+    def test_sort_group_clusters_by_group_order(self):
+        import matplotlib.colors as mcolors
+        r = aa.AAPredPlot().predict_group(_df_rank(8), kind="ranking", col_group="group",
+                                          sort="group", group_order=["non", "sub"],
+                                          dict_color={"non": "blue", "sub": "red"})
+        cols = [tuple(np.round(p.get_facecolor(), 3)) for p in r.ax.patches]
+        blue = tuple(np.round(mcolors.to_rgba("blue"), 3))
+        red = tuple(np.round(mcolors.to_rgba("red"), 3))
+        # all 'non' (blue) bars precede all 'sub' (red) bars in draw order (contiguous blocks)
+        assert cols == [blue] * cols.count(blue) + [red] * cols.count(red)
+
+    def test_sort_group_requires_col_group(self):
+        with pytest.raises(ValueError):
+            aa.AAPredPlot().predict_group(_df_rank(), kind="ranking", sort="group")
+
+    def test_sort_invalid_raises(self):
+        with pytest.raises(ValueError):
+            aa.AAPredPlot().predict_group(_df_rank(), kind="ranking", col_group="group", sort="nope")
+
+    def test_panels_with_sort_group(self):
+        r = aa.AAPredPlot().predict_group(_df_rank(8), kind="ranking", col_group="group",
+                                          sort="group", panels={"All": ["non", "sub"]})
+        assert np.size(r.ax) == 1
 
 
 def _imp_data(n=12, n_feat=20, seed=0):
@@ -523,7 +582,7 @@ class TestAAPredPlotPredictHist:
     def test_band_custom_colors(self):
         scores, labels = _scores()
         fig, ax = aa.AAPredPlot().predict_group(scores, kind="hist", band=True,
-                                                thresholds=[0.5], colors=["#cccccc", "#4477aa"])
+                                                thresholds=[0.5], band_colors=["#cccccc", "#4477aa"])
         assert ax is not None
 
     def test_band_cmap(self):
@@ -547,7 +606,7 @@ class TestAAPredPlotPredictHist:
         scores, labels = _scores()
         with pytest.raises(ValueError):
             aa.AAPredPlot().predict_group(scores, kind="hist", band=True,
-                                          thresholds=[0.3, 0.7], colors=["#000000"])
+                                          thresholds=[0.3, 0.7], band_colors=["#000000"])
 
 
 class TestAAPredPlotPredictScatter:
