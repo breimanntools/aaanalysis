@@ -14,6 +14,12 @@ from ._utils_cpp_plot_map import plot_heatmap_
 from ._utils_cpp_plot import get_sorted_list_cat_
 
 
+# Maximum physical width (inches) of the cumulative feature-importance bar column. The column
+# width scales with the figure (so the bars stay proportional on small/medium maps), but is capped
+# here so the bars do not keep growing and run edge-to-edge on a large/wide feature map.
+_MAX_IMP_COL_IN = 1.5
+
+
 # I Helper Functions
 
 
@@ -264,7 +270,13 @@ def plot_feature_map(df_feat=None, df_cat=None,
         fig, ax_hm = plt.subplots(figsize=figsize)
         ax_bt = ax_br = ax_empty = None
     else:
-        width_ratio = [6, min(1*height/width, 1)]
+        r_imp = min(1*height/width, 1)
+        # Cap the importance-bar column at a maximum physical width: it grows proportionally with
+        # the figure up to `_MAX_IMP_COL_IN` inches, then stops (so the bars do not run to the edge
+        # on a large map). Solve width * r/(6 + r) = _MAX_IMP_COL_IN for the capped ratio.
+        if width * r_imp / (6 + r_imp) > _MAX_IMP_COL_IN:
+            r_imp = 6 * _MAX_IMP_COL_IN / (width - _MAX_IMP_COL_IN)
+        width_ratio = [6, r_imp]
         height_ratio = (width_ratio[1], width_ratio[0])
         gridspc_kw = {'width_ratios': width_ratio, "wspace": 0, "hspace": 0}
         if add_imp_bar_top:
