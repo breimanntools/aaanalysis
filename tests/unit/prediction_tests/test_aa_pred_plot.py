@@ -335,6 +335,34 @@ class TestAAPredPlotPredictRanking:
         r = aa.AAPredPlot().predict_group(_df_rank(), kind="ranking", ax=ax, xlabel="score", title="t")
         assert r.ax is ax
 
+    def test_panel_col_multi_panel(self):
+        r = aa.AAPredPlot().predict_group(_df_rank(), kind="ranking", panel_col="group")
+        assert np.size(r.ax) == 2  # one panel per distinct group value ("sub"/"non")
+
+    def test_panel_col_single_value(self):
+        df = _df_rank()
+        df["group"] = "sub"
+        r = aa.AAPredPlot().predict_group(df, kind="ranking", panel_col="group")
+        assert np.size(r.ax) == 1
+
+    def test_panel_col_default_is_single_axes(self):
+        from matplotlib.axes import Axes
+        r = aa.AAPredPlot().predict_group(_df_rank(), kind="ranking")
+        assert isinstance(r.ax, Axes)  # single panel returns one Axes, not an array
+
+    def test_panel_col_requires_ax_none(self):
+        _, ax = plt.subplots()
+        with pytest.raises(ValueError):
+            aa.AAPredPlot().predict_group(_df_rank(), kind="ranking", panel_col="group", ax=ax)
+
+    def test_panel_col_missing_column_raises(self):
+        with pytest.raises(ValueError):
+            aa.AAPredPlot().predict_group(_df_rank(), kind="ranking", panel_col="nope")
+
+    def test_panel_col_title_prefixes_panels(self):
+        r = aa.AAPredPlot().predict_group(_df_rank(), kind="ranking", panel_col="group", title="Rank")
+        assert any("Rank:" in a.get_title() for a in np.ravel(r.ax))
+
 
 def _imp_data(n=12, n_feat=20, seed=0):
     rng = np.random.RandomState(seed)
@@ -342,47 +370,100 @@ def _imp_data(n=12, n_feat=20, seed=0):
                       rng.normal(-0.6, 0.2, (n - n // 2, n_feat))])
 
 
-class TestAAPredPlotPredictClustermap:
+class TestAAPredPlotGroupCluster:
     def test_returns_fig_ax(self):
-        r = aa.AAPredPlot().predict_group(_imp_data(), kind="clustermap")
+        r = aa.AAPredPlot().group_cluster(_imp_data())
         assert r.fig is not None and r.ax is not None
 
+    def test_removed_from_predict_group(self):
+        # clustermap moved out of predict_group into its own method.
+        with pytest.raises(ValueError):
+            aa.AAPredPlot().predict_group(_imp_data(), kind="clustermap")
+
+    def test_invalid_kind_raises(self):
+        with pytest.raises(ValueError):
+            aa.AAPredPlot().group_cluster(_imp_data(), kind="not_a_kind")
+
     def test_labels_and_names(self):
-        r = aa.AAPredPlot().predict_group(_imp_data(), kind="clustermap", labels=np.array([1, 0] * 6),
-                                    names=[f"P{i}" for i in range(12)])
+        r = aa.AAPredPlot().group_cluster(_imp_data(), labels=np.array([1, 0] * 6),
+                                          names=[f"P{i}" for i in range(12)])
         assert r.ax is not None
 
-    def test_colors_and_cmap(self):
-        r = aa.AAPredPlot().predict_group(_imp_data(), kind="clustermap", labels=np.array([1, 0] * 6),
-                                    colors={1: "red", 0: "blue"}, cmap="viridis")
+    def test_labels_dict_color_and_cmap(self):
+        r = aa.AAPredPlot().group_cluster(_imp_data(), cmap="viridis",
+                                          labels=np.array([1, 0] * 6),
+                                          dict_color={1: "red", 0: "blue"})
         assert r.ax is not None
 
-    def test_min_samples_raises(self):
-        with pytest.raises(ValueError):
-            aa.AAPredPlot().predict_group(np.random.RandomState(0).rand(1, 5), kind="clustermap")
+    def test_no_labels(self):
+        r = aa.AAPredPlot().group_cluster(_imp_data(), names=[f"P{i}" for i in range(12)])
+        assert r.ax is not None
 
-    def test_labels_length_mismatch_raises(self):
-        with pytest.raises(ValueError):
-            aa.AAPredPlot().predict_group(_imp_data(), kind="clustermap", labels=np.array([1, 0, 1]))
-
-    def test_names_length_mismatch_raises(self):
-        with pytest.raises(ValueError):
-            aa.AAPredPlot().predict_group(_imp_data(), kind="clustermap", names=["a", "b"])
+    def test_string_labels_allowed(self):
+        r = aa.AAPredPlot().group_cluster(_imp_data(), labels=["sub", "non"] * 6)
+        assert r.ax is not None
 
     def test_figsize_cbar_label_title(self):
-        r = aa.AAPredPlot().predict_group(_imp_data(), kind="clustermap", figsize=(6, 6),
-                                    cbar_label="r", title="t")
+        r = aa.AAPredPlot().group_cluster(_imp_data(), figsize=(6, 6), cbar_label="r", title="t")
         assert r.ax is not None
 
     def test_constant_row_does_not_crash(self):
         # A zero-variance importance row yields NaN correlations; must be sanitized.
         data = _imp_data()
         data[0] = 0.0
-        r = aa.AAPredPlot().predict_group(data, kind="clustermap", labels=np.array([1, 0] * 6))
+        r = aa.AAPredPlot().group_cluster(data, labels=np.array([1, 0] * 6))
         assert r.ax is not None
 
-    def test_string_labels_allowed(self):
-        r = aa.AAPredPlot().predict_group(_imp_data(), kind="clustermap", labels=["sub", "non"] * 6)
+    def test_min_samples_raises(self):
+        with pytest.raises(ValueError):
+            aa.AAPredPlot().group_cluster(np.random.RandomState(0).rand(1, 5))
+
+    def test_labels_length_mismatch_raises(self):
+        with pytest.raises(ValueError):
+            aa.AAPredPlot().group_cluster(_imp_data(), labels=np.array([1, 0, 1]))
+
+    def test_names_length_mismatch_raises(self):
+        with pytest.raises(ValueError):
+            aa.AAPredPlot().group_cluster(_imp_data(), names=["a", "b"])
+
+    def test_dict_color_missing_label_raises(self):
+        with pytest.raises(ValueError):
+            aa.AAPredPlot().group_cluster(_imp_data(), labels=["sub", "non"] * 6,
+                                          dict_color={"sub": "red"})
+
+    def test_bad_dict_color_raises(self):
+        with pytest.raises(ValueError):
+            aa.AAPredPlot().group_cluster(_imp_data(), labels=np.array([1, 0] * 6),
+                                          dict_color={1: "red", 0: "not_a_color"})
+
+    def test_two_annotations(self):
+        # Distinct top (labels) and left (labels_row) sidebars, each with a titled legend.
+        r = aa.AAPredPlot().group_cluster(
+            _imp_data(),
+            labels=["sub", "non"] * 6, dict_color={"sub": "tab:green", "non": "tab:gray"},
+            legend_title="Prediction group",
+            labels_row=["hi", "lo"] * 6, dict_color_row={"hi": "tab:red", "lo": "tab:blue"},
+            legend_title_row="Confidence", names=[f"P{i}" for i in range(12)])
+        assert r.fig is not None and r.ax is not None
+
+    def test_labels_row_only(self):
+        r = aa.AAPredPlot().group_cluster(_imp_data(), labels_row=["hi", "lo"] * 6,
+                                          legend_title_row="Confidence")
+        assert r.ax is not None
+
+    def test_labels_row_length_mismatch_raises(self):
+        with pytest.raises(ValueError):
+            aa.AAPredPlot().group_cluster(_imp_data(), labels_row=np.array([1, 0, 1]))
+
+    def test_dict_color_row_missing_label_raises(self):
+        with pytest.raises(ValueError):
+            aa.AAPredPlot().group_cluster(_imp_data(), labels_row=["hi", "lo"] * 6,
+                                          dict_color_row={"hi": "red"})
+
+    def test_title_and_two_annotations(self):
+        r = aa.AAPredPlot().group_cluster(
+            _imp_data(), labels=["a", "b"] * 6, labels_row=["x", "y"] * 6,
+            title="Explanation-similarity clustering")
         assert r.ax is not None
 
 
@@ -561,6 +642,34 @@ class TestAAPredPlotPredictCutoff:
         fig, ax0 = plt.subplots()
         fig, ax = aa.AAPredPlot().predict_group(scores, kind="cutoff", ax=ax0, figsize=(6, 4))
         assert ax is ax0
+
+    def test_labels_one_curve_per_group(self):
+        scores, labels = _scores()
+        fig, ax = aa.AAPredPlot().predict_group(scores, kind="cutoff", labels=labels)
+        assert len(ax.get_lines()) == 2  # one survival curve per group
+
+    def test_labels_legend(self):
+        scores, labels = _scores()
+        fig, ax = aa.AAPredPlot().predict_group(scores, kind="cutoff", labels=labels)
+        assert ax.get_legend() is not None
+
+    def test_labels_dict_color(self):
+        scores, labels = _scores()
+        fig, ax = aa.AAPredPlot().predict_group(scores, kind="cutoff", labels=labels,
+                                                dict_color={1: "#111111", 0: "#222222"})
+        assert ax is not None
+
+    def test_labels_length_mismatch_raises(self):
+        scores, labels = _scores()
+        with pytest.raises(ValueError):
+            aa.AAPredPlot().predict_group(scores, kind="cutoff", labels=labels[:-1])
+
+    def test_grouped_curves_monotone(self):
+        scores, labels = _scores()
+        fig, ax = aa.AAPredPlot().predict_group(scores, kind="cutoff", labels=labels)
+        for line in ax.get_lines():
+            y = line.get_ydata()
+            assert np.all(np.diff(y) <= 1e-9)
 
 
 class TestAAPredPlotPredictGroupInvalidKind:
