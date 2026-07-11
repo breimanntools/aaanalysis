@@ -441,12 +441,13 @@ Changed
   a dense grid a larger one, and nothing clips at the figure edge at any size. The TMD/JMD part labels
   are capped in size and held a constant distance below the sequence band (they previously rode the
   residue-letter size and could grow huge or collide with the sequence). The bottom furniture is laid
-  out as one aligned row — the scale-category legend flush to the figure's left edge, the colorbar
-  centred, the feature-importance legend flush to the right edge, all tops on a single line — so it no
-  longer scatters or overlaps the sequence on a sparse grid. The residue letters are capped to fit
-  inside the cell (they otherwise filled the cell width and overflowed its height, dwarfing the
-  labels; the colored per-residue cells stay gap-free), and the subcategory row labels are lifted to
-  the colorbar/legend size so they are no longer a step smaller than the rest.
+  out as one compact, top-aligned row clustered just below the grid — the scale-category legend, the
+  ``Feature value`` colorbar (a fixed-thickness gradient bar, no longer collapsing to a thin line when
+  the figure shrinks) and the feature-importance legend — so it no longer scatters or overlaps the
+  position ticks on a sparse grid. The coloured per-residue sequence cells and the scale-category
+  sidebar render as solid, gap-free blocks (the sidebar at a readable, cell-relative width), and the
+  subcategory row labels are lifted to the colorbar/legend size so they are no longer a step smaller
+  than the rest — matching the cheat-sheet reference at any figure size.
 - **Uniform plot return contract**: Every public ``*Plot`` method now returns a single
   ``(fig, ax)`` pair (forwarding attribute access to ``ax``, so existing
   ``ax = plot(...); ax.set_title(...)`` code keeps working), replacing the previous mix
