@@ -27,6 +27,17 @@ def _resolve_group_colors(groups, colors):
     return {g: palette[i] for i, g in enumerate(order)}
 
 
+def _cutoff_labels(thresholds):
+    """Text label for each cut-off line: the usual two-threshold case is the low/high-confidence
+    convention (lower value = ``"LC cut-off"``, higher = ``"HC cut-off"``); other counts unlabeled."""
+    if len(thresholds) == 2:
+        labels = [None, None]
+        lo, hi = (0, 1) if thresholds[0] <= thresholds[1] else (1, 0)
+        labels[lo], labels[hi] = "LC cut-off", "HC cut-off"
+        return labels
+    return [None] * len(thresholds)
+
+
 # II Main Functions
 def plot_ranking_(df_pred=None, col_name="name", col_score="score", col_group=None,
                   col_std=None, dict_color=None, thresholds=(50, 80), top_n=None, ascending=False,
@@ -62,17 +73,24 @@ def plot_ranking_(df_pred=None, col_name="name", col_score="score", col_group=No
             xerr=xerr, capsize=2.5, error_kw=dict(lw=1))
     ax.set_yticks(y)
     ax.set_yticklabels(d[col_name].astype(str).tolist(), fontsize=9)
-    for c in (thresholds or []):
+    ax.tick_params(axis="y", length=0)  # no y-tick marks; labels sit next to the bars
+    ths = list(thresholds or [])
+    cut_labels = _cutoff_labels(ths)
+    for c, lab in zip(ths, cut_labels):
         ax.axvline(c, ls="--", color="0.3", lw=1.2)
+        if lab is not None:  # cut-off label above the line (e.g. "LC cut-off" / "HC cut-off")
+            ax.text(c, 1.005, lab, transform=ax.get_xaxis_transform(),
+                    ha="center", va="bottom", fontsize=9, clip_on=False)
     ax.set_xlabel(xlabel)
-    if title is not None:
-        ax.set_title(title)
-    if col_group is not None:
-        # Legend shows only the groups actually drawn in this panel, in their draw order
-        # (so a per-group panel does not advertise the whole palette).
-        present = list(dict.fromkeys(d[col_group].tolist()))
+    if title is not None:  # extra pad so the title clears the cut-off labels
+        ax.set_title(title, pad=22 if any(cut_labels) else None)
+    present = list(dict.fromkeys(d[col_group].tolist())) if col_group is not None else []
+    if len(present) >= 2:
+        # Legend shows only the groups drawn in this panel, in their draw order (so a per-group
+        # panel does not advertise the whole palette); a single-group panel needs no legend.
         handles = [plt.Rectangle((0, 0), 1, 1, color=dict_color[g]) for g in present]
         ax.legend(handles, present, frameon=False, fontsize=9, loc="lower right")
     ax.margins(y=0.01)
+    ax.set_xlim(left=0)  # bars start flush at the y-axis (drop the default left margin/gap)
     sns.despine(ax=ax)
     return fig, ax

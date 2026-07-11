@@ -422,6 +422,30 @@ class TestAAPredPlotPredictRanking:
                                           sort="group", panels={"All": ["non", "sub"]})
         assert np.size(r.ax) == 1
 
+    def test_no_yticks_and_bars_flush(self):
+        r = aa.AAPredPlot().predict_group(_df_rank(), kind="ranking")
+        assert all(t.get_markersize() == 0 for t in r.ax.yaxis.get_majorticklines())  # no y-tick marks
+        assert r.ax.get_xlim()[0] == 0  # bars start flush at the y-axis (no left gap)
+
+    def test_cutoff_labels_lc_hc(self):
+        r = aa.AAPredPlot().predict_group(_df_rank(), kind="ranking", thresholds=(50, 80))
+        texts = {t.get_text() for t in r.ax.texts}
+        assert {"LC cut-off", "HC cut-off"} <= texts
+
+    def test_no_cutoff_labels_when_not_two(self):
+        r = aa.AAPredPlot().predict_group(_df_rank(), kind="ranking", thresholds=(60,))
+        assert not {"LC cut-off", "HC cut-off"} & {t.get_text() for t in r.ax.texts}
+
+    def test_single_group_no_legend(self):
+        df = _df_rank()
+        df["group"] = "sub"  # one group -> no redundant legend
+        r = aa.AAPredPlot().predict_group(df, kind="ranking", col_group="group")
+        assert r.ax.get_legend() is None
+
+    def test_two_groups_has_legend(self):
+        r = aa.AAPredPlot().predict_group(_df_rank(), kind="ranking", col_group="group")
+        assert r.ax.get_legend() is not None
+
 
 def _imp_data(n=12, n_feat=20, seed=0):
     rng = np.random.RandomState(seed)
