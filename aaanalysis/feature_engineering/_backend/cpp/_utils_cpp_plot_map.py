@@ -14,6 +14,12 @@ from ._utils_cpp_plot_positions import PlotPartPositions
 
 WIDTH_NORM_FACTOR = 110
 
+# Category sidebar geometry, in grid-cell (column) units, matched to the cheat-sheet reference so it
+# reads the same at any figure size. The gap between the sidebar and the heatmap equals the gap
+# between the sequence band and the heatmap (see _SEQ_HEATMAP_GAP_CELLS in _utils_cpp_plot_positions).
+_SUBCAT_BAR_WIDTH_CELLS = 0.38
+_SUBCAT_BAR_GAP_CELLS = 0.22
+
 
 # I Helper Functions
 def _get_value_type(col_val="abs_auc"):
@@ -63,9 +69,9 @@ def _get_bar_width(fig=None, len_seq=None):
 
     A constant number of columns wide, so its physical width scales with the grid cell size (not
     with the figure): the previous figure-relative width collapsed to a hairline once the constant-
-    cell sizer shrank/widened the figure. ~0.7 columns reads as a solid category strip.
+    cell sizer shrank/widened the figure. 0.38 columns matches the cheat-sheet reference strip.
     """
-    return 0.7
+    return _SUBCAT_BAR_WIDTH_CELLS
 
 
 # Get colormap
@@ -262,7 +268,7 @@ def plot_heatmap_(df_feat=None, df_cat=None,
     bar_width = _get_bar_width(fig=fig, len_seq=jmd_n_len+tmd_len+jmd_c_len)
     pe.add_subcat_bars(ax=ax, df_pos=df_pos, df_feat=df_feat,
                        col_cat=col_cat, dict_color=dict_color,
-                       bar_width=bar_width, bar_spacing=bar_width*0.75,
+                       bar_width=bar_width, bar_spacing=_SUBCAT_BAR_GAP_CELLS,
                        optimize_labels=optimize_labels, fontsize_labels=fontsize_labels)
 
     # Add scale legend

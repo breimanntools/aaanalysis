@@ -105,8 +105,11 @@ def _adjust_xticks_labels(xticks=None, xtick_labels=None, add_xtick_pos=True,
 # 1.0 = symmetric; smaller keeps the band flush to the grid on top but slim underneath.
 _SEQ_CELL_BOTTOM_MARGIN_FRAC = 0.4
 
-# Gap (points) between the heatmap grid and the sequence band, via the x-tick pad.
-_SEQ_HEATMAP_GAP_PT = 4.0
+# Gap between the heatmap grid and the sequence band. Expressed in grid-CELL (row) units so it
+# equals the category-sidebar gap (_SUBCAT_BAR_GAP_CELLS) and scales with the cell like it does.
+# The x-tick pad moves the residue letters clear of that gap (points; a touch above the cell gap).
+_SEQ_HEATMAP_GAP_CELLS = 0.22
+_SEQ_HEATMAP_GAP_PT = 8.0
 
 # Constant gap (points) between the sequence band and the JMD-N/TMD/JMD-C part labels.
 _JMD_LABEL_GAP_PT = 3.0
@@ -155,9 +158,14 @@ def _add_seq_cell_backgrounds(ax=None, labels=None, colors=None, x_shift=0.0):
     center = 0.5 * (lo + hi)
     edge = min(ax.get_ylim(), key=lambda v: abs(v - center))
     near, far = (lo, hi) if abs(lo - edge) <= abs(hi - edge) else (hi, lo)
+    d = 1 if far >= edge else -1  # from the heatmap edge toward the letters
+    # Leave a gap between the heatmap and the band top (matches the sidebar gap), but never uncover
+    # the letters: clamp the band top just above the letters' near edge if the pad is too small.
+    gap = min(_SEQ_HEATMAP_GAP_CELLS, max(0.0, abs(near - edge) - 0.05))
+    inner = edge + gap * d
     margin = abs(near - edge) * _SEQ_CELL_BOTTOM_MARGIN_FRAC
     y_far = far + margin * (1 if far >= near else -1)
-    y0, y1 = sorted((edge, y_far))
+    y0, y1 = sorted((inner, y_far))
     # Center each cell on its residue's own data-x (glyph center = tick), so the band frames the
     # letters regardless of x_shift and can be repainted around any (re-fitted) letter size.
     for e, c in zip(exts, colors):

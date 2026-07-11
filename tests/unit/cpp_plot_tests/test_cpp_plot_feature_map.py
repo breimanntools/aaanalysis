@@ -1130,23 +1130,24 @@ class TestFeatureMapSeqCharFill:
         plt.close("all")
         assert len(cells_off) == 0                          # fill=False keeps the legacy glyph bbox
 
-    def test_fill_cell_flush_to_heatmap_edge(self):
-        # The colored cell's inner edge snaps exactly onto a heatmap border (a y-limit), so there
-        # is no gap between the sequence band and the grid above it. (The band's far edge is a slim
-        # margin past the letters; that margin is a visual constant, not asserted here because the
-        # font's bounding box includes empty descender space below the caps.)
-        from matplotlib.patches import Rectangle
+    def test_fill_cell_gap_below_heatmap_matches_sidebar(self):
+        # The colored sequence band sits a small constant gap below the heatmap (not flush), and
+        # that gap equals the category-sidebar gap so both read the same distance from the grid.
+        from aaanalysis.feature_engineering._backend.cpp._utils_cpp_plot_positions import (
+            _SEQ_HEATMAP_GAP_CELLS)
+        from aaanalysis.feature_engineering._backend.cpp._utils_cpp_plot_map import (
+            _SUBCAT_BAR_GAP_CELLS)
         df_feat = aa.load_features(name="DOM_GSEC").head(40)
         cpp = aa.CPPPlot(df_scales=aa.load_scales())
         _, ax = cpp.feature_map(df_feat=df_feat, add_imp_bar_top=False, seq_char_fill=True, **self._seq_kws())
         ax.figure.canvas.draw()
-        cells = [p for p in ax.patches if isinstance(p, Rectangle) and abs(p.get_width() - 1.0) < 1e-6]
-        ys = [p.get_y() for p in cells] + [p.get_y() + p.get_height() for p in cells]
-        cy0, cy1 = min(ys), max(ys)
-        ylim = ax.get_ylim()
+        cells = [p for p in ax.patches if p.get_gid() == "_seq_cell"]
+        edge = max(ax.get_ylim())                    # heatmap bottom border (largest y, inverted axis)
+        top = min(p.get_y() for p in cells)          # cell edge nearest the grid
+        gap = abs(top - edge)
         plt.close("all")
-        flush = min(min(abs(cy0 - e), abs(cy1 - e)) for e in ylim)
-        assert flush < 1e-6                                       # one band edge is flush to the grid
+        assert abs(gap - _SEQ_HEATMAP_GAP_CELLS) < 0.02, gap           # gapped below the grid, not flush
+        assert abs(_SEQ_HEATMAP_GAP_CELLS - _SUBCAT_BAR_GAP_CELLS) < 0.02  # equals the sidebar gap
 
     def test_fill_bad_type_raises(self):
         df_feat = aa.load_features(name="DOM_GSEC").head(40)
