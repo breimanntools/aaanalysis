@@ -11,7 +11,7 @@ from matplotlib.figure import Figure
 
 import aaanalysis.utils as ut
 from ._backend.aa_pred.aa_pred_plot_comparison import plot_comparison_
-from ._backend.aa_pred.aa_pred_plot_ranking import plot_ranking_
+from ._backend.aa_pred.aa_pred_plot_ranking import plot_ranking_, ranking_figheight
 from ._backend.aa_pred.aa_pred_plot_rank_scatter import plot_rank_scatter_
 from ._backend.aa_pred.aa_pred_plot_clustermap import plot_clustermap_
 
@@ -622,12 +622,17 @@ class AAPredPlot:
                        cutoffs: Optional[Tuple[Union[int, float], ...]] = (50, 80),
                        top_n: Optional[int] = None,
                        ascending: bool = False,
+                       panel_col: Optional[str] = None,
                        title: Optional[str] = None,
                        scores_y: Optional[ut.ArrayLike1D] = None,
                        marker_size: Union[int, float] = 30,
                        diagonal: bool = True,
                        n_steps: int = 101,
                        names: Optional[List[str]] = None,
+                       labels_row: Optional[ut.ArrayLike1D] = None,
+                       colors_row: Optional[Union[Dict[str, str], List[str]]] = None,
+                       legend_title: str = "Class",
+                       legend_title_row: Optional[str] = None,
                        cmap: str = "GnBu",
                        cbar_label: str = "Pearson correlation (r)",
                        xlabel: Optional[str] = None,
@@ -646,7 +651,8 @@ class AAPredPlot:
           ``cmap``, ``xlabel``, ``ylabel``.
         * ``'ranking'`` — ranked-candidate horizontal bars; ``data`` is a per-sample ``df_pred``.
           Uses ``col_name``, ``col_score``, ``col_group``, ``col_std``, ``colors``, ``cutoffs``,
-          ``top_n``, ``ascending``, ``xlabel``, ``title``.
+          ``top_n``, ``ascending``, ``xlabel``, ``title``. With ``panel_col`` given, one panel is
+          drawn per distinct value of that column, side by side.
         * ``'rank_scatter'`` — per-protein rank scatter: proteins ranked by their maximum score
           (x-axis = rank, y-axis = score) and colored by group, the standard sanity check for a
           deployed per-protein predictor; ``data`` is a per-protein ``df_rank``. Uses
@@ -656,10 +662,13 @@ class AAPredPlot:
           ``scores_y`` the y-axis. Uses ``labels``, ``dict_color``, ``marker_size``, ``diagonal``,
           ``xlabel``, ``ylabel``.
         * ``'cutoff'`` — survival curve of the scores; ``data`` is the ``scores`` array. Uses
-          ``n_steps``, ``thresholds``, ``xlabel``, ``ylabel``.
+          ``n_steps``, ``thresholds``, ``xlabel``, ``ylabel``. With ``labels`` given, one curve is
+          drawn per group (colored by ``dict_color``) over a common cutoff grid.
         * ``'clustermap'`` — explanation-similarity clustermap; ``data`` is the per-sample
-          importance matrix. Uses ``names``, ``labels``, ``colors``, ``cmap``, ``cbar_label``,
-          ``title``, ``figsize`` (``ax`` is ignored: the clustermap owns its figure).
+          importance matrix. Uses ``names``, ``labels`` (column/top sidebar), ``labels_row``
+          (row/left sidebar, mirrors ``labels`` when omitted), ``colors``, ``colors_row``,
+          ``legend_title``, ``legend_title_row``, ``cmap``, ``cbar_label``, ``title``, ``figsize``
+          (``ax`` is ignored: the clustermap owns its figure).
 
         .. versionadded:: 1.1.0
 
@@ -679,8 +688,9 @@ class AAPredPlot:
         figsize : tuple, optional
             Figure size when ``ax`` is ``None``. If ``None``, a per-kind default is used.
         labels : array-like, optional
-            (``kind='hist'``/``'scatter'``/``'clustermap'``) Per-sample class labels used to
-            color/separate the data (adds a class legend / sidebars).
+            (``kind='hist'``/``'scatter'``/``'cutoff'``/``'clustermap'``) Per-sample class labels
+            used to color/separate the data (adds a class legend, one curve per group, or the
+            column/top clustermap sidebar).
         bins : int, default=20
             (``kind='hist'``) Number of histogram bins.
         thresholds : int, float, or list, optional
@@ -694,10 +704,11 @@ class AAPredPlot:
 
             .. versionadded:: 1.1.0
         dict_color : dict, optional
-            (``kind='hist'``/``'scatter'``) Mapping ``label -> color``; defaults to the locked
-            positive/negative sample palette. (``kind='rank_scatter'``) Mapping ``group -> color``;
-            canonical group names (``substrate``, ``non-substrate``, ``hold-out``) default to the
-            locked sample palette, with a fallback palette for other groups.
+            (``kind='hist'``/``'scatter'``/``'cutoff'``) Mapping ``label -> color``; defaults to the
+            locked positive/negative sample palette. (``kind='rank_scatter'``) Mapping
+            ``group -> color``; canonical group names (``substrate``, ``non-substrate``,
+            ``hold-out``) default to the locked sample palette, with a fallback palette for other
+            groups.
         col_name : str, default="name"
             (``kind='ranking'``) Column with the per-item labels shown as y-tick labels.
         col_score : str, default="score"
@@ -722,6 +733,12 @@ class AAPredPlot:
             (``kind='ranking'``) If given, keep only the top ``top_n`` ranked items.
         ascending : bool, default=False
             (``kind='ranking'``) Sort order; ``False`` ranks the highest score first (on top).
+        panel_col : str, optional
+            (``kind='ranking'``) Column whose distinct values each get their own ranked-bar panel,
+            drawn side by side (requires ``ax=None``); ``None`` draws a single panel. Panels share
+            the x-axis and return an array of axes.
+
+            .. versionadded:: 1.1.0
         title : str, optional
             (``kind='ranking'``/``'clustermap'``) Axes/figure title.
         scores_y : array-like, optional
@@ -734,6 +751,26 @@ class AAPredPlot:
             (``kind='cutoff'``) Number of evenly spaced cutoffs between the min and max score.
         names : list of str, optional
             (``kind='clustermap'``) Per-sample tick labels; defaults to positional indices.
+        labels_row : array-like, optional
+            (``kind='clustermap'``) Per-sample labels for the row (left) sidebar, a second
+            annotation distinct from ``labels``. When ``None`` the ``labels`` annotation is mirrored
+            onto both sidebars (the single-annotation figure).
+
+            .. versionadded:: 1.1.0
+        colors_row : dict or list, optional
+            (``kind='clustermap'``) A ``label -> color`` mapping (or list) for ``labels_row``;
+            defaults to the house categorical palette.
+
+            .. versionadded:: 1.1.0
+        legend_title : str, default="Class"
+            (``kind='clustermap'``) Title of the ``labels`` (column) sidebar legend.
+
+            .. versionadded:: 1.1.0
+        legend_title_row : str, optional
+            (``kind='clustermap'``) Title of the ``labels_row`` sidebar legend; falls back to
+            ``legend_title`` when ``None``. Only shown when ``labels_row`` is a distinct annotation.
+
+            .. versionadded:: 1.1.0
         cmap : str, default="GnBu"
             (``kind='clustermap'``) Colormap for the correlation heatmap. (``kind='hist'`` with
             ``band=True`` and no ``colors``) Colormap sampled for the per-band colors.
@@ -774,7 +811,8 @@ class AAPredPlot:
             return AAPredPlot._plot_ranking(
                 df_pred=data, col_name=col_name, col_score=col_score, col_group=col_group,
                 col_std=col_std, colors=colors, cutoffs=cutoffs, top_n=top_n, ascending=ascending,
-                ax=ax, figsize=figsize, xlabel=_default(xlabel, "Prediction score"), title=title)
+                ax=ax, figsize=figsize, xlabel=_default(xlabel, "Prediction score"), title=title,
+                panel_col=panel_col)
         if kind == "rank_scatter":
             return AAPredPlot._plot_rank_scatter(
                 df_rank=data, col_score=col_score, col_group=col_group, group_order=group_order,
@@ -791,13 +829,14 @@ class AAPredPlot:
                 ylabel=_default(ylabel, "Predictor 2 score"))
         if kind == "cutoff":
             return AAPredPlot._plot_cutoff(
-                scores=data, ax=ax, figsize=figsize, n_steps=n_steps, color=None,
-                thresholds=thresholds, xlabel=_default(xlabel, "Score cutoff"),
+                scores=data, labels=labels, ax=ax, figsize=figsize, n_steps=n_steps, color=None,
+                dict_color=dict_color, thresholds=thresholds, xlabel=_default(xlabel, "Score cutoff"),
                 ylabel=_default(ylabel, "Samples above cutoff [%]"))
         # kind == "clustermap"
         return AAPredPlot._plot_clustermap(
-            data=data, names=names, labels=labels, colors=colors, cmap=cmap, figsize=figsize,
-            cbar_label=cbar_label, title=title)
+            data=data, names=names, labels=labels, labels_row=labels_row, colors=colors,
+            colors_row=colors_row, cmap=cmap, figsize=figsize, cbar_label=cbar_label, title=title,
+            legend_title=legend_title, legend_title_row=legend_title_row)
 
     @staticmethod
     def eval(df_eval: pd.DataFrame,
@@ -1137,14 +1176,18 @@ class AAPredPlot:
     @staticmethod
     def _plot_ranking(df_pred, col_name="name", col_score="score", col_group=None, col_std=None,
                       colors=None, cutoffs=(50, 80), top_n=None, ascending=False, ax=None,
-                      figsize=None, xlabel="Prediction score", title=None):
-        """Ranked candidates as horizontal bars colored by class, with cut-off lines."""
+                      figsize=None, xlabel="Prediction score", title=None, panel_col=None):
+        """Ranked candidates as horizontal bars colored by class, with cut-off lines.
+
+        With ``panel_col`` given, one ranked-bar panel is drawn per distinct value, side by side.
+        """
         # Check input
         ut.check_str(name="col_name", val=col_name)
         ut.check_str(name="col_score", val=col_score)
         ut.check_str(name="col_group", val=col_group, accept_none=True)
         ut.check_str(name="col_std", val=col_std, accept_none=True)
-        cols_required = [c for c in [col_name, col_score, col_group, col_std] if c is not None]
+        ut.check_str(name="panel_col", val=panel_col, accept_none=True)
+        cols_required = [c for c in [col_name, col_score, col_group, col_std, panel_col] if c is not None]
         ut.check_df(name="df_pred", df=df_pred, cols_required=cols_required)
         if len(df_pred) == 0:
             raise ValueError("'df_pred' (0 rows) should contain at least one row.")
@@ -1157,12 +1200,28 @@ class AAPredPlot:
         ut.check_figsize(figsize=figsize, accept_none=True)
         ut.check_str(name="xlabel", val=xlabel, accept_none=True)
         ut.check_str(name="title", val=title, accept_none=True)
-        # Plot
-        fig, ax = plot_ranking_(df_pred=df_pred, col_name=col_name, col_score=col_score,
-                                col_group=col_group, col_std=col_std, colors=colors,
-                                cutoffs=cutoffs, top_n=top_n, ascending=ascending, ax=ax,
-                                figsize=figsize, xlabel=xlabel, title=title)
-        return ut.FigAxResult(fig, ax)
+        # Single-panel (default) vs one panel per distinct ``panel_col`` value
+        if panel_col is None:
+            fig, ax = plot_ranking_(df_pred=df_pred, col_name=col_name, col_score=col_score,
+                                    col_group=col_group, col_std=col_std, colors=colors,
+                                    cutoffs=cutoffs, top_n=top_n, ascending=ascending, ax=ax,
+                                    figsize=figsize, xlabel=xlabel, title=title)
+            return ut.FigAxResult(fig, ax)
+        if ax is not None:
+            raise ValueError("'panel_col' draws multiple panels and requires 'ax' (None).")
+        panels = list(dict.fromkeys(df_pred[panel_col].tolist()))
+        n_rows_max = max(len(df_pred[df_pred[panel_col] == p]) for p in panels)
+        if figsize is None:
+            figsize = (5.0 * len(panels), ranking_figheight(n_rows_max))
+        fig, axes = plt.subplots(1, len(panels), figsize=figsize, sharex=True, squeeze=False)
+        axes = axes[0]
+        for panel, ax_i in zip(panels, axes):
+            d = df_pred[df_pred[panel_col] == panel]
+            plot_ranking_(df_pred=d, col_name=col_name, col_score=col_score, col_group=col_group,
+                          col_std=col_std, colors=colors, cutoffs=cutoffs, top_n=top_n,
+                          ascending=ascending, ax=ax_i, figsize=figsize, xlabel=xlabel,
+                          title=str(panel) if title is None else f"{title}: {panel}")
+        return ut.FigAxResult(fig, axes)
 
     @staticmethod
     def _plot_rank_scatter(df_rank, col_score="score", col_group=None, group_order=None,
@@ -1204,8 +1263,10 @@ class AAPredPlot:
         return ut.FigAxResult(fig, ax)
 
     @staticmethod
-    def _plot_clustermap(data, names=None, labels=None, colors=None, cmap="GnBu", figsize=(9, 9),
-                         cbar_label="Pearson correlation (r)", title=None):
+    def _plot_clustermap(data, names=None, labels=None, labels_row=None, colors=None,
+                         colors_row=None, cmap="GnBu", figsize=(9, 9),
+                         cbar_label="Pearson correlation (r)", title=None,
+                         legend_title="Class", legend_title_row=None):
         """Cluster samples by explanation similarity (correlation of importance vectors)."""
         # Check input
         data = ut.check_X(X=data, min_n_samples=2, min_n_features=1)
@@ -1213,19 +1274,29 @@ class AAPredPlot:
             ut.check_list_like(name="names", val=names)
             if len(names) != data.shape[0]:
                 raise ValueError(f"'names' (n={len(names)}) should match n_samples ({data.shape[0]}).")
+        # Labels here are purely cosmetic (sidebar coloring), so any hashable class values
+        # are allowed (e.g. "substrate"/"non-substrate"), not only integers. `labels` colors
+        # the column (top) sidebar; `labels_row` the row (left) sidebar (mirrors `labels`
+        # when None).
         if labels is not None:
-            # Labels here are purely cosmetic (sidebar coloring), so any hashable class
-            # values are allowed (e.g. "substrate"/"non-substrate"), not only integers.
             labels = ut.check_list_like(name="labels", val=labels, accept_none=False)
             if len(labels) != data.shape[0]:
                 raise ValueError(f"'labels' (n={len(labels)}) should match n_samples ({data.shape[0]}).")
+        if labels_row is not None:
+            labels_row = ut.check_list_like(name="labels_row", val=labels_row, accept_none=False)
+            if len(labels_row) != data.shape[0]:
+                raise ValueError(f"'labels_row' (n={len(labels_row)}) should match n_samples ({data.shape[0]}).")
         ut.check_str(name="cmap", val=cmap)
         ut.check_figsize(figsize=figsize, accept_none=True)
         ut.check_str(name="cbar_label", val=cbar_label, accept_none=True)
         ut.check_str(name="title", val=title, accept_none=True)
+        ut.check_str(name="legend_title", val=legend_title, accept_none=True)
+        ut.check_str(name="legend_title_row", val=legend_title_row, accept_none=True)
         # Plot
-        fig, ax = plot_clustermap_(data=data, names=names, labels=labels, colors=colors,
-                                   cmap=cmap, figsize=figsize, cbar_label=cbar_label, title=title)
+        fig, ax = plot_clustermap_(data=data, names=names, labels=labels, labels_row=labels_row,
+                                   colors=colors, colors_row=colors_row, cmap=cmap,
+                                   figsize=figsize, cbar_label=cbar_label, title=title,
+                                   legend_title=legend_title, legend_title_row=legend_title_row)
         return ut.FigAxResult(fig, ax)
 
     @staticmethod
@@ -1329,17 +1400,25 @@ class AAPredPlot:
         return ut.FigAxResult(fig, ax)
 
     @staticmethod
-    def _plot_cutoff(scores, ax=None, figsize=(6, 4.5), n_steps=101, color=None, thresholds=None,
-                     xlabel="Score cutoff", ylabel="Samples above cutoff [%]"):
-        """Line plot of the percentage of samples scoring at or above each cutoff."""
+    def _plot_cutoff(scores, labels=None, ax=None, figsize=(6, 4.5), n_steps=101, color=None,
+                     dict_color=None, thresholds=None, xlabel="Score cutoff",
+                     ylabel="Samples above cutoff [%]"):
+        """Line plot of the percentage of samples scoring at or above each cutoff.
+
+        With ``labels`` given, one survival curve is drawn per group over a common cutoff grid.
+        """
         # Check input
         scores = ut.check_array_like(name="scores", val=scores, expected_dim=1)
         if len(scores) == 0:
             raise ValueError("'scores' (0 values) should contain at least one score.")
+        labels = ut.check_list_like(name="labels", val=labels) if labels is not None else None
+        if labels is not None and len(labels) != len(scores):
+            raise ValueError(f"'labels' (n={len(labels)}) should match 'scores' (n={len(scores)}).")
         ut.check_ax(ax=ax, accept_none=True)
         ut.check_figsize(figsize=figsize, accept_none=True)
         ut.check_number_range(name="n_steps", val=n_steps, min_val=2, just_int=True)
         ut.check_color(name="color", val=color, accept_none=True)
+        ut.check_dict_color(name="dict_color", val=dict_color, accept_none=True)
         ut.check_str(name="xlabel", val=xlabel, accept_none=True)
         ut.check_str(name="ylabel", val=ylabel, accept_none=True)
         list_thresholds = []
@@ -1347,13 +1426,24 @@ class AAPredPlot:
             list_thresholds = list(thresholds) if isinstance(thresholds, (list, tuple)) else [thresholds]
             for i, t in enumerate(list_thresholds):
                 ut.check_number_val(name=f"thresholds[{i}]", val=t, just_int=False)
-        # Compute
+        # Compute over a common cutoff grid so grouped curves are comparable
         scores = np.asarray(scores, dtype=float)
         cutoffs = np.linspace(float(np.min(scores)), float(np.max(scores)), n_steps)
-        pct = np.array([100.0 * np.mean(scores >= c) for c in cutoffs])
         # Draw
         fig, ax = _new_ax(ax=ax, figsize=figsize)
-        ax.plot(cutoffs, pct, color=color or ut.COLOR_FEAT_POS, linewidth=2)
+        if labels is None:
+            pct = np.array([100.0 * np.mean(scores >= c) for c in cutoffs])
+            ax.plot(cutoffs, pct, color=color or ut.COLOR_FEAT_POS, linewidth=2)
+        else:
+            labels = np.asarray(labels)
+            dict_color = dict(dict_color) if dict_color is not None else {}
+            default_cycle = [ut.COLOR_POS, ut.COLOR_NEG, ut.COLOR_REL_NEG, ut.COLOR_UNL]
+            for i, lab in enumerate(sorted(set(labels.tolist()))):
+                g_scores = scores[labels == lab]
+                pct = np.array([100.0 * np.mean(g_scores >= c) for c in cutoffs])
+                ax.plot(cutoffs, pct, color=dict_color.get(lab, default_cycle[i % len(default_cycle)]),
+                        linewidth=2, label=str(lab))
+            ax.legend(frameon=False)
         for t in list_thresholds:
             ax.axvline(t, color="0.3", linestyle="--", linewidth=1.3)
         ax.set_xlabel(xlabel)
