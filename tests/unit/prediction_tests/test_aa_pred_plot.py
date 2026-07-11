@@ -370,79 +370,85 @@ def _imp_data(n=12, n_feat=20, seed=0):
                       rng.normal(-0.6, 0.2, (n - n // 2, n_feat))])
 
 
-class TestAAPredPlotPredictClustermap:
+class TestAAPredPlotGroupCluster:
     def test_returns_fig_ax(self):
-        r = aa.AAPredPlot().predict_group(_imp_data(), kind="clustermap")
+        r = aa.AAPredPlot().group_cluster(_imp_data())
         assert r.fig is not None and r.ax is not None
 
-    def test_labels_and_names(self):
-        r = aa.AAPredPlot().predict_group(_imp_data(), kind="clustermap", labels=np.array([1, 0] * 6),
-                                    names=[f"P{i}" for i in range(12)])
+    def test_removed_from_predict_group(self):
+        # clustermap moved out of predict_group into its own method.
+        with pytest.raises(ValueError):
+            aa.AAPredPlot().predict_group(_imp_data(), kind="clustermap")
+
+    def test_invalid_kind_raises(self):
+        with pytest.raises(ValueError):
+            aa.AAPredPlot().group_cluster(_imp_data(), kind="not_a_kind")
+
+    def test_single_track_and_names(self):
+        r = aa.AAPredPlot().group_cluster(_imp_data(), tracks=[dict(values=np.array([1, 0] * 6))],
+                                          names=[f"P{i}" for i in range(12)])
         assert r.ax is not None
 
-    def test_colors_and_cmap(self):
-        r = aa.AAPredPlot().predict_group(_imp_data(), kind="clustermap", labels=np.array([1, 0] * 6),
-                                    colors={1: "red", 0: "blue"}, cmap="viridis")
+    def test_single_track_colors_and_cmap(self):
+        r = aa.AAPredPlot().group_cluster(_imp_data(), cmap="viridis",
+                                          tracks=[dict(values=np.array([1, 0] * 6),
+                                                       colors={1: "red", 0: "blue"})])
         assert r.ax is not None
 
-    def test_min_samples_raises(self):
-        with pytest.raises(ValueError):
-            aa.AAPredPlot().predict_group(np.random.RandomState(0).rand(1, 5), kind="clustermap")
+    def test_two_tracks_distinct_titles(self):
+        r = aa.AAPredPlot().group_cluster(_imp_data(),
+                                          tracks=[dict(values=["sub", "non"] * 6, title="Group",
+                                                       colors={"sub": "red", "non": "blue"}),
+                                                  dict(values=["hi", "lo"] * 6, title="Confidence",
+                                                       colors={"hi": "green", "lo": "orange"})])
+        assert r.ax is not None
 
-    def test_labels_length_mismatch_raises(self):
-        with pytest.raises(ValueError):
-            aa.AAPredPlot().predict_group(_imp_data(), kind="clustermap", labels=np.array([1, 0, 1]))
+    def test_row_only_track(self):
+        r = aa.AAPredPlot().group_cluster(_imp_data(), tracks=[dict(values=["hi", "lo"] * 6, where="left")])
+        assert r.ax is not None
 
-    def test_names_length_mismatch_raises(self):
-        with pytest.raises(ValueError):
-            aa.AAPredPlot().predict_group(_imp_data(), kind="clustermap", names=["a", "b"])
+    def test_no_tracks(self):
+        r = aa.AAPredPlot().group_cluster(_imp_data(), names=[f"P{i}" for i in range(12)])
+        assert r.ax is not None
+
+    def test_string_track_values_allowed(self):
+        r = aa.AAPredPlot().group_cluster(_imp_data(), tracks=[dict(values=["sub", "non"] * 6)])
+        assert r.ax is not None
 
     def test_figsize_cbar_label_title(self):
-        r = aa.AAPredPlot().predict_group(_imp_data(), kind="clustermap", figsize=(6, 6),
-                                    cbar_label="r", title="t")
+        r = aa.AAPredPlot().group_cluster(_imp_data(), figsize=(6, 6), cbar_label="r", title="t")
         assert r.ax is not None
 
     def test_constant_row_does_not_crash(self):
         # A zero-variance importance row yields NaN correlations; must be sanitized.
         data = _imp_data()
         data[0] = 0.0
-        r = aa.AAPredPlot().predict_group(data, kind="clustermap", labels=np.array([1, 0] * 6))
+        r = aa.AAPredPlot().group_cluster(data, tracks=[dict(values=np.array([1, 0] * 6))])
         assert r.ax is not None
 
-    def test_string_labels_allowed(self):
-        r = aa.AAPredPlot().predict_group(_imp_data(), kind="clustermap", labels=["sub", "non"] * 6)
-        assert r.ax is not None
-
-    def test_labels_row_dual_annotation(self):
-        r = aa.AAPredPlot().predict_group(_imp_data(), kind="clustermap",
-                                          labels=["sub", "non"] * 6,
-                                          labels_row=["hi", "mid", "lo"] * 4)
-        assert r.ax is not None
-
-    def test_labels_row_colors_and_titles(self):
-        r = aa.AAPredPlot().predict_group(_imp_data(), kind="clustermap",
-                                          labels=["sub", "non"] * 6,
-                                          labels_row=["hi", "lo"] * 6,
-                                          colors={"sub": "red", "non": "blue"},
-                                          colors_row={"hi": "green", "lo": "orange"},
-                                          legend_title="Group", legend_title_row="Confidence")
-        assert r.ax is not None
-
-    def test_labels_row_only_single_sidebar(self):
-        # A row annotation without a column annotation still resolves and draws a legend.
-        r = aa.AAPredPlot().predict_group(_imp_data(), kind="clustermap",
-                                          labels_row=["hi", "lo"] * 6)
-        assert r.ax is not None
-
-    def test_labels_row_none_mirrors_default(self):
-        # Default (labels_row=None): the single labels annotation mirrors onto both sidebars.
-        r = aa.AAPredPlot().predict_group(_imp_data(), kind="clustermap", labels=["sub", "non"] * 6)
-        assert r.ax is not None
-
-    def test_labels_row_length_mismatch_raises(self):
+    def test_min_samples_raises(self):
         with pytest.raises(ValueError):
-            aa.AAPredPlot().predict_group(_imp_data(), kind="clustermap",
-                                          labels_row=np.array([1, 0, 1]))
+            aa.AAPredPlot().group_cluster(np.random.RandomState(0).rand(1, 5))
+
+    def test_track_values_length_mismatch_raises(self):
+        with pytest.raises(ValueError):
+            aa.AAPredPlot().group_cluster(_imp_data(), tracks=[dict(values=np.array([1, 0, 1]))])
+
+    def test_names_length_mismatch_raises(self):
+        with pytest.raises(ValueError):
+            aa.AAPredPlot().group_cluster(_imp_data(), names=["a", "b"])
+
+    def test_too_many_tracks_raises(self):
+        with pytest.raises(ValueError):
+            aa.AAPredPlot().group_cluster(_imp_data(), tracks=[dict(values=["a", "b"] * 6)] * 3)
+
+    def test_track_missing_values_key_raises(self):
+        with pytest.raises(ValueError):
+            aa.AAPredPlot().group_cluster(_imp_data(), tracks=[{"colors": {1: "red"}}])
+
+    def test_bad_where_raises(self):
+        with pytest.raises(ValueError):
+            aa.AAPredPlot().group_cluster(_imp_data(), tracks=[dict(values=["a", "b"] * 6, where="middle")])
 
 
 class TestAAPredPlotPredictHist:
