@@ -505,6 +505,10 @@ _Avoid_: denoising, blurring (attenuates peaks).
 A per-protein **max-score-vs-rank** scatter colored by group (substrate / hold-out / non-substrate) with optional threshold lines — the standard deployed-predictor sanity check. Lives on `AAPredPlot.predict_group(kind="rank_scatter")` (its logic twin is `AAPred`, which produces the per-protein scores it visualizes).
 _Avoid_: the standalone `aa.plot_rank` (removed — folded into `AAPredPlot`); `kind="ranking"` (the per-candidate leaderboard **bars**, a different figure); `CPPPlot.ranking` (ranks *features* from `df_feat`).
 
+**score-grid heatmap**:
+An **arbitrary wide-numeric matrix** rendered as an annotated heatmap with the best (or worst) cell(s) boxed — the generic 2-D parameter-sweep view (e.g. part × scale, n_train × n_dpu). `AAPredPlot.eval(df_eval, kind="heatmap", highlight=...)`; `df_eval` is any rows × cols numeric frame, with no prediction-specific schema required. This is the package's general annotated-matrix renderer; it just lives on `AAPredPlot.eval` rather than under a dedicated top-level name.
+_Avoid_: assuming a standalone `aa.plot_heatmap` exists (it does not — this is the generic matrix surface); `CPPPlot.heatmap` (a CPP **feature** map built from `df_feat`/`df_cat`, not a free matrix); `pipe.plot_eval` / `aap.plot_eval` (a find_features **sweep** grid keyed on named CPP axes such as `list_parts`/`scale`, not an arbitrary matrix).
+
 ### Feature selection vocabulary
 
 **feature selection**:
