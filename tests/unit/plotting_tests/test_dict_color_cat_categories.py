@@ -65,25 +65,25 @@ class TestStructurePreprocessorCategoriesResolve:
     """Every category produced by build_cat must be in DICT_COLOR_CAT."""
 
     def test_single_feature_category_resolves(self):
-        stp = aa.StructurePreprocessor(verbose=False)
-        df_cat = stp.build_cat(features=["ss3"])
+        strp = aa.StructurePreprocessor(verbose=False)
+        df_cat = strp.build_cat(features=["ss3"])
         for c in df_cat[ut.COL_CAT].unique():
             assert c in ut.DICT_COLOR_CAT
 
     def test_all_v1_keys_resolve(self):
         # The full v1 feature key set; v1.1 also includes these.
-        stp = aa.StructurePreprocessor(verbose=False)
+        strp = aa.StructurePreprocessor(verbose=False)
         all_keys = ["ss3", "ss8", "rasa", "phi_psi_sincos",
                     "bfactor", "depth"]
-        df_cat = stp.build_cat(features=all_keys)
+        df_cat = strp.build_cat(features=all_keys)
         for c in df_cat[ut.COL_CAT].unique():
             assert c in ut.DICT_COLOR_CAT
 
     def test_all_categories_are_structure(self):
-        stp = aa.StructurePreprocessor(verbose=False)
+        strp = aa.StructurePreprocessor(verbose=False)
         all_keys = ["ss3", "ss8", "rasa", "phi_psi_sincos",
                     "bfactor", "depth"]
-        df_cat = stp.build_cat(features=all_keys)
+        df_cat = strp.build_cat(features=all_keys)
         assert set(df_cat[ut.COL_CAT].unique()) == {"Structure"}
 
 

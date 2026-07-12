@@ -42,47 +42,47 @@ def _canned(seq, ss="H"):
 class TestGetDsspEdges:
     def test_dssp_runtimeerror_sets_not_ok(self, tmp_path):
         df = _df_one()
-        stp = aa.StructurePreprocessor(verbose=False)
+        strp = aa.StructurePreprocessor(verbose=False)
         (tmp_path / "P1.pdb").write_text("dummy")
         with _mock_binary_present(), \
              patch(RUNNER, side_effect=RuntimeError("dssp boom")):
             with warnings.catch_warnings(record=True) as w:
                 warnings.simplefilter("always")
-                out = stp.get_dssp(df_seq=df, pdb_folder=str(tmp_path))
+                out = strp.get_dssp(df_seq=df, pdb_folder=str(tmp_path))
         assert any("DSSP failed" in str(x.message) for x in w)
         assert not bool(out[ut.COL_DSSP_OK].iloc[0])
 
     def test_no_matching_chains_sets_not_ok(self, tmp_path):
         df = _df_one()
-        stp = aa.StructurePreprocessor(verbose=False)
+        strp = aa.StructurePreprocessor(verbose=False)
         (tmp_path / "P1.pdb").write_text("dummy")
         with _mock_binary_present(), patch(RUNNER, side_effect=lambda p: []):
             with warnings.catch_warnings(record=True) as w:
                 warnings.simplefilter("always")
-                out = stp.get_dssp(df_seq=df, pdb_folder=str(tmp_path))
+                out = strp.get_dssp(df_seq=df, pdb_folder=str(tmp_path))
         assert any("No chains" in str(x.message) for x in w)
         assert not bool(out[ut.COL_DSSP_OK].iloc[0])
 
     def test_residue_mismatch_warns_but_ok(self, tmp_path):
         df = _df_one("ACDEFGHIK")
-        stp = aa.StructurePreprocessor(verbose=False)
+        strp = aa.StructurePreprocessor(verbose=False)
         (tmp_path / "P1.pdb").write_text("dummy")
         # chain sequence differs from target -> mismatch warning, still dssp_ok
         with _mock_binary_present(), \
              patch(RUNNER, side_effect=lambda p: _canned("MMMMMMMMM")):
             with warnings.catch_warnings(record=True) as w:
                 warnings.simplefilter("always")
-                out = stp.get_dssp(df_seq=df, pdb_folder=str(tmp_path))
+                out = strp.get_dssp(df_seq=df, pdb_folder=str(tmp_path))
         assert any("mismatch" in str(x.message) for x in w)
         assert bool(out[ut.COL_DSSP_OK].iloc[0])
 
     def test_verbose_prints_entry(self, tmp_path, capsys):
         df = _df_one()
-        stp = aa.StructurePreprocessor(verbose=True)
+        strp = aa.StructurePreprocessor(verbose=True)
         (tmp_path / "P1.pdb").write_text("dummy")
         with _mock_binary_present(), \
              patch(RUNNER, side_effect=lambda p: _canned("ACDEFGHIK")):
-            stp.get_dssp(df_seq=df, pdb_folder=str(tmp_path))
+            strp.get_dssp(df_seq=df, pdb_folder=str(tmp_path))
         assert "P1" in capsys.readouterr().out
 
 
@@ -91,18 +91,18 @@ class TestEncodePdbEdges:
 
     def test_parse_fail_sets_not_ok(self, tmp_path):
         (tmp_path / "P1.pdb").write_text("x")
-        stp = aa.StructurePreprocessor(verbose=False)
+        strp = aa.StructurePreprocessor(verbose=False)
         with patch(f"{MODULE}.load_structure", side_effect=ValueError("bad pdb")):
             with warnings.catch_warnings(record=True) as w:
                 warnings.simplefilter("always")
-                _, df_out = stp.encode_pdb(df_seq=_df_one(), pdb_folder=str(tmp_path),
+                _, df_out = strp.encode_pdb(df_seq=_df_one(), pdb_folder=str(tmp_path),
                                            features=["bfactor"], return_df=True)
         assert any("parse failed" in str(x.message) for x in w)
         assert not bool(df_out.iloc[0, -1])  # *_ok column False
 
     def test_encoder_fail_sets_not_ok(self, tmp_path):
         (tmp_path / "P1.pdb").write_text("x")
-        stp = aa.StructurePreprocessor(verbose=False)
+        strp = aa.StructurePreprocessor(verbose=False)
         # The shared per-entry chain pick runs in the frontend before the
         # encoders, so stub it (the dummy structure is never really walked);
         # the encoder still raises to exercise the row-degrade path.
@@ -112,26 +112,26 @@ class TestEncodePdbEdges:
              patch(f"{MODULE}.encode_bfactor", side_effect=RuntimeError("enc boom")):
             with warnings.catch_warnings(record=True) as w:
                 warnings.simplefilter("always")
-                _, df_out = stp.encode_pdb(df_seq=_df_one(), pdb_folder=str(tmp_path),
+                _, df_out = strp.encode_pdb(df_seq=_df_one(), pdb_folder=str(tmp_path),
                                            features=["bfactor"], return_df=True)
         assert any("encoder" in str(x.message) for x in w)
         assert not bool(df_out.iloc[0, -1])
 
     def test_on_failure_raise(self, tmp_path):
         # no PDB file -> failure -> raise (a 'not found' warning fires first)
-        stp = aa.StructurePreprocessor(verbose=False)
+        strp = aa.StructurePreprocessor(verbose=False)
         with warnings.catch_warnings():
             warnings.simplefilter("ignore")
             with pytest.raises(RuntimeError):
-                stp.encode_pdb(df_seq=_df_one(), pdb_folder=str(tmp_path),
+                strp.encode_pdb(df_seq=_df_one(), pdb_folder=str(tmp_path),
                                features=["bfactor"], on_failure="raise")
 
     def test_on_failure_drop(self, tmp_path):
         # no PDB file -> failure -> drop the entry
-        stp = aa.StructurePreprocessor(verbose=False)
+        strp = aa.StructurePreprocessor(verbose=False)
         with warnings.catch_warnings():
             warnings.simplefilter("ignore")
-            out, df_out = stp.encode_pdb(df_seq=_df_one(), pdb_folder=str(tmp_path),
+            out, df_out = strp.encode_pdb(df_seq=_df_one(), pdb_folder=str(tmp_path),
                                          features=["bfactor"], on_failure="drop",
                                          return_df=True)
         assert len(df_out) == 0  # the only entry was dropped
@@ -139,13 +139,13 @@ class TestEncodePdbEdges:
     def test_verbose_pdb(self, tmp_path, capsys):
         (tmp_path / "P1.pdb").write_text("x")
         import numpy as np
-        stp = aa.StructurePreprocessor(verbose=True)
+        strp = aa.StructurePreprocessor(verbose=True)
         with patch(f"{MODULE}.load_structure", return_value=object()), \
              patch(f"{MODULE}._resolve_best_chain",
                    return_value=(None, None, None, 0.0)), \
              patch(f"{MODULE}.encode_bfactor",
                    return_value=(np.zeros((9, 1)), 1.0)):
-            stp.encode_pdb(df_seq=_df_one(), pdb_folder=str(tmp_path),
+            strp.encode_pdb(df_seq=_df_one(), pdb_folder=str(tmp_path),
                            features=["bfactor"])
         assert "P1" in capsys.readouterr().out
 
@@ -154,26 +154,26 @@ class TestEncodePaeEdges:
     """encode_pae failure policy (missing sidecar)."""
 
     def test_missing_sidecar_nan(self, tmp_path):
-        stp = aa.StructurePreprocessor(verbose=False)
+        strp = aa.StructurePreprocessor(verbose=False)
         with warnings.catch_warnings():
             warnings.simplefilter("ignore")
-            out = stp.encode_pae(df_seq=_df_one(), pae_folder=str(tmp_path),
+            out = strp.encode_pae(df_seq=_df_one(), pae_folder=str(tmp_path),
                                  features=["pae_row_mean"])
         assert "P1" in out  # NaN tensor present under 'nan' policy
 
     def test_missing_sidecar_raise(self, tmp_path):
-        stp = aa.StructurePreprocessor(verbose=False)
+        strp = aa.StructurePreprocessor(verbose=False)
         with warnings.catch_warnings():
             warnings.simplefilter("ignore")
             with pytest.raises(RuntimeError):
-                stp.encode_pae(df_seq=_df_one(), pae_folder=str(tmp_path),
+                strp.encode_pae(df_seq=_df_one(), pae_folder=str(tmp_path),
                                features=["pae_row_mean"], on_failure="raise")
 
     def test_missing_sidecar_drop(self, tmp_path):
-        stp = aa.StructurePreprocessor(verbose=False)
+        strp = aa.StructurePreprocessor(verbose=False)
         with warnings.catch_warnings():
             warnings.simplefilter("ignore")
-            out, df_out = stp.encode_pae(df_seq=_df_one(), pae_folder=str(tmp_path),
+            out, df_out = strp.encode_pae(df_seq=_df_one(), pae_folder=str(tmp_path),
                                          features=["pae_row_mean"], on_failure="drop",
                                          return_df=True)
         assert len(df_out) == 0
@@ -190,26 +190,26 @@ class TestEncodePaeSuccess:
 
     def test_success(self, tmp_path):
         df = _pae_df(tmp_path)
-        stp = aa.StructurePreprocessor(verbose=False)
-        out = stp.encode_pae(df_seq=df, pae_folder=str(tmp_path),
+        strp = aa.StructurePreprocessor(verbose=False)
+        out = strp.encode_pae(df_seq=df, pae_folder=str(tmp_path),
                              features=["pae_row_mean"])
         assert "AF_TINY" in out
         assert out["AF_TINY"].shape[0] == len(AF_SEQ)
 
     def test_success_verbose(self, tmp_path, capsys):
         df = _pae_df(tmp_path)
-        stp = aa.StructurePreprocessor(verbose=True)
-        stp.encode_pae(df_seq=df, pae_folder=str(tmp_path),
+        strp = aa.StructurePreprocessor(verbose=True)
+        strp.encode_pae(df_seq=df, pae_folder=str(tmp_path),
                        features=["pae_row_mean"])
         assert "AF_TINY" in capsys.readouterr().out
 
     def test_encoder_fail_sets_not_ok(self, tmp_path):
         df = _pae_df(tmp_path)
-        stp = aa.StructurePreprocessor(verbose=False)
+        strp = aa.StructurePreprocessor(verbose=False)
         with patch(f"{MODULE}.encode_pae_row_mean", side_effect=RuntimeError("boom")):
             with warnings.catch_warnings(record=True) as w:
                 warnings.simplefilter("always")
-                _, df_out = stp.encode_pae(df_seq=df, pae_folder=str(tmp_path),
+                _, df_out = strp.encode_pae(df_seq=df, pae_folder=str(tmp_path),
                                            features=["pae_row_mean"], return_df=True)
         assert any("encoder" in str(x.message) for x in w)
         assert not bool(df_out.iloc[0, -1])
@@ -226,43 +226,43 @@ class TestEncodeDomainsInline:
                     "domain_size", "n_domains_in_protein"]
 
     def test_success_all_features(self):
-        stp = aa.StructurePreprocessor(verbose=False)
-        out = stp.encode_domains(df_seq=self._df(), features=self.DOMAIN_FEATS)
+        strp = aa.StructurePreprocessor(verbose=False)
+        out = strp.encode_domains(df_seq=self._df(), features=self.DOMAIN_FEATS)
         assert "P1" in out
         assert out["P1"].shape[0] == 30
 
     def test_success_verbose(self, capsys):
-        stp = aa.StructurePreprocessor(verbose=True)
-        stp.encode_domains(df_seq=self._df(), features=["domain_boundary"])
+        strp = aa.StructurePreprocessor(verbose=True)
+        strp.encode_domains(df_seq=self._df(), features=["domain_boundary"])
         assert "P1" in capsys.readouterr().out
 
     def test_inline_chopping_none(self):
-        stp = aa.StructurePreprocessor(verbose=False)
+        strp = aa.StructurePreprocessor(verbose=False)
         with warnings.catch_warnings(record=True) as w:
             warnings.simplefilter("always")
-            _, df_out = stp.encode_domains(df_seq=self._df(chopping=None),
+            _, df_out = strp.encode_domains(df_seq=self._df(chopping=None),
                                            features=["domain_boundary"],
                                            return_df=True)
         assert any("missing" in str(x.message) for x in w)
         assert not bool(df_out.iloc[0, -1])
 
     def test_inline_chopping_parse_fail(self):
-        stp = aa.StructurePreprocessor(verbose=False)
+        strp = aa.StructurePreprocessor(verbose=False)
         with warnings.catch_warnings(record=True) as w:
             warnings.simplefilter("always")
-            _, df_out = stp.encode_domains(df_seq=self._df(chopping="garbage!!"),
+            _, df_out = strp.encode_domains(df_seq=self._df(chopping="garbage!!"),
                                            features=["domain_boundary"],
                                            return_df=True)
         assert any("parse failed" in str(x.message) for x in w)
         assert not bool(df_out.iloc[0, -1])
 
     def test_encoder_fail_sets_not_ok(self):
-        stp = aa.StructurePreprocessor(verbose=False)
+        strp = aa.StructurePreprocessor(verbose=False)
         with patch(f"{MODULE}.encode_domain_boundary",
                    side_effect=RuntimeError("dom boom")):
             with warnings.catch_warnings(record=True) as w:
                 warnings.simplefilter("always")
-                _, df_out = stp.encode_domains(df_seq=self._df(),
+                _, df_out = strp.encode_domains(df_seq=self._df(),
                                                features=["domain_boundary"],
                                                return_df=True)
         assert any("encoder" in str(x.message) for x in w)

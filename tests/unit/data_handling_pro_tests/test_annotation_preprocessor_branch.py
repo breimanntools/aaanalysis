@@ -27,19 +27,19 @@ class TestIngestScoreColumn:
     """ingest: optional 'score' column triggers the unit-range guard."""
 
     def test_score_column_in_range_accepted(self):
-        ap = aa.AnnotationPreprocessor(verbose=False)
+        annp = aa.AnnotationPreprocessor(verbose=False)
         df_user = pd.DataFrame({
             ut.COL_PROTEIN_ID: ["P1", "P1"],
             ut.COL_START: [3, 7],
             ut.COL_FEATURE_TYPE: ["phospho", "phospho"],
             ut.COL_SCORE: [0.4, 1.0],
         })
-        out = ap.ingest(df_user=df_user)
+        out = annp.ingest(df_user=df_user)
         assert ut.COL_SCORE in out.columns
         assert len(out) == 2
 
     def test_score_column_out_of_range_raises(self):
-        ap = aa.AnnotationPreprocessor(verbose=False)
+        annp = aa.AnnotationPreprocessor(verbose=False)
         df_user = pd.DataFrame({
             ut.COL_PROTEIN_ID: ["P1"],
             ut.COL_START: [3],
@@ -47,7 +47,7 @@ class TestIngestScoreColumn:
             ut.COL_SCORE: [1.5],   # out of [0, 1]
         })
         with pytest.raises(ValueError):
-            ap.ingest(df_user=df_user)
+            annp.ingest(df_user=df_user)
 
 
 class TestToDfSeqPositionOutOfRange:
@@ -55,7 +55,7 @@ class TestToDfSeqPositionOutOfRange:
     exercises the ``1 <= p <= len(seq)`` False arm in the residue-type pass."""
 
     def test_position_beyond_sequence_ignored_for_residue_type(self):
-        ap = aa.AnnotationPreprocessor(verbose=False)
+        annp = aa.AnnotationPreprocessor(verbose=False)
         df_seq = _df_seq_one()
         # 'start'=999 is past len(TDS_SEQ); the residue-type collector must
         # skip it without IndexError. Pair with an in-range positive so the
@@ -66,11 +66,11 @@ class TestToDfSeqPositionOutOfRange:
             ut.COL_FEATURE_TYPE: ["phospho", "phospho"],
             ut.COL_AA: ["S", ""],
         })
-        df_annot = ap.ingest(df_user=df_user)
+        df_annot = annp.ingest(df_user=df_user)
         # Must not raise IndexError despite the out-of-range position; the
         # residue-type collector skips p=999 (1 <= p <= len(seq) False arm)
         # while the in-range S at position 3 still drives residue matching.
-        out = ap.to_df_seq(df_seq=df_seq, df_annot=df_annot,
+        out = annp.to_df_seq(df_seq=df_seq, df_annot=df_annot,
                            feature_type="phospho", match_residue_type=True)
         assert len(out["aa_context"].iloc[0]) == len(TDS_SEQ)
         # Residue-type matching restricts eligible context to S residues only.

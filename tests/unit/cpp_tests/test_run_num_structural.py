@@ -70,8 +70,8 @@ class TestStructuralRunNum:
 
     def test_encode_dssp_plus_combine_then_run_num(self):
         df_seq = _build_df_seq_with_dssp(n_per_label=3, L=40)
-        stp = aa.StructurePreprocessor(verbose=False)
-        dict_dssp = stp.encode_dssp(
+        strp = aa.StructurePreprocessor(verbose=False)
+        dict_dssp = strp.encode_dssp(
             df_seq=df_seq, pdb_folder=None,
             features=["ss3", "rasa", "phi_psi_sincos"])
         dict_pdb = _build_synthetic_dict_pdb(df_seq, D=1)
@@ -85,9 +85,9 @@ class TestStructuralRunNum:
         feats = ["ss3", "rasa", "phi_psi_sincos", "bfactor"]
         with warnings.catch_warnings():
             warnings.simplefilter("ignore")
-            df_scales = stp.build_scales(
+            df_scales = strp.build_scales(
                 df_seq=df_seq, dict_num=dict_num, features=feats)
-        df_cat = stp.build_cat(features=feats)
+        df_cat = strp.build_cat(features=feats)
         nf = aa.NumericalFeature()
         df_parts, dict_num_parts = nf.get_parts(df_seq=df_seq,
                                                 dict_num=dict_num)
@@ -108,10 +108,10 @@ class TestStructuralRunNum:
             "entry": ["P1", "P2"],
             "sequence": ["ACDEFGHIKLMNPQRS", "VLIMKRSTGADE"],
         })
-        stp = aa.StructurePreprocessor(verbose=False)
+        strp = aa.StructurePreprocessor(verbose=False)
         with warnings.catch_warnings():
             warnings.simplefilter("ignore")
-            d, df_out = stp.encode_pdb(return_df=True, df_seq=df_seq,
+            d, df_out = strp.encode_pdb(return_df=True, df_seq=df_seq,
                                        pdb_folder=str(PDB_FIXTURES),
                                        features=["bfactor"])
         assert d["P1"].shape == (16, 1)
@@ -119,15 +119,15 @@ class TestStructuralRunNum:
 
     def test_build_scales_matches_combined_D(self):
         df_seq = _build_df_seq_with_dssp(n_per_label=2, L=30)
-        stp = aa.StructurePreprocessor(verbose=False)
-        dict_dssp = stp.encode_dssp(df_seq=df_seq, pdb_folder=None,
+        strp = aa.StructurePreprocessor(verbose=False)
+        dict_dssp = strp.encode_dssp(df_seq=df_seq, pdb_folder=None,
                                        features=["ss3", "rasa"])
         feats = ["ss3", "rasa"]
         with warnings.catch_warnings():
             warnings.simplefilter("ignore")
-            df_scales = stp.build_scales(
+            df_scales = strp.build_scales(
                 df_seq=df_seq, dict_num=dict_dssp, features=feats)
-        df_cat = stp.build_cat(features=feats)
+        df_cat = strp.build_cat(features=feats)
         D = next(iter(dict_dssp.values())).shape[1]
         assert D == len(df_scales.columns)
         assert D == len(df_cat)
@@ -210,12 +210,12 @@ class TestStructuralRunNumRealisticVariance:
     def test_realistic_pipeline_produces_features(self):
         df_seq, dict_num = _build_realistic_corpus(n_per_label=4, L=40)
         feats = ["ss3", "plddt", "bfactor", "rasa"]   # D = 3+1+1+1 = 6
-        stp = aa.StructurePreprocessor(verbose=False)
+        strp = aa.StructurePreprocessor(verbose=False)
         with warnings.catch_warnings():
             warnings.simplefilter("ignore")
-            df_scales = stp.build_scales(
+            df_scales = strp.build_scales(
                 df_seq=df_seq, dict_num=dict_num, features=feats)
-        df_cat = stp.build_cat(features=feats)
+        df_cat = strp.build_cat(features=feats)
         nf = aa.NumericalFeature()
         df_parts, dict_num_parts = nf.get_parts(df_seq=df_seq,
                                                 dict_num=dict_num)
@@ -241,10 +241,10 @@ class TestStructuralRunNumRealisticVariance:
         feats = ["ss3", "plddt", "rasa"]
         keep_cols = [0, 1, 2, 3, 5]
         dict_num = {k: v[:, keep_cols] for k, v in dict_num_full.items()}
-        stp = aa.StructurePreprocessor(verbose=False)
+        strp = aa.StructurePreprocessor(verbose=False)
         with warnings.catch_warnings():
             warnings.simplefilter("ignore")
-            df_scales = stp.build_scales(
+            df_scales = strp.build_scales(
                 df_seq=df_seq, dict_num=dict_num, features=feats)
         corr = df_scales.corr().values
         # Diagonal is 1.0; off-diagonal must be finite (NOT all-NaN).
@@ -266,10 +266,10 @@ class TestStructuralRunNumRealisticVariance:
         feats = ["plddt", "bfactor", "rasa"]
         keep_cols = [3, 4, 5]
         dict_num = {k: v[:, keep_cols] for k, v in dict_num_full.items()}
-        stp = aa.StructurePreprocessor(verbose=False)
+        strp = aa.StructurePreprocessor(verbose=False)
         with warnings.catch_warnings():
             warnings.simplefilter("ignore")
-            df_scales = stp.build_scales(
+            df_scales = strp.build_scales(
                 df_seq=df_seq, dict_num=dict_num, features=feats)
         # plddt and bfactor columns should be perfectly correlated (the
         # values are identical per construction).
@@ -278,7 +278,7 @@ class TestStructuralRunNumRealisticVariance:
         # > 0.95 in practice and never below max_cor default (0.5).
         assert corr_pb > 0.5
 
-        df_cat = stp.build_cat(features=feats)
+        df_cat = strp.build_cat(features=feats)
         nf = aa.NumericalFeature()
         df_parts, dict_num_parts = nf.get_parts(df_seq=df_seq,
                                                 dict_num=dict_num)

@@ -18,7 +18,7 @@ class TestAAMutBranch:
     """Cover the verbose-output arm and the df_cat lookup arm of AAMut.run."""
 
     def test_run_verbose(self):
-        # _aamut.py:127 — verbose print branch; backend aamut.py:14 df_cat lookup taken
+        # _aamut.py:127 — verbose print branch; backend aam.py:14 df_cat lookup taken
         df_impact = aa.AAMut(verbose=True).run(from_aa="M", to_aa="V")
         assert len(df_impact) > 0
         assert ut.COL_CAT in df_impact.columns
@@ -53,13 +53,13 @@ class TestSeqMutScanRegionBranch:
     """Cover the jmd_n / jmd_c region arms of get_region_positions + verbose."""
 
     def test_scan_region_jmd_n(self, df_seq_pos, df_feat_multipart):
-        # seqmut.py:46 — region 'jmd_n' positions
+        # seqm.py:46 — region 'jmd_n' positions
         df_scan = aa.SeqMut().scan(df_seq=df_seq_pos, df_feat=df_feat_multipart, region="jmd_n")
         assert len(df_scan) > 0
         assert set(df_scan[ut.COL_REGION]) <= {"jmd_n"}
 
     def test_scan_region_jmd_c(self, df_seq_pos, df_feat_multipart):
-        # seqmut.py:48 — region 'jmd_c' positions
+        # seqm.py:48 — region 'jmd_c' positions
         df_scan = aa.SeqMut().scan(df_seq=df_seq_pos, df_feat=df_feat_multipart, region="jmd_c")
         assert len(df_scan) > 0
         assert set(df_scan[ut.COL_REGION]) <= {"jmd_c"}

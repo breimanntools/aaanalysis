@@ -42,9 +42,9 @@ class TestAlphaFoldFetchLive:
 
     def test_fetch_alphafold_downloads_a_real_structure(self):
         df = pd.DataFrame({"entry": [KNOWN_ENTRY], "sequence": ["MKV"], "label": [1]})
-        stp = aa.StructurePreprocessor(verbose=False)
+        strp = aa.StructurePreprocessor(verbose=False)
         out = tempfile.mkdtemp()
-        status = stp.fetch_alphafold(df_seq=df, out_folder=out, on_failure="nan")
+        status = strp.fetch_alphafold(df_seq=df, out_folder=out, on_failure="nan")
         assert bool(status.iloc[0]["alphafold_ok"]) is True, (
             f"fetch_alphafold failed for a known AlphaFold-DB entry ({KNOWN_ENTRY}) "
             "— the upstream file naming/version likely changed; see _af_resolve_urls")

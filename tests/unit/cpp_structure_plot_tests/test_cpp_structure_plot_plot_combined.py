@@ -193,10 +193,10 @@ class TestPlotCombinedComplex:
 
     def test_custom_df_scales_and_df_cat(self, pdb_path, df_feat):
         # Forwarding df_cat to the inner CPPPlot avoids the "scale ids missing in df_cat" crash.
-        csp = aa.CPPStructurePlot(jmd_n_len=10, jmd_c_len=10,
+        cpps_plot = aa.CPPStructurePlot(jmd_n_len=10, jmd_c_len=10,
                                   df_scales=aa.load_scales(),
                                   df_cat=aa.load_scales(name="scales_cat"), verbose=False)
-        view = csp.plot_combined(df_feat=df_feat, pdb=pdb_path, tmd_len=10, col_imp="feat_impact")
+        view = cpps_plot.plot_combined(df_feat=df_feat, pdb=pdb_path, tmd_len=10, col_imp="feat_impact")
         assert isinstance(view, CombinedView)
 
     def test_uniprot_fetch_path_mocked(self, df_feat, monkeypatch):
@@ -214,8 +214,8 @@ class TestPlotCombinedComplex:
         assert isinstance(view, CombinedView)
 
     def test_missing_py3dmol_raises_friendly(self, pdb_path, df_feat, monkeypatch):
-        from aaanalysis.feature_engineering_pro import _cpp_structure_plot as csp_mod
-        monkeypatch.setattr(csp_mod, "py3dmol_available", lambda: False)
+        from aaanalysis.feature_engineering_pro import _cpp_structure_plot as cpps_plot_mod
+        monkeypatch.setattr(cpps_plot_mod, "py3dmol_available", lambda: False)
         with pytest.raises(RuntimeError, match="py3Dmol"):
             _csp().plot_combined(df_feat=df_feat, pdb=pdb_path, tmd_len=10, col_imp="feat_impact")
 

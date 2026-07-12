@@ -38,8 +38,8 @@ paths:
 A logic/plot pair whose precompute is **cheap** (a getter or light transform) may
 let users skip the logic class: the plot method takes an optional
 `<base_abbrev>_kws` dict — the abbreviation from the class-abbreviation registry,
-e.g. `aal_kws` for `AAlogoPlot` — holding the logic class's getter kwargs, and
-computes the data internally. Reference: `AAlogoPlot.single_logo`'s `aal_kws`
+e.g. `aal_kws` for `AALogoPlot` — holding the logic class's getter kwargs, and
+computes the data internally. Reference: `AALogoPlot.single_logo`'s `aal_kws`
 (and `multi_logo`'s `list_aal_kws`).
 
 Contract (mirror the reference exactly):
@@ -51,8 +51,8 @@ Contract (mirror the reference exactly):
   per panel), mutually exclusive with the list-of-data param.
 - numpydoc: state that the data is computed internally from these kwargs.
 
-**Apply ONLY to LIGHT pairs** (cheap precompute): `AAlogoPlot` (`aal_kws`, done),
-`AAMutPlot` (`aamut_kws`), `SeqMutPlot` (`seqmut_kws`).
+**Apply ONLY to LIGHT pairs** (cheap precompute): `AALogoPlot` (`aal_kws`, done),
+`AAMutPlot` (`aam_kws`), `SeqMutPlot` (`seqm_kws`).
 
 **NEVER add it to pairs whose `.run` / `.fit` is compute-intensive** —
 `CPPPlot` (`CPP.run` = feature discovery), `dPULearnPlot` (`dPULearn.fit` =

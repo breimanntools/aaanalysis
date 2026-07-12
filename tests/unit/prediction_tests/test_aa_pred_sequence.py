@@ -28,8 +28,8 @@ def fitted():
     df_feat = aa.load_features(name="DOM_GSEC").head(10)
     sf = aa.SequenceFeature()
     X = sf.feature_matrix(features=df_feat, df_parts=sf.get_df_parts(df_seq=df_seq))
-    aapred = aa.AAPred(df_feat=df_feat, random_state=42).fit(X, labels)
-    return aapred, df_seq, df_feat
+    aap = aa.AAPred(df_feat=df_feat, random_state=42).fit(X, labels)
+    return aap, df_seq, df_feat
 
 
 @pytest.fixture(autouse=True)
@@ -41,48 +41,48 @@ def _close():
 class TestFeaturizerBinding:
     def test_df_feat_stored(self, fitted):
         _, _, df_feat = fitted
-        aapred = aa.AAPred(df_feat=df_feat)
-        assert aapred._df_feat is not None
+        aap = aa.AAPred(df_feat=df_feat)
+        assert aap._df_feat is not None
 
     def test_df_scales_stored(self):
         df_scales = aa.load_scales()
-        aapred = aa.AAPred(df_scales=df_scales)
-        assert aapred._df_scales is not None
+        aap = aa.AAPred(df_scales=df_scales)
+        assert aap._df_scales is not None
 
     def test_predict_seq_without_df_feat_raises(self, fitted):
         _, df_seq, _ = fitted
-        aapred = aa.AAPred(random_state=0)
+        aap = aa.AAPred(random_state=0)
         # fit on a dummy X so it is "fitted" but has no df_feat
-        aapred.fit(np.random.RandomState(0).rand(20, 10), np.array([0, 1] * 10))
+        aap.fit(np.random.RandomState(0).rand(20, 10), np.array([0, 1] * 10))
         with pytest.raises(ValueError):
-            aapred.predict(df_seq.head(3), level="sequence")
+            aap.predict(df_seq.head(3), level="sequence")
 
 
 class TestPredictSeq:
     def test_columns(self, fitted):
-        aapred, df_seq, _ = fitted
-        df_pred = aapred.predict(df_seq.head(5), level="sequence")
+        aap, df_seq, _ = fitted
+        df_pred = aap.predict(df_seq.head(5), level="sequence")
         assert list(df_pred.columns) == ["entry", "score", "score_std"]
 
     def test_one_row_per_protein(self, fitted):
-        aapred, df_seq, _ = fitted
-        df_pred = aapred.predict(df_seq.head(5), level="sequence")
+        aap, df_seq, _ = fitted
+        df_pred = aap.predict(df_seq.head(5), level="sequence")
         assert len(df_pred) == 5
 
     def test_scores_in_range(self, fitted):
-        aapred, df_seq, _ = fitted
-        df_pred = aapred.predict(df_seq.head(5), level="sequence")
+        aap, df_seq, _ = fitted
+        df_pred = aap.predict(df_seq.head(5), level="sequence")
         assert df_pred["score"].between(0, 1).all()
 
     def test_threshold_adds_predicted_label(self, fitted):
-        aapred, df_seq, _ = fitted
-        df_pred = aapred.predict(df_seq.head(5), level="sequence", threshold=0.5)
+        aap, df_seq, _ = fitted
+        df_pred = aap.predict(df_seq.head(5), level="sequence", threshold=0.5)
         assert "predicted_label" in df_pred.columns
-        assert set(df_pred["predicted_label"]).issubset({aapred.label_pos_, aapred.label_neg_})
+        assert set(df_pred["predicted_label"]).issubset({aap.label_pos_, aap.label_neg_})
 
     def test_list_parts(self, fitted):
-        aapred, df_seq, _ = fitted
-        df_pred = aapred.predict(df_seq.head(3), level="sequence",
+        aap, df_seq, _ = fitted
+        df_pred = aap.predict(df_seq.head(3), level="sequence",
                                  list_parts=["tmd", "jmd_n_tmd_n", "tmd_c_jmd_c"])
         assert len(df_pred) == 3
 
@@ -92,35 +92,35 @@ class TestPredictSeq:
             aa.AAPred(df_feat=df_feat).predict(df_seq.head(3), level="sequence")
 
     def test_invalid_level_raises(self, fitted):
-        aapred, df_seq, _ = fitted
+        aap, df_seq, _ = fitted
         with pytest.raises(ValueError):
-            aapred.predict(df_seq.head(3), level="not_a_level")
+            aap.predict(df_seq.head(3), level="not_a_level")
 
 
 class TestPredictDomain:
     def test_columns(self, fitted):
-        aapred, df_seq, _ = fitted
-        df = aapred.predict(df_seq[df_seq["entry"] == "P05067"], level="domain", window=2)
+        aap, df_seq, _ = fitted
+        df = aap.predict(df_seq[df_seq["entry"] == "P05067"], level="domain", window=2)
         assert list(df.columns) == ["entry", "offset", "score", "is_best"]
 
     def test_offsets_scanned(self, fitted):
-        aapred, df_seq, _ = fitted
-        df = aapred.predict(df_seq[df_seq["entry"] == "P05067"], level="domain", window=2)
+        aap, df_seq, _ = fitted
+        df = aap.predict(df_seq[df_seq["entry"] == "P05067"], level="domain", window=2)
         assert set(df["offset"]) == {-2, -1, 0, 1, 2}
 
     def test_exactly_one_best(self, fitted):
-        aapred, df_seq, _ = fitted
-        df = aapred.predict(df_seq[df_seq["entry"] == "P05067"], level="domain", window=3)
+        aap, df_seq, _ = fitted
+        df = aap.predict(df_seq[df_seq["entry"] == "P05067"], level="domain", window=3)
         assert df["is_best"].sum() == 1
 
     def test_best_is_argmax(self, fitted):
-        aapred, df_seq, _ = fitted
-        df = aapred.predict(df_seq[df_seq["entry"] == "P05067"], level="domain", window=3)
+        aap, df_seq, _ = fitted
+        df = aap.predict(df_seq[df_seq["entry"] == "P05067"], level="domain", window=3)
         assert df.loc[df["is_best"], "score"].iloc[0] == df["score"].max()
 
     def test_list_parts(self, fitted):
-        aapred, df_seq, _ = fitted
-        df = aapred.predict(df_seq[df_seq["entry"] == "P05067"], level="domain", window=1,
+        aap, df_seq, _ = fitted
+        df = aap.predict(df_seq[df_seq["entry"] == "P05067"], level="domain", window=1,
                             list_parts=["tmd", "jmd_n_tmd_n", "tmd_c_jmd_c"])
         assert len(df) >= 1
 
@@ -130,44 +130,44 @@ class TestPredictWindow:
         return df_seq[df_seq["entry"] == "P05067"][["entry", "sequence"]]
 
     def test_columns(self, fitted):
-        aapred, df_seq, _ = fitted
-        df = aapred.predict(self._one(df_seq), level="window", tmd_len=15, step=20)
+        aap, df_seq, _ = fitted
+        df = aap.predict(self._one(df_seq), level="window", tmd_len=15, step=20)
         assert list(df.columns) == ["entry", "position", "score", "score_std"]
 
     def test_positions_sorted_and_spaced(self, fitted):
-        aapred, df_seq, _ = fitted
-        df = aapred.predict(self._one(df_seq), level="window", tmd_len=15, step=10)
+        aap, df_seq, _ = fitted
+        df = aap.predict(self._one(df_seq), level="window", tmd_len=15, step=10)
         pos = df["position"].to_numpy()
         assert (np.diff(pos) == 10).all()
 
     def test_step(self, fitted):
-        aapred, df_seq, _ = fitted
-        d1 = aapred.predict(self._one(df_seq), level="window", tmd_len=15, step=5)
-        d2 = aapred.predict(self._one(df_seq), level="window", tmd_len=15, step=10)
+        aap, df_seq, _ = fitted
+        d1 = aap.predict(self._one(df_seq), level="window", tmd_len=15, step=5)
+        d2 = aap.predict(self._one(df_seq), level="window", tmd_len=15, step=10)
         assert len(d1) > len(d2)
 
     def test_jmd_lengths(self, fitted):
-        aapred, df_seq, _ = fitted
-        df = aapred.predict(self._one(df_seq), level="window", tmd_len=15, step=25,
+        aap, df_seq, _ = fitted
+        df = aap.predict(self._one(df_seq), level="window", tmd_len=15, step=25,
                             jmd_n_len=8, jmd_c_len=8)
         assert len(df) > 0
 
     def test_missing_tmd_len_raises(self, fitted):
-        aapred, df_seq, _ = fitted
+        aap, df_seq, _ = fitted
         with pytest.raises(ValueError):
-            aapred.predict(self._one(df_seq), level="window")
+            aap.predict(self._one(df_seq), level="window")
 
     def test_list_parts(self, fitted):
-        aapred, df_seq, _ = fitted
-        df = aapred.predict(self._one(df_seq), level="window", tmd_len=15, step=25,
+        aap, df_seq, _ = fitted
+        df = aap.predict(self._one(df_seq), level="window", tmd_len=15, step=25,
                             list_parts=["tmd", "jmd_n_tmd_n", "tmd_c_jmd_c"])
         assert len(df) > 0
 
 
 class TestPlotWindow:
     def _dw(self, fitted, step=15):
-        aapred, df_seq, _ = fitted
-        return aapred.predict(df_seq[df_seq["entry"] == "P05067"][["entry", "sequence"]],
+        aap, df_seq, _ = fitted
+        return aap.predict(df_seq[df_seq["entry"] == "P05067"][["entry", "sequence"]],
                               level="window", tmd_len=15, step=step)
 
     def test_returns_fig_ax(self, fitted):
@@ -179,9 +179,9 @@ class TestPlotWindow:
         assert any(l.get_linestyle() == "--" for l in ax.get_lines())
 
     def test_entry_multi_requires_entry(self, fitted):
-        aapred, df_seq, _ = fitted
+        aap, df_seq, _ = fitted
         two = df_seq[df_seq["entry"].isin(["P05067", "P14925"])][["entry", "sequence"]]
-        dw = aapred.predict(two, level="window", tmd_len=15, step=30)
+        dw = aap.predict(two, level="window", tmd_len=15, step=30)
         with pytest.raises(ValueError):
             aa.AAPredPlot().predict_sample(dw, kind="window")
         fig, ax = aa.AAPredPlot().predict_sample(dw, kind="window", entry="P05067")
@@ -206,8 +206,8 @@ class TestPlotWindow:
 
 class TestPlotDomain:
     def _dd(self, fitted):
-        aapred, df_seq, _ = fitted
-        return aapred.predict(df_seq[df_seq["entry"] == "P05067"], level="domain", window=3)
+        aap, df_seq, _ = fitted
+        return aap.predict(df_seq[df_seq["entry"] == "P05067"], level="domain", window=3)
 
     def test_returns_fig_ax(self, fitted):
         fig, ax = aa.AAPredPlot().predict_sample(self._dd(fitted), kind="domain")
@@ -237,8 +237,8 @@ class TestPlotWindowTracks:
     """Multi-track sequence viewer for kind='window' (importance, subcats, sequence, annotations)."""
 
     def _dw(self, fitted, step=45):
-        aapred, df_seq, _ = fitted
-        return aapred.predict(df_seq[df_seq["entry"] == "P05067"][["entry", "sequence"]],
+        aap, df_seq, _ = fitted
+        return aap.predict(df_seq[df_seq["entry"] == "P05067"][["entry", "sequence"]],
                               level="window", tmd_len=15, step=step)
 
     def _one(self, fitted):
@@ -262,7 +262,7 @@ class TestPlotWindowTracks:
         assert len(fig.axes[1].images) == 1  # categorical -> imshow strip
 
     def test_subcats_add_line_tracks(self, fitted, scales):
-        aapred, df_seq, df_feat = fitted
+        aap, df_seq, df_feat = fitted
         df_scales, df_cat = scales
         subcats = list(df_feat["subcategory"].unique()[:2])
         fig, ax = aa.AAPredPlot().predict_sample(
@@ -273,7 +273,7 @@ class TestPlotWindowTracks:
 
     def test_subcats_default_load_scales_when_omitted(self, fitted):
         # df_scales/df_cat omitted -> bundled scales loaded internally
-        aapred, df_seq, df_feat = fitted
+        aap, df_seq, df_feat = fitted
         subcats = list(df_feat["subcategory"].unique()[:1])
         fig, ax = aa.AAPredPlot().predict_sample(
             self._dw(fitted), kind="window", entry="P05067", subcats=subcats,
@@ -281,7 +281,7 @@ class TestPlotWindowTracks:
         assert len(fig.axes) == 3  # base + 1 subcat + sequence
 
     def test_df_feat_adds_importance_track(self, fitted):
-        aapred, df_seq, df_feat = fitted
+        aap, df_seq, df_feat = fitted
         fig, ax = aa.AAPredPlot().predict_sample(self._dw(fitted), kind="window", df_feat=df_feat)
         assert len(fig.axes) == 2  # base + importance
         assert len(fig.axes[1].get_lines()) >= 1
@@ -300,13 +300,13 @@ class TestPlotWindowTracks:
 
     def test_missing_inputs_omit_tracks(self, fitted):
         # subcats requested but no df_seq -> no subcat/sequence tracks (base only)
-        aapred, df_seq, df_feat = fitted
+        aap, df_seq, df_feat = fitted
         subcats = list(df_feat["subcategory"].unique()[:1])
         fig, ax = aa.AAPredPlot().predict_sample(self._dw(fitted), kind="window", subcats=subcats)
         assert len(fig.axes) == 1
 
     def test_full_stack_returns_base_axes_on_top(self, fitted, scales):
-        aapred, df_seq, df_feat = fitted
+        aap, df_seq, df_feat = fitted
         df_scales, df_cat = scales
         n = len(self._dw(fitted))
         ann = [{"values": np.linspace(0, 1, n), "label": "pLDDT"}]
@@ -322,20 +322,20 @@ class TestPlotDomainTracks:
     """Multi-track viewer for kind='domain' (offsets mapped to residues via tmd_start)."""
 
     def _dd(self, fitted, window=5):
-        aapred, df_seq, _ = fitted
-        return aapred.predict(df_seq[df_seq["entry"] == "P05067"], level="domain", window=window)
+        aap, df_seq, _ = fitted
+        return aap.predict(df_seq[df_seq["entry"] == "P05067"], level="domain", window=window)
 
     def _one(self, fitted):
         _, df_seq, _ = fitted
         return df_seq[df_seq["entry"] == "P05067"]
 
     def test_df_feat_importance_track(self, fitted):
-        aapred, df_seq, df_feat = fitted
+        aap, df_seq, df_feat = fitted
         fig, ax = aa.AAPredPlot().predict_sample(self._dd(fitted), kind="domain", df_feat=df_feat)
         assert len(fig.axes) == 2 and ax is fig.axes[0]
 
     def test_subcats_and_sequence_via_tmd_start(self, fitted, scales):
-        aapred, df_seq, df_feat = fitted
+        aap, df_seq, df_feat = fitted
         df_scales, df_cat = scales
         subcats = list(df_feat["subcategory"].unique()[:1])
         fig, ax = aa.AAPredPlot().predict_sample(
@@ -353,7 +353,7 @@ class TestPlotDomainTracks:
 
     def test_missing_df_seq_omits_residue_tracks(self, fitted):
         # subcats requested but no df_seq -> subcat/sequence tracks omitted (base only)
-        aapred, df_seq, df_feat = fitted
+        aap, df_seq, df_feat = fitted
         subcats = list(df_feat["subcategory"].unique()[:1])
         fig, ax = aa.AAPredPlot().predict_sample(self._dd(fitted), kind="domain", subcats=subcats)
         assert len(fig.axes) == 1
@@ -367,8 +367,8 @@ class TestPredictSampleInvalidKind:
     def test_bad_kind_raises(self, fitted):
         # A group kind (or any non-positional kind) must be rejected by predict_sample,
         # naming only the two valid sample kinds.
-        aapred, df_seq, _ = fitted
-        dw = aapred.predict(df_seq[df_seq["entry"] == "P05067"][["entry", "sequence"]],
+        aap, df_seq, _ = fitted
+        dw = aap.predict(df_seq[df_seq["entry"] == "P05067"][["entry", "sequence"]],
                             level="window", tmd_len=15, step=15)
         with pytest.raises(ValueError):
             aa.AAPredPlot().predict_sample(dw, kind="hist")
@@ -380,8 +380,8 @@ class TestPredictSampleHighlightWindow:
     """Region highlighting + zoom for kind='window' (residue-position spans)."""
 
     def _dw(self, fitted, step=45):
-        aapred, df_seq, _ = fitted
-        return aapred.predict(df_seq[df_seq["entry"] == "P05067"][["entry", "sequence"]],
+        aap, df_seq, _ = fitted
+        return aap.predict(df_seq[df_seq["entry"] == "P05067"][["entry", "sequence"]],
                               level="window", tmd_len=15, step=step)
 
     def _one(self, fitted):
@@ -393,7 +393,7 @@ class TestPredictSampleHighlightWindow:
         return int(pos[len(pos) // 2])
 
     def test_single_tuple_spans_every_track_axes(self, fitted, scales):
-        aapred, df_seq, df_feat = fitted
+        aap, df_seq, df_feat = fitted
         df_scales, df_cat = scales
         dw = self._dw(fitted)
         mid = self._mid(dw)
@@ -462,15 +462,15 @@ class TestPredictSampleHighlightDomain:
     """Region highlighting + zoom for kind='domain' (boundary-offset spans)."""
 
     def _dd(self, fitted, window=8):
-        aapred, df_seq, _ = fitted
-        return aapred.predict(df_seq[df_seq["entry"] == "P05067"], level="domain", window=window)
+        aap, df_seq, _ = fitted
+        return aap.predict(df_seq[df_seq["entry"] == "P05067"], level="domain", window=window)
 
     def _one(self, fitted):
         _, df_seq, _ = fitted
         return df_seq[df_seq["entry"] == "P05067"]
 
     def test_single_tuple_spans_every_track_axes(self, fitted, scales):
-        aapred, df_seq, df_feat = fitted
+        aap, df_seq, df_feat = fitted
         df_scales, df_cat = scales
         subcats = list(df_feat["subcategory"].unique()[:1])
         fig, ax = aa.AAPredPlot().predict_sample(
@@ -522,7 +522,7 @@ class TestPredictSampleSequence:
         assert "sequence" in LIST_SAMPLE_KINDS
 
     def test_returns_fig_ax(self, fitted, scales):
-        aapred, df_seq, df_feat = fitted
+        aap, df_seq, df_feat = fitted
         df_scales, df_cat = scales
         fig, ax = aa.AAPredPlot().predict_sample(
             kind="sequence", entry="P05067", df_seq=self._one(fitted),
@@ -530,7 +530,7 @@ class TestPredictSampleSequence:
         assert fig is not None and ax is not None and ax is fig.axes[0]
 
     def test_rows_equal_n_subcats(self, fitted, scales):
-        aapred, df_seq, df_feat = fitted
+        aap, df_seq, df_feat = fitted
         df_scales, df_cat = scales
         subcats = self._subcats(df_feat, n=4)
         fig, ax = aa.AAPredPlot().predict_sample(
@@ -540,7 +540,7 @@ class TestPredictSampleSequence:
         assert matrix.shape[0] == len(subcats)  # one heatmap row per subcategory
 
     def test_columns_span_full_sequence(self, fitted, scales):
-        aapred, df_seq, df_feat = fitted
+        aap, df_seq, df_feat = fitted
         df_scales, df_cat = scales
         one = self._one(fitted)
         fig, ax = aa.AAPredPlot().predict_sample(
@@ -550,7 +550,7 @@ class TestPredictSampleSequence:
         assert matrix.shape[1] == self._seq_len(one)  # one column per residue (full sequence)
 
     def test_subcats_none_uses_all_capped(self, fitted, scales):
-        aapred, df_seq, df_feat = fitted
+        aap, df_seq, df_feat = fitted
         df_scales, df_cat = scales
         from aaanalysis.prediction._aa_pred_plot import _SUBCAT_ROW_CAP
         n_all = df_cat["subcategory"].nunique()
@@ -562,7 +562,7 @@ class TestPredictSampleSequence:
 
     def test_subcats_none_below_cap_uses_all(self, fitted, scales):
         # A small df_cat (< cap subcategories) shows all of them, uncapped.
-        aapred, df_seq, df_feat = fitted
+        aap, df_seq, df_feat = fitted
         df_scales, df_cat = scales
         keep = list(pd.unique(df_cat["subcategory"]))[:5]
         df_cat_small = df_cat[df_cat["subcategory"].isin(keep)]
@@ -579,7 +579,7 @@ class TestPredictSampleSequence:
         assert len(ax.images) == 1
 
     def test_sequence_row_below_heatmap(self, fitted, scales):
-        aapred, df_seq, df_feat = fitted
+        aap, df_seq, df_feat = fitted
         df_scales, df_cat = scales
         fig, ax = aa.AAPredPlot().predict_sample(
             kind="sequence", entry="P05067", df_seq=self._one(fitted),
@@ -590,10 +590,10 @@ class TestPredictSampleSequence:
         assert tracks[-1].get_xlabel() == "Residue position"
 
     def test_data_adds_prediction_track_above(self, fitted, scales):
-        aapred, df_seq, df_feat = fitted
+        aap, df_seq, df_feat = fitted
         df_scales, df_cat = scales
         one = self._one(fitted)
-        dw = aapred.predict(one[["entry", "sequence"]], level="window", tmd_len=15, step=40)
+        dw = aap.predict(one[["entry", "sequence"]], level="window", tmd_len=15, step=40)
         fig, ax = aa.AAPredPlot().predict_sample(
             data=dw, kind="sequence", entry="P05067", df_seq=one,
             df_scales=df_scales, df_cat=df_cat, subcats=self._subcats(df_feat), threshold=0.5)
@@ -628,7 +628,7 @@ class TestPredictSampleSequence:
                                            entry="NOT_A_PROTEIN")
 
     def test_ax_draws_heatmap_only(self, fitted, scales):
-        aapred, df_seq, df_feat = fitted
+        aap, df_seq, df_feat = fitted
         df_scales, df_cat = scales
         fig0, ax0 = plt.subplots()
         fig, ax = aa.AAPredPlot().predict_sample(
@@ -648,7 +648,7 @@ class TestPredictSampleSequenceHighlight:
         return list(pd.unique(df_feat["subcategory"]))[:n]
 
     def test_single_tuple_spans_every_track_axes(self, fitted, scales):
-        aapred, df_seq, df_feat = fitted
+        aap, df_seq, df_feat = fitted
         df_scales, df_cat = scales
         fig, ax = aa.AAPredPlot().predict_sample(
             kind="sequence", entry="P05067", df_seq=self._one(fitted), df_scales=df_scales,

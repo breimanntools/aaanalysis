@@ -1,4 +1,4 @@
-"""Gallery thumbnail for Protocol 2: sequence logo (AAlogo / AAlogoPlot).
+"""Gallery thumbnail for Protocol 2: sequence logo (AALogo / AALogoPlot).
 
 Classic two-panel sequence logo: a per-position information-content (bits) bar on
 top + the composition letter stack below, coloured by amino-acid property, with
@@ -29,11 +29,11 @@ df_parts = sf.get_df_parts(
 )
 
 # Composition letter stack + the per-position information content (bits).
-al = aa.AAlogo()
+al = aa.AALogo()
 df_logo = al.get_df_logo(df_parts=df_parts, tmd_len=TMD_LEN)
 df_logo_info = al.get_df_logo_info(df_parts=df_parts, tmd_len=TMD_LEN)
 
-alp = aa.AAlogoPlot(jmd_n_len=JMD_N_LEN, jmd_c_len=JMD_C_LEN, verbose=False)
+alp = aa.AALogoPlot(jmd_n_len=JMD_N_LEN, jmd_c_len=JMD_C_LEN, verbose=False)
 # Passing df_logo_info renders the bits/conservation bar ON TOP of the logo.
 fig, ax = alp.single_logo(
     df_logo=df_logo,

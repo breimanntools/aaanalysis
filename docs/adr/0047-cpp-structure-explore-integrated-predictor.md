@@ -58,7 +58,7 @@ choices underpin it:
 3. **`model=` drives prediction; `ShapModel` keeps its defaults.** `model=`
    accepts a name (`"rf"` / `"svm"` / `"log_reg"`, the `ut.MODEL_*` constants),
    a scikit-learn estimator, or a list — the same `Union[str, BaseEstimator,
-   List]` convention as `aap.find_features`. It selects the estimator used for
+   List]` convention as `ap.find_features`. It selects the estimator used for
    the per-site predicted probability / soft label. The `ShapModel` that
    computes the impact is constructed with **its own defaults** (TreeExplainer +
    RandomForest/ExtraTrees). Consequence: the prediction model and the

@@ -28,7 +28,7 @@ overlapping: *don't re-test at a higher tier what a lower tier already covers.*
 - **Integration** (`test_feature_pipeline`, `test_prediction_pipeline`,
   `test_seq_pipeline`, `test_data_pipeline`) asserts that one component's output is a
   valid input to the next — e.g. `CPP.run` → `feature_matrix` → `TreeModel.fit`,
-  `dPULearn` carve → `TreeModel`, `AAWindowSampler` → `AAlogo`, `CPPGrid` sweep + `eval`,
+  `dPULearn` carve → `TreeModel`, `AAWindowSampler` → `AALogo`, `CPPGrid` sweep + `eval`,
   fasta round-trip, encoder → consumer. Its negatives are failures that only emerge *when
   components meet* (shape/label-set mismatch, PU dataset with no unlabeled rows, a sampler
   that returns no windows) — never a re-run of unit-level input validation.
