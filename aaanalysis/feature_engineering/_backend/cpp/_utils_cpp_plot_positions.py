@@ -401,7 +401,11 @@ def align_bottom_furniture_(fig=None, ax=None, gap_in=_FURNITURE_GAP_IN, item_ga
     right_in = max(a.get_position().x1 for a in fig.axes if a is not cbar_ax) * w_in
     content_w = right_in - left_in
     fits = (cat_w + cbar_w_in + imp_w + 2 * item_gap_in) <= content_w
-    two_fit = (cat_w + cbar_w_in + item_gap_in) <= content_w
+    # A LEFT-anchored category legend clears the CENTRED colorbar only if it fits within the left
+    # half of the content width (twice the legend plus the colorbar and two gaps), not merely the raw
+    # sum -- otherwise the left legend runs into the centred colorbar. Below that bound the legend is
+    # clustered just left of the colorbar instead (the branch below).
+    two_fit = (2 * cat_w + cbar_w_in + 2 * item_gap_in) <= content_w
     # Scale-category legend: left content edge if the row has room, else clustered just left of the
     # (centred) colorbar so it never overlaps it.
     if cat_legend is not None:

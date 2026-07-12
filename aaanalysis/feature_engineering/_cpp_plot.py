@@ -979,7 +979,8 @@ class CPPPlot:
             Residue-letter size. ``"auto"`` (default) fits the letters to the grid cell and steps
             the size down for short TMDs. A value in ``(0, 1]`` sets the letter height to that
             fraction of the cell height (e.g. ``0.9``); a value ``> 1`` is an absolute font size in
-            points. The letters never overlap at any size.
+            points. The ``"auto"`` and fractional modes keep the letters from overlapping; an
+            absolute point size is used as given.
         seq_char_fill : bool, optional
             If ``True``, the sequence renders as a continuous, gap-free colored band (one full-width
             cell per residue) with the letters drawn on top. If ``False``, each residue gets its own
@@ -1291,7 +1292,8 @@ class CPPPlot:
             Residue-letter size. ``"auto"`` (default) fits the letters to the grid cell and steps
             the size down for short TMDs. A value in ``(0, 1]`` sets the letter height to that
             fraction of the cell height (e.g. ``0.9``); a value ``> 1`` is an absolute font size in
-            points. The letters never overlap at any size.
+            points. The ``"auto"`` and fractional modes keep the letters from overlapping; an
+            absolute point size is used as given.
         seq_char_fill : bool, optional
             If ``True``, the sequence renders as a continuous, gap-free colored band (one full-width
             cell per residue) with the letters drawn on top. If ``False``, each residue gets its own
@@ -1682,7 +1684,8 @@ class CPPPlot:
             Residue-letter size. ``"auto"`` (default) fits the letters to the grid cell and steps
             the size down for short TMDs. A value in ``(0, 1]`` sets the letter height to that
             fraction of the cell height (e.g. ``0.9``); a value ``> 1`` is an absolute font size in
-            points. The letters never overlap at any size.
+            points. The ``"auto"`` and fractional modes keep the letters from overlapping; an
+            absolute point size is used as given.
         fontsize_tmd_jmd : int or float, optional
             Font size (>=0) for the part labels: 'JMD-N', 'TMD', 'JMD-C'. If ``None``, optimized automatically.
         weight_tmd_jmd : {'normal', 'bold'}, default='normal'

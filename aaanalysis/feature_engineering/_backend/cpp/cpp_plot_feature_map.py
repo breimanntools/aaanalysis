@@ -85,7 +85,9 @@ def plot_feat_importance_bars_subcat(ax=None,
     # immediately with the label sitting on the bar rather than outside it. Only bars
     # at/above the threshold are annotated, so they are long enough to hold the label.
     if not shap_plot:
-        v_max = int(np.ceil(max(list_imp) - 1e-9))  # epsilon: avoid 2.0000000000000004 -> 3
+        # epsilon avoids 2.0000000000000004 -> 3; floor of 1 avoids a degenerate 0-width axis when
+        # every importance is (near) zero.
+        v_max = max(1, int(np.ceil(max(list_imp) - 1e-9)))
         annotation_th = v_max / 2 if annotation_th is None else annotation_th
         for i, val in enumerate(list_imp):
             if val >= annotation_th:
@@ -148,7 +150,9 @@ def plot_feat_importance_bars_pos(ax=None,
         x_ticks = list(range(0, len(list_imp)))
         ax.bar(x_ticks, list_imp,
                color=ut.COLOR_FEAT_IMP, edgecolor=None, align="edge")
-        v_max = int(np.ceil(max(list_imp) - 1e-9))  # epsilon: avoid 2.0000000000000004 -> 3
+        # epsilon avoids 2.0000000000000004 -> 3; floor of 1 avoids a degenerate 0-height axis when
+        # every position sums to (near) zero.
+        v_max = max(1, int(np.ceil(max(list_imp) - 1e-9)))
         ax.set_ylim(0, v_max)
     # Keep the y-axis (spine) on the RIGHT, directly next to the "Cumulative feature importance"
     # label -- the tick VALUE is repositioned to the left of that spine in the frontend.
@@ -351,7 +355,10 @@ def plot_feature_map(df_feat=None, df_cat=None,
         #     already printed on the bars) and shown above that;
         #   - the top-bars y-tick (mark AND number, always on the same side) sits on the LEFT for a
         #     short strip (top_ymax <= 2.5) and on the RIGHT for a tall one (> 2.5, the standard look).
-        show_subcat_xtick = add_imp_bar_top and top_ymax > 1.5
+        # For SHAP impact the right per-subcategory bars carry no on-bar value labels, so keep the
+        # subcategory importance axis (its only scale reference); for plain importance drop it on the
+        # shortest strips where the values are already printed on the bars.
+        show_subcat_xtick = add_imp_bar_top and (shap_plot or top_ymax > 1.5)
 
         if add_imp_bar_top:
             label_imp_bar = f"Cumulative\nfeature\n{imp_word}"
@@ -394,15 +401,19 @@ def plot_feature_map(df_feat=None, df_cat=None,
             # The y-axis spine stays on the RIGHT (next to the "Cumulative feature importance" label).
             # A short strip (top_ymax <= 2.5) renders the max value to the LEFT of that spine; a tall
             # one to the RIGHT of it -- the standard look. Both at the subcategory x-tick's font size.
-            v_max_bt = int(np.ceil(ax_bt.get_ylim()[1]))
             ax_bt.yaxis.set_ticks_position("right")
             if top_ymax > 2.5:
                 ut.ticks_0(ax_bt, axis="y", **args_ticks_0)
                 ax_bt.tick_params(axis="y", labelsize=fontsize_annotations, length=3)
             else:
-                ax_bt.set_yticks([v_max_bt])
+                # Place the number AT the actual strip top. For plain importance the axis top is an
+                # integer (whole-percent cumulative); for SHAP impact it is the raw fractional max, so
+                # format it to one decimal instead of ceiling it (which would float above the strip).
+                y_top = float(ax_bt.get_ylim()[1])
+                v_label = f"{y_top:.1f}" if shap_plot else f"{int(round(y_top))}"
+                ax_bt.set_yticks([y_top])
                 ax_bt.tick_params(axis="y", labelleft=False, labelright=False, length=3)
-                ax_bt.text(1.0, v_max_bt, f"{v_max_bt} ", transform=ax_bt.get_yaxis_transform(),
+                ax_bt.text(1.0, y_top, f"{v_label} ", transform=ax_bt.get_yaxis_transform(),
                            ha="right", va="center", size=fontsize_annotations, clip_on=False)
 
     # Plot heatmap
