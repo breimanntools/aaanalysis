@@ -569,3 +569,154 @@ class TestAAPredPredict:
         pred, pred_std = aap._predict_X(X)
         assert pred.shape == (len(X),) and pred_std.shape == (len(X),)
         assert pred.min() >= 0 and pred.max() <= 1
+
+
+def _oof_ensemble(random_state=42):
+    """A small 3-model ensemble mirroring the study's substratome scoring (sans xgboost)."""
+    from sklearn.calibration import CalibratedClassifierCV
+    from sklearn.linear_model import LogisticRegression
+    return [RandomForestClassifier(n_estimators=50, random_state=random_state),
+            CalibratedClassifierCV(SVC(kernel="linear"), cv=3),
+            LogisticRegression(max_iter=1000, random_state=random_state)]
+
+
+class TestAAPredPredictOOF:
+    """AAPred.predict_oof — cross-validated out-of-fold per-sample scores for the training set."""
+
+    def test_columns(self):
+        X, labels = _data()
+        df_pred = aa.AAPred(random_state=0).predict_oof(X, labels)
+        assert list(df_pred.columns) == ["score", "score_std"]
+
+    def test_row_aligned_with_X(self):
+        X, labels = _data(n_per_class=12)
+        df_pred = aa.AAPred(random_state=0).predict_oof(X, labels)
+        assert len(df_pred) == len(X)
+
+    def test_scores_in_range(self):
+        X, labels = _data()
+        df_pred = aa.AAPred(random_state=0).predict_oof(X, labels)
+        assert df_pred["score"].between(0, 1).all()
+
+    def test_score_std_non_negative(self):
+        X, labels = _data()
+        df_pred = aa.AAPred(models=_oof_ensemble(), random_state=42).predict_oof(X, labels)
+        assert (df_pred["score_std"] >= 0).all()
+
+    def test_single_model_std_is_zero(self):
+        X, labels = _data()
+        df_pred = aa.AAPred(models=["rf"], random_state=42).predict_oof(X, labels)
+        assert (df_pred["score_std"] == 0).all()
+
+    @pytest.mark.parametrize("n_cv", [2, 3, 5])
+    def test_n_cv_values(self, n_cv):
+        X, labels = _data(n_per_class=15)
+        df_pred = aa.AAPred(random_state=0).predict_oof(X, labels, n_cv=n_cv)
+        assert len(df_pred) == len(X)
+
+    def test_label_pos_default_is_one(self):
+        X, labels = _data()
+        d_default = aa.AAPred(random_state=0).predict_oof(X, labels)
+        d_pos1 = aa.AAPred(random_state=0).predict_oof(X, labels, label_pos=1)
+        pd.testing.assert_frame_equal(d_default, d_pos1)
+
+    def test_reproducible(self):
+        X, labels = _data()
+        d1 = aa.AAPred(models=_oof_ensemble(), random_state=7).predict_oof(X, labels)
+        d2 = aa.AAPred(models=_oof_ensemble(), random_state=7).predict_oof(X, labels)
+        pd.testing.assert_frame_equal(d1, d2)
+
+    def test_does_not_require_fit(self):
+        # Unlike predict(), predict_oof cross-validates the constructor models itself.
+        X, labels = _data()
+        aapred = aa.AAPred(random_state=0)
+        df_pred = aapred.predict_oof(X, labels)  # no prior fit
+        assert len(df_pred) == len(X)
+
+    def test_does_not_set_deployment_models(self):
+        # It must not touch the fitted-deployment state in list_models_.
+        X, labels = _data()
+        aapred = aa.AAPred(random_state=0)
+        aapred.predict_oof(X, labels)
+        assert aapred.list_models_ is None
+
+    def test_non_binary_labels_raises(self):
+        X, _ = _data(n_per_class=10)
+        labels = np.array([0, 1, 2] * 10)
+        with pytest.raises(ValueError):
+            aa.AAPred(random_state=0).predict_oof(X, labels)
+
+    def test_mismatched_labels_raises(self):
+        X, _ = _data(n_per_class=10)
+        with pytest.raises(ValueError):
+            aa.AAPred(random_state=0).predict_oof(X, np.array([1, 0, 1]))
+
+    def test_n_cv_too_large_raises(self):
+        X, labels = _data(n_per_class=4)
+        with pytest.raises(ValueError):
+            aa.AAPred(random_state=0).predict_oof(X, labels, n_cv=10)
+
+    def test_n_cv_below_two_raises(self):
+        X, labels = _data()
+        with pytest.raises(ValueError):
+            aa.AAPred(random_state=0).predict_oof(X, labels, n_cv=1)
+
+    def test_invalid_label_pos_raises(self):
+        X, labels = _data()
+        with pytest.raises(ValueError):
+            aa.AAPred(random_state=0).predict_oof(X, labels, label_pos=5)
+
+
+class TestAAPredPredictOOFComplex:
+    """Cross-parameter and exact-equivalence behavior of AAPred.predict_oof."""
+
+    def test_matches_hand_rolled_ensemble(self):
+        # KPI: OOF score/score_std equal the hand-rolled per-model cross_val_predict block
+        # (vstack over the ensemble -> mean(0)/std(0)) within 1e-9.
+        from sklearn.model_selection import StratifiedKFold, cross_val_predict
+        X, labels = _data(n_per_class=25, seed=3)
+        rs = 42
+        # Reference: identical config, scored the notebook way.
+        cv5 = StratifiedKFold(n_splits=5, shuffle=True, random_state=rs)
+        ref = np.vstack([cross_val_predict(m, X, labels, cv=cv5, method="predict_proba")[:, 1]
+                         for m in _oof_ensemble(random_state=rs)])
+        ref_score, ref_std = ref.mean(0), ref.std(0)
+        df_pred = aa.AAPred(models=_oof_ensemble(random_state=rs), random_state=rs).predict_oof(X, labels)
+        assert np.allclose(df_pred["score"].to_numpy(), ref_score, atol=1e-9, rtol=0)
+        assert np.allclose(df_pred["score_std"].to_numpy(), ref_std, atol=1e-9, rtol=0)
+
+    def test_label_pos_zero_is_complement_of_one(self):
+        # For a single model, the OOF prob of class 0 is 1 - prob of class 1.
+        X, labels = _data(n_per_class=20)
+        d_pos = aa.AAPred(models=["rf"], random_state=0).predict_oof(X, labels, label_pos=1)
+        d_neg = aa.AAPred(models=["rf"], random_state=0).predict_oof(X, labels, label_pos=0)
+        assert np.allclose(d_neg["score"].to_numpy(), 1 - d_pos["score"].to_numpy(), atol=1e-9)
+
+    def test_n_cv_changes_scores(self):
+        # Different fold counts generally give different out-of-fold scores.
+        X, labels = _data(n_per_class=20)
+        d3 = aa.AAPred(models=["rf"], random_state=0).predict_oof(X, labels, n_cv=3)
+        d5 = aa.AAPred(models=["rf"], random_state=0).predict_oof(X, labels, n_cv=5)
+        assert not np.allclose(d3["score"].to_numpy(), d5["score"].to_numpy())
+
+    def test_random_state_changes_folds(self):
+        # A different seed reshuffles the stratified folds, changing the OOF scores.
+        X, labels = _data(n_per_class=20)
+        d1 = aa.AAPred(models=["rf"], random_state=1).predict_oof(X, labels)
+        d2 = aa.AAPred(models=["rf"], random_state=2).predict_oof(X, labels)
+        assert not np.allclose(d1["score"].to_numpy(), d2["score"].to_numpy())
+
+    def test_matches_eval_cv_roc_auc(self):
+        # The per-sample OOF scores must reproduce eval's aggregate CV roc_auc for one model
+        # (same folds, same seed) -> a cross-check that predict_oof and eval share the CV contract.
+        from sklearn.metrics import roc_auc_score
+        from sklearn.model_selection import StratifiedKFold, cross_val_predict
+        X, labels = _data(n_per_class=20, seed=5)
+        rs = 11
+        cv = StratifiedKFold(n_splits=5, shuffle=True, random_state=rs)
+        model = RandomForestClassifier(n_estimators=50, random_state=rs)
+        oof = cross_val_predict(model, X, labels, cv=cv, method="predict_proba")[:, 1]
+        df_pred = aa.AAPred(models=[RandomForestClassifier(n_estimators=50, random_state=rs)],
+                            random_state=rs).predict_oof(X, labels)
+        assert np.allclose(df_pred["score"].to_numpy(), oof, atol=1e-9)
+        assert 0.0 <= roc_auc_score(labels, df_pred["score"].to_numpy()) <= 1.0

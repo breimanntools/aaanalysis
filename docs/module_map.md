@@ -65,8 +65,10 @@ flowchart LR
 
 **Prediction / deploy layer:** `prediction` — `AAPred` fits and cross-validates
 predictors over CPP features (or directly from `df_seq` / `df_parts`) and deploys them
-at sequence / domain / window level; `AAPredPlot` visualizes per-sample and per-group
-predictions plus the evaluation grid.
+at sequence / domain / window level: `eval` reports aggregate cross-validated metrics,
+`predict_oof` the per-sample out-of-fold training-set scores, and `predict` scores new
+proteins (all sharing the `score` / `score_std` shape); `AAPredPlot` visualizes per-sample
+and per-group predictions plus the evaluation grid.
 
 **Cross-cutting (used by many, not a pipeline stage):** `plotting`
 (`plot_settings`/colors/`plot_legend`) styles every `*Plot`; `metrics`

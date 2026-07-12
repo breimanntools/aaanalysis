@@ -11,7 +11,7 @@ from sklearn.model_selection import BaseCrossValidator
 import aaanalysis.utils as ut
 from aaanalysis.template_classes import Wrapper
 
-from ._backend.aa_pred.aa_pred_fit import fit_models, predict_proba_models
+from ._backend.aa_pred.aa_pred_fit import fit_models, predict_proba_models, predict_proba_oof
 from ._backend.aa_pred.aa_pred_eval import eval_models
 
 
@@ -497,6 +497,74 @@ class AAPred(Wrapper):
                               X_holdout=X_holdout, labels_holdout=labels_holdout,
                               dict_X_baseline=dict_X_baseline, cv=cv)
         return df_eval
+
+    def predict_oof(self,
+                    X: ut.ArrayLike2D,
+                    labels: ut.ArrayLike1D,
+                    label_pos: int = 1,
+                    n_cv: int = 5,
+                    ) -> pd.DataFrame:
+        """
+        Score the training set with cross-validated out-of-fold per-sample probabilities.
+
+        Where :meth:`predict` deploys models fit on all data to score *new* proteins, and
+        :meth:`eval` reports *aggregate* cross-validated metrics, ``predict_oof`` returns the
+        *per-sample* out-of-fold score for the **training** data: every sample is scored by models
+        fit on the folds that exclude it (stratified k-fold cross-validation), so the scores are
+        honest and free of the optimistic in-sample bias that scoring the training proteins with
+        :meth:`predict` would incur. Each configured model is cross-validated independently and the
+        per-model out-of-fold scores are averaged, matching the ``score`` / ``score_std`` shape of
+        :meth:`predict` (mean over the ensemble, std across models).
+
+        Like :meth:`eval`, this cross-validates the models given at construction and does **not**
+        require a prior :meth:`fit`; it never touches the deployment models in ``list_models_``.
+
+        .. versionadded:: 1.1.0
+
+        Parameters
+        ----------
+        X : array-like, shape (n_samples, n_features)
+            Feature matrix. Rows typically correspond to samples and columns to features.
+        labels : array-like, shape (n_samples,)
+            Class labels for samples in ``X`` (typically ``1`` for the positive class and
+            ``0`` for the negative class).
+        label_pos : int, default=1
+            Label of the positive class whose out-of-fold probability is scored.
+        n_cv : int, default=5
+            Number of stratified cross-validation folds (must not exceed the smallest class count).
+
+        Returns
+        -------
+        df_pred : pd.DataFrame, shape (n_samples, 2)
+            Per-sample out-of-fold predictions, row-aligned with ``X``, with columns ``score``
+            (mean positive-class probability over the model ensemble) and ``score_std`` (std across
+            models; ``0`` for a single model).
+
+        See Also
+        --------
+        * :meth:`AAPred.predict` for scoring new proteins with the fitted deployment ensemble.
+        * :meth:`AAPred.eval` for aggregate cross-validated model metrics (``df_eval``).
+
+        Examples
+        --------
+        .. include:: examples/aap_predict_oof.rst
+        """
+        # Check input
+        X = ut.check_X(X=X)
+        labels = ut.check_labels(labels=labels)
+        ut.check_match_X_labels(X=X, labels=labels)
+        classes = check_binary_labels(labels=labels)
+        ut.check_number_val(name="label_pos", val=label_pos, just_int=True)
+        if label_pos not in classes:
+            raise ValueError(f"'label_pos' ({label_pos}) should be one of the labels: {classes}")
+        check_n_cv(n_cv=n_cv, labels=labels)
+        # Out-of-fold scoring: clone the constructor's estimators and cross-validate (no prior fit)
+        pred, pred_std = predict_proba_oof(X=X, labels=labels,
+                                           list_estimators=self._list_estimators,
+                                           n_cv=n_cv, random_state=self._random_state,
+                                           label_pos=label_pos)
+        df_pred = pd.DataFrame({ut.COL_SCORE: pred, ut.COL_SCORE_STD: pred_std})
+        return df_pred
 
     def predict(self,
                 df_seq: pd.DataFrame,

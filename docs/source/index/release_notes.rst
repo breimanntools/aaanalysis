@@ -206,6 +206,15 @@ Added
   degenerate per-fold score — the correct principle when a single-sample test fold makes per-fold
   averaging meaningless. ``score_std`` is ``NaN`` for ``cv_pooled`` (a single estimate). Purely
   additive: with ``cv=None`` (default) ``df_eval`` is byte-identical to before.
+- :meth:`~aaanalysis.AAPred.predict_oof`: New method returning **cross-validated out-of-fold**
+  per-sample scores for the training set — each sample is scored by models fit on the folds that
+  exclude it (stratified k-fold ``cross_val_predict``), so the training-set scores are free of the
+  optimistic in-sample bias that scoring them with :meth:`~aaanalysis.AAPred.predict` would incur.
+  Every configured model is cross-validated independently and the per-model out-of-fold scores are
+  averaged, returning the same ``score`` / ``score_std`` shape as
+  :meth:`~aaanalysis.AAPred.predict` (mean over the ensemble, std across models). Like
+  :meth:`~aaanalysis.AAPred.eval` it cross-validates the constructor models and needs no prior
+  :meth:`~aaanalysis.AAPred.fit`; deterministic under ``random_state``.
 - :meth:`~aaanalysis.AAPredPlot.eval`: New ``kind='heatmap'`` that renders any 2D score grid
   (rows x columns are the two sweep axes) as a square annotated heatmap and boxes the best cell(s)
   with a full-cell frame — ``highlight`` selects how many (a positive int for the top-N,
