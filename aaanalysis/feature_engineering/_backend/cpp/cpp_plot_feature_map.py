@@ -19,9 +19,17 @@ from ._utils_cpp_plot import get_sorted_list_cat_
 # reference instead of ballooning on dense grids or vanishing on sparse ones. Each strip scales gently
 # with the grid's perpendicular extent (1/6 of a cell per grid cell -- reproduces the cheat sheet:
 # 28 subcat -> 4.7-cell top, 40 positions -> 6.7-cell right) but is CLAMPED to a [min, max] cell range.
+# This cell-unit clamp supersedes the earlier absolute-inch column cap (the constant-cell sizer keeps
+# the column at right_cells * cell_w inches, so a separate inch cap is no longer needed).
 _IMP_BAR_SCALE = 1 / 6
 _IMP_BAR_TOP_MIN_CELLS, _IMP_BAR_TOP_MAX_CELLS = 2.5, 5.5
 _IMP_BAR_RIGHT_MIN_CELLS, _IMP_BAR_RIGHT_MAX_CELLS = 3.5, 7.5
+
+# Absolute backstop (inches) on the right importance-bar column width. The cell-unit clamp above
+# already bounds the column on the constant-cell sizer path (column = right_cells * cell_w). On the
+# FIXED-figure path (no sizer: an explicit figsize with auto_font off / cell_size unset) the column
+# would otherwise grow with the figure and the bars run edge-to-edge, so cap it here as well.
+_MAX_IMP_COL_IN = 1.5
 
 
 # I Helper Functions
@@ -249,7 +257,7 @@ def plot_feature_map(df_feat=None, df_cat=None,
                      dict_color=None, legend_kws=None, legend_xy=(-0.1, -0.01),
                      legend_imp_xy=(1.25, 0),
                      xtick_size=11.0, xtick_width=2.0, xtick_length=5.0,
-                     seq_char_fill=False, optimize_labels=False):
+                     seq_char_fill=False, optimize_labels=False, size_grid=False):
     """Create a comprehensive feature map with a heatmap, feature importance bars, and custom legends."""
     # Get fontsize
     pe = PlotElements()
@@ -273,7 +281,6 @@ def plot_feature_map(df_feat=None, df_cat=None,
     # (with the heatmap showing the mean difference) OR, when col_val is a feature
     # impact column, directly in the heatmap cells with the bars switched off.
     bars_off = shap_plot and ut.COL_FEAT_IMPACT in col_val
-    width, height = figsize
     if bars_off:
         # Heatmap-only layout: impact lives in the cells, no cumulative-impact bars
         # (plain layout like CPPPlot.heatmap, so the frontend's tight_layout is compatible)
@@ -283,13 +290,21 @@ def plot_feature_map(df_feat=None, df_cat=None,
         # Size the bar strips in grid-cell units and clamp to a [min, max] cell range so they lock
         # to a near-constant physical size (the sizer holds each cell fixed, so a strip of K cells is
         # K*cell inches regardless of figure size). Right strip scales with the number of positions,
-        # top strip with the number of subcategory rows.
+        # top strip with the number of subcategory rows. This replaces the earlier figure-ratio
+        # column with an absolute-inch cap -- the clamp already bounds the column in cell units.
         n_cols_grid = tmd_len + jmd_n_len + jmd_c_len
         n_rows_grid = max(1, int(df_feat[col_cat].nunique()))
         right_cells = float(np.clip(n_cols_grid * _IMP_BAR_SCALE,
                                     _IMP_BAR_RIGHT_MIN_CELLS, _IMP_BAR_RIGHT_MAX_CELLS))
         top_cells = float(np.clip(n_rows_grid * _IMP_BAR_SCALE,
                                   _IMP_BAR_TOP_MIN_CELLS, _IMP_BAR_TOP_MAX_CELLS))
+        # On the fixed-figure path (no constant-cell sizer) the column width tracks the figure, so
+        # cap it at `_MAX_IMP_COL_IN` inches: solve fig_w * rc/(n_cols + rc) = _MAX_IMP_COL_IN for rc.
+        # The sizer path is left to the cell-unit clamp (its column is already well under the cap).
+        fig_w = figsize[0]
+        if not size_grid and fig_w > _MAX_IMP_COL_IN and \
+                fig_w * right_cells / (n_cols_grid + right_cells) > _MAX_IMP_COL_IN:
+            right_cells = n_cols_grid * _MAX_IMP_COL_IN / (fig_w - _MAX_IMP_COL_IN)
         gridspc_kw = {'width_ratios': [n_cols_grid, right_cells], "wspace": 0, "hspace": 0}
         if add_imp_bar_top:
             gridspc_kw["height_ratios"] = [top_cells, n_rows_grid]

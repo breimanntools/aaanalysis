@@ -1912,7 +1912,7 @@ class CPPPlot:
                                    cbar_pct=cbar_pct, cbar_kws=cbar_kws, cbar_xywh=cbar_xywh,
                                    dict_color=dict_color, legend_kws=legend_kws, legend_xy=legend_xy,
                                    legend_imp_xy=legend_imp_xy, seq_char_fill=seq_char_fill,
-                                   optimize_labels=optimize_labels,
+                                   optimize_labels=optimize_labels, size_grid=size_grid,
                                    **args_xtick)
         # Adjust plot. Leave a little more room on the right than the heatmap needs
         # so the cumulative-importance bar column's label ("Cumulative feature
