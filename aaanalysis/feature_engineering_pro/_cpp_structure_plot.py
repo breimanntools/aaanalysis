@@ -137,6 +137,8 @@ class CPPStructurePlot:
       :class:`CPPPlot` so juxta-membrane domain (JMD) lengths stay consistent.
     * This is a ``pro`` feature: ``biopython`` parses structures, ``py3Dmol`` renders them, and
       ``ipywidgets`` powers :meth:`interactive` — all in the ``pro`` extra.
+    * Parameters ending in ``_kws`` (e.g. ``feature_map_kws``) bundle related keyword arguments
+      into one dict; see the :ref:`keyword-dict parameters overview <kws-overview>`.
 
     """
     def __init__(self,

@@ -543,6 +543,56 @@ the *class-instance* names above are checked).
 ``df_top15``) — used **only when you actually have a variant**, not stamped onto
 every example. Class instances stay the bare abbreviation (see above).
 
+.. _kws-overview:
+
+Keyword-dict (``_kws``) parameters
+----------------------------------
+
+A ``*_kws`` parameter groups several related keyword arguments into one dict.
+There are two **kinds**, and the *forwarded* kind splits into two **subtypes**:
+
+* **forwarded** — passed through (mostly) verbatim to another callable, so it
+  accepts whatever that callable accepts (open-ended keys):
+
+  * *external* — the target is a third-party library (e.g. Matplotlib);
+  * *internal* — the target is another AAanalysis function or method.
+
+* **structured bundle** — a **fixed, documented key set** consumed *inside*
+  AAanalysis (validate unknown keys, default the unset ones).
+
+Name any new one ``<noun>_kws`` and add it to the table below.
+
+.. list-table:: Keyword-dict (``_kws``) parameters
+   :header-rows: 1
+   :widths: 22 22 56
+
+   * - Parameter
+     - Kind
+     - Contents / target
+   * - ``cbar_kws``
+     - forwarded, external
+     - Arbitrary keys for :meth:`matplotlib.figure.Figure.colorbar`.
+   * - ``legend_kws``
+     - forwarded, internal
+     - Arbitrary keys for :func:`~aaanalysis.plot_legend`.
+   * - ``feature_map_kws``
+     - forwarded, internal
+     - Arbitrary keys for :meth:`~aaanalysis.CPPPlot.feature_map` (from ``CPPStructurePlot``).
+   * - ``aal_kws`` / ``list_aal_kws``
+     - forwarded, internal
+     - Keys for :meth:`~aaanalysis.AALogo.get_df_logo` / ``get_df_logo_info`` (``list_`` = one dict per logo).
+   * - ``df_parts_kws``
+     - forwarded, internal
+     - Keys for ``sf.get_df_parts`` (e.g. ``list_parts``, ``jmd_n_len``) when *building* ``df_parts``.
+   * - ``split_kws``
+     - structured bundle
+     - One param-dict per split type: ``Segment`` (``n_split_min``, ``n_split_max``), ``Pattern``
+       (``steps``, ``n_min``, ``n_max``, ``len_max``), ``PeriodicPattern`` (``steps``). From ``sf.get_split_kws``.
+   * - ``bootstrap_kws``
+     - structured bundle
+     - Fixed keys ``rounds`` / ``resample`` / ``frac`` (any subset; unset keys keep their default) —
+       :meth:`~aaanalysis.CPP` bootstrap configuration.
+
 Label parameter names
 ---------------------
 

@@ -284,6 +284,9 @@ class SequenceFeature:
     Default parts:
         The following three parts are provided by default: ``tmd``, ``jmd_n_tmd_n``, ``tmd_c_jmd_c``.
 
+    Parameters ending in ``_kws`` (e.g. ``split_kws``, ``df_parts_kws``) bundle related keyword
+    arguments into one dict; see the :ref:`keyword-dict parameters overview <kws-overview>`.
+
     """
 
     def __init__(self,
