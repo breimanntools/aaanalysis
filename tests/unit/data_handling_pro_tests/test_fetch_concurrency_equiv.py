@@ -161,32 +161,32 @@ class TestFrontendMaxWorkers:
 
     @pytest.mark.parametrize("bad", [0, -1, 2.5])
     def test_fetch_alphafold_invalid_max_workers_raises(self, tmp_path, bad):
-        stp = StructurePreprocessor(verbose=False)
+        strp = StructurePreprocessor(verbose=False)
         with pytest.raises(ValueError):
-            stp.fetch_alphafold(df_seq=self._df_seq(), out_folder=tmp_path / "o",
+            strp.fetch_alphafold(df_seq=self._df_seq(), out_folder=tmp_path / "o",
                                 max_workers=bad)
 
     @pytest.mark.parametrize("bad", [0, -1, 2.5])
     def test_fetch_uniprot_invalid_max_workers_raises(self, bad):
-        ap = AnnotationPreprocessor(verbose=False)
+        annp = AnnotationPreprocessor(verbose=False)
         with pytest.raises(ValueError):
-            ap.fetch_uniprot(df_seq=self._df_seq(), max_workers=bad)
+            annp.fetch_uniprot(df_seq=self._df_seq(), max_workers=bad)
 
     def test_fetch_alphafold_max_workers_plumbs_through(self, tmp_path):
-        stp = StructurePreprocessor(verbose=False)
+        strp = StructurePreprocessor(verbose=False)
         entries = ["P1", "P2", "P3"]
         with patch(f"{AF_MODULE}._af_resolve_urls", side_effect=_af_resolve), \
                 patch(f"{AF_MODULE}.http_get_", side_effect=_af_http):
-            df = stp.fetch_alphafold(df_seq=self._df_seq(entries),
+            df = strp.fetch_alphafold(df_seq=self._df_seq(entries),
                                      out_folder=tmp_path / "o", skip_existing=False,
                                      max_workers=4)
         assert list(df[ut.COL_ENTRY]) == entries
         assert df["alphafold_ok"].all()
 
     def test_fetch_uniprot_max_workers_plumbs_through(self):
-        ap = AnnotationPreprocessor(verbose=False)
+        annp = AnnotationPreprocessor(verbose=False)
         entries = ["P1", "P2", "P3"]
         with patch(f"{UP_MODULE}.fetch_uniprot_json", side_effect=_uniprot_record):
-            df = ap.fetch_uniprot(df_seq=self._df_seq(entries), evidence="all",
+            df = annp.fetch_uniprot(df_seq=self._df_seq(entries), evidence="all",
                                   max_workers=4)
         assert list(df[ut.COL_PROTEIN_ID]) == entries

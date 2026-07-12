@@ -359,9 +359,9 @@ Added
 
 **Golden Pipelines**
 
-- **aaanalysis.pipe** (``aap``): A second, opt-in convenience API of stateless, one-call
-  *golden pipelines* over the AAanalysis primitives (``import aaanalysis.pipe as aap``).
-- **aap.find_features**: Staged, interpretable CPP AutoML search. Stage 1
+- **aaanalysis.pipe** (``ap``): A second, opt-in convenience API of stateless, one-call
+  *golden pipelines* over the AAanalysis primitives (``import aaanalysis.pipe as ap``).
+- **ap.find_features**: Staged, interpretable CPP AutoML search. Stage 1
   cross-validates the full Cartesian Part × Split × Scale grid and ranks each axis by
   its marginal-mean impact; Stage 2 refines the single highest-impact axis against
   ``n_filter``; Stage 3 refines the winning feature set (:meth:`~aaanalysis.CPP.simplify` + recursive
@@ -374,13 +374,13 @@ Added
   carries the publication eval figures (``ax.eval``) and ``df_eval`` has one
   ``<metric>_mean``/``_std`` column per metric plus ``stage`` / ``is_pareto`` / ``rank``
   / ``is_selected``.
-- **aap.predict_samples**: Trains and cross-validates every ``(feature set × model)`` combination
+- **ap.predict_samples**: Trains and cross-validates every ``(feature set × model)`` combination
   over one ``df_seq`` in a single call, returning the refit predictors and a tidy comparison table.
   With ``plot=True`` (the default) it now also draws the **model comparison** bar plot (hue = model,
   one bar group per metric, cross-validation ``std`` error bars) and returns its ``Axes`` in the
   previously-unused middle slot, completing the ``(results, fig, evals)`` symmetry with
   ``find_features`` / ``explain_features`` (``figsize`` / ``dict_color`` / ``baseline`` style it).
-- **aap.plot_eval**: Publication-ready evaluation figures of a ``find_features`` sweep —
+- **ap.plot_eval**: Publication-ready evaluation figures of a ``find_features`` sweep —
   the high-dimensional Part × Split × Scale grid is **decomposed** into a series of clean
   2D ``viridis`` heatmaps (the two most-informative axes on each panel, the least on the
   slice), with a shared colorbar, the selected configuration starred, plus marginal-impact
@@ -415,7 +415,7 @@ Added
   study end to end from bundled data. The first, *Charting γ-secretase substrates by
   explainable AI* (``use_case1_gamma_secretase``), walks the full AAanalysis pipeline of
   Breimann and Kamp *et al.*, Nat. Commun. 2025 on the bundled ``DOM_GSEC`` /
-  ``DOM_GSEC_PU`` sets: AAlogo sequence logos of the three protein groups, AAclust
+  ``DOM_GSEC_PU`` sets: AALogo sequence logos of the three protein groups, AAclust
   redundancy-reduced scale sets, the CPP + TreeModel signature and feature map, dPULearn
   reliable-negative mining (with PCA and logo), a prediction benchmark (feature
   engineering × data expansion) plus a CPP/dPULearn optimization heatmap, and SHAP
@@ -427,7 +427,7 @@ Added
 - **Split API reference**: the reference is now two pages, each listing its members
   directly at the top level. *API* documents the explicit **building blocks**
   (``import aaanalysis as aa``) grouped by category; the new *API (Pipelines)* page documents
-  the **golden pipelines** (``import aaanalysis.pipe as aap``), one function per pipeline.
+  the **golden pipelines** (``import aaanalysis.pipe as ap``), one function per pipeline.
   Golden pipelines are no longer mixed into the building-block page or the Tutorials
   section; Getting Started links both references.
 
@@ -555,7 +555,7 @@ Fixed
   thread-safe, single-process progress path and the run completes normally instead of
   aborting (previously the only workaround was ``n_jobs=1``). When the Manager is
   available, behavior and output are unchanged.
-- **CPP splits on free peptides / short parts (#338)**: ``aap.find_features`` and the
+- **CPP splits on free peptides / short parts (#338)**: ``ap.find_features`` and the
   ``Pattern`` / ``PeriodicPattern`` splits were unusable on free peptides with no flanking
   context (the linear-epitope case). ``find_features(search="fast")`` and its Stage-3
   simplify step ignored the requested / winning split configuration and always used the
@@ -585,8 +585,8 @@ v1.0.3 (2026-04-06)
 
 Added
 ~~~~~
-- :class:`~aaanalysis.AAlogo`: New class for amino acid logo visualization.
-- :class:`~aaanalysis.AAlogoPlot`: New plotting class for AAlogo visualizations.
+- :class:`~aaanalysis.AALogo`: New class for amino acid logo visualization.
+- :class:`~aaanalysis.AALogoPlot`: New plotting class for AALogo visualizations.
 
 Changed
 ~~~~~~~

@@ -139,7 +139,7 @@ CPP_STRATEGIES = {
 # follow the RTD API subpackages — Sequence Analysis, Feature Engineering,
 # PU Learning, Explainable AI — while keeping the intent -> key-class mapping.
 WHICH_MODULE = [
-    ("Explore sequence patterns / composition", "AAlogo"),
+    ("Explore sequence patterns / composition", "AALogo"),
     ("Sample reference windows (if negatives are missing)", "AAWindowSampler"),
     ("Reduce redundant amino acid scales", "AAclust"),
     ("Discover discriminative physicochemical features", "CPP"),
@@ -194,7 +194,7 @@ CAPABILITY_FAMILIES = [
      ]},
     {"name": "Sequence Analysis", "tag": "logos · windows · motifs",
      "rows": [
-         ("Position-specific logo", "AAlogo().get_df_logo(df_parts) → df_logo", None),
+         ("Position-specific logo", "AALogo().get_df_logo(df_parts) → df_logo", None),
          ("Sample reference windows", "AAWindowSampler().sample_*(df_seq)", None),
          ("Pairwise sequence similarity", "comp_seq_sim(df_seq)  [pro]", None),
          ("Scan motifs (FIMO / MEME)", "scan_motif(df_seq, pwm) → df_hits  [pro]", None),
@@ -245,8 +245,8 @@ CAPABILITY_FAMILIES = [
 # Detailed recipes for the core analytical classes (page 2, right zone).
 # Worked examples — tutorial-convention code paired with the figure it produces.
 FLAGSHIP_RECIPES = [
-    {"cls": "AAlogo — see the data", "tag": "dataset at a glance", "img": "logo", "logo": True,
-     "caption": "AAlogoPlot.single_logo · per-position enrichment",
+    {"cls": "AALogo — see the data", "tag": "dataset at a glance", "img": "logo", "logo": True,
+     "caption": "AALogoPlot.single_logo · per-position enrichment",
      "code": "import numpy as np, matplotlib.pyplot as plt, aaanalysis as aa\n"
              "df_seq = aa.load_dataset(name='DOM_GSEC')   # γ-secretase\n"
              "labels = list(df_seq['label']); df_scales = aa.load_scales()\n"
@@ -255,7 +255,7 @@ FLAGSHIP_RECIPES = [
              "    list_parts=['tmd', 'jmd_n', 'jmd_c'])\n"
              "aa.plot_settings(font_scale=0.7)\n"
              "# aal_kws builds df_logo + bits bar for you\n"
-             "aa.AAlogoPlot().single_logo(\n"
+             "aa.AALogoPlot().single_logo(\n"
              "    aal_kws=dict(df_parts=df_parts, labels=labels,\n"
              "        label_test=1, tmd_len=20),\n"
              "    name_data='Test set: substrates')\n"
@@ -347,7 +347,7 @@ FLAGSHIP_RECIPES = [
              "df_syn = aaws.sample_synthetic(df_seq, n=100, generator='global_freq')"},
 ]
 
-# Page-2 layout: AAlogo stands alone (big logo); the rest are shown as PAIRS —
+# Page-2 layout: AALogo stands alone (big logo); the rest are shown as PAIRS —
 # two code boxes stacked, then both figures side-by-side below (left | right),
 # so each figure pair is as wide as the code block.
 # Each pair renders two code boxes then both figures SIDE-BY-SIDE in one row, set
@@ -355,7 +355,7 @@ FLAGSHIP_RECIPES = [
 # (widths follow each plot's aspect ratio). h is tuned so the two widths fit one
 # column. Feature maps sit in the middle column.
 RECIPE_GROUPS = [
-    {"recipes": [FLAGSHIP_RECIPES[0]]},                                  # AAlogo (col1, big logo)
+    {"recipes": [FLAGSHIP_RECIPES[0]]},                                  # AALogo (col1, big logo)
     {"recipes": [FLAGSHIP_RECIPES[2], FLAGSHIP_RECIPES[1]], "h": 35},    # feature | ranking (col1)
     {"recipes": [FLAGSHIP_RECIPES[3]]},                                  # feature map: full | simplified (col2 top)
     {"recipes": [FLAGSHIP_RECIPES[4]]},                                  # SHAP: profile | feature map (col2 bottom)
@@ -464,12 +464,12 @@ OPTIONS = (
 # (mirrors the registry in docstring_guide.rst / test_class_abbreviation_registry.py)
 CLASS_PLOT = [
     # Data Handling
-    ("SequencePreprocessor", "sp", "—", ""),
-    ("EmbeddingPreprocessor", "ep", "—", ""),
-    ("StructurePreprocessor  [pro]", "stp", "—", ""),
-    ("AnnotationPreprocessor  [pro]", "ap", "—", ""),
+    ("SequencePreprocessor", "seqp", "—", ""),
+    ("EmbeddingPreprocessor", "embp", "—", ""),
+    ("StructurePreprocessor  [pro]", "strp", "—", ""),
+    ("AnnotationPreprocessor  [pro]", "annp", "—", ""),
     # Sequence Analysis
-    ("AAlogo", "aal", "AAlogoPlot", ""),
+    ("AALogo", "aal", "AALogoPlot", ""),
     ("AAWindowSampler", "aaws", "—", ""),
     # Feature Engineering
     ("SequenceFeature", "sf", "—", ""),
@@ -482,8 +482,8 @@ CLASS_PLOT = [
     ("TreeModel", "tm", "—", "Wrapper"),
     ("ShapModel  [pro]", "sm", "—", "Wrapper"),
     # Protein Design
-    ("AAMut", "aamut", "AAMutPlot", ""),
-    ("SeqMut", "seqmut", "SeqMutPlot", ""),
+    ("AAMut", "aam", "AAMutPlot", ""),
+    ("SeqMut", "seqm", "SeqMutPlot", ""),
 ]
 
 DESIGN_PRINCIPLES = [

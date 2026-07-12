@@ -76,12 +76,12 @@ def _csp():
     return aa.CPPStructurePlot(jmd_n_len=10, jmd_c_len=10, verbose=False)
 
 
-def _explore(csp, df_feat, query_seq, df_seq, labels, pdb_path, **kw):
+def _explore(cpps_plot, df_feat, query_seq, df_seq, labels, pdb_path, **kw):
     kw.setdefault("model", ut.MODEL_RF)
     kw.setdefault("tmd_len", 10)
     kw.setdefault("init_site", 11)
     kw.setdefault("random_state", 42)
-    return csp.explore(df_feat=df_feat, sequence=query_seq, pdb=pdb_path,
+    return cpps_plot.explore(df_feat=df_feat, sequence=query_seq, pdb=pdb_path,
                        df_seq=df_seq, labels=labels, **kw)
 
 
@@ -299,8 +299,8 @@ class TestExploreMultiSite:
 
     def test_verbose_and_zoom(self, df_feat, query_seq, df_seq, labels, pdb_path):
         # verbose=True + focus='zoom' exercise the progress prints and the zoom-baking branch
-        csp = aa.CPPStructurePlot(jmd_n_len=10, jmd_c_len=10, verbose=True)
-        view = csp.explore(df_feat=df_feat, sequence=query_seq, pdb=pdb_path, df_seq=df_seq,
+        cpps_plot = aa.CPPStructurePlot(jmd_n_len=10, jmd_c_len=10, verbose=True)
+        view = cpps_plot.explore(df_feat=df_feat, sequence=query_seq, pdb=pdb_path, df_seq=df_seq,
                            labels=labels, model="rf", output="html", sites=[12, 16],
                            tmd_len=10, focus="zoom", random_state=42)
         assert isinstance(view, LinkedView)

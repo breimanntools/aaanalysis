@@ -248,7 +248,7 @@ class SeqMut:
 
         Examples
         --------
-        .. include:: examples/seqmut_mutate.rst
+        .. include:: examples/seqm_mutate.rst
         """
         # Validate
         check_match_df_seq_pos_based(df_seq=df_seq)
@@ -335,7 +335,7 @@ class SeqMut:
 
         Examples
         --------
-        .. include:: examples/seqmut_scan.rst
+        .. include:: examples/seqm_scan.rst
         """
         # Validate
         check_match_df_seq_pos_based(df_seq=df_seq)
@@ -409,7 +409,7 @@ class SeqMut:
 
         Examples
         --------
-        .. include:: examples/seqmut_suggest.rst
+        .. include:: examples/seqm_suggest.rst
         """
         # Validate
         check_match_df_seq_pos_based(df_seq=df_seq)
@@ -459,7 +459,7 @@ class SeqMut:
 
         Examples
         --------
-        .. include:: examples/seqmut_eval.rst
+        .. include:: examples/seqm_eval.rst
         """
         # Validate
         ut.check_df(df=df_scan, name="df_scan", cols_required=ut.COLS_SEQMUT_SCAN)
@@ -515,7 +515,7 @@ class SeqMut:
 
         Examples
         --------
-        .. include:: examples/seqmut_combine.rst
+        .. include:: examples/seqm_combine.rst
         """
         # Validate
         check_match_df_seq_pos_based(df_seq=df_seq)

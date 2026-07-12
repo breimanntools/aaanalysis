@@ -70,7 +70,7 @@ Rules:
   label break and a comma / parentheses in field values.
 - **All six fields are mandatory.** Use real cross-refs (`:class:`/`:func:` for API,
   `:doc:` for the protocol) so the links resolve; a broken target is a Sphinx warning.
-  The *Related protocol* is the protocol whose golden `aap` workflow uses the tool.
+  The *Related protocol* is the protocol whose golden `ap` workflow uses the tool.
 - Only add the `id` key to the raw cell when the notebook already uses cell ids
   (nbformat >= 4.5); the older `tutorial2a` (minor 0) must stay id-less or it fails
   `nbformat.validate`.

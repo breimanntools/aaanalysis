@@ -64,62 +64,62 @@ class TestGetDomainsAfragmenter:
 
     # ----- NEGATIVES (≥5) -----
     def test_invalid_tool_unknown(self, tmp_path):
-        stp = aa.StructurePreprocessor(verbose=False)
+        strp = aa.StructurePreprocessor(verbose=False)
         with pytest.raises(ValueError, match="tool"):
-            stp.get_domains(df_seq=_df_one(), pae_folder=str(tmp_path),
+            strp.get_domains(df_seq=_df_one(), pae_folder=str(tmp_path),
                             tool="merizo")
 
     def test_invalid_afragmenter_missing_pae_folder(self):
-        stp = aa.StructurePreprocessor(verbose=False)
+        strp = aa.StructurePreprocessor(verbose=False)
         with patch(CHECK_AF):
             with pytest.raises(ValueError, match="pae_folder"):
-                stp.get_domains(df_seq=_df_one(), pae_folder=None,
+                strp.get_domains(df_seq=_df_one(), pae_folder=None,
                                 tool="afragmenter")
 
     def test_invalid_afragmenter_pae_folder_nonexistent(self):
-        stp = aa.StructurePreprocessor(verbose=False)
+        strp = aa.StructurePreprocessor(verbose=False)
         with pytest.raises(ValueError, match="pae_folder"):
-            stp.get_domains(df_seq=_df_one(),
+            strp.get_domains(df_seq=_df_one(),
                             pae_folder="/__nope__/__here__",
                             tool="afragmenter")
 
     def test_invalid_afragmenter_chopping_collision(self, tmp_path):
         df = _df_one()
         df["chopping"] = ["1-30"]
-        stp = aa.StructurePreprocessor(verbose=False)
+        strp = aa.StructurePreprocessor(verbose=False)
         with pytest.raises(ValueError, match="chopping"):
-            stp.get_domains(df_seq=df, pae_folder=str(tmp_path),
+            strp.get_domains(df_seq=df, pae_folder=str(tmp_path),
                             tool="afragmenter")
 
     def test_invalid_afragmenter_resolution_out_of_range(self, tmp_path):
-        stp = aa.StructurePreprocessor(verbose=False)
+        strp = aa.StructurePreprocessor(verbose=False)
         with patch(CHECK_AF):
             with pytest.raises(ValueError, match="resolution"):
-                stp.get_domains(df_seq=_df_one(),
+                strp.get_domains(df_seq=_df_one(),
                                 pae_folder=str(tmp_path),
                                 tool="afragmenter", resolution=-1.0)
 
     def test_invalid_afragmenter_threshold_out_of_range(self, tmp_path):
-        stp = aa.StructurePreprocessor(verbose=False)
+        strp = aa.StructurePreprocessor(verbose=False)
         with patch(CHECK_AF):
             with pytest.raises(ValueError, match="threshold"):
-                stp.get_domains(df_seq=_df_one(),
+                strp.get_domains(df_seq=_df_one(),
                                 pae_folder=str(tmp_path),
                                 tool="afragmenter", threshold=50.0)
 
     def test_invalid_afragmenter_on_failure_value(self, tmp_path):
-        stp = aa.StructurePreprocessor(verbose=False)
+        strp = aa.StructurePreprocessor(verbose=False)
         with pytest.raises(ValueError, match="on_failure"):
-            stp.get_domains(df_seq=_df_one(), pae_folder=str(tmp_path),
+            strp.get_domains(df_seq=_df_one(), pae_folder=str(tmp_path),
                             tool="afragmenter", on_failure="skip")
 
     # ----- POSITIVES (≥6) -----
     def test_valid_afragmenter_returns_chopping(self, tmp_path):
         _write_fake_pae(tmp_path, "P1")
-        stp = aa.StructurePreprocessor(verbose=False)
+        strp = aa.StructurePreprocessor(verbose=False)
         with patch(CHECK_AF), \
              patch(RUN_AF, return_value="1-10,15-25"):
-            df_out = stp.get_domains(df_seq=_df_one(),
+            df_out = strp.get_domains(df_seq=_df_one(),
                                      pae_folder=str(tmp_path),
                                      tool="afragmenter")
         assert df_out["chopping"].iloc[0] == "1-10,15-25"
@@ -127,10 +127,10 @@ class TestGetDomainsAfragmenter:
 
     def test_valid_afragmenter_appends_two_columns(self, tmp_path):
         _write_fake_pae(tmp_path, "P1")
-        stp = aa.StructurePreprocessor(verbose=False)
+        strp = aa.StructurePreprocessor(verbose=False)
         with patch(CHECK_AF), \
              patch(RUN_AF, return_value="1-30"):
-            df_out = stp.get_domains(df_seq=_df_one(),
+            df_out = strp.get_domains(df_seq=_df_one(),
                                      pae_folder=str(tmp_path),
                                      tool="afragmenter")
         assert "chopping" in df_out.columns
@@ -138,12 +138,12 @@ class TestGetDomainsAfragmenter:
 
     def test_valid_afragmenter_missing_pae_warns_and_nan(self, tmp_path):
         # No PAE file written → resolver returns None → row fails.
-        stp = aa.StructurePreprocessor(verbose=False)
+        strp = aa.StructurePreprocessor(verbose=False)
         with patch(CHECK_AF), \
              patch(RUN_AF):  # would not be called
             with warnings.catch_warnings():
                 warnings.simplefilter("ignore")
-                df_out = stp.get_domains(df_seq=_df_one(),
+                df_out = strp.get_domains(df_seq=_df_one(),
                                          pae_folder=str(tmp_path),
                                          tool="afragmenter")
         assert df_out["chopping"].iloc[0] == ""
@@ -151,10 +151,10 @@ class TestGetDomainsAfragmenter:
 
     def test_valid_afragmenter_kwargs_pass_through(self, tmp_path):
         _write_fake_pae(tmp_path, "P1")
-        stp = aa.StructurePreprocessor(verbose=False)
+        strp = aa.StructurePreprocessor(verbose=False)
         with patch(CHECK_AF), \
              patch(RUN_AF, return_value="1-30") as run_mock:
-            stp.get_domains(df_seq=_df_one(), pae_folder=str(tmp_path),
+            strp.get_domains(df_seq=_df_one(), pae_folder=str(tmp_path),
                             tool="afragmenter", resolution=0.42,
                             threshold=3.5)
         kwargs = run_mock.call_args.kwargs
@@ -164,12 +164,12 @@ class TestGetDomainsAfragmenter:
     def test_valid_afragmenter_drop_failed(self, tmp_path):
         _write_fake_pae(tmp_path, "P1")   # only P1 has PAE; P2 missing
         df = _df_two()
-        stp = aa.StructurePreprocessor(verbose=False)
+        strp = aa.StructurePreprocessor(verbose=False)
         with patch(CHECK_AF), \
              patch(RUN_AF, return_value="1-30"):
             with warnings.catch_warnings():
                 warnings.simplefilter("ignore")
-                df_out = stp.get_domains(df_seq=df,
+                df_out = strp.get_domains(df_seq=df,
                                          pae_folder=str(tmp_path),
                                          tool="afragmenter",
                                          on_failure="drop")
@@ -177,12 +177,12 @@ class TestGetDomainsAfragmenter:
 
     def test_valid_afragmenter_raise_on_failure(self, tmp_path):
         # No file → on_failure='raise' should raise.
-        stp = aa.StructurePreprocessor(verbose=False)
+        strp = aa.StructurePreprocessor(verbose=False)
         with patch(CHECK_AF):
             with warnings.catch_warnings():
                 warnings.simplefilter("ignore")
                 with pytest.raises(RuntimeError):
-                    stp.get_domains(df_seq=_df_one(),
+                    strp.get_domains(df_seq=_df_one(),
                                     pae_folder=str(tmp_path),
                                     tool="afragmenter",
                                     on_failure="raise")
@@ -191,13 +191,13 @@ class TestGetDomainsAfragmenter:
         # End-to-end: get_domains output flows into encode_domains via
         # the in-memory 'chopping' column.
         _write_fake_pae(tmp_path, "P1")
-        stp = aa.StructurePreprocessor(verbose=False)
+        strp = aa.StructurePreprocessor(verbose=False)
         with patch(CHECK_AF), \
              patch(RUN_AF, return_value="1-10,15-25"):
-            df_out = stp.get_domains(df_seq=_df_one(),
+            df_out = strp.get_domains(df_seq=_df_one(),
                                      pae_folder=str(tmp_path),
                                      tool="afragmenter")
-            d, df_aug = stp.encode_domains(return_df=True, 
+            d, df_aug = strp.encode_domains(return_df=True, 
                 df_seq=df_out,
                 features=["domain_boundary",
                           "domain_relative_position"])
@@ -212,35 +212,35 @@ class TestGetDomainsChainsaw:
 
     # ----- NEGATIVES (≥5) -----
     def test_invalid_chainsaw_missing_pdb_folder(self, tmp_path):
-        stp = aa.StructurePreprocessor(verbose=False)
+        strp = aa.StructurePreprocessor(verbose=False)
         with patch(RESOLVE_CS):
             with pytest.raises(ValueError, match="pdb_folder"):
-                stp.get_domains(df_seq=_df_one(), pdb_folder=None,
+                strp.get_domains(df_seq=_df_one(), pdb_folder=None,
                                 tool="chainsaw",
                                 chainsaw_path=str(tmp_path))
 
     def test_invalid_chainsaw_pdb_folder_nonexistent(self, tmp_path):
-        stp = aa.StructurePreprocessor(verbose=False)
+        strp = aa.StructurePreprocessor(verbose=False)
         with patch(RESOLVE_CS):
             with pytest.raises(ValueError, match="pdb_folder"):
-                stp.get_domains(df_seq=_df_one(),
+                strp.get_domains(df_seq=_df_one(),
                                 pdb_folder="/__nope__",
                                 tool="chainsaw",
                                 chainsaw_path=str(tmp_path))
 
     def test_invalid_chainsaw_path_none(self, tmp_path):
-        stp = aa.StructurePreprocessor(verbose=False)
+        strp = aa.StructurePreprocessor(verbose=False)
         with pytest.raises(RuntimeError, match="chainsaw_path"):
-            stp.get_domains(df_seq=_df_one(),
+            strp.get_domains(df_seq=_df_one(),
                             pdb_folder=str(tmp_path),
                             tool="chainsaw", chainsaw_path=None)
 
     def test_invalid_chainsaw_path_not_a_dir(self, tmp_path):
         bogus = tmp_path / "not_a_dir.txt"
         bogus.write_text("hi")
-        stp = aa.StructurePreprocessor(verbose=False)
+        strp = aa.StructurePreprocessor(verbose=False)
         with pytest.raises(RuntimeError, match="chainsaw_path"):
-            stp.get_domains(df_seq=_df_one(),
+            strp.get_domains(df_seq=_df_one(),
                             pdb_folder=str(tmp_path),
                             tool="chainsaw", chainsaw_path=str(bogus))
 
@@ -248,19 +248,19 @@ class TestGetDomainsChainsaw:
         # Directory exists but has no get_predictions.py.
         cs_dir = tmp_path / "fake_chainsaw"
         cs_dir.mkdir()
-        stp = aa.StructurePreprocessor(verbose=False)
+        strp = aa.StructurePreprocessor(verbose=False)
         with pytest.raises(RuntimeError, match="get_predictions.py"):
-            stp.get_domains(df_seq=_df_one(),
+            strp.get_domains(df_seq=_df_one(),
                             pdb_folder=str(tmp_path),
                             tool="chainsaw", chainsaw_path=str(cs_dir))
 
     # ----- POSITIVES (≥6) -----
     def test_valid_chainsaw_returns_chopping(self, tmp_path):
         _write_fake_pdb(tmp_path, "P1")
-        stp = aa.StructurePreprocessor(verbose=False)
+        strp = aa.StructurePreprocessor(verbose=False)
         with patch(RESOLVE_CS, return_value=Path("/fake")), \
              patch(RUN_CS, return_value="1-30"):
-            df_out = stp.get_domains(df_seq=_df_one(),
+            df_out = strp.get_domains(df_seq=_df_one(),
                                      pdb_folder=str(tmp_path),
                                      tool="chainsaw",
                                      chainsaw_path="/fake")
@@ -269,10 +269,10 @@ class TestGetDomainsChainsaw:
 
     def test_valid_chainsaw_appends_two_columns(self, tmp_path):
         _write_fake_pdb(tmp_path, "P1")
-        stp = aa.StructurePreprocessor(verbose=False)
+        strp = aa.StructurePreprocessor(verbose=False)
         with patch(RESOLVE_CS, return_value=Path("/fake")), \
              patch(RUN_CS, return_value="1-30"):
-            df_out = stp.get_domains(df_seq=_df_one(),
+            df_out = strp.get_domains(df_seq=_df_one(),
                                      pdb_folder=str(tmp_path),
                                      tool="chainsaw",
                                      chainsaw_path="/fake")
@@ -280,12 +280,12 @@ class TestGetDomainsChainsaw:
         assert "domain_ok" in df_out.columns
 
     def test_valid_chainsaw_missing_pdb_warns(self, tmp_path):
-        stp = aa.StructurePreprocessor(verbose=False)
+        strp = aa.StructurePreprocessor(verbose=False)
         with patch(RESOLVE_CS, return_value=Path("/fake")), \
              patch(RUN_CS):  # would not be called
             with warnings.catch_warnings():
                 warnings.simplefilter("ignore")
-                df_out = stp.get_domains(df_seq=_df_one(),
+                df_out = strp.get_domains(df_seq=_df_one(),
                                          pdb_folder=str(tmp_path),
                                          tool="chainsaw",
                                          chainsaw_path="/fake")
@@ -294,13 +294,13 @@ class TestGetDomainsChainsaw:
 
     def test_valid_chainsaw_runtime_failure_warns(self, tmp_path):
         _write_fake_pdb(tmp_path, "P1")
-        stp = aa.StructurePreprocessor(verbose=False)
+        strp = aa.StructurePreprocessor(verbose=False)
         with patch(RESOLVE_CS, return_value=Path("/fake")), \
              patch(RUN_CS,
                    side_effect=RuntimeError("subprocess exit 1")):
             with warnings.catch_warnings():
                 warnings.simplefilter("ignore")
-                df_out = stp.get_domains(df_seq=_df_one(),
+                df_out = strp.get_domains(df_seq=_df_one(),
                                          pdb_folder=str(tmp_path),
                                          tool="chainsaw",
                                          chainsaw_path="/fake")
@@ -310,11 +310,11 @@ class TestGetDomainsChainsaw:
     def test_valid_chainsaw_two_entries_independent(self, tmp_path):
         _write_fake_pdb(tmp_path, "P1")
         _write_fake_pdb(tmp_path, "P2")
-        stp = aa.StructurePreprocessor(verbose=False)
+        strp = aa.StructurePreprocessor(verbose=False)
         with patch(RESOLVE_CS, return_value=Path("/fake")), \
              patch(RUN_CS,
                    side_effect=["1-30", "1-10,12-20"]):
-            df_out = stp.get_domains(df_seq=_df_two(),
+            df_out = strp.get_domains(df_seq=_df_two(),
                                      pdb_folder=str(tmp_path),
                                      tool="chainsaw",
                                      chainsaw_path="/fake")
@@ -324,14 +324,14 @@ class TestGetDomainsChainsaw:
     def test_valid_chainsaw_then_encode_domains(self, tmp_path):
         # End-to-end through ChainSaw mock + encode_domains.
         _write_fake_pdb(tmp_path, "P1")
-        stp = aa.StructurePreprocessor(verbose=False)
+        strp = aa.StructurePreprocessor(verbose=False)
         with patch(RESOLVE_CS, return_value=Path("/fake")), \
              patch(RUN_CS, return_value="1-10,15-25"):
-            df_out = stp.get_domains(df_seq=_df_one(),
+            df_out = strp.get_domains(df_seq=_df_one(),
                                      pdb_folder=str(tmp_path),
                                      tool="chainsaw",
                                      chainsaw_path="/fake")
-            d, df_aug = stp.encode_domains(return_df=True, 
+            d, df_aug = strp.encode_domains(return_df=True, 
                 df_seq=df_out,
                 features=["domain_boundary",
                           "n_domains_in_protein"])
@@ -349,9 +349,9 @@ class TestEncodeDomainsInlineChoppingColumn:
             "chopping": ["1-10,15-25"],
             "domain_ok": [True],
         })
-        stp = aa.StructurePreprocessor(verbose=False)
+        strp = aa.StructurePreprocessor(verbose=False)
         # No domain_folder needed when 'chopping' column present.
-        d = stp.encode_domains(df_seq=df,
+        d = strp.encode_domains(df_seq=df,
                                   features=["domain_boundary"])
         v = d["P1"][:, 0]
         for endpoint_1based in (1, 10, 15, 25):
@@ -364,8 +364,8 @@ class TestEncodeDomainsInlineChoppingColumn:
             "sequence": ["A" * 30],
             "chopping": ["1-30"],
         })
-        stp = aa.StructurePreprocessor(verbose=False)
-        d = stp.encode_domains(df_seq=df, domain_folder=None,
+        strp = aa.StructurePreprocessor(verbose=False)
+        d = strp.encode_domains(df_seq=df, domain_folder=None,
                                   features=["domain_boundary"])
         assert d["P1"].shape == (30, 1)
 
@@ -375,10 +375,10 @@ class TestEncodeDomainsInlineChoppingColumn:
             "sequence": ["A" * 30],
             "chopping": ["not_a_chopping!!!"],
         })
-        stp = aa.StructurePreprocessor(verbose=False)
+        strp = aa.StructurePreprocessor(verbose=False)
         with warnings.catch_warnings():
             warnings.simplefilter("ignore")
-            d, df_aug = stp.encode_domains(return_df=True, 
+            d, df_aug = strp.encode_domains(return_df=True, 
                 df_seq=df, features=["domain_boundary"])
         assert np.isnan(d["P1"]).all()
         assert not bool(df_aug["domain_ok"].iloc[0])
@@ -389,8 +389,8 @@ class TestEncodeDomainsInlineChoppingColumn:
             "sequence": ["A" * 30],
             "chopping": [""],
         })
-        stp = aa.StructurePreprocessor(verbose=False)
-        d, df_aug = stp.encode_domains(return_df=True, 
+        strp = aa.StructurePreprocessor(verbose=False)
+        d, df_aug = strp.encode_domains(return_df=True, 
             df_seq=df, features=["domain_boundary"])
         # Empty chopping → 0 domains → all residues unassigned (NaN).
         assert np.isnan(d["P1"]).all()

@@ -41,8 +41,8 @@ def _is_bar(ax):
 
 def _scores(seed=0):
     X, labels = _data(seed=seed)
-    aapred = aa.AAPred(random_state=seed).fit(X, labels)
-    pred, _ = aapred._predict_X(X)
+    aap = aa.AAPred(random_state=seed).fit(X, labels)
+    pred, _ = aap._predict_X(X)
     return pred, labels
 
 

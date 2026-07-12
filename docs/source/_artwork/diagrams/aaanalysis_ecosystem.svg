@@ -48,7 +48,7 @@
 <text x="660" y="468" text-anchor="middle" font-size="13.5" font-style="italic" fill="#3f7bb0">sequence &#8594; physicochemical scales &#8594; interpretable features &#8594; explainable ML</text>
 <text x="660" y="492" text-anchor="middle" font-size="13" font-weight="700" fill="#333131">CPP · Part &#215; Split &#215; Scale · CPP.run_num (numeric) · AAontology</text>
 <text x="660" y="515" text-anchor="middle" font-size="13" font-weight="700" fill="#333131">SequenceFeature · AAclust · NumericalFeature · dPULearn · AAWindowSampler</text>
-<text x="660" y="538" text-anchor="middle" font-size="13" font-weight="700" fill="#333131">TreeModel · ShapModel · CPPPlot · AAlogoPlot · AAMut · SeqMut · SeqOpt</text>
+<text x="660" y="538" text-anchor="middle" font-size="13" font-weight="700" fill="#333131">TreeModel · ShapModel · CPPPlot · AALogoPlot · AAMut · SeqMut · SeqOpt</text>
 <text x="660" y="560" text-anchor="middle" font-size="12.5" font-style="italic" fill="#5a5a5a">where on the sequence  &#215;  how to read it  &#215;  which physicochemical property</text>
 <path d="M377,456 L393,456" stroke="#C0526E" stroke-width="3.2"/><path d="M377,449 L377,463 L365,456 Z" fill="#C0526E"/><path d="M393,449 L393,463 L405,456 Z" fill="#C0526E"/><text x="385" y="449" text-anchor="middle" font-size="11" font-weight="700" fill="#8E3A52">vs</text>
 <g transform="translate(0,-5)"><rect x="140" y="350" width="225" height="222" rx="11" fill="#FAEDEC" stroke="#C0526E" stroke-width="1.5"/>

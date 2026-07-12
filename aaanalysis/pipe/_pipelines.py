@@ -1,5 +1,5 @@
 """
-This is a script for the frontend of the ``aaanalysis.pipe`` (aap) ``predict_samples`` golden
+This is a script for the frontend of the ``aaanalysis.pipe`` (ap) ``predict_samples`` golden
 pipeline: a thin, stateless multi-model comparison harness. It cross-validates every
 (feature set x model) combination over one ``df_seq`` and returns the fitted predictors together
 with a tidy comparison table — a convenience facade over the explicit
@@ -227,7 +227,7 @@ def predict_samples(list_df_feat: FeatArg,
 
     Examples
     --------
-    .. include:: examples/aap_predict_samples.rst
+    .. include:: examples/ap_predict_samples.rst
     """
     # Validate (thin facade: the wrapped primitives validate the rest)
     ut.check_df_seq(df_seq=df_seq)

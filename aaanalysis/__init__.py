@@ -3,7 +3,7 @@ from .data_handling import (load_dataset, load_scales, load_features, get_labels
                             SequencePreprocessor,
                             EmbeddingPreprocessor,
                             combine_dict_nums)
-from .seq_analysis import AAlogo, AAlogoPlot, AAWindowSampler
+from .seq_analysis import AALogo, AALogoPlot, AAWindowSampler
 from .feature_engineering import AAclust, AAclustPlot, SequenceFeature, NumericalFeature, CPP, CPPGrid, CPPPlot
 from .pu_learning import dPULearn, dPULearnPlot
 from .explainable_ai import TreeModel
@@ -40,8 +40,8 @@ __all__ = [
     # "comp_seq_sim",       BioPython
     # "filter_seq",         BioPython
     # "scan_motif",         MEME Suite
-    "AAlogo",
-    "AAlogoPlot",
+    "AALogo",
+    "AALogoPlot",
     "AAWindowSampler",
     # "StructurePreprocessor",   # DSSP + biopython (pro)
     # "AnnotationPreprocessor",  # UniProt fetch + requests (pro)
@@ -189,3 +189,19 @@ try:
 except ImportError as e:
     display_df = None
     globals()["display_df"] = missing_feature_stub("display_df", e, mode="dev")
+
+
+# Deprecated class-name aliases: AAlogo/AAlogoPlot were renamed to PascalCase
+# (AALogo/AALogoPlot). The old names remain importable for backward compatibility,
+# resolved lazily so they stay out of ``__all__`` and the abbreviation registry.
+_DEPRECATED_CLASS_ALIASES = {"AAlogo": "AALogo", "AAlogoPlot": "AALogoPlot"}
+
+
+def __getattr__(name):
+    canonical = _DEPRECATED_CLASS_ALIASES.get(name)
+    if canonical is not None:
+        import warnings
+        warnings.warn(f"'aaanalysis.{name}' is deprecated; use 'aaanalysis.{canonical}'.",
+                      DeprecationWarning, stacklevel=2)
+        return globals()[canonical]
+    raise AttributeError(f"module {__name__!r} has no attribute {name!r}")

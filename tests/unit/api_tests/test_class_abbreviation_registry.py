@@ -27,10 +27,10 @@ GUIDE = ROOT / "docs" / "source" / "index" / "docstring_guide.rst"
 
 # Class -> canonical abbreviation (single source of truth; mirrors the guide table).
 REGISTRY = {
-    "SequencePreprocessor": "sp",
-    "EmbeddingPreprocessor": "ep",
-    "AAlogo": "aal",
-    "AAlogoPlot": "aal_plot",
+    "SequencePreprocessor": "seqp",
+    "EmbeddingPreprocessor": "embp",
+    "AALogo": "aal",
+    "AALogoPlot": "aal_plot",
     "AAWindowSampler": "aaws",
     "AAclust": "aac",
     "AAclustPlot": "aac_plot",
@@ -39,23 +39,23 @@ REGISTRY = {
     "CPP": "cpp",
     "CPPGrid": "cppg",
     "CPPPlot": "cpp_plot",
-    "CPPStructurePlot": "csp",
+    "CPPStructurePlot": "cpps_plot",
     "dPULearn": "dpul",
     "dPULearnPlot": "dpul_plot",
-    "AAMut": "aamut",
-    "AAMutPlot": "aamut_plot",
-    "SeqMut": "seqmut",
-    "SeqMutPlot": "seqmut_plot",
-    "SeqOpt": "seqopt",
-    "SeqOptPlot": "seqopt_plot",
+    "AAMut": "aam",
+    "AAMutPlot": "aam_plot",
+    "SeqMut": "seqm",
+    "SeqMutPlot": "seqm_plot",
+    "SeqOpt": "seqo",
+    "SeqOptPlot": "seqo_plot",
     "TreeModel": "tm",
-    "AAPred": "aapred",
-    "AAPredPlot": "aapred_plot",
+    "AAPred": "aap",
+    "AAPredPlot": "aap_plot",
     "ReliabilityModel": "rm",
     "ReliabilityModelPlot": "rm_plot",
     "ShapModel": "sm",
-    "StructurePreprocessor": "stp",
-    "AnnotationPreprocessor": "ap",
+    "StructurePreprocessor": "strp",
+    "AnnotationPreprocessor": "annp",
 }
 
 # A class instance is named the bare abbreviation, ALWAYS. The only exception is
@@ -65,7 +65,7 @@ REGISTRY = {
 # sequential reuse (reassign the canonical abbr instead).
 ALLOWED_SECONDARY = {
     ("AAWindowSampler", "aaws_strict"),  # strict-threshold sampler alive beside aaws in aaws_sample_same_protein
-    ("AAlogoPlot", "aal_plot_t"),        # per-iteration plotter beside aal_plot in aal_plot_single_logo
+    ("AALogoPlot", "aal_plot_t"),        # per-iteration plotter beside aal_plot in aal_plot_single_logo
 }
 
 # Notebook surfaces whose instance variables are checked.
@@ -157,7 +157,7 @@ def test_registry_documented_in_style_guide():
     text = GUIDE.read_text(encoding="utf-8")
     # Classes are documented either as a ``ClassName`` literal or, preferably, via a
     # cross-referenced :class:`~aaanalysis.ClassName` role (the trailing backtick pins the
-    # exact name, so ``AAlogo`` does not match ``AAlogoPlot``). The abbreviation is a literal.
+    # exact name, so ``AALogo`` does not match ``AALogoPlot``). The abbreviation is a literal.
     undocumented = [
         (cls, abbr) for cls, abbr in REGISTRY.items()
         if (f"``{cls}``" not in text and f"aaanalysis.{cls}`" not in text)

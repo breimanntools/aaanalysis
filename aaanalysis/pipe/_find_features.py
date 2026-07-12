@@ -1,5 +1,5 @@
 """
-This is a script for the frontend of the ``aaanalysis.pipe`` (aap) ``find_features`` golden
+This is a script for the frontend of the ``aaanalysis.pipe`` (ap) ``find_features`` golden
 pipeline: a staged, interpretable CPP AutoML search. Stage 1 cross-validates the full Cartesian
 Part x Split x Scale grid and ranks each axis by its marginal-mean impact; Stage 2 refines the
 single highest-impact axis against ``n_filter``; Stage 3 refines the winning feature set
@@ -432,7 +432,7 @@ def find_features(labels: ut.ArrayLike1D,
 
     Examples
     --------
-    .. include:: examples/aap_find_features.rst
+    .. include:: examples/ap_find_features.rst
     """
     # Validate (thin facade: the wrapped primitives validate the rest)
     ut.check_str_options(name="search", val=search, list_str_options=list(_MODES))

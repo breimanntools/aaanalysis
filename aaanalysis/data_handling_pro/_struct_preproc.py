@@ -450,7 +450,7 @@ class StructurePreprocessor:
 
         Examples
         --------
-        .. include:: examples/stp_encode_pdb.rst
+        .. include:: examples/strp_encode_pdb.rst
         """
         self._verbose = ut.check_verbose(verbose)
 
@@ -553,7 +553,7 @@ class StructurePreprocessor:
 
         Examples
         --------
-        .. include:: examples/stp_fetch_alphafold.rst
+        .. include:: examples/strp_fetch_alphafold.rst
         """
         # Validate
         verbose = self._verbose
@@ -663,7 +663,7 @@ class StructurePreprocessor:
 
         Examples
         --------
-        .. include:: examples/stp_get_dssp.rst
+        .. include:: examples/strp_get_dssp.rst
         """
         # Validate
         verbose = self._verbose
@@ -775,7 +775,7 @@ class StructurePreprocessor:
 
         Examples
         --------
-        .. include:: examples/stp_encode_dssp.rst
+        .. include:: examples/strp_encode_dssp.rst
         """
         verbose = self._verbose
         ut.check_df_seq(df_seq=df_seq)
@@ -974,7 +974,7 @@ class StructurePreprocessor:
 
         Examples
         --------
-        .. include:: examples/stp_encode_pdb.rst
+        .. include:: examples/strp_encode_pdb.rst
         """
         verbose = self._verbose
         ut.check_df_seq(df_seq=df_seq)
@@ -1224,7 +1224,7 @@ class StructurePreprocessor:
 
         Examples
         --------
-        .. include:: examples/stp_encode_pae.rst
+        .. include:: examples/strp_encode_pae.rst
         """
         verbose = self._verbose
         ut.check_df_seq(df_seq=df_seq)
@@ -1438,7 +1438,7 @@ class StructurePreprocessor:
 
         Examples
         --------
-        .. include:: examples/stp_get_domains.rst
+        .. include:: examples/strp_get_domains.rst
         """
         verbose = self._verbose
         ut.check_df_seq(df_seq=df_seq)
@@ -1621,7 +1621,7 @@ class StructurePreprocessor:
 
         Examples
         --------
-        .. include:: examples/stp_encode_domains.rst
+        .. include:: examples/strp_encode_domains.rst
         """
         verbose = self._verbose
         ut.check_df_seq(df_seq=df_seq)
@@ -1837,7 +1837,7 @@ class StructurePreprocessor:
 
         Examples
         --------
-        .. include:: examples/stp_build_scales.rst
+        .. include:: examples/strp_build_scales.rst
         """
         # Validate
         if df_seq is None or dict_num is None:
@@ -1956,7 +1956,7 @@ class StructurePreprocessor:
 
         Examples
         --------
-        .. include:: examples/stp_build_cat.rst
+        .. include:: examples/strp_build_cat.rst
         """
         validate_feature_keys(features)
         D = get_total_dims(features)

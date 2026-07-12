@@ -446,7 +446,7 @@ DICT_DF_SCHEMAS = {
     },
     "df_logo": {
         "description": (
-            "AAlogo composition/probability matrix consumed by sequence-logo plots."),
+            "AALogo composition/probability matrix consumed by sequence-logo plots."),
         "matrix": {
             "index": "1-based sequence position",
             "columns": "amino acid (one-letter)",
