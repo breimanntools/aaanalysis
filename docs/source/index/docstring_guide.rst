@@ -475,13 +475,13 @@ tutorial centred on a single public class is titled
 
 — the **exact public class name** (as in the API), a colon, then a short phrase
 for what the reader learns. Examples already in the set:
-``AAclust: Selecting redundancy-reduced scale sets``,
-``SequenceFeature: Creation of CPP feature components``,
-``CPP: Identification of physicochemical signatures``,
-``dPULearn: Learning from unbalanced data``,
-``ShapModel: Explaining with single-residue resolution``,
-``CPPGrid: Sweeping, evaluating, and ranking configurations``,
-``SeqOpt: Optimizing sequences by directed evolution``.
+:doc:`AAclust: Selecting redundancy-reduced scale sets </generated/tutorial3a_aaclust>`,
+:doc:`SequenceFeature: Creation of CPP feature components </generated/tutorial3b_sequence_feature>`,
+:doc:`CPP: Identification of physicochemical signatures </generated/tutorial3c_cpp>`,
+:doc:`dPULearn: Learning from unbalanced data </generated/tutorial4a_dpulearn>`,
+:doc:`ShapModel: Explaining with single-residue resolution </generated/tutorial5a_shap_model>`,
+:doc:`CPPGrid: Sweeping, evaluating, and ranking configurations </generated/tutorial6_comparison_harness>`,
+:doc:`SeqOpt: Optimizing sequences by directed evolution </generated/tutorial7_protein_engineering>`.
 
 Rules:
 
@@ -489,14 +489,17 @@ Rules:
   ``Tutorial: …``). Ordering lives in the filename (``tutorial6_*``) and the
   ``tutorials.rst`` toctree, not the heading.
 * When a section of ``tutorials.rst`` introduces the notebook in prose, name it by
-  the **same class** (``the **CPPGrid** tutorial``, ``the **SeqOpt** tutorial``) so
+  the **same class** (the :doc:`CPPGrid tutorial </generated/tutorial6_comparison_harness>`,
+  the :doc:`SeqOpt tutorial </generated/tutorial7_protein_engineering>`) so
   the prose, the title, and the API all read the same.
 * A tutorial that teaches a **function** or a **cross-cutting topic** rather than
-  one class uses a plain descriptive title — ``Data loading``, ``Scale loading``,
-  ``CPP across data representations: …``.
+  one class uses a plain descriptive title — :doc:`Data loading </generated/tutorial2a_data_loader>`,
+  :doc:`Scale loading </generated/tutorial2b_scales_loader>`,
+  :doc:`CPP across data representations </generated/tutorial3d_data_representations>`.
 * The onboarding notebooks under :ref:`Getting Started <getting_started>`
-  (``A minimal CPP analysis``, ``Quick start with AAanalysis``,
-  ``Slow start with AAanalysis``) are titled by what they deliver, not a class.
+  (:doc:`A minimal CPP analysis </generated/tutorial0_minimal>`,
+  :doc:`Quick start with AAanalysis </generated/tutorial1_quick_start>`,
+  :doc:`Slow start with AAanalysis </generated/tutorial1_slow_start>`) are titled by what they deliver, not a class.
 
 Output / data-object names
 --------------------------
