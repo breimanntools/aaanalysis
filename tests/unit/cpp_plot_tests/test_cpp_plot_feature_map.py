@@ -1080,7 +1080,10 @@ class TestFeatureMapSeqCharFill:
         fs += [t.get_fontsize() for t in ax.get_xticklabels()]
         return max(fs)
 
-    def test_fill_true_grows_font(self):
+    def test_fill_caps_font(self):
+        # fill=True caps the residue letters to the cell (proportional to the row labels), so the
+        # cells supply the gap-free band; fill=False keeps the larger non-overlapping glyph size.
+        # So fill BOUNDS the font rather than growing it.
         df_feat = aa.load_features(name="DOM_GSEC").head(40)
         cpp = aa.CPPPlot(df_scales=aa.load_scales())
         kws = self._seq_kws()
@@ -1088,11 +1091,10 @@ class TestFeatureMapSeqCharFill:
         off = self._max_seq_fs(ax_off); plt.close("all")
         _, ax_on = cpp.feature_map(df_feat=df_feat, add_imp_bar_top=False, seq_char_fill=True, **kws)
         on = self._max_seq_fs(ax_on); plt.close("all")
-        assert on >= off  # fill never shrinks; grows toward touching characters
+        assert on <= off + 0.5  # fill caps the letters; never larger than the no-fill glyph size
 
     def test_fill_default_is_true(self):
-        # Default is edge-to-edge fill (seq_char_fill=True): default matches fill=True,
-        # and is at least as large as the explicit no-fill spacing.
+        # Default follows auto_font (seq_char_fill=True): the default matches the explicit fill=True.
         df_feat = aa.load_features(name="DOM_GSEC").head(40)
         cpp = aa.CPPPlot(df_scales=aa.load_scales())
         kws = self._seq_kws()
@@ -1100,9 +1102,7 @@ class TestFeatureMapSeqCharFill:
         def_fs = self._max_seq_fs(ax_def); plt.close("all")
         _, ax_on = cpp.feature_map(df_feat=df_feat, add_imp_bar_top=False, seq_char_fill=True, **kws)
         on_fs = self._max_seq_fs(ax_on); plt.close("all")
-        _, ax_off = cpp.feature_map(df_feat=df_feat, add_imp_bar_top=False, seq_char_fill=False, **kws)
-        off_fs = self._max_seq_fs(ax_off); plt.close("all")
-        assert def_fs == on_fs and def_fs >= off_fs
+        assert def_fs == on_fs
 
     def test_fill_draws_seamless_full_width_cells(self):
         # seq_char_fill=True paints one full-width (1.0 data unit) colored cell per residue

@@ -103,13 +103,13 @@ def _adjust_xticks_labels(xticks=None, xtick_labels=None, add_xtick_pos=True,
 
 # Colored sequence cell: fraction of the (heatmap-edge) top margin mirrored below the letters.
 # 1.0 = symmetric; smaller keeps the band flush to the grid on top but slim underneath.
-_SEQ_CELL_BOTTOM_MARGIN_FRAC = 0.4
+_SEQ_CELL_BOTTOM_MARGIN_FRAC = 0.2
 
 # Gap between the heatmap grid and the sequence band. Expressed in grid-CELL (row) units so it
 # equals the category-sidebar gap (_SUBCAT_BAR_GAP_CELLS) and scales with the cell like it does.
 # The x-tick pad moves the residue letters clear of that gap (points; a touch above the cell gap).
 _SEQ_HEATMAP_GAP_CELLS = 0.22
-_SEQ_HEATMAP_GAP_PT = 8.0
+_SEQ_HEATMAP_GAP_PT = 5.0
 
 # Constant gap (points) between the sequence band and the JMD-N/TMD/JMD-C part labels.
 _JMD_LABEL_GAP_PT = 3.0
@@ -286,11 +286,24 @@ def finalize_part_labels_(fig=None, ax=None, gap_pt=_JMD_LABEL_GAP_PT, cap=_JMD_
     if not seq_labels:
         return
     seq_size = max(t.get_fontsize() for t in seq_labels)
-    band_bottom = min(t.get_window_extent(renderer).y0 for t in seq_labels)
+    # Measure the band bottom from the colored per-residue cells too (fill mode): they extend past
+    # the letters, so pinning to the letters alone leaves the labels nearly touching the band.
+    cells = [p for p in ax.patches if p.get_gid() == "_seq_cell"]
+    extents = [t.get_window_extent(renderer) for t in seq_labels]
+    extents += [p.get_window_extent(renderer) for p in cells]
+    band_bottom = min(e.y0 for e in extents)
     ax_bottom = ax.get_window_extent(renderer).y0
     band_below_pt = max(0.0, (ax_bottom - band_bottom) / fig.dpi * 72.0)
+    # Match the below-band gap to the above-band (heatmap) gap so the sequence sits symmetrically
+    # between the grid and the part labels: both a constant _SEQ_HEATMAP_GAP_CELLS cell-rows.
+    eff_gap = gap_pt
+    if cells:
+        p0 = ax.transData.transform((0.0, 0.0))
+        p1 = ax.transData.transform((0.0, 1.0))
+        row_pt = abs(p1[1] - p0[1]) / fig.dpi * 72.0
+        eff_gap = _SEQ_HEATMAP_GAP_CELLS * row_pt
     size = fontsize_tmd_jmd if fontsize_tmd_jmd is not None else min(seq_size, cap)
-    part_ax.spines["bottom"].set_position(("outward", band_below_pt + gap_pt))
+    part_ax.spines["bottom"].set_position(("outward", band_below_pt + eff_gap))
     for label in part_ax.get_xticklabels():
         if label.get_text() in names:
             label.set_size(size)
@@ -318,13 +331,16 @@ def place_colorbar_below_grid_(fig=None, ax=None, gap_in=_CBAR_BELOW_GRID_IN):
 
 
 def align_bottom_furniture_(fig=None, ax=None, gap_in=_FURNITURE_GAP_IN, item_gap_in=_FURNITURE_ITEM_GAP_IN):
-    """Lay the scale-category legend, colorbar and importance legend as one COMPACT bottom row.
+    """Lay the scale-category legend, colorbar and importance legend as one aligned bottom row.
 
-    Clustered near the grid centre in left / middle / right order with small ``item_gap_in`` gaps,
-    a small ``gap_in`` below the sequence/part-label block, tops on one line. The colorbar is a
-    fixed-inch-thick, fixed-inch-wide gradient bar (the backend sizes it as a figure fraction, which
-    collapses when the figure shrinks). Run after ``grow_to_fit``, in figure coordinates. Missing
-    items (e.g. no importance legend on the standalone heatmap) are skipped.
+    Aligned to the grid columns (the cheat-sheet layout): the scale-category legend LEFT-aligned with
+    the grid's left content (row labels / the "Scale (subcategory)" title), the "Feature value"
+    colorbar centred on the grid, and the feature-importance legend RIGHT-aligned with the right
+    content edge (the cumulative-importance column). All three tops on one line, a small ``gap_in``
+    below the sequence/part-label block. The colorbar is a fixed-inch-thick, fixed-inch-wide gradient
+    bar (the backend sizes it as a figure fraction, which collapses when the figure shrinks). Run
+    after ``grow_to_fit``, in figure coordinates. Missing items (e.g. no importance legend on the
+    standalone heatmap) are skipped.
     """
     fig.canvas.draw()
     renderer = fig.canvas.get_renderer()
@@ -341,7 +357,9 @@ def align_bottom_furniture_(fig=None, ax=None, gap_in=_FURNITURE_GAP_IN, item_ga
     if cat_legend is not None:
         cat_legend.set_visible(False)
     fig.canvas.draw()
-    low_disp = ax.get_tightbbox(renderer).y0
+    _tb = ax.get_tightbbox(renderer)
+    low_disp = _tb.y0
+    left_disp = _tb.x0  # grid's left content edge (row labels + the "Scale (subcategory)" title)
     for a in fig.axes:
         if a is ax or a is cbar_ax:
             continue
@@ -370,15 +388,44 @@ def align_bottom_furniture_(fig=None, ax=None, gap_in=_FURNITURE_GAP_IN, item_ga
         cbar_right_in = cbar_left_in + cbar_w_in
         bottom = (top_in - label_above_in - _CBAR_HEIGHT_IN) / h_in
         cbar_ax.set_position([cbar_left_in / w_in, bottom, cbar_w_in / w_in, _CBAR_HEIGHT_IN / h_in])
-    # Category legend just LEFT of the colorbar; importance legend just RIGHT of it.
+    # Furniture row, width-responsive so the text never overlaps:
+    #  - if the three items fit the grid's content width, keep the cheat-sheet grid-column alignment
+    #    (scale-category legend flush to the left content edge, importance legend flush to the right
+    #    content edge, colorbar centred);
+    #  - otherwise cluster them ADJACENT around the centred colorbar (category just left, importance
+    #    just right) so they never overlap each other; grow_to_fit then widens the figure to fit.
+    cat_w = cat_legend.get_window_extent(renderer).width / dpi if cat_legend is not None else 0.0
+    imp_w = imp_legend.get_window_extent(renderer).width / dpi if imp_legend is not None else 0.0
+    cbar_w_in = (cbar_right_in - cbar_left_in) if cbar_left_in is not None else 0.0
+    left_in = left_disp / dpi
+    right_in = max(a.get_position().x1 for a in fig.axes if a is not cbar_ax) * w_in
+    content_w = right_in - left_in
+    fits = (cat_w + cbar_w_in + imp_w + 2 * item_gap_in) <= content_w
+    two_fit = (cat_w + cbar_w_in + item_gap_in) <= content_w
+    # Scale-category legend: left content edge if the row has room, else clustered just left of the
+    # (centred) colorbar so it never overlaps it.
     if cat_legend is not None:
-        right_edge = (cbar_left_in - item_gap_in) if cbar_left_in is not None else (grid.x0 * w_in - item_gap_in)
-        cat_legend.set_loc("upper right")
-        cat_legend.set_bbox_to_anchor((right_edge / w_in, top_frac), transform=fig.transFigure)
+        if fits or two_fit:
+            cat_legend.set_loc("upper left")
+            cat_legend.set_bbox_to_anchor((left_in / w_in, top_frac), transform=fig.transFigure)
+        elif cbar_left_in is not None:
+            cat_legend.set_loc("upper right")
+            cat_legend.set_bbox_to_anchor(((cbar_left_in - item_gap_in) / w_in, top_frac), transform=fig.transFigure)
+    # Feature-importance legend: right content edge when all three fit the row; otherwise drop it to
+    # a SECOND row below the colorbar (still right-aligned), so the narrow top row only holds the
+    # category legend + colorbar.
     if imp_legend is not None:
-        left_edge = (cbar_right_in + item_gap_in) if cbar_right_in is not None else (grid.x1 * w_in + item_gap_in)
-        imp_legend.set_loc("upper left")
-        imp_legend.set_bbox_to_anchor((left_edge / w_in, top_frac), transform=fig.transFigure)
+        if fits:
+            imp_legend.set_loc("upper right")
+            imp_legend.set_bbox_to_anchor((right_in / w_in, top_frac), transform=fig.transFigure)
+        elif cbar_ax is not None and cbar_right_in is not None:
+            imp_legend.set_visible(False)
+            fig.canvas.draw()
+            cbar_low = cbar_ax.get_tightbbox(renderer).y0  # colorbar incl. its tick labels
+            imp_legend.set_visible(True)
+            imp_top = (cbar_low / dpi - item_gap_in) / h_in
+            imp_legend.set_loc("upper right")
+            imp_legend.set_bbox_to_anchor((cbar_right_in / w_in, imp_top), transform=fig.transFigure)
 
 
 def _get_new_axis(ax=None):

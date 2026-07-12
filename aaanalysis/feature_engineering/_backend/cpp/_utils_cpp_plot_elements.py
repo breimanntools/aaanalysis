@@ -31,11 +31,13 @@ def _force_render(fig):
     return fig.canvas.get_renderer()
 
 
-def _row_labels_overlap(label_artists, renderer, overlap_frac=0.15):
-    """Whether any two vertically-adjacent row labels overlap beyond a fraction.
+def _row_labels_overlap(label_artists, renderer, overlap_frac=0.05):
+    """Whether any two vertically-adjacent row labels overlap beyond a small fraction.
 
     Row labels share the same x (right-aligned), so the vertical overlap fraction
-    of the smaller box is an accurate stand-in for the area fraction.
+    of the smaller box is an accurate stand-in for the area fraction. Only a small tolerance
+    (the font bbox includes empty descender space) so the labels keep a visible gap rather
+    than shrinking only once the glyphs literally collide.
     """
     boxes = sorted((t.get_window_extent(renderer) for t in label_artists), key=lambda b: b.y0)
     for lower, upper in zip(boxes[:-1], boxes[1:]):

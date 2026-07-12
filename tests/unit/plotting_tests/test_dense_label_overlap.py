@@ -541,3 +541,44 @@ class TestSeqCharNeverOverlap:
             tmd_seq=self._SEQ[:95], jmd_n_seq=self._SEQ[:10], jmd_c_seq=self._SEQ[:10])
         n_cells = sum(1 for p in ax.patches if p.get_gid() == "_seq_cell")
         assert n_cells == 95 + 20, n_cells
+
+
+class TestSeqSizeModes:
+    """seq_size: 'auto' (length-adaptive) | fraction of the cell height (<=1) | points (>1).
+    Every mode keeps the residue letters non-overlapping."""
+
+    _SEQ = "ACDEFGHIKLMNPQRSTVWY" * 10
+
+    def setup_method(self):
+        aa.options["verbose"] = False
+
+    def teardown_method(self):
+        plt.close("all")
+        aa.options["auto_font"] = True
+
+    def _seq_fs(self, tmd_len, seq_size):
+        fig, ax = aa.CPPPlot().feature_map(
+            _df_feat_len(20, tmd_len), tmd_len=tmd_len, add_imp_bar_top=False, seq_size=seq_size,
+            tmd_seq=self._SEQ[:tmd_len], jmd_n_seq=self._SEQ[:10], jmd_c_seq=self._SEQ[:10])
+        _, worst = _seq_letter_overlaps(fig, ax)
+        labs = [t for t in ax.xaxis.get_ticklabels(which="both") if len(t.get_text().strip()) == 1]
+        fs = max(t.get_fontsize() for t in labs)
+        plt.close("all")
+        assert worst <= 1.0, f"overlap {worst:.1f}px at seq_size={seq_size}"
+        return fs
+
+    def test_auto_steps_down_for_short_tmd(self):
+        assert self._seq_fs(20, "auto") > self._seq_fs(4, "auto")
+
+    def test_fraction_smaller_than_full(self):
+        assert self._seq_fs(20, 0.6) < self._seq_fs(20, 0.9)
+
+    @pytest.mark.parametrize("pt", [8.0, 12.0])
+    def test_points_sets_absolute_size(self, pt):
+        assert abs(self._seq_fs(20, pt) - pt) <= 0.6
+
+    def test_invalid_seq_size_raises(self):
+        with pytest.raises(ValueError):
+            aa.CPPPlot().feature_map(
+                _df_feat_len(20, 20), tmd_len=20, seq_size=-1,
+                tmd_seq=self._SEQ[:20], jmd_n_seq=self._SEQ[:10], jmd_c_seq=self._SEQ[:10])
