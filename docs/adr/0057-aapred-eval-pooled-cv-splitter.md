@@ -1,4 +1,4 @@
-# ADR-XXXX — `AAPred.eval` accepts a custom CV splitter and scores it by pooled out-of-fold prediction
+# ADR-0057 — `AAPred.eval` accepts a custom CV splitter and scores it by pooled out-of-fold prediction
 
 Status: Accepted — 2026-07-12
 

@@ -64,4 +64,5 @@ Regenerate this table with:
 | [0054](0054-reject-distributed-signal-diagnostic.md) | Reject the distributed-signal (joint-vs-marginal lift) diagnostic | Accepted | 2026-07-08 |  |
 | [0055](0055-cpp-bootstrap-stability-selection.md) | CPP bootstrap / stability annotation | Accepted | 2026-07-08 |  |
 | [0056](0056-rank-plot-into-aapredplot.md) | Per-protein rank scatter moves into `AAPredPlot.predict_group(kind="rank_scatter")` | Accepted | 2026-07-09 |  |
+| [0057](0057-aapred-eval-pooled-cv-splitter.md) | `AAPred.eval` accepts a custom CV splitter and scores it by pooled out-of-fold prediction | Accepted | 2026-07-12 |  |
 <!-- ADR-INDEX:END -->
