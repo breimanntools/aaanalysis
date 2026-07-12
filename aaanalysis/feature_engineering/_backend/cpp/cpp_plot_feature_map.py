@@ -369,7 +369,7 @@ def plot_feature_map(df_feat=None, df_cat=None,
         #   - the subcategory x-tick is dropped on the shortest strips (top_ymax <= 1.5; the values are
         #     already printed on the bars) and shown above that;
         #   - the top-bars y-tick (mark AND number, always on the same side) sits on the LEFT for a
-        #     short strip (top_ymax <= 2.5) and on the RIGHT for a tall one (> 2.5, the standard look).
+        #     short strip (top_ymax <= 3) and on the RIGHT for a tall one (> 3, the standard look).
         # For SHAP impact the right per-subcategory bars carry no on-bar value labels, so keep the
         # subcategory importance axis (its only scale reference); for plain importance drop it on the
         # shortest strips where the values are already printed on the bars.
@@ -414,10 +414,10 @@ def plot_feature_map(df_feat=None, df_cat=None,
 
         if add_imp_bar_top:
             # The y-axis spine stays on the RIGHT (next to the "Cumulative feature importance" label).
-            # A short strip (top_ymax <= 2.5) renders the max value to the LEFT of that spine; a tall
+            # A short strip (top_ymax <= 3) renders the max value to the LEFT of that spine; a tall
             # one to the RIGHT of it -- the standard look. Both at the subcategory x-tick's font size.
             ax_bt.yaxis.set_ticks_position("right")
-            if top_ymax > 2.5:
+            if top_ymax > 3:
                 ut.ticks_0(ax_bt, axis="y", **args_ticks_0)
                 ax_bt.tick_params(axis="y", labelsize=fontsize_annotations, length=3)
             else:
