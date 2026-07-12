@@ -1293,18 +1293,25 @@ class CPPPlot:
             fraction of the cell height (e.g. ``0.9``); a value ``> 1`` is an absolute font size in
             points. The letters never overlap at any size.
         seq_char_fill : bool, optional
-            If ``True`` and ``seq_size`` is auto-optimized (``None``), grow the residue
-            characters until adjacent letters touch (no whitespace) while never overlapping, so
-            they fill the cells. If ``False``, keep a small gap. If ``None`` (default), follows
-            the ``auto_font`` option (on when auto-sizing is enabled, off otherwise).
+            If ``True``, the sequence renders as a continuous, gap-free colored band (one full-width
+            cell per residue) with the letters drawn on top. If ``False``, each residue gets its own
+            glyph-sized colored box. If ``None`` (default), follows the ``auto_font`` option
+            (on when auto-sizing is enabled, off otherwise).
 
             .. versionadded:: 1.1.0
         fontsize_tmd_jmd : int or float, optional
             Font size (>=0) for the part labels: 'JMD-N', 'TMD', 'JMD-C'. If ``None``, optimized automatically.
         weight_tmd_jmd : {'normal', 'bold'}, default='normal'
             Font weight for the part labels: 'JMD-N', 'TMD', 'JMD-C'.
-        fontsize_labels : int or float, default=12
-            Font size (>= 0) for figure labels. If ``None``, determined automatically.
+        fontsize_labels : str, int, or float, default=12
+            Font size (>= 0) for the figure labels (the scale-subcategory row labels, the
+            scale-category legend, and the colorbar). A number sets the size directly (the default
+            ``12`` leaves the output unchanged). ``"auto"`` scales the size with the
+            ``plot_settings`` font scale, caps it at about 13 pt, and shrinks it further if the
+            subcategory rows would overlap, so the rows never collide.
+
+            .. versionchanged:: 1.1.0
+                Accepts ``"auto"`` to track the ``plot_settings`` font scale without row overlap.
         add_xticks_pos : bool, default=False
             If ``True``, include x-tick positions when TMD-JMD sequence is given.
         grid_linewidth : int or float, default=0.01
@@ -1682,8 +1689,15 @@ class CPPPlot:
             Font weight for the part labels: 'JMD-N', 'TMD', 'JMD-C'.
         fontsize_titles : int or float, default=11
             Font size (>= 0) for figure titles. If ``None``, determined automatically.
-        fontsize_labels : int or float, default=12
-            Font size (>= 0) for figure labels. If ``None``, determined automatically.
+        fontsize_labels : str, int, or float, default=12
+            Font size (>= 0) for the figure labels (the scale-subcategory row labels, the
+            scale-category legend, and the colorbar). A number sets the size directly (the default
+            ``12`` leaves the output unchanged). ``"auto"`` scales the size with the
+            ``plot_settings`` font scale, caps it at about 13 pt, and shrinks it further if the
+            subcategory rows would overlap, so the rows never collide.
+
+            .. versionchanged:: 1.1.0
+                Accepts ``"auto"`` to track the ``plot_settings`` font scale without row overlap.
         fontsize_annotations : int or float, default=11
             Font size (>= 0) for figure annotations. If ``None``, determined automatically.
         fontsize_imp_bar : int or float, default=9
