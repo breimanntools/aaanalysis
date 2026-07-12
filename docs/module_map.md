@@ -37,6 +37,10 @@ flowchart LR
     TM["TreeModel"]
     SM["ShapModel (pro)"]
   end
+  subgraph PRED["prediction"]
+    AAP["AAPred / AAPredPlot"]
+    RM["ReliabilityModel"]
+  end
   subgraph PD["protein_engineering"]
     AAM["AAMut / SeqMut"]
   end
@@ -55,6 +59,8 @@ flowchart LR
   EP -->|embeddings X| TM
   TM -->|fitted model| SM
   SM -->|SHAP values| CPPP
+  CPP -->|df_feat / X| AAP
+  AAP -->|scores / df_pred| RM
   CPP -->|feature impact| AAM
   AL -.->|sequence logos| CPPP
 ```
@@ -88,6 +94,7 @@ feature impact onto a 3D protein structure, reusing the CPP position backend fro
 - metrics
 - pipe
 - plotting
+- prediction
 - protein_engineering
 - pu_learning
 - seq_analysis
