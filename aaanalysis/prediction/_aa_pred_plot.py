@@ -487,7 +487,7 @@ class AAPredPlot:
 
         Examples
         --------
-        .. include:: examples/aapred_plot.rst
+        .. include:: examples/aap_plot.rst
         """
 
     @staticmethod
@@ -620,7 +620,7 @@ class AAPredPlot:
 
         Examples
         --------
-        .. include:: examples/aapred_plot_sample.rst
+        .. include:: examples/aap_plot_sample.rst
         """
         if kind not in LIST_SAMPLE_KINDS:
             raise ValueError(f"'kind' ('{kind}') must be one of {LIST_SAMPLE_KINDS}.")
@@ -830,7 +830,7 @@ class AAPredPlot:
 
         Examples
         --------
-        .. include:: examples/aapred_plot_group.rst
+        .. include:: examples/aap_plot_group.rst
         """
         if kind not in LIST_GROUP_KINDS:
             raise ValueError(f"'kind' ('{kind}') must be one of {LIST_GROUP_KINDS}.")
@@ -949,7 +949,7 @@ class AAPredPlot:
 
         Examples
         --------
-        .. include:: examples/aapred_plot_group_cluster.rst
+        .. include:: examples/aap_plot_group_cluster.rst
         """
         if kind not in LIST_CLUSTER_KINDS:
             raise ValueError(f"'kind' ('{kind}') must be one of {LIST_CLUSTER_KINDS}.")
@@ -1108,7 +1108,7 @@ class AAPredPlot:
 
         Examples
         --------
-        .. include:: examples/aapred_plot_eval.rst
+        .. include:: examples/aap_plot_eval.rst
         """
         if kind not in LIST_EVAL_KINDS:
             raise ValueError(f"'kind' ('{kind}') must be one of {LIST_EVAL_KINDS}.")

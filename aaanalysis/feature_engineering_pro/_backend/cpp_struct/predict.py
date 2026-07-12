@@ -24,7 +24,7 @@ from aaanalysis.explainable_ai_pro import ShapModel
 # Underscored + unlikely to collide with a real accession; used as the fuzzy-label / sample key.
 _QUERY_ENTRY = "__QUERY__"
 
-# String shortcuts for the prediction-estimator vocabulary, mirroring the aap.find_features /
+# String shortcuts for the prediction-estimator vocabulary, mirroring the ap.find_features /
 # predict_samples presets (the ut.MODEL_* constants) so the user can write model="rf" instead of
 # importing the class. Each lambda takes the random_state. The ShapModel that computes the impact
 # always uses its OWN defaults (TreeExplainer + RF/ExtraTrees), independent of this choice.

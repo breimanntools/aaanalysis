@@ -19,32 +19,32 @@ def _data(n_per_class=15, n_feat=6, seed=0):
 
 class TestAAPredInit:
     def test_default_construction(self):
-        aapred = aa.AAPred()
-        assert aapred.list_models_ is None
+        aap = aa.AAPred()
+        assert aap.list_models_ is None
 
     def test_list_model_classes(self):
-        aapred = aa.AAPred(list_model_classes=[RandomForestClassifier, SVC])
-        assert aapred._list_model_classes == [RandomForestClassifier, SVC]
+        aap = aa.AAPred(list_model_classes=[RandomForestClassifier, SVC])
+        assert aap._list_model_classes == [RandomForestClassifier, SVC]
 
     def test_list_model_kwargs(self):
-        aapred = aa.AAPred(list_model_classes=[SVC], list_model_kwargs=[{"probability": True}])
-        assert aapred._list_model_kwargs[0]["probability"] is True
+        aap = aa.AAPred(list_model_classes=[SVC], list_model_kwargs=[{"probability": True}])
+        assert aap._list_model_kwargs[0]["probability"] is True
 
     def test_list_metrics(self):
-        aapred = aa.AAPred(list_metrics=["balanced_accuracy"])
-        assert aapred._list_metrics == ["balanced_accuracy"]
+        aap = aa.AAPred(list_metrics=["balanced_accuracy"])
+        assert aap._list_metrics == ["balanced_accuracy"]
 
     def test_verbose(self):
-        aapred = aa.AAPred(verbose=False)
-        assert aapred._verbose is False
+        aap = aa.AAPred(verbose=False)
+        assert aap._verbose is False
 
     def test_random_state(self):
-        aapred = aa.AAPred(random_state=42)
-        assert aapred._random_state == 42
+        aap = aa.AAPred(random_state=42)
+        assert aap._random_state == 42
 
     def test_single_model_not_in_list(self):
-        aapred = aa.AAPred(list_model_classes=RandomForestClassifier)
-        assert aapred._list_model_classes == [RandomForestClassifier]
+        aap = aa.AAPred(list_model_classes=RandomForestClassifier)
+        assert aap._list_model_classes == [RandomForestClassifier]
 
     def test_invalid_metric_raises(self):
         with pytest.raises(ValueError):
@@ -63,20 +63,20 @@ class TestAAPredInit:
 class TestAAPredFit:
     def test_fit_returns_self(self):
         X, labels = _data()
-        aapred = aa.AAPred(random_state=0, verbose=False)
-        assert aapred.fit(X, labels) is aapred
+        aap = aa.AAPred(random_state=0, verbose=False)
+        assert aap.fit(X, labels) is aap
 
     def test_fit_sets_models(self):
         X, labels = _data()
-        aapred = aa.AAPred(list_model_classes=[RandomForestClassifier, SVC],
+        aap = aa.AAPred(list_model_classes=[RandomForestClassifier, SVC],
                            list_model_kwargs=[{}, {"probability": True}], random_state=0)
-        aapred.fit(X, labels)
-        assert len(aapred.list_models_) == 2
+        aap.fit(X, labels)
+        assert len(aap.list_models_) == 2
 
     def test_fit_label_pos(self):
         X, labels = _data()
-        aapred = aa.AAPred(random_state=0).fit(X, labels, label_pos=1)
-        assert aapred.label_pos_ == 1
+        aap = aa.AAPred(random_state=0).fit(X, labels, label_pos=1)
+        assert aap.label_pos_ == 1
 
     def test_fit_label_pos_absent_raises(self):
         X, labels = _data()
@@ -97,20 +97,20 @@ class TestAAPredFit:
     def test_fit_sets_real_negative_label(self):
         X, labels01 = _data()
         labels = np.where(labels01 == 0, 2, 1)  # classes {1, 2}
-        aapred = aa.AAPred(random_state=0).fit(X, labels, label_pos=1)
-        assert aapred.label_neg_ == 2
+        aap = aa.AAPred(random_state=0).fit(X, labels, label_pos=1)
+        assert aap.label_neg_ == 2
 
 
 class TestAAPredModelsAndHPO:
     def test_models_by_name(self):
         X, y = _data()
-        aapred = aa.AAPred(models=["svm", "rf"], random_state=0).fit(X, y)
-        assert len(aapred.list_models_) == 2
+        aap = aa.AAPred(models=["svm", "rf"], random_state=0).fit(X, y)
+        assert len(aap.list_models_) == 2
 
     def test_models_accepts_estimator_instance(self):
         X, y = _data()
-        aapred = aa.AAPred(models=SVC(kernel="rbf", probability=True), random_state=0).fit(X, y)
-        assert aapred.list_models_[0].kernel == "rbf"
+        aap = aa.AAPred(models=SVC(kernel="rbf", probability=True), random_state=0).fit(X, y)
+        assert aap.list_models_[0].kernel == "rbf"
 
     def test_models_and_list_model_classes_mutually_exclusive(self):
         with pytest.raises(ValueError):
@@ -118,15 +118,15 @@ class TestAAPredModelsAndHPO:
 
     def test_optimize_hyperparams_with_param_grids(self):
         X, y = _data()
-        aapred = aa.AAPred(models=["svm"], random_state=0)
-        aapred.fit(X, y, optimize_hyperparams=True, param_grids={"C": [0.1, 10.0]}, n_cv=3)
-        assert aapred.list_models_[0].C in (0.1, 10.0)
+        aap = aa.AAPred(models=["svm"], random_state=0)
+        aap.fit(X, y, optimize_hyperparams=True, param_grids={"C": [0.1, 10.0]}, n_cv=3)
+        assert aap.list_models_[0].C in (0.1, 10.0)
 
     def test_optimize_hyperparams_default_grid(self):
         X, y = _data()
-        aapred = aa.AAPred(models=["svm"], random_state=0)
-        aapred.fit(X, y, optimize_hyperparams=True)
-        assert aapred.list_models_ is not None
+        aap = aa.AAPred(models=["svm"], random_state=0)
+        aap.fit(X, y, optimize_hyperparams=True)
+        assert aap.list_models_ is not None
 
     def test_ensemble_instance_fit(self):
         # Meta-ensembles are used by passing an instance (not a registry name); the
@@ -136,8 +136,8 @@ class TestAAPredModelsAndHPO:
         X, y = _data()
         vc = VotingClassifier(estimators=[("rf", RandomForestClassifier()),
                                           ("svm", SVC(probability=True))], voting="soft")
-        aapred = aa.AAPred(models=vc, random_state=0).fit(X, y)
-        assert len(aapred.list_models_) == 1
+        aap = aa.AAPred(models=vc, random_state=0).fit(X, y)
+        assert len(aap.list_models_) == 1
 
     def test_ensemble_instance_eval(self):
         from sklearn.ensemble import VotingClassifier
@@ -155,14 +155,14 @@ class TestAAPredModelsAndHPO:
     def test_instance_receives_random_state(self):
         # A passed estimator with random_state left unset inherits the AAPred seed.
         X, y = _data()
-        aapred = aa.AAPred(models=RandomForestClassifier(), random_state=42).fit(X, y)
-        assert aapred.list_models_[0].random_state == 42
+        aap = aa.AAPred(models=RandomForestClassifier(), random_state=42).fit(X, y)
+        assert aap.list_models_[0].random_state == 42
 
     def test_instance_explicit_seed_preserved(self):
         # A user-set seed on the passed instance is not overwritten.
         X, y = _data()
-        aapred = aa.AAPred(models=RandomForestClassifier(random_state=7), random_state=42).fit(X, y)
-        assert aapred.list_models_[0].random_state == 7
+        aap = aa.AAPred(models=RandomForestClassifier(random_state=7), random_state=42).fit(X, y)
+        assert aap.list_models_[0].random_state == 7
 
 
 class TestAAPredEval:
@@ -344,53 +344,53 @@ def seq_fitted():
     df_feat = aa.load_features(name="DOM_GSEC").head(20)
     sf = aa.SequenceFeature()
     X = sf.feature_matrix(features=df_feat, df_parts=sf.get_df_parts(df_seq=df_seq))
-    aapred = aa.AAPred(df_feat=df_feat, random_state=42).fit(X, labels)
-    return aapred, df_seq, np.asarray(X)
+    aap = aa.AAPred(df_feat=df_feat, random_state=42).fit(X, labels)
+    return aap, df_seq, np.asarray(X)
 
 
 class TestAAPredPredict:
     def test_predict_seq_columns(self, seq_fitted):
-        aapred, df_seq, _ = seq_fitted
-        df_pred = aapred.predict(df_seq.head(5), level="sequence")
+        aap, df_seq, _ = seq_fitted
+        df_pred = aap.predict(df_seq.head(5), level="sequence")
         assert list(df_pred.columns) == ["entry", "score", "score_std"]
 
     def test_predict_seq_scores_in_range(self, seq_fitted):
-        aapred, df_seq, _ = seq_fitted
-        df_pred = aapred.predict(df_seq.head(5), level="sequence")
+        aap, df_seq, _ = seq_fitted
+        df_pred = aap.predict(df_seq.head(5), level="sequence")
         assert df_pred["score"].between(0, 1).all()
 
     def test_predict_seq_threshold_adds_predicted_label(self, seq_fitted):
-        aapred, df_seq, _ = seq_fitted
-        df_pred = aapred.predict(df_seq.head(5), level="sequence", threshold=0.5)
+        aap, df_seq, _ = seq_fitted
+        df_pred = aap.predict(df_seq.head(5), level="sequence", threshold=0.5)
         assert "predicted_label" in df_pred.columns
-        assert set(df_pred["predicted_label"]).issubset({aapred.label_pos_, aapred.label_neg_})
+        assert set(df_pred["predicted_label"]).issubset({aap.label_pos_, aap.label_neg_})
 
     def test_predict_domain_columns(self, seq_fitted):
-        aapred, df_seq, _ = seq_fitted
-        df_pred = aapred.predict(df_seq[df_seq["entry"] == "P05067"], level="domain", window=2)
+        aap, df_seq, _ = seq_fitted
+        df_pred = aap.predict(df_seq[df_seq["entry"] == "P05067"], level="domain", window=2)
         assert list(df_pred.columns) == ["entry", "offset", "score", "is_best"]
 
     def test_predict_window_columns(self, seq_fitted):
-        aapred, df_seq, _ = seq_fitted
+        aap, df_seq, _ = seq_fitted
         one = df_seq[df_seq["entry"] == "P05067"][["entry", "sequence"]]
-        df_pred = aapred.predict(one, level="window", tmd_len=15, step=20)
+        df_pred = aap.predict(one, level="window", tmd_len=15, step=20)
         assert list(df_pred.columns) == ["entry", "position", "score", "score_std"]
 
     def test_predict_window_without_tmd_len_raises(self, seq_fitted):
-        aapred, df_seq, _ = seq_fitted
+        aap, df_seq, _ = seq_fitted
         one = df_seq[df_seq["entry"] == "P05067"][["entry", "sequence"]]
         with pytest.raises(ValueError):
-            aapred.predict(one, level="window")
+            aap.predict(one, level="window")
 
     def test_predict_invalid_level_raises(self, seq_fitted):
-        aapred, df_seq, _ = seq_fitted
+        aap, df_seq, _ = seq_fitted
         with pytest.raises(ValueError):
-            aapred.predict(df_seq.head(3), level="bogus")
+            aap.predict(df_seq.head(3), level="bogus")
 
     def test_predict_invalid_threshold_raises(self, seq_fitted):
-        aapred, df_seq, _ = seq_fitted
+        aap, df_seq, _ = seq_fitted
         with pytest.raises(ValueError):
-            aapred.predict(df_seq.head(3), level="sequence", threshold=2.0)
+            aap.predict(df_seq.head(3), level="sequence", threshold=2.0)
 
     def test_predict_before_fit_raises(self):
         df_seq = aa.load_dataset(name="DOM_GSEC", n=5)
@@ -401,14 +401,14 @@ class TestAAPredPredict:
     def test_predict_without_df_feat_raises(self):
         # Fitted (so not the not-fitted error) but no bound df_feat -> check_featurizer raises.
         X, labels = _data()
-        aapred = aa.AAPred(random_state=0).fit(X, labels)
+        aap = aa.AAPred(random_state=0).fit(X, labels)
         df_seq = aa.load_dataset(name="DOM_GSEC", n=5)
         with pytest.raises(ValueError):
-            aapred.predict(df_seq.head(3), level="sequence")
+            aap.predict(df_seq.head(3), level="sequence")
 
     def test_predict_X_raw_ensemble_scores(self, seq_fitted):
         # The private ensemble scorer that predict() builds on.
-        aapred, _, X = seq_fitted
-        pred, pred_std = aapred._predict_X(X)
+        aap, _, X = seq_fitted
+        pred, pred_std = aap._predict_X(X)
         assert pred.shape == (len(X),) and pred_std.shape == (len(X),)
         assert pred.min() >= 0 and pred.max() <= 1

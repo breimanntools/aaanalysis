@@ -111,7 +111,7 @@ and a suite of site-localization metrics and plotting helpers.
 
 ## [1.0.3] - 2026-04-06
 ### Added
-- `AAlogo` and `AAlogoPlot` for amino acid logo visualization.
+- `AALogo` and `AALogoPlot` for amino acid logo visualization.
 
 ### Changed
 - Dropped end-of-life Python 3.9; added 3.13 and 3.14 (now 3.10–3.14).

@@ -92,7 +92,7 @@ class AAMutPlot:
 
         Examples
         --------
-        .. include:: examples/aamut_plot_substitution_matrix.rst
+        .. include:: examples/aam_plot_substitution_matrix.rst
         """
         # Validate
         check_df_impact(df_impact=df_impact)
@@ -146,7 +146,7 @@ class AAMutPlot:
 
         Examples
         --------
-        .. include:: examples/aamut_plot_scale_ranking.rst
+        .. include:: examples/aam_plot_scale_ranking.rst
         """
         # Validate
         check_df_impact(df_impact=df_impact)
@@ -204,7 +204,7 @@ class AAMutPlot:
 
         Examples
         --------
-        .. include:: examples/aamut_plot_aa_comparison.rst
+        .. include:: examples/aam_plot_aa_comparison.rst
         """
         # Validate
         check_df_impact(df_impact=df_impact)

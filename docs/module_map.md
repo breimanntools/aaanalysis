@@ -22,7 +22,7 @@ flowchart LR
   end
   subgraph SA["seq_analysis"]
     AWS["AAWindowSampler"]
-    AL["AAlogo"]
+    AL["AALogo"]
   end
   subgraph FE["feature_engineering"]
     AAC["AAclust"]
@@ -40,6 +40,9 @@ flowchart LR
   subgraph PD["protein_engineering"]
     AAM["AAMut / SeqMut"]
   end
+  subgraph PRD["prediction"]
+    AAPRED["AAPred / AAPredPlot"]
+  end
 
   LD -->|df_seq| SF
   LD -->|df_seq| AWS
@@ -49,6 +52,7 @@ flowchart LR
   LS -->|df_scales| CPP
   SF -->|df_parts| CPP
   CPP -->|df_feat| TM
+  CPP -->|df_feat| AAPRED
   CPP -->|df_feat| CPPP
   LF -->|df_feat ref| CPPP
   DPU -->|labels| TM
@@ -59,12 +63,17 @@ flowchart LR
   AL -.->|sequence logos| CPPP
 ```
 
+**Prediction / deploy layer:** `prediction` — `AAPred` fits and cross-validates
+predictors over CPP features (or directly from `df_seq` / `df_parts`) and deploys them
+at sequence / domain / window level; `AAPredPlot` visualizes per-sample and per-group
+predictions plus the evaluation grid.
+
 **Cross-cutting (used by many, not a pipeline stage):** `plotting`
 (`plot_settings`/colors/`plot_legend`) styles every `*Plot`; `metrics`
 (`comp_*`) scores model/clustering outputs.
 
 **Convenience facade (wraps the whole flow):** `pipe` — imported as
-`import aaanalysis.pipe as aap`, a stateless second API whose golden pipelines
+`import aaanalysis.pipe as ap`, a stateless second API whose golden pipelines
 (`obtain_samples` → `find_features` → `predict_samples` → `explain_features`, plus
 the `plot_eval` grid) chain the primitives above into one call each. Its defaults
 are byte-identical to the explicit primitive path; it adds no algorithm of its own,

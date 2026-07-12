@@ -203,7 +203,7 @@ class AAPred(Wrapper):
 
         Examples
         --------
-        .. include:: examples/aapred.rst
+        .. include:: examples/aap.rst
         """
         # Global parameters
         verbose = ut.check_verbose(verbose)
@@ -318,7 +318,7 @@ class AAPred(Wrapper):
 
         Examples
         --------
-        .. include:: examples/aapred_fit.rst
+        .. include:: examples/aap_fit.rst
         """
         # Check input
         X = ut.check_X(X=X)
@@ -422,7 +422,7 @@ class AAPred(Wrapper):
 
         Examples
         --------
-        .. include:: examples/aapred_eval.rst
+        .. include:: examples/aap_eval.rst
         """
         # Check input
         X = ut.check_X(X=X)
@@ -531,7 +531,7 @@ class AAPred(Wrapper):
 
         Examples
         --------
-        .. include:: examples/aapred_predict.rst
+        .. include:: examples/aap_predict.rst
         """
         # Check input
         check_is_fitted(list_models=self.list_models_)

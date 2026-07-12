@@ -235,12 +235,12 @@ class TestFetchRealModel:
 
     def test_protein_and_residue(self):
         df = _df(2)
-        ep = aa.EmbeddingPreprocessor(verbose=False)
-        X = ep.fetch_embeddings(df, mode="protein", model="esm2_t6_8M")
+        embp = aa.EmbeddingPreprocessor(verbose=False)
+        X = embp.fetch_embeddings(df, mode="protein", model="esm2_t6_8M")
         assert X.shape == (2, 320) and not np.isnan(X).any()
-        emb = ep.fetch_embeddings(df, mode="residue", model="esm2_t6_8M")
+        emb = embp.fetch_embeddings(df, mode="residue", model="esm2_t6_8M")
         for entry, seq in zip(df["entry"], df["sequence"]):
             assert emb[entry].shape == (len(seq), 320)
         # pool_embeddings reproduces mean pooling
-        X_pool = ep.pool_embeddings(emb, df_seq=df)
+        X_pool = embp.pool_embeddings(emb, df_seq=df)
         np.testing.assert_allclose(X_pool, X, rtol=1e-4, atol=1e-4)

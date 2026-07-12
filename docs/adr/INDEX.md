@@ -47,7 +47,7 @@ Regenerate this table with:
 | [0037](0037-perf-ab-gate.md) | Same-runner A/B vs the latest PyPI release makes wall-clock a merge gate | Accepted | 2026-06-22 |  |
 | [0038](0038-agentic-readiness-boundary.md) | Agentic-readiness boundary: usability/improvability is ours, agent integration is ProtXplain's | Accepted | 2026-06-23 |  |
 | [0039](0039-plot-return-contract.md) | One uniform `(fig, ax)` return contract for every `*Plot` method | Accepted | 2026-06-24 |  |
-| [0040](0040-golden-pipelines-convenience-api.md) | Golden pipelines: the `aaanalysis.pipe` (aap) convenience API | Accepted | 2026-06-24 |  |
+| [0040](0040-golden-pipelines-convenience-api.md) | Golden pipelines: the `aaanalysis.pipe` (ap) convenience API | Accepted | 2026-06-24 |  |
 | [0041](0041-pipe-pipeline-conventions.md) | `aaanalysis.pipe` pipeline conventions and the core golden pipelines | Accepted | 2026-06-24 |  |
 | [0042](0042-seqmut-model-guided-prediction-shift.md) | SeqMut model-guided prediction shift (ML-guided directed evolution) | Accepted | 2026-06-24 |  |
 | [0043](0043-seqopt-optimization-layer.md) | SeqOpt optimization layer (SHAP-guided, fuzzy-labeled multi-objective directed evolution) | Accepted | 2026-06-24 |  |
@@ -64,4 +64,5 @@ Regenerate this table with:
 | [0054](0054-reject-distributed-signal-diagnostic.md) | Reject the distributed-signal (joint-vs-marginal lift) diagnostic | Accepted | 2026-07-08 |  |
 | [0055](0055-cpp-bootstrap-stability-selection.md) | CPP bootstrap / stability annotation | Accepted | 2026-07-08 |  |
 | [0056](0056-rank-plot-into-aapredplot.md) | Per-protein rank scatter moves into `AAPredPlot.predict_group(kind="rank_scatter")` | Accepted | 2026-07-09 |  |
+| [0057](0057-v2-api-naming-and-future-xai-layer.md) | v2 API naming system and the future XAI `*Explainer` layer | Accepted | 2026-07-12 |  |
 <!-- ADR-INDEX:END -->

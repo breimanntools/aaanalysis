@@ -1,5 +1,5 @@
 """
-This is a script for the frontend of the ``aaanalysis.pipe`` (aap) ``obtain_samples`` golden
+This is a script for the frontend of the ``aaanalysis.pipe`` (ap) ``obtain_samples`` golden
 pipeline: a thin, stateless one-call wrapper that turns a described sampling situation into a
 balanced, labeled training set (plus a quick validation report) over the existing AAanalysis
 primitives (:class:`AAWindowSampler`, optionally :class:`dPULearn`).
@@ -11,7 +11,7 @@ import pandas as pd
 from matplotlib.axes import Axes
 
 import aaanalysis.utils as ut
-from aaanalysis.seq_analysis import AAWindowSampler, AAlogo, AAlogoPlot
+from aaanalysis.seq_analysis import AAWindowSampler, AALogo, AALogoPlot
 from aaanalysis.feature_engineering import SequenceFeature
 from aaanalysis.pu_learning import dPULearn
 
@@ -187,13 +187,13 @@ def _plot_logo_comparison(df_samples, window_size) -> List[Tuple[Axes, Axes]]:
     """Stacked sequence-logo comparison of the sampled groups (one logo per role).
 
     Each role's windows (the positive ``Test`` windows and the sampled references) are turned
-    into a one-column ``tmd`` parts frame and rendered via :meth:`AAlogoPlot.multi_logo` as a
+    into a one-column ``tmd`` parts frame and rendered via :meth:`AALogoPlot.multi_logo` as a
     probability sequence logo with a per-position information-content (bits) bar on top, labeled
     with the group name and size (``"<role> (n=…)"``). The x-axis uses P-site notation around
     the P1 anchor (the windows are P1-anchored), so the groups' composition and conservation are
     directly comparable on a shared scale.
     """
-    aal = AAlogo(logo_type="probability")
+    aal = AALogo(logo_type="probability")
     list_df_logo, list_df_logo_info, list_names = [], [], []
     # groupby yields only non-empty groups, so every role has at least one window.
     for role, df_group in df_samples.groupby(ut.COL_ROLE, sort=False):
@@ -204,7 +204,7 @@ def _plot_logo_comparison(df_samples, window_size) -> List[Tuple[Axes, Axes]]:
         list_names.append(f"{role} (n={len(windows)})")
     # The whole window is the TMD region (no JMD flanks), so jmd_n_len = jmd_c_len = 0; the P1
     # anchor sits at the centered position (half_left + 1) under the sampler's anchoring.
-    aalp = AAlogoPlot(logo_type="probability", jmd_n_len=0, jmd_c_len=0, verbose=False)
+    aalp = AALogoPlot(logo_type="probability", jmd_n_len=0, jmd_c_len=0, verbose=False)
     _, axes = aalp.multi_logo(list_df_logo=list_df_logo, list_df_logo_info=list_df_logo_info,
                               list_name_data=list_names,
                               target_p1_site=(window_size - 1) // 2 + 1)
@@ -302,11 +302,11 @@ def obtain_samples(df_seq: pd.DataFrame,
     --------
     * :class:`AAWindowSampler` for the window-sampling primitives this pipeline wraps.
     * :class:`dPULearn` for the reliable-negative identification used by the PU path.
-    * :class:`AAlogoPlot` for the sequence-logo comparison drawn when ``plot=True``.
+    * :class:`AALogoPlot` for the sequence-logo comparison drawn when ``plot=True``.
 
     Examples
     --------
-    .. include:: examples/aap_obtain_samples.rst
+    .. include:: examples/ap_obtain_samples.rst
     """
     # Validate (thin facade: the wrapped primitives validate the rest)
     ut.check_df_seq(df_seq=df_seq)

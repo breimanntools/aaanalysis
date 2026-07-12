@@ -1,5 +1,5 @@
 """
-This is a script for the backend of the AAlogo class methods.
+This is a script for the backend of the AALogo class methods.
 """
 import warnings
 import logomaker

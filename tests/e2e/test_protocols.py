@@ -50,7 +50,7 @@ class TestProtocol2SequenceAnalysis:
         df_seq = aa.load_dataset(name="DOM_GSEC", n=15)
         df_parts = aa.SequenceFeature().get_df_parts(
             df_seq=df_seq, list_parts=["jmd_n", "tmd", "jmd_c"])
-        aal = aa.AAlogo(logo_type="probability")
+        aal = aa.AALogo(logo_type="probability")
         df_logo_info = aal.get_df_logo_info(df_parts=df_parts, tmd_len=20)
         cons = aal.get_conservation(df_logo_info=df_logo_info, value_type="mean")
         assert np.isfinite(cons) and cons >= 0

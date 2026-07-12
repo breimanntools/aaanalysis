@@ -308,7 +308,7 @@ def check_xrefs(doc, add):
 
     Conservative: external-library refs (``pandas.DataFrame``) and ambiguous bare
     lowercase names are left alone; the high-value catches are a CamelCase class
-    target that doesn't exist (``AALogo`` vs ``AAlogo``) and a wrong method on a
+    target that doesn't exist (``AALogo`` vs ``AALogo``) and a wrong method on a
     real class.
     """
     if not (KNOWN_CLASSES or KNOWN_FUNCS):

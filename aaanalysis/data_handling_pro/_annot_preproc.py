@@ -151,7 +151,7 @@ class AnnotationPreprocessor:
 
         Examples
         --------
-        .. include:: examples/ap_encode.rst
+        .. include:: examples/annp_encode.rst
         """
         self._verbose = ut.check_verbose(verbose)
         # Per-instance registry copy so auto-registered Functional keys never
@@ -221,7 +221,7 @@ class AnnotationPreprocessor:
 
         Examples
         --------
-        .. include:: examples/ap_fetch_uniprot.rst
+        .. include:: examples/annp_fetch_uniprot.rst
         """
         # Validate
         verbose = self._verbose
@@ -283,7 +283,7 @@ class AnnotationPreprocessor:
 
         Examples
         --------
-        .. include:: examples/ap_ingest.rst
+        .. include:: examples/annp_ingest.rst
         """
         # Validate
         if not isinstance(df_user, pd.DataFrame):
@@ -383,7 +383,7 @@ class AnnotationPreprocessor:
 
         Examples
         --------
-        .. include:: examples/ap_register_feature.rst
+        .. include:: examples/annp_register_feature.rst
         """
         ut.check_str(name="key", val=key, accept_none=False)
         register_functional_key(
@@ -459,7 +459,7 @@ class AnnotationPreprocessor:
 
         Examples
         --------
-        .. include:: examples/ap_encode.rst
+        .. include:: examples/annp_encode.rst
         """
         # Validate
         ut.check_df_seq(df_seq=df_seq)
@@ -597,7 +597,7 @@ class AnnotationPreprocessor:
 
         Examples
         --------
-        .. include:: examples/ap_build_scales.rst
+        .. include:: examples/annp_build_scales.rst
         """
         # Validate
         if df_seq is None or dict_num is None:
@@ -719,7 +719,7 @@ class AnnotationPreprocessor:
 
         Examples
         --------
-        .. include:: examples/ap_build_cat.rst
+        .. include:: examples/annp_build_cat.rst
         """
         validate_feature_keys(features, registry=self._registry)
         D = get_total_dims(features, registry=self._registry)
@@ -824,7 +824,7 @@ class AnnotationPreprocessor:
 
         .. code-block:: python
 
-            df_ws = ap.to_df_seq(df_seq, df_annot, feature_type="phospho")
+            df_ws = annp.to_df_seq(df_seq, df_annot, feature_type="phospho")
             df_ref = aa.AAWindowSampler().sample_same_protein(
                 df_seq=df_ws, pos_col="pos", window_size=9,
                 aa_context_col="aa_context", context_in="1",
@@ -832,7 +832,7 @@ class AnnotationPreprocessor:
 
         Examples
         --------
-        .. include:: examples/ap_to_df_seq.rst
+        .. include:: examples/annp_to_df_seq.rst
         """
         # Validate
         ut.check_df_seq(df_seq=df_seq)

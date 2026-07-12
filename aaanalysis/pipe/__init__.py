@@ -1,11 +1,11 @@
 """
-``aaanalysis.pipe`` (aap) — high-level convenience pipelines (golden pipelines).
+``aaanalysis.pipe`` (ap) — high-level convenience pipelines (golden pipelines).
 
 A second, opt-in API on top of the AAanalysis primitives: stateless, thin wrappers that chain
 the existing classes into one call so users get a result without hand-wiring every step. Import it
 explicitly under the conventional alias::
 
-    import aaanalysis.pipe as aap
+    import aaanalysis.pipe as ap
 
 The wrappers add no algorithm of their own — their defaults are byte-identical to the explicit
 primitive path (e.g. :meth:`SequenceFeature.feature_matrix` → :class:`TreeModel`), they return plain

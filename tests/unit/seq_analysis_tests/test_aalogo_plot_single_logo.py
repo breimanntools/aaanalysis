@@ -1,5 +1,5 @@
 """
-This is a script to test the AAlogoPlot.single_logo method.
+This is a script to test the AALogoPlot.single_logo method.
 """
 import pytest
 import numpy as np
@@ -25,7 +25,7 @@ def get_df_logo(n=50, logo_type="probability", label_test=1):
     df_seq = aa.load_dataset(name="DOM_GSEC", n=n)
     labels = df_seq["label"].values
     df_parts = sf.get_df_parts(df_seq=df_seq)
-    return aa.AAlogo(logo_type=logo_type).get_df_logo(
+    return aa.AALogo(logo_type=logo_type).get_df_logo(
         df_parts=df_parts, labels=labels, label_test=label_test)
 
 
@@ -35,13 +35,13 @@ def get_df_logo_info(n=50, label_test=1):
     df_seq = aa.load_dataset(name="DOM_GSEC", n=n)
     labels = df_seq["label"].values
     df_parts = sf.get_df_parts(df_seq=df_seq)
-    return aa.AAlogo().get_df_logo_info(
+    return aa.AALogo().get_df_logo_info(
         df_parts=df_parts, labels=labels, label_test=label_test)
 
 
 def get_aal_plot(jmd_n_len=10, jmd_c_len=10, logo_type="probability"):
-    """Create default AAlogoPlot instance."""
-    return aa.AAlogoPlot(logo_type=logo_type, jmd_n_len=jmd_n_len, jmd_c_len=jmd_c_len)
+    """Create default AALogoPlot instance."""
+    return aa.AALogoPlot(logo_type=logo_type, jmd_n_len=jmd_n_len, jmd_c_len=jmd_c_len)
 
 
 # ===========================================================================
@@ -429,7 +429,7 @@ class TestSingleLogoPartsLen:
         """Test that jmd_n_len + jmd_c_len < len(df_logo) passes."""
         df_logo = get_df_logo()   # len = 40 (10 + 20 + 10)
         for jmd_n, jmd_c in [(10, 10), (0, 0), (5, 5), (0, 10)]:
-            aal_plot = aa.AAlogoPlot(jmd_n_len=jmd_n, jmd_c_len=jmd_c)
+            aal_plot = aa.AALogoPlot(jmd_n_len=jmd_n, jmd_c_len=jmd_c)
             fig, ax = aal_plot.single_logo(df_logo=df_logo)
             assert isinstance(fig, plt.Figure)
             plt.close("all")
@@ -451,7 +451,7 @@ class TestSingleLogoComplex:
     def test_valid_combinations(self, logo_type, highlight_alpha, logo_width, highlight_tmd_area):
         """Test valid parameter combinations produce a figure without error."""
         df_logo = get_df_logo(logo_type=logo_type)
-        aal_plot = aa.AAlogoPlot(logo_type=logo_type)
+        aal_plot = aa.AALogoPlot(logo_type=logo_type)
         fig, ax = aal_plot.single_logo(
             df_logo=df_logo,
             highlight_alpha=highlight_alpha,
@@ -473,7 +473,7 @@ def get_df_parts_labels(n=50):
 
 
 # ===========================================================================
-# XII Test single_logo: aal_kws (internal AAlogo shortcut)
+# XII Test single_logo: aal_kws (internal AALogo shortcut)
 # ===========================================================================
 class TestSingleLogoAalKws:
     """Test single_logo 'aal_kws' convenience parameter."""
@@ -493,8 +493,8 @@ class TestSingleLogoAalKws:
         """Test that aal_kws path matches the explicit df_logo/df_logo_info path."""
         df_parts, labels = get_df_parts_labels()
         kws = dict(df_parts=df_parts, labels=labels, label_test=1)
-        df_logo = aa.AAlogo().get_df_logo(**kws)
-        df_logo_info = aa.AAlogo().get_df_logo_info(**kws)
+        df_logo = aa.AALogo().get_df_logo(**kws)
+        df_logo_info = aa.AALogo().get_df_logo_info(**kws)
         fig_a, _ = get_aal_plot().single_logo(df_logo=df_logo, df_logo_info=df_logo_info)
         fig_b, _ = get_aal_plot().single_logo(aal_kws=kws)
         assert isinstance(fig_a, plt.Figure) and isinstance(fig_b, plt.Figure)
@@ -538,7 +538,7 @@ class TestSingleLogoAalKws:
                 aal_kws=dict(df_parts=df_parts, labels=labels, label_test=1))
 
     def test_invalid_aal_kws_bad_df_parts(self):
-        """Test that invalid contents in aal_kws surface as an error from AAlogo."""
+        """Test that invalid contents in aal_kws surface as an error from AALogo."""
         aal_plot = get_aal_plot()
         with pytest.raises((ValueError, TypeError)):
             aal_plot.single_logo(aal_kws=dict(df_parts="not-a-frame"))
@@ -597,7 +597,7 @@ class TestSingleLogoDfParts:
         """Test that an explicit tmd_len is accepted."""
         df_parts, labels = get_df_parts_labels()
         # jmd_n_len + jmd_c_len must be < logo length (= tmd_len here, only 'tmd' part)
-        aal_plot = aa.AAlogoPlot(jmd_n_len=2, jmd_c_len=2)
+        aal_plot = aa.AALogoPlot(jmd_n_len=2, jmd_c_len=2)
         fig, axes = aal_plot.single_logo(
             df_parts=df_parts, labels=labels, label_test=1, tmd_len=15)
         assert isinstance(fig, plt.Figure)
@@ -607,8 +607,8 @@ class TestSingleLogoDfParts:
         """Regression: df_parts path renders the SAME logo as the two-getter path."""
         df_parts, labels = get_df_parts_labels()
         kws = dict(df_parts=df_parts, labels=labels, label_test=1)
-        df_logo = aa.AAlogo().get_df_logo(**kws)
-        df_logo_info = aa.AAlogo().get_df_logo_info(**kws)
+        df_logo = aa.AALogo().get_df_logo(**kws)
+        df_logo_info = aa.AALogo().get_df_logo_info(**kws)
         fig_a, axes_a = get_aal_plot().single_logo(
             df_logo=df_logo, df_logo_info=df_logo_info)
         fig_b, axes_b = get_aal_plot().single_logo(
@@ -683,7 +683,7 @@ class TestSingleLogoDfParts:
             aal_plot.single_logo()
 
     def test_invalid_df_parts_bad_frame(self):
-        """Test that an invalid df_parts surfaces as an error from AAlogo."""
+        """Test that an invalid df_parts surfaces as an error from AALogo."""
         aal_plot = get_aal_plot()
         with pytest.raises((ValueError, TypeError)):
             aal_plot.single_logo(df_parts="not-a-frame")

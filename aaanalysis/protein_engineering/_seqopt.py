@@ -484,7 +484,7 @@ class SeqOpt(Tool):
 
         Examples
         --------
-        .. include:: examples/seqopt_run.rst
+        .. include:: examples/seqo_run.rst
         """
         # Validate
         check_match_df_seq_single(df_seq=df_seq)
@@ -650,7 +650,7 @@ class SeqOpt(Tool):
 
         Examples
         --------
-        .. include:: examples/seqopt_eval.rst
+        .. include:: examples/seqo_eval.rst
         """
         # Validate
         ut.check_df(df=df_pareto, name="df_pareto",

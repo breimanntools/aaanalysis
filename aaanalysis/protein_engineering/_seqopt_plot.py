@@ -108,7 +108,7 @@ class SeqOptPlot:
 
         Examples
         --------
-        .. include:: examples/seqopt_pareto_front.rst
+        .. include:: examples/seqo_pareto_front.rst
         """
         # Validate
         ut.check_df(df=df_pareto, name="df_pareto", cols_required=[ut.COL_RANK])
@@ -170,7 +170,7 @@ class SeqOptPlot:
 
         Examples
         --------
-        .. include:: examples/seqopt_hypervolume.rst
+        .. include:: examples/seqo_hypervolume.rst
         """
         # Validate
         traj = np.asarray(ut.check_list_like(name="trajectory", val=trajectory), dtype=float)
@@ -211,7 +211,7 @@ class SeqOptPlot:
 
         Examples
         --------
-        .. include:: examples/seqopt_convergence.rst
+        .. include:: examples/seqo_convergence.rst
         """
         # Validate
         ut.check_df(df=history, name="history", cols_required=[ut.COL_GENERATION])
@@ -279,7 +279,7 @@ class SeqOptPlot:
 
         Examples
         --------
-        .. include:: examples/seqopt_parallel_coordinates.rst
+        .. include:: examples/seqo_parallel_coordinates.rst
         """
         # Validate
         ut.check_df(df=df_pareto, name="df_pareto", cols_required=[ut.COL_RANK])
@@ -344,7 +344,7 @@ class SeqOptPlot:
 
         Examples
         --------
-        .. include:: examples/seqopt_mutation_map.rst
+        .. include:: examples/seqo_mutation_map.rst
         """
         # Validate
         ut.check_df(df=df_pareto, name="df_pareto",
@@ -415,7 +415,7 @@ class SeqOptPlot:
 
         Examples
         --------
-        .. include:: examples/seqopt_genealogy.rst
+        .. include:: examples/seqo_genealogy.rst
         """
         # Validate
         ut.check_df(df=df_pareto, name="df_pareto",

@@ -9,7 +9,7 @@ grill-with-docs session.
 
 ## Context
 
-ADR-0040 established `aaanalysis.pipe` (`aap`) as the stateless convenience facade and
+ADR-0040 established `aaanalysis.pipe` (`ap`) as the stateless convenience facade and
 set the naming (`verb_noun`), the Ends/Means tiering, and the documentation exposure. As
 the first Ends were designed, three things sharpened that ADR-0040 left open or set
 provisionally: the **return shape** (D3 had a `(primary, secondary)` 2-tuple, too narrow
@@ -24,8 +24,8 @@ the primary result, the figure(s), then the evaluation(s) — superseding ADR-00
 2-tuple. Each slot is a **bare object or `None`** (no dicts, no nested tuples), so it
 unpacks plainly:
 
-    df_feat, ax, df_eval = aap.find_features(df_seq, labels)
-    model,   _,  df_eval = aap.predict_samples(df_feat, df_parts, labels)
+    df_feat, ax, df_eval = ap.find_features(df_seq, labels)
+    model,   _,  df_eval = ap.predict_samples(df_feat, df_parts, labels)
 
 A pipeline that produces several figures still returns the **primary** one in `figs`
 (e.g. the feature map) and creates the rest as ordinary pyplot figures, so a single
@@ -87,7 +87,7 @@ workflows in lockstep.
 - `find_features` carries real compute (N CV models per call on the higher grades); the
   smart `n_filter` slice keeps the *feature* cost to one CPP run, and the grade names set
   expectations.
-- A new public plotting concern (the eval grid) lives inside `aap`, not as a `*Plot`
+- A new public plotting concern (the eval grid) lives inside `ap`, not as a `*Plot`
   class, so it is outside the ADR-0039 plot-method return contract (it returns via the
   pipeline's `figs` slot).
 
