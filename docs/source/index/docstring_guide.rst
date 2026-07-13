@@ -594,7 +594,7 @@ Name any new one ``<noun>_kws`` and add it to the table below.
        :meth:`~aaanalysis.CPP` bootstrap configuration.
    * - ``sample_kws``
      - structured bundle
-     - Fixed keys ``sample`` (an entry name / id / accession ``str`` or a row-position ``int``),
+     - Fixed keys ``sample`` (an ``entry`` name or ``name``-column value ``str``, or a row-position ``int``),
        ``df_seq`` and ``df_parts`` — selects one sample for :meth:`~aaanalysis.CPPPlot.feature_map` /
        :meth:`~aaanalysis.CPPPlot.heatmap` / :meth:`~aaanalysis.CPPPlot.profile`, resolving its TMD-JMD
        sequence (and per-sample ``feat_impact`` column) from ``df_parts``. The bundled alternative to
