@@ -54,47 +54,47 @@ class TestSeqColumnGuards:
     passes check_df_seq but lacks COL_SEQ)."""
 
     def test_get_dssp_seq_guard(self):
-        stp = aa.StructurePreprocessor(verbose=False)
+        strp = aa.StructurePreprocessor(verbose=False)
         with pytest.raises(ValueError, match="for get_dssp"):
-            stp.get_dssp(df_seq=_part_based_df(), pdb_folder=str(PDB_FIXTURES))
+            strp.get_dssp(df_seq=_part_based_df(), pdb_folder=str(PDB_FIXTURES))
 
     def test_encode_dssp_seq_guard(self):
-        stp = aa.StructurePreprocessor(verbose=False)
+        strp = aa.StructurePreprocessor(verbose=False)
         with pytest.raises(ValueError, match="for encode_dssp"):
-            stp.encode_dssp(df_seq=_part_based_df(),
+            strp.encode_dssp(df_seq=_part_based_df(),
                             pdb_folder=str(PDB_FIXTURES), features=["ss3"])
 
     def test_encode_pdb_seq_guard(self):
-        stp = aa.StructurePreprocessor(verbose=False)
+        strp = aa.StructurePreprocessor(verbose=False)
         with pytest.raises(ValueError, match="for encode_pdb"):
-            stp.encode_pdb(df_seq=_part_based_df(),
+            strp.encode_pdb(df_seq=_part_based_df(),
                            pdb_folder=str(PDB_FIXTURES), features=["bfactor"])
 
     def test_encode_pae_seq_guard(self):
-        stp = aa.StructurePreprocessor(verbose=False)
+        strp = aa.StructurePreprocessor(verbose=False)
         with pytest.raises(ValueError, match="for encode_pae"):
-            stp.encode_pae(df_seq=_part_based_df(),
+            strp.encode_pae(df_seq=_part_based_df(),
                            pae_folder=str(PDB_FIXTURES),
                            features=["pae_row_mean"])
 
     def test_get_domains_seq_guard(self):
-        stp = aa.StructurePreprocessor(verbose=False)
+        strp = aa.StructurePreprocessor(verbose=False)
         with pytest.raises(ValueError, match="for get_domains"):
-            stp.get_domains(df_seq=_part_based_df(),
+            strp.get_domains(df_seq=_part_based_df(),
                             pdb_folder=str(PDB_FIXTURES))
 
     def test_encode_domains_seq_guard(self):
-        stp = aa.StructurePreprocessor(verbose=False)
+        strp = aa.StructurePreprocessor(verbose=False)
         with pytest.raises(ValueError, match="for encode_domains"):
-            stp.encode_domains(df_seq=_part_based_df(),
+            strp.encode_domains(df_seq=_part_based_df(),
                                domain_folder=str(PDB_FIXTURES),
                                features=["domain_boundary"])
 
     def test_build_scales_seq_guard(self):
-        stp = aa.StructurePreprocessor(verbose=False)
+        strp = aa.StructurePreprocessor(verbose=False)
         d = {"P1": np.zeros((8, 1))}
         with pytest.raises(ValueError, match="for build_scales"):
-            stp.build_scales(df_seq=_part_based_df(), dict_num=d, features=["bfactor"])
+            strp.build_scales(df_seq=_part_based_df(), dict_num=d, features=["bfactor"])
 
 
 class TestPaeIoBranches:
@@ -106,8 +106,8 @@ class TestPaeIoBranches:
         mat = (1.0 + np.abs(np.subtract.outer(np.arange(L), np.arange(L)))
                ).astype(float)
         td = _pae_folder(mat.tolist())
-        stp = aa.StructurePreprocessor(verbose=False)
-        d = stp.encode_pae(df_seq=_df_af(), pae_folder=td.name,
+        strp = aa.StructurePreprocessor(verbose=False)
+        d = strp.encode_pae(df_seq=_df_af(), pae_folder=td.name,
                            features=["pae_row_mean"])
         assert d["AF_TINY"].shape == (L, 1)
         assert not np.isnan(d["AF_TINY"]).all()
@@ -119,8 +119,8 @@ class TestPaeIoBranches:
         mat = (1.0 + np.abs(np.subtract.outer(np.arange(L), np.arange(L)))
                ).astype(float)
         td = _pae_folder({"pae": mat.tolist()})
-        stp = aa.StructurePreprocessor(verbose=False)
-        d = stp.encode_pae(df_seq=_df_af(), pae_folder=td.name,
+        strp = aa.StructurePreprocessor(verbose=False)
+        d = strp.encode_pae(df_seq=_df_af(), pae_folder=td.name,
                            features=["pae_row_mean"])
         assert d["AF_TINY"].shape == (L, 1)
         td.cleanup()
@@ -128,9 +128,9 @@ class TestPaeIoBranches:
     def test_pae_not_2d_warns_and_marks_failed(self):
         # 1-D payload -> ndim != 2 -> RuntimeError -> warned, pae_ok False.
         td = _pae_folder({"predicted_aligned_error": [1.0, 2.0, 3.0]})
-        stp = aa.StructurePreprocessor(verbose=False)
+        strp = aa.StructurePreprocessor(verbose=False)
         with pytest.warns(UserWarning, match="PAE load failed"):
-            d, df_out = stp.encode_pae(df_seq=_df_af(), pae_folder=td.name,
+            d, df_out = strp.encode_pae(df_seq=_df_af(), pae_folder=td.name,
                                        features=["pae_row_mean"],
                                        return_df=True)
         assert bool(df_out.iloc[0]["pae_ok"]) is False
@@ -141,9 +141,9 @@ class TestPaeIoBranches:
         # Square-vs-L mismatch first triggers; build a genuinely non-square 2D.
         td = _pae_folder({"predicted_aligned_error": [[1.0, 2.0, 3.0],
                                                       [4.0, 5.0, 6.0]]})
-        stp = aa.StructurePreprocessor(verbose=False)
+        strp = aa.StructurePreprocessor(verbose=False)
         with pytest.warns(UserWarning, match="PAE load failed"):
-            d, df_out = stp.encode_pae(df_seq=_df_af(), pae_folder=td.name,
+            d, df_out = strp.encode_pae(df_seq=_df_af(), pae_folder=td.name,
                                        features=["pae_row_mean"],
                                        return_df=True)
         assert bool(df_out.iloc[0]["pae_ok"]) is False
@@ -158,8 +158,8 @@ class TestEncodePaeDistalEmpty:
         mat = (1.0 + np.abs(np.subtract.outer(np.arange(L), np.arange(L)))
                ).astype(float)
         td = _pae_folder({"predicted_aligned_error": mat.tolist()})
-        stp = aa.StructurePreprocessor(verbose=False)
-        d = stp.encode_pae(df_seq=_df_af(), pae_folder=td.name,
+        strp = aa.StructurePreprocessor(verbose=False)
+        d = strp.encode_pae(df_seq=_df_af(), pae_folder=td.name,
                            features=["pae_distal_mean"],
                            local_window=L + 5)
         # Every residue is "local"; distal mean is all NaN.
@@ -178,9 +178,9 @@ class TestEncodeDomainsBranches:
     def test_chopping_trailing_comma_empty_domain(self):
         # "1-5," -> split on ',' yields an empty piece -> `if not dom_str`.
         td = self._domain_folder("AF_TINY", "1-5,10-15")
-        stp = aa.StructurePreprocessor(verbose=False)
+        strp = aa.StructurePreprocessor(verbose=False)
         td2 = self._domain_folder("AF_TINY", "1-5,")
-        d = stp.encode_domains(df_seq=_df_af(), domain_folder=td2.name,
+        d = strp.encode_domains(df_seq=_df_af(), domain_folder=td2.name,
                                features=["domain_boundary"])
         assert d["AF_TINY"].shape[0] == len(AF_FIXTURE_SEQ)
         td.cleanup(); td2.cleanup()
@@ -189,8 +189,8 @@ class TestEncodeDomainsBranches:
         # Two domains over the same residues -> _residue_to_domain_index
         # `if out[i] == -1` False arm (already assigned).
         td = self._domain_folder("AF_TINY", "1-10,5-15")
-        stp = aa.StructurePreprocessor(verbose=False)
-        d = stp.encode_domains(df_seq=_df_af(), domain_folder=td.name,
+        strp = aa.StructurePreprocessor(verbose=False)
+        d = strp.encode_domains(df_seq=_df_af(), domain_folder=td.name,
                                features=["n_domains_in_protein"])
         assert d["AF_TINY"].shape[0] == len(AF_FIXTURE_SEQ)
         td.cleanup()
@@ -199,8 +199,8 @@ class TestEncodeDomainsBranches:
         # Domain end far beyond L -> boundary endpoint idx >= L -> the
         # `if 0 <= idx < L` False arm in encode_domain_boundary.
         td = self._domain_folder("AF_TINY", "1-9999")
-        stp = aa.StructurePreprocessor(verbose=False)
-        d = stp.encode_domains(df_seq=_df_af(), domain_folder=td.name,
+        strp = aa.StructurePreprocessor(verbose=False)
+        d = strp.encode_domains(df_seq=_df_af(), domain_folder=td.name,
                                features=["domain_boundary"])
         assert d["AF_TINY"].shape[0] == len(AF_FIXTURE_SEQ)
         td.cleanup()
@@ -217,9 +217,9 @@ class TestDomainIoBranches:
     def test_segment_start_lt_one_raises_failure(self):
         # "0-5" -> start < 1 -> RuntimeError in parser -> row marked failed.
         td = self._folder("AF_TINY", "0-5", ".txt")
-        stp = aa.StructurePreprocessor(verbose=False)
+        strp = aa.StructurePreprocessor(verbose=False)
         with pytest.warns(UserWarning):
-            d, df_out = stp.encode_domains(df_seq=_df_af(),
+            d, df_out = strp.encode_domains(df_seq=_df_af(),
                                            domain_folder=td.name,
                                            features=["domain_boundary"],
                                            return_df=True)
@@ -228,9 +228,9 @@ class TestDomainIoBranches:
 
     def test_tsv_missing_chopping_column(self):
         td = self._folder("AF_TINY", "id\tfoo\nAF_TINY\t1-5\n", ".tsv")
-        stp = aa.StructurePreprocessor(verbose=False)
+        strp = aa.StructurePreprocessor(verbose=False)
         with pytest.warns(UserWarning):
-            d, df_out = stp.encode_domains(df_seq=_df_af(),
+            d, df_out = strp.encode_domains(df_seq=_df_af(),
                                            domain_folder=td.name,
                                            features=["domain_boundary"],
                                            return_df=True)
@@ -239,9 +239,9 @@ class TestDomainIoBranches:
 
     def test_tsv_header_no_data_row(self):
         td = self._folder("AF_TINY", "chopping\n", ".tsv")
-        stp = aa.StructurePreprocessor(verbose=False)
+        strp = aa.StructurePreprocessor(verbose=False)
         with pytest.warns(UserWarning):
-            d, df_out = stp.encode_domains(df_seq=_df_af(),
+            d, df_out = strp.encode_domains(df_seq=_df_af(),
                                            domain_folder=td.name,
                                            features=["domain_boundary"],
                                            return_df=True)
@@ -251,9 +251,9 @@ class TestDomainIoBranches:
     def test_tsv_row_fewer_cols_than_header(self):
         # chopping is the 2nd column but the data row has only 1 field.
         td = self._folder("AF_TINY", "id\tchopping\nonlyone\n", ".tsv")
-        stp = aa.StructurePreprocessor(verbose=False)
+        strp = aa.StructurePreprocessor(verbose=False)
         with pytest.warns(UserWarning):
-            d, df_out = stp.encode_domains(df_seq=_df_af(),
+            d, df_out = strp.encode_domains(df_seq=_df_af(),
                                            domain_folder=td.name,
                                            features=["domain_boundary"],
                                            return_df=True)
@@ -264,9 +264,9 @@ class TestDomainIoBranches:
         # .tsv whose only content is blank lines -> no non-empty lines ->
         # 'domain file ... is empty' RuntimeError -> row marked failed.
         td = self._folder("AF_TINY", "\n   \n\n", ".tsv")
-        stp = aa.StructurePreprocessor(verbose=False)
+        strp = aa.StructurePreprocessor(verbose=False)
         with pytest.warns(UserWarning):
-            d, df_out = stp.encode_domains(df_seq=_df_af(),
+            d, df_out = strp.encode_domains(df_seq=_df_af(),
                                            domain_folder=td.name,
                                            features=["domain_boundary"],
                                            return_df=True)
@@ -275,8 +275,8 @@ class TestDomainIoBranches:
 
     def test_tsv_valid_chopping_column(self):
         td = self._folder("AF_TINY", "chopping\n1-10,11-20\n", ".tsv")
-        stp = aa.StructurePreprocessor(verbose=False)
-        d = stp.encode_domains(df_seq=_df_af(), domain_folder=td.name,
+        strp = aa.StructurePreprocessor(verbose=False)
+        d = strp.encode_domains(df_seq=_df_af(), domain_folder=td.name,
                                features=["n_domains_in_protein"])
         assert d["AF_TINY"].shape[0] == len(AF_FIXTURE_SEQ)
         td.cleanup()
@@ -291,9 +291,9 @@ class TestEncodePdbDepthNoMsms:
             pytest.skip("msms present; this exercises the missing-tool arm")
         td = tempfile.TemporaryDirectory()
         shutil.copy(PDB_FIXTURES / "AF_TINY.pdb", Path(td.name) / "AF_TINY.pdb")
-        stp = aa.StructurePreprocessor(verbose=False)
+        strp = aa.StructurePreprocessor(verbose=False)
         with pytest.raises(RuntimeError, match="msms"):
-            stp.encode_pdb(df_seq=_df_af(), pdb_folder=td.name,
+            strp.encode_pdb(df_seq=_df_af(), pdb_folder=td.name,
                            features=["depth"])
         td.cleanup()
 
@@ -316,10 +316,10 @@ class TestEncodePdbNoAminoAcidChains:
     ])
     def test_no_aa_chains_returns_nan(self, feat, tmp_path):
         (tmp_path / "AF_TINY.pdb").write_text(_HETATM_ONLY_PDB)
-        stp = aa.StructurePreprocessor(verbose=False)
+        strp = aa.StructurePreprocessor(verbose=False)
         with warnings.catch_warnings():
             warnings.simplefilter("ignore")
-            d = stp.encode_pdb(df_seq=_df_af(), pdb_folder=str(tmp_path),
+            d = strp.encode_pdb(df_seq=_df_af(), pdb_folder=str(tmp_path),
                                features=[feat])
         # Empty-structure path yields an all-NaN per-residue block.
         assert d["AF_TINY"].shape[0] == len(AF_FIXTURE_SEQ)
@@ -333,11 +333,11 @@ class TestFetchAlphafoldSkipVerbose:
         (tmp_path / "P1.pdb").write_text("x")
         (tmp_path / "AF-P1-F1-predicted_aligned_error_v4.json").write_text("{}")
         df = pd.DataFrame({"entry": ["P1"], "sequence": ["ACDEFGHIK"]})
-        stp = aa.StructurePreprocessor(verbose=True)
+        strp = aa.StructurePreprocessor(verbose=True)
         BACKEND = ("aaanalysis.data_handling_pro._backend.struct_preproc."
                    "_alphafold")
         with patch(f"{BACKEND}.requests.get") as mg:
-            out = stp.fetch_alphafold(df_seq=df, out_folder=str(tmp_path),
+            out = strp.fetch_alphafold(df_seq=df, out_folder=str(tmp_path),
                                       skip_existing=True)
         mg.assert_not_called()
         assert bool(out.iloc[0]["skipped"]) is True

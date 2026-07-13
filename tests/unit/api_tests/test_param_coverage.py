@@ -121,15 +121,15 @@ def collect_test_kwarg_names():
 # exercised by a real test, not allowlisted. Keep this list small (issue #84
 # targets >=95% covered with the remainder justified here).
 ALLOWLIST = {
-    # AAlogoPlot single_logo/multi_logo: cosmetic passthrough to logomaker.
-    ("AAlogoPlot", "logo_vpad"): "visual-only passthrough to logomaker",
-    ("AAlogoPlot", "logo_vsep"): "visual-only passthrough to logomaker",
-    ("AAlogoPlot", "logo_font_name"): "visual-only passthrough to logomaker",
-    ("AAlogoPlot", "logo_color_scheme"): "visual-only passthrough to logomaker",
-    ("AAlogoPlot", "name_data_fontsize"): "visual-only label styling",
-    ("AAlogoPlot", "name_data_color"): "visual-only label styling",
-    ("AAlogoPlot", "info_bar_color"): "visual-only label styling",
-    ("AAlogoPlot", "target_p1_site"): "visual-only annotation marker",
+    # AALogoPlot single_logo/multi_logo: cosmetic passthrough to logomaker.
+    ("AALogoPlot", "logo_vpad"): "visual-only passthrough to logomaker",
+    ("AALogoPlot", "logo_vsep"): "visual-only passthrough to logomaker",
+    ("AALogoPlot", "logo_font_name"): "visual-only passthrough to logomaker",
+    ("AALogoPlot", "logo_color_scheme"): "visual-only passthrough to logomaker",
+    ("AALogoPlot", "name_data_fontsize"): "visual-only label styling",
+    ("AALogoPlot", "name_data_color"): "visual-only label styling",
+    ("AALogoPlot", "info_bar_color"): "visual-only label styling",
+    ("AALogoPlot", "target_p1_site"): "visual-only annotation marker",
     # AAMut / SeqMut have no dedicated unit-test suite yet (a whole-class gap, not
     # specific to these params; tracked as a separate issue). The global name-based
     # detection only surfaces their uniquely-named mutation-direction params; there

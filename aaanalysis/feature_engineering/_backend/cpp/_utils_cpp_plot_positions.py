@@ -101,14 +101,48 @@ def _adjust_xticks_labels(xticks=None, xtick_labels=None, add_xtick_pos=True,
     return xticks, xtick_labels
 
 
+# Colored sequence cell: fraction of the (heatmap-edge) top margin mirrored below the letters.
+# 1.0 = symmetric; smaller keeps the band flush to the grid on top but slim underneath.
+_SEQ_CELL_BOTTOM_MARGIN_FRAC = 0.2
+
+# Gap between the heatmap grid and the sequence band. Expressed in grid-CELL (row) units so it
+# equals the category-sidebar gap (_SUBCAT_BAR_GAP_CELLS) and scales with the cell like it does.
+# The x-tick pad moves the residue letters clear of that gap (points; a touch above the cell gap).
+_SEQ_HEATMAP_GAP_CELLS = 0.22
+_SEQ_HEATMAP_GAP_PT = 5.0
+
+# Constant gap (points) between the sequence band and the JMD-N/TMD/JMD-C part labels.
+_JMD_LABEL_GAP_PT = 3.0
+
+# Upper bound (points) on the auto-sized part-label font. The part labels otherwise
+# default to the residue-letter size, which balloons on short/wide grids; the cap keeps
+# them readable-but-bounded. An explicit ``fontsize_tmd_jmd`` is honored uncapped.
+_JMD_LABEL_MAX_PT = 12.0
+
+# Distance (inches) from the heatmap grid bottom to the colorbar top, matching the look of a
+# dense feature map. Holding it constant keeps the colorbar clear of the sequence band on a
+# sparse grid (small figure), where the figure-bottom-anchored default would ride up into it.
+_CBAR_BELOW_GRID_IN = 1.4
+
+# Fixed colorbar thickness (inches). The backend sizes it as a figure fraction, which collapses
+# to a thin line once the figure shrinks; pinning it to a constant inch height keeps a proper
+# gradient bar at any figure size (the cheat-sheet look).
+_CBAR_HEIGHT_IN = 0.16
+
+# Compact gap (inches) between the sequence/part-label block and the bottom furniture row, and
+# between the colorbar and the importance legend beside it.
+_FURNITURE_GAP_IN = 0.12
+_FURNITURE_ITEM_GAP_IN = 0.25
+
+
 def _add_seq_cell_backgrounds(ax=None, labels=None, colors=None, x_shift=0.0):
     """Paint a seamless, full-width colored cell behind each residue letter (``fill`` mode).
 
     The per-letter text bbox is glyph-sized, so narrow residues leave hairline gaps and the
     colored band reads as ragged against the uniform heatmap grid. Draw one rectangle per
     residue instead: full-width (1.0 data unit) and centered on the tick so it lines up exactly
-    with the heatmap column, its **top flush against the heatmap edge** and a symmetric margin
-    below the letters, so the band is gap-free on every side.
+    with the heatmap column, its **top flush against the heatmap edge** and a slim margin below
+    the letters, so the band is gap-free without piling excess color under the residues.
     """
     fig = ax.figure
     fig.canvas.draw()
@@ -124,14 +158,35 @@ def _add_seq_cell_backgrounds(ax=None, labels=None, colors=None, x_shift=0.0):
     center = 0.5 * (lo + hi)
     edge = min(ax.get_ylim(), key=lambda v: abs(v - center))
     near, far = (lo, hi) if abs(lo - edge) <= abs(hi - edge) else (hi, lo)
-    margin = abs(near - edge)
+    d = 1 if far >= edge else -1  # from the heatmap edge toward the letters
+    # Leave a gap between the heatmap and the band top (matches the sidebar gap), but never uncover
+    # the letters: clamp the band top just above the letters' near edge if the pad is too small.
+    gap = min(_SEQ_HEATMAP_GAP_CELLS, max(0.0, abs(near - edge) - 0.05))
+    inner = edge + gap * d
+    margin = abs(near - edge) * _SEQ_CELL_BOTTOM_MARGIN_FRAC
     y_far = far + margin * (1 if far >= near else -1)
-    y0, y1 = sorted((edge, y_far))
-    for i, c in enumerate(colors):
-        rect = mpl.patches.Rectangle((i + x_shift - 0.5, y0), width=1.0, height=y1 - y0,
+    y0, y1 = sorted((inner, y_far))
+    # Center each cell on its residue's own data-x (glyph center = tick), so the band frames the
+    # letters regardless of x_shift and can be repainted around any (re-fitted) letter size.
+    for e, c in zip(exts, colors):
+        xc = 0.5 * (e.x0 + e.x1)
+        rect = mpl.patches.Rectangle((xc - 0.5, y0), width=1.0, height=y1 - y0,
                                      facecolor=c, edgecolor="none", linewidth=0,
-                                     zorder=0.1, clip_on=False)
+                                     zorder=0.1, clip_on=False, gid="_seq_cell")
         ax.add_patch(rect)
+
+
+def repaint_seq_cell_backgrounds_(ax=None, labels=None, colors=None):
+    """Re-draw the full-width residue cells to frame the FINAL (re-fitted) letters (``fill`` mode).
+
+    The initial cells are painted at the seed layout; once the constant-cell sizer rescales the
+    figure and ``update_seq_size_`` re-fits the residue letters, those seed cells no longer frame
+    the letters (the band reads too thin and clips them). Remove the tagged cells and repaint around
+    the current letters, so the gap-free band always fully covers the transparent-boxed residues.
+    """
+    for p in [p for p in ax.patches if p.get_gid() == "_seq_cell"]:
+        p.remove()
+    _add_seq_cell_backgrounds(ax=ax, labels=labels, colors=colors)
 
 
 def _add_part_seq(ax=None, jmd_n_seq=None, tmd_seq=None, jmd_c_seq=None, x_shift=0.0, seq_size=None,
@@ -151,7 +206,8 @@ def _add_part_seq(ax=None, jmd_n_seq=None, tmd_seq=None, jmd_c_seq=None, x_shift
                      fontname=ut.FONT_AA, zorder=2)
     ax.set_xticklabels(labels=[tmd_jmd[i] for i in minor_xticks], minor=True, **kws_ticks)
     ax.set_xticklabels(labels=[tmd_jmd[i] for i in major_xticks], minor=False, **kws_ticks)
-    ax.tick_params(axis="x", length=0, which="both")
+    # `pad` opens a small gap between the heatmap grid and the sequence band (like the cheat sheet).
+    ax.tick_params(axis="x", length=0, which="both", pad=_SEQ_HEATMAP_GAP_PT)
     # Get labels in order of sequence (separate between minor and major ticks)
     dict_pos_label = dict(zip(minor_xticks, ax.xaxis.get_ticklabels(which="minor")))
     dict_pos_label.update(dict(zip(major_xticks, ax.xaxis.get_ticklabels(which="major"))))
@@ -185,8 +241,8 @@ def _add_part_seq_second_ticks(ax2=None, seq_size=11.0, xticks=None, xtick_label
     # Move twinned axis ticks and label from top to bottom
     ax2.xaxis.set_ticks_position("bottom")
     ax2.xaxis.set_label_position("bottom")
-    # Offset the twin axis below the host
-    y_pos = 5 if heatmap else 7
+    # Offset the twin axis below the host (extra gap so the part labels clear the sequence band)
+    y_pos = (5 + _JMD_LABEL_GAP_PT) if heatmap else 7
     ax2.spines["bottom"].set_position(("outward", seq_size+y_pos))
     ax2.set_xticks([x + x_shift for x in xticks])
     ax2.set_xticklabels(xtick_labels, size=xtick_size, rotation=0, color="black", ha="center", va="top")
@@ -201,6 +257,202 @@ def _add_part_seq_second_ticks(ax2=None, seq_size=11.0, xticks=None, xtick_label
         elif name_jmd_n in text or name_jmd_c in text:
             l.set_size(fontsize_tmd_jmd)
             l.set_weight(weight_tmd_jmd)
+
+
+def finalize_part_labels_(fig=None, ax=None, gap_pt=_JMD_LABEL_GAP_PT, cap=_JMD_LABEL_MAX_PT,
+                          fontsize_tmd_jmd=None, weight_tmd_jmd="normal"):
+    """Cap the TMD/JMD part-label font and pin it a constant gap below the sequence band.
+
+    Re-places the JMD-N/TMD/JMD-C part labels AFTER the residue letters are final (so the
+    measurement reflects the letters the user sees): the label font is capped at ``cap``
+    (unless ``fontsize_tmd_jmd`` is given, which is honored uncapped), and the label row is
+    put a constant ``gap_pt`` points below the MEASURED bottom of the sequence letters.
+    Both the label size and the label-to-sequence distance otherwise ride the residue-letter
+    size, which balloons on short/wide grids; pinning them here keeps them constant across
+    sequence length and subcategory count. ``ax`` is the grid/profile axes carrying the
+    sequence letters; the part labels live on a sibling twin axes. No-op if either is absent.
+    """
+    name_tmd = ut.options["name_tmd"]
+    name_jmd_n = ut.options["name_jmd_n"]
+    name_jmd_c = ut.options["name_jmd_c"]
+    names = {name_tmd, name_jmd_n, name_jmd_c}
+    part_ax = next((a for a in fig.axes
+                    if any(t.get_text() in names for t in a.get_xticklabels())), None)
+    if part_ax is None:
+        return
+    fig.canvas.draw()
+    renderer = fig.canvas.get_renderer()
+    seq_labels = [t for t in ax.get_xticklabels(which="both") if t.get_text().strip()]
+    if not seq_labels:
+        return
+    seq_size = max(t.get_fontsize() for t in seq_labels)
+    # Measure the band bottom from the colored per-residue cells too (fill mode): they extend past
+    # the letters, so pinning to the letters alone leaves the labels nearly touching the band.
+    cells = [p for p in ax.patches if p.get_gid() == "_seq_cell"]
+    extents = [t.get_window_extent(renderer) for t in seq_labels]
+    extents += [p.get_window_extent(renderer) for p in cells]
+    band_bottom = min(e.y0 for e in extents)
+    ax_bottom = ax.get_window_extent(renderer).y0
+    band_below_pt = max(0.0, (ax_bottom - band_bottom) / fig.dpi * 72.0)
+    # Match the below-band gap to the above-band (heatmap) gap so the sequence sits symmetrically
+    # between the grid and the part labels: both a constant _SEQ_HEATMAP_GAP_CELLS cell-rows.
+    eff_gap = gap_pt
+    if cells:
+        p0 = ax.transData.transform((0.0, 0.0))
+        p1 = ax.transData.transform((0.0, 1.0))
+        row_pt = abs(p1[1] - p0[1]) / fig.dpi * 72.0
+        eff_gap = _SEQ_HEATMAP_GAP_CELLS * row_pt
+    size = fontsize_tmd_jmd if fontsize_tmd_jmd is not None else min(seq_size, cap)
+    part_ax.spines["bottom"].set_position(("outward", band_below_pt + eff_gap))
+    for label in part_ax.get_xticklabels():
+        if label.get_text() in names:
+            label.set_size(size)
+            label.set_weight(weight_tmd_jmd)
+
+
+def place_colorbar_below_grid_(fig=None, ax=None, gap_in=_CBAR_BELOW_GRID_IN):
+    """Re-place the heatmap colorbar a constant distance below the grid (grid-relative).
+
+    The colorbar is otherwise anchored near the figure bottom, which sits below the sequence
+    only when the grid fills the figure; on a sparse grid (small figure) that anchor rides up
+    into the sequence band. Pinning the colorbar's top ``gap_in`` inches below the grid bottom
+    keeps it clear of the sequence at any grid size, and its importance-dot legend (anchored to
+    the colorbar axes) follows. No-op if the grid has no attached colorbar.
+    """
+    if not ax.collections or ax.collections[0].colorbar is None:
+        return
+    cbar_ax = ax.collections[0].colorbar.ax
+    w_in, h_in = (float(v) for v in fig.get_size_inches())
+    grid_pos = ax.get_position()
+    cbar_pos = cbar_ax.get_position()
+    top_in = grid_pos.y0 * h_in - gap_in
+    new_bottom = (top_in - cbar_pos.height * h_in) / h_in
+    cbar_ax.set_position([cbar_pos.x0, new_bottom, cbar_pos.width, cbar_pos.height])
+
+
+def align_bottom_furniture_(fig=None, ax=None, gap_in=_FURNITURE_GAP_IN, item_gap_in=_FURNITURE_ITEM_GAP_IN):
+    """Lay the scale-category legend, colorbar and importance legend as one aligned bottom row.
+
+    Aligned to the grid columns (the cheat-sheet layout): the scale-category legend LEFT-aligned with
+    the grid's left content (row labels / the "Scale (subcategory)" title), the "Feature value"
+    colorbar centred on the grid, and the feature-importance legend RIGHT-aligned with the right
+    content edge (the cumulative-importance column). All three tops on one line, a small ``gap_in``
+    below the sequence/part-label block. The colorbar is a fixed-inch-thick, fixed-inch-wide gradient
+    bar (the backend sizes it as a figure fraction, which collapses when the figure shrinks). Run
+    after ``grow_to_fit``, in figure coordinates. Missing items (e.g. no importance legend on the
+    standalone heatmap) are skipped.
+    """
+    fig.canvas.draw()
+    renderer = fig.canvas.get_renderer()
+    dpi = fig.dpi
+    w_in, h_in = (float(v) for v in fig.get_size_inches())
+    cat_legend = ax.get_legend()
+    cbar = ax.collections[0].colorbar if (ax.collections and ax.collections[0].colorbar) else None
+    cbar_ax = cbar.ax if cbar is not None else None
+    imp_legend = cbar_ax.get_legend() if cbar_ax is not None else None
+    grid = ax.get_position()
+    # Lowest grid-attached content = min bottom of the grid axes' own tight bbox (position ticks,
+    # sequence letters, row labels; the legend is hidden so it does not feed back) and any sibling
+    # twin sharing the grid position (the part-label JMD/TMD axis, whose spine is pushed below).
+    if cat_legend is not None:
+        cat_legend.set_visible(False)
+    fig.canvas.draw()
+    _tb = ax.get_tightbbox(renderer)
+    low_disp = _tb.y0
+    left_disp = _tb.x0  # grid's left content edge (row labels + the "Scale (subcategory)" title)
+    for a in fig.axes:
+        if a is ax or a is cbar_ax:
+            continue
+        p = a.get_position()
+        if abs(p.x0 - grid.x0) < 0.02 and abs(p.width - grid.width) < 0.02:
+            low_disp = min(low_disp, a.get_tightbbox(renderer).y0)
+    if cat_legend is not None:
+        cat_legend.set_visible(True)
+    top_in = low_disp / dpi - gap_in
+    top_frac = top_in / h_in
+    if cat_legend is not None:  # drop the blank-line title padding (an old positioning hack)
+        title = cat_legend.get_title()
+        title.set_text(title.get_text().lstrip("\n"))
+    # Colorbar: fixed thickness AND width (inches), centred on the grid, top-aligned.
+    cbar_left_in = cbar_right_in = None
+    if cbar_ax is not None:
+        pos = cbar_ax.get_position()
+        if imp_legend is not None:
+            imp_legend.set_visible(False)
+            fig.canvas.draw()
+        label_above_in = cbar_ax.get_tightbbox(renderer).y1 / dpi - pos.y1 * h_in
+        if imp_legend is not None:
+            imp_legend.set_visible(True)
+        cbar_w_in = min(max((grid.x1 - grid.x0) * w_in * 0.42, 1.4), 3.0)
+        cbar_left_in = 0.5 * (grid.x0 + grid.x1) * w_in - 0.5 * cbar_w_in
+        cbar_right_in = cbar_left_in + cbar_w_in
+        bottom = (top_in - label_above_in - _CBAR_HEIGHT_IN) / h_in
+        cbar_ax.set_position([cbar_left_in / w_in, bottom, cbar_w_in / w_in, _CBAR_HEIGHT_IN / h_in])
+    # Furniture row, width-responsive so the text never overlaps:
+    #  - if the three items fit the grid's content width, keep the cheat-sheet grid-column alignment
+    #    (scale-category legend flush to the left content edge, importance legend flush to the right
+    #    content edge, colorbar centred);
+    #  - otherwise cluster them ADJACENT around the centred colorbar (category just left, importance
+    #    just right) so they never overlap each other; grow_to_fit then widens the figure to fit.
+    cat_w = cat_legend.get_window_extent(renderer).width / dpi if cat_legend is not None else 0.0
+    imp_w = imp_legend.get_window_extent(renderer).width / dpi if imp_legend is not None else 0.0
+    cbar_w_in = (cbar_right_in - cbar_left_in) if cbar_left_in is not None else 0.0
+    left_in = left_disp / dpi
+    right_in = max(a.get_position().x1 for a in fig.axes if a is not cbar_ax) * w_in
+    content_w = right_in - left_in
+    fits = (cat_w + cbar_w_in + imp_w + 2 * item_gap_in) <= content_w
+    # A LEFT-anchored category legend clears the CENTRED colorbar only if it fits within the left
+    # half of the content width (twice the legend plus the colorbar and two gaps), not merely the raw
+    # sum -- otherwise the left legend runs into the centred colorbar. Below that bound the legend is
+    # clustered just left of the colorbar instead (the branch below).
+    two_fit = (2 * cat_w + cbar_w_in + 2 * item_gap_in) <= content_w
+    # Scale-category legend: left content edge if the row has room, else clustered just left of the
+    # (centred) colorbar so it never overlaps it.
+    if cat_legend is not None:
+        if fits or two_fit:
+            cat_legend.set_loc("upper left")
+            cat_legend.set_bbox_to_anchor((left_in / w_in, top_frac), transform=fig.transFigure)
+        elif cbar_left_in is not None:
+            cat_legend.set_loc("upper right")
+            cat_legend.set_bbox_to_anchor(((cbar_left_in - item_gap_in) / w_in, top_frac), transform=fig.transFigure)
+    # Feature-importance legend: right content edge when all three fit the row; otherwise drop it to
+    # a SECOND row below the colorbar (still right-aligned), so the narrow top row only holds the
+    # category legend + colorbar.
+    if imp_legend is not None:
+        if fits:
+            imp_legend.set_loc("upper right")
+            imp_legend.set_bbox_to_anchor((right_in / w_in, top_frac), transform=fig.transFigure)
+        elif cbar_ax is not None and cbar_right_in is not None:
+            imp_legend.set_visible(False)
+            fig.canvas.draw()
+            cbar_low = cbar_ax.get_tightbbox(renderer).y0  # colorbar incl. its tick labels
+            imp_legend.set_visible(True)
+            imp_top = (cbar_low / dpi - item_gap_in) / h_in
+            imp_legend.set_loc("upper right")
+            imp_legend.set_bbox_to_anchor((cbar_right_in / w_in, imp_top), transform=fig.transFigure)
+    # Very narrow figures: if the centred colorbar still COLLIDES with the scale-category legend (they
+    # overlap both horizontally and vertically), drop the colorbar to its own row just below the
+    # legend so the two never sit on top of each other. The importance legend, anchored to the
+    # colorbar, follows it down.
+    if cat_legend is not None and cbar_ax is not None:
+        fig.canvas.draw()
+        lb = cat_legend.get_window_extent(renderer)
+        cb = cbar_ax.get_tightbbox(renderer)
+        if lb.x1 > cb.x0 and cb.x1 > lb.x0 and lb.y1 > cb.y0 and cb.y1 > lb.y0:
+            cpos = cbar_ax.get_position()
+            # Place the colorbar's AXES so its whole tight bbox (the "Feature value" label sits
+            # ``label_above_in`` above the bar) clears below the legend's bottom.
+            new_cbar_axes_top_in = lb.y0 / dpi - item_gap_in - label_above_in
+            cbar_ax.set_position([cpos.x0, (new_cbar_axes_top_in - _CBAR_HEIGHT_IN) / h_in,
+                                  cpos.width, cpos.height])
+            if imp_legend is not None and cbar_right_in is not None:
+                imp_legend.set_visible(False)
+                fig.canvas.draw()
+                clow = cbar_ax.get_tightbbox(renderer).y0
+                imp_legend.set_visible(True)
+                imp_legend.set_loc("upper right")
+                imp_legend.set_bbox_to_anchor((cbar_right_in / w_in, (clow / dpi - item_gap_in) / h_in),
+                                              transform=fig.transFigure)
 
 
 def _get_new_axis(ax=None):
@@ -325,18 +577,22 @@ class PlotPartPositions:
         return ax
 
     # Add TMD-JMD elements
-    def add_tmd_jmd_bar(self, ax=None, x_shift=0, jmd_color="blue", tmd_color="mediumspringgreen"):
+    def add_tmd_jmd_bar(self, ax=None, x_shift=0, jmd_color="blue", tmd_color="mediumspringgreen",
+                        bar_height_factor=1, bar_height=None):
         """Add colored bars to indicate TMD and JMD regions."""
         ut.add_tmd_jmd_bar(ax=ax,
                            x_shift=x_shift,
                            jmd_color=jmd_color,
                            tmd_color=tmd_color,
+                           bar_height_factor=bar_height_factor,
+                           bar_height=bar_height,
                            tmd_len=self.tmd_len,
                            jmd_n_len=self.jmd_n_len,
                            jmd_c_len=self.jmd_c_len,
                            start=self.start)
 
-    def add_tmd_jmd_text(self, ax=None, x_shift=0, fontsize_tmd_jmd=None, weight_tmd_jmd="normal"):
+    def add_tmd_jmd_text(self, ax=None, x_shift=0, fontsize_tmd_jmd=None, weight_tmd_jmd="normal",
+                         height_factor=1.3, bar_height=None):
         """Add text labels for TMD and JMD regions."""
         name_tmd = ut.options["name_tmd"]
         name_jmd_n = ut.options["name_jmd_n"]
@@ -345,6 +601,8 @@ class PlotPartPositions:
                             x_shift=x_shift,
                             fontsize_tmd_jmd=fontsize_tmd_jmd,
                             weight_tmd_jmd=weight_tmd_jmd,
+                            height_factor=height_factor,
+                            bar_height=bar_height,
                             name_tmd=name_tmd,
                             name_jmd_n=name_jmd_n,
                             name_jmd_c=name_jmd_c,

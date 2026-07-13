@@ -70,12 +70,12 @@ def main():
     df_feat, X = _augment(df_feat0)
     df_feat_s, X_s = _augment(cpp.simplify(df_feat=df_feat0, labels=labels))
 
-    # AAlogo: substrate (label_test=1, the CPP "test set") sequence logo with a
+    # AALogo: substrate (label_test=1, the CPP "test set") sequence logo with a
     # bits information bar on top — makes the dataset clear
     n_test = int(sum(v == 1 for v in labels))
     aa.plot_settings(font_scale=0.7)
-    # aal_kws computes df_logo + the bits bar internally (skips the manual AAlogo step)
-    aa.AAlogoPlot().single_logo(
+    # aal_kws computes df_logo + the bits bar internally (skips the manual AALogo step)
+    aa.AALogoPlot().single_logo(
         aal_kws=dict(df_parts=df_parts_core, labels=labels,
                      label_test=1, tmd_len=TMD_LEN),
         name_data=f"Test set: substrates (n={n_test})")

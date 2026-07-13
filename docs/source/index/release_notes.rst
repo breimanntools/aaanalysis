@@ -152,6 +152,15 @@ Added
   ``df_parts`` so the residues stay bound to the feature geometry — removing the manual
   slicing glue when feeding :meth:`~aaanalysis.CPPPlot.profile` / ``feature_map`` (e.g. sample-level SHAP
   plots).
+- **``sample_kws`` bundle on CPPPlot plots**: :meth:`~aaanalysis.CPPPlot.feature_map`,
+  :meth:`~aaanalysis.CPPPlot.heatmap`, and :meth:`~aaanalysis.CPPPlot.profile` take a structured
+  ``sample_kws=dict(sample, df_seq, df_parts)`` — the bundled alternative to providing the TMD-JMD
+  sequences directly. ``sample`` accepts an entry name / id / accession (``str``) or a row position
+  (``int``); it resolves that sample's sequence band (and, for the SHAP variants, the per-sample
+  ``feat_impact`` column) from ``df_parts`` and **overrides** any explicitly passed ``tmd_seq`` /
+  ``jmd_n_seq`` / ``jmd_c_seq``. The displayed sequence stays faithful to the ``df_parts`` the features
+  map to, so its own lengths set the grid geometry (``tmd_len`` / ``jmd_n_len`` / ``jmd_c_len`` apply
+  only when no sequence is shown). See the keyword-dict parameters overview in the docstring guide.
 - :meth:`~aaanalysis.SequenceFeature.get_feature_descriptions`: One standardized, human-readable
   sentence per ``PART-SPLIT-SCALE`` feature id (region + split + AAontology scale name /
   category). Additive (the ``'feature'`` id is unchanged); fills an optional
@@ -197,6 +206,24 @@ Added
   (default) ``df_eval`` is byte-identical to before (no ``features`` column).
   :meth:`~aaanalysis.AAPredPlot.eval` (bar plot) reads the ``features`` column as the hue, so it
   draws the ``cpp`` and baseline bars side by side instead of averaging them.
+- :meth:`~aaanalysis.AAPred.eval`: New ``cv`` option to cross-validate with an arbitrary
+  scikit-learn splitter (e.g. ``LeaveOneOut()``) instead of the integer ``n_cv`` folds. Unlike
+  ``n_cv``, a splitter is **not** capped at the smallest class count, so ``LeaveOneOut`` works on
+  small, imbalanced sets. Its rows are scored by a new ``'cv_pooled'`` principle: every held-out
+  prediction is pooled and each metric is applied **once** on that pooled vector (reproducing
+  ``metric(labels, cross_val_predict(estimator, X, labels, cv=cv))``), rather than averaging a
+  degenerate per-fold score — the correct principle when a single-sample test fold makes per-fold
+  averaging meaningless. ``score_std`` is ``NaN`` for ``cv_pooled`` (a single estimate). Purely
+  additive: with ``cv=None`` (default) ``df_eval`` is byte-identical to before.
+- :meth:`~aaanalysis.AAPred.predict_oof`: New method returning **cross-validated out-of-fold**
+  per-sample scores for the training set — each sample is scored by models fit on the folds that
+  exclude it (stratified k-fold ``cross_val_predict``), so the training-set scores are free of the
+  optimistic in-sample bias that scoring them with :meth:`~aaanalysis.AAPred.predict` would incur.
+  Every configured model is cross-validated independently and the per-model out-of-fold scores are
+  averaged, returning the same ``score`` / ``score_std`` shape as
+  :meth:`~aaanalysis.AAPred.predict` (mean over the ensemble, std across models). Like
+  :meth:`~aaanalysis.AAPred.eval` it cross-validates the constructor models and needs no prior
+  :meth:`~aaanalysis.AAPred.fit`; deterministic under ``random_state``.
 - :meth:`~aaanalysis.AAPredPlot.eval`: New ``kind='heatmap'`` that renders any 2D score grid
   (rows x columns are the two sweep axes) as a square annotated heatmap and boxes the best cell(s)
   with a full-cell frame — ``highlight`` selects how many (a positive int for the top-N,
@@ -334,6 +361,24 @@ Added
 
 **Plotting**
 
+- **cell_size** on :meth:`~aaanalysis.CPPPlot.feature_map` / :meth:`~aaanalysis.CPPPlot.heatmap` /
+  :meth:`~aaanalysis.CPPPlot.profile`: a ``(width, height)`` inches tuple that holds every grid
+  cell at that exact physical size — the figure shrinks for a small grid and grows for a large one,
+  and nothing clips the figure edge — for any sequence length or number of scale subcategories.
+  ``figsize`` seeds the layout; ``cell_size`` sets the cell (the profile uses only the width). The
+  cumulative-importance bar strips (top per-position, right per-subcategory) are sized in grid-cell
+  units and clamped to a min/max cell range, so they lock to a near-constant physical size instead
+  of ballooning on dense grids or vanishing on sparse ones; the importance-axis maximum value sits
+  left of the right spine on a short strip and right of it on a tall one (the standard look), and
+  the ``[%]`` suffix is dropped from the heatmap-only label so both variants read the same.
+- **seq_size** on :meth:`~aaanalysis.CPPPlot.feature_map` / :meth:`~aaanalysis.CPPPlot.heatmap` /
+  :meth:`~aaanalysis.CPPPlot.profile` gains ``"auto"`` (default): it fits the residue letters to the
+  grid cell and steps them down for a short TMD, so a fixed cell keeps the sequence consistent too.
+  A value in ``(0, 1]`` sets the letter height to that fraction of the cell, and a value ``> 1`` is
+  an absolute font size in points; the letters never overlap at any size.
+- **fontsize_labels** on :meth:`~aaanalysis.CPPPlot.feature_map` / :meth:`~aaanalysis.CPPPlot.heatmap`
+  gains ``"auto"``, which tracks the ``plot_settings`` font scale, caps at about 13 pt, and shrinks
+  on overlap so the scale-subcategory rows never collide.
 - **COLOR_SAMPLES_POS / COLOR_SAMPLES_NEG / COLOR_SAMPLES_UNL / COLOR_SAMPLES_REL_NEG**:
   Public, named constants for the canonical sample-group colors (positive / negative /
   unlabeled / reliable-negative). They equal the ``plot_get_cdict("DICT_COLOR")["SAMPLES_*"]``
@@ -341,9 +386,9 @@ Added
 
 **Golden Pipelines**
 
-- **aaanalysis.pipe** (``aap``): A second, opt-in convenience API of stateless, one-call
-  *golden pipelines* over the AAanalysis primitives (``import aaanalysis.pipe as aap``).
-- **aap.find_features**: Staged, interpretable CPP AutoML search. Stage 1
+- **aaanalysis.pipe** (``ap``): A second, opt-in convenience API of stateless, one-call
+  *golden pipelines* over the AAanalysis primitives (``import aaanalysis.pipe as ap``).
+- **ap.find_features**: Staged, interpretable CPP AutoML search. Stage 1
   cross-validates the full Cartesian Part × Split × Scale grid and ranks each axis by
   its marginal-mean impact; Stage 2 refines the single highest-impact axis against
   ``n_filter``; Stage 3 refines the winning feature set (:meth:`~aaanalysis.CPP.simplify` + recursive
@@ -356,13 +401,13 @@ Added
   carries the publication eval figures (``ax.eval``) and ``df_eval`` has one
   ``<metric>_mean``/``_std`` column per metric plus ``stage`` / ``is_pareto`` / ``rank``
   / ``is_selected``.
-- **aap.predict_samples**: Trains and cross-validates every ``(feature set × model)`` combination
+- **ap.predict_samples**: Trains and cross-validates every ``(feature set × model)`` combination
   over one ``df_seq`` in a single call, returning the refit predictors and a tidy comparison table.
   With ``plot=True`` (the default) it now also draws the **model comparison** bar plot (hue = model,
   one bar group per metric, cross-validation ``std`` error bars) and returns its ``Axes`` in the
   previously-unused middle slot, completing the ``(results, fig, evals)`` symmetry with
   ``find_features`` / ``explain_features`` (``figsize`` / ``dict_color`` / ``baseline`` style it).
-- **aap.plot_eval**: Publication-ready evaluation figures of a ``find_features`` sweep —
+- **ap.plot_eval**: Publication-ready evaluation figures of a ``find_features`` sweep —
   the high-dimensional Part × Split × Scale grid is **decomposed** into a series of clean
   2D ``viridis`` heatmaps (the two most-informative axes on each panel, the least on the
   slice), with a shared colorbar, the selected configuration starred, plus marginal-impact
@@ -397,7 +442,7 @@ Added
   study end to end from bundled data. The first, *Charting γ-secretase substrates by
   explainable AI* (``use_case1_gamma_secretase``), walks the full AAanalysis pipeline of
   Breimann and Kamp *et al.*, Nat. Commun. 2025 on the bundled ``DOM_GSEC`` /
-  ``DOM_GSEC_PU`` sets: AAlogo sequence logos of the three protein groups, AAclust
+  ``DOM_GSEC_PU`` sets: AALogo sequence logos of the three protein groups, AAclust
   redundancy-reduced scale sets, the CPP + TreeModel signature and feature map, dPULearn
   reliable-negative mining (with PCA and logo), a prediction benchmark (feature
   engineering × data expansion) plus a CPP/dPULearn optimization heatmap, and SHAP
@@ -409,7 +454,7 @@ Added
 - **Split API reference**: the reference is now two pages, each listing its members
   directly at the top level. *API* documents the explicit **building blocks**
   (``import aaanalysis as aa``) grouped by category; the new *API (Pipelines)* page documents
-  the **golden pipelines** (``import aaanalysis.pipe as aap``), one function per pipeline.
+  the **golden pipelines** (``import aaanalysis.pipe as ap``), one function per pipeline.
   Golden pipelines are no longer mixed into the building-block page or the Tutorials
   section; Getting Started links both references.
 
@@ -426,9 +471,23 @@ Changed
   :meth:`~aaanalysis.CPPPlot.ranking` now default to ``figsize=None`` and honor any explicit ``figsize`` as
   a fixed size, so "explicit figsize wins" holds package-wide (matching :meth:`~aaanalysis.CPPPlot.feature_map`);
   omitting ``figsize`` auto-sizes as before. :meth:`~aaanalysis.CPPPlot.heatmap` / :meth:`~aaanalysis.CPPPlot.profile`
-  gain the ``seq_char_fill`` residue-spacing option already on :meth:`~aaanalysis.CPPPlot.feature_map`, and
+  gain the ``seq_char_fill`` residue-band option already on :meth:`~aaanalysis.CPPPlot.feature_map`, and
   :meth:`~aaanalysis.AAPredPlot.predict_group` (``kind='rank_scatter'``) joins ``auto_font`` — its width grows
   with the number of ranked proteins when ``figsize`` is omitted.
+- **Constant-cell sizing shrinks as well as grows**: on the ``auto_font`` path (and whenever
+  ``cell_size`` is set), :meth:`~aaanalysis.CPPPlot.feature_map` / :meth:`~aaanalysis.CPPPlot.heatmap` /
+  :meth:`~aaanalysis.CPPPlot.profile` now size the figure so each cell hits the target exactly — a
+  sparse grid yields a *smaller* figure (previously it floored at the default and the cells ballooned),
+  a dense grid a larger one, and nothing clips at the figure edge at any size. The TMD/JMD part labels
+  are capped in size and held a constant distance below the sequence band (they previously rode the
+  residue-letter size and could grow huge or collide with the sequence). The bottom furniture is laid
+  out as one compact, top-aligned row clustered just below the grid — the scale-category legend, the
+  ``Feature value`` colorbar (a fixed-thickness gradient bar, no longer collapsing to a thin line when
+  the figure shrinks) and the feature-importance legend — so it no longer scatters or overlaps the
+  position ticks on a sparse grid. The coloured per-residue sequence cells and the scale-category
+  sidebar render as solid, gap-free blocks (the sidebar at a readable, cell-relative width), and the
+  subcategory row labels are lifted to the colorbar/legend size so they are no longer a step smaller
+  than the rest — matching the cheat-sheet reference at any figure size.
 - **Uniform plot return contract**: Every public ``*Plot`` method now returns a single
   ``(fig, ax)`` pair (forwarding attribute access to ``ax``, so existing
   ``ax = plot(...); ax.set_title(...)`` code keeps working), replacing the previous mix
@@ -504,6 +563,22 @@ Changed
 Fixed
 ~~~~~
 
+- **Composite-plot furniture no longer lands on the heatmap**: :meth:`~aaanalysis.CPPPlot.feature_map`
+  and :meth:`~aaanalysis.CPPPlot.heatmap` place their colorbar and legends below the grid in figure
+  coordinates. Ending a cell with the usual ``plt.tight_layout(); plt.show()`` re-packed the axes and
+  pulled that furniture back onto the heatmap. Both methods now manage their own layout and neutralize
+  ``tight_layout`` on the returned figure, so the composed layout survives the standard idiom
+  (``fig.savefig(..., bbox_inches="tight")`` and ``plt.show()`` are unaffected).
+- **Consistent feature-map / heatmap layout at any figure size**: several dense-grid / fixed-``figsize``
+  layout fixes for :meth:`~aaanalysis.CPPPlot.feature_map` and :meth:`~aaanalysis.CPPPlot.heatmap`. The
+  no-sequence TMD/JMD bar is a **constant** height (a fixed fraction of a grid cell-row) rather than
+  scaling with the figure. Under ``auto_font`` the subcategory row labels **and** the cumulative-importance
+  ``%`` annotations shrink independently until they no longer overlap (re-run on the final layout, below the
+  former 5pt floor if a tight fixed ``figsize`` needs it). The ``■`` feature-impact markers scale with the
+  cell size so they never overflow a small cell. On a manual ``figsize`` the three legends are laid out as one
+  aligned bottom row (the grid cells adapting to the reserved space, the figure keeping its exact size), and
+  on a very narrow figure the colorbar drops to its own row below the category legend instead of colliding
+  with it. The standalone heatmap now uses the **same cell height** as the feature map.
 - **Sequence bar in CPP-SHAP plots**: with ``seq_char_fill=True`` (the auto_font default),
   :meth:`~aaanalysis.CPPPlot.feature_map`, :meth:`~aaanalysis.CPPPlot.heatmap`, and
   :meth:`~aaanalysis.CPPPlot.profile` drew each residue's colored background as a glyph-sized text
@@ -523,7 +598,7 @@ Fixed
   thread-safe, single-process progress path and the run completes normally instead of
   aborting (previously the only workaround was ``n_jobs=1``). When the Manager is
   available, behavior and output are unchanged.
-- **CPP splits on free peptides / short parts (#338)**: ``aap.find_features`` and the
+- **CPP splits on free peptides / short parts (#338)**: ``ap.find_features`` and the
   ``Pattern`` / ``PeriodicPattern`` splits were unusable on free peptides with no flanking
   context (the linear-epitope case). ``find_features(search="fast")`` and its Stage-3
   simplify step ignored the requested / winning split configuration and always used the
@@ -553,8 +628,8 @@ v1.0.3 (2026-04-06)
 
 Added
 ~~~~~
-- :class:`~aaanalysis.AAlogo`: New class for amino acid logo visualization.
-- :class:`~aaanalysis.AAlogoPlot`: New plotting class for AAlogo visualizations.
+- :class:`~aaanalysis.AALogo`: New class for amino acid logo visualization.
+- :class:`~aaanalysis.AALogoPlot`: New plotting class for AALogo visualizations.
 
 Changed
 ~~~~~~~

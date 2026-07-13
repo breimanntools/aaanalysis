@@ -1,6 +1,7 @@
 """
 This script tests the heatmap() method.
 """
+import warnings
 import pandas as pd
 import matplotlib
 matplotlib.use("Agg")
@@ -87,6 +88,23 @@ def get_bar_facecolors(fig):
 
 def _rgba(color):
     return tuple(round(x, 3) for x in color)
+
+
+def _right_importance_bar(fig, hm):
+    """The narrow importance bar to the RIGHT of the heatmap, robust to figure size.
+
+    It is glued to the heatmap's right edge and shares its vertical extent (sharey), so
+    identify it by that y-extent match rather than an absolute height fraction -- the latter
+    changes as the constant-cell sizer resizes the figure. Returns the axes, or None."""
+    hp = hm.get_position()
+    for a in fig.get_axes():
+        if a is hm:
+            continue
+        p = a.get_position()
+        if (p.x0 >= hp.x1 - 0.02 and p.width < hp.width
+                and abs(p.y0 - hp.y0) < 0.02 and abs(p.height - hp.height) < 0.02):
+            return a
+    return None
 
 
 class TestCCPlotFeatureMap:
@@ -834,10 +852,8 @@ class TestCCPlotFeatureMapShap:
         fig.canvas.draw()
         ylabels = [t.get_text() for t in hm.get_yticklabels()]
         row = ylabels.index(target)
-        hm_x0 = hm.get_position().x0
-        bar_ax = next(a for a in fig.get_axes()
-                      if a is not hm and a.get_position().x0 > hm_x0 + 0.1
-                      and a.get_position().width < 0.2 and a.get_position().height > 0.4)
+        bar_ax = _right_importance_bar(fig, hm)
+        assert bar_ax is not None, "right importance bar not found"
         y_centers = {round(p.get_y() + p.get_height() / 2)
                      for p in bar_ax.patches if getattr(p, "get_width", lambda: 0)() > 0.01}
         assert y_centers == {row}, (y_centers, "expected only row", row)
@@ -858,10 +874,8 @@ class TestCCPlotFeatureMapShap:
         fig.canvas.draw()
         ylabels = [t.get_text() for t in hm.get_yticklabels()]
         expected_rows = {ylabels.index(t) for t in targets}
-        hm_x0 = hm.get_position().x0
-        bar_ax = next(a for a in fig.get_axes()
-                      if a is not hm and a.get_position().x0 > hm_x0 + 0.1
-                      and a.get_position().width < 0.2 and a.get_position().height > 0.4)
+        bar_ax = _right_importance_bar(fig, hm)
+        assert bar_ax is not None, "right importance bar not found"
         bar_rows = {round(p.get_y() + p.get_height() / 2)
                     for p in bar_ax.patches if getattr(p, "get_width", lambda: 0)() > 0.01}
         assert bar_rows == expected_rows, (sorted(bar_rows), "expected", sorted(expected_rows))
@@ -877,19 +891,16 @@ class TestCCPlotFeatureMapShap:
         fig, hm = cpp_plot.feature_map(df_feat=df_feat)
         fig.canvas.draw()
         renderer = fig.canvas.get_renderer()
-        hm_x0 = hm.get_position().x0
+        a = _right_importance_bar(fig, hm)  # narrow bar glued to the heatmap's right edge
+        assert a is not None, "right importance bar not found"
         checked = 0
-        for a in fig.axes:  # the right importance bar: narrow + tall, right of the heatmap
-            p = a.get_position()
-            if a is hm or p.x0 <= hm_x0 + 0.1 or p.width >= 0.2 or p.height <= 0.4:
-                continue
-            x_max = a.get_xlim()[1]
-            for t in a.texts:
-                if t.get_text().strip().endswith("%"):
-                    ext = t.get_window_extent(renderer)
-                    right = a.transData.inverted().transform((ext.x1, ext.y0))[0]
-                    assert right <= x_max + 1e-6, f"label spills right past the bar region: {right} > {x_max}"
-                    checked += 1
+        x_max = a.get_xlim()[1]
+        for t in a.texts:
+            if t.get_text().strip().endswith("%"):
+                ext = t.get_window_extent(renderer)
+                right = a.transData.inverted().transform((ext.x1, ext.y0))[0]
+                assert right <= x_max + 1e-6, f"label spills right past the bar region: {right} > {x_max}"
+                checked += 1
         assert checked, "no % importance-bar labels found"
         plt.close()
 
@@ -950,10 +961,8 @@ class TestCCPlotFeatureMapShap:
         fig, hm = cpp_plot.feature_map(df_feat=df_feat, shap_plot=True,
                                        col_val=COL_MEAN_DIF_TEST, col_imp=COL_FEAT_IMPACT_TEST)
         fig.canvas.draw()
-        hm_x0 = hm.get_position().x0
-        bar_ax = next(a for a in fig.get_axes()
-                      if a is not hm and a.get_position().x0 > hm_x0 + 0.1
-                      and a.get_position().width < 0.2 and a.get_position().height > 0.4)
+        bar_ax = _right_importance_bar(fig, hm)
+        assert bar_ax is not None, "right importance bar not found"
         code = {_rgba(SHAP_POS): "R", _rgba(SHAP_NEG): "B"}
         segs = sorted((p for p in bar_ax.patches
                        if _rgba(p.get_facecolor()) in code and p.get_width() > 0.01),
@@ -1072,7 +1081,10 @@ class TestFeatureMapSeqCharFill:
         fs += [t.get_fontsize() for t in ax.get_xticklabels()]
         return max(fs)
 
-    def test_fill_true_grows_font(self):
+    def test_fill_caps_font(self):
+        # fill=True caps the residue letters to the cell (proportional to the row labels), so the
+        # cells supply the gap-free band; fill=False keeps the larger non-overlapping glyph size.
+        # So fill BOUNDS the font rather than growing it.
         df_feat = aa.load_features(name="DOM_GSEC").head(40)
         cpp = aa.CPPPlot(df_scales=aa.load_scales())
         kws = self._seq_kws()
@@ -1080,11 +1092,10 @@ class TestFeatureMapSeqCharFill:
         off = self._max_seq_fs(ax_off); plt.close("all")
         _, ax_on = cpp.feature_map(df_feat=df_feat, add_imp_bar_top=False, seq_char_fill=True, **kws)
         on = self._max_seq_fs(ax_on); plt.close("all")
-        assert on >= off  # fill never shrinks; grows toward touching characters
+        assert on <= off + 0.5  # fill caps the letters; never larger than the no-fill glyph size
 
     def test_fill_default_is_true(self):
-        # Default is edge-to-edge fill (seq_char_fill=True): default matches fill=True,
-        # and is at least as large as the explicit no-fill spacing.
+        # Default follows auto_font (seq_char_fill=True): the default matches the explicit fill=True.
         df_feat = aa.load_features(name="DOM_GSEC").head(40)
         cpp = aa.CPPPlot(df_scales=aa.load_scales())
         kws = self._seq_kws()
@@ -1092,9 +1103,7 @@ class TestFeatureMapSeqCharFill:
         def_fs = self._max_seq_fs(ax_def); plt.close("all")
         _, ax_on = cpp.feature_map(df_feat=df_feat, add_imp_bar_top=False, seq_char_fill=True, **kws)
         on_fs = self._max_seq_fs(ax_on); plt.close("all")
-        _, ax_off = cpp.feature_map(df_feat=df_feat, add_imp_bar_top=False, seq_char_fill=False, **kws)
-        off_fs = self._max_seq_fs(ax_off); plt.close("all")
-        assert def_fs == on_fs and def_fs >= off_fs
+        assert def_fs == on_fs
 
     def test_fill_draws_seamless_full_width_cells(self):
         # seq_char_fill=True paints one full-width (1.0 data unit) colored cell per residue
@@ -1122,8 +1131,97 @@ class TestFeatureMapSeqCharFill:
         plt.close("all")
         assert len(cells_off) == 0                          # fill=False keeps the legacy glyph bbox
 
+    def test_fill_cell_gap_below_heatmap_matches_sidebar(self):
+        # The colored sequence band sits a small constant gap below the heatmap (not flush), and
+        # that gap equals the category-sidebar gap so both read the same distance from the grid.
+        from aaanalysis.feature_engineering._backend.cpp._utils_cpp_plot_positions import (
+            _SEQ_HEATMAP_GAP_CELLS)
+        from aaanalysis.feature_engineering._backend.cpp._utils_cpp_plot_map import (
+            _SUBCAT_BAR_GAP_CELLS)
+        df_feat = aa.load_features(name="DOM_GSEC").head(40)
+        cpp = aa.CPPPlot(df_scales=aa.load_scales())
+        _, ax = cpp.feature_map(df_feat=df_feat, add_imp_bar_top=False, seq_char_fill=True, **self._seq_kws())
+        ax.figure.canvas.draw()
+        cells = [p for p in ax.patches if p.get_gid() == "_seq_cell"]
+        edge = max(ax.get_ylim())                    # heatmap bottom border (largest y, inverted axis)
+        top = min(p.get_y() for p in cells)          # cell edge nearest the grid
+        gap = abs(top - edge)
+        plt.close("all")
+        assert abs(gap - _SEQ_HEATMAP_GAP_CELLS) < 0.02, gap           # gapped below the grid, not flush
+        assert abs(_SEQ_HEATMAP_GAP_CELLS - _SUBCAT_BAR_GAP_CELLS) < 0.02  # equals the sidebar gap
+
     def test_fill_bad_type_raises(self):
         df_feat = aa.load_features(name="DOM_GSEC").head(40)
         cpp = aa.CPPPlot(df_scales=aa.load_scales())
         with pytest.raises(ValueError):
             cpp.feature_map(df_feat=df_feat, seq_char_fill="yes", **self._seq_kws())
+
+
+class TestFeatureMapImportanceCorner:
+    """Corner behavior of the top per-position cumulative-importance/impact strip."""
+
+    def setup_method(self):
+        aa.options["verbose"] = False
+
+    def teardown_method(self):
+        plt.close("all")
+
+    @staticmethod
+    def _top_bars_ax(fig):
+        # ax_bt: the thin strip above the heatmap -> highest y0 among axes carrying bar patches.
+        return max((a for a in fig.axes if a.patches), key=lambda a: a.get_position().y0)
+
+    @staticmethod
+    def _right_bars_ax(fig):
+        # ax_br: the per-subcategory strip to the right -> highest x0 among axes carrying bar patches.
+        return max((a for a in fig.axes if a.patches), key=lambda a: a.get_position().x0)
+
+    def _shap_df(self, scale):
+        df_feat = get_df_feat_shap(n=10)
+        signs = [1 if i % 2 == 0 else -1 for i in range(len(df_feat))]
+        df_feat[COL_FEAT_IMPACT_TEST] = [s * scale * (1 + i) for i, s in enumerate(signs)]
+        return df_feat
+
+    def test_shap_short_strip_label_at_real_top(self):
+        # SHAP impact: the top strip's y-axis top is a raw fractional max. On a short strip the corner
+        # number must be that fractional value AT the strip top -- not ceil'd to an integer floating
+        # above it (the pre-fix bug labelled 0.936 as "1" placed at data-y=1).
+        fig, _ = aa.CPPPlot().feature_map(df_feat=self._shap_df(0.05), shap_plot=True,
+                                          col_imp=COL_FEAT_IMPACT_TEST, col_val=COL_MEAN_DIF_TEST,
+                                          add_imp_bar_top=True)
+        ax_bt = self._top_bars_ax(fig)
+        y_top = float(ax_bt.get_ylim()[1])
+        assert 0 < y_top <= 2.5                                  # short branch is exercised
+        ticks = list(ax_bt.get_yticks())
+        assert len(ticks) == 1 and abs(ticks[0] - y_top) < 1e-6  # tick sits AT the real top, not ceil
+        texts = [t.get_text().strip() for t in ax_bt.texts]
+        assert f"{y_top:.1f}" in texts                           # label is the fractional max
+
+    def test_shap_subcat_scale_tick_present_on_short_strip(self):
+        # SHAP right bars carry no on-bar value labels, so the per-subcategory importance axis tick
+        # (the only scale reference) must stay even on a short strip where importance would drop it.
+        fig, _ = aa.CPPPlot().feature_map(df_feat=self._shap_df(0.05), shap_plot=True,
+                                          col_imp=COL_FEAT_IMPACT_TEST, col_val=COL_MEAN_DIF_TEST,
+                                          add_imp_bar_top=True)
+        assert len(self._right_bars_ax(fig).get_xticks()) > 0
+
+    def test_importance_corner_integer_at_top(self):
+        # Plain importance: axis top is a whole-percent integer and the corner label is that integer.
+        fig, _ = aa.CPPPlot().feature_map(df_feat=get_df_feat(n=10), add_imp_bar_top=True)
+        ax_bt = self._top_bars_ax(fig)
+        y_top = float(ax_bt.get_ylim()[1])
+        ticks = list(ax_bt.get_yticks())
+        assert len(ticks) == 1 and abs(ticks[0] - y_top) < 1e-6
+        texts = [t.get_text().strip() for t in ax_bt.texts]
+        assert (not texts) or f"{int(round(y_top))}" in texts
+
+    def test_all_zero_importance_no_degenerate_axis(self):
+        # Every importance (near) zero must not collapse the top strip to set_ylim(0, 0) (a matplotlib
+        # "identical low and high ylims" warning + silent autoscale); the axis floors at 1.
+        df_feat = get_df_feat(n=10)
+        df_feat[COL_FEAT_IMPORTANCE_TEST] = [0] * len(df_feat)
+        with warnings.catch_warnings(record=True) as caught:
+            warnings.simplefilter("always")
+            aa.CPPPlot().feature_map(df_feat=df_feat, col_imp=COL_FEAT_IMPORTANCE_TEST,
+                                     add_imp_bar_top=True)
+        assert not [w for w in caught if "identical low and high" in str(w.message)]

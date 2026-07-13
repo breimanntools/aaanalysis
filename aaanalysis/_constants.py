@@ -464,15 +464,17 @@ COLS_EVAL_DPULEARN = [COL_N_REL_NEG] + COLS_EVAL_DPULEARN_SIMILARITY + COLS_EVAL
 # AAPred (model evaluation / deployment)
 COL_MODEL = "model"             # model class short name (e.g. 'RandomForestClassifier')
 COL_METRIC = "metric"           # performance metric name (e.g. 'balanced_accuracy')
-COL_PRINCIPLE = "principle"     # evaluation principle: 'cv' (cross-validation) | 'holdout'
-COL_SCORE_STD = "score_std"     # std of the score (across CV folds; NaN for a single holdout estimate)
+COL_PRINCIPLE = "principle"     # evaluation principle: 'cv' | 'cv_pooled' | 'holdout'
+COL_SCORE_STD = "score_std"     # std of the score (across CV folds; NaN for a single holdout/pooled estimate)
 COL_GROUP = "group"             # per-sample/per-protein group label used for coloring
 COL_OFFSET = "offset"           # AAPred.predict(level='domain') — boundary shift applied to tmd_start/tmd_stop
 COL_RESIDUE_POS = "position"    # AAPred.predict(level='window') — 1-based anchor position scored
 COL_PRED_LABEL = "predicted_label"  # AAPred.predict — class label when a threshold is given
-STR_PRINCIPLE_CV = "cv"
+STR_PRINCIPLE_CV = "cv"                  # k-fold cross-validation, scored per fold then averaged (mean, std)
+STR_PRINCIPLE_CV_POOLED = "cv_pooled"    # custom-splitter cross-validation, each metric scored once on the
+                                         # pooled out-of-fold predictions (std is NaN: a single estimate)
 STR_PRINCIPLE_HOLDOUT = "holdout"
-LIST_PRINCIPLES = [STR_PRINCIPLE_CV, STR_PRINCIPLE_HOLDOUT]
+LIST_PRINCIPLES = [STR_PRINCIPLE_CV, STR_PRINCIPLE_CV_POOLED, STR_PRINCIPLE_HOLDOUT]
 LIST_METRICS_PRED = ["accuracy", "balanced_accuracy", "precision", "recall", "f1", "roc_auc"]
 COLS_EVAL_PRED = [COL_MODEL, COL_METRIC, COL_PRINCIPLE, COL_SCORE, COL_SCORE_STD]
 

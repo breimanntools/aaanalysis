@@ -71,3 +71,27 @@ def predict_proba_models(X, list_models=None, label_pos=1):
     pred = probas.mean(axis=0)
     pred_std = probas.std(axis=0) if len(list_models) > 1 else np.zeros(len(pred))
     return pred, pred_std
+
+
+def predict_proba_oof(X, labels, list_estimators=None, n_cv=5, random_state=None, label_pos=1):
+    """Out-of-fold positive-class probability per sample, averaged across the model ensemble.
+
+    Every configured estimator is scored by stratified k-fold ``cross_val_predict`` (each
+    sample is scored by a model fit on the folds that exclude it), giving honest, in-sample-free
+    scores for the training set. The per-model out-of-fold probability columns are stacked and
+    reduced to a per-sample mean and a std across models — the same aggregation shape as
+    :func:`predict_proba_models`, so the output matches the deployment ``predict`` path.
+
+    The positive-class column is selected from the sorted class order that ``cross_val_predict``
+    returns; ``label_pos`` names which class is positive. Std is 0 for a single estimator.
+    """
+    from sklearn.base import clone
+    from sklearn.model_selection import StratifiedKFold, cross_val_predict
+    cv = StratifiedKFold(n_splits=n_cv, shuffle=True, random_state=random_state)
+    idx_pos = sorted(np.unique(labels).tolist()).index(label_pos)
+    probas = np.vstack([cross_val_predict(clone(estimator), X, labels, cv=cv,
+                                          method="predict_proba")[:, idx_pos]
+                        for estimator in list_estimators])
+    pred = probas.mean(axis=0)
+    pred_std = probas.std(axis=0) if len(list_estimators) > 1 else np.zeros(len(pred))
+    return pred, pred_std

@@ -1,5 +1,5 @@
 """
-This is a script for the frontend of the ``aaanalysis.pipe`` (aap) ``plot_eval`` helper: it turns a
+This is a script for the frontend of the ``aaanalysis.pipe`` (ap) ``plot_eval`` helper: it turns a
 :func:`aaanalysis.pipe.find_features` sweep table into a set of **publication-ready** evaluation
 figures. The high-dimensional Part x Split x Scale grid is decomposed into a series of clean 2D
 ``viridis`` heatmaps — the two most-informative axes on each panel, the least-informative axis as the
@@ -294,7 +294,7 @@ def plot_eval(df_eval: pd.DataFrame,
 
     Examples
     --------
-    .. include:: examples/aap_plot_eval.rst
+    .. include:: examples/ap_plot_eval.rst
     """
     # Validate
     if not isinstance(df_eval, pd.DataFrame):

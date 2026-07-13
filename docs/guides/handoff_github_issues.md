@@ -12,7 +12,7 @@ protein prediction; `pro` extra for heavy deps; semver-strict v1) and the standa
 > `AAPred`/`AAPredPlot` (#344), `ReliabilityModel` (#358), `dPULearn.project` (#357/#352 ✅),
 > CPP `bootstrap` stability (#371/#368 ✅), CPP `redundancy="exact"` (#351) + the three #343
 > defects (#351/#353/#356), `auto_font` consistency (#378/#219 ✅), composition featurizers
-> (#360), and the `aap` pipe verbs (`find_features`/`predict_samples`/`explain_features`/
+> (#360), and the `ap` pipe verbs (`find_features`/`predict_samples`/`explain_features`/
 > `plot_eval`/`obtain_samples`). Old "in progress" spine items (#132/#133/#134/#241-partial)
 > are superseded below.
 >
@@ -101,7 +101,7 @@ issues were assigned; #342/#288 closed instead). The assignments applied:
 | 345 | param-coverage burn-down | **v1.1** | docs debt gating the v1.1 quality bar |
 | 226 | swap data-flow infogram | **v1.1** | docs onramp (blocked-by #227) |
 | 227 | data-flow infogram artwork | **v1.1** | blocks #226 |
-| 241 | `aaanalysis.pipe` (aap) | **v1.2** | facade mostly shipped; transformer tail |
+| 241 | `aaanalysis.pipe` (ap) | **v1.2** | facade mostly shipped; transformer tail |
 | 261 | SeqOpt optimizer | **v1.2** | groups with #37/#59/#60 design lane |
 | 263 | GPU CPP backend | **v1.5** | opt-in perf, long-horizon |
 | 265 | symbolic-regression surrogate | **v2.X** | research/XAI, heavy-dep |

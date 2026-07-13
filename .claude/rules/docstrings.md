@@ -39,8 +39,8 @@ traps to keep front-of-mind on touch:
   **Class abbreviations** section of `docstring_guide.rst`; enforced across
   examples + tutorials + protocols by
   `tests/unit/api_tests/test_class_abbreviation_registry.py`. Highlights:
-  `ShapModel`→`sm`, `SeqMut`→`seqmut`, `AAWindowSampler`→`aaws`, `AAMut`→`aamut`,
-  `CPPGrid`→`cppg`, `AAlogo`→`aal`; plot pair = `<base>_plot`.
+  `ShapModel`→`sm`, `SeqMut`→`seqm`, `AAWindowSampler`→`aaws`, `AAMut`→`aam`,
+  `CPPGrid`→`cppg`, `AALogo`→`aal`; plot pair = `<base>_plot`.
 - **Instance = the bare abbr, always.** `cpp = aa.CPP(...)`, never `cpp_res`/
   `cpp_dom`; reassign the bare name per iteration and let *outputs* carry the
   qualifier (`df_feat_res`). A `<abbr>_<qualifier>` instance name is allowed only

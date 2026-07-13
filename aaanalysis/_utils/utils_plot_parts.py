@@ -23,9 +23,15 @@ def _get_y(ax=None, bar_height=None, height_factor=1.0, reversed_weight=0):
     return y
 
 
-def _add_part_bar(ax=None, start=1.0, len_part=40.0, color="blue", bar_height_factor=1):
-    """Add colored bar for TMD and JMD sequence parts."""
-    bar_height = _get_bar_height(ax=ax) * bar_height_factor
+def _add_part_bar(ax=None, start=1.0, len_part=40.0, color="blue", bar_height_factor=1, bar_height=None):
+    """Add colored bar for TMD and JMD sequence parts.
+
+    ``bar_height`` (in y-data units, i.e. grid rows) pins the bar to a constant thickness independent
+    of the figure size — the ``divider``-based default scales with the figure. On a constant-cell grid
+    a fixed row count renders at a constant physical height, matching the subcategory cells.
+    """
+    if bar_height is None:
+        bar_height = _get_bar_height(ax=ax) * bar_height_factor
     y = _get_y(ax=ax, bar_height=bar_height)
     bar = mpl.patches.Rectangle((start, y), width=len_part, height=bar_height, linewidth=0,
                                 color=color, zorder=3, clip_on=False)
@@ -33,9 +39,10 @@ def _add_part_bar(ax=None, start=1.0, len_part=40.0, color="blue", bar_height_fa
 
 
 def _add_part_text(ax=None, text=None, start=1.0, len_part=10.0, fontsize=None,
-                   fontweight="normal", height_factor=1.3):
+                   fontweight="normal", height_factor=1.3, bar_height=None):
     """Place text marking for TMD and JMD sequence parts."""
-    bar_height = _get_bar_height(ax=ax)
+    if bar_height is None:
+        bar_height = _get_bar_height(ax=ax)
     y = _get_y(ax=ax, bar_height=bar_height, height_factor=height_factor, reversed_weight=-1)
     x = start + len_part / 2    # Middle of part
     ax.text(x, y, text,
@@ -77,27 +84,29 @@ class PlotPart:
 
 # II Main functions
 def add_tmd_jmd_bar(ax=None, x_shift=0, jmd_color="blue", tmd_color="mediumspringgreen",
-                    bar_height_factor=1,
+                    bar_height_factor=1, bar_height=None,
                     tmd_len=20, jmd_n_len=10, jmd_c_len=10, start=1):
     """Add colored bars to indicate TMD and JMD regions."""
     pp = PlotPart(tmd_len=tmd_len, jmd_n_len=jmd_n_len, jmd_c_len=jmd_c_len, start=start)
     jmd_n_start, tmd_start, jmd_c_start = pp.get_starts(x_shift=x_shift)
-    _add_part_bar(ax=ax, start=jmd_n_start, len_part=jmd_n_len, color=jmd_color, bar_height_factor=bar_height_factor)
-    _add_part_bar(ax=ax, start=tmd_start, len_part=tmd_len, color=tmd_color, bar_height_factor=bar_height_factor)
-    _add_part_bar(ax=ax, start=jmd_c_start, len_part=jmd_c_len, color=jmd_color, bar_height_factor=bar_height_factor)
+    args = dict(bar_height_factor=bar_height_factor, bar_height=bar_height)
+    _add_part_bar(ax=ax, start=jmd_n_start, len_part=jmd_n_len, color=jmd_color, **args)
+    _add_part_bar(ax=ax, start=tmd_start, len_part=tmd_len, color=tmd_color, **args)
+    _add_part_bar(ax=ax, start=jmd_c_start, len_part=jmd_c_len, color=jmd_color, **args)
 
 
 def add_tmd_jmd_text(ax=None, x_shift=0, fontsize_tmd_jmd=None, weight_tmd_jmd="normal",
                      name_tmd="TMD", name_jmd_n="JMD-N", name_jmd_c="JMD-C",
                      tmd_len=20, jmd_n_len=10, jmd_c_len=10, start=1,
-                     height_factor=1.3):
+                     height_factor=1.3, bar_height=None):
     """Add text labels for TMD and JMD regions."""
     pp = PlotPart(tmd_len=tmd_len, jmd_n_len=jmd_n_len, jmd_c_len=jmd_c_len, start=start)
     jmd_n_start, tmd_start, jmd_c_start = pp.get_starts(x_shift=x_shift)
     exists_jmd_n = jmd_n_len > 0
     exists_jmd_c = jmd_c_len > 0
     if fontsize_tmd_jmd is None or fontsize_tmd_jmd > 0:
-        args = dict(ax=ax, fontsize=fontsize_tmd_jmd, fontweight=weight_tmd_jmd, height_factor=height_factor)
+        args = dict(ax=ax, fontsize=fontsize_tmd_jmd, fontweight=weight_tmd_jmd,
+                    height_factor=height_factor, bar_height=bar_height)
         _add_part_text(start=tmd_start, len_part=tmd_len, text=name_tmd, **args)
         if exists_jmd_n:
             _add_part_text(start=jmd_n_start, text=name_jmd_n, len_part=jmd_n_len, **args)

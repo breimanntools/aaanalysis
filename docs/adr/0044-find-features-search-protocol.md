@@ -4,7 +4,7 @@ Status: Accepted — 2026-06-24
 
 ## Context
 
-ADR-0041 D3 defined `aap.find_features` as a CPPGrid sweep selected by a single model
+ADR-0041 D3 defined `ap.find_features` as a CPPGrid sweep selected by a single model
 cross-validation. The shipped v1 (PR #258) realised that as "CV-score every cell of the
 Part × Split × Scale × `n_filter` grid, then pick the simplest config within 1 % of the best
 balanced-accuracy". That works but has three limits: (1) it CV-scores the **full** grid, which
@@ -54,7 +54,7 @@ deprecation cycle.
 - **D7 — Enriched `df_eval` contract.** One `mean`/`std` column **per metric**, plus `stage`,
   `is_pareto` (Pareto-optimal within its stage), `rank`, and `is_selected` (the single winner).
 
-- **D8 — Publication eval figures via `ax.eval`.** `plot_eval` (refines #251's `aap.plot_eval`)
+- **D8 — Publication eval figures via `ax.eval`.** `plot_eval` (refines #251's `ap.plot_eval`)
   **decomposes** the structural sweep into a set of **separate** publication-ready figures: the two
   most-informative axes (largest marginal-mean impact) form each 2D `viridis` heatmap, the
   least-informative axis is the slice (one figure per level), all sharing one color scale with the

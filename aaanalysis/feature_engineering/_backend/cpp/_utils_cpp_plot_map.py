@@ -14,6 +14,20 @@ from ._utils_cpp_plot_positions import PlotPartPositions
 
 WIDTH_NORM_FACTOR = 110
 
+# Category sidebar geometry, in grid-cell (column) units, matched to the cheat-sheet reference so it
+# reads the same at any figure size. The gap between the sidebar and the heatmap equals the gap
+# between the sequence band and the heatmap (see _SEQ_HEATMAP_GAP_CELLS in _utils_cpp_plot_positions).
+_SUBCAT_BAR_WIDTH_CELLS = 0.38
+_SUBCAT_BAR_GAP_CELLS = 0.22
+
+# When no sequence is supplied the TMD/JMD region is drawn as a plain colored bar (no residue
+# letters). Pin its thickness to a CONSTANT number of grid cell-heights (y-data units, i.e. rows)
+# rather than the figure-scaling default, so it renders at a constant physical height on the
+# constant-cell grid -- matching the subcategory cells and the cheat-sheet reference at any figure
+# size. The part labels sit a fixed cell-gap below the bar.
+_NO_SEQ_BAR_CELLS = 0.6
+_NO_SEQ_LABEL_GAP_CELLS = 0.35
+
 
 # I Helper Functions
 def _get_value_type(col_val="abs_auc"):
@@ -59,11 +73,13 @@ def _get_vmin_vmax(df_pos=None, vmin=None, vmax=None):
 
 
 def _get_bar_width(fig=None, len_seq=None):
-    """Get consistent bar width to for category bars"""
-    width, height = fig.get_size_inches()
-    width_factor = 1 / width * 8
-    bar_width = len_seq / WIDTH_NORM_FACTOR * width_factor
-    return bar_width
+    """Category-sidebar bar width in DATA (column) units.
+
+    A constant number of columns wide, so its physical width scales with the grid cell size (not
+    with the figure): the previous figure-relative width collapsed to a hairline once the constant-
+    cell sizer shrank/widened the figure. 0.38 columns matches the cheat-sheet reference strip.
+    """
+    return _SUBCAT_BAR_WIDTH_CELLS
 
 
 # Get colormap
@@ -250,9 +266,11 @@ def plot_heatmap_(df_feat=None, df_cat=None,
                                 x_shift=0.5, xtick_size=xtick_size, fill=fill)
     # Add tmd_jmd bar
     else:
-        pp.add_tmd_jmd_bar(ax=ax, **args_part_color)
+        pp.add_tmd_jmd_bar(ax=ax, bar_height=_NO_SEQ_BAR_CELLS, **args_part_color)
         pp.add_tmd_jmd_xticks(ax=ax, x_shift=0.5, **args_xtick)
-        pp.add_tmd_jmd_text(ax=ax, x_shift=0,
+        # Place the labels a constant cell-gap below the constant-height bar.
+        pp.add_tmd_jmd_text(ax=ax, x_shift=0, bar_height=_NO_SEQ_BAR_CELLS,
+                            height_factor=1.0 + _NO_SEQ_LABEL_GAP_CELLS / _NO_SEQ_BAR_CELLS,
                             fontsize_tmd_jmd=fontsize_tmd_jmd,
                             weight_tmd_jmd=weight_tmd_jmd)
 
@@ -260,8 +278,8 @@ def plot_heatmap_(df_feat=None, df_cat=None,
     bar_width = _get_bar_width(fig=fig, len_seq=jmd_n_len+tmd_len+jmd_c_len)
     pe.add_subcat_bars(ax=ax, df_pos=df_pos, df_feat=df_feat,
                        col_cat=col_cat, dict_color=dict_color,
-                       bar_width=bar_width, bar_spacing=bar_width*0.75,
-                       optimize_labels=optimize_labels)
+                       bar_width=bar_width, bar_spacing=_SUBCAT_BAR_GAP_CELLS,
+                       optimize_labels=optimize_labels, fontsize_labels=fontsize_labels)
 
     # Add scale legend
     ut.plot_legend_(ax=ax, dict_color=dict_color, **legend_kws)

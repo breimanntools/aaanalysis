@@ -1,4 +1,4 @@
-"""Branch-coverage tests for AAlogo / AAlogoPlot, exercised ONLY through the public API.
+"""Branch-coverage tests for AALogo / AALogoPlot, exercised ONLY through the public API.
 
 Targets the under-covered guard / branch arms in:
 * seq_analysis/_aalogo.py (no-required-part raise),
@@ -27,11 +27,11 @@ def _df_parts(n=12):
 
 
 def _df_logo(n=12, logo_type="probability"):
-    return aa.AAlogo(logo_type=logo_type).get_df_logo(df_parts=_df_parts(n=n))
+    return aa.AALogo(logo_type=logo_type).get_df_logo(df_parts=_df_parts(n=n))
 
 
 def _df_logo_info(n=12):
-    return aa.AAlogo().get_df_logo_info(df_parts=_df_parts(n=n))
+    return aa.AALogo().get_df_logo_info(df_parts=_df_parts(n=n))
 
 
 class TestGetDfLogoNoRequiredPart:
@@ -42,7 +42,7 @@ class TestGetDfLogoNoRequiredPart:
         # COLS_SEQ_PARTS, so check_match_df_parts_logo_parts must raise.
         df_parts = pd.DataFrame({"tmd_n": ["ACDEF", "GHIKL", "MNPQR"]})
         with pytest.raises(ValueError, match="at least one"):
-            aa.AAlogo().get_df_logo(df_parts=df_parts)
+            aa.AALogo().get_df_logo(df_parts=df_parts)
 
 
 class TestGetDfLogoNoTmdEarlyReturn:
@@ -52,7 +52,7 @@ class TestGetDfLogoNoTmdEarlyReturn:
         sf = aa.SequenceFeature()
         df_parts = sf.get_df_parts(df_seq=_df_seq(), list_parts=["jmd_n", "jmd_c"])
         assert "tmd" not in df_parts.columns
-        df_logo = aa.AAlogo().get_df_logo(df_parts=df_parts)
+        df_logo = aa.AALogo().get_df_logo(df_parts=df_parts)
         assert isinstance(df_logo, pd.DataFrame)
         assert len(df_logo) > 0
 
@@ -64,7 +64,7 @@ class TestSingleLogoPartsLenRaise:
         df_logo = _df_logo()
         # JMD lengths sum to >= logo length, so derived tmd_len < 1.
         big = len(df_logo)
-        aal_plot = aa.AAlogoPlot(jmd_n_len=big, jmd_c_len=big, verbose=False)
+        aal_plot = aa.AALogoPlot(jmd_n_len=big, jmd_c_len=big, verbose=False)
         with pytest.raises(ValueError, match="logo length"):
             aal_plot.single_logo(df_logo=df_logo)
 
@@ -74,7 +74,7 @@ class TestSingleLogoVerbose:
 
     def test_verbose_single_logo_prints(self, capfd):
         df_logo = _df_logo()
-        aal_plot = aa.AAlogoPlot(verbose=True)
+        aal_plot = aa.AALogoPlot(verbose=True)
         fig, _ = aal_plot.single_logo(df_logo=df_logo)
         out = capfd.readouterr().out
         assert "single logo" in out.lower()
@@ -86,7 +86,7 @@ class TestSingleLogoPSites:
 
     def test_target_p1_site_single(self):
         df_logo = _df_logo()
-        aal_plot = aa.AAlogoPlot(verbose=False)
+        aal_plot = aa.AALogoPlot(verbose=False)
         fig, _ = aal_plot.single_logo(df_logo=df_logo, target_p1_site=5)
         assert isinstance(fig, plt.Figure)
         plt.close("all")
@@ -97,7 +97,7 @@ class TestSingleLogoNameDataLeft:
 
     def test_name_data_left(self):
         df_logo = _df_logo()
-        aal_plot = aa.AAlogoPlot(verbose=False)
+        aal_plot = aa.AALogoPlot(verbose=False)
         fig, _ = aal_plot.single_logo(df_logo=df_logo, name_data="GSEC",
                                       name_data_pos="left")
         assert isinstance(fig, plt.Figure)
@@ -110,7 +110,7 @@ class TestSingleLogoBitScoreBar:
     def test_with_df_logo_info(self):
         df_logo = _df_logo()
         df_logo_info = _df_logo_info()
-        aal_plot = aa.AAlogoPlot(verbose=False)
+        aal_plot = aa.AALogoPlot(verbose=False)
         fig, axes = aal_plot.single_logo(df_logo=df_logo, df_logo_info=df_logo_info)
         # df_logo_info present -> a (ax_logo, ax_info) tuple is returned.
         assert isinstance(axes, tuple) and len(axes) == 2
@@ -122,7 +122,7 @@ class TestMultiLogoVerbose:
 
     def test_verbose_multi_logo_prints(self, capfd):
         df_logo = _df_logo()
-        aal_plot = aa.AAlogoPlot(verbose=True)
+        aal_plot = aa.AALogoPlot(verbose=True)
         fig, _ = aal_plot.multi_logo(list_df_logo=[df_logo, df_logo])
         out = capfd.readouterr().out
         assert "logos" in out.lower()
@@ -136,7 +136,7 @@ class TestMultiLogoProbabilityScaling:
         # Probability logos sum to 1 per position -> y_max <= 1 -> the *100 scaling
         # arm (167/179) and the percentage yticks arm (187) all fire.
         df_logo = _df_logo(logo_type="probability")
-        aal_plot = aa.AAlogoPlot(logo_type="probability", verbose=False)
+        aal_plot = aa.AALogoPlot(logo_type="probability", verbose=False)
         fig, axes = aal_plot.multi_logo(list_df_logo=[df_logo, df_logo])
         assert len(axes) == 2
         plt.close("all")
@@ -147,7 +147,7 @@ class TestMultiLogoPSites:
 
     def test_target_p1_site_multi(self):
         df_logo = _df_logo()
-        aal_plot = aa.AAlogoPlot(verbose=False)
+        aal_plot = aa.AALogoPlot(verbose=False)
         fig, axes = aal_plot.multi_logo(list_df_logo=[df_logo, df_logo],
                                         target_p1_site=5)
         assert len(axes) == 2

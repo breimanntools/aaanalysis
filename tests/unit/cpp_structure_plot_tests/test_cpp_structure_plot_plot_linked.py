@@ -92,9 +92,9 @@ class TestPlotLinked:
 
     def test_unique_view_ids_across_calls(self, pdb_path, df_feat):
         # Two views on one page must not share DOM ids (else hover binds to the wrong panel).
-        csp = _csp()
-        h1 = csp.plot_linked(df_feat=df_feat, pdb=pdb_path, tmd_len=10, col_imp="feat_impact")._repr_html_()
-        h2 = csp.plot_linked(df_feat=df_feat, pdb=pdb_path, tmd_len=10, col_imp="feat_impact")._repr_html_()
+        cpps_plot = _csp()
+        h1 = cpps_plot.plot_linked(df_feat=df_feat, pdb=pdb_path, tmd_len=10, col_imp="feat_impact")._repr_html_()
+        h2 = cpps_plot.plot_linked(df_feat=df_feat, pdb=pdb_path, tmd_len=10, col_imp="feat_impact")._repr_html_()
         ids1 = set(re.findall(r'id="(cppstruct_view_\w+)"', h1))
         ids2 = set(re.findall(r'id="(cppstruct_view_\w+)"', h2))
         assert ids1 and ids2 and ids1.isdisjoint(ids2)
@@ -214,8 +214,8 @@ class TestPlotLinkedComplex:
         assert isinstance(view, LinkedView)
 
     def test_missing_py3dmol_raises_friendly(self, pdb_path, df_feat, monkeypatch):
-        from aaanalysis.feature_engineering_pro import _cpp_structure_plot as csp_mod
-        monkeypatch.setattr(csp_mod, "py3dmol_available", lambda: False)
+        from aaanalysis.feature_engineering_pro import _cpp_structure_plot as cpps_plot_mod
+        monkeypatch.setattr(cpps_plot_mod, "py3dmol_available", lambda: False)
         with pytest.raises(RuntimeError, match="py3Dmol"):
             _csp().plot_linked(df_feat=df_feat, pdb=pdb_path, tmd_len=10, col_imp="feat_impact")
 

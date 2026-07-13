@@ -1,5 +1,5 @@
 """
-This is a script to test the AAlogoPlot.multi_logo method.
+This is a script to test the AALogoPlot.multi_logo method.
 """
 import pytest
 import numpy as np
@@ -25,7 +25,7 @@ def get_df_logo(n=50, logo_type="probability", label_test=1):
     df_seq = aa.load_dataset(name="DOM_GSEC", n=n)
     labels = df_seq["label"].values
     df_parts = sf.get_df_parts(df_seq=df_seq)
-    return aa.AAlogo(logo_type=logo_type).get_df_logo(
+    return aa.AALogo(logo_type=logo_type).get_df_logo(
         df_parts=df_parts, labels=labels, label_test=label_test)
 
 
@@ -35,8 +35,8 @@ def get_list_df_logo(n=50, logo_type="probability"):
 
 
 def get_aal_plot(jmd_n_len=10, jmd_c_len=10, logo_type="probability"):
-    """Create default AAlogoPlot instance."""
-    return aa.AAlogoPlot(logo_type=logo_type, jmd_n_len=jmd_n_len, jmd_c_len=jmd_c_len)
+    """Create default AALogoPlot instance."""
+    return aa.AALogoPlot(logo_type=logo_type, jmd_n_len=jmd_n_len, jmd_c_len=jmd_c_len)
 
 
 # ===========================================================================
@@ -425,7 +425,7 @@ class TestMultiLogoPartsLen:
         """Test that jmd_n_len + jmd_c_len < len(df_logo) passes."""
         list_df_logo = get_list_df_logo()   # each len = 40
         for jmd_n, jmd_c in [(10, 10), (0, 0), (5, 5)]:
-            aal_plot = aa.AAlogoPlot(jmd_n_len=jmd_n, jmd_c_len=jmd_c)
+            aal_plot = aa.AALogoPlot(jmd_n_len=jmd_n, jmd_c_len=jmd_c)
             fig, axes = aal_plot.multi_logo(list_df_logo=list_df_logo)
             assert isinstance(fig, plt.Figure)
             plt.close("all")
@@ -442,7 +442,7 @@ def get_df_parts_labels(n=50):
 
 
 # ===========================================================================
-# XII Test multi_logo: list_aal_kws (internal AAlogo shortcut)
+# XII Test multi_logo: list_aal_kws (internal AALogo shortcut)
 # ===========================================================================
 class TestMultiLogoListAalKws:
     """Test multi_logo 'list_aal_kws' convenience parameter."""
@@ -463,7 +463,7 @@ class TestMultiLogoListAalKws:
         df_parts, labels = get_df_parts_labels()
         list_aal_kws = [dict(df_parts=df_parts, labels=labels, label_test=lt)
                         for lt in [1, 0]]
-        list_df_logo = [aa.AAlogo().get_df_logo(**kws) for kws in list_aal_kws]
+        list_df_logo = [aa.AALogo().get_df_logo(**kws) for kws in list_aal_kws]
         fig_a, axes_a = get_aal_plot().multi_logo(list_df_logo=list_df_logo)
         fig_b, axes_b = get_aal_plot().multi_logo(list_aal_kws=list_aal_kws)
         assert isinstance(fig_a, plt.Figure) and isinstance(fig_b, plt.Figure)
@@ -538,7 +538,7 @@ class TestMultiLogoListAalKws:
 def get_list_df_logo_and_info(n=50, logo_type="information"):
     """Build matching [df_logo, df_logo] and [df_logo_info, df_logo_info] from DOM_GSEC."""
     df_parts, labels = get_df_parts_labels(n=n)
-    aal = aa.AAlogo(logo_type=logo_type)
+    aal = aa.AALogo(logo_type=logo_type)
     kws = [dict(df_parts=df_parts, labels=labels, label_test=lt) for lt in [1, 0]]
     list_df_logo = [aal.get_df_logo(**k) for k in kws]
     list_df_logo_info = [aal.get_df_logo_info(**k) for k in kws]

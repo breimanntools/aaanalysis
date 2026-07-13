@@ -173,7 +173,7 @@ class SequencePreprocessor:
 
         Examples
         --------
-        .. include:: examples/sp_encode_one_hot.rst
+        .. include:: examples/seqp_encode_one_hot.rst
         """
         # Check input
         list_seq = ut.check_list_like(name="list_seq", val=list_seq,
@@ -226,7 +226,7 @@ class SequencePreprocessor:
 
         Examples
         --------
-        .. include:: examples/sp_encode_integer.rst
+        .. include:: examples/seqp_encode_integer.rst
         """
         # Check input
         list_seq = ut.check_list_like(name="list_seq", val=list_seq,
@@ -306,7 +306,7 @@ class SequencePreprocessor:
 
         Examples
         --------
-        .. include:: examples/sp_pad_parts.rst
+        .. include:: examples/seqp_pad_parts.rst
         """
         # Check input
         ut.check_df(name="df_parts", df=df_parts, accept_none=False)
@@ -382,7 +382,7 @@ class SequencePreprocessor:
 
         Examples
         --------
-        .. include:: examples/sp_get_aa_window.rst
+        .. include:: examples/seqp_get_aa_window.rst
         """
         # Check input
         ut.check_str(name="seq", val=seq, accept_none=False)
@@ -457,7 +457,7 @@ class SequencePreprocessor:
 
         Examples
         --------
-        .. include:: examples/sp_get_sliding_aa_window.rst
+        .. include:: examples/seqp_get_sliding_aa_window.rst
         """
         # Check input
         ut.check_str(name="seq", val=seq, accept_none=False)
