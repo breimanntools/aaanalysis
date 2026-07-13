@@ -2,10 +2,18 @@
 import numpy as np
 import pandas as pd
 import pytest
+from hypothesis import given, settings
+import hypothesis.strategies as some
 from sklearn.svm import SVC
 from sklearn.ensemble import RandomForestClassifier
+from sklearn.base import clone
+from sklearn.model_selection import LeaveOneOut, StratifiedKFold, cross_val_predict
+from sklearn.metrics import (accuracy_score, balanced_accuracy_score, f1_score, roc_auc_score)
 
 import aaanalysis as aa
+
+settings.register_profile("ci", deadline=None)
+settings.load_profile("ci")
 
 
 def _data(n_per_class=15, n_feat=6, seed=0):
@@ -221,6 +229,155 @@ class TestAAPredEval:
         d1 = aa.AAPred(random_state=7).eval(X, labels, metrics=["accuracy"])
         d2 = aa.AAPred(random_state=7).eval(X, labels, metrics=["accuracy"])
         pd.testing.assert_frame_equal(d1, d2)
+
+
+class TestAAPredEvalCV:
+    """AAPred.eval(cv=...) — custom CV splitters (e.g. LeaveOneOut) + pooled scoring (#397)."""
+
+    def test_cv_splitter_tags_cv_pooled_principle(self):
+        X, labels = _data()
+        df_eval = aa.AAPred(models=["svm"], random_state=0).eval(
+            X, labels, cv=LeaveOneOut(), metrics=["balanced_accuracy"])
+        assert set(df_eval["principle"]) == {"cv_pooled"}
+
+    def test_cv_pooled_std_is_nan(self):
+        # A pooled score is a single estimate over all held-out predictions: no fold distribution.
+        X, labels = _data()
+        df_eval = aa.AAPred(models=["svm"], random_state=0).eval(
+            X, labels, cv=LeaveOneOut(), metrics=["accuracy"])
+        assert df_eval["score_std"].isna().all()
+
+    def test_cv_leaveoneout_bypasses_class_count_cap(self):
+        # Imbalanced small set (10 pos vs 3 neg): the int-n_cv cap forbids n_cv>3, but a splitter
+        # defines its own folds, so LeaveOneOut evaluates without raising.
+        X_pos, _ = _data(n_per_class=10, seed=0)
+        X_neg, _ = _data(n_per_class=3, seed=1)
+        X = np.vstack([X_pos[:10], X_neg[:3]])
+        labels = np.array([1] * 10 + [0] * 3)
+        df_eval = aa.AAPred(models=["svm"], random_state=0).eval(
+            X, labels, cv=LeaveOneOut(), metrics=["balanced_accuracy"])
+        assert len(df_eval) == 1
+        assert set(df_eval["principle"]) == {"cv_pooled"}
+
+    @settings(max_examples=5, deadline=None)
+    @given(n_splits=some.integers(min_value=2, max_value=6))
+    def test_cv_stratified_kfold_splitter(self, n_splits):
+        X, labels = _data(n_per_class=12)
+        cv = StratifiedKFold(n_splits=n_splits, shuffle=True, random_state=0)
+        df_eval = aa.AAPred(models=["svm"], random_state=0).eval(
+            X, labels, cv=cv, metrics=["accuracy", "roc_auc"])
+        assert set(df_eval["principle"]) == {"cv_pooled"}
+        assert ((df_eval["score"] >= 0) & (df_eval["score"] <= 1)).all()
+
+    def test_cv_pooled_roc_auc_uses_probabilities(self):
+        # roc_auc needs the positive-class probability; the pooled path must reproduce a manual
+        # cross_val_predict(method="predict_proba") reference, not score hard labels.
+        X, labels = _data(n_per_class=12)
+        cv = StratifiedKFold(n_splits=4, shuffle=True, random_state=0)
+        est = aa.AAPred(models=["svm"], random_state=0)._list_estimators[0]
+        got = aa.AAPred(models=["svm"], random_state=0).eval(
+            X, labels, cv=cv, metrics=["roc_auc"])["score"].iloc[0]
+        proba = cross_val_predict(clone(est), X, labels, cv=cv, method="predict_proba")[:, -1]
+        ref = roc_auc_score(labels, proba)
+        assert abs(got - ref) < 1e-9
+
+    def test_cv_none_is_byte_identical_to_omitting(self):
+        # Passing cv=None must be indistinguishable from not passing cv (default per-fold path).
+        X, labels = _data()
+        d_omit = aa.AAPred(models=["rf"], random_state=0).eval(X, labels, metrics=["accuracy"])
+        d_none = aa.AAPred(models=["rf"], random_state=0).eval(X, labels, metrics=["accuracy"], cv=None)
+        pd.testing.assert_frame_equal(d_omit, d_none)
+        assert set(d_none["principle"]) == {"cv"}
+
+    def test_cv_reproducible(self):
+        X, labels = _data()
+        cv = StratifiedKFold(n_splits=5, shuffle=True, random_state=3)
+        d1 = aa.AAPred(models=["svm"], random_state=0).eval(X, labels, cv=cv, metrics=["accuracy"])
+        cv = StratifiedKFold(n_splits=5, shuffle=True, random_state=3)
+        d2 = aa.AAPred(models=["svm"], random_state=0).eval(X, labels, cv=cv, metrics=["accuracy"])
+        pd.testing.assert_frame_equal(d1, d2)
+
+    def test_cv_invalid_splitter_raises(self):
+        X, labels = _data()
+        for bad in [5, "loo", object(), [1, 2, 3]]:
+            with pytest.raises(ValueError):
+                aa.AAPred(models=["svm"], random_state=0).eval(X, labels, cv=bad)
+
+
+class TestAAPredEvalCVComplex:
+    """Interactions of cv= with holdout and baseline (#397)."""
+
+    def test_cv_with_holdout_coexist(self):
+        # A pooled cv splitter and a holdout set produce both principle blocks in one table.
+        X, labels = _data()
+        X_holdout, labels_holdout = _data(n_per_class=8, seed=1)
+        df_eval = aa.AAPred(models=["svm"], random_state=0).eval(
+            X, labels, cv=LeaveOneOut(), metrics=["accuracy"],
+            X_holdout=X_holdout, labels_holdout=labels_holdout)
+        assert set(df_eval["principle"]) == {"cv_pooled", "holdout"}
+
+    def test_cv_threads_through_baseline(self):
+        # The splitter must score the baseline matrices too: every row is cv_pooled, and the
+        # baseline block is the same size as the cpp block.
+        df_seq = aa.load_dataset(name="DOM_GSEC", n=8)
+        labels = df_seq["label"].to_list()
+        X = np.random.RandomState(0).normal(size=(len(labels), 6))
+        cv = StratifiedKFold(n_splits=3, shuffle=True, random_state=0)
+        df_eval = aa.AAPred(models=["svm"], random_state=0).eval(
+            X, labels, metrics=["accuracy"], df_seq=df_seq, baseline="aac", cv=cv)
+        assert set(df_eval["principle"]) == {"cv_pooled"}
+        assert set(df_eval["features"]) == {"cpp", "aac"}
+        assert (df_eval["features"] == "aac").sum() == (df_eval["features"] == "cpp").sum()
+
+    def test_cv_baseline_reproduces_manual_pooled_eval(self):
+        # A baseline's pooled rows equal a standalone pooled eval of the same featurizer matrix.
+        df_seq = aa.load_dataset(name="DOM_GSEC", n=8)
+        labels = df_seq["label"].to_list()
+        X = np.random.RandomState(0).normal(size=(len(labels), 6))
+        cv = StratifiedKFold(n_splits=3, shuffle=True, random_state=0)
+        d_base = aa.AAPred(models=["svm"], random_state=0).eval(
+            X, labels, metrics=["accuracy", "balanced_accuracy"], df_seq=df_seq, baseline="aac", cv=cv)
+        X_aac = np.asarray(aa.SequenceFeature().aa_composition(df_seq=df_seq))
+        cv = StratifiedKFold(n_splits=3, shuffle=True, random_state=0)
+        d_manual = aa.AAPred(models=["svm"], random_state=0).eval(
+            X_aac, labels, metrics=["accuracy", "balanced_accuracy"], cv=cv)
+        aac_rows = d_base[d_base["features"] == "aac"].reset_index(drop=True)
+        merged = aac_rows.merge(d_manual, on=["model", "metric", "principle"], suffixes=("_b", "_m"))
+        assert len(merged) == len(d_manual)
+        assert np.allclose(merged["score_b"], merged["score_m"])
+
+
+class TestAAPredEvalCVGoldenValues:
+    """Frozen KPI: pooled LeaveOneOut reproduces the sklearn reference exactly (#397)."""
+
+    def test_leaveoneout_balanced_accuracy_matches_sklearn(self):
+        # The exact boilerplate #397 removes:
+        #   balanced_accuracy_score(y, cross_val_predict(SVC(kernel="linear"), X, y, cv=LeaveOneOut()))
+        rng = np.random.RandomState(0)
+        X = np.vstack([rng.normal(0.4, 1.0, size=(20, 6)), rng.normal(-0.4, 1.0, size=(9, 6))])
+        labels = np.array([1] * 20 + [0] * 9)
+        est = SVC(kernel="linear")
+        df_eval = aa.AAPred(models=[SVC(kernel="linear")], random_state=0).eval(
+            X, labels, cv=LeaveOneOut(), metrics=["balanced_accuracy"])
+        got = df_eval["score"].iloc[0]
+        ref = balanced_accuracy_score(labels, cross_val_predict(est, X, labels, cv=LeaveOneOut()))
+        assert abs(got - ref) < 1e-9
+
+    def test_cv_pooled_reproduces_cross_val_predict_all_label_metrics(self):
+        rng = np.random.RandomState(1)
+        X = np.vstack([rng.normal(0.5, 1.0, size=(15, 5)), rng.normal(-0.5, 1.0, size=(15, 5))])
+        labels = np.array([1] * 15 + [0] * 15)
+        cv = StratifiedKFold(n_splits=5, shuffle=True, random_state=0)
+        est = aa.AAPred(models=["svm"], random_state=0)._list_estimators[0]
+        pred = cross_val_predict(clone(est), X, labels, cv=cv)
+        refs = {"accuracy": accuracy_score(labels, pred),
+                "balanced_accuracy": balanced_accuracy_score(labels, pred),
+                "f1": f1_score(labels, pred)}
+        df_eval = aa.AAPred(models=["svm"], random_state=0).eval(
+            X, labels, cv=cv, metrics=list(refs))
+        for metric, ref in refs.items():
+            got = df_eval[df_eval["metric"] == metric]["score"].iloc[0]
+            assert abs(got - ref) < 1e-9, metric
 
 
 @pytest.fixture(scope="module")

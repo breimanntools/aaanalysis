@@ -6,6 +6,7 @@ import numpy as np
 import pandas as pd
 from sklearn.base import ClassifierMixin, BaseEstimator, clone
 from sklearn.ensemble import RandomForestClassifier
+from sklearn.model_selection import BaseCrossValidator
 
 import aaanalysis.utils as ut
 from aaanalysis.template_classes import Wrapper
@@ -43,6 +44,18 @@ def check_n_cv(n_cv=None, labels=None):
     min_class_count = int(min(counts))
     if n_cv > min_class_count:
         raise ValueError(f"'n_cv' ({n_cv}) should not be greater than the smallest class count ({min_class_count}).")
+
+
+def check_cv(cv=None):
+    """Check that a custom cross-validation splitter exposes a callable ``split`` method.
+
+    Unlike the integer ``n_cv`` path, a splitter is trusted to define its own folds, so it is
+    not capped at the smallest class count — this is what enables ``LeaveOneOut`` on small,
+    imbalanced sets.
+    """
+    if not callable(getattr(cv, "split", None)):
+        raise ValueError(f"'cv' ({cv}) should be a scikit-learn cross-validation splitter "
+                         f"exposing a 'split' method (e.g. 'LeaveOneOut()', 'StratifiedKFold(...)').")
 
 
 def check_is_fitted(list_models=None):
@@ -358,6 +371,7 @@ class AAPred(Wrapper):
              labels_holdout: Optional[ut.ArrayLike1D] = None,
              metrics: Optional[List[str]] = None,
              n_cv: int = 5,
+             cv: Optional[BaseCrossValidator] = None,
              df_seq: Optional[pd.DataFrame] = None,
              baseline: Optional[Union[bool, str, List[str]]] = None,
              list_parts: Optional[Union[str, List[str]]] = None,
@@ -365,10 +379,18 @@ class AAPred(Wrapper):
         """
         Evaluate every model across metrics by cross-validation and an optional held-out set.
 
-        Two evaluation principles are reported: ``cv`` (stratified k-fold cross-validation on
-        ``X``) and, when a held-out set is provided, ``holdout`` (models fit on ``X`` and scored
-        on ``X_holdout``). The result is a long-format table with one row per
-        (model, metric, principle).
+        Up to three evaluation principles are reported: ``cv`` (stratified k-fold
+        cross-validation on ``X``, scored per fold then averaged) and, when a held-out set is
+        provided, ``holdout`` (models fit on ``X`` and scored on ``X_holdout``). The result is a
+        long-format table with one row per (model, metric, principle).
+
+        Pass ``cv`` to cross-validate with an **arbitrary scikit-learn splitter** (e.g.
+        ``LeaveOneOut()``) instead of the integer ``n_cv`` folds. The splitter is not capped at
+        the smallest class count, and its rows are scored by the ``cv_pooled`` principle: every
+        held-out prediction is pooled and each metric is applied **once** on that pooled vector
+        (reproducing ``metric(labels, cross_val_predict(estimator, X, labels, cv=cv))``), rather
+        than averaging a per-fold score. This is the correct principle for ``LeaveOneOut`` on a
+        small, imbalanced set, where a single-sample test fold makes per-fold averaging degenerate.
 
         Set ``baseline`` to compare the bound features against simple, non-positional
         **baseline featurizers** (amino-acid / dipeptide / scale composition) built internally
@@ -391,7 +413,14 @@ class AAPred(Wrapper):
         metrics : list of str, optional
             Performance metrics to compute. Defaults to ``list_metrics`` from the constructor.
         n_cv : int, default=5
-            Number of stratified cross-validation folds (must not exceed the smallest class count).
+            Number of stratified cross-validation folds (must not exceed the smallest class
+            count). Ignored when ``cv`` is given.
+        cv : cross-validation splitter, optional
+            A scikit-learn cross-validation splitter exposing a ``split`` method (e.g.
+            ``LeaveOneOut()``, ``StratifiedKFold(n_splits=10)``). When given, it replaces the
+            integer ``n_cv`` folds and the cross-validation rows are scored by the pooled
+            ``cv_pooled`` principle (each metric applied once on the pooled out-of-fold
+            predictions, so ``score_std`` is ``NaN``). Not capped at the smallest class count.
         df_seq : pd.DataFrame, shape (n_samples, n_seq_info), optional
             DataFrame containing an ``entry`` column with unique protein identifiers and sequence
             information (the same input accepted by :meth:`SequenceFeature.get_df_parts`). Must be
@@ -415,10 +444,13 @@ class AAPred(Wrapper):
         -------
         df_eval : pd.DataFrame, shape (n_rows, 5) — or (n_rows, 6) in baseline mode
             Long-format evaluation table with columns ``model``, ``metric``, ``principle``,
-            ``score``, and ``score_std`` (``score_std`` is ``NaN`` for the ``holdout`` principle).
-            When ``baseline`` is given, a leading ``features`` column is added (``'cpp'`` for the
-            bound-feature rows, the baseline kind for each baseline's cross-validation rows);
-            with ``baseline=None`` the table is unchanged (5 columns).
+            ``score``, and ``score_std``. The ``principle`` is ``cv`` for the default per-fold
+            cross-validation, ``cv_pooled`` when a ``cv`` splitter is passed, and ``holdout`` for
+            the held-out set; ``score_std`` is ``NaN`` for the ``holdout`` and ``cv_pooled``
+            principles (each is a single estimate). When ``baseline`` is given, a leading
+            ``features`` column is added (``'cpp'`` for the bound-feature rows, the baseline kind
+            for each baseline's cross-validation rows); with ``baseline=None`` the table is
+            unchanged (5 columns).
 
         Examples
         --------
@@ -430,7 +462,12 @@ class AAPred(Wrapper):
         ut.check_match_X_labels(X=X, labels=labels)
         check_binary_labels(labels=labels)
         metrics = check_metrics(metrics=metrics) if metrics is not None else self._list_metrics
-        check_n_cv(n_cv=n_cv, labels=labels)
+        # A custom splitter defines its own folds (pooled scoring), so it bypasses the
+        # smallest-class-count cap that the integer n_cv path enforces.
+        if cv is not None:
+            check_cv(cv=cv)
+        else:
+            check_n_cv(n_cv=n_cv, labels=labels)
         list_models = None
         if X_holdout is not None:
             X_holdout = ut.check_X(X=X_holdout, min_n_samples=1)
@@ -458,7 +495,7 @@ class AAPred(Wrapper):
                               list_models=list_models, metrics=metrics, n_cv=n_cv,
                               random_state=self._random_state,
                               X_holdout=X_holdout, labels_holdout=labels_holdout,
-                              dict_X_baseline=dict_X_baseline)
+                              dict_X_baseline=dict_X_baseline, cv=cv)
         return df_eval
 
     def predict(self,

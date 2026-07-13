@@ -65,4 +65,5 @@ Regenerate this table with:
 | [0055](0055-cpp-bootstrap-stability-selection.md) | CPP bootstrap / stability annotation | Accepted | 2026-07-08 |  |
 | [0056](0056-rank-plot-into-aapredplot.md) | Per-protein rank scatter moves into `AAPredPlot.predict_group(kind="rank_scatter")` | Accepted | 2026-07-09 |  |
 | [0057](0057-v2-api-naming-and-future-xai-layer.md) | v2 API naming system and the future XAI `*Explainer` layer | Accepted | 2026-07-12 |  |
+| [0058](0058-aapred-eval-pooled-cv-splitter.md) | `AAPred.eval` accepts a custom CV splitter and scores it by pooled out-of-fold prediction | Accepted | 2026-07-12 |  |
 <!-- ADR-INDEX:END -->

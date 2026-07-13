@@ -197,6 +197,15 @@ Added
   (default) ``df_eval`` is byte-identical to before (no ``features`` column).
   :meth:`~aaanalysis.AAPredPlot.eval` (bar plot) reads the ``features`` column as the hue, so it
   draws the ``cpp`` and baseline bars side by side instead of averaging them.
+- :meth:`~aaanalysis.AAPred.eval`: New ``cv`` option to cross-validate with an arbitrary
+  scikit-learn splitter (e.g. ``LeaveOneOut()``) instead of the integer ``n_cv`` folds. Unlike
+  ``n_cv``, a splitter is **not** capped at the smallest class count, so ``LeaveOneOut`` works on
+  small, imbalanced sets. Its rows are scored by a new ``'cv_pooled'`` principle: every held-out
+  prediction is pooled and each metric is applied **once** on that pooled vector (reproducing
+  ``metric(labels, cross_val_predict(estimator, X, labels, cv=cv))``), rather than averaging a
+  degenerate per-fold score — the correct principle when a single-sample test fold makes per-fold
+  averaging meaningless. ``score_std`` is ``NaN`` for ``cv_pooled`` (a single estimate). Purely
+  additive: with ``cv=None`` (default) ``df_eval`` is byte-identical to before.
 - :meth:`~aaanalysis.AAPredPlot.eval`: New ``kind='heatmap'`` that renders any 2D score grid
   (rows x columns are the two sweep axes) as a square annotated heatmap and boxes the best cell(s)
   with a full-cell frame — ``highlight`` selects how many (a positive int for the top-N,
