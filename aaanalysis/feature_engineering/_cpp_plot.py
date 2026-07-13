@@ -313,6 +313,8 @@ class CPPPlot:
       ``_jmd_c_len`` and are reused by all plot methods (``ranking``, ``profile``, ``heatmap``,
       ``feature_map``, ``update_seq_size``) so that juxta middle domain (JMD) lengths are
       consistent across a single :class:`CPPPlot` instance.
+    * Parameters ending in ``_kws`` (e.g. ``cbar_kws``, ``legend_kws``) bundle related keyword
+      arguments into one dict; see the :ref:`keyword-dict parameters overview <kws-overview>`.
 
     """
     def __init__(self,

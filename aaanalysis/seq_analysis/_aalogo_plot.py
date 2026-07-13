@@ -224,6 +224,11 @@ class AALogoPlot:
 
     .. versionadded:: 1.0.3
 
+    Notes
+    -----
+    Parameters ending in ``_kws`` (e.g. ``aal_kws``, ``list_aal_kws``) bundle related keyword
+    arguments into one dict; see the :ref:`keyword-dict parameters overview <kws-overview>`.
+
     """
 
     def __init__(self,
