@@ -54,6 +54,19 @@ _RIGHT_LABEL_IN = 0.6
 
 
 # I Helper Functions
+def _freeze_composed_layout(fig):
+    """Neutralize ``tight_layout`` on a figure whose furniture is hand-placed below the grid.
+
+    ``feature_map`` / ``heatmap`` compose a self-managed layout (colorbar and legends anchored in
+    figure coordinates below the grid, like seaborn's clustermap). The notebook/user idiom of
+    ending a cell with ``plt.tight_layout(); plt.show()`` would otherwise re-pack every axes and
+    drop that furniture back onto the heatmap. Replacing this figure's ``tight_layout`` with a
+    no-op keeps the composed layout intact; ``savefig(bbox_inches="tight")`` and a plain
+    ``plt.show()`` measure the tight bounding box directly and are unaffected.
+    """
+    fig.tight_layout = lambda *args, **kwargs: None
+
+
 def resolve_seq_size(seq_size=None):
     """Split the public ``seq_size`` into (fixed_pt, req) for the residue-letter sizing.
 
@@ -1368,6 +1381,15 @@ class CPPPlot:
         ``tmd_seq_color`` and ``jmd_seq_color`` are applicable only when ``tmd_seq``, ``jmd_n_seq``,
         and ``jmd_c_seq`` are provided.
 
+        The returned figure is self-contained: the scale-category legend and the "Feature value"
+        colorbar are arranged automatically below the grid. The method manages its own layout, so
+        calling ``plt.tight_layout()`` afterwards is unnecessary (it is neutralized on the returned
+        figure to keep this furniture from being pulled back onto the heatmap);
+        ``fig.savefig(..., bbox_inches="tight")`` and ``plt.show()`` work as usual.
+
+        When no sequence is supplied (``tmd_seq`` is ``None``), the TMD and JMD regions are drawn as
+        a solid colored bar of a fixed, sequence-band-like height below the grid.
+
         See Also
         --------
         * :meth:`CPP.run` for details on CPP statistical measures of the ``df_feat`` DataFrame.
@@ -1488,8 +1510,8 @@ class CPPPlot:
                                             fill=seq_char_fill, req_size=_req_size)
             if self._verbose:
                 ut.print_out(f"Optimized sequence character fontsize is: {seq_size}")
-        # Cap the TMD/JMD part labels and pin them a constant gap below the sequence band, and
-        # pin the colorbar a constant distance below the grid (clear of the sequence on a sparse grid).
+        # Cap the TMD/JMD part labels and pin them a constant gap below the sequence band, and pin
+        # the colorbar a constant distance below the grid (clear of the sequence on a sparse grid).
         if size_grid:
             finalize_part_labels_(fig=fig, ax=ax, fontsize_tmd_jmd=fontsize_tmd_jmd,
                                   weight_tmd_jmd=weight_tmd_jmd)
@@ -1497,11 +1519,15 @@ class CPPPlot:
         # Stage 2 -- grow the canvas by any tight-bbox spill and translate the axes inward, so the
         # point-sized furniture never clips while the cells stay exactly on target; then lay the
         # scale-category legend and colorbar out as one aligned bottom row (a second grow/align pass
-        # absorbs any spill the re-placed row introduces).
+        # absorbs any spill the re-placed row introduces). Gated on the sizer path so an explicit
+        # figsize keeps its exact size.
         if size_grid:
             for _ in range(2):
                 grow_to_fit(fig=fig)
                 align_bottom_furniture_(fig=fig, ax=ax)
+        # Freeze on every path: a later plt.tight_layout() must not re-pack the axes and drop the
+        # colorbar/legend back onto the heatmap, whatever figure size was used.
+        _freeze_composed_layout(fig)
         return ut.FigAxResult(fig, ax)
 
     def feature_map(self,
@@ -1783,6 +1809,12 @@ class CPPPlot:
         ``tmd_seq_color`` and ``jmd_seq_color`` are applicable only when ``tmd_seq``, ``jmd_n_seq``,
         and ``jmd_c_seq`` are provided.
 
+        The returned figure is self-contained: the scale-category legend, the "Feature value"
+        colorbar and the feature-importance legend are arranged automatically below the grid. The
+        method manages its own layout, so calling ``plt.tight_layout()`` afterwards is unnecessary
+        (it is neutralized on the returned figure to keep this furniture from being pulled back onto
+        the heatmap); ``fig.savefig(..., bbox_inches="tight")`` and ``plt.show()`` work as usual.
+
         See Also
         --------
         * :meth:`CPP.run` for details on CPP statistical measures of the ``df_feat`` DataFrame.
@@ -1990,11 +2022,17 @@ class CPPPlot:
         # the tight-bbox spill and translate every axes inward. A translation preserves the cell
         # size, so the grid stays exactly on target while nothing clips the figure edge. Then lay
         # the scale-category legend, colorbar and importance legend out as one aligned bottom row;
-        # a second grow/align pass absorbs any spill the re-placed row introduces.
+        # a second grow/align pass absorbs any spill the re-placed row introduces. Gated on the
+        # sizer path: an explicit figsize is honored at its exact size (the furniture is anchored
+        # by the backend defaults), so the canvas is never grown out from under the caller.
         if size_grid:
             for _ in range(2):
                 grow_to_fit(fig=fig)
                 align_bottom_furniture_(fig=fig, ax=ax)
+        # Freeze on EVERY path (auto, cell_size, manual figsize): a later plt.tight_layout() would
+        # re-pack the axes and drop the furniture back onto the heatmap regardless of how the
+        # figure was sized. This is the fix for the "legend lands on the heatmap" report.
+        _freeze_composed_layout(fig)
         return ut.FigAxResult(fig, ax)
 
     def update_seq_size(self,

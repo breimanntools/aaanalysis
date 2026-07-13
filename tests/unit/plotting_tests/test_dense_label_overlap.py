@@ -582,3 +582,55 @@ class TestSeqSizeModes:
             aa.CPPPlot().feature_map(
                 _df_feat_len(20, 20), tmd_len=20, seq_size=-1,
                 tmd_seq=self._SEQ[:20], jmd_n_seq=self._SEQ[:10], jmd_c_seq=self._SEQ[:10])
+
+
+class TestTightLayoutFreeze:
+    """feature_map / heatmap compose their own furniture layout (colorbar + legends below the
+    grid). A later plt.tight_layout() -- the standard notebook idiom -- must NOT re-pack the axes
+    and pull that furniture back onto the heatmap: the returned figure neutralizes tight_layout."""
+
+    def setup_method(self):
+        aa.options["verbose"] = False
+
+    def teardown_method(self):
+        plt.close("all")
+
+    @pytest.mark.parametrize("method", ["feature_map", "heatmap"])
+    @pytest.mark.parametrize("figsize", [None, (9, 6)])
+    def test_tight_layout_is_neutralized(self, method, figsize):
+        fig, ax = getattr(aa.CPPPlot(), method)(make_dense_df_feat(30), figsize=figsize)
+        fig.canvas.draw()
+        before = ax.get_position().bounds
+        plt.tight_layout()   # pyplot idiom -> gcf().tight_layout()
+        fig.tight_layout()   # and a direct call on the figure
+        after = ax.get_position().bounds
+        assert all(abs(b - a) < 1e-6 for b, a in zip(before, after)), (method, figsize, before, after)
+
+
+class TestNoSequenceBarHeight:
+    """With no sequence, the TMD/JMD region is a solid colored bar; it must be a substantial,
+    sequence-band-like track, not the razor-thin default strip."""
+
+    def setup_method(self):
+        aa.options["verbose"] = False
+
+    def teardown_method(self):
+        plt.close("all")
+
+    @staticmethod
+    def _tmd_jmd_bar_heights(ax):
+        # The TMD/JMD bar rectangles span whole regions (width > 1 position) and are drawn
+        # unclipped just below the grid; the narrow category sidebar rectangles are < 1 wide.
+        import matplotlib.patches as mpatches
+        return [p.get_height() for p in ax.patches
+                if isinstance(p, mpatches.Rectangle) and p.get_width() > 1 and not p.get_clip_on()]
+
+    @pytest.mark.parametrize("method", ["feature_map", "heatmap"])
+    def test_no_seq_bar_is_substantial(self, method):
+        fig, ax = getattr(aa.CPPPlot(), method)(make_dense_df_feat(20))
+        fig.canvas.draw()
+        heights = self._tmd_jmd_bar_heights(ax)
+        assert heights, "no TMD/JMD bar rectangle found in the no-sequence layout"
+        # One grid row spans 1.0 data unit; the thin default bar is ~0.4 rows, the thickened one
+        # is well above two-thirds of a row. Guards against the height factor regressing to ~1.
+        assert max(heights) > 0.7, max(heights)

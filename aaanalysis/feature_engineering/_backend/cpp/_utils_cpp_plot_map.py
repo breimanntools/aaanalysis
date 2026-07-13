@@ -20,6 +20,12 @@ WIDTH_NORM_FACTOR = 110
 _SUBCAT_BAR_WIDTH_CELLS = 0.38
 _SUBCAT_BAR_GAP_CELLS = 0.22
 
+# When no sequence is supplied the TMD/JMD region is drawn as a plain colored bar (no residue
+# letters). The default bar is a razor-thin strip; thicken it to a substantial, sequence-band-like
+# height so it reads as the TMD/JMD track. The part labels sit a matching gap below the thicker bar.
+_NO_SEQ_BAR_HEIGHT_FACTOR = 2.5
+_NO_SEQ_LABEL_GAP_FACTOR = 0.3
+
 
 # I Helper Functions
 def _get_value_type(col_val="abs_auc"):
@@ -258,9 +264,11 @@ def plot_heatmap_(df_feat=None, df_cat=None,
                                 x_shift=0.5, xtick_size=xtick_size, fill=fill)
     # Add tmd_jmd bar
     else:
-        pp.add_tmd_jmd_bar(ax=ax, **args_part_color)
+        pp.add_tmd_jmd_bar(ax=ax, bar_height_factor=_NO_SEQ_BAR_HEIGHT_FACTOR, **args_part_color)
         pp.add_tmd_jmd_xticks(ax=ax, x_shift=0.5, **args_xtick)
+        # Push the labels below the thickened bar (same relative gap as the default thin bar).
         pp.add_tmd_jmd_text(ax=ax, x_shift=0,
+                            height_factor=_NO_SEQ_BAR_HEIGHT_FACTOR + _NO_SEQ_LABEL_GAP_FACTOR,
                             fontsize_tmd_jmd=fontsize_tmd_jmd,
                             weight_tmd_jmd=weight_tmd_jmd)
 
