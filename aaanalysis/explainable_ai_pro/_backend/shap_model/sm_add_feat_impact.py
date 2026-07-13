@@ -3,7 +3,6 @@ This is a script for the backend of the ShapModel.add_feat_impact() and ShapMode
 """
 import numpy as np
 import pandas as pd
-import warnings
 
 import aaanalysis.utils as ut
 
@@ -49,7 +48,11 @@ def _comp_group_shap_feat_impact(shap_values=None, list_i=None, normalize=True, 
     if verbose:
         max_std, max_impact = round(max(np.abs(feat_impact_std)), 2), round(max(np.abs(feat_impact)), 2)
         if max_std > max_impact * 5:
-            warnings.warn(f"Absolute maximum of 'feat_impact_std' ({max_std}) >> 'feat_impact' ({max_impact}). Grouping might be invalid.")
+            # Advisory (not an exception): a verbose-gated notice, so it reads as a clean line under
+            # `verbose=True` and stays out of the notebook output when verbose is off, rather than an
+            # exception-styled warnings.warn traceback.
+            ut.print_out(f"Absolute maximum of 'feat_impact_std' ({max_std}) >> 'feat_impact' "
+                         f"({max_impact}). Grouping might be invalid.")
     return feat_impact, feat_impact_std
 
 

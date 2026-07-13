@@ -554,18 +554,21 @@ class PlotPartPositions:
         return ax
 
     # Add TMD-JMD elements
-    def add_tmd_jmd_bar(self, ax=None, x_shift=0, jmd_color="blue", tmd_color="mediumspringgreen"):
+    def add_tmd_jmd_bar(self, ax=None, x_shift=0, jmd_color="blue", tmd_color="mediumspringgreen",
+                        bar_height_factor=1):
         """Add colored bars to indicate TMD and JMD regions."""
         ut.add_tmd_jmd_bar(ax=ax,
                            x_shift=x_shift,
                            jmd_color=jmd_color,
                            tmd_color=tmd_color,
+                           bar_height_factor=bar_height_factor,
                            tmd_len=self.tmd_len,
                            jmd_n_len=self.jmd_n_len,
                            jmd_c_len=self.jmd_c_len,
                            start=self.start)
 
-    def add_tmd_jmd_text(self, ax=None, x_shift=0, fontsize_tmd_jmd=None, weight_tmd_jmd="normal"):
+    def add_tmd_jmd_text(self, ax=None, x_shift=0, fontsize_tmd_jmd=None, weight_tmd_jmd="normal",
+                         height_factor=1.3):
         """Add text labels for TMD and JMD regions."""
         name_tmd = ut.options["name_tmd"]
         name_jmd_n = ut.options["name_jmd_n"]
@@ -574,6 +577,7 @@ class PlotPartPositions:
                             x_shift=x_shift,
                             fontsize_tmd_jmd=fontsize_tmd_jmd,
                             weight_tmd_jmd=weight_tmd_jmd,
+                            height_factor=height_factor,
                             name_tmd=name_tmd,
                             name_jmd_n=name_jmd_n,
                             name_jmd_c=name_jmd_c,

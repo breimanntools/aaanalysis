@@ -554,6 +554,13 @@ Changed
 Fixed
 ~~~~~
 
+- **Composite-plot furniture no longer lands on the heatmap**: :meth:`~aaanalysis.CPPPlot.feature_map`
+  and :meth:`~aaanalysis.CPPPlot.heatmap` place their colorbar and legends below the grid in figure
+  coordinates. Ending a cell with the usual ``plt.tight_layout(); plt.show()`` re-packed the axes and
+  pulled that furniture back onto the heatmap. Both methods now manage their own layout and neutralize
+  ``tight_layout`` on the returned figure, so the composed layout survives the standard idiom
+  (``fig.savefig(..., bbox_inches="tight")`` and ``plt.show()`` are unaffected). When no sequence is
+  supplied, the TMD/JMD region is drawn as a solid, sequence-band-like bar instead of a thin strip.
 - **Sequence bar in CPP-SHAP plots**: with ``seq_char_fill=True`` (the auto_font default),
   :meth:`~aaanalysis.CPPPlot.feature_map`, :meth:`~aaanalysis.CPPPlot.heatmap`, and
   :meth:`~aaanalysis.CPPPlot.profile` drew each residue's colored background as a glyph-sized text
