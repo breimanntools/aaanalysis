@@ -430,6 +430,29 @@ def align_bottom_furniture_(fig=None, ax=None, gap_in=_FURNITURE_GAP_IN, item_ga
             imp_top = (cbar_low / dpi - item_gap_in) / h_in
             imp_legend.set_loc("upper right")
             imp_legend.set_bbox_to_anchor((cbar_right_in / w_in, imp_top), transform=fig.transFigure)
+    # Very narrow figures: if the centred colorbar still COLLIDES with the scale-category legend (they
+    # overlap both horizontally and vertically), drop the colorbar to its own row just below the
+    # legend so the two never sit on top of each other. The importance legend, anchored to the
+    # colorbar, follows it down.
+    if cat_legend is not None and cbar_ax is not None:
+        fig.canvas.draw()
+        lb = cat_legend.get_window_extent(renderer)
+        cb = cbar_ax.get_tightbbox(renderer)
+        if lb.x1 > cb.x0 and cb.x1 > lb.x0 and lb.y1 > cb.y0 and cb.y1 > lb.y0:
+            cpos = cbar_ax.get_position()
+            # Place the colorbar's AXES so its whole tight bbox (the "Feature value" label sits
+            # ``label_above_in`` above the bar) clears below the legend's bottom.
+            new_cbar_axes_top_in = lb.y0 / dpi - item_gap_in - label_above_in
+            cbar_ax.set_position([cpos.x0, (new_cbar_axes_top_in - _CBAR_HEIGHT_IN) / h_in,
+                                  cpos.width, cpos.height])
+            if imp_legend is not None and cbar_right_in is not None:
+                imp_legend.set_visible(False)
+                fig.canvas.draw()
+                clow = cbar_ax.get_tightbbox(renderer).y0
+                imp_legend.set_visible(True)
+                imp_legend.set_loc("upper right")
+                imp_legend.set_bbox_to_anchor((cbar_right_in / w_in, (clow / dpi - item_gap_in) / h_in),
+                                              transform=fig.transFigure)
 
 
 def _get_new_axis(ax=None):
@@ -555,20 +578,21 @@ class PlotPartPositions:
 
     # Add TMD-JMD elements
     def add_tmd_jmd_bar(self, ax=None, x_shift=0, jmd_color="blue", tmd_color="mediumspringgreen",
-                        bar_height_factor=1):
+                        bar_height_factor=1, bar_height=None):
         """Add colored bars to indicate TMD and JMD regions."""
         ut.add_tmd_jmd_bar(ax=ax,
                            x_shift=x_shift,
                            jmd_color=jmd_color,
                            tmd_color=tmd_color,
                            bar_height_factor=bar_height_factor,
+                           bar_height=bar_height,
                            tmd_len=self.tmd_len,
                            jmd_n_len=self.jmd_n_len,
                            jmd_c_len=self.jmd_c_len,
                            start=self.start)
 
     def add_tmd_jmd_text(self, ax=None, x_shift=0, fontsize_tmd_jmd=None, weight_tmd_jmd="normal",
-                         height_factor=1.3):
+                         height_factor=1.3, bar_height=None):
         """Add text labels for TMD and JMD regions."""
         name_tmd = ut.options["name_tmd"]
         name_jmd_n = ut.options["name_jmd_n"]
@@ -578,6 +602,7 @@ class PlotPartPositions:
                             fontsize_tmd_jmd=fontsize_tmd_jmd,
                             weight_tmd_jmd=weight_tmd_jmd,
                             height_factor=height_factor,
+                            bar_height=bar_height,
                             name_tmd=name_tmd,
                             name_jmd_n=name_jmd_n,
                             name_jmd_c=name_jmd_c,

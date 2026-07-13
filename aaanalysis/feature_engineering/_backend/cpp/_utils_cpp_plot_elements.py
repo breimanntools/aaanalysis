@@ -31,18 +31,18 @@ def _force_render(fig):
     return fig.canvas.get_renderer()
 
 
-def _row_labels_overlap(label_artists, renderer, overlap_frac=0.05):
-    """Whether any two vertically-adjacent row labels overlap beyond a small fraction.
+def _row_labels_overlap(label_artists, renderer, overlap_frac=0.0):
+    """Whether any two vertically-adjacent row labels overlap.
 
-    Row labels share the same x (right-aligned), so the vertical overlap fraction
-    of the smaller box is an accurate stand-in for the area fraction. Only a small tolerance
-    (the font bbox includes empty descender space) so the labels keep a visible gap rather
-    than shrinking only once the glyphs literally collide.
+    Row labels share the same x (right-aligned), so the vertical overlap of the boxes is an
+    accurate stand-in. The font bbox includes empty ascender/descender space, so requiring the
+    boxes to *not overlap at all* (``overlap_frac=0``) leaves the glyphs a real gap -- the goal
+    under ``auto_font`` is zero overlap, so the tolerance is off by default.
     """
     boxes = sorted((t.get_window_extent(renderer) for t in label_artists), key=lambda b: b.y0)
     for lower, upper in zip(boxes[:-1], boxes[1:]):
         overlap = lower.y1 - upper.y0
-        if overlap > 0 and overlap / min(lower.height, upper.height) >= overlap_frac:
+        if overlap > 0 and overlap / min(lower.height, upper.height) > overlap_frac:
             return True
     return False
 
@@ -124,29 +124,24 @@ class PlotElements:
             PlotElements.optimize_subcat_label_fontsize(fig=ax.figure, label_artists=row_labels)
 
     @staticmethod
-    def optimize_subcat_label_fontsize(fig=None, label_artists=None, floor=5.0, fs_step=0.5):
-        """Shrink subcategory row-label font just enough to clear vertical overlap.
+    def optimize_subcat_label_fontsize(fig=None, label_artists=None, floor=3.0, fs_step=0.5):
+        """Shrink subcategory row-label font until vertical overlap is fully cleared.
 
         The row labels are hand-placed text artists at the current rcParams font
         size; on dense feature maps / heatmaps (many subcategories in a fixed
-        figure height) they collide into an unreadable column. This reduces their
-        font stepwise until consecutive labels no longer overlap, never dropping
-        below the legibility ``floor`` (~5 pt). Sparse maps already fit, so their
-        labels are left untouched and their output stays unchanged.
+        figure height) they collide into an unreadable column. Under ``auto_font`` the
+        goal is zero overlap, so this reduces their font stepwise until consecutive
+        labels no longer overlap at all -- independently of the legend and other
+        furniture -- down to a low legibility ``floor`` so a tight fixed figure still
+        separates the labels. Sparse maps already fit, so their labels are left
+        untouched and their output stays unchanged.
         """
         if not label_artists or len(label_artists) < 2:
             return
         fs = label_artists[0].get_fontsize()
-        # Cheap pre-check to avoid an expensive forced render on the common sparse
-        # map. Estimate how many rows fit before labels could touch, using a
-        # deliberately conservative axes-height fraction (0.6, below the real
-        # ~0.75) so we only *skip* when overlap is impossible and always render
-        # when it is even plausible. A wrong skip would reintroduce overlap; a
-        # wrong render just costs one draw.
-        fig_height_in = fig.get_size_inches()[1]
-        rows_capacity = (fig_height_in * 0.6 * 72.0) / max(fs * 1.1, 1e-6)
-        if len(label_artists) <= rows_capacity:
-            return
+        # Measure the actual rendered boxes and only shrink when they overlap. (A former
+        # fig-height-fraction pre-check skipped the render on sparse maps, but it mis-estimated the
+        # grid height once a fixed figsize reserves a bottom band, wrongly skipping real overlap.)
         renderer = _force_render(fig)
         if not _row_labels_overlap(label_artists, renderer):
             return

@@ -67,6 +67,85 @@ def _freeze_composed_layout(fig):
     fig.tight_layout = lambda *args, **kwargs: None
 
 
+def _reshrink_row_labels(fig, ax, label_texts, optimize_labels):
+    """Re-run the subcategory-label overlap shrink on the FINAL axes geometry.
+
+    ``add_subcat_bars`` shrinks the row labels while plotting, but the frontend's later
+    ``tight_layout`` / ``subplots_adjust`` / rescale resizes the axes and can reintroduce overlap.
+    Re-running the shrink here, after all layout is settled, honors the ``auto_font`` promise of
+    zero label overlap even for a fixed ``figsize`` (where the figure cannot be grown to fit); the
+    labels shrink independently of the legend and other furniture until they no longer collide.
+    """
+    if not optimize_labels:
+        return
+    from ._backend.cpp._utils_cpp_plot_elements import PlotElements
+    wanted = {str(t) for t in label_texts}
+    labels = [t for t in ax.texts if t.get_text().strip() in wanted]
+    PlotElements.optimize_subcat_label_fontsize(fig=fig, label_artists=labels)
+
+
+def _reshrink_importance_pcts(fig, ax_grid, optimize_labels):
+    """Shrink the per-row cumulative-importance ``%`` annotations until they no longer overlap.
+
+    Those labels (one per row, on the right importance-bar axes) stack and overlap on a dense grid
+    at a fixed figsize just like the subcategory row labels; under ``auto_font`` they must clear too.
+    Re-run on the FINAL layout, independently of the row labels.
+    """
+    if not optimize_labels:
+        return
+    from ._backend.cpp._utils_cpp_plot_elements import PlotElements
+    grid = ax_grid.get_position()
+    pcts = [t for a in fig.axes if a is not ax_grid and a.get_position().x0 >= grid.x1 - 0.02
+            for t in a.texts if t.get_text().strip().endswith("%")]
+    if len(pcts) >= 2:
+        PlotElements.optimize_subcat_label_fontsize(fig=fig, label_artists=pcts)
+
+
+def _align_furniture_fixed_figure(fig, ax, fontsize_tmd_jmd=None, weight_tmd_jmd="normal"):
+    """Align the bottom furniture within a FIXED-size figure (the manual-figsize path).
+
+    The auto / cell_size path grows the figure to fit the furniture. A manual ``figsize`` is honored
+    at its exact size instead, so the grid is shrunk upward (``subplots_adjust(bottom=...)``) to
+    reserve a bottom band, and the scale-category legend, colorbar and importance legend are laid out
+    as one aligned row in it -- exactly the auto-path layout, but with the grid *cells adapting* to
+    the remaining space rather than the figure growing. Iterates until the furniture sits inside the
+    figure (or the reserve is capped).
+    """
+    for _ in range(4):
+        finalize_part_labels_(fig=fig, ax=ax, fontsize_tmd_jmd=fontsize_tmd_jmd,
+                              weight_tmd_jmd=weight_tmd_jmd)
+        place_colorbar_below_grid_(fig=fig, ax=ax)
+        align_bottom_furniture_(fig=fig, ax=ax)
+        fig.canvas.draw()
+        h_in = float(fig.get_size_inches()[1])
+        spill_in = -float(fig.get_tightbbox(fig.canvas.get_renderer()).y0)  # >0 if content below the figure
+        if spill_in <= 0.04:
+            break
+        new_bottom = min(0.6, fig.subplotpars.bottom + (spill_in + 0.05) / h_in)
+        if new_bottom <= fig.subplotpars.bottom + 1e-4:
+            break
+        fig.subplots_adjust(bottom=new_bottom)
+
+
+def _rescale_impact_markers(fig, ax, n_rows):
+    """Scale the feature-impact ``■`` markers to the FINAL cell height.
+
+    The markers are drawn at a fixed point size calibrated to the default cell (``CELL_H_IN``); on a
+    smaller manual figsize the cells shrink but the markers do not, so they overflow the cell. Scaling
+    them by the final cell height keeps each marker the same fraction of its cell at any figure size.
+    """
+    from ._backend.cpp._utils_cpp_plot_sizing import CELL_H_IN
+    fig.canvas.draw()
+    h_in = float(fig.get_size_inches()[1])
+    cell_h = ax.get_position().height * h_in / max(int(n_rows), 1)
+    scale = cell_h / CELL_H_IN
+    if abs(scale - 1.0) < 0.02:
+        return
+    for t in ax.texts:
+        if t.get_text() == "■":  # ■
+            t.set_fontsize(t.get_fontsize() * scale)
+
+
 def resolve_seq_size(seq_size=None):
     """Split the public ``seq_size`` into (fixed_pt, req) for the residue-letter sizing.
 
@@ -1425,7 +1504,8 @@ class CPPPlot:
         ``fig.savefig(..., bbox_inches="tight")`` and ``plt.show()`` work as usual.
 
         When no sequence is supplied (``tmd_seq`` is ``None``), the TMD and JMD regions are drawn as
-        a solid colored bar of a fixed, sequence-band-like height below the grid.
+        a thin solid colored bar below the grid, kept at a constant height (a fixed fraction of a grid
+        cell-row) at any figure size.
 
         See Also
         --------
@@ -1574,6 +1654,15 @@ class CPPPlot:
             for _ in range(2):
                 grow_to_fit(fig=fig)
                 align_bottom_furniture_(fig=fig, ax=ax)
+        else:
+            # Manual figsize: keep the exact figure and align the furniture at the bottom, letting
+            # the grid cells adapt to the reserved space (rather than growing the figure).
+            _align_furniture_fixed_figure(fig=fig, ax=ax, fontsize_tmd_jmd=fontsize_tmd_jmd,
+                                          weight_tmd_jmd=weight_tmd_jmd)
+        # After all layout is settled, re-run the subcategory-label shrink so any overlap a fixed
+        # figsize's tight_layout reintroduced is cleared (auto_font's zero-overlap promise).
+        _reshrink_row_labels(fig=fig, ax=ax, label_texts=df_feat[col_cat].unique(),
+                             optimize_labels=optimize_labels)
         # Freeze on every path: a later plt.tight_layout() must not re-pack the axes and drop the
         # colorbar/legend back onto the heatmap, whatever figure size was used.
         _freeze_composed_layout(fig)
@@ -2082,6 +2171,20 @@ class CPPPlot:
             for _ in range(2):
                 grow_to_fit(fig=fig)
                 align_bottom_furniture_(fig=fig, ax=ax)
+        else:
+            # Manual figsize: keep the exact figure and align the furniture at the bottom, letting
+            # the grid cells adapt to the reserved space (rather than growing the figure).
+            _align_furniture_fixed_figure(fig=fig, ax=ax, fontsize_tmd_jmd=fontsize_tmd_jmd,
+                                          weight_tmd_jmd=weight_tmd_jmd)
+        # After all layout is settled, re-run the subcategory-label shrink so any overlap a fixed
+        # figsize's tight_layout reintroduced is cleared (auto_font's zero-overlap promise). The
+        # per-row cumulative-importance % annotations are shrunk the same way.
+        _reshrink_row_labels(fig=fig, ax=ax, label_texts=df_feat[col_cat].unique(),
+                             optimize_labels=optimize_labels)
+        _reshrink_importance_pcts(fig=fig, ax_grid=ax, optimize_labels=optimize_labels)
+        # Scale the ■ feature-impact markers to the final cell size (no-op at the default cell) so
+        # they do not overflow the shrunken cells of a small manual figsize.
+        _rescale_impact_markers(fig=fig, ax=ax, n_rows=n_subcat)
         # Freeze on EVERY path (auto, cell_size, manual figsize): a later plt.tight_layout() would
         # re-pack the axes and drop the furniture back onto the heatmap regardless of how the
         # figure was sized. This is the fix for the "legend lands on the heatmap" report.

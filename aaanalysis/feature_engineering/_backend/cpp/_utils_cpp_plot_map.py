@@ -21,10 +21,12 @@ _SUBCAT_BAR_WIDTH_CELLS = 0.38
 _SUBCAT_BAR_GAP_CELLS = 0.22
 
 # When no sequence is supplied the TMD/JMD region is drawn as a plain colored bar (no residue
-# letters). The default bar is a razor-thin strip; thicken it to a substantial, sequence-band-like
-# height so it reads as the TMD/JMD track. The part labels sit a matching gap below the thicker bar.
-_NO_SEQ_BAR_HEIGHT_FACTOR = 2.5
-_NO_SEQ_LABEL_GAP_FACTOR = 0.3
+# letters). Pin its thickness to a CONSTANT number of grid cell-heights (y-data units, i.e. rows)
+# rather than the figure-scaling default, so it renders at a constant physical height on the
+# constant-cell grid -- matching the subcategory cells and the cheat-sheet reference at any figure
+# size. The part labels sit a fixed cell-gap below the bar.
+_NO_SEQ_BAR_CELLS = 0.6
+_NO_SEQ_LABEL_GAP_CELLS = 0.35
 
 
 # I Helper Functions
@@ -264,11 +266,11 @@ def plot_heatmap_(df_feat=None, df_cat=None,
                                 x_shift=0.5, xtick_size=xtick_size, fill=fill)
     # Add tmd_jmd bar
     else:
-        pp.add_tmd_jmd_bar(ax=ax, bar_height_factor=_NO_SEQ_BAR_HEIGHT_FACTOR, **args_part_color)
+        pp.add_tmd_jmd_bar(ax=ax, bar_height=_NO_SEQ_BAR_CELLS, **args_part_color)
         pp.add_tmd_jmd_xticks(ax=ax, x_shift=0.5, **args_xtick)
-        # Push the labels below the thickened bar (same relative gap as the default thin bar).
-        pp.add_tmd_jmd_text(ax=ax, x_shift=0,
-                            height_factor=_NO_SEQ_BAR_HEIGHT_FACTOR + _NO_SEQ_LABEL_GAP_FACTOR,
+        # Place the labels a constant cell-gap below the constant-height bar.
+        pp.add_tmd_jmd_text(ax=ax, x_shift=0, bar_height=_NO_SEQ_BAR_CELLS,
+                            height_factor=1.0 + _NO_SEQ_LABEL_GAP_CELLS / _NO_SEQ_BAR_CELLS,
                             fontsize_tmd_jmd=fontsize_tmd_jmd,
                             weight_tmd_jmd=weight_tmd_jmd)
 

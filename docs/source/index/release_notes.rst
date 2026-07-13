@@ -568,8 +568,17 @@ Fixed
   coordinates. Ending a cell with the usual ``plt.tight_layout(); plt.show()`` re-packed the axes and
   pulled that furniture back onto the heatmap. Both methods now manage their own layout and neutralize
   ``tight_layout`` on the returned figure, so the composed layout survives the standard idiom
-  (``fig.savefig(..., bbox_inches="tight")`` and ``plt.show()`` are unaffected). When no sequence is
-  supplied, the TMD/JMD region is drawn as a solid, sequence-band-like bar instead of a thin strip.
+  (``fig.savefig(..., bbox_inches="tight")`` and ``plt.show()`` are unaffected).
+- **Consistent feature-map / heatmap layout at any figure size**: several dense-grid / fixed-``figsize``
+  layout fixes for :meth:`~aaanalysis.CPPPlot.feature_map` and :meth:`~aaanalysis.CPPPlot.heatmap`. The
+  no-sequence TMD/JMD bar is a **constant** height (a fixed fraction of a grid cell-row) rather than
+  scaling with the figure. Under ``auto_font`` the subcategory row labels **and** the cumulative-importance
+  ``%`` annotations shrink independently until they no longer overlap (re-run on the final layout, below the
+  former 5pt floor if a tight fixed ``figsize`` needs it). The ``■`` feature-impact markers scale with the
+  cell size so they never overflow a small cell. On a manual ``figsize`` the three legends are laid out as one
+  aligned bottom row (the grid cells adapting to the reserved space, the figure keeping its exact size), and
+  on a very narrow figure the colorbar drops to its own row below the category legend instead of colliding
+  with it. The standalone heatmap now uses the **same cell height** as the feature map.
 - **Sequence bar in CPP-SHAP plots**: with ``seq_char_fill=True`` (the auto_font default),
   :meth:`~aaanalysis.CPPPlot.feature_map`, :meth:`~aaanalysis.CPPPlot.heatmap`, and
   :meth:`~aaanalysis.CPPPlot.profile` drew each residue's colored background as a glyph-sized text
