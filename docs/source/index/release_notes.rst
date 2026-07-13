@@ -152,6 +152,15 @@ Added
   ``df_parts`` so the residues stay bound to the feature geometry — removing the manual
   slicing glue when feeding :meth:`~aaanalysis.CPPPlot.profile` / ``feature_map`` (e.g. sample-level SHAP
   plots).
+- **``sample_kws`` bundle on CPPPlot plots**: :meth:`~aaanalysis.CPPPlot.feature_map`,
+  :meth:`~aaanalysis.CPPPlot.heatmap`, and :meth:`~aaanalysis.CPPPlot.profile` take a structured
+  ``sample_kws=dict(sample, df_seq, df_parts)`` — the bundled alternative to providing the TMD-JMD
+  sequences directly. ``sample`` accepts an entry name / id / accession (``str``) or a row position
+  (``int``); it resolves that sample's sequence band (and, for the SHAP variants, the per-sample
+  ``feat_impact`` column) from ``df_parts`` and **overrides** any explicitly passed ``tmd_seq`` /
+  ``jmd_n_seq`` / ``jmd_c_seq``. The displayed sequence stays faithful to the ``df_parts`` the features
+  map to, so its own lengths set the grid geometry (``tmd_len`` / ``jmd_n_len`` / ``jmd_c_len`` apply
+  only when no sequence is shown). See the keyword-dict parameters overview in the docstring guide.
 - :meth:`~aaanalysis.SequenceFeature.get_feature_descriptions`: One standardized, human-readable
   sentence per ``PART-SPLIT-SCALE`` feature id (region + split + AAontology scale name /
   category). Additive (the ``'feature'`` id is unchanged); fills an optional

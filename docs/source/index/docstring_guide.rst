@@ -592,6 +592,13 @@ Name any new one ``<noun>_kws`` and add it to the table below.
      - structured bundle
      - Fixed keys ``rounds`` / ``resample`` / ``frac`` (any subset; unset keys keep their default) —
        :meth:`~aaanalysis.CPP` bootstrap configuration.
+   * - ``sample_kws``
+     - structured bundle
+     - Fixed keys ``sample`` (an entry name / id / accession ``str`` or a row-position ``int``),
+       ``df_seq`` and ``df_parts`` — selects one sample for :meth:`~aaanalysis.CPPPlot.feature_map` /
+       :meth:`~aaanalysis.CPPPlot.heatmap` / :meth:`~aaanalysis.CPPPlot.profile`, resolving its TMD-JMD
+       sequence (and per-sample ``feat_impact`` column) from ``df_parts``. The bundled alternative to
+       passing ``tmd_seq`` / ``jmd_n_seq`` / ``jmd_c_seq`` directly.
 
 Label parameter names
 ---------------------
