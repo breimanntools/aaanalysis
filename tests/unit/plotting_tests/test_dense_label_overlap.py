@@ -428,7 +428,9 @@ class TestAutoFontOffAndExplicit:
 
 
 class TestForcedFigsizeFallback:
-    """auto_font on + a forced too-small figsize falls back to the shrink gate."""
+    """auto_font on: the subcategory row labels shrink independently until there is NO vertical
+    overlap -- re-run on the FINAL layout, and below the old 5pt floor if a tight fixed figsize
+    requires it (zero overlap is the priority; the figure cannot be grown when figsize is fixed)."""
 
     def setup_method(self):
         aa.options["verbose"] = False
@@ -436,13 +438,30 @@ class TestForcedFigsizeFallback:
     def teardown_method(self):
         plt.close("all")
 
-    def test_fallback_shrinks_but_holds_5pt_floor(self):
-        # No room to grow (fixed small figure) -> labels shrink to fit, never < 5pt.
+    @staticmethod
+    def _row_overlaps(fig, ax, names):
+        fig.canvas.draw()
+        r = fig.canvas.get_renderer()
+        boxes = sorted([t.get_window_extent(r) for t in ax.texts if t.get_text().strip() in names],
+                       key=lambda b: -b.y0)
+        return sum(1 for a, b in zip(boxes, boxes[1:]) if b.y1 > a.y0 + 0.5)
+
+    @pytest.mark.parametrize("method", ["feature_map", "heatmap"])
+    @pytest.mark.parametrize("figsize", [None, (8, 6), (7, 5)])
+    def test_no_row_label_overlap_any_figsize(self, method, figsize):
+        aa.options["auto_font"] = True
+        df_feat = make_dense_df_feat(40)
+        names = set(df_feat["subcategory"])
+        fig, ax = getattr(aa.CPPPlot(), method)(df_feat, figsize=figsize)
+        assert self._row_overlaps(fig, ax, names) == 0, (method, figsize)
+
+    def test_font_drops_below_old_5pt_floor_when_needed(self):
+        # A very tight fixed figure pushes below the previous 5pt floor to guarantee no overlap.
         aa.options["auto_font"] = True
         df_feat = make_dense_df_feat(74)
-        fig, ax = aa.CPPPlot().feature_map(df_feat, figsize=(6, 6))
+        fig, ax = aa.CPPPlot().feature_map(df_feat, figsize=(6, 5))
         sizes = _row_label_fonts(fig, df_feat["subcategory"])
-        assert sizes and min(sizes) >= 5.0, min(sizes) if sizes else None
+        assert sizes and min(sizes) < 5.0 and min(sizes) >= 3.0, min(sizes) if sizes else None
 
 
 class TestOptionIsolation:
@@ -473,9 +492,14 @@ class TestFigsizeSentinel:
             plt.close("all")
 
     def test_omitted_figsize_autosizes_heatmap(self):
-        # Omitted figsize -> auto: a dense grid grows taller than the fixed (8, 8) default.
-        aa.CPPPlot().heatmap(aa.load_features(name="DOM_GSEC").head(40))
-        assert plt.gcf().get_size_inches()[1] > 8.0
+        # Omitted figsize -> auto: the figure grows with the grid (constant cell height),
+        # rather than staying at a fixed default. A denser grid is taller than a sparse one.
+        df = aa.load_features(name="DOM_GSEC")
+        h_sparse = float(aa.CPPPlot().heatmap(df.head(20))[0].get_size_inches()[1])
+        plt.close("all")
+        h_dense = float(aa.CPPPlot().heatmap(df.head(74))[0].get_size_inches()[1])
+        plt.close("all")
+        assert h_dense > h_sparse > 0, (h_sparse, h_dense)
 
 
 class TestSeqCharFill:
@@ -608,8 +632,8 @@ class TestTightLayoutFreeze:
 
 
 class TestNoSequenceBarHeight:
-    """With no sequence, the TMD/JMD region is a solid colored bar; it must be a substantial,
-    sequence-band-like track, not the razor-thin default strip."""
+    """With no sequence, the TMD/JMD region is a solid colored bar pinned to a CONSTANT number of
+    grid cell-heights (matching the cheat-sheet reference), so it does not scale with the figure."""
 
     def setup_method(self):
         aa.options["verbose"] = False
@@ -626,11 +650,17 @@ class TestNoSequenceBarHeight:
                 if isinstance(p, mpatches.Rectangle) and p.get_width() > 1 and not p.get_clip_on()]
 
     @pytest.mark.parametrize("method", ["feature_map", "heatmap"])
-    def test_no_seq_bar_is_substantial(self, method):
-        fig, ax = getattr(aa.CPPPlot(), method)(make_dense_df_feat(20))
-        fig.canvas.draw()
-        heights = self._tmd_jmd_bar_heights(ax)
-        assert heights, "no TMD/JMD bar rectangle found in the no-sequence layout"
-        # One grid row spans 1.0 data unit; the thin default bar is ~0.4 rows, the thickened one
-        # is well above two-thirds of a row. Guards against the height factor regressing to ~1.
-        assert max(heights) > 0.7, max(heights)
+    def test_no_seq_bar_is_constant_cells(self, method):
+        # The bar height is a fixed number of grid rows (data units), independent of the figure
+        # size -- the same value whether the figure is small, large, or auto-sized.
+        from aaanalysis.feature_engineering._backend.cpp._utils_cpp_plot_map import _NO_SEQ_BAR_CELLS
+        vals = []
+        for figsize in [None, (6, 5), (14, 11)]:
+            fig, ax = getattr(aa.CPPPlot(), method)(make_dense_df_feat(20), figsize=figsize)
+            fig.canvas.draw()
+            heights = self._tmd_jmd_bar_heights(ax)
+            assert heights, "no TMD/JMD bar rectangle found in the no-sequence layout"
+            vals.append(max(heights))
+            plt.close("all")
+        # Every figure yields the same bar height in cell-rows == the configured constant.
+        assert all(abs(v - _NO_SEQ_BAR_CELLS) < 1e-6 for v in vals), vals

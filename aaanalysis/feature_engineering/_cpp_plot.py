@@ -67,6 +67,85 @@ def _freeze_composed_layout(fig):
     fig.tight_layout = lambda *args, **kwargs: None
 
 
+def _reshrink_row_labels(fig, ax, label_texts, optimize_labels):
+    """Re-run the subcategory-label overlap shrink on the FINAL axes geometry.
+
+    ``add_subcat_bars`` shrinks the row labels while plotting, but the frontend's later
+    ``tight_layout`` / ``subplots_adjust`` / rescale resizes the axes and can reintroduce overlap.
+    Re-running the shrink here, after all layout is settled, honors the ``auto_font`` promise of
+    zero label overlap even for a fixed ``figsize`` (where the figure cannot be grown to fit); the
+    labels shrink independently of the legend and other furniture until they no longer collide.
+    """
+    if not optimize_labels:
+        return
+    from ._backend.cpp._utils_cpp_plot_elements import PlotElements
+    wanted = {str(t) for t in label_texts}
+    labels = [t for t in ax.texts if t.get_text().strip() in wanted]
+    PlotElements.optimize_subcat_label_fontsize(fig=fig, label_artists=labels)
+
+
+def _reshrink_importance_pcts(fig, ax_grid, optimize_labels):
+    """Shrink the per-row cumulative-importance ``%`` annotations until they no longer overlap.
+
+    Those labels (one per row, on the right importance-bar axes) stack and overlap on a dense grid
+    at a fixed figsize just like the subcategory row labels; under ``auto_font`` they must clear too.
+    Re-run on the FINAL layout, independently of the row labels.
+    """
+    if not optimize_labels:
+        return
+    from ._backend.cpp._utils_cpp_plot_elements import PlotElements
+    grid = ax_grid.get_position()
+    pcts = [t for a in fig.axes if a is not ax_grid and a.get_position().x0 >= grid.x1 - 0.02
+            for t in a.texts if t.get_text().strip().endswith("%")]
+    if len(pcts) >= 2:
+        PlotElements.optimize_subcat_label_fontsize(fig=fig, label_artists=pcts)
+
+
+def _align_furniture_fixed_figure(fig, ax, fontsize_tmd_jmd=None, weight_tmd_jmd="normal"):
+    """Align the bottom furniture within a FIXED-size figure (the manual-figsize path).
+
+    The auto / cell_size path grows the figure to fit the furniture. A manual ``figsize`` is honored
+    at its exact size instead, so the grid is shrunk upward (``subplots_adjust(bottom=...)``) to
+    reserve a bottom band, and the scale-category legend, colorbar and importance legend are laid out
+    as one aligned row in it -- exactly the auto-path layout, but with the grid *cells adapting* to
+    the remaining space rather than the figure growing. Iterates until the furniture sits inside the
+    figure (or the reserve is capped).
+    """
+    for _ in range(4):
+        finalize_part_labels_(fig=fig, ax=ax, fontsize_tmd_jmd=fontsize_tmd_jmd,
+                              weight_tmd_jmd=weight_tmd_jmd)
+        place_colorbar_below_grid_(fig=fig, ax=ax)
+        align_bottom_furniture_(fig=fig, ax=ax)
+        fig.canvas.draw()
+        h_in = float(fig.get_size_inches()[1])
+        spill_in = -float(fig.get_tightbbox(fig.canvas.get_renderer()).y0)  # >0 if content below the figure
+        if spill_in <= 0.04:
+            break
+        new_bottom = min(0.6, fig.subplotpars.bottom + (spill_in + 0.05) / h_in)
+        if new_bottom <= fig.subplotpars.bottom + 1e-4:
+            break
+        fig.subplots_adjust(bottom=new_bottom)
+
+
+def _rescale_impact_markers(fig, ax, n_rows):
+    """Scale the feature-impact ``■`` markers to the FINAL cell height.
+
+    The markers are drawn at a fixed point size calibrated to the default cell (``CELL_H_IN``); on a
+    smaller manual figsize the cells shrink but the markers do not, so they overflow the cell. Scaling
+    them by the final cell height keeps each marker the same fraction of its cell at any figure size.
+    """
+    from ._backend.cpp._utils_cpp_plot_sizing import CELL_H_IN
+    fig.canvas.draw()
+    h_in = float(fig.get_size_inches()[1])
+    cell_h = ax.get_position().height * h_in / max(int(n_rows), 1)
+    scale = cell_h / CELL_H_IN
+    if abs(scale - 1.0) < 0.02:
+        return
+    for t in ax.texts:
+        if t.get_text() == "■":  # ■
+            t.set_fontsize(t.get_fontsize() * scale)
+
+
 def resolve_seq_size(seq_size=None):
     """Split the public ``seq_size`` into (fixed_pt, req) for the residue-letter sizing.
 
@@ -261,16 +340,39 @@ def check_match_ax_seq_len(ax=None, jmd_n_len=10, jmd_c_len=10) -> None:
                          f"\n Sequence (len: {len(tmd_jmd_seq)}) retrieved from 'ax' is: '{tmd_jmd_seq}'")
 
 
+_SAMPLE_KWS_KEYS = ("sample", "df_seq", "df_parts")
+
+
+def unpack_sample_kws(sample_kws=None, resolve_seq=True):
+    """Validate a ``sample_kws`` bundle and return ``(sample, df_seq, df_parts)``.
+
+    ``sample_kws`` is a structured bundle (fixed key set): ``sample`` (an entry name / id / accession
+    ``str`` or a row-position ``int``) plus ``df_seq`` and ``df_parts`` (both required for
+    sequence-level plots, to resolve the TMD-JMD parts). Returns ``(None, None, None)`` when
+    ``sample_kws`` is ``None`` (the shortcut is simply not used).
+    """
+    if sample_kws is None:
+        return None, None, None
+    ut.check_dict(name="sample_kws", val=sample_kws)
+    unknown = set(sample_kws) - set(_SAMPLE_KWS_KEYS)
+    if unknown:
+        raise ValueError(f"'sample_kws' has unknown keys {sorted(unknown)}; allowed: {list(_SAMPLE_KWS_KEYS)}.")
+    if "sample" not in sample_kws:
+        raise ValueError(f"'sample_kws' must contain 'sample' (allowed keys: {list(_SAMPLE_KWS_KEYS)}).")
+    return sample_kws.get("sample"), sample_kws.get("df_seq"), sample_kws.get("df_parts")
+
+
 def resolve_sample_kws(sample=None, df_seq=None, df_parts=None,
                        jmd_n_seq=None, tmd_seq=None, jmd_c_seq=None,
-                       resolve_seq=True):
-    """Resolve the ``sample=`` shortcut for the SHAP plot methods.
+                       resolve_seq=True, verbose=True):
+    """Resolve the ``sample_kws`` shortcut for the sample-level plot methods.
 
-    When ``sample`` is given, the feature-impact column is resolved to ``feat_impact_<entry>``
+    When ``sample_kws`` is given, the feature-impact column is resolved to ``feat_impact_<entry>``
     and (for sequence-aware plots) the TMD-JMD parts are read from ``df_parts`` via
     :meth:`SequenceFeature.get_seq_kws`, so the per-sample ``col_imp`` string-templating and the
-    explicit ``get_seq_kws`` plumbing are no longer needed at the call site. Explicitly passed
-    sequence parts are never overridden.
+    explicit ``get_seq_kws`` plumbing are no longer needed at the call site. ``sample_kws`` is the
+    bundled alternative to passing the sequences directly and **overrides** any explicitly given
+    ``tmd_seq`` / ``jmd_n_seq`` / ``jmd_c_seq`` (a verbose notice is emitted when both are supplied).
 
     The impact column is keyed by the protein **entry name** (as written by
     :meth:`ShapModel.add_feat_impact`). A ``sample`` given as a row position (int) is therefore
@@ -283,19 +385,19 @@ def resolve_sample_kws(sample=None, df_seq=None, df_parts=None,
         raise ValueError(f"'sample' ({sample}) should be an entry name (str) or a row position (int).")
     if resolve_seq:
         if df_seq is None or df_parts is None:
-            raise ValueError("'df_seq' and 'df_parts' are required when 'sample' is given for "
-                             "sequence-level plots, to resolve the TMD-JMD parts.")
+            raise ValueError("'df_seq' and 'df_parts' are required in 'sample_kws' to resolve the "
+                             "TMD-JMD parts for sequence-level plots.")
         # Lazy import to avoid a circular import at module load (same subpackage).
         from aaanalysis.feature_engineering._sequence_feature import SequenceFeature
         seq_kws = SequenceFeature().get_seq_kws(df_seq=df_seq, df_parts=df_parts, sample=sample)
         # get_seq_kws validated 'sample'; map an int position to its entry name for 'col_imp'.
         name = sample if is_str else df_parts.index[int(sample)]
-        if jmd_n_seq is None:
-            jmd_n_seq = seq_kws[f"{ut.COL_JMD_N}_seq"]
-        if tmd_seq is None:
-            tmd_seq = seq_kws[f"{ut.COL_TMD}_seq"]
-        if jmd_c_seq is None:
-            jmd_c_seq = seq_kws[f"{ut.COL_JMD_C}_seq"]
+        # 'sample_kws' resolves the TMD-JMD parts and WINS over any explicitly given sequences.
+        if verbose and any(s is not None for s in (jmd_n_seq, tmd_seq, jmd_c_seq)):
+            ut.print_out("'sample_kws' overrides the given 'tmd_seq' / 'jmd_n_seq' / 'jmd_c_seq'.")
+        jmd_n_seq = seq_kws[f"{ut.COL_JMD_N}_seq"]
+        tmd_seq = seq_kws[f"{ut.COL_TMD}_seq"]
+        jmd_c_seq = seq_kws[f"{ut.COL_JMD_C}_seq"]
     else:
         if not is_str:
             raise ValueError(f"'sample' ({sample}) must be an entry name (str) for 'ranking'; a row "
@@ -914,9 +1016,7 @@ class CPPPlot:
                 ytick_size: Optional[Union[int, float]] = None,
                 ytick_width: Optional[Union[int, float]] = None,
                 ytick_length: Union[int, float] = 5.0,
-                sample: Optional[Union[str, int]] = None,
-                df_seq: Optional[pd.DataFrame] = None,
-                df_parts: Optional[pd.DataFrame] = None,
+                sample_kws: Optional[dict] = None,
                 ) -> Tuple[Figure, Axes]:
         """
         Plot CPP/-SHAP profile showing feature importance/impact per residue position.
@@ -1040,18 +1140,17 @@ class CPPPlot:
             Width of the y-ticks (>0).
         ytick_length : int or float, default=5.0
             Length of the y-ticks (>0).
-        sample : str or int, optional
-            Convenience shortcut for a sample-level CPP-SHAP profile. When given (an entry name or row
-            position), ``col_imp`` is resolved to ``feat_impact_<sample>``, the TMD-JMD sequence parts
-            (``jmd_n_seq``, ``tmd_seq``, ``jmd_c_seq``) are read from ``df_parts`` via
-            :meth:`SequenceFeature.get_seq_kws`, and ``shap_plot`` is set to ``True`` automatically.
-            Requires ``df_seq`` and ``df_parts``. Explicitly passed sequence parts are not overridden.
-        df_seq : pd.DataFrame, optional
-            DataFrame containing an ``entry`` column with unique protein identifiers; required when
-            ``sample`` is given, to cross-check the resolved TMD-JMD parts.
-        df_parts : pd.DataFrame, optional
-            Sequence parts DataFrame (indexed by ``entry``) as produced by
-            :meth:`SequenceFeature.get_df_parts`; required when ``sample`` is given.
+        sample_kws : dict, optional
+            Structured bundle selecting one sample for a sample-level CPP-SHAP profile — the bundled
+            alternative to providing the TMD-JMD sequences directly. Fixed keys: ``sample`` (an entry
+            name / id / accession ``str`` or a row-position ``int``), ``df_seq`` and ``df_parts``.
+            When given, ``col_imp`` is resolved to ``feat_impact_<entry>``, the TMD-JMD sequence parts
+            are read from ``df_parts`` via :meth:`SequenceFeature.get_seq_kws`, and ``shap_plot`` is
+            set to ``True`` automatically. It **overrides** any explicitly passed ``tmd_seq`` /
+            ``jmd_n_seq`` / ``jmd_c_seq``. Because the displayed sequence must stay faithful to the
+            ``df_parts`` the features map to, the sequence's own lengths set the geometry;
+            ``tmd_len`` / ``jmd_n_len`` / ``jmd_c_len`` apply only when no sequence is shown. See the
+            :ref:`keyword-dict parameters overview <kws-overview>`.
 
         Returns
         -------
@@ -1074,12 +1173,15 @@ class CPPPlot:
         --------
         .. include:: examples/cpp_plot_profile.rst
         """
-        # Resolve sample-level SHAP shortcut: 'sample' sets col_imp='feat_impact_<sample>'
-        # and the TMD-JMD parts from df_parts (via SequenceFeature.get_seq_kws).
+        # Resolve the 'sample_kws' shortcut: it sets col_imp='feat_impact_<sample>' and the TMD-JMD
+        # parts from df_parts (via SequenceFeature.get_seq_kws), the bundled alternative to passing
+        # the sequences directly. The displayed sequence's own lengths drive the grid geometry
+        # (faithful to df_parts); tmd_len/jmd_n_len/jmd_c_len only apply when no sequence is shown.
+        sample, df_seq, df_parts = unpack_sample_kws(sample_kws)
         if sample is not None:
             col_imp, jmd_n_seq, tmd_seq, jmd_c_seq = resolve_sample_kws(
                 sample=sample, df_seq=df_seq, df_parts=df_parts,
-                jmd_n_seq=jmd_n_seq, tmd_seq=tmd_seq, jmd_c_seq=jmd_c_seq)
+                jmd_n_seq=jmd_n_seq, tmd_seq=tmd_seq, jmd_c_seq=jmd_c_seq, verbose=self._verbose)
             shap_plot = True
         # Check primary input
         ut.check_bool(name="shap_plot", val=shap_plot)
@@ -1097,9 +1199,13 @@ class CPPPlot:
         ut.check_number_range(name="start", val=start, min_val=0, just_int=True)
         jmd_n_len = ut.check_jmd_n_len(jmd_n_len=self._jmd_n_len)
         jmd_c_len = ut.check_jmd_c_len(jmd_c_len=self._jmd_c_len)
+        # When any sequence is shown its own lengths set the grid geometry (faithful to df_parts, to
+        # which the features map); tmd_len/jmd_n_len/jmd_c_len only take effect when NO sequence is
+        # given. On the sample_kws path the parts come from df_parts, so the length-consistency guard
+        # (meant for user-supplied sequences) is relaxed.
         args_len, args_seq = check_parts_len(tmd_len=tmd_len, jmd_n_len=jmd_n_len, jmd_c_len=jmd_c_len,
                                              jmd_n_seq=jmd_n_seq, tmd_seq=tmd_seq, jmd_c_seq=jmd_c_seq,
-                                             check_jmd_seq_len_consistent=True)
+                                             check_jmd_seq_len_consistent=(sample_kws is None))
         args_part_color = check_part_color(tmd_color=tmd_color, jmd_color=jmd_color)
         args_seq_color = check_seq_color(tmd_seq_color=tmd_seq_color, jmd_seq_color=jmd_seq_color)
         _fixed_seq_size, _req_size = resolve_seq_size(seq_size)
@@ -1228,6 +1334,7 @@ class CPPPlot:
                 xtick_size: Union[int, float] = 11.0,
                 xtick_width: Union[int, float] = 2.0,
                 xtick_length: Union[int, float] = 5.0,
+                sample_kws: Optional[dict] = None,
                 ) -> Tuple[Figure, Axes]:
         """
         Plot a CPP/-SHAP heatmap showing the feature value mean difference/feature impact
@@ -1368,6 +1475,15 @@ class CPPPlot:
             Width of the x-ticks (>0).
         xtick_length : int or float, default=5.0
             Length of the x-ticks (>0).
+        sample_kws : dict, optional
+            Structured bundle selecting one sample to draw its TMD-JMD sequence band — the bundled
+            alternative to providing the sequences directly. Fixed keys: ``sample`` (an entry name /
+            id / accession ``str`` or a row-position ``int``), ``df_seq`` and ``df_parts``. The
+            TMD-JMD parts are read from ``df_parts`` via :meth:`SequenceFeature.get_seq_kws` and
+            **override** any explicitly passed ``tmd_seq`` / ``jmd_n_seq`` / ``jmd_c_seq``. Because the
+            displayed sequence must stay faithful to the ``df_parts`` the features map to, the
+            sequence's own lengths set the grid geometry; ``tmd_len`` / ``jmd_n_len`` / ``jmd_c_len``
+            apply only when no sequence is shown. See the :ref:`keyword-dict parameters overview <kws-overview>`.
 
         Returns
         -------
@@ -1388,7 +1504,8 @@ class CPPPlot:
         ``fig.savefig(..., bbox_inches="tight")`` and ``plt.show()`` work as usual.
 
         When no sequence is supplied (``tmd_seq`` is ``None``), the TMD and JMD regions are drawn as
-        a solid colored bar of a fixed, sequence-band-like height below the grid.
+        a thin solid colored bar below the grid, kept at a constant height (a fixed fraction of a grid
+        cell-row) at any figure size.
 
         See Also
         --------
@@ -1404,6 +1521,14 @@ class CPPPlot:
         --------
         .. include:: examples/cpp_plot_heatmap.rst
         """
+        # Resolve the 'sample_kws' shortcut: read the TMD-JMD parts for one sample from df_parts (via
+        # SequenceFeature.get_seq_kws), the bundled alternative to passing the sequences directly. The
+        # heatmap shows the sequence band (no importance overlay), so only the parts are resolved.
+        sample, df_seq, df_parts = unpack_sample_kws(sample_kws)
+        if sample is not None:
+            _, jmd_n_seq, tmd_seq, jmd_c_seq = resolve_sample_kws(
+                sample=sample, df_seq=df_seq, df_parts=df_parts,
+                jmd_n_seq=jmd_n_seq, tmd_seq=tmd_seq, jmd_c_seq=jmd_c_seq, verbose=self._verbose)
         # Check primary input
         ut.check_bool(name="shap_plot", val=shap_plot)
         ut.check_str_options(name="col_cat", val=col_cat,
@@ -1420,9 +1545,13 @@ class CPPPlot:
         ut.check_number_range(name="start", val=start, min_val=0, just_int=True)
         jmd_n_len = ut.check_jmd_n_len(jmd_n_len=self._jmd_n_len)
         jmd_c_len = ut.check_jmd_c_len(jmd_c_len=self._jmd_c_len)
+        # When any sequence is shown its own lengths set the grid geometry (faithful to df_parts, to
+        # which the features map); tmd_len/jmd_n_len/jmd_c_len only take effect when NO sequence is
+        # given. On the sample_kws path the parts come from df_parts, so the length-consistency guard
+        # (meant for user-supplied sequences) is relaxed.
         args_len, args_seq = check_parts_len(tmd_len=tmd_len, jmd_n_len=jmd_n_len, jmd_c_len=jmd_c_len,
                                              jmd_n_seq=jmd_n_seq, tmd_seq=tmd_seq, jmd_c_seq=jmd_c_seq,
-                                             check_jmd_seq_len_consistent=True)
+                                             check_jmd_seq_len_consistent=(sample_kws is None))
         args_part_color = check_part_color(tmd_color=tmd_color, jmd_color=jmd_color)
         args_seq_color = check_seq_color(tmd_seq_color=tmd_seq_color, jmd_seq_color=jmd_seq_color)
         _fixed_seq_size, _req_size = resolve_seq_size(seq_size)
@@ -1525,6 +1654,15 @@ class CPPPlot:
             for _ in range(2):
                 grow_to_fit(fig=fig)
                 align_bottom_furniture_(fig=fig, ax=ax)
+        else:
+            # Manual figsize: keep the exact figure and align the furniture at the bottom, letting
+            # the grid cells adapt to the reserved space (rather than growing the figure).
+            _align_furniture_fixed_figure(fig=fig, ax=ax, fontsize_tmd_jmd=fontsize_tmd_jmd,
+                                          weight_tmd_jmd=weight_tmd_jmd)
+        # After all layout is settled, re-run the subcategory-label shrink so any overlap a fixed
+        # figsize's tight_layout reintroduced is cleared (auto_font's zero-overlap promise).
+        _reshrink_row_labels(fig=fig, ax=ax, label_texts=df_feat[col_cat].unique(),
+                             optimize_labels=optimize_labels)
         # Freeze on every path: a later plt.tight_layout() must not re-pack the axes and drop the
         # colorbar/legend back onto the heatmap, whatever figure size was used.
         _freeze_composed_layout(fig)
@@ -1588,9 +1726,7 @@ class CPPPlot:
                     xtick_width: Union[int, float] = 2.0,
                     xtick_length: Union[int, float] = 5.0,
                     seq_char_fill: Optional[bool] = None,
-                    sample: Optional[Union[str, int]] = None,
-                    df_seq: Optional[pd.DataFrame] = None,
-                    df_parts: Optional[pd.DataFrame] = None,
+                    sample_kws: Optional[dict] = None,
                     ) -> Tuple[Figure, Axes]:
         """
         Plot Comparative Physicochemical Profiling (CPP) feature map showing feature value mean
@@ -1783,19 +1919,18 @@ class CPPPlot:
 
             .. versionchanged:: 1.1.0
                 Now defaults to ``True`` (edge-to-edge residue characters).
-        sample : str or int, optional
-            Convenience shortcut for a sample-level CPP-SHAP feature map. When given (an entry name or
-            row position), ``col_imp`` is resolved to ``feat_impact_<entry>`` (an int position is
-            mapped to its entry name via ``df_parts``), the TMD-JMD sequence
-            parts (``jmd_n_seq``, ``tmd_seq``, ``jmd_c_seq``) are read from ``df_parts`` via
-            :meth:`SequenceFeature.get_seq_kws`, and ``shap_plot`` is set to ``True`` automatically.
-            Requires ``df_seq`` and ``df_parts``. Explicitly passed sequence parts are not overridden.
-        df_seq : pd.DataFrame, optional
-            DataFrame containing an ``entry`` column with unique protein identifiers; required when
-            ``sample`` is given, to cross-check the resolved TMD-JMD parts.
-        df_parts : pd.DataFrame, optional
-            Sequence parts DataFrame (indexed by ``entry``) as produced by
-            :meth:`SequenceFeature.get_df_parts`; required when ``sample`` is given.
+        sample_kws : dict, optional
+            Structured bundle selecting one sample for a sample-level CPP-SHAP feature map — the
+            bundled alternative to providing the TMD-JMD sequences directly. Fixed keys: ``sample``
+            (an entry name / id / accession ``str`` or a row-position ``int``), ``df_seq`` and
+            ``df_parts``. When given, ``col_imp`` is resolved to ``feat_impact_<entry>`` (an int
+            position is mapped to its entry name via ``df_parts``), the TMD-JMD sequence parts are
+            read from ``df_parts`` via :meth:`SequenceFeature.get_seq_kws`, and ``shap_plot`` is set
+            to ``True`` automatically. It **overrides** any explicitly passed ``tmd_seq`` /
+            ``jmd_n_seq`` / ``jmd_c_seq``. Because the displayed sequence must stay faithful to the
+            ``df_parts`` the features map to, the sequence's own lengths set the grid geometry;
+            ``tmd_len`` / ``jmd_n_len`` / ``jmd_c_len`` apply only when no sequence is shown. See the
+            :ref:`keyword-dict parameters overview <kws-overview>`.
 
         Returns
         -------
@@ -1830,12 +1965,15 @@ class CPPPlot:
         --------
         .. include:: examples/cpp_plot_feature_map.rst
         """
-        # Resolve sample-level SHAP shortcut: 'sample' sets col_imp='feat_impact_<sample>'
-        # and the TMD-JMD parts from df_parts (via SequenceFeature.get_seq_kws).
+        # Resolve the 'sample_kws' shortcut: it sets col_imp='feat_impact_<sample>' and the TMD-JMD
+        # parts from df_parts (via SequenceFeature.get_seq_kws), the bundled alternative to passing
+        # the sequences directly. The displayed sequence's own lengths drive the grid geometry
+        # (faithful to df_parts); tmd_len/jmd_n_len/jmd_c_len only apply when no sequence is shown.
+        sample, df_seq, df_parts = unpack_sample_kws(sample_kws)
         if sample is not None:
             col_imp, jmd_n_seq, tmd_seq, jmd_c_seq = resolve_sample_kws(
                 sample=sample, df_seq=df_seq, df_parts=df_parts,
-                jmd_n_seq=jmd_n_seq, tmd_seq=tmd_seq, jmd_c_seq=jmd_c_seq)
+                jmd_n_seq=jmd_n_seq, tmd_seq=tmd_seq, jmd_c_seq=jmd_c_seq, verbose=self._verbose)
             shap_plot = True
         # Check primary input
         ut.check_bool(name="shap_plot", val=shap_plot)
@@ -1863,9 +2001,13 @@ class CPPPlot:
         ut.check_number_range(name="start", val=start, min_val=0, just_int=True)
         jmd_n_len = ut.check_jmd_n_len(jmd_n_len=self._jmd_n_len)
         jmd_c_len = ut.check_jmd_c_len(jmd_c_len=self._jmd_c_len)
+        # When any sequence is shown its own lengths set the grid geometry (faithful to df_parts, to
+        # which the features map); tmd_len/jmd_n_len/jmd_c_len only take effect when NO sequence is
+        # given. On the sample_kws path the parts come from df_parts, so the length-consistency guard
+        # (meant for user-supplied sequences) is relaxed.
         args_len, args_seq = check_parts_len(tmd_len=tmd_len, jmd_n_len=jmd_n_len, jmd_c_len=jmd_c_len,
                                              jmd_n_seq=jmd_n_seq, tmd_seq=tmd_seq, jmd_c_seq=jmd_c_seq,
-                                             check_jmd_seq_len_consistent=True)
+                                             check_jmd_seq_len_consistent=(sample_kws is None))
         args_part_color = check_part_color(tmd_color=tmd_color, jmd_color=jmd_color)
         args_seq_color = check_seq_color(tmd_seq_color=tmd_seq_color, jmd_seq_color=jmd_seq_color)
         _fixed_seq_size, _req_size = resolve_seq_size(seq_size)
@@ -2029,6 +2171,20 @@ class CPPPlot:
             for _ in range(2):
                 grow_to_fit(fig=fig)
                 align_bottom_furniture_(fig=fig, ax=ax)
+        else:
+            # Manual figsize: keep the exact figure and align the furniture at the bottom, letting
+            # the grid cells adapt to the reserved space (rather than growing the figure).
+            _align_furniture_fixed_figure(fig=fig, ax=ax, fontsize_tmd_jmd=fontsize_tmd_jmd,
+                                          weight_tmd_jmd=weight_tmd_jmd)
+        # After all layout is settled, re-run the subcategory-label shrink so any overlap a fixed
+        # figsize's tight_layout reintroduced is cleared (auto_font's zero-overlap promise). The
+        # per-row cumulative-importance % annotations are shrunk the same way.
+        _reshrink_row_labels(fig=fig, ax=ax, label_texts=df_feat[col_cat].unique(),
+                             optimize_labels=optimize_labels)
+        _reshrink_importance_pcts(fig=fig, ax_grid=ax, optimize_labels=optimize_labels)
+        # Scale the ■ feature-impact markers to the final cell size (no-op at the default cell) so
+        # they do not overflow the shrunken cells of a small manual figsize.
+        _rescale_impact_markers(fig=fig, ax=ax, n_rows=n_subcat)
         # Freeze on EVERY path (auto, cell_size, manual figsize): a later plt.tight_layout() would
         # re-pack the axes and drop the furniture back onto the heatmap regardless of how the
         # figure was sized. This is the fix for the "legend lands on the heatmap" report.
