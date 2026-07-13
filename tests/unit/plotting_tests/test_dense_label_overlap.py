@@ -1,18 +1,18 @@
 """
-Layout invariants for the ``auto_font`` constant-cell-size sizing of the CPP
-composite plots (``CPPPlot.feature_map`` / ``heatmap`` / ``profile``).
+Layout invariants for the constant-cell-size sizing of the CPP composite plots
+(``CPPPlot.feature_map`` / ``heatmap`` / ``profile``).
 
-The guarantee under ``auto_font=True`` (the default) is: every grid *cell* keeps a
-constant physical size regardless of how many subcategory rows or residue-position
-columns the grid has — the *figure* grows instead. That keeps fonts fixed (they are
-measured in points, so they do not scale with the figure) and therefore legible and
-non-overlapping at any data size, without the caller hand-tuning
-``plot_settings(font_scale=...)``.
+The guarantee (on by default via ``auto_font``, and driven explicitly by ``cell_size``)
+is: every grid *cell* keeps a constant physical size regardless of how many subcategory
+rows or residue-position columns the grid has — the *figure* shrinks for a small grid and
+grows for a large one. That keeps fonts fixed (they are measured in points, so they do not
+scale with the figure) and the residue letters, which are fitted to the cell, consistent —
+legible and non-overlapping at any data size, and NOTHING clips the figure edge.
 
-These assert the invariants directly (constant cell size; font neither shrunk nor
-enlarged; no overlap; figure grows) rather than fragile absolute-pixel snapshots,
-so they are robust to the freetype/matplotlib build. The pixel-exact check lives in
-the pytest-mpl ``visual_regression`` suite.
+These assert the invariants directly (constant cell size; no edge clip; font neither shrunk
+nor enlarged; no overlap; capped/constant part labels) rather than fragile absolute-pixel
+snapshots, so they are robust to the freetype/matplotlib build. The pixel-exact check lives
+in the pytest-mpl ``visual_regression`` suite.
 """
 import io
 import re
@@ -34,12 +34,14 @@ from ._text_overlap import get_label_overlaps, make_dense_df_feat
 
 
 N_SUBCATS = [20, 36, 55, 74]
-# Grids dense enough that the auto figure exceeds the default (8, 8) floor, so the
-# constant-cell-size invariant applies (below the floor, auto_font only grows the
-# figure to the default and cells are larger — see TestSmallGridFloor).
+# The cell stays constant at ANY density now (no lower floor): sparse grids shrink the
+# figure below the (8, 8) default, dense grids grow it, and the cell hits the target either way.
 DENSE_SUBCATS = [40, 55, 74]
+SPARSE_SUBCATS = [1, 5, 15]
 N_POSITIONS = 40  # default tmd_len 20 + jmd_n 10 + jmd_c 10
-CELL_TOL = 0.06   # relative tolerance on the per-cell size (freetype/layout jitter)
+CELL_TOL = 0.03   # relative tolerance on the per-cell size (freetype/layout jitter)
+CLIP_TOL_IN = 0.02  # inches of tolerated content overflow past the figure edge
+PART_NAMES = {"JMD-N", "TMD", "JMD-C"}
 
 
 def _cell_size(fig, ax, n_rows, n_cols):
@@ -50,11 +52,61 @@ def _cell_size(fig, ax, n_rows, n_cols):
     return pos.width * w_in / n_cols, pos.height * h_in / n_rows
 
 
+def _edge_clip_in(fig):
+    """Max inches by which any drawn content spills past the figure box [0,w]x[0,h]."""
+    fig.canvas.draw()
+    r = fig.canvas.get_renderer()
+    w_in, h_in = (float(v) for v in fig.get_size_inches())
+    tb = fig.get_tightbbox(r)  # inches, figure lower-left origin
+    return max(max(0.0, -tb.x0), max(0.0, -tb.y0), max(0.0, tb.x1 - w_in), max(0.0, tb.y1 - h_in))
+
+
+def _part_label_size_and_gap(fig, ax):
+    """(max part-label pt, points from sequence-band bottom to part-label top), or (None, None)."""
+    fig.canvas.draw()
+    r = fig.canvas.get_renderer()
+    part_ax = next((a for a in fig.axes
+                    if any(t.get_text() in PART_NAMES for t in a.get_xticklabels())), None)
+    if part_ax is None:
+        return None, None
+    pl = [t for t in part_ax.get_xticklabels() if t.get_text() in PART_NAMES]
+    sl = [t for t in ax.get_xticklabels(which="both") if t.get_text().strip()]
+    if not pl or not sl:
+        return None, None
+    size = max(t.get_fontsize() for t in pl)
+    gap = (min(t.get_window_extent(r).y0 for t in sl)
+           - max(t.get_window_extent(r).y1 for t in pl)) / fig.dpi * 72.0
+    return size, gap
+
+
+def _df_feat_len(n_subcat, tmd_len):
+    """A valid df_feat for ANY tmd_len (feature spans the whole TMD), varying the row count.
+
+    ``make_dense_df_feat`` hardcodes positions valid only at the default tmd_len; the
+    TMD-spanning ``Segment(1,1)`` feature stays valid for any tmd_len, so the part-label tests
+    can vary the sequence length.
+    """
+    df = make_dense_df_feat(n_subcat).copy()
+    df["feature"] = ["TMD-Segment(1,1)-" + f.split("-")[-1] for f in df["feature"]]
+    return df
+
+
 def _row_label_fonts(fig, subcats):
     fig.canvas.draw()
     subcats = set(subcats)
     return [t.get_fontsize() for a in fig.axes for t in a.texts
             if t.get_text().strip() in subcats and t.get_visible()]
+
+
+def _seq_letter_overlaps(fig, ax):
+    """(#residue letters, worst px overlap between adjacent letters). >0 px means glyphs collide."""
+    fig.canvas.draw()
+    r = fig.canvas.get_renderer()
+    labs = [t for t in ax.xaxis.get_ticklabels(which="both") if len(t.get_text().strip()) == 1]
+    labs = sorted(labs, key=lambda t: t.get_window_extent(r).x0)
+    boxes = [t.get_window_extent(r) for t in labs]
+    worst = max((a.x1 - b.x0 for a, b in zip(boxes, boxes[1:])), default=0.0)
+    return len(labs), worst
 
 
 _NUMERIC = re.compile(r"^\[?-?\d+(\.\d+)?%?\]?$")
@@ -107,7 +159,7 @@ class TestOverlapDetector:
 
 
 class TestConstantCellSize:
-    """auto_font=True holds each cell at a constant physical size across densities."""
+    """The cell holds a constant physical size across every density (sparse to dense)."""
 
     def setup_method(self):
         aa.options["verbose"] = False
@@ -115,14 +167,14 @@ class TestConstantCellSize:
     def teardown_method(self):
         plt.close("all")
 
-    @pytest.mark.parametrize("n_subcat", DENSE_SUBCATS)
+    @pytest.mark.parametrize("n_subcat", SPARSE_SUBCATS + DENSE_SUBCATS)
     def test_feature_map_cell_size_is_target(self, n_subcat):
         fig, ax = aa.CPPPlot().feature_map(make_dense_df_feat(n_subcat))
         cw, ch = _cell_size(fig, ax, n_subcat, N_POSITIONS)
         assert abs(cw - CELL_W_IN) <= CELL_W_IN * CELL_TOL, cw
         assert abs(ch - CELL_H_IN) <= CELL_H_IN * CELL_TOL, ch
 
-    @pytest.mark.parametrize("n_subcat", [55, 74])
+    @pytest.mark.parametrize("n_subcat", [5, 55, 74])
     def test_heatmap_cell_size_is_target(self, n_subcat):
         # The standalone heatmap uses a taller target cell height (HEATMAP_CELL_H_IN) than
         # the feature map, so its subcategory row labels do not overlap; width matches.
@@ -132,16 +184,17 @@ class TestConstantCellSize:
         assert abs(ch - HEATMAP_CELL_H_IN) <= HEATMAP_CELL_H_IN * CELL_TOL, ch
 
     def test_cell_size_constant_across_densities(self):
-        # The whole point: the cell does NOT shrink as the grid gets denser (above the floor).
+        # The whole point: the cell is the SAME at a sparse grid and a dense grid (the figure
+        # resizes, not the cell). Spanning sparse (5) to dense (74) exercises shrink AND grow.
         heights = []
-        for n in (40, 74):
+        for n in (5, 74):
             fig, ax = aa.CPPPlot().feature_map(make_dense_df_feat(n))
             heights.append(_cell_size(fig, ax, n, N_POSITIONS)[1])
         assert abs(heights[0] - heights[1]) <= CELL_H_IN * CELL_TOL, heights
 
 
-class TestSmallGridFloor:
-    """auto_font only GROWS the figure: sparse grids never collapse below the default."""
+class TestSparseGridShrinks:
+    """A sparse grid shrinks the figure below the default and still hits the cell, no clip."""
 
     def setup_method(self):
         aa.options["verbose"] = False
@@ -149,18 +202,103 @@ class TestSmallGridFloor:
     def teardown_method(self):
         plt.close("all")
 
-    @pytest.mark.parametrize("n_subcat", [1, 5, 15])
-    def test_feature_map_not_smaller_than_default(self, n_subcat):
+    @pytest.mark.parametrize("n_subcat", SPARSE_SUBCATS)
+    def test_feature_map_shrinks_and_hits_cell(self, n_subcat):
         fig, ax = aa.CPPPlot().feature_map(make_dense_df_feat(n_subcat))
         w, h = (float(v) for v in fig.get_size_inches())
-        # Never shrink below the (8, 8) default footprint (so decorations/fonts fit).
-        assert w >= 8.0 - 1e-6 and h >= 8.0 - 1e-6, (n_subcat, w, h)
+        cw, ch = _cell_size(fig, ax, n_subcat, N_POSITIONS)
+        # Few rows -> the figure is shorter than the old (8, 8) floor (the cell no longer balloons).
+        assert h < 8.0, (n_subcat, h)
+        assert abs(ch - CELL_H_IN) <= CELL_H_IN * CELL_TOL, ch
+        assert _edge_clip_in(fig) <= CLIP_TOL_IN, _edge_clip_in(fig)
 
-    @pytest.mark.parametrize("n_subcat", [1, 5, 15])
-    def test_heatmap_not_smaller_than_default(self, n_subcat):
+    @pytest.mark.parametrize("n_subcat", SPARSE_SUBCATS)
+    def test_heatmap_shrinks_and_hits_cell(self, n_subcat):
         fig, ax = aa.CPPPlot().heatmap(make_dense_df_feat(n_subcat))
-        w, h = (float(v) for v in fig.get_size_inches())
-        assert w >= 8.0 - 1e-6 and h >= 8.0 - 1e-6, (n_subcat, w, h)
+        h = float(fig.get_size_inches()[1])
+        cw, ch = _cell_size(fig, ax, n_subcat, N_POSITIONS)
+        assert h < 8.0, (n_subcat, h)
+        assert abs(ch - HEATMAP_CELL_H_IN) <= HEATMAP_CELL_H_IN * CELL_TOL, ch
+        assert _edge_clip_in(fig) <= CLIP_TOL_IN, _edge_clip_in(fig)
+
+
+class TestNoEdgeClip:
+    """Nothing clips the figure edge, at any density (the objective 'perfect in any setting' gate)."""
+
+    def setup_method(self):
+        aa.options["verbose"] = False
+
+    def teardown_method(self):
+        plt.close("all")
+
+    @pytest.mark.parametrize("n_subcat", SPARSE_SUBCATS + N_SUBCATS)
+    def test_feature_map_no_clip(self, n_subcat):
+        fig, ax = aa.CPPPlot().feature_map(make_dense_df_feat(n_subcat))
+        assert _edge_clip_in(fig) <= CLIP_TOL_IN, (n_subcat, _edge_clip_in(fig))
+
+    @pytest.mark.parametrize("n_subcat", SPARSE_SUBCATS + N_SUBCATS)
+    def test_heatmap_no_clip(self, n_subcat):
+        fig, ax = aa.CPPPlot().heatmap(make_dense_df_feat(n_subcat))
+        assert _edge_clip_in(fig) <= CLIP_TOL_IN, (n_subcat, _edge_clip_in(fig))
+
+
+class TestPartLabelsCappedAndConstant:
+    """The TMD/JMD part labels stay capped in size and a constant gap below the sequence band."""
+
+    def setup_method(self):
+        aa.options["verbose"] = False
+
+    def teardown_method(self):
+        plt.close("all")
+
+    @pytest.mark.parametrize("tmd_len", [6, 20, 100])
+    def test_part_label_size_capped(self, tmd_len):
+        seq = "ACDEFGHIKLMNPQRSTVWY" * 8
+        fig, ax = aa.CPPPlot().feature_map(
+            _df_feat_len(20, tmd_len), tmd_len=tmd_len, add_imp_bar_top=False,
+            tmd_seq=seq[:tmd_len], jmd_n_seq=seq[:10], jmd_c_seq=seq[:10])
+        size, _ = _part_label_size_and_gap(fig, ax)
+        assert size is not None and size <= 12.01, size
+
+    def test_part_label_gap_constant_across_lengths(self):
+        seq = "ACDEFGHIKLMNPQRSTVWY" * 8
+        gaps = []
+        for tmd_len in (6, 100):
+            fig, ax = aa.CPPPlot().feature_map(
+                _df_feat_len(20, tmd_len), tmd_len=tmd_len, add_imp_bar_top=False,
+                tmd_seq=seq[:tmd_len], jmd_n_seq=seq[:10], jmd_c_seq=seq[:10])
+            gaps.append(_part_label_size_and_gap(fig, ax)[1])
+            plt.close("all")
+        assert gaps[0] is not None and abs(gaps[0] - gaps[1]) <= 1.0, gaps
+
+
+class TestCellSizeParam:
+    """The explicit cell_size param sets the exact cell, composes with figsize, and never clips."""
+
+    def setup_method(self):
+        aa.options["verbose"] = False
+
+    def teardown_method(self):
+        plt.close("all")
+
+    @pytest.mark.parametrize("cell_size", [(0.25, 0.25), (0.10, 0.12)])
+    def test_feature_map_cell_size_is_exact(self, cell_size):
+        fig, ax = aa.CPPPlot().feature_map(make_dense_df_feat(25), cell_size=cell_size)
+        cw, ch = _cell_size(fig, ax, 25, N_POSITIONS)
+        assert abs(cw - cell_size[0]) <= cell_size[0] * CELL_TOL, cw
+        assert abs(ch - cell_size[1]) <= cell_size[1] * CELL_TOL, ch
+        assert _edge_clip_in(fig) <= CLIP_TOL_IN, _edge_clip_in(fig)
+
+    def test_cell_size_drives_even_with_auto_font_off(self):
+        aa.options["auto_font"] = False
+        fig, ax = aa.CPPPlot().feature_map(make_dense_df_feat(25), cell_size=(0.2, 0.2))
+        cw, ch = _cell_size(fig, ax, 25, N_POSITIONS)
+        assert abs(cw - 0.2) <= 0.2 * CELL_TOL and abs(ch - 0.2) <= 0.2 * CELL_TOL, (cw, ch)
+
+    @pytest.mark.parametrize("cell_size", [(0.0, 0.2), (0.2, -0.1), (0.2,), 0.2])
+    def test_invalid_cell_size_raises(self, cell_size):
+        with pytest.raises(ValueError):
+            aa.CPPPlot().feature_map(make_dense_df_feat(20), cell_size=cell_size)
 
 
 class TestFontStableAndNoOverlap:
@@ -360,3 +498,87 @@ class TestSeqCharFill:
             for fill in (True, False):
                 getattr(cpp, name)(df, seq_char_fill=fill, **seq_kws)
                 plt.close("all")
+
+
+class TestSeqCharNeverOverlap:
+    """The sequence residue letters must NEVER overlap, at any grid width; the colored band
+    stays gap-free (one full-width cell per residue in fill mode)."""
+
+    _SEQ = "ACDEFGHIKLMNPQRSTVWY" * 10
+
+    def setup_method(self):
+        aa.options["verbose"] = False
+
+    def teardown_method(self):
+        plt.close("all")
+        aa.options["auto_font"] = True
+
+    @pytest.mark.parametrize("n_subcat", [5, 25, 40])
+    @pytest.mark.parametrize("tmd_len", [6, 20, 95, 150])
+    def test_feature_map_no_seq_overlap(self, tmd_len, n_subcat):
+        fig, ax = aa.CPPPlot().feature_map(
+            _df_feat_len(n_subcat, tmd_len), tmd_len=tmd_len, add_imp_bar_top=False,
+            tmd_seq=self._SEQ[:tmd_len], jmd_n_seq=self._SEQ[:10], jmd_c_seq=self._SEQ[:10])
+        n, worst = _seq_letter_overlaps(fig, ax)
+        assert n == tmd_len + 20, n
+        assert worst <= 1.0, f"seq letters overlap by {worst:.1f}px (tmd={tmd_len}, nsub={n_subcat})"
+
+    @pytest.mark.parametrize("figsize", [None, (10, 7), (20, 9)])
+    def test_no_seq_overlap_across_figsize(self, figsize):
+        # All-W/M: the widest glyphs, the worst case for adjacent-letter collision.
+        seq = "WM" * 90
+        fig, ax = aa.CPPPlot().feature_map(
+            _df_feat_len(25, 95), tmd_len=95, add_imp_bar_top=False, figsize=figsize,
+            tmd_seq=seq[:95], jmd_n_seq=seq[:10], jmd_c_seq=seq[:10])
+        _, worst = _seq_letter_overlaps(fig, ax)
+        assert worst <= 1.0, f"seq letters overlap by {worst:.1f}px (figsize={figsize})"
+
+    def test_seq_band_one_cell_per_residue(self):
+        # fill mode (auto_font on): a full-width colored cell behind every residue = gap-free band.
+        aa.options["auto_font"] = True
+        fig, ax = aa.CPPPlot().feature_map(
+            _df_feat_len(25, 95), tmd_len=95, add_imp_bar_top=False,
+            tmd_seq=self._SEQ[:95], jmd_n_seq=self._SEQ[:10], jmd_c_seq=self._SEQ[:10])
+        n_cells = sum(1 for p in ax.patches if p.get_gid() == "_seq_cell")
+        assert n_cells == 95 + 20, n_cells
+
+
+class TestSeqSizeModes:
+    """seq_size: 'auto' (length-adaptive) | fraction of the cell height (<=1) | points (>1).
+    Every mode keeps the residue letters non-overlapping."""
+
+    _SEQ = "ACDEFGHIKLMNPQRSTVWY" * 10
+
+    def setup_method(self):
+        aa.options["verbose"] = False
+
+    def teardown_method(self):
+        plt.close("all")
+        aa.options["auto_font"] = True
+
+    def _seq_fs(self, tmd_len, seq_size):
+        fig, ax = aa.CPPPlot().feature_map(
+            _df_feat_len(20, tmd_len), tmd_len=tmd_len, add_imp_bar_top=False, seq_size=seq_size,
+            tmd_seq=self._SEQ[:tmd_len], jmd_n_seq=self._SEQ[:10], jmd_c_seq=self._SEQ[:10])
+        _, worst = _seq_letter_overlaps(fig, ax)
+        labs = [t for t in ax.xaxis.get_ticklabels(which="both") if len(t.get_text().strip()) == 1]
+        fs = max(t.get_fontsize() for t in labs)
+        plt.close("all")
+        assert worst <= 1.0, f"overlap {worst:.1f}px at seq_size={seq_size}"
+        return fs
+
+    def test_auto_steps_down_for_short_tmd(self):
+        assert self._seq_fs(20, "auto") > self._seq_fs(4, "auto")
+
+    def test_fraction_smaller_than_full(self):
+        assert self._seq_fs(20, 0.6) < self._seq_fs(20, 0.9)
+
+    @pytest.mark.parametrize("pt", [8.0, 12.0])
+    def test_points_sets_absolute_size(self, pt):
+        assert abs(self._seq_fs(20, pt) - pt) <= 0.6
+
+    def test_invalid_seq_size_raises(self):
+        with pytest.raises(ValueError):
+            aa.CPPPlot().feature_map(
+                _df_feat_len(20, 20), tmd_len=20, seq_size=-1,
+                tmd_seq=self._SEQ[:20], jmd_n_seq=self._SEQ[:10], jmd_c_seq=self._SEQ[:10])

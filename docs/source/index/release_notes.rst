@@ -334,6 +334,24 @@ Added
 
 **Plotting**
 
+- **cell_size** on :meth:`~aaanalysis.CPPPlot.feature_map` / :meth:`~aaanalysis.CPPPlot.heatmap` /
+  :meth:`~aaanalysis.CPPPlot.profile`: a ``(width, height)`` inches tuple that holds every grid
+  cell at that exact physical size — the figure shrinks for a small grid and grows for a large one,
+  and nothing clips the figure edge — for any sequence length or number of scale subcategories.
+  ``figsize`` seeds the layout; ``cell_size`` sets the cell (the profile uses only the width). The
+  cumulative-importance bar strips (top per-position, right per-subcategory) are sized in grid-cell
+  units and clamped to a min/max cell range, so they lock to a near-constant physical size instead
+  of ballooning on dense grids or vanishing on sparse ones; the importance-axis maximum value sits
+  left of the right spine on a short strip and right of it on a tall one (the standard look), and
+  the ``[%]`` suffix is dropped from the heatmap-only label so both variants read the same.
+- **seq_size** on :meth:`~aaanalysis.CPPPlot.feature_map` / :meth:`~aaanalysis.CPPPlot.heatmap` /
+  :meth:`~aaanalysis.CPPPlot.profile` gains ``"auto"`` (default): it fits the residue letters to the
+  grid cell and steps them down for a short TMD, so a fixed cell keeps the sequence consistent too.
+  A value in ``(0, 1]`` sets the letter height to that fraction of the cell, and a value ``> 1`` is
+  an absolute font size in points; the letters never overlap at any size.
+- **fontsize_labels** on :meth:`~aaanalysis.CPPPlot.feature_map` / :meth:`~aaanalysis.CPPPlot.heatmap`
+  gains ``"auto"``, which tracks the ``plot_settings`` font scale, caps at about 13 pt, and shrinks
+  on overlap so the scale-subcategory rows never collide.
 - **COLOR_SAMPLES_POS / COLOR_SAMPLES_NEG / COLOR_SAMPLES_UNL / COLOR_SAMPLES_REL_NEG**:
   Public, named constants for the canonical sample-group colors (positive / negative /
   unlabeled / reliable-negative). They equal the ``plot_get_cdict("DICT_COLOR")["SAMPLES_*"]``
@@ -426,9 +444,23 @@ Changed
   :meth:`~aaanalysis.CPPPlot.ranking` now default to ``figsize=None`` and honor any explicit ``figsize`` as
   a fixed size, so "explicit figsize wins" holds package-wide (matching :meth:`~aaanalysis.CPPPlot.feature_map`);
   omitting ``figsize`` auto-sizes as before. :meth:`~aaanalysis.CPPPlot.heatmap` / :meth:`~aaanalysis.CPPPlot.profile`
-  gain the ``seq_char_fill`` residue-spacing option already on :meth:`~aaanalysis.CPPPlot.feature_map`, and
+  gain the ``seq_char_fill`` residue-band option already on :meth:`~aaanalysis.CPPPlot.feature_map`, and
   :meth:`~aaanalysis.AAPredPlot.predict_group` (``kind='rank_scatter'``) joins ``auto_font`` — its width grows
   with the number of ranked proteins when ``figsize`` is omitted.
+- **Constant-cell sizing shrinks as well as grows**: on the ``auto_font`` path (and whenever
+  ``cell_size`` is set), :meth:`~aaanalysis.CPPPlot.feature_map` / :meth:`~aaanalysis.CPPPlot.heatmap` /
+  :meth:`~aaanalysis.CPPPlot.profile` now size the figure so each cell hits the target exactly — a
+  sparse grid yields a *smaller* figure (previously it floored at the default and the cells ballooned),
+  a dense grid a larger one, and nothing clips at the figure edge at any size. The TMD/JMD part labels
+  are capped in size and held a constant distance below the sequence band (they previously rode the
+  residue-letter size and could grow huge or collide with the sequence). The bottom furniture is laid
+  out as one compact, top-aligned row clustered just below the grid — the scale-category legend, the
+  ``Feature value`` colorbar (a fixed-thickness gradient bar, no longer collapsing to a thin line when
+  the figure shrinks) and the feature-importance legend — so it no longer scatters or overlaps the
+  position ticks on a sparse grid. The coloured per-residue sequence cells and the scale-category
+  sidebar render as solid, gap-free blocks (the sidebar at a readable, cell-relative width), and the
+  subcategory row labels are lifted to the colorbar/legend size so they are no longer a step smaller
+  than the rest — matching the cheat-sheet reference at any figure size.
 - **Uniform plot return contract**: Every public ``*Plot`` method now returns a single
   ``(fig, ax)`` pair (forwarding attribute access to ``ax``, so existing
   ``ax = plot(...); ax.set_title(...)`` code keeps working), replacing the previous mix
