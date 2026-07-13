@@ -426,7 +426,7 @@ cpp = <span class="c-nm">aa.CPP</span>(df_parts=df_parts, split_kws=split_kws)</
     <div class="sec">
       <div class="sec-h"><span>Which Module Should I Use?</span><span class="hint">intent → module</span></div>
       <div class="sec-body">
-        <div class="cap-item"><span class="cw">Explore sequence patterns / composition</span><span class="cs">AAlogo</span></div>
+        <div class="cap-item"><span class="cw">Explore sequence patterns / composition</span><span class="cs">AALogo</span></div>
         <div class="cap-item"><span class="cw">Sample reference windows (if negatives are missing)</span><span class="cs">AAWindowSampler</span></div>
         <div class="cap-item"><span class="cw">Reduce redundant amino acid scales</span><span class="cs">AAclust</span></div>
         <div class="cap-item"><span class="cw">Discover discriminative physicochemical features</span><span class="cs">CPP</span></div>
@@ -442,13 +442,14 @@ cpp = <span class="c-nm">aa.CPP</span>(df_parts=df_parts, split_kws=split_kws)</
     <div class="cap-item"><span class="cw">Load benchmark sequences</span><span class="cs">load_dataset(name) → <span class="out">df_seq</span></span></div>
     <div class="cap-item"><span class="cw">Load AAontology scales</span><span class="cs">load_scales() → <span class="out">df_scales</span></span></div>
     <div class="cap-item"><span class="cw">Load precomputed features</span><span class="cs">load_features(name) → <span class="out">df_feat</span></span></div>
+    <div class="cap-item"><span class="cw">Binary labels from df column <span class="rowtag">v1.1</span></span><span class="cs">get_labels(df, positive_label) → <span class="out">labels</span></span></div>
     <div class="cap-item"><span class="cw">Read / write FASTA</span><span class="cs">read_fasta(file) → <span class="out">df_seq</span></span></div>
     <div class="cap-item"><span class="cw">Cluster redundant homologs</span><span class="cs">filter_seq(df_seq) → <span class="out">df_clust  <span class="protag">pro</span></span></span></div>
   </div>
 </div><div class="sec">
   <div class="sec-h"><span>Sequence Analysis</span><span class="hint">logos · windows · motifs</span></div>
   <div class="sec-body">
-    <div class="cap-item"><span class="cw">Position-specific logo</span><span class="cs">AAlogo().get_df_logo(df_parts) → <span class="out">df_logo</span></span></div>
+    <div class="cap-item"><span class="cw">Position-specific logo</span><span class="cs">AALogo().get_df_logo(df_parts) → <span class="out">df_logo</span></span></div>
     <div class="cap-item"><span class="cw">Sample reference windows</span><span class="cs">AAWindowSampler().sample_*(df_seq)</span></div>
     <div class="cap-item"><span class="cw">Pairwise sequence similarity</span><span class="cs">comp_seq_sim(df_seq)  <span class="protag">pro</span></span></div>
     <div class="cap-item"><span class="cw">Scan motifs (FIMO / MEME)</span><span class="cs">scan_motif(df_seq, pwm) → <span class="out">df_hits  <span class="protag">pro</span></span></span></div>
@@ -479,6 +480,8 @@ cpp = <span class="c-nm">aa.CPP</span>(df_parts=df_parts, split_kws=split_kws)</
   <div class="sec-h"><span>Modeling &amp; Explainability</span><span class="hint">PU · classify · SHAP</span></div>
   <div class="sec-body">
     <div class="cap-item"><span class="cw">Train with positives + unlabeled data</span><span class="cs">dPULearn().fit(X, labels)  [Wrapper]</span></div>
+    <div class="cap-item"><span class="cw">Mine reliable negatives (mask) <span class="rowtag">v1.1</span></span><span class="cs">dPULearn().fit(X_pos=, X_unlabeled=).mask_neg_ → <span class="out">mask</span></span></div>
+    <div class="cap-item"><span class="cw">Project held-out points into PC space <span class="rowtag">v1.1</span></span><span class="cs">dPULearn().fit(X, labels).project(X_new) → <span class="out">df_pu</span></span></div>
     <div class="cap-item"><span class="cw">Train + RFE + MC importance</span><span class="cs">TreeModel().fit(X, labels)  [Wrapper]</span></div>
     <div class="cap-item"><span class="cw">Per-feature / sample SHAP impact</span><span class="cs">ShapModel().fit(X, labels)  <span class="protag">pro</span></span></div>
   </div>
@@ -511,7 +514,7 @@ cpp = <span class="c-nm">aa.CPP</span>(df_parts=df_parts, split_kws=split_kws)</
     </div>
 
 <div class="sec">
-  <div class="sec-h"><span>AAlogo — see the data</span><span class="hint">dataset at a glance</span></div>
+  <div class="sec-h"><span>AALogo — see the data</span><span class="hint">dataset at a glance</span></div>
   <div class="sec-body">
     <pre class="code">import numpy as np, matplotlib.pyplot as plt, aaanalysis as aa
 df_seq = <span class="c-nm">aa.load_dataset</span>(name=<span class="c-st">&#x27;DOM_GSEC&#x27;</span>)   <span class="c-cm"># γ-secretase</span>
@@ -521,12 +524,12 @@ df_parts = sf.get_df_parts(df_seq=df_seq,
     list_parts=[<span class="c-st">&#x27;tmd&#x27;</span>, <span class="c-st">&#x27;jmd_n&#x27;</span>, <span class="c-st">&#x27;jmd_c&#x27;</span>])
 <span class="c-nm">aa.plot_settings</span>(font_scale=0.7)
 <span class="c-cm"># aal_kws builds df_logo + bits bar for you</span>
-<span class="c-nm">aa.AAlogoPlot</span>().single_logo(
+<span class="c-nm">aa.AALogoPlot</span>().single_logo(
     aal_kws=dict(df_parts=df_parts, labels=labels,
         label_test=1, tmd_len=20),
     name_data=<span class="c-st">&#x27;Test set: substrates&#x27;</span>)
 plt.tight_layout(); plt.show()</pre>
-<figure class="recipe-fig"><img class="recipe-img logo" src="cs_plots/logo.png" alt="AAlogo — see the data output"><figcaption>AAlogoPlot.single_logo · per-position enrichment</figcaption></figure>  </div>
+<figure class="recipe-fig"><img class="recipe-img logo" src="cs_plots/logo.png" alt="AALogo — see the data output"><figcaption>AALogoPlot.single_logo · per-position enrichment</figcaption></figure>  </div>
 </div><div class="sec pairsec">
   <div class="sec-h"><span>CPP — feature</span><span class="hint">top feature · <span class="hint-test">test</span> vs <span class="hint-ref">ref</span></span></div>
   <div class="sec-body"><pre class="code"><span class="c-cm"># default parts + a redundancy-reduced set of 100 scales</span>
@@ -680,7 +683,7 @@ df_syn = aaws.sample_synthetic(df_seq, n=100, generator=<span class="c-st">&#x27
       <div class="sec-h"><span>Class · abbr ↔ Plot Class</span><span class="hint">mirrored API</span></div>
       <div class="sec-body"><table class="kv">
         <tr class="hdr"><td class="k">class</td><td class="d mono abbr">abbr</td><td class="d mono">plot class</td><td class="d" style="text-align:right">kind</td></tr>
-<tr><td class="k">SequencePreprocessor</td><td class="d mono abbr">sp</td><td class="d mono">—</td><td class="d" style="text-align:right"></td></tr><tr><td class="k">EmbeddingPreprocessor</td><td class="d mono abbr">ep</td><td class="d mono">—</td><td class="d" style="text-align:right"></td></tr><tr><td class="k">StructurePreprocessor  <span class="protag">pro</span></td><td class="d mono abbr">stp</td><td class="d mono">—</td><td class="d" style="text-align:right"></td></tr><tr><td class="k">AnnotationPreprocessor  <span class="protag">pro</span></td><td class="d mono abbr">ap</td><td class="d mono">—</td><td class="d" style="text-align:right"></td></tr><tr><td class="k">AAlogo</td><td class="d mono abbr">aal</td><td class="d mono">AAlogoPlot</td><td class="d" style="text-align:right"></td></tr><tr><td class="k">AAWindowSampler</td><td class="d mono abbr">aaws</td><td class="d mono">—</td><td class="d" style="text-align:right"></td></tr><tr><td class="k">SequenceFeature</td><td class="d mono abbr">sf</td><td class="d mono">—</td><td class="d" style="text-align:right"></td></tr><tr><td class="k">NumericalFeature</td><td class="d mono abbr">nf</td><td class="d mono">—</td><td class="d" style="text-align:right"></td></tr><tr><td class="k">AAclust</td><td class="d mono abbr">aac</td><td class="d mono">AAclustPlot</td><td class="d" style="text-align:right">Wrapper</td></tr><tr><td class="k">CPP</td><td class="d mono abbr">cpp</td><td class="d mono">CPPPlot</td><td class="d" style="text-align:right"></td></tr><tr><td class="k">dPULearn</td><td class="d mono abbr">dpul</td><td class="d mono">dPULearnPlot</td><td class="d" style="text-align:right">Wrapper</td></tr><tr><td class="k">TreeModel</td><td class="d mono abbr">tm</td><td class="d mono">—</td><td class="d" style="text-align:right">Wrapper</td></tr><tr><td class="k">ShapModel  <span class="protag">pro</span></td><td class="d mono abbr">sm</td><td class="d mono">—</td><td class="d" style="text-align:right">Wrapper</td></tr><tr><td class="k">AAMut</td><td class="d mono abbr">aamut</td><td class="d mono">AAMutPlot</td><td class="d" style="text-align:right"></td></tr><tr><td class="k">SeqMut</td><td class="d mono abbr">seqmut</td><td class="d mono">SeqMutPlot</td><td class="d" style="text-align:right"></td></tr>      </table></div>
+<tr><td class="k">SequencePreprocessor</td><td class="d mono abbr">seqp</td><td class="d mono">—</td><td class="d" style="text-align:right"></td></tr><tr><td class="k">EmbeddingPreprocessor</td><td class="d mono abbr">embp</td><td class="d mono">—</td><td class="d" style="text-align:right"></td></tr><tr><td class="k">StructurePreprocessor  <span class="protag">pro</span></td><td class="d mono abbr">strp</td><td class="d mono">—</td><td class="d" style="text-align:right"></td></tr><tr><td class="k">AnnotationPreprocessor  <span class="protag">pro</span></td><td class="d mono abbr">annp</td><td class="d mono">—</td><td class="d" style="text-align:right"></td></tr><tr><td class="k">AALogo</td><td class="d mono abbr">aal</td><td class="d mono">AALogoPlot</td><td class="d" style="text-align:right"></td></tr><tr><td class="k">AAWindowSampler</td><td class="d mono abbr">aaws</td><td class="d mono">—</td><td class="d" style="text-align:right"></td></tr><tr><td class="k">SequenceFeature</td><td class="d mono abbr">sf</td><td class="d mono">—</td><td class="d" style="text-align:right"></td></tr><tr><td class="k">NumericalFeature</td><td class="d mono abbr">nf</td><td class="d mono">—</td><td class="d" style="text-align:right"></td></tr><tr><td class="k">AAclust</td><td class="d mono abbr">aac</td><td class="d mono">AAclustPlot</td><td class="d" style="text-align:right">Wrapper</td></tr><tr><td class="k">CPP</td><td class="d mono abbr">cpp</td><td class="d mono">CPPPlot</td><td class="d" style="text-align:right"></td></tr><tr><td class="k">dPULearn</td><td class="d mono abbr">dpul</td><td class="d mono">dPULearnPlot</td><td class="d" style="text-align:right">Wrapper</td></tr><tr><td class="k">TreeModel</td><td class="d mono abbr">tm</td><td class="d mono">—</td><td class="d" style="text-align:right">Wrapper</td></tr><tr><td class="k">ShapModel  <span class="protag">pro</span></td><td class="d mono abbr">sm</td><td class="d mono">—</td><td class="d" style="text-align:right">Wrapper</td></tr><tr><td class="k">AAMut</td><td class="d mono abbr">aam</td><td class="d mono">AAMutPlot</td><td class="d" style="text-align:right"></td></tr><tr><td class="k">SeqMut</td><td class="d mono abbr">seqm</td><td class="d mono">SeqMutPlot</td><td class="d" style="text-align:right"></td></tr>      </table></div>
     </div>
 
     <div class="sec">
@@ -721,6 +724,5 @@ df_syn = aaws.sample_synthetic(df_seq, n=100, generator=<span class="c-st">&#x27
   <span class="r"><a class="docs-link" href="https://aaanalysis.readthedocs.io">aaanalysis.readthedocs.io</a> · v1.1.0 · 2026-06</span></div>
 </section>
 
-<style>.dlm{position:fixed;top:12px;right:14px;z-index:99999;font:600 12.5px Helvetica,Arial,sans-serif}.dlm>summary{list-style:none;cursor:pointer;background:#333131;color:#fff;padding:7px 12px;border-radius:7px;box-shadow:0 2px 8px rgba(0,0,0,.3)}.dlm>summary::-webkit-details-marker{display:none}.dlm .m{position:absolute;right:0;margin-top:6px;background:#fff;border:1px solid #d8d8d8;border-radius:8px;box-shadow:0 6px 18px rgba(0,0,0,.2);overflow:hidden;min-width:150px}.dlm .m a{display:block;padding:9px 14px;color:#2b2b2b;text-decoration:none}.dlm .m a+a{border-top:1px solid #eee}.dlm .m a:hover{background:#f4f6f8}</style><details class="dlm"><summary aria-label="Download the cheat sheet">&#11015; Download &#9662;</summary><div class="m"><a href="AAanalysis_cheat_sheet.pdf" download="AAanalysis_Cheat_Sheet.pdf">PDF (3 pages)</a><a href="cheat_sheet.html" download="AAanalysis_Cheat_Sheet.html">HTML</a></div></details>
 </body>
 </html>

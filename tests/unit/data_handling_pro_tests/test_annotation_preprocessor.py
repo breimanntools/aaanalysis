@@ -53,7 +53,7 @@ def _annot_rows(rows):
 # ---------------------------------------------------------------------------
 class TestRegistryAndMetadata:
     def test_builtin_keys_present(self):
-        ap = AnnotationPreprocessor(verbose=False)
+        annp = AnnotationPreprocessor(verbose=False)
         for key in [
             "phospho",
             "glyco_n",
@@ -67,19 +67,19 @@ class TestRegistryAndMetadata:
             "act_site",
             "dna_bind",
         ]:
-            assert key in ap._registry
+            assert key in annp._registry
 
     def test_build_cat_categories(self):
-        ap = AnnotationPreprocessor(verbose=False)
-        df_cat = ap.build_cat(features=["phospho", "disulfide", "binding"])
+        annp = AnnotationPreprocessor(verbose=False)
+        df_cat = annp.build_cat(features=["phospho", "disulfide", "binding"])
         cats = dict(zip(df_cat[ut.COL_SCALE_ID], df_cat[ut.COL_CAT]))
         assert cats["phospho"] == "PTMs"
         assert cats["disulfide"] == "PTMs"
         assert cats["binding"] == "Functional sites"
 
     def test_build_cat_shape_and_columns(self):
-        ap = AnnotationPreprocessor(verbose=False)
-        df_cat = ap.build_cat(features=["phospho", "binding"])
+        annp = AnnotationPreprocessor(verbose=False)
+        df_cat = annp.build_cat(features=["phospho", "binding"])
         assert len(df_cat) == 2
         for col in (
             ut.COL_SCALE_ID,
@@ -91,21 +91,21 @@ class TestRegistryAndMetadata:
             assert col in df_cat.columns
 
     def test_build_cat_invalid_feature_raises(self):
-        ap = AnnotationPreprocessor(verbose=False)
+        annp = AnnotationPreprocessor(verbose=False)
         for bad in [["not_a_key"], [], "phospho", None]:
             with pytest.raises(ValueError):
-                ap.build_cat(features=bad)
+                annp.build_cat(features=bad)
 
     def test_build_scales_per_aa_mean(self):
-        ap = AnnotationPreprocessor(verbose=False)
+        annp = AnnotationPreprocessor(verbose=False)
         df_seq = _df_seq()
         df_annot = _annot_rows(
             [["P1", 3, 3, "S", "phospho", "PTMs", "UniProt", "", 1.0, None]]
         )
-        dn = ap.encode(df_seq=df_seq, df_annot=df_annot, features=["phospho"])
+        dn = annp.encode(df_seq=df_seq, df_annot=df_annot, features=["phospho"])
         with warnings.catch_warnings():
             warnings.simplefilter("ignore")
-            dfs = ap.build_scales(
+            dfs = annp.build_scales(
                 df_seq=df_seq, dict_num=dn, features=["phospho"]
             )
         assert dfs.shape == (20, 1)
@@ -113,23 +113,23 @@ class TestRegistryAndMetadata:
         assert abs(float(dfs.loc["S", "phospho"]) - 0.5) < 1e-9
 
     def test_build_scales_requires_corpus(self):
-        ap = AnnotationPreprocessor(verbose=False)
+        annp = AnnotationPreprocessor(verbose=False)
         with pytest.raises(ValueError):
-            ap.build_scales(df_seq=None, dict_num=None, features=["phospho"])
+            annp.build_scales(df_seq=None, dict_num=None, features=["phospho"])
 
     def test_register_feature_subcategory_and_normalization(self):
-        ap = AnnotationPreprocessor(verbose=False)
-        ap.register_feature(
+        annp = AnnotationPreprocessor(verbose=False)
+        annp.register_feature(
             key="hotspot",
             subcategory="Custom hotspots",
             normalization=lambda values: np.clip(values, 0.0, 1.0),
         )
-        df_cat = ap.build_cat(features=["hotspot"])
+        df_cat = annp.build_cat(features=["hotspot"])
         assert df_cat[ut.COL_SUBCAT].iloc[0] == "Custom hotspots"
         df_annot = _annot_rows(
             [["P1", 5, 5, "", "hotspot", "Functional sites", "rfdiff", "", 0.42, None]]
         )
-        dn = ap.encode(df_seq=_df_seq(), df_annot=df_annot, features=["hotspot"])
+        dn = annp.encode(df_seq=_df_seq(), df_annot=df_annot, features=["hotspot"])
         assert abs(dn["P1"][4, 0] - 0.42) < 1e-9
 
 
@@ -237,11 +237,11 @@ class TestUniProtMapper:
 # ---------------------------------------------------------------------------
 class TestEncode:
     def test_shape_and_absent_is_zero(self):
-        ap = AnnotationPreprocessor(verbose=False)
+        annp = AnnotationPreprocessor(verbose=False)
         df_annot = _annot_rows(
             [["P1", 3, 3, "S", "phospho", "PTMs", "UniProt", "", 1.0, None]]
         )
-        dn = ap.encode(df_seq=_df_seq(), df_annot=df_annot, features=["phospho"])
+        dn = annp.encode(df_seq=_df_seq(), df_annot=df_annot, features=["phospho"])
         arr = dn["P1"]
         assert arr.shape == (21, 1)
         assert arr[2, 0] == 1.0  # pos 3 annotated
@@ -249,7 +249,7 @@ class TestEncode:
         assert not np.isnan(arr).any()
 
     def test_two_features_two_columns(self):
-        ap = AnnotationPreprocessor(verbose=False)
+        annp = AnnotationPreprocessor(verbose=False)
         df_annot = _annot_rows(
             [
                 ["P1", 3, 3, "S", "phospho", "PTMs", "UniProt", "", 1.0, None],
@@ -257,7 +257,7 @@ class TestEncode:
                 ["P1", 16, 16, "C", "disulfide", "PTMs", "UniProt", "", 1.0, "b1"],
             ]
         )
-        dn = ap.encode(
+        dn = annp.encode(
             df_seq=_df_seq(), df_annot=df_annot, features=["phospho", "disulfide"]
         )
         arr = dn["P1"]
@@ -266,12 +266,12 @@ class TestEncode:
         assert list(np.where(arr[:, 1] > 0)[0] + 1) == [7, 16]
 
     def test_guard_raises_on_mismatch(self):
-        ap = AnnotationPreprocessor(verbose=False)
+        annp = AnnotationPreprocessor(verbose=False)
         bad = _annot_rows(
             [["P1", 4, 4, "W", "phospho", "PTMs", "UniProt", "", 1.0, None]]
         )
         with pytest.raises(ValueError):
-            ap.encode(
+            annp.encode(
                 df_seq=_df_seq(),
                 df_annot=bad,
                 features=["phospho"],
@@ -279,41 +279,41 @@ class TestEncode:
             )
 
     def test_guard_drop_skips_row(self):
-        ap = AnnotationPreprocessor(verbose=False)
+        annp = AnnotationPreprocessor(verbose=False)
         bad = _annot_rows(
             [["P1", 4, 4, "W", "phospho", "PTMs", "UniProt", "", 1.0, None]]
         )
-        dn = ap.encode(
+        dn = annp.encode(
             df_seq=_df_seq(), df_annot=bad, features=["phospho"], on_mismatch="drop"
         )
         assert dn["P1"].sum() == 0.0
 
     def test_guard_warn_emits_warning(self):
-        ap = AnnotationPreprocessor(verbose=False)
+        annp = AnnotationPreprocessor(verbose=False)
         bad = _annot_rows(
             [["P1", 4, 4, "W", "phospho", "PTMs", "UniProt", "", 1.0, None]]
         )
         with pytest.warns(UserWarning):
-            ap.encode(
+            annp.encode(
                 df_seq=_df_seq(), df_annot=bad, features=["phospho"], on_mismatch="warn"
             )
 
     def test_empty_aa_skips_guard(self):
-        ap = AnnotationPreprocessor(verbose=False)
+        annp = AnnotationPreprocessor(verbose=False)
         # aa="" → no guard even though pos 4 is T, label here is arbitrary
         df_annot = _annot_rows(
             [["P1", 4, 4, "", "phospho", "PTMs", "user", "", 1.0, None]]
         )
-        dn = ap.encode(df_seq=_df_seq(), df_annot=df_annot, features=["phospho"])
+        dn = annp.encode(df_seq=_df_seq(), df_annot=df_annot, features=["phospho"])
         assert dn["P1"][3, 0] == 1.0
 
     def test_score_value_preserved(self):
-        ap = AnnotationPreprocessor(verbose=False)
-        ap.register_feature(key="hotspot")
+        annp = AnnotationPreprocessor(verbose=False)
+        annp.register_feature(key="hotspot")
         df_annot = _annot_rows(
             [["P1", 5, 5, "", "hotspot", "Functional sites", "rfdiff", "", 0.42, None]]
         )
-        dn = ap.encode(df_seq=_df_seq(), df_annot=df_annot, features=["hotspot"])
+        dn = annp.encode(df_seq=_df_seq(), df_annot=df_annot, features=["hotspot"])
         assert abs(dn["P1"][4, 0] - 0.42) < 1e-9
 
 
@@ -322,7 +322,7 @@ class TestEncode:
 # ---------------------------------------------------------------------------
 class TestIngest:
     def test_ingest_auto_registers_and_marks_functional(self):
-        ap = AnnotationPreprocessor(verbose=False)
+        annp = AnnotationPreprocessor(verbose=False)
         df_user = pd.DataFrame(
             {
                 ut.COL_PROTEIN_ID: ["P1", "P1"],
@@ -331,18 +331,18 @@ class TestIngest:
                 ut.COL_SCORE: [0.9, 0.4],
             }
         )
-        da = ap.ingest(df_user)
-        assert "hotspot" in ap._registry
+        da = annp.ingest(df_user)
+        assert "hotspot" in annp._registry
         assert da[ut.COL_CAT].unique().tolist() == ["Functional sites"]
         assert set(ut.COLS_ANNOT).issubset(da.columns)
 
     def test_ingest_missing_columns_raises(self):
-        ap = AnnotationPreprocessor(verbose=False)
+        annp = AnnotationPreprocessor(verbose=False)
         with pytest.raises(ValueError):
-            ap.ingest(pd.DataFrame({ut.COL_PROTEIN_ID: ["P1"]}))
+            annp.ingest(pd.DataFrame({ut.COL_PROTEIN_ID: ["P1"]}))
 
     def test_ingest_out_of_range_score_raises(self):
-        ap = AnnotationPreprocessor(verbose=False)
+        annp = AnnotationPreprocessor(verbose=False)
         df_user = pd.DataFrame(
             {
                 ut.COL_PROTEIN_ID: ["P1"],
@@ -352,10 +352,10 @@ class TestIngest:
             }
         )
         with pytest.raises(ValueError):
-            ap.ingest(df_user)
+            annp.ingest(df_user)
 
     def test_ingest_defaults_source_and_score(self):
-        ap = AnnotationPreprocessor(verbose=False)
+        annp = AnnotationPreprocessor(verbose=False)
         df_user = pd.DataFrame(
             {
                 ut.COL_PROTEIN_ID: ["P1"],
@@ -363,7 +363,7 @@ class TestIngest:
                 ut.COL_FEATURE_TYPE: ["iface"],
             }
         )
-        da = ap.ingest(df_user)
+        da = annp.ingest(df_user)
         assert da[ut.COL_SOURCE].iloc[0] == "user"
         assert da[ut.COL_SCORE].iloc[0] == 1.0
 
@@ -444,15 +444,15 @@ def _build_sparse_corpus(n_per_label=5, L=40, seed=0):
 class TestEndToEndRunNum:
     def test_pipeline_produces_ptm_features(self):
         df_seq, df_annot = _build_sparse_corpus()
-        ap = AnnotationPreprocessor(verbose=False)
+        annp = AnnotationPreprocessor(verbose=False)
         feats = ["phospho"]
-        dn = ap.encode(df_seq=df_seq, df_annot=df_annot, features=feats)
+        dn = annp.encode(df_seq=df_seq, df_annot=df_annot, features=feats)
         with warnings.catch_warnings():
             warnings.simplefilter("ignore")
-            df_scales = ap.build_scales(
+            df_scales = annp.build_scales(
                 df_seq=df_seq, dict_num=dn, features=feats
             )
-        df_cat = ap.build_cat(features=feats)
+        df_cat = annp.build_cat(features=feats)
         # D invariant
         D = next(iter(dn.values())).shape[1]
         assert D == len(df_scales.columns) == len(df_cat)
@@ -473,8 +473,8 @@ class TestEndToEndRunNum:
 
     def test_combine_dict_nums_roundtrip(self):
         df_seq, df_annot = _build_sparse_corpus(n_per_label=2)
-        ap = AnnotationPreprocessor(verbose=False)
-        dn = ap.encode(df_seq=df_seq, df_annot=df_annot, features=["phospho"])
+        annp = AnnotationPreprocessor(verbose=False)
+        dn = annp.encode(df_seq=df_seq, df_annot=df_annot, features=["phospho"])
         combined = aa.combine_dict_nums([dn, dn])
         # Two stacked copies → 2 columns, same entry set and L
         for entry, arr in combined.items():
@@ -513,13 +513,13 @@ def _eligible_positions(ctx):
 
 class TestToDfSeq:
     def test_pos_column_holds_feature_positives(self):
-        ap = AnnotationPreprocessor(verbose=False)
-        out = ap.to_df_seq(_df_seq_tds(), _annot_tds(), feature_type="phospho")
+        annp = AnnotationPreprocessor(verbose=False)
+        out = annp.to_df_seq(_df_seq_tds(), _annot_tds(), feature_type="phospho")
         assert out[ut.COL_POS].iloc[0] == [3]
 
     def test_residue_type_matched_and_contamination_excluded(self):
-        ap = AnnotationPreprocessor(verbose=False)
-        out = ap.to_df_seq(_df_seq_tds(), _annot_tds(), feature_type="phospho")
+        annp = AnnotationPreprocessor(verbose=False)
+        out = annp.to_df_seq(_df_seq_tds(), _annot_tds(), feature_type="phospho")
         elig = _eligible_positions(out["aa_context"].iloc[0])
         # phospho positives are on S → only non-annotated S residues remain
         assert all(TODFSEQ_SEQ[p - 1] == "S" for p in elig)
@@ -528,8 +528,8 @@ class TestToDfSeq:
         assert set(elig) == {10, 16, 21}
 
     def test_no_match_residue_type_keeps_all_non_annotated(self):
-        ap = AnnotationPreprocessor(verbose=False)
-        out = ap.to_df_seq(
+        annp = AnnotationPreprocessor(verbose=False)
+        out = annp.to_df_seq(
             _df_seq_tds(),
             _annot_tds(),
             feature_type="phospho",
@@ -540,8 +540,8 @@ class TestToDfSeq:
         assert len(elig) == len(TODFSEQ_SEQ) - 3  # everything else
 
     def test_keep_other_annotations_when_disabled(self):
-        ap = AnnotationPreprocessor(verbose=False)
-        out = ap.to_df_seq(
+        annp = AnnotationPreprocessor(verbose=False)
+        out = annp.to_df_seq(
             _df_seq_tds(),
             _annot_tds(),
             feature_type="phospho",
@@ -553,26 +553,26 @@ class TestToDfSeq:
         assert 3 not in elig  # the positive stays excluded
 
     def test_context_mask_length_equals_sequence(self):
-        ap = AnnotationPreprocessor(verbose=False)
-        out = ap.to_df_seq(_df_seq_tds(), _annot_tds(), feature_type="phospho")
+        annp = AnnotationPreprocessor(verbose=False)
+        out = annp.to_df_seq(_df_seq_tds(), _annot_tds(), feature_type="phospho")
         assert len(out["aa_context"].iloc[0]) == len(TODFSEQ_SEQ)
 
     def test_column_collision_raises(self):
-        ap = AnnotationPreprocessor(verbose=False)
+        annp = AnnotationPreprocessor(verbose=False)
         df_seq = _df_seq_tds()
         df_seq[ut.COL_POS] = [[1]]
         with pytest.raises(ValueError):
-            ap.to_df_seq(df_seq, _annot_tds(), feature_type="phospho")
+            annp.to_df_seq(df_seq, _annot_tds(), feature_type="phospho")
 
     def test_no_positives_warns_and_empty_pos(self):
-        ap = AnnotationPreprocessor(verbose=False)
+        annp = AnnotationPreprocessor(verbose=False)
         with pytest.warns(UserWarning):
-            out = ap.to_df_seq(_df_seq_tds(), _annot_tds(), feature_type="dna_bind")
+            out = annp.to_df_seq(_df_seq_tds(), _annot_tds(), feature_type="dna_bind")
         assert out[ut.COL_POS].iloc[0] == []
 
     def test_custom_column_names(self):
-        ap = AnnotationPreprocessor(verbose=False)
-        out = ap.to_df_seq(
+        annp = AnnotationPreprocessor(verbose=False)
+        out = annp.to_df_seq(
             _df_seq_tds(),
             _annot_tds(),
             feature_type="phospho",
@@ -582,8 +582,8 @@ class TestToDfSeq:
         assert "positives" in out.columns and "ctx" in out.columns
 
     def test_end_to_end_window_sampler_residue_matched(self):
-        ap = AnnotationPreprocessor(verbose=False)
-        out = ap.to_df_seq(_df_seq_tds(), _annot_tds(), feature_type="phospho")
+        annp = AnnotationPreprocessor(verbose=False)
+        out = annp.to_df_seq(_df_seq_tds(), _annot_tds(), feature_type="phospho")
         aws = aa.AAWindowSampler()
         with warnings.catch_warnings():
             warnings.simplefilter("ignore")

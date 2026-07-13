@@ -61,14 +61,14 @@ AAanalysis offers the same analysis two ways, both documented in the Reference:
 
 - **Building blocks** (``import aaanalysis as aa``): the individual objects and
   functions you compose, for full control over each step. See :ref:`API <api>`.
-- **Golden pipelines** (``import aaanalysis.pipe as aap``): stateless one-call
+- **Golden pipelines** (``import aaanalysis.pipe as ap``): stateless one-call
   wrappers that chain those building blocks into a sensible default workflow.
   See :ref:`API (Pipelines) <api_pipe>`.
 
 .. code-block:: python
 
     import aaanalysis as aa            # explicit building blocks
-    import aaanalysis.pipe as aap      # golden pipelines
+    import aaanalysis.pipe as ap      # golden pipelines
 
 .. _gs_decision_map:
 

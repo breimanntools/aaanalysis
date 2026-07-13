@@ -14,9 +14,21 @@ from ._utils_cpp_plot_map import plot_heatmap_
 from ._utils_cpp_plot import get_sorted_list_cat_
 
 
-# Maximum physical width (inches) of the cumulative feature-importance bar column. The column
-# width scales with the figure (so the bars stay proportional on small/medium maps), but is capped
-# here so the bars do not keep growing and run edge-to-edge on a large/wide feature map.
+# The cumulative-importance bar strips (top per-position, right per-subcategory) are sized in GRID
+# CELL units, not figure fractions, so they lock to a near-constant physical size like the cheat-sheet
+# reference instead of ballooning on dense grids or vanishing on sparse ones. Each strip scales gently
+# with the grid's perpendicular extent (1/6 of a cell per grid cell -- reproduces the cheat sheet:
+# 28 subcat -> 4.7-cell top, 40 positions -> 6.7-cell right) but is CLAMPED to a [min, max] cell range.
+# This cell-unit clamp supersedes the earlier absolute-inch column cap (the constant-cell sizer keeps
+# the column at right_cells * cell_w inches, so a separate inch cap is no longer needed).
+_IMP_BAR_SCALE = 1 / 6
+_IMP_BAR_TOP_MIN_CELLS, _IMP_BAR_TOP_MAX_CELLS = 2.5, 5.5
+_IMP_BAR_RIGHT_MIN_CELLS, _IMP_BAR_RIGHT_MAX_CELLS = 3.5, 7.5
+
+# Absolute backstop (inches) on the right importance-bar column width. The cell-unit clamp above
+# already bounds the column on the constant-cell sizer path (column = right_cells * cell_w). On the
+# FIXED-figure path (no sizer: an explicit figsize with auto_font off / cell_size unset) the column
+# would otherwise grow with the figure and the bars run edge-to-edge, so cap it here as well.
 _MAX_IMP_COL_IN = 1.5
 
 
@@ -81,7 +93,9 @@ def plot_feat_importance_bars_subcat(ax=None,
     # immediately with the label sitting on the bar rather than outside it. Only bars
     # at/above the threshold are annotated, so they are long enough to hold the label.
     if not shap_plot:
-        v_max = int(np.ceil(max(list_imp)))
+        # epsilon avoids 2.0000000000000004 -> 3; floor of 1 avoids a degenerate 0-width axis when
+        # every importance is (near) zero.
+        v_max = max(1, int(np.ceil(max(list_imp) - 1e-9)))
         annotation_th = v_max / 2 if annotation_th is None else annotation_th
         for i, val in enumerate(list_imp):
             if val >= annotation_th:
@@ -144,8 +158,12 @@ def plot_feat_importance_bars_pos(ax=None,
         x_ticks = list(range(0, len(list_imp)))
         ax.bar(x_ticks, list_imp,
                color=ut.COLOR_FEAT_IMP, edgecolor=None, align="edge")
-        v_max = int(np.ceil(max(list_imp)))
+        # epsilon avoids 2.0000000000000004 -> 3; floor of 1 avoids a degenerate 0-height axis when
+        # every position sums to (near) zero.
+        v_max = max(1, int(np.ceil(max(list_imp) - 1e-9)))
         ax.set_ylim(0, v_max)
+    # Keep the y-axis (spine) on the RIGHT, directly next to the "Cumulative feature importance"
+    # label -- the tick VALUE is repositioned to the left of that spine in the frontend.
     sns.despine(ax=ax, bottom=False, top=True, left=True, right=False)
     # Adjust ticks
     ax.set_xticks([])
@@ -239,7 +257,7 @@ def plot_feature_map(df_feat=None, df_cat=None,
                      dict_color=None, legend_kws=None, legend_xy=(-0.1, -0.01),
                      legend_imp_xy=(1.25, 0),
                      xtick_size=11.0, xtick_width=2.0, xtick_length=5.0,
-                     seq_char_fill=False, optimize_labels=False):
+                     seq_char_fill=False, optimize_labels=False, size_grid=False):
     """Create a comprehensive feature map with a heatmap, feature importance bars, and custom legends."""
     # Get fontsize
     pe = PlotElements()
@@ -263,24 +281,33 @@ def plot_feature_map(df_feat=None, df_cat=None,
     # (with the heatmap showing the mean difference) OR, when col_val is a feature
     # impact column, directly in the heatmap cells with the bars switched off.
     bars_off = shap_plot and ut.COL_FEAT_IMPACT in col_val
-    width, height = figsize
     if bars_off:
         # Heatmap-only layout: impact lives in the cells, no cumulative-impact bars
         # (plain layout like CPPPlot.heatmap, so the frontend's tight_layout is compatible)
         fig, ax_hm = plt.subplots(figsize=figsize)
         ax_bt = ax_br = ax_empty = None
     else:
-        r_imp = min(1*height/width, 1)
-        # Cap the importance-bar column at a maximum physical width: it grows proportionally with
-        # the figure up to `_MAX_IMP_COL_IN` inches, then stops (so the bars do not run to the edge
-        # on a large map). Solve width * r/(6 + r) = _MAX_IMP_COL_IN for the capped ratio.
-        if width * r_imp / (6 + r_imp) > _MAX_IMP_COL_IN:
-            r_imp = 6 * _MAX_IMP_COL_IN / (width - _MAX_IMP_COL_IN)
-        width_ratio = [6, r_imp]
-        height_ratio = (width_ratio[1], width_ratio[0])
-        gridspc_kw = {'width_ratios': width_ratio, "wspace": 0, "hspace": 0}
+        # Size the bar strips in grid-cell units and clamp to a [min, max] cell range so they lock
+        # to a near-constant physical size (the sizer holds each cell fixed, so a strip of K cells is
+        # K*cell inches regardless of figure size). Right strip scales with the number of positions,
+        # top strip with the number of subcategory rows. This replaces the earlier figure-ratio
+        # column with an absolute-inch cap -- the clamp already bounds the column in cell units.
+        n_cols_grid = tmd_len + jmd_n_len + jmd_c_len
+        n_rows_grid = max(1, int(df_feat[col_cat].nunique()))
+        right_cells = float(np.clip(n_cols_grid * _IMP_BAR_SCALE,
+                                    _IMP_BAR_RIGHT_MIN_CELLS, _IMP_BAR_RIGHT_MAX_CELLS))
+        top_cells = float(np.clip(n_rows_grid * _IMP_BAR_SCALE,
+                                  _IMP_BAR_TOP_MIN_CELLS, _IMP_BAR_TOP_MAX_CELLS))
+        # On the fixed-figure path (no constant-cell sizer) the column width tracks the figure, so
+        # cap it at `_MAX_IMP_COL_IN` inches: solve fig_w * rc/(n_cols + rc) = _MAX_IMP_COL_IN for rc.
+        # The sizer path is left to the cell-unit clamp (its column is already well under the cap).
+        fig_w = figsize[0]
+        if not size_grid and fig_w > _MAX_IMP_COL_IN and \
+                fig_w * right_cells / (n_cols_grid + right_cells) > _MAX_IMP_COL_IN:
+            right_cells = n_cols_grid * _MAX_IMP_COL_IN / (fig_w - _MAX_IMP_COL_IN)
+        gridspc_kw = {'width_ratios': [n_cols_grid, right_cells], "wspace": 0, "hspace": 0}
         if add_imp_bar_top:
-            gridspc_kw["height_ratios"] = height_ratio
+            gridspc_kw["height_ratios"] = [top_cells, n_rows_grid]
         # NOTE: no constrained/tight layout engine here. The frontend finalises the
         # layout with fig.tight_layout(); switching a constrained engine to tight
         # after the heatmap colorbar exists raises, and the engines also fight the
@@ -318,7 +345,44 @@ def plot_feature_map(df_feat=None, df_cat=None,
     # Plot feat importance/impact bars (unless impact is shown in the heatmap)
     if not bars_off:
         imp_word = "impact" if shap_plot else "importance"
-        label_imp_bar = f"Cumulative\nfeature\n{imp_word}" if add_imp_bar_top else f"Cumulative feature\n{imp_word} [%]"
+        _narrow = (tmd_len + jmd_n_len + jmd_c_len) < 10
+        show_only_max = add_imp_bar_top != "long"
+        args_ticks_0 = dict(show_zero=False, show_only_max=show_only_max, precision=1)
+
+        # Plot the top per-position bars first; their cumulative-importance max drives the corner
+        # layout. The taller that strip is (larger max), the more room there is between the max value
+        # at the top and the "Cumulative feature importance" label below, so three cases keep them
+        # from overlapping (see _corner_case below).
+        top_ymax = None
+        if add_imp_bar_top:
+            plot_feat_importance_bars_pos(ax=ax_bt,
+                                          df_feat=df_feat.copy(),
+                                          df_cat=df_cat.copy(),
+                                          col_imp=col_imp,
+                                          col_cat=col_cat,
+                                          shap_plot=shap_plot,
+                                          start=start,
+                                          **args_len)
+            top_ymax = (float(ax_bt.get_ylim()[1]) if shap_plot
+                        else max([p.get_height() for p in ax_bt.patches] + [0.0]))
+        # Two thresholds on the top strip's cumulative max keep the corner readable:
+        #   - the subcategory x-tick is dropped on the shortest strips (top_ymax <= 1.5; the values are
+        #     already printed on the bars) and shown above that;
+        #   - the top-bars y-tick (mark AND number, always on the same side) sits on the LEFT for a
+        #     short strip (top_ymax <= 3) and on the RIGHT for a tall one (> 3, the standard look).
+        # For SHAP impact the right per-subcategory bars carry no on-bar value labels, so keep the
+        # subcategory importance axis (its only scale reference); for plain importance drop it on the
+        # shortest strips where the values are already printed on the bars.
+        show_subcat_xtick = add_imp_bar_top and (shap_plot or top_ymax > 1.5)
+
+        if add_imp_bar_top:
+            label_imp_bar = f"Cumulative\nfeature\n{imp_word}"
+        elif _narrow:
+            # Narrow grid: stack the label so it stays over the (narrow) bars instead of running
+            # left into the shortened "Feature" title (same text as the top-bars label).
+            label_imp_bar = f"Cumulative\nfeature\n{imp_word}"
+        else:
+            label_imp_bar = f"Cumulative feature\n{imp_word}"
         fs_label_bar = fs_titles - 1 if add_imp_bar_top else fs_titles
         ha_bar = "left" if add_imp_bar_top else "right"
         position_bar = (0.1, 0) if add_imp_bar_top else (1, 0)
@@ -341,23 +405,31 @@ def plot_feature_map(df_feat=None, df_cat=None,
                                          position=position_bar,
                                          multialignment=multialignment_bar,
                                          weight_annotation="bold")
-        # Intentional: only the max tick is labelled on the cumulative-importance bar.
-        # Do NOT re-key this to imp_bar_label_type (reviewed and rejected: it clutters
-        # every default feature-map figure).
-        show_only_max = add_imp_bar_top != "long"
-        args_ticks_0 = dict(show_zero=False, show_only_max=show_only_max, precision=1)
-        ut.ticks_0(ax_br, **args_ticks_0)
+        # Subcategory x-axis: dropped on the shortest strips (values are printed on the bars); shown
+        # at the right otherwise, and for the no-top (heatmap) layout. Label stays in its normal spot.
+        if add_imp_bar_top and not show_subcat_xtick:
+            ax_br.set_xticks([])
+        else:
+            ut.ticks_0(ax_br, **args_ticks_0)
 
         if add_imp_bar_top:
-            plot_feat_importance_bars_pos(ax=ax_bt,
-                                          df_feat=df_feat.copy(),
-                                          df_cat=df_cat.copy(),
-                                          col_imp=col_imp,
-                                          col_cat=col_cat,
-                                          shap_plot=shap_plot,
-                                          start=start,
-                                          **args_len)
-            ut.ticks_0(ax_bt, axis="y", **args_ticks_0)
+            # The y-axis spine stays on the RIGHT (next to the "Cumulative feature importance" label).
+            # A short strip (top_ymax <= 3) renders the max value to the LEFT of that spine; a tall
+            # one to the RIGHT of it -- the standard look. Both at the subcategory x-tick's font size.
+            ax_bt.yaxis.set_ticks_position("right")
+            if top_ymax > 3:
+                ut.ticks_0(ax_bt, axis="y", **args_ticks_0)
+                ax_bt.tick_params(axis="y", labelsize=fontsize_annotations, length=3)
+            else:
+                # Place the number AT the actual strip top. For plain importance the axis top is an
+                # integer (whole-percent cumulative); for SHAP impact it is the raw fractional max, so
+                # format it to one decimal instead of ceiling it (which would float above the strip).
+                y_top = float(ax_bt.get_ylim()[1])
+                v_label = f"{y_top:.1f}" if shap_plot else f"{int(round(y_top))}"
+                ax_bt.set_yticks([y_top])
+                ax_bt.tick_params(axis="y", labelleft=False, labelright=False, length=3)
+                ax_bt.text(1.0, y_top, f"{v_label} ", transform=ax_bt.get_yaxis_transform(),
+                           ha="right", va="center", size=fontsize_annotations, clip_on=False)
 
     # Plot heatmap
     plot_heatmap_(df_feat=df_feat.copy(), df_cat=df_cat,
@@ -377,10 +449,14 @@ def plot_feature_map(df_feat=None, df_cat=None,
                   **args_xtick)
     # Add feature position title
     sns.despine(ax=ax_hm, top=True, left=True, right=True, bottom=True)
+    n_positions = tmd_len + jmd_n_len + jmd_c_len
     if add_imp_bar_top and not bars_off:
         ax_hm.set_title("Scale (subcategory)  ", x=0, ha="right", weight="bold", fontsize=fs_titles)
     else:
-        ax_hm.set_title(ut.LABEL_FEAT_POS, x=0, weight="bold", fontsize=fs_titles)
+        # On an ultra-narrow grid (< 10 columns) the padded "... + Positions" title runs into the
+        # cumulative-importance label; drop the padding and the "+ Positions" so the two clear.
+        _title = "Feature\nScale (subcategory)" if n_positions < 10 else ut.LABEL_FEAT_POS
+        ax_hm.set_title(_title, x=0, weight="bold", fontsize=fs_titles)
     # Add feature importance map
     add_feat_importance_map(df_feat=df_feat, df_cat=df_cat,
                             col_cat=col_cat, col_imp=col_imp,

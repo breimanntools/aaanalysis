@@ -22,7 +22,7 @@ flowchart LR
   end
   subgraph SA["seq_analysis"]
     AWS["AAWindowSampler"]
-    AL["AAlogo"]
+    AL["AALogo"]
   end
   subgraph FE["feature_engineering"]
     AAC["AAclust"]
@@ -37,12 +37,11 @@ flowchart LR
     TM["TreeModel"]
     SM["ShapModel (pro)"]
   end
-  subgraph PRED["prediction"]
-    AAP["AAPred / AAPredPlot"]
-    RM["ReliabilityModel"]
-  end
   subgraph PD["protein_engineering"]
     AAM["AAMut / SeqMut"]
+  end
+  subgraph PRD["prediction"]
+    AAPRED["AAPred / AAPredPlot"]
   end
 
   LD -->|df_seq| SF
@@ -53,24 +52,28 @@ flowchart LR
   LS -->|df_scales| CPP
   SF -->|df_parts| CPP
   CPP -->|df_feat| TM
+  CPP -->|df_feat| AAPRED
   CPP -->|df_feat| CPPP
   LF -->|df_feat ref| CPPP
   DPU -->|labels| TM
   EP -->|embeddings X| TM
   TM -->|fitted model| SM
   SM -->|SHAP values| CPPP
-  CPP -->|df_feat / X| AAP
-  AAP -->|scores / df_pred| RM
   CPP -->|feature impact| AAM
   AL -.->|sequence logos| CPPP
 ```
+
+**Prediction / deploy layer:** `prediction` — `AAPred` fits and cross-validates
+predictors over CPP features (or directly from `df_seq` / `df_parts`) and deploys them
+at sequence / domain / window level; `AAPredPlot` visualizes per-sample and per-group
+predictions plus the evaluation grid.
 
 **Cross-cutting (used by many, not a pipeline stage):** `plotting`
 (`plot_settings`/colors/`plot_legend`) styles every `*Plot`; `metrics`
 (`comp_*`) scores model/clustering outputs.
 
 **Convenience facade (wraps the whole flow):** `pipe` — imported as
-`import aaanalysis.pipe as aap`, a stateless second API whose golden pipelines
+`import aaanalysis.pipe as ap`, a stateless second API whose golden pipelines
 (`obtain_samples` → `find_features` → `predict_samples` → `explain_features`, plus
 the `plot_eval` grid) chain the primitives above into one call each. Its defaults
 are byte-identical to the explicit primitive path; it adds no algorithm of its own,
@@ -94,7 +97,6 @@ feature impact onto a 3D protein structure, reusing the CPP position backend fro
 - metrics
 - pipe
 - plotting
-- prediction
 - protein_engineering
 - pu_learning
 - seq_analysis

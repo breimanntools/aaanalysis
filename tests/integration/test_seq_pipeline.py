@@ -3,7 +3,7 @@
 Integration tier. Real components, no mocks.
 
 Seams covered:
-  9.  AAWindowSampler.sample_* windows -> AAlogo logo matrix
+  9.  AAWindowSampler.sample_* windows -> AALogo logo matrix
   10. SeqMut.mutate -> re-featurize via SequenceFeature (design loop closes);
       and SeqMut.mutate(df_feat=...) -> ΔCPP against a real CPP feature set
 """
@@ -25,17 +25,17 @@ POS_COLS = ["entry", "sequence", "tmd_start", "tmd_stop", "label"]
 
 
 # ---------------------------------------------------------------------------
-# Seam 9: AAWindowSampler -> AAlogo
+# Seam 9: AAWindowSampler -> AALogo
 # ---------------------------------------------------------------------------
 class TestSamplerToLogo:
-    """Sampled fixed-length windows drive an AAlogo composition matrix."""
+    """Sampled fixed-length windows drive an AALogo composition matrix."""
 
     def test_windows_feed_logo(self):
         df_seq = aa.load_dataset(name="DOM_GSEC", n=10)
         df_win = aa.AAWindowSampler(random_state=0).sample_synthetic(
             df_seq=df_seq, n=8, window_size=9, generator="global_freq", seed=0)
         df_parts = pd.DataFrame({"tmd": df_win["window"].to_list()})
-        df_logo = aa.AAlogo(logo_type="probability").get_df_logo(df_parts=df_parts, tmd_len=9)
+        df_logo = aa.AALogo(logo_type="probability").get_df_logo(df_parts=df_parts, tmd_len=9)
         assert df_logo.shape[0] == 9  # one row per window position
 
     @settings(max_examples=4, deadline=None)
@@ -51,7 +51,7 @@ class TestSamplerToLogo:
         df_parts = pd.DataFrame({"tmd": df_win["window"].to_list()})
         # tmd_len omitted: the logo INFERS length from the windows, so the row count
         # reflects the actual sampled length rather than a forced tmd_len.
-        df_logo = aa.AAlogo().get_df_logo(df_parts=df_parts)
+        df_logo = aa.AALogo().get_df_logo(df_parts=df_parts)
         assert df_logo.shape[0] == window_size
 
     def test_absent_label_empties_logo(self):
@@ -65,7 +65,7 @@ class TestSamplerToLogo:
         # requested label_test=1, so the post-filter pool is empty.
         labels = np.array([0, 0, 0, 2, 2, 2])
         with pytest.raises(ValueError, match="label_test"):
-            aa.AAlogo().get_df_logo(df_parts=df_parts, labels=labels, label_test=1, tmd_len=9)
+            aa.AALogo().get_df_logo(df_parts=df_parts, labels=labels, label_test=1, tmd_len=9)
 
 
 # ---------------------------------------------------------------------------

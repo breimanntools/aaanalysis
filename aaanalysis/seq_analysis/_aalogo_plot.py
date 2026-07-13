@@ -1,5 +1,5 @@
 """
-This is a script for the frontend of the AAlogoPlot class.
+This is a script for the frontend of the AALogoPlot class.
 """
 import inspect
 import matplotlib.pyplot as plt
@@ -9,7 +9,7 @@ import pandas as pd
 from typing import Optional, Union, List, Tuple, Literal
 
 import aaanalysis.utils as ut
-from ._aalogo import AAlogo
+from ._aalogo import AALogo
 from ._backend._aalogo.aalogo_plot import single_logo_, multi_logo_
 
 # Settings
@@ -28,15 +28,15 @@ def check_df_logo(df_logo=None) -> None:
 
 
 def _valid_aal_kws_keys(include_info=True):
-    """Return AAlogo.get_df_logo[/_info] parameter names valid in an aal_kws dict."""
-    keys = set(inspect.signature(AAlogo.get_df_logo).parameters) - {"self"}
+    """Return AALogo.get_df_logo[/_info] parameter names valid in an aal_kws dict."""
+    keys = set(inspect.signature(AALogo.get_df_logo).parameters) - {"self"}
     if include_info:
-        keys &= set(inspect.signature(AAlogo.get_df_logo_info).parameters) - {"self"}
+        keys &= set(inspect.signature(AALogo.get_df_logo_info).parameters) - {"self"}
     return keys
 
 
 def check_aal_kws_keys(name=None, aal_kws=None, include_info=True) -> None:
-    """Check that every key in an aal_kws dict is a valid AAlogo argument name."""
+    """Check that every key in an aal_kws dict is a valid AALogo argument name."""
     valid_keys = _valid_aal_kws_keys(include_info=include_info)
     invalid_keys = set(aal_kws) - valid_keys
     if invalid_keys:
@@ -52,7 +52,7 @@ def check_aal_kws(aal_kws=None, df_logo=None, df_logo_info=None) -> None:
     if not isinstance(aal_kws, dict):
         raise ValueError(
             f"'aal_kws' ({aal_kws}) should be a dictionary of keyword arguments "
-            f"shared by 'AAlogo.get_df_logo' and 'AAlogo.get_df_logo_info'.")
+            f"shared by 'AALogo.get_df_logo' and 'AALogo.get_df_logo_info'.")
     check_aal_kws_keys(name="aal_kws", aal_kws=aal_kws, include_info=True)
     if df_logo is not None or df_logo_info is not None:
         raise ValueError(
@@ -94,12 +94,12 @@ def check_list_aal_kws(list_aal_kws=None, list_df_logo=None, list_df_logo_info=N
     if not isinstance(list_aal_kws, list) or len(list_aal_kws) == 0:
         raise ValueError(
             f"'list_aal_kws' ({list_aal_kws}) should be a non-empty list of "
-            f"dictionaries, one per logo, holding 'AAlogo.get_df_logo' arguments.")
+            f"dictionaries, one per logo, holding 'AALogo.get_df_logo' arguments.")
     for i, aal_kws in enumerate(list_aal_kws):
         if not isinstance(aal_kws, dict):
             raise ValueError(
                 f"'list_aal_kws[{i}]' ({aal_kws}) should be a dictionary of "
-                f"'AAlogo.get_df_logo' keyword arguments.")
+                f"'AALogo.get_df_logo' keyword arguments.")
         check_aal_kws_keys(name=f"list_aal_kws[{i}]", aal_kws=aal_kws,
                            include_info=True)
     if list_df_logo is not None or list_df_logo_info is not None:
@@ -206,9 +206,9 @@ def check_list_name_data_color(list_name_data_color=None, list_df_logo=None) -> 
 
 
 # II Main Functions
-class AAlogoPlot:
+class AALogoPlot:
     """
-    Amino Acid logo Plot (**AAlogoPlot**) class for visualizing sequence logos.
+    Amino Acid logo Plot (**AALogoPlot**) class for visualizing sequence logos.
 
     Every plotting method returns a ``(fig, ax)`` pair (a thin tuple subclass): unpack as
     ``fig, ax = ...``. For backward compatibility, the returned object also forwards attribute
@@ -220,9 +220,14 @@ class AAlogoPlot:
     plot methods to derive the TMD region length from the logo DataFrame. The ``logo_type``
     set at initialization controls
     only the y-axis label; the logo data itself is provided as a pre-computed
-    ``df_logo`` from :class:`AAlogo`.
+    ``df_logo`` from :class:`AALogo`.
 
     .. versionadded:: 1.0.3
+
+    Notes
+    -----
+    Parameters ending in ``_kws`` (e.g. ``aal_kws``, ``list_aal_kws``) bundle related keyword
+    arguments into one dict; see the :ref:`keyword-dict parameters overview <kws-overview>`.
 
     """
 
@@ -254,7 +259,7 @@ class AAlogoPlot:
 
         See Also
         --------
-        * :class:`AAlogo`: the corresponding data computation class.
+        * :class:`AALogo`: the corresponding data computation class.
         * `logomaker <https://logomaker.readthedocs.io/en/latest/>`_: the underlying logo rendering package.
         """
         # Check input
@@ -309,31 +314,31 @@ class AAlogoPlot:
         Plot a single sequence logo with optional bit-score bar and target middle domain
         (TMD) / juxta middle domain (JMD) annotations.
 
-        Renders a pre-computed logo matrix from :class:`AAlogo` as a letter-stack
+        Renders a pre-computed logo matrix from :class:`AALogo` as a letter-stack
         sequence logo using logomaker [Tareen20]_, and draws colored TMD/JMD part
         annotations beneath the x-axis. An optional bit-score bar panel can be shown
         above the logo when ``df_logo_info`` is provided. See
-        :meth:`AAlogoPlot.multi_logo` for stacking multiple logos for group comparison.
+        :meth:`AALogoPlot.multi_logo` for stacking multiple logos for group comparison.
 
         .. versionadded:: 1.1.0
 
         Parameters
         ----------
         df_logo : pd.DataFrame, shape (n_positions, n_amino_acids), optional
-            Logo matrix as returned by :meth:`AAlogo.get_df_logo`. Rows are residue
+            Logo matrix as returned by :meth:`AALogo.get_df_logo`. Rows are residue
             positions, columns are amino acids. Required unless ``aal_kws`` is given,
             in which case it is computed internally and must be ``None``.
         df_logo_info : pd.Series, shape (n_positions,), optional
-            Per-position information content as returned by :meth:`AAlogo.get_df_logo_info`.
+            Per-position information content as returned by :meth:`AALogo.get_df_logo_info`.
             If provided, a bit-score bar is rendered above the main logo. Must be ``None``
             when ``aal_kws`` is given (it is then computed internally and the bar is shown).
         aal_kws : dict, optional
-            :meth:`AAlogo.get_df_logo` / :meth:`AAlogo.get_df_logo_info` keyword arguments.
+            :meth:`AALogo.get_df_logo` / :meth:`AALogo.get_df_logo_info` keyword arguments.
             If given, ``df_logo`` and ``df_logo_info`` are computed internally and both must
             be ``None``. Mutually exclusive with ``df_logo`` and ``df_logo_info`` (see Notes).
         df_parts : pd.DataFrame, shape (n_samples, n_parts), optional
             Sequence parts DataFrame with at least one of the standard part columns
-            (``jmd_n``, ``tmd``, ``jmd_c``), as passed to :meth:`AAlogo.get_df_logo`. If given,
+            (``jmd_n``, ``tmd``, ``jmd_c``), as passed to :meth:`AALogo.get_df_logo`. If given,
             ``df_logo`` and ``df_logo_info`` are computed internally (so the bit-score bar is
             shown). Mutually exclusive with ``df_logo`` / ``df_logo_info`` and with ``aal_kws``
             (see Notes).
@@ -417,14 +422,14 @@ class AAlogoPlot:
 
           1. precomputed ``df_logo`` (optionally with ``df_logo_info``);
           2. the raw inputs ``df_parts`` (with ``labels``, ``label_test``, ``tmd_len``);
-          3. an ``aal_kws`` dict bundling the :class:`AAlogo` getter arguments.
+          3. an ``aal_kws`` dict bundling the :class:`AALogo` getter arguments.
 
           Mixing sources (e.g. ``df_parts`` together with ``df_logo`` or ``aal_kws``)
           raises ``ValueError``.
         * ``df_parts`` is the most direct shortcut: when given (and ``df_logo`` is
-          ``None``), ``AAlogoPlot`` instantiates :class:`AAlogo` with this plot's
-          ``logo_type`` and computes both ``df_logo`` (via :meth:`AAlogo.get_df_logo`)
-          and ``df_logo_info`` (via :meth:`AAlogo.get_df_logo_info`) from
+          ``None``), ``AALogoPlot`` instantiates :class:`AALogo` with this plot's
+          ``logo_type`` and computes both ``df_logo`` (via :meth:`AALogo.get_df_logo`)
+          and ``df_logo_info`` (via :meth:`AALogo.get_df_logo_info`) from
           ``df_parts``/``labels``/``label_test``/``tmd_len``, then renders the logo
           with the bit-score bar.
         * ``aal_kws`` is the equivalent shortcut as a single dict, useful when the
@@ -436,8 +441,8 @@ class AAlogoPlot:
 
         See Also
         --------
-        * :meth:`AAlogoPlot.multi_logo`: for stacked multi-group comparison.
-        * :class:`AAlogo`: to compute ``df_logo`` and ``df_logo_info``.
+        * :meth:`AALogoPlot.multi_logo`: for stacked multi-group comparison.
+        * :class:`AALogo`: to compute ``df_logo`` and ``df_logo_info``.
 
         Examples
         --------
@@ -453,7 +458,7 @@ class AAlogoPlot:
             aal_kws = dict(df_parts=df_parts, labels=labels,
                            label_test=label_test, tmd_len=tmd_len)
         if aal_kws is not None:
-            aal = AAlogo(logo_type=self._logo_type)
+            aal = AALogo(logo_type=self._logo_type)
             df_logo = aal.get_df_logo(**aal_kws)
             df_logo_info = aal.get_df_logo_info(**aal_kws)
         check_df_logo(df_logo=df_logo)
@@ -566,12 +571,12 @@ class AAlogoPlot:
             internally and must be ``None``.
         list_df_logo_info : list of pd.Series, each shape (n_positions,), optional
             Per-position information content, one per group, as returned by
-            :meth:`AAlogo.get_df_logo_info`. If provided, a bit-score bar is rendered above
+            :meth:`AALogo.get_df_logo_info`. If provided, a bit-score bar is rendered above
             each logo. Length and per-group positions must match ``list_df_logo``. Must be
             ``None`` when ``list_aal_kws`` is given (it is then computed internally and the
             bars are shown).
         list_aal_kws : list of dict, optional
-            Per-group :meth:`AAlogo.get_df_logo` keyword arguments, one dict per group. If
+            Per-group :meth:`AALogo.get_df_logo` keyword arguments, one dict per group. If
             given, ``list_df_logo`` and ``list_df_logo_info`` are computed internally and
             must be ``None``. Mutually exclusive with ``list_df_logo`` (see Notes).
         info_bar_color : str, default='gray'
@@ -642,10 +647,10 @@ class AAlogoPlot:
 
         Notes
         -----
-        * ``list_aal_kws`` is a convenience shortcut that skips the manual :class:`AAlogo`
-          step for each group: ``AAlogoPlot`` instantiates :class:`AAlogo` with this plot's
-          ``logo_type`` and computes both ``df_logo`` (via :meth:`AAlogo.get_df_logo`) and
-          ``df_logo_info`` (via :meth:`AAlogo.get_df_logo_info`) per dict, so the bit-score
+        * ``list_aal_kws`` is a convenience shortcut that skips the manual :class:`AALogo`
+          step for each group: ``AALogoPlot`` instantiates :class:`AALogo` with this plot's
+          ``logo_type`` and computes both ``df_logo`` (via :meth:`AALogo.get_df_logo`) and
+          ``df_logo_info`` (via :meth:`AALogo.get_df_logo_info`) per dict, so the bit-score
           bars appear automatically. Each dict holds that group's arguments, e.g.
           ``df_parts``, ``labels``, ``label_test``, ``tmd_len``, ``start_n``,
           ``characters_to_ignore``, and ``pseudocount`` (typically the same ``df_parts``
@@ -656,8 +661,8 @@ class AAlogoPlot:
 
         See Also
         --------
-        * :meth:`AAlogoPlot.single_logo`: for a single-group visualization.
-        * :class:`AAlogo`: to compute ``df_logo`` for each group.
+        * :meth:`AALogoPlot.single_logo`: for a single-group visualization.
+        * :class:`AALogo`: to compute ``df_logo`` for each group.
 
         Examples
         --------
@@ -667,7 +672,7 @@ class AAlogoPlot:
         check_list_aal_kws(list_aal_kws=list_aal_kws, list_df_logo=list_df_logo,
                            list_df_logo_info=list_df_logo_info)
         if list_aal_kws is not None:
-            aal = AAlogo(logo_type=self._logo_type)
+            aal = AALogo(logo_type=self._logo_type)
             list_df_logo = [aal.get_df_logo(**aal_kws) for aal_kws in list_aal_kws]
             list_df_logo_info = [aal.get_df_logo_info(**aal_kws) for aal_kws in list_aal_kws]
         check_list_df_logo(list_df_logo=list_df_logo)

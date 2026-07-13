@@ -988,7 +988,7 @@ Canonical per-residue annotation table (AnnotationPreprocessor); one row per ann
 ``df_logo``
 -----------
 
-AAlogo composition/probability matrix consumed by sequence-logo plots.
+AALogo composition/probability matrix consumed by sequence-logo plots.
 
 Matrix / array contract:
 

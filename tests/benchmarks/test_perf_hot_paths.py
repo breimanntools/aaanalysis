@@ -317,10 +317,10 @@ def test_tree_model_fit(benchmark, tree_inputs):
 def test_encode_pdb(benchmark, pdb_inputs):
     """StructurePreprocessor.encode_pdb — PDB -> per-residue tensor (pro)."""
     pytest.importorskip("Bio")  # biopython, from the [pro] extra
-    stp = aa.StructurePreprocessor()
+    strp = aa.StructurePreprocessor()
     with warnings.catch_warnings():
         warnings.simplefilter("ignore")
-        result = _bench(benchmark, lambda: stp.encode_pdb(
+        result = _bench(benchmark, lambda: strp.encode_pdb(
             df_seq=pdb_inputs, pdb_folder=str(PDB_FIXTURES), features=["bfactor"]))
     assert isinstance(result, dict)
 

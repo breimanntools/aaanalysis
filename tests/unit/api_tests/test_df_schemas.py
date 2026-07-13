@@ -5,7 +5,7 @@ Three layers, all guarded so drift is detectable in CI:
 - structural: every frame + field record is well-formed, and the rich df_feat view agrees
   with the simple ``ut.DICT_DF_FEAT``;
 - golden conformance: real frames (load_dataset / get_df_parts / load_scales /
-  load_features / AAlogo) satisfy their schema (columns, dtypes, ranges, uniqueness);
+  load_features / AALogo) satisfy their schema (columns, dtypes, ranges, uniqueness);
 - cross-frame contract: a real df_feat references valid scales/parts/categories, and its
   numeric columns are finite and in range;
 - doc sync: the committed schemas doc page matches the rendered registry.

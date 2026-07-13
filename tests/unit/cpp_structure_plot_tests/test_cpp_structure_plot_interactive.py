@@ -72,11 +72,11 @@ SEQ = "A" * 60
 
 
 def _panel(pdb_path, predictor=None, **kwargs):
-    csp = aa.CPPStructurePlot(jmd_n_len=10, jmd_c_len=10, verbose=False)
+    cpps_plot = aa.CPPStructurePlot(jmd_n_len=10, jmd_c_len=10, verbose=False)
     kwargs.setdefault("tmd_len", 10)
     kwargs.setdefault("col_imp", "feat_impact")
     kwargs.setdefault("debounce_ms", 0)
-    container = csp.interactive(predictor=predictor or _RecordingPredictor(),
+    container = cpps_plot.interactive(predictor=predictor or _RecordingPredictor(),
                                 sequence=SEQ, pdb=pdb_path, **kwargs)
     return container, container._cpp_panel
 
@@ -150,39 +150,39 @@ class TestInteractive:
 
     # --- negatives -----------------------------------------------------------
     def test_predictor_not_callable_negative(self, pdb_path):
-        csp = aa.CPPStructurePlot(verbose=False)
+        cpps_plot = aa.CPPStructurePlot(verbose=False)
         with pytest.raises(ValueError):
-            csp.interactive(predictor="nope", sequence=SEQ, pdb=pdb_path, tmd_len=10)
+            cpps_plot.interactive(predictor="nope", sequence=SEQ, pdb=pdb_path, tmd_len=10)
 
     def test_pdb_and_uniprot_both_negative(self, pdb_path):
-        csp = aa.CPPStructurePlot(verbose=False)
+        cpps_plot = aa.CPPStructurePlot(verbose=False)
         with pytest.raises(ValueError):
-            csp.interactive(predictor=_RecordingPredictor(), sequence=SEQ, pdb=pdb_path,
+            cpps_plot.interactive(predictor=_RecordingPredictor(), sequence=SEQ, pdb=pdb_path,
                             uniprot="P05067", tmd_len=10)
 
     def test_pdb_and_uniprot_neither_negative(self):
-        csp = aa.CPPStructurePlot(verbose=False)
+        cpps_plot = aa.CPPStructurePlot(verbose=False)
         with pytest.raises(ValueError):
-            csp.interactive(predictor=_RecordingPredictor(), sequence=SEQ, tmd_len=10)
+            cpps_plot.interactive(predictor=_RecordingPredictor(), sequence=SEQ, tmd_len=10)
 
     @pytest.mark.parametrize("mode", ["Impact", "shap", ""])
     def test_mode_negative(self, pdb_path, mode):
-        csp = aa.CPPStructurePlot(verbose=False)
+        cpps_plot = aa.CPPStructurePlot(verbose=False)
         with pytest.raises(ValueError):
-            csp.interactive(predictor=_RecordingPredictor(), sequence=SEQ, pdb=pdb_path,
+            cpps_plot.interactive(predictor=_RecordingPredictor(), sequence=SEQ, pdb=pdb_path,
                             tmd_len=10, mode=mode)
 
     @pytest.mark.parametrize("init_site", [0, -1, 999])
     def test_init_site_out_of_range_negative(self, pdb_path, init_site):
-        csp = aa.CPPStructurePlot(verbose=False)
+        cpps_plot = aa.CPPStructurePlot(verbose=False)
         with pytest.raises(ValueError):
-            csp.interactive(predictor=_RecordingPredictor(), sequence=SEQ, pdb=pdb_path,
+            cpps_plot.interactive(predictor=_RecordingPredictor(), sequence=SEQ, pdb=pdb_path,
                             tmd_len=10, init_site=init_site)
 
     def test_site_to_start_not_callable_negative(self, pdb_path):
-        csp = aa.CPPStructurePlot(verbose=False)
+        cpps_plot = aa.CPPStructurePlot(verbose=False)
         with pytest.raises(ValueError):
-            csp.interactive(predictor=_RecordingPredictor(), sequence=SEQ, pdb=pdb_path,
+            cpps_plot.interactive(predictor=_RecordingPredictor(), sequence=SEQ, pdb=pdb_path,
                             tmd_len=10, site_to_start=5)
 
 
@@ -225,25 +225,25 @@ class TestInteractiveComplex:
             return pd.DataFrame({"entry": ["Q9NQ76"], "model_path": [str(p)]})
 
         monkeypatch.setattr(StructurePreprocessor, "fetch_alphafold", _fake_fetch)
-        csp = aa.CPPStructurePlot(jmd_n_len=10, jmd_c_len=10, verbose=False)
-        container = csp.interactive(predictor=_RecordingPredictor(), sequence=SEQ,
+        cpps_plot = aa.CPPStructurePlot(jmd_n_len=10, jmd_c_len=10, verbose=False)
+        container = cpps_plot.interactive(predictor=_RecordingPredictor(), sequence=SEQ,
                                     uniprot="Q9NQ76", tmd_len=10, debounce_ms=0)
         assert container._cpp_panel.n_predict == 1
 
     def test_missing_ipywidgets_raises_friendly(self, pdb_path, monkeypatch):
         # Simulate ipywidgets absent: import fails -> friendly RuntimeError, not ImportError.
         monkeypatch.setitem(sys.modules, "ipywidgets", None)
-        csp = aa.CPPStructurePlot(verbose=False)
+        cpps_plot = aa.CPPStructurePlot(verbose=False)
         with pytest.raises(RuntimeError, match="ipywidgets"):
-            csp.interactive(predictor=_RecordingPredictor(), sequence=SEQ, pdb=pdb_path,
+            cpps_plot.interactive(predictor=_RecordingPredictor(), sequence=SEQ, pdb=pdb_path,
                             tmd_len=10)
 
     def test_missing_py3dmol_raises_friendly(self, pdb_path, monkeypatch):
-        from aaanalysis.feature_engineering_pro import _cpp_structure_plot as csp_mod
-        monkeypatch.setattr(csp_mod, "py3dmol_available", lambda: False)
-        csp = aa.CPPStructurePlot(verbose=False)
+        from aaanalysis.feature_engineering_pro import _cpp_structure_plot as cpps_plot_mod
+        monkeypatch.setattr(cpps_plot_mod, "py3dmol_available", lambda: False)
+        cpps_plot = aa.CPPStructurePlot(verbose=False)
         with pytest.raises(RuntimeError, match="py3Dmol"):
-            csp.interactive(predictor=_RecordingPredictor(), sequence=SEQ, pdb=pdb_path,
+            cpps_plot.interactive(predictor=_RecordingPredictor(), sequence=SEQ, pdb=pdb_path,
                             tmd_len=10)
 
 

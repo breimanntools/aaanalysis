@@ -117,7 +117,7 @@ class AAMut(Tool):
 
         Examples
         --------
-        .. include:: examples/aamut_run.rst
+        .. include:: examples/aam_run.rst
         """
         # Validate
         list_from = check_aa(name="from_aa", val=from_aa) or ut.LIST_CANONICAL_AA
@@ -154,7 +154,7 @@ class AAMut(Tool):
 
         Examples
         --------
-        .. include:: examples/aamut_eval.rst
+        .. include:: examples/aam_eval.rst
         """
         # Validate
         ut.check_df(df=df_impact, name="df_impact", cols_required=ut.COLS_AAMUT)

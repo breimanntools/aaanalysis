@@ -137,6 +137,8 @@ class CPPStructurePlot:
       :class:`CPPPlot` so juxta-membrane domain (JMD) lengths stay consistent.
     * This is a ``pro`` feature: ``biopython`` parses structures, ``py3Dmol`` renders them, and
       ``ipywidgets`` powers :meth:`interactive` — all in the ``pro`` extra.
+    * Parameters ending in ``_kws`` (e.g. ``feature_map_kws``) bundle related keyword arguments
+      into one dict; see the :ref:`keyword-dict parameters overview <kws-overview>`.
 
     """
     def __init__(self,
@@ -170,7 +172,7 @@ class CPPStructurePlot:
 
         Examples
         --------
-        .. include:: examples/csp_map_structure.rst
+        .. include:: examples/cpps_plot_map_structure.rst
         """
         # Check input
         verbose = ut.check_verbose(verbose)
@@ -291,7 +293,7 @@ class CPPStructurePlot:
 
         Examples
         --------
-        .. include:: examples/csp_map_structure.rst
+        .. include:: examples/cpps_plot_map_structure.rst
         """
         # Validate
         ut.check_df(name="df_feat", df=df_feat, cols_required=[ut.COL_FEATURE, col_imp])
@@ -452,7 +454,7 @@ class CPPStructurePlot:
 
         Examples
         --------
-        .. include:: examples/csp_plot_combined.rst
+        .. include:: examples/cpps_plot_plot_combined.rst
         """
         # Validate
         ut.check_df(name="df_feat", df=df_feat, cols_required=[ut.COL_FEATURE, col_imp])
@@ -650,7 +652,7 @@ class CPPStructurePlot:
 
         Examples
         --------
-        .. include:: examples/csp_plot_linked.rst
+        .. include:: examples/cpps_plot_plot_linked.rst
         """
         # Validate (same contract as plot_combined)
         ut.check_df(name="df_feat", df=df_feat, cols_required=[ut.COL_FEATURE, col_imp])
@@ -958,7 +960,7 @@ class CPPStructurePlot:
 
         Examples
         --------
-        .. include:: examples/csp_interactive.rst
+        .. include:: examples/cpps_plot_interactive.rst
         """
         # Validate
         if not callable(predictor):
@@ -1209,7 +1211,7 @@ class CPPStructurePlot:
 
         Examples
         --------
-        .. include:: examples/csp_explore.rst
+        .. include:: examples/cpps_plot_explore.rst
         """
         # Validate (cheap checks first, so an invalid argument fails before the predictor is built)
         ut.check_df(name="df_feat", df=df_feat, cols_required=[ut.COL_FEATURE])
@@ -1367,8 +1369,8 @@ class CPPStructurePlot:
         # The download is by accession; the sequence column only satisfies df_seq validation.
         seq = sequence if sequence is not None else "M"
         df_seq = pd.DataFrame({ut.COL_ENTRY: [uniprot], ut.COL_SEQ: [seq]})
-        stp = StructurePreprocessor(verbose=self._verbose)
-        df_status = stp.fetch_alphafold(df_seq=df_seq, out_folder=out_folder,
+        strp = StructurePreprocessor(verbose=self._verbose)
+        df_status = strp.fetch_alphafold(df_seq=df_seq, out_folder=out_folder,
                                         file_format="pdb", on_failure="raise")
         model_path = df_status["model_path"].iloc[0]
         if not (isinstance(model_path, str) and os.path.isfile(model_path)):

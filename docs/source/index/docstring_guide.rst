@@ -71,7 +71,7 @@ Invariants:
   describes — its own paper, or the project paper ``[Breimann25]_`` for the core
   γ-secretase CPP / dPULearn / TreeModel algorithms it covers. **Most classes —
   every data-prep / utility / helper class (preprocessors, loaders,
-  :class:`~aaanalysis.NumericalFeature`, :class:`~aaanalysis.AAlogo`, …) — carry no citation, and that is correct,
+  :class:`~aaanalysis.NumericalFeature`, :class:`~aaanalysis.AALogo`, …) — carry no citation, and that is correct,
   not a gap.** Never add one to satisfy a checker note. **Verify before adding,
   and never invent one:** the key must be defined in ``references.rst`` (the
   checker's ``CITATION-UNDEFINED`` flags typo'd / fabricated keys) *and* the cited
@@ -219,7 +219,7 @@ Cross-references (``See Also``)
 * **Every cross-reference must resolve.** A ``:class:``/``:meth:``/``:func:``
   target (in ``See Also`` *or* inline prose) must name a real public symbol —
   :class:`~aaanalysis.CPP`, :meth:`~aaanalysis.CPP.run_num`, ``aaanalysis.combine_dict_nums``. Watch
-  capitalization (:class:`~aaanalysis.AAlogo`, not ``AALogo``) and method names on the right
+  capitalization (:class:`~aaanalysis.AALogo`, not ``AALogo``) and method names on the right
   class. The checker's ``XREF-UNRESOLVED`` flags an internal target that does
   not resolve; external refs (``pandas.DataFrame``) are left alone.
 * **Order multi-layer links by documentation layer.** When a ``See Also`` (or
@@ -285,21 +285,66 @@ The registry below is the single source of truth and is enforced by
 ``tests/unit/api_tests/test_class_abbreviation_registry.py`` (every public class
 is registered; every ``<abbr> = aa.<Class>()`` and notebook filename matches).
 
-Rules:
+How an abbreviation is formed (in priority order):
 
-* ``AA*`` classes keep the ``aa`` prefix; acronyms stay whole (:class:`~aaanalysis.CPP` → ``cpp``);
-  the established public spelling is kept (:class:`~aaanalysis.dPULearn` → ``dpul``).
+* **Keep the recognizable name prefix.** ``AA*`` classes keep ``aa``; ``Seq*``
+  classes keep ``seq``; a genuine acronym stays whole (:class:`~aaanalysis.CPP` →
+  ``cpp``); an established public spelling is kept (:class:`~aaanalysis.dPULearn` →
+  ``dpul``).
+* **Then add the first letter of each remaining CamelCase word.** So
+  :class:`~aaanalysis.AAWindowSampler` → ``aaws``, :class:`~aaanalysis.SequenceFeature`
+  → ``sf``, :class:`~aaanalysis.NumericalFeature` → ``nf``,
+  :class:`~aaanalysis.TreeModel` → ``tm``, :class:`~aaanalysis.ShapModel` → ``sm``,
+  :class:`~aaanalysis.AAclust` → ``aac``, :class:`~aaanalysis.AALogo` → ``aal``,
+  :class:`~aaanalysis.AAMut` → ``aam``, :class:`~aaanalysis.AAPred` → ``aap``,
+  :class:`~aaanalysis.SeqMut` → ``seqm``, :class:`~aaanalysis.SeqOpt` → ``seqo``.
+* **Extend a component when the minimal initial is too generic or would collide.**
+  The ``*Preprocessor`` family therefore uses a three-letter first-word stem plus
+  ``p`` — :class:`~aaanalysis.SequencePreprocessor` → ``seqp``,
+  :class:`~aaanalysis.EmbeddingPreprocessor` → ``embp``,
+  :class:`~aaanalysis.StructurePreprocessor` → ``strp``,
+  :class:`~aaanalysis.AnnotationPreprocessor` → ``annp`` — because two-letter
+  initials (``sp``/``ep``) are too generic and clash. On a direct collision the
+  *newer* class takes the longer form: :class:`~aaanalysis.SeqMut` is ``seqm``,
+  leaving ``sm`` free for :class:`~aaanalysis.ShapModel`.
+* **Reserved:** ``ap`` is the import alias for :mod:`aaanalysis.pipe`
+  (``import aaanalysis.pipe as ap``) and is never a class abbreviation.
 * A plot pair is the base abbreviation plus ``_plot`` (:class:`~aaanalysis.CPPPlot` → ``cpp_plot``).
-* **Legacy/incumbency wins.** Existing short forms are kept (``aac``, ``aal``);
-  the ``aa`` prefix is enforced where missing (:class:`~aaanalysis.AAWindowSampler` → ``aaws``);
-  and when two classes would collide the *newer* one takes the longer form — so
-  :class:`~aaanalysis.SeqMut` stays ``seqmut``, leaving ``sm`` free for :class:`~aaanalysis.ShapModel`.
 * **A class instance is named the bare abbreviation, always** — ``cpp = aa.CPP(...)``,
   never ``cpp_res``/``cpp_dom``. If you build the same class repeatedly (e.g. one
   CPP per prediction level), **reassign the bare name** and let the *outputs* carry
   the qualifier (``df_feat_res``, ``X_res``). A ``<abbr>_<qualifier>`` *instance*
   name is allowed **only** for a genuinely concurrent second instance that cannot
   be restructured (``aaws_strict`` beside ``aaws``) — never an unrelated word.
+
+**Type-suffix mnemonic.** Four class families encode their *kind* in the last
+letter of the abbreviation, so a reader can tell what a variable holds at a
+glance. The remaining tool / engine classes keep the prefix + concept-initial
+form above (``cpp``, ``aac``, ``aam``, ``seqm``, ``seqo``, ``aap``, ``aaws``,
+``dpul``).
+
+.. list-table:: Abbreviation type-suffix map
+   :header-rows: 1
+   :widths: 12 40 48
+
+   * - Suffix
+     - Family
+     - Members
+   * - ``*p``
+     - preprocessors
+     - ``seqp``, ``embp``, ``strp``, ``annp``
+   * - ``*f``
+     - feature containers
+     - ``sf``, ``nf``
+   * - ``*m``
+     - models (fit / produce a model or estimate)
+     - ``tm``, ``rm``, ``sm``
+   * - ``*x``
+     - XAI explainers (post-hoc; *planned* — see *Reserved future abbreviations*)
+     - ``fx``, ``cx``, ``ex``, ``rx``, ``nx``, ``sx``
+   * - ``*_plot``
+     - plot companions
+     - ``cpp_plot``, ``aap_plot``, ``seqo_plot``
 
 .. list-table:: Canonical class abbreviations
    :header-rows: 1
@@ -309,12 +354,12 @@ Rules:
      - Abbr.
      - Extra
    * - :class:`~aaanalysis.SequencePreprocessor`
-     - ``sp``
+     - ``seqp``
      -
    * - :class:`~aaanalysis.EmbeddingPreprocessor`
-     - ``ep``
+     - ``embp``
      -
-   * - :class:`~aaanalysis.AAlogo` / :class:`~aaanalysis.AAlogoPlot`
+   * - :class:`~aaanalysis.AALogo` / :class:`~aaanalysis.AALogoPlot`
      - ``aal`` / ``aal_plot``
      -
    * - :class:`~aaanalysis.AAWindowSampler`
@@ -336,25 +381,25 @@ Rules:
      - ``cppg``
      -
    * - :class:`~aaanalysis.CPPStructurePlot`
-     - ``csp``
+     - ``cpps_plot``
      - ``pro``
    * - :class:`~aaanalysis.dPULearn` / :class:`~aaanalysis.dPULearnPlot`
      - ``dpul`` / ``dpul_plot``
      -
    * - :class:`~aaanalysis.AAMut` / :class:`~aaanalysis.AAMutPlot`
-     - ``aamut`` / ``aamut_plot``
+     - ``aam`` / ``aam_plot``
      -
    * - :class:`~aaanalysis.SeqMut` / :class:`~aaanalysis.SeqMutPlot`
-     - ``seqmut`` / ``seqmut_plot``
+     - ``seqm`` / ``seqm_plot``
      -
    * - :class:`~aaanalysis.SeqOpt` / :class:`~aaanalysis.SeqOptPlot`
-     - ``seqopt`` / ``seqopt_plot``
+     - ``seqo`` / ``seqo_plot``
      - core (``mode="impact"`` needs ``pro``)
    * - :class:`~aaanalysis.TreeModel`
      - ``tm``
      -
    * - :class:`~aaanalysis.AAPred` / :class:`~aaanalysis.AAPredPlot`
-     - ``aapred`` / ``aapred_plot``
+     - ``aap`` / ``aap_plot``
      -
    * - :class:`~aaanalysis.ReliabilityModel` / :class:`~aaanalysis.ReliabilityModelPlot`
      - ``rm`` / ``rm_plot``
@@ -363,11 +408,61 @@ Rules:
      - ``sm``
      - ``pro``
    * - :class:`~aaanalysis.StructurePreprocessor`
-     - ``stp``
+     - ``strp``
      - ``pro``
    * - :class:`~aaanalysis.AnnotationPreprocessor`
-     - ``ap``
+     - ``annp``
      - ``pro``
+
+Reserved future abbreviations
+-----------------------------
+
+The v2 Explainability (XAI) layer will add one ``*Explainer`` class per method
+category, each wrapping several library approaches as methods (one method per
+approach). Their abbreviations follow the ``*x`` (e\ **x**\ plainer) suffix and
+are **reserved now** so they are not reused before the classes land. The shipped
+``*Model`` wrappers — :class:`~aaanalysis.TreeModel` (``tm``),
+:class:`~aaanalysis.ReliabilityModel` (``rm``), :class:`~aaanalysis.ShapModel`
+(``sm``, kept as the legacy SHAP wrapper) — stay unchanged.
+
+.. list-table:: Reserved XAI ``*Explainer`` abbreviations (planned, not yet implemented)
+   :header-rows: 1
+   :widths: 26 10 16 48
+
+   * - Class (planned)
+     - Abbr.
+     - Scope
+     - Wraps (one method per approach)
+   * - ``FeatureExplainer``
+     - ``fx``
+     - ``pro``
+     - permutation importance, PDP, ICE, ALE, LIME
+   * - ``ExampleExplainer``
+     - ``ex``
+     - core / ``pro``
+     - prototypes (AAclust medoids, MMD-CRITIC), counterfactuals (Wachter, DiCE, CEM)
+   * - ``RuleExplainer``
+     - ``rx``
+     - ``pro``
+     - ANCHOR, RuleFit, LORE, TREPAN
+   * - ``NeuralExplainer``
+     - ``nx``
+     - ``pro``
+     - integrated gradients, LRP, Grad-CAM, TCAV (Captum)
+   * - ``SurrogateExplainer``
+     - ``sx``
+     - core / ``pro``
+     - tree / linear / symbolic distillation of a fitted model
+   * - ``CausalExplainer``
+     - ``cx``
+     - ``pro``
+     - DoWhy, EconML
+
+Each planned class gets a plot companion (``fx_plot``, ``ex_plot``, …). The
+PascalCase pass for :class:`~aaanalysis.AALogo` / :class:`~aaanalysis.AALogoPlot`
+(abbreviations ``aal`` / ``aal_plot`` unchanged) is **done**; the former
+``AAlogo`` / ``AAlogoPlot`` names remain importable as deprecated back-compatible
+aliases (resolved via ``aaanalysis.__getattr__`` with a ``DeprecationWarning``).
 
 Tutorial notebook titles
 ------------------------
@@ -380,13 +475,13 @@ tutorial centred on a single public class is titled
 
 — the **exact public class name** (as in the API), a colon, then a short phrase
 for what the reader learns. Examples already in the set:
-``AAclust: Selecting redundancy-reduced scale sets``,
-``SequenceFeature: Creation of CPP feature components``,
-``CPP: Identification of physicochemical signatures``,
-``dPULearn: Learning from unbalanced data``,
-``ShapModel: Explaining with single-residue resolution``,
-``CPPGrid: Sweeping, evaluating, and ranking configurations``,
-``SeqOpt: Optimizing sequences by directed evolution``.
+:doc:`AAclust: Selecting redundancy-reduced scale sets </generated/tutorial3a_aaclust>`,
+:doc:`SequenceFeature: Creation of CPP feature components </generated/tutorial3b_sequence_feature>`,
+:doc:`CPP: Identification of physicochemical signatures </generated/tutorial3c_cpp>`,
+:doc:`dPULearn: Learning from unbalanced data </generated/tutorial4a_dpulearn>`,
+:doc:`ShapModel: Explaining with single-residue resolution </generated/tutorial5a_shap_model>`,
+:doc:`CPPGrid: Sweeping, evaluating, and ranking configurations </generated/tutorial6_comparison_harness>`,
+:doc:`SeqOpt: Optimizing sequences by directed evolution </generated/tutorial7_protein_engineering>`.
 
 Rules:
 
@@ -394,14 +489,17 @@ Rules:
   ``Tutorial: …``). Ordering lives in the filename (``tutorial6_*``) and the
   ``tutorials.rst`` toctree, not the heading.
 * When a section of ``tutorials.rst`` introduces the notebook in prose, name it by
-  the **same class** (``the **CPPGrid** tutorial``, ``the **SeqOpt** tutorial``) so
+  the **same class** (the :doc:`CPPGrid tutorial </generated/tutorial6_comparison_harness>`,
+  the :doc:`SeqOpt tutorial </generated/tutorial7_protein_engineering>`) so
   the prose, the title, and the API all read the same.
 * A tutorial that teaches a **function** or a **cross-cutting topic** rather than
-  one class uses a plain descriptive title — ``Data loading``, ``Scale loading``,
-  ``CPP across data representations: …``.
+  one class uses a plain descriptive title — :doc:`Data loading </generated/tutorial2a_data_loader>`,
+  :doc:`Scale loading </generated/tutorial2b_scales_loader>`,
+  :doc:`CPP across data representations </generated/tutorial3d_data_representations>`.
 * The onboarding notebooks under :ref:`Getting Started <getting_started>`
-  (``A minimal CPP analysis``, ``Quick start with AAanalysis``,
-  ``Slow start with AAanalysis``) are titled by what they deliver, not a class.
+  (:doc:`A minimal CPP analysis </generated/tutorial0_minimal>`,
+  :doc:`Quick start with AAanalysis </generated/tutorial1_quick_start>`,
+  :doc:`Slow start with AAanalysis </generated/tutorial1_slow_start>`) are titled by what they deliver, not a class.
 
 Output / data-object names
 --------------------------
@@ -430,20 +528,70 @@ the *class-instance* names above are checked).
    * - ``X`` / ``labels``
      - feature matrix (``sf.feature_matrix``) / class labels (``df_seq["label"].to_list()``)
    * - ``df_eval``
-     - evaluation results (``cpp/tm/dpul/aamut/seqmut .eval(...)``)
+     - evaluation results (``cpp/tm/dpul/aam/seqm .eval(...)``)
    * - ``df_pos`` / ``feat_importance``
      - feature positions (``sf.get_df_pos``) / importance column (``tm.add_feat_importance``)
    * - ``df_logo`` / ``df_logo_info``
      - sequence-logo frames (``aal.get_df_logo`` / ``get_df_logo_info``)
    * - ``df_impact`` / ``df_scan``
-     - mutation impact (``aamut.run``) / scan (``seqmut.scan``)
+     - mutation impact (``aam.run``) / scan (``seqm.scan``)
    * - ``df_pu`` / ``dict_num`` / ``df_annot`` / ``df_params``
-     - PU frame (``dpul``) / numerical parts (``nf``) / annotations (``ap``) / grid params (``cppg``)
+     - PU frame (``dpul``) / numerical parts (``nf``) / annotations (``annp``) / grid params (``cppg``)
 
 **Qualifiers belong on the data level.** A variant of a data object takes a
 ``<name>_<qualifier>`` suffix (``df_feat_res``, ``X_res``, ``df_cat_selected``,
 ``df_top15``) — used **only when you actually have a variant**, not stamped onto
 every example. Class instances stay the bare abbreviation (see above).
+
+.. _kws-overview:
+
+Keyword-dict (``_kws``) parameters
+----------------------------------
+
+A ``*_kws`` parameter groups several related keyword arguments into one dict.
+There are two **kinds**, and the *forwarded* kind splits into two **subtypes**:
+
+* **forwarded** — passed through (mostly) verbatim to another callable, so it
+  accepts whatever that callable accepts (open-ended keys):
+
+  * *external* — the target is a third-party library (e.g. Matplotlib);
+  * *internal* — the target is another AAanalysis function or method.
+
+* **structured bundle** — a **fixed, documented key set** consumed *inside*
+  AAanalysis (validate unknown keys, default the unset ones).
+
+Name any new one ``<noun>_kws`` and add it to the table below.
+
+.. list-table:: Keyword-dict (``_kws``) parameters
+   :header-rows: 1
+   :widths: 22 22 56
+
+   * - Parameter
+     - Kind
+     - Contents / target
+   * - ``cbar_kws``
+     - forwarded, external
+     - Arbitrary keys for :meth:`matplotlib.figure.Figure.colorbar`.
+   * - ``legend_kws``
+     - forwarded, internal
+     - Arbitrary keys for :func:`~aaanalysis.plot_legend`.
+   * - ``feature_map_kws``
+     - forwarded, internal
+     - Arbitrary keys for :meth:`~aaanalysis.CPPPlot.feature_map` (from ``CPPStructurePlot``).
+   * - ``aal_kws`` / ``list_aal_kws``
+     - forwarded, internal
+     - Keys for :meth:`~aaanalysis.AALogo.get_df_logo` / ``get_df_logo_info`` (``list_`` = one dict per logo).
+   * - ``df_parts_kws``
+     - forwarded, internal
+     - Keys for ``sf.get_df_parts`` (e.g. ``list_parts``, ``jmd_n_len``) when *building* ``df_parts``.
+   * - ``split_kws``
+     - structured bundle
+     - One param-dict per split type: ``Segment`` (``n_split_min``, ``n_split_max``), ``Pattern``
+       (``steps``, ``n_min``, ``n_max``, ``len_max``), ``PeriodicPattern`` (``steps``). From ``sf.get_split_kws``.
+   * - ``bootstrap_kws``
+     - structured bundle
+     - Fixed keys ``rounds`` / ``resample`` / ``frac`` (any subset; unset keys keep their default) —
+       :meth:`~aaanalysis.CPP` bootstrap configuration.
 
 Label parameter names
 ---------------------
@@ -462,7 +610,7 @@ but name *different* concepts — keep them distinct rather than collapsing them
    * - Contrast markers (the two groups being compared)
      - ``label_test`` / ``label_ref``
      - The positive/test group vs the reference group of a *contrast* —
-       :meth:`~aaanalysis.CPP.run` / :meth:`~aaanalysis.CPP.eval`, :meth:`~aaanalysis.AAlogo.get_df_logo`.
+       :meth:`~aaanalysis.CPP.run` / :meth:`~aaanalysis.CPP.eval`, :meth:`~aaanalysis.AALogo.get_df_logo`.
    * - Single labeling (1D)
      - ``labels``
      - One per-sample class-label vector, shape ``(n_samples,)`` — e.g.

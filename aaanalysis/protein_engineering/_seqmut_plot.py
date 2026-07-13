@@ -134,7 +134,7 @@ class SeqMutPlot:
 
         Examples
         --------
-        .. include:: examples/seqmut_plot_mutation_landscape.rst
+        .. include:: examples/seqm_plot_mutation_landscape.rst
         """
         # Validate
         check_df_scan(df_scan=df_scan)
@@ -230,7 +230,7 @@ class SeqMutPlot:
 
         Examples
         --------
-        .. include:: examples/seqmut_plot_residue_mutation_impact.rst
+        .. include:: examples/seqm_plot_residue_mutation_impact.rst
         """
         # Validate
         check_df_scan(df_scan=df_scan)
@@ -293,7 +293,7 @@ class SeqMutPlot:
 
         Examples
         --------
-        .. include:: examples/seqmut_plot_variant_impact.rst
+        .. include:: examples/seqm_plot_variant_impact.rst
         """
         # Validate
         check_df_variant(df_variant=df_variant)
@@ -362,7 +362,7 @@ class SeqMutPlot:
 
         Examples
         --------
-        .. include:: examples/seqmut_plot_epistasis.rst
+        .. include:: examples/seqm_plot_epistasis.rst
         """
         # Validate
         check_df_variant(df_variant=df_variant)

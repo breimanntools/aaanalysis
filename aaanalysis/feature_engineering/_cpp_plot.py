@@ -5,6 +5,7 @@ from typing import Optional, Dict, Union, List, Tuple, Type, Literal
 import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
+import matplotlib.transforms as mtransforms
 from matplotlib.axes import Axes
 from matplotlib.figure import Figure
 import warnings
@@ -35,11 +36,61 @@ from ._backend.cpp.cpp_plot_profile import plot_profile
 from ._backend.cpp.cpp_plot_heatmap import plot_heatmap
 from ._backend.cpp.cpp_plot_feature_map import plot_feature_map
 from ._backend.cpp._utils_cpp_plot_sizing import (fit_cells_by_rescale, fit_width_by_rescale,
-                                                  ranking_figheight, HEATMAP_CELL_H_IN)
+                                                  grow_to_fit, ranking_figheight,
+                                                  CELL_W_IN, CELL_H_IN, HEATMAP_CELL_H_IN)
+from ._backend.cpp._utils_cpp_plot_positions import (finalize_part_labels_, place_colorbar_below_grid_,
+                                                     align_bottom_furniture_)
 from ._backend.cpp.cpp_plot_update_seq_size import get_tmd_jmd_seq, update_seq_size_, update_tmd_jmd_labels
+
+# Points below the heatmap grid at which the scale-category legend is anchored (feature_map).
+# Kept in points (not a figure fraction), anchored to the heatmap axes, so the legend sits the
+# same distance below the grid at any figure size (and rides the grid when grow_to_fit shifts it).
+_LEGEND_BELOW_GRID_PT = 70.0
+
+# Absolute width (inches) reserved on the right for the "Cumulative feature importance" label
+# and its axis tick, so it never clips (a fixed right-fraction reserves too few inches when narrow).
+# Generous on purpose: bbox_inches="tight" trims any unused margin at save time.
+_RIGHT_LABEL_IN = 0.6
 
 
 # I Helper Functions
+def resolve_seq_size(seq_size=None):
+    """Split the public ``seq_size`` into (fixed_pt, req) for the residue-letter sizing.
+
+    ``"auto"`` / ``None`` -> length-adaptive auto (both returned None). ``0 < seq_size <= 1`` ->
+    a fraction of the grid cell height (``fixed_pt`` None, ``req`` = the fraction). ``seq_size > 1``
+    -> an absolute font size in points (``fixed_pt`` = the points, taken by the legacy fixed path).
+    """
+    if seq_size is None or (isinstance(seq_size, str) and seq_size == "auto"):
+        return None, None
+    ut.check_number_range(name="seq_size", val=seq_size, min_val=0, exclusive_limits=True, just_int=False)
+    if seq_size <= 1:
+        return None, seq_size
+    return seq_size, None
+
+
+def resolve_fontsize_labels(fontsize_labels=None):
+    """Resolve the subcategory row-label size into (size_pt, shrink_on_overlap).
+
+    ``"auto"`` / ``None`` follows the ``plot_settings`` font scale: 12 pt at the ``seaborn`` "talk"
+    scale of 1.0 (so the default output is unchanged), scaling linearly with the font size, and
+    shrunk to fit the row if the scaled labels would overlap. An explicit number is used as-is (no
+    shrink). Every other text element already tracks the font scale via rcParams.
+    """
+    if fontsize_labels is None or (isinstance(fontsize_labels, str) and fontsize_labels == "auto"):
+        import seaborn as sns
+        base = sns.plotting_context("talk", font_scale=1.0)["font.size"]  # 18.0 ('talk' base)
+        size = plt.rcParams["font.size"] * 12.0 / base
+        # Hard-cap at ~the grid row height (0.19 in cell * 72 * 0.95 ~ 13 pt) so a large font_scale
+        # never makes the row labels taller than their row and overlap (the overlap-shrink runs at
+        # the seed size and can miss the collision that the constant-cell resize then introduces).
+        size = min(size, 13.0)
+        return round(size, 2), True
+    ut.check_number_range(name="fontsize_labels", val=fontsize_labels, min_val=0,
+                          exclusive_limits=False, just_int=False)
+    return float(fontsize_labels), False
+
+
 # Checks for eval plot
 def check_match_dict_color_list_cat(dict_color=None, list_cat=None):
     """Check if all categories from list_cat are in dict_color"""
@@ -173,6 +224,16 @@ def check_imp_tuples(name="imp_th", imp_tuples=None) -> None:
         raise ValueError(f"Minium of '{name}' ({imp_tuples[0]}) should be > 0")
 
 
+def check_cell_size(cell_size=None) -> None:
+    """Check if grid cell_size is a (width, height) tuple of positive inches, or None."""
+    if cell_size is None:
+        return None
+    ut.check_tuple(name="cell_size", val=cell_size, n=2, accept_none=False, check_number=True,
+                   str_add="a (width, height) tuple of sizes in inches")
+    if cell_size[0] <= 0 or cell_size[1] <= 0:
+        raise ValueError(f"'cell_size' ({cell_size}) should be a (width, height) tuple of positive inches")
+
+
 # Check update_seq_size
 def check_match_ax_seq_len(ax=None, jmd_n_len=10, jmd_c_len=10) -> None:
     """Check if ax matches with required length"""
@@ -252,6 +313,8 @@ class CPPPlot:
       ``_jmd_c_len`` and are reused by all plot methods (``ranking``, ``profile``, ``heatmap``,
       ``feature_map``, ``update_seq_size``) so that juxta middle domain (JMD) lengths are
       consistent across a single :class:`CPPPlot` instance.
+    * Parameters ending in ``_kws`` (e.g. ``cbar_kws``, ``legend_kws``) bundle related keyword
+      arguments into one dict; see the :ref:`keyword-dict parameters overview <kws-overview>`.
 
     """
     def __init__(self,
@@ -804,6 +867,7 @@ class CPPPlot:
                 normalize: bool = True,
                 ax: Optional[Axes] = None,
                 figsize: Optional[Tuple[Union[int, float], Union[int, float]]] = None,
+                cell_size: Optional[Tuple[Union[int, float], Union[int, float]]] = None,
 
                 # Appearance of Parts (TMD-JMD)
                 start: int = 1,
@@ -815,7 +879,7 @@ class CPPPlot:
                 jmd_color: str = "blue",
                 tmd_seq_color: str = "black",
                 jmd_seq_color: str = "white",
-                seq_size: Optional[Union[int, float]] = None,
+                seq_size: Union[str, int, float] = "auto",
                 seq_char_fill: Optional[bool] = None,
                 fontsize_tmd_jmd: Optional[Union[int, float]] = None,
                 weight_tmd_jmd: Literal['normal', 'bold'] = "normal",
@@ -879,9 +943,17 @@ class CPPPlot:
             Pre-defined Axes object to plot on. If ``None``, a new Axes object is created.
         figsize : tuple, optional
             Figure dimensions (width, height) in inches. When ``None`` (default) and the global
-            ``auto_font`` option is enabled, the width grows with the sequence length (height and
-            fonts fixed); any explicit ``figsize`` is honored as a fixed size. With ``auto_font``
-            disabled, ``None`` falls back to ``(7, 5)``.
+            ``auto_font`` option is enabled, the width tracks the sequence length (narrowing for a
+            short sequence, widening for a long one; height and fonts fixed); any explicit
+            ``figsize`` is honored as a fixed size. With ``auto_font`` disabled, ``None`` falls back
+            to ``(7, 5)``.
+        cell_size : tuple, optional
+            Target ``(width, height)`` in inches of one grid cell; only the width (per-position
+            column) applies to the single-row profile. When given, the profile width is sized to
+            this per-position width regardless of ``auto_font``. ``None`` (default) uses a
+            calibrated default on the ``auto_font`` path. Ignored when an explicit ``ax`` is passed.
+
+            .. versionadded:: 1.1.0
 
             .. versionchanged:: 1.1.0
                 Defaults to ``None`` and participates in ``auto_font``; explicit ``figsize`` wins.
@@ -905,13 +977,17 @@ class CPPPlot:
             Color for TMD sequence.
         jmd_seq_color : str, default='white'
             Color for JMD sequence.
-        seq_size : int or float, optional
-            Font size (>=0) for sequence characters. If ``None``, optimized automatically.
+        seq_size : str, int, or float, optional
+            Residue-letter size. ``"auto"`` (default) fits the letters to the grid cell and steps
+            the size down for short TMDs. A value in ``(0, 1]`` sets the letter height to that
+            fraction of the cell height (e.g. ``0.9``); a value ``> 1`` is an absolute font size in
+            points. The ``"auto"`` and fractional modes keep the letters from overlapping; an
+            absolute point size is used as given.
         seq_char_fill : bool, optional
-            If ``True`` and ``seq_size`` is auto-optimized (``None``), grow the residue
-            characters until adjacent letters touch (no whitespace) while never overlapping, so
-            they fill the width. If ``False``, keep a small gap. If ``None`` (default), follows
-            the ``auto_font`` option (on when auto-sizing is enabled, off otherwise).
+            If ``True``, the sequence renders as a continuous, gap-free colored band (one full-width
+            cell per residue) with the letters drawn on top. If ``False``, each residue gets its own
+            glyph-sized colored box. If ``None`` (default), follows the ``auto_font`` option
+            (on when auto-sizing is enabled, off otherwise).
 
             .. versionadded:: 1.1.0
         fontsize_tmd_jmd : int or float, optional
@@ -1002,6 +1078,7 @@ class CPPPlot:
         ut.check_bool(name="normalize", val=normalize)
         ut.check_ax(ax=ax, accept_none=True)
         ut.check_figsize(figsize=figsize, accept_none=True)
+        check_cell_size(cell_size=cell_size)
 
         # Check specific TMD-JMD input
         ut.check_number_range(name="start", val=start, min_val=0, just_int=True)
@@ -1012,7 +1089,8 @@ class CPPPlot:
                                              check_jmd_seq_len_consistent=True)
         args_part_color = check_part_color(tmd_color=tmd_color, jmd_color=jmd_color)
         args_seq_color = check_seq_color(tmd_seq_color=tmd_seq_color, jmd_seq_color=jmd_seq_color)
-        args_fs = ut.check_fontsize_args(seq_size=seq_size,
+        _fixed_seq_size, _req_size = resolve_seq_size(seq_size)
+        args_fs = ut.check_fontsize_args(seq_size=_fixed_seq_size,
                                          fontsize_tmd_jmd=fontsize_tmd_jmd)
         ut.check_str_options(name="weight_tmd_jmd", val=weight_tmd_jmd,
                              list_str_options=["normal", "bold"])
@@ -1040,12 +1118,18 @@ class CPPPlot:
         if seq_char_fill is None:
             seq_char_fill = ut.check_auto_font()
         ut.check_bool(name="seq_char_fill", val=seq_char_fill)
-        # Auto-sizing applies only when the caller OMITS figsize (figsize is None, the
-        # signature default); any explicit figsize is honored as a fixed size (same
-        # sentinel as feature_map/heatmap/ranking).
+        # figsize is a SEED the sizer ADJUSTS. The profile is a single row, so only the WIDTH
+        # is sized (to a constant per-position column width, cell_size[0] or the default); the
+        # height stays as seeded. The sizer runs when a cell_size is set, or on the default
+        # auto_font path (figsize omitted) -- but only when we own the figure (ax is None); a
+        # user-supplied ax and an explicit figsize are both left as-is, so a multi-panel layout is
+        # never resized underneath the caller.
         figsize_omitted = figsize is None
         if figsize is None:
             figsize = (7, 5)
+        cell_w = cell_size[0] if cell_size is not None else CELL_W_IN
+        size_grid = ax is None and (cell_size is not None or (ut.check_auto_font() and figsize_omitted))
+        n_positions = tmd_len + (jmd_n_len or 0) + (jmd_c_len or 0)
 
         # Plot profile
         fig, ax = plot_profile(df_feat=df_feat, df_cat=self._df_cat, shap_plot=shap_plot,
@@ -1064,19 +1148,25 @@ class CPPPlot:
         with warnings.catch_warnings():
             warnings.simplefilter("ignore", category=UserWarning)
             plt.tight_layout()
-        # Constant per-position column width under auto_font (omitted figsize only):
-        # the profile widens with sequence length; height and fonts stay fixed.
-        # Off (default) -> byte-identical.
-        if ut.check_auto_font() and figsize_omitted:
-            n_positions = tmd_len + (jmd_n_len or 0) + (jmd_c_len or 0)
-            _, capped = fit_width_by_rescale(fig=fig, ax_grid=ax, n_cols=n_positions)
+        # Stage 1 -- hold the per-position column width (the profile widens for a long sequence
+        # and narrows for a short one; height and fonts stay fixed). Before the residue-letter fit.
+        if size_grid:
+            _, capped = fit_width_by_rescale(fig=fig, ax_grid=ax, n_cols=n_positions, cell_w=cell_w)
             if capped and self._verbose:
-                ut.print_out("auto_font: sequence exceeds the max figure width; layout may be constrained.")
-        if tmd_seq is not None and seq_size is None:
+                ut.print_out("cell_size: sequence exceeds the max figure width; layout may be constrained.")
+        if tmd_seq is not None and _fixed_seq_size is None:
             ax, seq_size = update_seq_size_(ax=ax, **args_seq, **args_part_color, **args_seq_color,
-                                            fill=seq_char_fill)
+                                            fill=seq_char_fill, req_size=_req_size)
             if self._verbose:
                 ut.print_out(f"Optimized sequence character fontsize is: {seq_size}")
+        # Cap the TMD/JMD part labels and pin them a constant gap below the sequence band.
+        if size_grid:
+            finalize_part_labels_(fig=fig, ax=ax, fontsize_tmd_jmd=fontsize_tmd_jmd,
+                                  weight_tmd_jmd=weight_tmd_jmd)
+        # Stage 2 -- grow the canvas by any tight-bbox spill and translate the axes inward, so
+        # nothing clips while the per-position width stays exactly on target.
+        if size_grid:
+            grow_to_fit(fig=fig)
         return ut.FigAxResult(fig, ax)
 
     def heatmap(self,
@@ -1088,6 +1178,7 @@ class CPPPlot:
                 name_test: str = "TEST",
                 name_ref: str = "REF",
                 figsize: Optional[Tuple[Union[int, float], Union[int, float]]] = None,
+                cell_size: Optional[Tuple[Union[int, float], Union[int, float]]] = None,
 
                 # Appearance of Parts (TMD-JMD)
                 start: int = 1,
@@ -1099,11 +1190,11 @@ class CPPPlot:
                 jmd_color: str = "blue",
                 tmd_seq_color: str = "black",
                 jmd_seq_color: str = "white",
-                seq_size: Optional[Union[int, float]] = None,
+                seq_size: Union[str, int, float] = "auto",
                 seq_char_fill: Optional[bool] = None,
                 fontsize_tmd_jmd: Optional[Union[int, float]] = None,
                 weight_tmd_jmd: Literal['normal', 'bold'] = "normal",
-                fontsize_labels: Union[int, float] = 12,
+                fontsize_labels: Union[str, int, float] = 12,
                 add_xticks_pos: bool = False,
 
                 # Legend, Axis, and Grid Configurations
@@ -1165,8 +1256,17 @@ class CPPPlot:
         figsize : tuple, optional
             Figure dimensions (width, height) in inches. When ``None`` (default) and the global
             ``auto_font`` option is enabled, the size is derived from the grid shape so cells stay
-            a constant size; any explicit ``figsize`` (including ``(8, 8)``) is honored as a fixed
-            size. With ``auto_font`` disabled, ``None`` falls back to ``(8, 8)``.
+            a constant size (the figure shrinks for a small grid and grows for a large one); any
+            explicit ``figsize`` (including ``(8, 8)``) is honored as a fixed size. With
+            ``auto_font`` disabled, ``None`` falls back to ``(8, 8)``.
+        cell_size : tuple, optional
+            Target physical size ``(width, height)`` in inches of one grid cell. When given, the
+            figure is sized so every cell renders at this exact size (shrinking or growing as
+            needed, nothing clipping) regardless of ``auto_font``; ``None`` (default) uses a
+            calibrated default cell on the ``auto_font`` path. The standalone heatmap's default cell
+            is taller than the feature map's so row labels do not crowd.
+
+            .. versionadded:: 1.1.0
 
             .. versionchanged:: 1.1.0
                 Defaults to ``None`` and participates in ``auto_font``; explicit ``figsize`` wins.
@@ -1190,21 +1290,32 @@ class CPPPlot:
             Color for TMD sequence.
         jmd_seq_color : str, default='white'
             Color for JMD sequence.
-        seq_size : int or float, optional
-            Font size (>=0) for sequence characters. If ``None``, optimized automatically.
+        seq_size : str, int, or float, optional
+            Residue-letter size. ``"auto"`` (default) fits the letters to the grid cell and steps
+            the size down for short TMDs. A value in ``(0, 1]`` sets the letter height to that
+            fraction of the cell height (e.g. ``0.9``); a value ``> 1`` is an absolute font size in
+            points. The ``"auto"`` and fractional modes keep the letters from overlapping; an
+            absolute point size is used as given.
         seq_char_fill : bool, optional
-            If ``True`` and ``seq_size`` is auto-optimized (``None``), grow the residue
-            characters until adjacent letters touch (no whitespace) while never overlapping, so
-            they fill the cells. If ``False``, keep a small gap. If ``None`` (default), follows
-            the ``auto_font`` option (on when auto-sizing is enabled, off otherwise).
+            If ``True``, the sequence renders as a continuous, gap-free colored band (one full-width
+            cell per residue) with the letters drawn on top. If ``False``, each residue gets its own
+            glyph-sized colored box. If ``None`` (default), follows the ``auto_font`` option
+            (on when auto-sizing is enabled, off otherwise).
 
             .. versionadded:: 1.1.0
         fontsize_tmd_jmd : int or float, optional
             Font size (>=0) for the part labels: 'JMD-N', 'TMD', 'JMD-C'. If ``None``, optimized automatically.
         weight_tmd_jmd : {'normal', 'bold'}, default='normal'
             Font weight for the part labels: 'JMD-N', 'TMD', 'JMD-C'.
-        fontsize_labels : int or float, default=12
-            Font size (>= 0) for figure labels. If ``None``, determined automatically.
+        fontsize_labels : str, int, or float, default=12
+            Font size (>= 0) for the figure labels (the scale-subcategory row labels, the
+            scale-category legend, and the colorbar). A number sets the size directly (the default
+            ``12`` leaves the output unchanged). ``"auto"`` scales the size with the
+            ``plot_settings`` font scale, caps it at about 13 pt, and shrinks it further if the
+            subcategory rows would overlap, so the rows never collide.
+
+            .. versionchanged:: 1.1.0
+                Accepts ``"auto"`` to track the ``plot_settings`` font scale without row overlap.
         add_xticks_pos : bool, default=False
             If ``True``, include x-tick positions when TMD-JMD sequence is given.
         grid_linewidth : int or float, default=0.01
@@ -1281,6 +1392,7 @@ class CPPPlot:
         ut.check_str(name="name_test", val=name_test)
         ut.check_str(name="name_ref", val=name_ref)
         ut.check_figsize(figsize=figsize, accept_none=True)
+        check_cell_size(cell_size=cell_size)
 
         # Check specific TMD-JMD input
         ut.check_number_range(name="start", val=start, min_val=0, just_int=True)
@@ -1291,7 +1403,9 @@ class CPPPlot:
                                              check_jmd_seq_len_consistent=True)
         args_part_color = check_part_color(tmd_color=tmd_color, jmd_color=jmd_color)
         args_seq_color = check_seq_color(tmd_seq_color=tmd_seq_color, jmd_seq_color=jmd_seq_color)
-        args_fs = ut.check_fontsize_args(seq_size=seq_size,
+        _fixed_seq_size, _req_size = resolve_seq_size(seq_size)
+        fontsize_labels, _shrink_labels = resolve_fontsize_labels(fontsize_labels)
+        args_fs = ut.check_fontsize_args(seq_size=_fixed_seq_size,
                                          fontsize_tmd_jmd=fontsize_tmd_jmd,
                                          fontsize_labels=fontsize_labels)
         ut.check_str_options(name="weight_tmd_jmd", val=weight_tmd_jmd,
@@ -1325,15 +1439,21 @@ class CPPPlot:
         if seq_char_fill is None:
             seq_char_fill = ut.check_auto_font()
         ut.check_bool(name="seq_char_fill", val=seq_char_fill)
-        # Auto-sizing applies only when the caller OMITS figsize (figsize is None, the
-        # signature default); any explicit figsize -- including (8, 8) -- is honored as a
-        # fixed size. Same sentinel as feature_map/profile/ranking, so "explicit figsize
-        # wins" holds package-wide.
+        # figsize is a SEED the sizer ADJUSTS so every grid cell hits a constant physical size
+        # (shrink for a sparse grid, grow for a dense one). The sizer runs when a cell_size is set,
+        # or on the default auto_font path (figsize omitted); an explicit figsize with no cell_size
+        # is honored as a fixed frame (auto_font then shrinks labels to fit). The standalone heatmap
+        # uses a taller default cell than the feature map (its grid fills more of the figure, so
+        # shorter rows crowd the row labels).
         figsize_omitted = figsize is None
         if figsize is None:
             figsize = (8, 8)
-        # Shrink-labels fallback only when auto_font is on but figsize is forced.
-        optimize_labels = ut.check_auto_font() and not figsize_omitted
+        cell_w, cell_h = cell_size if cell_size is not None else (CELL_W_IN, HEATMAP_CELL_H_IN)
+        cell_active = cell_size is not None
+        size_grid = cell_active or (ut.check_auto_font() and figsize_omitted)
+        optimize_labels = (ut.check_auto_font() and not figsize_omitted and not cell_active) or _shrink_labels
+        n_positions = tmd_len + (jmd_n_len or 0) + (jmd_c_len or 0)
+        n_subcat = int(df_feat[col_cat].nunique())
         # Plot heatmap
         fig, ax = plot_heatmap(df_feat=df_feat, df_cat=self._df_cat,
                                shap_plot=shap_plot,
@@ -1356,20 +1476,32 @@ class CPPPlot:
         with warnings.catch_warnings():
             warnings.simplefilter("ignore", category=UserWarning)
             fig.tight_layout()
-        # Constant-cell-size grid under auto_font (omitted figsize only); grows the
-        # figure so cells/fonts stay fixed. Off (default) -> byte-identical.
-        if ut.check_auto_font() and figsize_omitted:
-            n_positions = tmd_len + (jmd_n_len or 0) + (jmd_c_len or 0)
-            n_subcat = int(df_feat[col_cat].nunique())
-            _, _, capped = fit_cells_by_rescale(fig=fig, ax_grid=ax, n_rows=n_subcat, n_cols=n_positions,
-                                                cell_h=HEATMAP_CELL_H_IN)
+        # Stage 1 -- hold the cell size (shrink or grow; cell exact because fractions are
+        # preserved). Done before the residue-letter fit so letters match the final column width.
+        if size_grid:
+            _, _, capped = fit_cells_by_rescale(fig=fig, ax_grid=ax, n_rows=n_subcat,
+                                                n_cols=n_positions, cell_w=cell_w, cell_h=cell_h)
             if capped and self._verbose:
-                ut.print_out("auto_font: grid exceeds the max figure size; cells may be smaller than target.")
-        if tmd_seq is not None and seq_size is None:
+                ut.print_out("cell_size: grid exceeds the max figure size; cells may be smaller than target.")
+        if tmd_seq is not None and _fixed_seq_size is None:
             ax, seq_size = update_seq_size_(ax=ax, **args_seq, **args_part_color, **args_seq_color,
-                                            fill=seq_char_fill)
+                                            fill=seq_char_fill, req_size=_req_size)
             if self._verbose:
                 ut.print_out(f"Optimized sequence character fontsize is: {seq_size}")
+        # Cap the TMD/JMD part labels and pin them a constant gap below the sequence band, and
+        # pin the colorbar a constant distance below the grid (clear of the sequence on a sparse grid).
+        if size_grid:
+            finalize_part_labels_(fig=fig, ax=ax, fontsize_tmd_jmd=fontsize_tmd_jmd,
+                                  weight_tmd_jmd=weight_tmd_jmd)
+            place_colorbar_below_grid_(fig=fig, ax=ax)
+        # Stage 2 -- grow the canvas by any tight-bbox spill and translate the axes inward, so the
+        # point-sized furniture never clips while the cells stay exactly on target; then lay the
+        # scale-category legend and colorbar out as one aligned bottom row (a second grow/align pass
+        # absorbs any spill the re-placed row introduces).
+        if size_grid:
+            for _ in range(2):
+                grow_to_fit(fig=fig)
+                align_bottom_furniture_(fig=fig, ax=ax)
         return ut.FigAxResult(fig, ax)
 
     def feature_map(self,
@@ -1382,6 +1514,7 @@ class CPPPlot:
                     name_test: str = "TEST",
                     name_ref: str = "REF",
                     figsize: Optional[Tuple[Union[int, float], Union[int, float]]] = None,
+                    cell_size: Optional[Tuple[Union[int, float], Union[int, float]]] = None,
 
                     # Feature importance
                     add_imp_bar_top: bool = True,
@@ -1400,11 +1533,11 @@ class CPPPlot:
                     jmd_color: str = "blue",
                     tmd_seq_color: str = "black",
                     jmd_seq_color: str = "white",
-                    seq_size: Optional[Union[int, float]] = None,
+                    seq_size: Union[str, int, float] = "auto",
                     fontsize_tmd_jmd: Optional[Union[int, float]] = None,
                     weight_tmd_jmd: Literal['normal', 'bold'] = "normal",
                     fontsize_titles: Union[int, float] = 11,
-                    fontsize_labels: Union[int, float] = 12,
+                    fontsize_labels: Union[str, int, float] = 12,
                     fontsize_annotations: Union[int, float] = 11,
                     fontsize_imp_bar: Union[int, float] = 9,
                     add_xticks_pos: bool = False,
@@ -1508,7 +1641,17 @@ class CPPPlot:
 
             .. versionchanged:: 1.1.0
                 Auto-derived from the grid shape when ``auto_font`` is enabled and ``figsize`` is
-                omitted; an explicit ``figsize`` always wins.
+                omitted (the figure now shrinks for a small grid as well as growing for a large
+                one); an explicit ``figsize`` (without ``cell_size``) still wins.
+        cell_size : tuple, optional
+            Target physical size ``(width, height)`` in inches of one grid cell (a single residue
+            position wide, a single subcategory row tall). When given, the figure is sized so every
+            cell renders at this exact size — shrinking for a small grid and growing for a large
+            one, with nothing clipping — regardless of ``auto_font``. When ``None`` (default) the
+            ``auto_font`` path uses a calibrated default cell. ``figsize`` seeds the layout;
+            ``cell_size`` sets the cell.
+
+            .. versionadded:: 1.1.0
         add_imp_bar_top : bool, default=True
             If ``True``, add bars for cumulative feature importance per position (top).
         imp_bar_th : int or float, optional
@@ -1539,16 +1682,27 @@ class CPPPlot:
             Color for TMD sequence.
         jmd_seq_color : str, default='white'
             Color for JMD sequence.
-        seq_size : int or float, optional
-            Font size (>=0) for sequence characters. If ``None``, optimized automatically.
+        seq_size : str, int, or float, optional
+            Residue-letter size. ``"auto"`` (default) fits the letters to the grid cell and steps
+            the size down for short TMDs. A value in ``(0, 1]`` sets the letter height to that
+            fraction of the cell height (e.g. ``0.9``); a value ``> 1`` is an absolute font size in
+            points. The ``"auto"`` and fractional modes keep the letters from overlapping; an
+            absolute point size is used as given.
         fontsize_tmd_jmd : int or float, optional
             Font size (>=0) for the part labels: 'JMD-N', 'TMD', 'JMD-C'. If ``None``, optimized automatically.
         weight_tmd_jmd : {'normal', 'bold'}, default='normal'
             Font weight for the part labels: 'JMD-N', 'TMD', 'JMD-C'.
         fontsize_titles : int or float, default=11
             Font size (>= 0) for figure titles. If ``None``, determined automatically.
-        fontsize_labels : int or float, default=12
-            Font size (>= 0) for figure labels. If ``None``, determined automatically.
+        fontsize_labels : str, int, or float, default=12
+            Font size (>= 0) for the figure labels (the scale-subcategory row labels, the
+            scale-category legend, and the colorbar). A number sets the size directly (the default
+            ``12`` leaves the output unchanged). ``"auto"`` scales the size with the
+            ``plot_settings`` font scale, caps it at about 13 pt, and shrinks it further if the
+            subcategory rows would overlap, so the rows never collide.
+
+            .. versionchanged:: 1.1.0
+                Accepts ``"auto"`` to track the ``plot_settings`` font scale without row overlap.
         fontsize_annotations : int or float, default=11
             Font size (>= 0) for figure annotations. If ``None``, determined automatically.
         fontsize_imp_bar : int or float, default=9
@@ -1595,11 +1749,10 @@ class CPPPlot:
         xtick_length : int or float, default=5.0
             Length of the x-ticks (>0).
         seq_char_fill : bool, optional
-            If ``True`` and ``seq_size`` is auto-optimized (``None``), grow the sequence
-            characters until adjacent residues touch (no whitespace between them) while
-            still never overlapping, so the residue letters fill the cells. If ``False``,
-            keep a small gap between characters (the previous spacing). If ``None`` (default),
-            follows the ``auto_font`` option: on when auto-sizing is enabled, off otherwise
+            If ``True``, the sequence renders as a continuous, gap-free colored band (one full-width
+            cell per residue) with the letters drawn on top. If ``False``, each residue gets its own
+            glyph-sized colored box. If ``None`` (default), follows the ``auto_font`` option: on when
+            auto-sizing is enabled, off otherwise
             (so the ``auto_font=False`` output stays unchanged).
 
             .. versionchanged:: 1.1.0
@@ -1664,6 +1817,7 @@ class CPPPlot:
         ut.check_str(name="name_test", val=name_test)
         ut.check_str(name="name_ref", val=name_ref)
         ut.check_figsize(figsize=figsize, accept_none=True)
+        check_cell_size(cell_size=cell_size)
 
         #  Check feature importance presentation input
         ut.check_bool(name="add_imp_bar_top", val=add_imp_bar_top)
@@ -1682,7 +1836,9 @@ class CPPPlot:
                                              check_jmd_seq_len_consistent=True)
         args_part_color = check_part_color(tmd_color=tmd_color, jmd_color=jmd_color)
         args_seq_color = check_seq_color(tmd_seq_color=tmd_seq_color, jmd_seq_color=jmd_seq_color)
-        args_fs = ut.check_fontsize_args(seq_size=seq_size,
+        _fixed_seq_size, _req_size = resolve_seq_size(seq_size)
+        fontsize_labels, _shrink_labels = resolve_fontsize_labels(fontsize_labels)
+        args_fs = ut.check_fontsize_args(seq_size=_fixed_seq_size,
                                          fontsize_tmd_jmd=fontsize_tmd_jmd,
                                          fontsize_titles=fontsize_titles,
                                          fontsize_labels=fontsize_labels,
@@ -1720,24 +1876,22 @@ class CPPPlot:
         ut.check_bool(name="seq_char_fill", val=seq_char_fill)
         args_xtick = check_args_xtick(xtick_size=xtick_size, xtick_width=xtick_width, xtick_length=xtick_length)
 
-        # Auto-sizing applies only when the caller OMITS figsize (figsize is None, the
-        # signature default). Any explicit figsize -- including (8, 8) -- is honored as a
-        # fixed size and wins over auto_font, so embedded consumers can pin a predictable
-        # size. Capture "omitted" before normalizing None to the default footprint.
+        # figsize is a SEED the sizer ADJUSTS so every grid cell renders at a constant physical
+        # size -- the figure shrinks for a small grid and grows for a large one. The sizer runs
+        # when a cell_size is set, or on the default auto_font path (figsize omitted). An explicit
+        # figsize with no cell_size is honored as a fixed frame (auto_font then shrinks labels to
+        # fit via optimize_labels), so embedded consumers keep a predictable size. cell_size
+        # (width, height) inches sets the target cell; else the calibrated default.
         figsize_omitted = figsize is None
         if figsize is None:
             figsize = (8, 8)
-        # Constant-cell-size grid when auto_font is on and figsize was omitted: laid out at
-        # the default size first, then rescaled (after tight_layout) so every cell hits a
-        # constant physical size; the figure grows with the grid while fonts stay fixed.
-        auto_grid = ut.check_auto_font() and figsize_omitted
-        # Fallback: auto_font on but the caller forced a fixed figsize, so the figure cannot
-        # be grown -> fall back to shrinking labels to fit.
-        optimize_labels = ut.check_auto_font() and not figsize_omitted
-        if auto_grid:
-            # jmd lengths are validated non-None above; `or 0` keeps the sum typed.
-            n_positions = tmd_len + (jmd_n_len or 0) + (jmd_c_len or 0)
-            n_subcat = int(df_feat[col_cat].nunique())
+        cell_w, cell_h = cell_size if cell_size is not None else (CELL_W_IN, CELL_H_IN)
+        cell_active = cell_size is not None
+        size_grid = cell_active or (ut.check_auto_font() and figsize_omitted)
+        optimize_labels = (ut.check_auto_font() and not figsize_omitted and not cell_active) or _shrink_labels
+        # jmd lengths are validated non-None above; `or 0` keeps the sum typed.
+        n_positions = tmd_len + (jmd_n_len or 0) + (jmd_c_len or 0)
+        n_subcat = int(df_feat[col_cat].nunique())
 
         # Plot feature map
         fig, ax = plot_feature_map(df_feat=df_feat, df_cat=self._df_cat,
@@ -1760,7 +1914,7 @@ class CPPPlot:
                                    cbar_pct=cbar_pct, cbar_kws=cbar_kws, cbar_xywh=cbar_xywh,
                                    dict_color=dict_color, legend_kws=legend_kws, legend_xy=legend_xy,
                                    legend_imp_xy=legend_imp_xy, seq_char_fill=seq_char_fill,
-                                   optimize_labels=optimize_labels,
+                                   optimize_labels=optimize_labels, size_grid=size_grid,
                                    **args_xtick)
         # Adjust plot. Leave a little more room on the right than the heatmap needs
         # so the cumulative-importance bar column's label ("Cumulative feature
@@ -1769,33 +1923,56 @@ class CPPPlot:
         with warnings.catch_warnings():
             warnings.simplefilter("ignore", category=UserWarning)
             fig.tight_layout()
-            plt.subplots_adjust(right=0.92)
-        # Constant-cell-size: rescale the whole figure so every heatmap cell hits a
-        # fixed physical size (the figure grows with the grid; the point-based fonts
-        # stay fixed and the sibling axes keep their fractions, so nothing crams or
-        # balloons). Done after tight_layout (fractions are final) and before the
-        # residue-letter fit below, so letters are sized to the final column width.
-        if auto_grid:
-            _, _, capped = fit_cells_by_rescale(fig=fig, ax_grid=ax,
-                                                n_rows=n_subcat, n_cols=n_positions)
+            # Reserve a CONSTANT ABSOLUTE width (inches) on the right for the multi-line
+            # "Cumulative feature importance" label, not a fixed 8% fraction: at a narrow
+            # figure (short sequence / few subcats) 8% is too few inches and the label clips.
+            # Skip when tight_layout's left margin (e.g. a far-left custom legend_xy) already
+            # exceeds the reserve, which would otherwise invert the margins; grow_to_fit still
+            # prevents any clip.
+            _right = max(0.6, 1.0 - _RIGHT_LABEL_IN / fig.get_size_inches()[0])
+            if _right > fig.subplotpars.left:
+                plt.subplots_adjust(right=_right)
+        # Stage 1 -- hold the cell size: rescale the whole figure so every heatmap cell hits
+        # (cell_w, cell_h) inches. tight_layout's fractions are preserved, so the cell is exact;
+        # the figure shrinks for a sparse grid and grows for a dense one. Point-based fonts stay
+        # fixed. Done before the residue-letter fit below, so letters match the final column width.
+        if size_grid:
+            _, _, capped = fit_cells_by_rescale(fig=fig, ax_grid=ax, n_rows=n_subcat,
+                                                n_cols=n_positions, cell_w=cell_w, cell_h=cell_h)
             if capped and self._verbose:
-                ut.print_out("auto_font: grid exceeds the max figure size; cells may be smaller than target.")
-        # Pin the scale-category legend to a fixed position in figure coordinates,
-        # in the left zone clear of the centred "Feature value" colorbar. The legend
-        # is otherwise anchored to the heatmap axes, which tight_layout pushes right
-        # when the y-tick labels grow (e.g. under plot_settings()), sliding the legend
-        # over the colorbar. The colorbar and the importance-dot legend already sit at
-        # fixed figure positions, so pinning the category legend lays the three out
-        # side by side without overlap at any font scale (group-level importance and
-        # both SHAP layouts). Skip only when the user supplied a custom legend_xy.
+                ut.print_out("cell_size: grid exceeds the max figure size; cells may be smaller than target.")
+        # Anchor the scale-category legend at the ROW-LABEL left edge (not the grid's left edge),
+        # a fixed points-distance below the grid, in AXES coordinates. Anchoring at the grid edge
+        # pushes a wide legend into the centred colorbar; the row-label left sits it under the
+        # subcategory labels (the canonical layout), clear of the colorbar. An axes anchor keeps
+        # that offset at any figure size and rides the grid when grow_to_fit shifts the axes. Skip
+        # only when the user supplied a custom legend_xy.
         cat_legend = ax.get_legend()
         if cat_legend is not None and tuple(legend_xy) == (-0.1, -0.01):
-            cat_legend.set_bbox_to_anchor((0.23, 0.183), transform=fig.transFigure)
-        if tmd_seq is not None and seq_size is None:
+            # Left edge of the grid's own content (row labels + title), measured with the legend
+            # hidden so it does not feed back into its own anchor.
+            cat_legend.set_visible(False)
+            fig.canvas.draw()
+            _content_x0 = ax.get_tightbbox(fig.canvas.get_renderer()).x0
+            _x_left = ax.transAxes.inverted().transform((_content_x0, 0.0))[0]
+            cat_legend.set_visible(True)
+            _below = mtransforms.ScaledTranslation(0.0, -_LEGEND_BELOW_GRID_PT / 72.0, fig.dpi_scale_trans)
+            cat_legend.set_loc("upper left")
+            cat_legend.set_bbox_to_anchor((_x_left, 0.0), transform=ax.transAxes + _below)
+        if tmd_seq is not None and _fixed_seq_size is None:
             ax, seq_size = update_seq_size_(ax=ax, **args_seq, **args_part_color, **args_seq_color,
-                                            fill=seq_char_fill)
+                                            fill=seq_char_fill, req_size=_req_size)
             if self._verbose:
                 ut.print_out(f"Optimized sequence character fontsize is: {seq_size}")
+        # Cap the TMD/JMD part-label font and pin it a constant gap below the sequence band, so
+        # the label size and its distance to the sequence stay constant across grid sizes (both
+        # otherwise ride the ballooning residue-letter size). Uses the final letters above.
+        # Pin the colorbar a constant distance below the grid too, so it (and its importance-dot
+        # legend) never rides into the sequence on a sparse grid.
+        if size_grid:
+            finalize_part_labels_(fig=fig, ax=ax, fontsize_tmd_jmd=fontsize_tmd_jmd,
+                                  weight_tmd_jmd=weight_tmd_jmd)
+            place_colorbar_below_grid_(fig=fig, ax=ax)
         # The top importance bar shares the position x-axis with the heatmap, so it
         # redundantly repeats the position ticks (1/10/30/40) ABOVE the grid — and
         # set_box_aspect makes it worse. Keep the position ticks on the heatmap
@@ -1809,6 +1986,15 @@ class CPPPlot:
                 other.tick_params(axis="x", labelbottom=False, labeltop=False, length=0)
                 for lbl in other.get_xticklabels():
                     lbl.set_visible(False)
+        # Stage 2 -- absorb any furniture that overflows the shrunken figure: grow the canvas by
+        # the tight-bbox spill and translate every axes inward. A translation preserves the cell
+        # size, so the grid stays exactly on target while nothing clips the figure edge. Then lay
+        # the scale-category legend, colorbar and importance legend out as one aligned bottom row;
+        # a second grow/align pass absorbs any spill the re-placed row introduces.
+        if size_grid:
+            for _ in range(2):
+                grow_to_fit(fig=fig)
+                align_bottom_furniture_(fig=fig, ax=ax)
         return ut.FigAxResult(fig, ax)
 
     def update_seq_size(self,

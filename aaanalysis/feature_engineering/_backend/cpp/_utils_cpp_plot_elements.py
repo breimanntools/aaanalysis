@@ -31,11 +31,13 @@ def _force_render(fig):
     return fig.canvas.get_renderer()
 
 
-def _row_labels_overlap(label_artists, renderer, overlap_frac=0.15):
-    """Whether any two vertically-adjacent row labels overlap beyond a fraction.
+def _row_labels_overlap(label_artists, renderer, overlap_frac=0.05):
+    """Whether any two vertically-adjacent row labels overlap beyond a small fraction.
 
     Row labels share the same x (right-aligned), so the vertical overlap fraction
-    of the smaller box is an accurate stand-in for the area fraction.
+    of the smaller box is an accurate stand-in for the area fraction. Only a small tolerance
+    (the font bbox includes empty descender space) so the labels keep a visible gap rather
+    than shrinking only once the glyphs literally collide.
     """
     boxes = sorted((t.get_window_extent(renderer) for t in label_artists), key=lambda b: b.y0)
     for lower, upper in zip(boxes[:-1], boxes[1:]):
@@ -91,7 +93,7 @@ class PlotElements:
     # Scale classification elements
     @staticmethod
     def add_subcat_bars(ax=None, df_pos=None, df_feat=None, col_cat=None, dict_color=None,
-                        bar_width=0.3, bar_spacing=0.15, optimize_labels=False):
+                        bar_width=0.3, bar_spacing=0.15, optimize_labels=False, fontsize_labels=None):
         """Add left colored sidebar to indicate category grouping.
 
         ``optimize_labels`` runs the overlap-driven font-shrink fallback. It stays
@@ -99,14 +101,26 @@ class PlotElements:
         only when ``auto_font`` is on AND the caller forced a fixed figsize, so the
         figure cannot be grown to fit. In the normal ``auto_font`` path the figure is
         instead rescaled to a constant cell size, which keeps labels full-size.
+        ``fontsize_labels`` sets the subcategory row-label size (else the rcParams default),
+        keeping the row labels in step with the colorbar/legend rather than a step smaller.
         """
         labels = list(df_pos.index)
         colors = _get_colors_for_col_cat(labels=labels, df_feat=df_feat, col_cat=col_cat, dict_color=dict_color)
         before = list(ax.texts)
+        before_patches = list(ax.patches)
         ut.plot_add_bars(ax=ax, labels=labels, colors=colors,
                          bar_width=bar_width, bar_spacing=bar_spacing, label_spacing_factor=2)
+        # Paint each category as a solid block: match the row edge to its fill so consecutive
+        # subcategories of one category read as one bar (the shared helper draws a white edge when
+        # every row shares a color, which otherwise leaves white hairlines between same-category rows).
+        for p in ax.patches:
+            if p not in before_patches:
+                p.set_edgecolor(p.get_facecolor())
+        row_labels = [t for t in ax.texts if t not in before]
+        if fontsize_labels is not None:
+            for t in row_labels:
+                t.set_fontsize(fontsize_labels)
         if optimize_labels:
-            row_labels = [t for t in ax.texts if t not in before]
             PlotElements.optimize_subcat_label_fontsize(fig=ax.figure, label_artists=row_labels)
 
     @staticmethod

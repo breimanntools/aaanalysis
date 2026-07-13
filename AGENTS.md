@@ -87,4 +87,4 @@ The public API is exactly what `aaanalysis/__init__.py` re-exports; anything
 starting with `_` is private and may change without deprecation. Each public
 subpackage carries a front-door module docstring in its `__init__.py` with an
 `__all__` synced to its re-exports. There is a second, opt-in convenience API,
-`import aaanalysis.pipe as aap` (golden pipelines).
+`import aaanalysis.pipe as ap` (golden pipelines).

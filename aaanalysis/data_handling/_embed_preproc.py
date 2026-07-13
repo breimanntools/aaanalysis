@@ -127,7 +127,7 @@ class EmbeddingPreprocessor:
 
         Examples
         --------
-        .. include:: examples/ep_encode.rst
+        .. include:: examples/embp_encode.rst
         """
         self._verbose = ut.check_verbose(verbose)
 
@@ -205,7 +205,7 @@ class EmbeddingPreprocessor:
 
         Examples
         --------
-        .. include:: examples/ep_encode.rst
+        .. include:: examples/embp_encode.rst
         """
         # Validate
         ut.check_df_seq(df_seq=df_seq)
@@ -288,7 +288,7 @@ class EmbeddingPreprocessor:
 
         Examples
         --------
-        .. include:: examples/ep_build_scales.rst
+        .. include:: examples/embp_build_scales.rst
         """
         # Validate
         ut.check_df_seq(df_seq=df_seq)
@@ -415,7 +415,7 @@ class EmbeddingPreprocessor:
 
         Examples
         --------
-        .. include:: examples/ep_build_cat.rst
+        .. include:: examples/embp_build_cat.rst
         """
         # Validate
         ut.check_df(name="df_scales", df=df_scales, accept_none=False)
@@ -631,7 +631,7 @@ class EmbeddingPreprocessor:
 
         Examples
         --------
-        .. include:: examples/ep_fetch_embeddings.rst
+        .. include:: examples/embp_fetch_embeddings.rst
         """
         # Validate
         verbose = self._verbose
@@ -726,7 +726,7 @@ class EmbeddingPreprocessor:
 
         Examples
         --------
-        .. include:: examples/ep_pool_embeddings.rst
+        .. include:: examples/embp_pool_embeddings.rst
         """
         # Validate
         ut.check_str_options(name="pooling", val=pooling, list_str_options=["mean", "max"])

@@ -1,5 +1,5 @@
 """
-This is a script for the frontend of the ``aaanalysis.pipe`` (aap) ``explain_features`` golden
+This is a script for the frontend of the ``aaanalysis.pipe`` (ap) ``explain_features`` golden
 pipeline (*pro*): a one-call SHAP explanation of an existing feature set. It rebuilds the feature
 matrix from ``df_feat`` + ``df_seq``, fits a :class:`ShapModel`, attaches per-sample SHAP impact to
 ``df_feat``, and draws the SHAP-coloured feature map. Defaults are byte-identical to the explicit
@@ -161,7 +161,7 @@ def explain_features(df_feat: pd.DataFrame,
 
     Examples
     --------
-    .. include:: examples/aap_explain_features.rst
+    .. include:: examples/ap_explain_features.rst
     """
     # Validate (thin facade: the wrapped primitives validate labels, samples, and the rest)
     df_feat = ut.check_df_feat(df_feat=df_feat)

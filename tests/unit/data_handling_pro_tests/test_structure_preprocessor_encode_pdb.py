@@ -46,63 +46,63 @@ class TestStpEncodePdb:
 
     # ----- NEGATIVES (≥10) -----
     def test_invalid_df_seq_none(self):
-        stp = aa.StructurePreprocessor(verbose=False)
+        strp = aa.StructurePreprocessor(verbose=False)
         with pytest.raises(ValueError):
-            stp.encode_pdb(df_seq=None, pdb_folder=str(PDB_FIXTURES),
+            strp.encode_pdb(df_seq=None, pdb_folder=str(PDB_FIXTURES),
                            features=["bfactor"])
 
     def test_invalid_pdb_folder_none(self):
-        stp = aa.StructurePreprocessor(verbose=False)
+        strp = aa.StructurePreprocessor(verbose=False)
         with pytest.raises(ValueError, match="pdb_folder"):
-            stp.encode_pdb(df_seq=_df_one(), pdb_folder=None,
+            strp.encode_pdb(df_seq=_df_one(), pdb_folder=None,
                            features=["bfactor"])
 
     def test_invalid_pdb_folder_nonexistent(self):
-        stp = aa.StructurePreprocessor(verbose=False)
+        strp = aa.StructurePreprocessor(verbose=False)
         with pytest.raises(ValueError, match="pdb_folder"):
-            stp.encode_pdb(df_seq=_df_one(),
+            strp.encode_pdb(df_seq=_df_one(),
                            pdb_folder="/__nope__/__here__",
                            features=["bfactor"])
 
     def test_invalid_features_empty(self):
-        stp = aa.StructurePreprocessor(verbose=False)
+        strp = aa.StructurePreprocessor(verbose=False)
         with pytest.raises(ValueError):
-            stp.encode_pdb(df_seq=_df_one(), pdb_folder=str(PDB_FIXTURES),
+            strp.encode_pdb(df_seq=_df_one(), pdb_folder=str(PDB_FIXTURES),
                            features=[])
 
     def test_invalid_features_unknown(self):
-        stp = aa.StructurePreprocessor(verbose=False)
+        strp = aa.StructurePreprocessor(verbose=False)
         with pytest.raises(ValueError):
-            stp.encode_pdb(df_seq=_df_one(), pdb_folder=str(PDB_FIXTURES),
+            strp.encode_pdb(df_seq=_df_one(), pdb_folder=str(PDB_FIXTURES),
                            features=["mystery"])
 
     def test_invalid_features_wrong_method(self):
         # ss3 belongs to encode_dssp
-        stp = aa.StructurePreprocessor(verbose=False)
+        strp = aa.StructurePreprocessor(verbose=False)
         with pytest.raises(ValueError):
-            stp.encode_pdb(df_seq=_df_one(), pdb_folder=str(PDB_FIXTURES),
+            strp.encode_pdb(df_seq=_df_one(), pdb_folder=str(PDB_FIXTURES),
                            features=["ss3"])
 
     def test_invalid_on_failure(self):
-        stp = aa.StructurePreprocessor(verbose=False)
+        strp = aa.StructurePreprocessor(verbose=False)
         with pytest.raises(ValueError, match="on_failure"):
-            stp.encode_pdb(df_seq=_df_one(), pdb_folder=str(PDB_FIXTURES),
+            strp.encode_pdb(df_seq=_df_one(), pdb_folder=str(PDB_FIXTURES),
                            features=["bfactor"], on_failure="ignore")
 
     def test_invalid_pdb_ok_collision(self):
-        stp = aa.StructurePreprocessor(verbose=False)
+        strp = aa.StructurePreprocessor(verbose=False)
         df = _df_one()
         df["pdb_ok"] = [True]
         with pytest.raises(ValueError, match="pdb_ok"):
-            stp.encode_pdb(df_seq=df, pdb_folder=str(PDB_FIXTURES),
+            strp.encode_pdb(df_seq=df, pdb_folder=str(PDB_FIXTURES),
                            features=["bfactor"])
 
     def test_invalid_depth_without_msms(self):
         # When msms is missing, requesting 'depth' must raise.
-        stp = aa.StructurePreprocessor(verbose=False)
+        strp = aa.StructurePreprocessor(verbose=False)
         if shutil.which("msms") is None:
             with pytest.raises(RuntimeError, match="msms"):
-                stp.encode_pdb(df_seq=_df_one(),
+                strp.encode_pdb(df_seq=_df_one(),
                                pdb_folder=str(PDB_FIXTURES),
                                features=["depth"])
         else:
@@ -110,64 +110,64 @@ class TestStpEncodePdb:
 
     def test_invalid_unsafe_entry(self):
         df = pd.DataFrame({"entry": ["../etc"], "sequence": ["ACDE"]})
-        stp = aa.StructurePreprocessor(verbose=False)
+        strp = aa.StructurePreprocessor(verbose=False)
         with pytest.raises(ValueError, match="entry"):
-            stp.encode_pdb(df_seq=df, pdb_folder=str(PDB_FIXTURES),
+            strp.encode_pdb(df_seq=df, pdb_folder=str(PDB_FIXTURES),
                            features=["bfactor"])
 
     def test_invalid_raise_on_failure_propagates(self, tmp_path):
-        stp = aa.StructurePreprocessor(verbose=False)
+        strp = aa.StructurePreprocessor(verbose=False)
         with warnings.catch_warnings():
             warnings.simplefilter("ignore")
             with pytest.raises(RuntimeError):
-                stp.encode_pdb(df_seq=_df_one(), pdb_folder=str(tmp_path),
+                strp.encode_pdb(df_seq=_df_one(), pdb_folder=str(tmp_path),
                                features=["bfactor"], on_failure="raise")
 
     # ----- POSITIVES (≥10) -----
     def test_valid_bfactor_returns_dict(self):
-        stp = aa.StructurePreprocessor(verbose=False)
+        strp = aa.StructurePreprocessor(verbose=False)
         with warnings.catch_warnings():
             warnings.simplefilter("ignore")
-            d, df_out = stp.encode_pdb(return_df=True, df_seq=_df_one(),
+            d, df_out = strp.encode_pdb(return_df=True, df_seq=_df_one(),
                                        pdb_folder=str(PDB_FIXTURES),
                                        features=["bfactor"])
         assert isinstance(d, dict)
         assert "P1" in d
 
     def test_valid_bfactor_shape(self):
-        stp = aa.StructurePreprocessor(verbose=False)
+        strp = aa.StructurePreprocessor(verbose=False)
         with warnings.catch_warnings():
             warnings.simplefilter("ignore")
-            d = stp.encode_pdb(df_seq=_df_one(),
+            d = strp.encode_pdb(df_seq=_df_one(),
                                   pdb_folder=str(PDB_FIXTURES),
                                   features=["bfactor"])
         assert d["P1"].shape == (16, 1)
 
     def test_valid_bfactor_values_finite(self):
-        stp = aa.StructurePreprocessor(verbose=False)
+        strp = aa.StructurePreprocessor(verbose=False)
         with warnings.catch_warnings():
             warnings.simplefilter("ignore")
-            d = stp.encode_pdb(df_seq=_df_one(),
+            d = strp.encode_pdb(df_seq=_df_one(),
                                   pdb_folder=str(PDB_FIXTURES),
                                   features=["bfactor"])
         vals = d["P1"].ravel()
         assert np.all(np.isfinite(vals))
 
     def test_valid_pdb_ok_column(self):
-        stp = aa.StructurePreprocessor(verbose=False)
+        strp = aa.StructurePreprocessor(verbose=False)
         with warnings.catch_warnings():
             warnings.simplefilter("ignore")
-            _, df_out = stp.encode_pdb(return_df=True, df_seq=_df_one(),
+            _, df_out = strp.encode_pdb(return_df=True, df_seq=_df_one(),
                                        pdb_folder=str(PDB_FIXTURES),
                                        features=["bfactor"])
         assert "pdb_ok" in df_out.columns
         assert bool(df_out["pdb_ok"].iloc[0])
 
     def test_valid_missing_pdb_yields_nan(self, tmp_path):
-        stp = aa.StructurePreprocessor(verbose=False)
+        strp = aa.StructurePreprocessor(verbose=False)
         with warnings.catch_warnings():
             warnings.simplefilter("ignore")
-            d, df_out = stp.encode_pdb(return_df=True, df_seq=_df_one(),
+            d, df_out = strp.encode_pdb(return_df=True, df_seq=_df_one(),
                                        pdb_folder=str(tmp_path),
                                        features=["bfactor"],
                                        on_failure="nan")
@@ -180,39 +180,39 @@ class TestStpEncodePdb:
         # Copy only P1 from fixtures; P2 missing.
         (tmp_path / "P1.pdb").write_text(
             (PDB_FIXTURES / "P1.pdb").read_text())
-        stp = aa.StructurePreprocessor(verbose=False)
+        strp = aa.StructurePreprocessor(verbose=False)
         with warnings.catch_warnings():
             warnings.simplefilter("ignore")
-            d, df_out = stp.encode_pdb(return_df=True, df_seq=df, pdb_folder=str(tmp_path),
+            d, df_out = strp.encode_pdb(return_df=True, df_seq=df, pdb_folder=str(tmp_path),
                                        features=["bfactor"],
                                        on_failure="drop")
         assert "P1" in d and "P2" not in d
         assert df_out["entry"].tolist() == ["P1"]
 
     def test_valid_two_proteins_keys_present(self):
-        stp = aa.StructurePreprocessor(verbose=False)
+        strp = aa.StructurePreprocessor(verbose=False)
         with warnings.catch_warnings():
             warnings.simplefilter("ignore")
-            d = stp.encode_pdb(df_seq=_df_two(),
+            d = strp.encode_pdb(df_seq=_df_two(),
                                   pdb_folder=str(PDB_FIXTURES),
                                   features=["bfactor"])
         assert set(d.keys()) == {"P1", "P2"}
 
     def test_valid_verbose_runs(self):
-        stp = aa.StructurePreprocessor(verbose=True)
+        strp = aa.StructurePreprocessor(verbose=True)
         with warnings.catch_warnings():
             warnings.simplefilter("ignore")
-            d = stp.encode_pdb(df_seq=_df_one(),
+            d = strp.encode_pdb(df_seq=_df_one(),
                                   pdb_folder=str(PDB_FIXTURES),
                                   features=["bfactor"])
         assert d["P1"].shape == (16, 1)
 
     def test_valid_p2_strand_bfactor_lower(self):
         # P1 helix has bfactor=30, P2 strand has bfactor=25.
-        stp = aa.StructurePreprocessor(verbose=False)
+        strp = aa.StructurePreprocessor(verbose=False)
         with warnings.catch_warnings():
             warnings.simplefilter("ignore")
-            d = stp.encode_pdb(df_seq=_df_two(),
+            d = strp.encode_pdb(df_seq=_df_two(),
                                   pdb_folder=str(PDB_FIXTURES),
                                   features=["bfactor"])
         p1_mean = float(np.nanmean(d["P1"]))
@@ -221,10 +221,10 @@ class TestStpEncodePdb:
 
     @msms_required
     def test_valid_depth_shape(self):
-        stp = aa.StructurePreprocessor(verbose=False)
+        strp = aa.StructurePreprocessor(verbose=False)
         with warnings.catch_warnings():
             warnings.simplefilter("ignore")
-            d = stp.encode_pdb(df_seq=_df_one(),
+            d = strp.encode_pdb(df_seq=_df_one(),
                                   pdb_folder=str(PDB_FIXTURES),
                                   features=["depth"])
         assert d["P1"].shape == (16, 1)
@@ -234,10 +234,10 @@ class TestStpEncodePdbComplex:
     """Cross-parameter combinations for encode_pdb."""
 
     def test_complex_bfactor_with_two_entries_independent(self):
-        stp = aa.StructurePreprocessor(verbose=False)
+        strp = aa.StructurePreprocessor(verbose=False)
         with warnings.catch_warnings():
             warnings.simplefilter("ignore")
-            d = stp.encode_pdb(df_seq=_df_two(),
+            d = strp.encode_pdb(df_seq=_df_two(),
                                   pdb_folder=str(PDB_FIXTURES),
                                   features=["bfactor"])
         assert d["P1"].shape == (16, 1)
@@ -246,10 +246,10 @@ class TestStpEncodePdbComplex:
     def test_complex_drop_keeps_succeeded(self, tmp_path):
         (tmp_path / "P1.pdb").write_text(
             (PDB_FIXTURES / "P1.pdb").read_text())
-        stp = aa.StructurePreprocessor(verbose=False)
+        strp = aa.StructurePreprocessor(verbose=False)
         with warnings.catch_warnings():
             warnings.simplefilter("ignore")
-            d, df_out = stp.encode_pdb(return_df=True, df_seq=_df_two(),
+            d, df_out = strp.encode_pdb(return_df=True, df_seq=_df_two(),
                                        pdb_folder=str(tmp_path),
                                        features=["bfactor"],
                                        on_failure="drop")
@@ -259,10 +259,10 @@ class TestStpEncodePdbComplex:
     def test_complex_nan_default_two_entries(self, tmp_path):
         (tmp_path / "P1.pdb").write_text(
             (PDB_FIXTURES / "P1.pdb").read_text())
-        stp = aa.StructurePreprocessor(verbose=False)
+        strp = aa.StructurePreprocessor(verbose=False)
         with warnings.catch_warnings():
             warnings.simplefilter("ignore")
-            d, df_out = stp.encode_pdb(return_df=True, df_seq=_df_two(),
+            d, df_out = strp.encode_pdb(return_df=True, df_seq=_df_two(),
                                        pdb_folder=str(tmp_path),
                                        features=["bfactor"])
         assert np.isnan(d["P2"]).all()
@@ -270,30 +270,30 @@ class TestStpEncodePdbComplex:
         assert df_out["pdb_ok"].tolist() == [True, False]
 
     def test_complex_raise_when_any_missing(self, tmp_path):
-        stp = aa.StructurePreprocessor(verbose=False)
+        strp = aa.StructurePreprocessor(verbose=False)
         with warnings.catch_warnings():
             warnings.simplefilter("ignore")
             with pytest.raises(RuntimeError):
-                stp.encode_pdb(df_seq=_df_two(), pdb_folder=str(tmp_path),
+                strp.encode_pdb(df_seq=_df_two(), pdb_folder=str(tmp_path),
                                features=["bfactor"], on_failure="raise")
 
     def test_complex_features_typed_as_int_rejected(self):
-        stp = aa.StructurePreprocessor(verbose=False)
+        strp = aa.StructurePreprocessor(verbose=False)
         with pytest.raises(ValueError):
-            stp.encode_pdb(df_seq=_df_one(), pdb_folder=str(PDB_FIXTURES),
+            strp.encode_pdb(df_seq=_df_one(), pdb_folder=str(PDB_FIXTURES),
                            features=[7])
 
     def test_complex_features_int_rejected_with_typed_list(self):
-        stp = aa.StructurePreprocessor(verbose=False)
+        strp = aa.StructurePreprocessor(verbose=False)
         with pytest.raises(ValueError):
-            stp.encode_pdb(df_seq=_df_one(), pdb_folder=str(PDB_FIXTURES),
+            strp.encode_pdb(df_seq=_df_one(), pdb_folder=str(PDB_FIXTURES),
                            features="bfactor")  # str, not list
 
     def test_complex_default_on_failure_is_nan(self):
-        stp = aa.StructurePreprocessor(verbose=False)
+        strp = aa.StructurePreprocessor(verbose=False)
         with warnings.catch_warnings():
             warnings.simplefilter("ignore")
-            d, df_out = stp.encode_pdb(return_df=True, df_seq=pd.DataFrame({
+            d, df_out = strp.encode_pdb(return_df=True, df_seq=pd.DataFrame({
                 "entry": ["P_missing"],
                 "sequence": ["ACDE"]}),
                 pdb_folder=str(PDB_FIXTURES),
@@ -318,89 +318,89 @@ class TestStpEncodePdbAFFeatures:
 
     # ----- NEGATIVES (≥10) -----
     def test_invalid_plddt_disorder_threshold_below(self):
-        stp = aa.StructurePreprocessor(verbose=False)
+        strp = aa.StructurePreprocessor(verbose=False)
         with pytest.raises(ValueError, match="plddt_disorder_threshold"):
-            stp.encode_pdb(df_seq=_df_af(), pdb_folder=str(PDB_FIXTURES),
+            strp.encode_pdb(df_seq=_df_af(), pdb_folder=str(PDB_FIXTURES),
                            features=["plddt_disorder"],
                            plddt_disorder_threshold=-1.0)
 
     def test_invalid_plddt_disorder_threshold_above(self):
-        stp = aa.StructurePreprocessor(verbose=False)
+        strp = aa.StructurePreprocessor(verbose=False)
         with pytest.raises(ValueError, match="plddt_disorder_threshold"):
-            stp.encode_pdb(df_seq=_df_af(), pdb_folder=str(PDB_FIXTURES),
+            strp.encode_pdb(df_seq=_df_af(), pdb_folder=str(PDB_FIXTURES),
                            features=["plddt_disorder"],
                            plddt_disorder_threshold=150.0)
 
     def test_invalid_plddt_disorder_threshold_not_number(self):
-        stp = aa.StructurePreprocessor(verbose=False)
+        strp = aa.StructurePreprocessor(verbose=False)
         with pytest.raises(ValueError):
-            stp.encode_pdb(df_seq=_df_af(), pdb_folder=str(PDB_FIXTURES),
+            strp.encode_pdb(df_seq=_df_af(), pdb_folder=str(PDB_FIXTURES),
                            features=["plddt_disorder"],
                            plddt_disorder_threshold="seventy")
 
     def test_invalid_af_feature_with_wrong_method(self):
         # ss3 belongs to encode_dssp, not encode_pdb.
-        stp = aa.StructurePreprocessor(verbose=False)
+        strp = aa.StructurePreprocessor(verbose=False)
         with pytest.raises(ValueError):
-            stp.encode_pdb(df_seq=_df_af(), pdb_folder=str(PDB_FIXTURES),
+            strp.encode_pdb(df_seq=_df_af(), pdb_folder=str(PDB_FIXTURES),
                            features=["ss3"])
 
     def test_invalid_pdb_folder_for_af(self):
-        stp = aa.StructurePreprocessor(verbose=False)
+        strp = aa.StructurePreprocessor(verbose=False)
         with pytest.raises(ValueError, match="pdb_folder"):
-            stp.encode_pdb(df_seq=_df_af(), pdb_folder="/__nope__",
+            strp.encode_pdb(df_seq=_df_af(), pdb_folder="/__nope__",
                            features=["plddt"])
 
     def test_invalid_features_mix_unknown_with_known(self):
-        stp = aa.StructurePreprocessor(verbose=False)
+        strp = aa.StructurePreprocessor(verbose=False)
         with pytest.raises(ValueError):
-            stp.encode_pdb(df_seq=_df_af(), pdb_folder=str(PDB_FIXTURES),
+            strp.encode_pdb(df_seq=_df_af(), pdb_folder=str(PDB_FIXTURES),
                            features=["plddt", "mystery_key"])
 
     def test_invalid_features_dropped_key_asa(self):
         # v1.1: 'asa' (absolute) was removed from the registry.
-        stp = aa.StructurePreprocessor(verbose=False)
+        strp = aa.StructurePreprocessor(verbose=False)
         with pytest.raises(ValueError):
-            stp.encode_pdb(df_seq=_df_af(), pdb_folder=str(PDB_FIXTURES),
+            strp.encode_pdb(df_seq=_df_af(), pdb_folder=str(PDB_FIXTURES),
                            features=["asa"])
 
     def test_invalid_missing_fixture_raises_on_raise(self, tmp_path):
-        stp = aa.StructurePreprocessor(verbose=False)
+        strp = aa.StructurePreprocessor(verbose=False)
         with warnings.catch_warnings():
             warnings.simplefilter("ignore")
             with pytest.raises(RuntimeError):
-                stp.encode_pdb(df_seq=_df_af(), pdb_folder=str(tmp_path),
+                strp.encode_pdb(df_seq=_df_af(), pdb_folder=str(tmp_path),
                                features=["plddt"], on_failure="raise")
 
     def test_invalid_unsafe_entry_for_af(self):
         df = pd.DataFrame({"entry": ["../etc"], "sequence": ["ACDE"]})
-        stp = aa.StructurePreprocessor(verbose=False)
+        strp = aa.StructurePreprocessor(verbose=False)
         with pytest.raises(ValueError, match="entry"):
-            stp.encode_pdb(df_seq=df, pdb_folder=str(PDB_FIXTURES),
+            strp.encode_pdb(df_seq=df, pdb_folder=str(PDB_FIXTURES),
                            features=["plddt"])
 
     def test_invalid_plddt_disorder_threshold_none(self):
-        stp = aa.StructurePreprocessor(verbose=False)
+        strp = aa.StructurePreprocessor(verbose=False)
         with pytest.raises(ValueError):
-            stp.encode_pdb(df_seq=_df_af(), pdb_folder=str(PDB_FIXTURES),
+            strp.encode_pdb(df_seq=_df_af(), pdb_folder=str(PDB_FIXTURES),
                            features=["plddt_disorder"],
                            plddt_disorder_threshold=None)
 
     # ----- POSITIVES (≥10) -----
     def test_valid_plddt_shape(self):
-        stp = aa.StructurePreprocessor(verbose=False)
+        strp = aa.StructurePreprocessor(verbose=False)
         with warnings.catch_warnings():
             warnings.simplefilter("ignore")
-            d = stp.encode_pdb(df_seq=_df_af(),
+            d = strp.encode_pdb(df_seq=_df_af(),
                                   pdb_folder=str(PDB_FIXTURES),
                                   features=["plddt"])
         assert d["AF_TINY"].shape == (len(AF_FIXTURE_SEQ), 1)
 
     def test_valid_plddt_in_unit_interval(self):
-        stp = aa.StructurePreprocessor(verbose=False)
+        strp = aa.StructurePreprocessor(verbose=False)
         with warnings.catch_warnings():
             warnings.simplefilter("ignore")
-            d = stp.encode_pdb(df_seq=_df_af(),
+            d = strp.encode_pdb(df_seq=_df_af(),
                                   pdb_folder=str(PDB_FIXTURES),
                                   features=["plddt"])
         vals = d["AF_TINY"].ravel()
@@ -408,10 +408,10 @@ class TestStpEncodePdbAFFeatures:
         assert (finite >= 0).all() and (finite <= 1).all()
 
     def test_valid_plddt_disorder_binary(self):
-        stp = aa.StructurePreprocessor(verbose=False)
+        strp = aa.StructurePreprocessor(verbose=False)
         with warnings.catch_warnings():
             warnings.simplefilter("ignore")
-            d = stp.encode_pdb(df_seq=_df_af(),
+            d = strp.encode_pdb(df_seq=_df_af(),
                                   pdb_folder=str(PDB_FIXTURES),
                                   features=["plddt_disorder"])
         vals = d["AF_TINY"].ravel()
@@ -420,24 +420,24 @@ class TestStpEncodePdbAFFeatures:
 
     def test_valid_plddt_disorder_threshold_increases_count(self):
         # A higher threshold should label more residues disordered.
-        stp = aa.StructurePreprocessor(verbose=False)
+        strp = aa.StructurePreprocessor(verbose=False)
         with warnings.catch_warnings():
             warnings.simplefilter("ignore")
-            d_low = stp.encode_pdb(df_seq=_df_af(),
+            d_low = strp.encode_pdb(df_seq=_df_af(),
                                       pdb_folder=str(PDB_FIXTURES),
                                       features=["plddt_disorder"],
                                       plddt_disorder_threshold=30.0)
-            d_high = stp.encode_pdb(df_seq=_df_af(),
+            d_high = strp.encode_pdb(df_seq=_df_af(),
                                        pdb_folder=str(PDB_FIXTURES),
                                        features=["plddt_disorder"],
                                        plddt_disorder_threshold=95.0)
         assert np.nansum(d_high["AF_TINY"]) >= np.nansum(d_low["AF_TINY"])
 
     def test_valid_plddt_tier_shape_and_one_hot(self):
-        stp = aa.StructurePreprocessor(verbose=False)
+        strp = aa.StructurePreprocessor(verbose=False)
         with warnings.catch_warnings():
             warnings.simplefilter("ignore")
-            d = stp.encode_pdb(df_seq=_df_af(),
+            d = strp.encode_pdb(df_seq=_df_af(),
                                   pdb_folder=str(PDB_FIXTURES),
                                   features=["plddt_tier"])
         v = d["AF_TINY"]
@@ -448,19 +448,19 @@ class TestStpEncodePdbAFFeatures:
         np.testing.assert_allclose(finite, 1.0)
 
     def test_valid_chi1_sincos_shape(self):
-        stp = aa.StructurePreprocessor(verbose=False)
+        strp = aa.StructurePreprocessor(verbose=False)
         with warnings.catch_warnings():
             warnings.simplefilter("ignore")
-            d = stp.encode_pdb(df_seq=_df_af(),
+            d = strp.encode_pdb(df_seq=_df_af(),
                                   pdb_folder=str(PDB_FIXTURES),
                                   features=["chi1_sincos"])
         assert d["AF_TINY"].shape == (len(AF_FIXTURE_SEQ), 2)
 
     def test_valid_chi1_sincos_in_unit_interval(self):
-        stp = aa.StructurePreprocessor(verbose=False)
+        strp = aa.StructurePreprocessor(verbose=False)
         with warnings.catch_warnings():
             warnings.simplefilter("ignore")
-            d = stp.encode_pdb(df_seq=_df_af(),
+            d = strp.encode_pdb(df_seq=_df_af(),
                                   pdb_folder=str(PDB_FIXTURES),
                                   features=["chi1_sincos"])
         vals = d["AF_TINY"]
@@ -470,10 +470,10 @@ class TestStpEncodePdbAFFeatures:
     def test_valid_chi1_finite_for_non_ala_gly(self):
         # The AF_TINY fixture is stereochemically valid: chi1 is defined for
         # every residue except ALA and GLY (which have no CG / CB).
-        stp = aa.StructurePreprocessor(verbose=False)
+        strp = aa.StructurePreprocessor(verbose=False)
         with warnings.catch_warnings():
             warnings.simplefilter("ignore")
-            d = stp.encode_pdb(df_seq=_df_af(),
+            d = strp.encode_pdb(df_seq=_df_af(),
                                   pdb_folder=str(PDB_FIXTURES),
                                   features=["chi1_sincos"])
         v = d["AF_TINY"]
@@ -488,10 +488,10 @@ class TestStpEncodePdbAFFeatures:
         # residues: R, N, D, E, F, H, I, K, L, M, P, Q, W, Y. C/S/T/V have
         # chi1 only; A/G have neither.
         chi2_eligible = set("RNDEFHIKLMPQWY")
-        stp = aa.StructurePreprocessor(verbose=False)
+        strp = aa.StructurePreprocessor(verbose=False)
         with warnings.catch_warnings():
             warnings.simplefilter("ignore")
-            d = stp.encode_pdb(df_seq=_df_af(),
+            d = strp.encode_pdb(df_seq=_df_af(),
                                   pdb_folder=str(PDB_FIXTURES),
                                   features=["chi2_sincos"])
         v = d["AF_TINY"]
@@ -504,10 +504,10 @@ class TestStpEncodePdbAFFeatures:
         assert finite_per_res.sum() >= 14
 
     def test_valid_ca_centroid_dist_shape_and_range(self):
-        stp = aa.StructurePreprocessor(verbose=False)
+        strp = aa.StructurePreprocessor(verbose=False)
         with warnings.catch_warnings():
             warnings.simplefilter("ignore")
-            d = stp.encode_pdb(df_seq=_df_af(),
+            d = strp.encode_pdb(df_seq=_df_af(),
                                   pdb_folder=str(PDB_FIXTURES),
                                   features=["ca_centroid_dist"])
         v = d["AF_TINY"]
@@ -516,19 +516,19 @@ class TestStpEncodePdbAFFeatures:
         assert (finite >= 0).all() and (finite <= 1).all()
 
     def test_valid_centroid_dist_norm_shape(self):
-        stp = aa.StructurePreprocessor(verbose=False)
+        strp = aa.StructurePreprocessor(verbose=False)
         with warnings.catch_warnings():
             warnings.simplefilter("ignore")
-            d = stp.encode_pdb(df_seq=_df_af(),
+            d = strp.encode_pdb(df_seq=_df_af(),
                                   pdb_folder=str(PDB_FIXTURES),
                                   features=["ca_centroid_dist_norm"])
         assert d["AF_TINY"].shape == (len(AF_FIXTURE_SEQ), 1)
 
     def test_valid_contact_count_8A_in_unit_interval(self):
-        stp = aa.StructurePreprocessor(verbose=False)
+        strp = aa.StructurePreprocessor(verbose=False)
         with warnings.catch_warnings():
             warnings.simplefilter("ignore")
-            d = stp.encode_pdb(df_seq=_df_af(),
+            d = strp.encode_pdb(df_seq=_df_af(),
                                   pdb_folder=str(PDB_FIXTURES),
                                   features=["contact_count_8A"])
         vals = d["AF_TINY"].ravel()
@@ -537,10 +537,10 @@ class TestStpEncodePdbAFFeatures:
 
     def test_valid_contact_count_12A_has_more_than_8A(self):
         # The wider radius should never produce a smaller count per residue.
-        stp = aa.StructurePreprocessor(verbose=False)
+        strp = aa.StructurePreprocessor(verbose=False)
         with warnings.catch_warnings():
             warnings.simplefilter("ignore")
-            d = stp.encode_pdb(df_seq=_df_af(),
+            d = strp.encode_pdb(df_seq=_df_af(),
                                   pdb_folder=str(PDB_FIXTURES),
                                   features=["contact_count_8A",
                                             "contact_count_12A"])
@@ -554,12 +554,12 @@ class TestStpEncodePdbAFFeatures:
         assert (c12[mask] >= c8[mask] - 1e-9).all()
 
     def test_valid_combined_AF_features_shape(self):
-        stp = aa.StructurePreprocessor(verbose=False)
+        strp = aa.StructurePreprocessor(verbose=False)
         feats = ["plddt", "plddt_disorder", "plddt_tier",
                  "ca_centroid_dist_norm", "contact_count_8A"]
         with warnings.catch_warnings():
             warnings.simplefilter("ignore")
-            d = stp.encode_pdb(df_seq=_df_af(),
+            d = strp.encode_pdb(df_seq=_df_af(),
                                   pdb_folder=str(PDB_FIXTURES),
                                   features=feats)
         # 1 + 1 + 4 + 1 + 1 = 8
@@ -580,10 +580,10 @@ class TestStpEncodePdbAFComplex:
             src = Path(str(PDB_FIXTURES) + "/AF_TINY.pdb.gz")
             dst = Path(td) / "AF_TINY.pdb.gz"
             dst.write_bytes(src.read_bytes())
-            stp = aa.StructurePreprocessor(verbose=False)
+            strp = aa.StructurePreprocessor(verbose=False)
             with warnings.catch_warnings():
                 warnings.simplefilter("ignore")
-                d, df_out = stp.encode_pdb(return_df=True, df_seq=_df_af(),
+                d, df_out = strp.encode_pdb(return_df=True, df_seq=_df_af(),
                                            pdb_folder=td,
                                            features=["plddt"])
             assert d["AF_TINY"].shape == (len(AF_FIXTURE_SEQ), 1)
@@ -591,10 +591,10 @@ class TestStpEncodePdbAFComplex:
 
     def test_complex_plddt_decreases_at_termini(self):
         # AF_TINY fixture has pLDDT tiered high in middle, low at ends.
-        stp = aa.StructurePreprocessor(verbose=False)
+        strp = aa.StructurePreprocessor(verbose=False)
         with warnings.catch_warnings():
             warnings.simplefilter("ignore")
-            d = stp.encode_pdb(df_seq=_df_af(),
+            d = strp.encode_pdb(df_seq=_df_af(),
                                   pdb_folder=str(PDB_FIXTURES),
                                   features=["plddt"])
         v = d["AF_TINY"].ravel()
@@ -609,10 +609,10 @@ class TestStpEncodePdbAFComplex:
         from pathlib import Path
         src = Path(str(PDB_FIXTURES) + "/AF_TINY.pdb")
         (tmp_path / "AF_TINY.pdb").write_text(src.read_text())
-        stp = aa.StructurePreprocessor(verbose=False)
+        strp = aa.StructurePreprocessor(verbose=False)
         with warnings.catch_warnings():
             warnings.simplefilter("ignore")
-            d, df_out = stp.encode_pdb(return_df=True, df_seq=df, pdb_folder=str(tmp_path),
+            d, df_out = strp.encode_pdb(return_df=True, df_seq=df, pdb_folder=str(tmp_path),
                                        features=["plddt"],
                                        on_failure="drop")
         assert "AF_TINY" in d and "GONE" not in d
@@ -620,20 +620,20 @@ class TestStpEncodePdbAFComplex:
 
     def test_complex_nan_default_with_missing_AF(self, tmp_path):
         df = pd.DataFrame({"entry": ["GONE"], "sequence": ["ACDE"]})
-        stp = aa.StructurePreprocessor(verbose=False)
+        strp = aa.StructurePreprocessor(verbose=False)
         with warnings.catch_warnings():
             warnings.simplefilter("ignore")
-            d, df_out = stp.encode_pdb(return_df=True, df_seq=df, pdb_folder=str(tmp_path),
+            d, df_out = strp.encode_pdb(return_df=True, df_seq=df, pdb_folder=str(tmp_path),
                                        features=["plddt_tier"])
         assert np.isnan(d["GONE"]).all()
         assert d["GONE"].shape == (4, 4)
         assert not bool(df_out["pdb_ok"].iloc[0])
 
     def test_complex_two_features_concat_order(self):
-        stp = aa.StructurePreprocessor(verbose=False)
+        strp = aa.StructurePreprocessor(verbose=False)
         with warnings.catch_warnings():
             warnings.simplefilter("ignore")
-            d = stp.encode_pdb(df_seq=_df_af(),
+            d = strp.encode_pdb(df_seq=_df_af(),
                                   pdb_folder=str(PDB_FIXTURES),
                                   features=["plddt", "ca_centroid_dist"])
         v = d["AF_TINY"]
@@ -645,10 +645,10 @@ class TestStpEncodePdbAFComplex:
         # Both feature keys read the B-factor column but emit DIFFERENT
         # subcategories — the corpus-derived df_scales lets the redundancy
         # filter spot the duplication (high corr).
-        stp = aa.StructurePreprocessor(verbose=False)
+        strp = aa.StructurePreprocessor(verbose=False)
         with warnings.catch_warnings():
             warnings.simplefilter("ignore")
-            d = stp.encode_pdb(df_seq=_df_af(),
+            d = strp.encode_pdb(df_seq=_df_af(),
                                   pdb_folder=str(PDB_FIXTURES),
                                   features=["plddt", "bfactor"])
         v = d["AF_TINY"]
@@ -657,12 +657,12 @@ class TestStpEncodePdbAFComplex:
         np.testing.assert_allclose(v[:, 0], v[:, 1], equal_nan=True)
 
     def test_complex_build_cat_for_all_AF_keys(self):
-        stp = aa.StructurePreprocessor(verbose=False)
+        strp = aa.StructurePreprocessor(verbose=False)
         feats = ["plddt", "plddt_disorder", "plddt_tier",
                  "chi1_sincos", "chi2_sincos",
                  "ca_centroid_dist", "ca_centroid_dist_norm",
                  "contact_count_8A", "contact_count_12A"]
-        df_cat = stp.build_cat(features=feats)
+        df_cat = strp.build_cat(features=feats)
         # 1 + 1 + 4 + 2 + 2 + 1 + 1 + 1 + 1 = 14
         assert df_cat.shape == (14, 5)
         assert (df_cat[ut.COL_CAT] == "Structure").all()
@@ -682,25 +682,25 @@ class TestStpEncodePdbHSE:
 
     def test_invalid_hse_with_wrong_method(self):
         # 'hse' belongs to encode_pdb, not encode_dssp.
-        stp = aa.StructurePreprocessor(verbose=False)
+        strp = aa.StructurePreprocessor(verbose=False)
         with pytest.raises(ValueError):
-            stp.encode_dssp(df_seq=_df_af(), pdb_folder=str(PDB_FIXTURES),
+            strp.encode_dssp(df_seq=_df_af(), pdb_folder=str(PDB_FIXTURES),
                             features=["hse"])
 
     def test_valid_hse_shape(self):
-        stp = aa.StructurePreprocessor(verbose=False)
+        strp = aa.StructurePreprocessor(verbose=False)
         with warnings.catch_warnings():
             warnings.simplefilter("ignore")
-            d = stp.encode_pdb(df_seq=_df_af(),
+            d = strp.encode_pdb(df_seq=_df_af(),
                                   pdb_folder=str(PDB_FIXTURES),
                                   features=["hse"])
         assert d["AF_TINY"].shape == (len(AF_FIXTURE_SEQ), 2)
 
     def test_valid_hse_in_unit_interval(self):
-        stp = aa.StructurePreprocessor(verbose=False)
+        strp = aa.StructurePreprocessor(verbose=False)
         with warnings.catch_warnings():
             warnings.simplefilter("ignore")
-            d = stp.encode_pdb(df_seq=_df_af(),
+            d = strp.encode_pdb(df_seq=_df_af(),
                                   pdb_folder=str(PDB_FIXTURES),
                                   features=["hse"])
         vals = d["AF_TINY"]
@@ -711,10 +711,10 @@ class TestStpEncodePdbHSE:
         # HSExposureCA needs at least one neighbor on each side to define
         # the pseudo-Cβ direction, so terminal residues come back NaN.
         # The middle residues (≥ 2 from each terminus) should be finite.
-        stp = aa.StructurePreprocessor(verbose=False)
+        strp = aa.StructurePreprocessor(verbose=False)
         with warnings.catch_warnings():
             warnings.simplefilter("ignore")
-            d = stp.encode_pdb(df_seq=_df_af(),
+            d = strp.encode_pdb(df_seq=_df_af(),
                                   pdb_folder=str(PDB_FIXTURES),
                                   features=["hse"])
         v = d["AF_TINY"]
@@ -726,10 +726,10 @@ class TestStpEncodePdbHSE:
         # At the same radius, hse_up + hse_down ≈ total Cα contact number.
         # On the helical AF_TINY fixture this should land in a sensible range
         # (sum > 0 for internal residues).
-        stp = aa.StructurePreprocessor(verbose=False)
+        strp = aa.StructurePreprocessor(verbose=False)
         with warnings.catch_warnings():
             warnings.simplefilter("ignore")
-            d = stp.encode_pdb(df_seq=_df_af(),
+            d = strp.encode_pdb(df_seq=_df_af(),
                                   pdb_folder=str(PDB_FIXTURES),
                                   features=["hse"])
         v = d["AF_TINY"]
@@ -742,18 +742,18 @@ class TestStpEncodePdbHSE:
 
     def test_valid_hse_combined_with_other_pdb_features(self):
         # hse should compose cleanly with other encode_pdb keys.
-        stp = aa.StructurePreprocessor(verbose=False)
+        strp = aa.StructurePreprocessor(verbose=False)
         with warnings.catch_warnings():
             warnings.simplefilter("ignore")
-            d = stp.encode_pdb(df_seq=_df_af(),
+            d = strp.encode_pdb(df_seq=_df_af(),
                                   pdb_folder=str(PDB_FIXTURES),
                                   features=["hse", "plddt", "bfactor"])
         # 2 + 1 + 1 = 4
         assert d["AF_TINY"].shape == (len(AF_FIXTURE_SEQ), 4)
 
     def test_valid_hse_in_build_cat_resolves_to_structure(self):
-        stp = aa.StructurePreprocessor(verbose=False)
-        df_cat = stp.build_cat(features=["hse"])
+        strp = aa.StructurePreprocessor(verbose=False)
+        df_cat = strp.build_cat(features=["hse"])
         # 2 rows (hse_up + hse_down), both under category='Structure'.
         assert df_cat.shape == (2, 5)
         assert (df_cat[ut.COL_CAT] == "Structure").all()
@@ -761,13 +761,13 @@ class TestStpEncodePdbHSE:
 
     def test_valid_hse_in_build_scales(self):
         # hse values get per-AA averaged for the corpus df_scales.
-        stp = aa.StructurePreprocessor(verbose=False)
+        strp = aa.StructurePreprocessor(verbose=False)
         with warnings.catch_warnings():
             warnings.simplefilter("ignore")
-            d = stp.encode_pdb(df_seq=_df_af(),
+            d = strp.encode_pdb(df_seq=_df_af(),
                                   pdb_folder=str(PDB_FIXTURES),
                                   features=["hse"])
-            df_scales = stp.build_scales(
+            df_scales = strp.build_scales(
                 df_seq=_df_af(), dict_num=d, features=["hse"])
         assert df_scales.shape == (20, 2)
         assert list(df_scales.columns) == ["hse_up", "hse_down"]
@@ -795,52 +795,52 @@ class TestStpEncodePdbDisulfide:
 
     # ----- NEGATIVES (≥5) -----
     def test_invalid_disulfide_with_wrong_method(self):
-        stp = aa.StructurePreprocessor(verbose=False)
+        strp = aa.StructurePreprocessor(verbose=False)
         with pytest.raises(ValueError):
-            stp.encode_dssp(df_seq=_df_ss(), pdb_folder=str(PDB_FIXTURES),
+            strp.encode_dssp(df_seq=_df_ss(), pdb_folder=str(PDB_FIXTURES),
                             features=["disulfide"])
 
     def test_invalid_disulfide_in_pae_method(self):
-        stp = aa.StructurePreprocessor(verbose=False)
+        strp = aa.StructurePreprocessor(verbose=False)
         with pytest.raises(ValueError):
-            stp.encode_pae(df_seq=_df_ss(), pae_folder=str(PDB_FIXTURES),
+            strp.encode_pae(df_seq=_df_ss(), pae_folder=str(PDB_FIXTURES),
                            features=["disulfide"])
 
     def test_invalid_disulfide_pdb_folder_nonexistent(self):
-        stp = aa.StructurePreprocessor(verbose=False)
+        strp = aa.StructurePreprocessor(verbose=False)
         with pytest.raises(ValueError, match="pdb_folder"):
-            stp.encode_pdb(df_seq=_df_ss(), pdb_folder="/__nope__",
+            strp.encode_pdb(df_seq=_df_ss(), pdb_folder="/__nope__",
                            features=["disulfide"])
 
     def test_invalid_disulfide_features_empty(self):
-        stp = aa.StructurePreprocessor(verbose=False)
+        strp = aa.StructurePreprocessor(verbose=False)
         with pytest.raises(ValueError):
-            stp.encode_pdb(df_seq=_df_ss(), pdb_folder=str(PDB_FIXTURES),
+            strp.encode_pdb(df_seq=_df_ss(), pdb_folder=str(PDB_FIXTURES),
                            features=[])
 
     def test_invalid_disulfide_raise_on_missing_pdb(self, tmp_path):
-        stp = aa.StructurePreprocessor(verbose=False)
+        strp = aa.StructurePreprocessor(verbose=False)
         with warnings.catch_warnings():
             warnings.simplefilter("ignore")
             with pytest.raises(RuntimeError):
-                stp.encode_pdb(df_seq=_df_ss(), pdb_folder=str(tmp_path),
+                strp.encode_pdb(df_seq=_df_ss(), pdb_folder=str(tmp_path),
                                features=["disulfide"], on_failure="raise")
 
     # ----- POSITIVES (≥10) -----
     def test_valid_disulfide_shape(self):
-        stp = aa.StructurePreprocessor(verbose=False)
+        strp = aa.StructurePreprocessor(verbose=False)
         with warnings.catch_warnings():
             warnings.simplefilter("ignore")
-            d = stp.encode_pdb(df_seq=_df_ss(),
+            d = strp.encode_pdb(df_seq=_df_ss(),
                                   pdb_folder=str(PDB_FIXTURES),
                                   features=["disulfide"])
         assert d["SS_BOND"].shape == (len(SS_BOND_SEQ), 2)
 
     def test_valid_disulfide_in_unit_interval(self):
-        stp = aa.StructurePreprocessor(verbose=False)
+        strp = aa.StructurePreprocessor(verbose=False)
         with warnings.catch_warnings():
             warnings.simplefilter("ignore")
-            d = stp.encode_pdb(df_seq=_df_ss(),
+            d = strp.encode_pdb(df_seq=_df_ss(),
                                   pdb_folder=str(PDB_FIXTURES),
                                   features=["disulfide"])
         vals = d["SS_BOND"]
@@ -849,10 +849,10 @@ class TestStpEncodePdbDisulfide:
 
     def test_valid_disulfide_non_cys_are_nan(self):
         # Non-CYS residues must be NaN in both columns.
-        stp = aa.StructurePreprocessor(verbose=False)
+        strp = aa.StructurePreprocessor(verbose=False)
         with warnings.catch_warnings():
             warnings.simplefilter("ignore")
-            d = stp.encode_pdb(df_seq=_df_ss(),
+            d = strp.encode_pdb(df_seq=_df_ss(),
                                   pdb_folder=str(PDB_FIXTURES),
                                   features=["disulfide"])
         v = d["SS_BOND"]
@@ -862,10 +862,10 @@ class TestStpEncodePdbDisulfide:
 
     def test_valid_disulfide_bonded_cys_participates_one(self):
         # Both CYS in SS_BOND should participate (=1.0).
-        stp = aa.StructurePreprocessor(verbose=False)
+        strp = aa.StructurePreprocessor(verbose=False)
         with warnings.catch_warnings():
             warnings.simplefilter("ignore")
-            d = stp.encode_pdb(df_seq=_df_ss(),
+            d = strp.encode_pdb(df_seq=_df_ss(),
                                   pdb_folder=str(PDB_FIXTURES),
                                   features=["disulfide"])
         v = d["SS_BOND"]
@@ -875,10 +875,10 @@ class TestStpEncodePdbDisulfide:
 
     def test_valid_disulfide_partner_distance_finite(self):
         # Bonded CYS get a finite partner_distance (≤ 1.0 after /5 norm).
-        stp = aa.StructurePreprocessor(verbose=False)
+        strp = aa.StructurePreprocessor(verbose=False)
         with warnings.catch_warnings():
             warnings.simplefilter("ignore")
-            d = stp.encode_pdb(df_seq=_df_ss(),
+            d = strp.encode_pdb(df_seq=_df_ss(),
                                   pdb_folder=str(PDB_FIXTURES),
                                   features=["disulfide"])
         v = d["SS_BOND"]
@@ -892,10 +892,10 @@ class TestStpEncodePdbDisulfide:
         # apart) to form a disulfide → participates=0.0, distance=NaN.
         df = pd.DataFrame({"entry": ["AF_TINY"],
                            "sequence": ["ACDEFGHIKLMNPQRSTVWYACDEFGHIKL"]})
-        stp = aa.StructurePreprocessor(verbose=False)
+        strp = aa.StructurePreprocessor(verbose=False)
         with warnings.catch_warnings():
             warnings.simplefilter("ignore")
-            d = stp.encode_pdb(df_seq=df, pdb_folder=str(PDB_FIXTURES),
+            d = strp.encode_pdb(df_seq=df, pdb_folder=str(PDB_FIXTURES),
                                   features=["disulfide"])
         v = d["AF_TINY"]
         # CYS at positions 2 and 22 (1-indexed) = idx 1 and 21.
@@ -904,28 +904,28 @@ class TestStpEncodePdbDisulfide:
             assert np.isnan(v[i, 1])
 
     def test_valid_disulfide_build_cat(self):
-        stp = aa.StructurePreprocessor(verbose=False)
-        df_cat = stp.build_cat(features=["disulfide"])
+        strp = aa.StructurePreprocessor(verbose=False)
+        df_cat = strp.build_cat(features=["disulfide"])
         assert df_cat.shape == (2, 5)
         assert (df_cat[ut.COL_CAT] == "Structure").all()
         assert (df_cat[ut.COL_SUBCAT] == "Disulfide bond (CYS-CYS)").all()
 
     def test_valid_disulfide_combined_with_other_features(self):
         # disulfide composes cleanly with bfactor / plddt.
-        stp = aa.StructurePreprocessor(verbose=False)
+        strp = aa.StructurePreprocessor(verbose=False)
         with warnings.catch_warnings():
             warnings.simplefilter("ignore")
-            d = stp.encode_pdb(df_seq=_df_ss(),
+            d = strp.encode_pdb(df_seq=_df_ss(),
                                   pdb_folder=str(PDB_FIXTURES),
                                   features=["disulfide", "bfactor"])
         # 2 (disulfide) + 1 (bfactor) = 3
         assert d["SS_BOND"].shape == (len(SS_BOND_SEQ), 3)
 
     def test_valid_disulfide_missing_pdb_nan_default(self, tmp_path):
-        stp = aa.StructurePreprocessor(verbose=False)
+        strp = aa.StructurePreprocessor(verbose=False)
         with warnings.catch_warnings():
             warnings.simplefilter("ignore")
-            d, df_out = stp.encode_pdb(return_df=True, df_seq=_df_ss(),
+            d, df_out = strp.encode_pdb(return_df=True, df_seq=_df_ss(),
                                        pdb_folder=str(tmp_path),
                                        features=["disulfide"])
         assert np.isnan(d["SS_BOND"]).all()
@@ -938,10 +938,10 @@ class TestStpEncodePdbDisulfide:
         from pathlib import Path
         (tmp_path / "SS_BOND.pdb").write_text(
             (PDB_FIXTURES / "SS_BOND.pdb").read_text())
-        stp = aa.StructurePreprocessor(verbose=False)
+        strp = aa.StructurePreprocessor(verbose=False)
         with warnings.catch_warnings():
             warnings.simplefilter("ignore")
-            d, df_out = stp.encode_pdb(return_df=True, df_seq=df, pdb_folder=str(tmp_path),
+            d, df_out = strp.encode_pdb(return_df=True, df_seq=df, pdb_folder=str(tmp_path),
                                        features=["disulfide"],
                                        on_failure="drop")
         assert "SS_BOND" in d and "GONE" not in d
@@ -949,10 +949,10 @@ class TestStpEncodePdbDisulfide:
 
     def test_valid_disulfide_partner_distance_normalized(self):
         # SS_BOND fixture has SG-SG distance ≈ 1.308 Å → normalized ≈ 0.262.
-        stp = aa.StructurePreprocessor(verbose=False)
+        strp = aa.StructurePreprocessor(verbose=False)
         with warnings.catch_warnings():
             warnings.simplefilter("ignore")
-            d = stp.encode_pdb(df_seq=_df_ss(),
+            d = strp.encode_pdb(df_seq=_df_ss(),
                                   pdb_folder=str(PDB_FIXTURES),
                                   features=["disulfide"])
         v = d["SS_BOND"]

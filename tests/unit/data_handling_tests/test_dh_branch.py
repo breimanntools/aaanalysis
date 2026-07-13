@@ -139,56 +139,56 @@ class TestSeqPreprocBranch:
 
     def test_encode_gap_in_alphabet_raises(self):
         """gap contained in alphabet raises (L34-35)."""
-        sp = aa.SequencePreprocessor()
+        seqp = aa.SequencePreprocessor()
         with pytest.raises(ValueError, match="should not be contained in the 'alphabet'"):
-            sp.encode_one_hot(list_seq=["ACDE"], alphabet="ACDE-", gap="-")
+            seqp.encode_one_hot(list_seq=["ACDE"], alphabet="ACDE-", gap="-")
 
     def test_get_aa_window_neither_pos_stop_nor_window_size(self):
         """Neither pos_stop nor window_size given raises (L56-57)."""
-        sp = aa.SequencePreprocessor()
+        seqp = aa.SequencePreprocessor()
         with pytest.raises(ValueError, match="must be specified. Both are 'None'"):
-            sp.get_aa_window(seq="ACDEFG", pos_start=0)
+            seqp.get_aa_window(seq="ACDEFG", pos_start=0)
 
     def test_get_aa_window_both_pos_stop_and_window_size(self):
         """Both pos_stop and window_size given raises (L58-59)."""
-        sp = aa.SequencePreprocessor()
+        seqp = aa.SequencePreprocessor()
         with pytest.raises(ValueError, match="Both are given"):
-            sp.get_aa_window(seq="ACDEFG", pos_start=0, pos_stop=3, window_size=2)
+            seqp.get_aa_window(seq="ACDEFG", pos_start=0, pos_stop=3, window_size=2)
 
     def test_get_aa_window_window_extends_beyond_seq_no_gap(self):
         """accept_gap=False with a window past the sequence end raises (L74-78)."""
-        sp = aa.SequencePreprocessor()
+        seqp = aa.SequencePreprocessor()
         with pytest.raises(ValueError, match=r"window_size.* should be >="):
-            sp.get_aa_window(seq="ACDEF", pos_start=2, window_size=10, accept_gap=False)
+            seqp.get_aa_window(seq="ACDEF", pos_start=2, window_size=10, accept_gap=False)
 
     @settings(max_examples=5, deadline=None)
     @given(ws=some.integers(min_value=1, max_value=4))
     def test_get_aa_window_within_seq_no_gap_ok(self, ws):
         """accept_gap=False with a window that fits takes the no-raise arm (L77->exit)."""
-        sp = aa.SequencePreprocessor()
-        window = sp.get_aa_window(seq="ACDEFGHIK", pos_start=2, window_size=ws,
+        seqp = aa.SequencePreprocessor()
+        window = seqp.get_aa_window(seq="ACDEFGHIK", pos_start=2, window_size=ws,
                                   accept_gap=False)
         assert isinstance(window, str)
         assert len(window) == ws
 
     def test_get_sliding_slide_start_gt_slide_stop_raises(self):
         """slide_start > slide_stop raises (L85-86)."""
-        sp = aa.SequencePreprocessor()
+        seqp = aa.SequencePreprocessor()
         with pytest.raises(ValueError, match="should be smaller than 'slide_stop'"):
-            sp.get_sliding_aa_window(seq="ACDEFGHIK", slide_start=5, slide_stop=2, window_size=2)
+            seqp.get_sliding_aa_window(seq="ACDEFGHIK", slide_start=5, slide_stop=2, window_size=2)
 
     def test_get_sliding_window_extends_beyond_seq_no_gap(self):
         """accept_gap=False with slide_start + window_size past the end raises (L111-112)."""
-        sp = aa.SequencePreprocessor()
+        seqp = aa.SequencePreprocessor()
         with pytest.raises(ValueError, match=r"window_size.* should be >="):
-            sp.get_sliding_aa_window(seq="ACDEF", slide_start=2, window_size=10, accept_gap=False)
+            seqp.get_sliding_aa_window(seq="ACDEF", slide_start=2, window_size=10, accept_gap=False)
 
     @settings(max_examples=5, deadline=None)
     @given(start=some.integers(min_value=1, max_value=3))
     def test_get_sliding_slide_stop_none_index1(self, start):
         """slide_stop=None with index1=True takes the +1 backend arm (sliding L15-18)."""
-        sp = aa.SequencePreprocessor()
-        windows = sp.get_sliding_aa_window(seq="ACDEFGHIK", slide_start=start,
+        seqp = aa.SequencePreprocessor()
+        windows = seqp.get_sliding_aa_window(seq="ACDEFGHIK", slide_start=start,
                                            window_size=3, index1=True)
         assert isinstance(windows, list)
         assert all(isinstance(w, str) for w in windows)

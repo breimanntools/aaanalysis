@@ -58,7 +58,7 @@ The MCP server, JSON/tool schemas, and verb orchestration are **ProtXplain**.
 
 ## Consequences
 
-- A new `aaanalysis.pipe` (`aap`) convenience namespace and a
+- A new `aaanalysis.pipe` (`ap`) convenience namespace and a
   `SequenceFeatureTransformer` are **in scope** for AAanalysis, as a stateless,
   thin facade whose defaults are byte-identical to the explicit primitive path
   (no new algorithm, no new required dependency; torch stays the `[embed]`

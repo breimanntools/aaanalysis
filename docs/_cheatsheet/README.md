@@ -15,7 +15,7 @@ fonts/                ← vendored DejaVu TTFs (embedded into the PDF; OFL, see 
 
 The "Example Outputs" gallery embeds real figures from
 `docs/source/_static/cs_plots/*.png`. Those are produced by `gen_plots.py`
-(it runs CPP / TreeModel / dPULearn / AAlogo on a small `DOM_GSEC` sample) and
+(it runs CPP / TreeModel / dPULearn / AALogo on a small `DOM_GSEC` sample) and
 committed. Regenerate them only when the figures should change:
 
 ```bash

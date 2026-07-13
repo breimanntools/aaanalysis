@@ -329,6 +329,11 @@ class CPP(Tool):
         Filter-funnel counts from the most recent :meth:`run` / :meth:`run_num` / :meth:`run_composit`
         (``n_candidates``, ``n_after_prefilter``, ``n_after_redundancy``, ``n_final``); ``None`` before
         the first call.
+
+    Notes
+    -----
+    Parameters ending in ``_kws`` (e.g. ``split_kws``, ``bootstrap_kws``) bundle related keyword
+    arguments into one dict; see the :ref:`keyword-dict parameters overview <kws-overview>`.
     """
 
     def __init__(
