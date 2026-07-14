@@ -11,7 +11,7 @@ Status: Superseded by ADR-0056 — 2026-07-09
 ## Context
 
 Every chart in the library is a method on a `*Plot` class that mirrors a logic
-class via `.eval` (`CPPPlot`, `AAlogoPlot`, `dPULearnPlot`, …); the `aaanalysis/plotting/`
+class via `.eval` (`CPPPlot`, `AALogoPlot`, `dPULearnPlot`, …); the `aaanalysis/plotting/`
 package holds **only** stateless helpers (`plot_get_clist`, `plot_settings`,
 `plot_legend`, …) — zero chart-drawing functions. A heavy CPP user asked for the
 "run4-style" per-protein rank plot (max-score-per-protein scatter, group sets,

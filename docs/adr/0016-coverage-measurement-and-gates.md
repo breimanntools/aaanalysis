@@ -102,7 +102,7 @@ referenced as a keyword argument anywhere under `tests/` nor on an explicit
   the pro surface only where `[pro]` is installed.
 
 The `ALLOWLIST` is the registry of justified, intentionally-untested params —
-visual-only styling passthroughs (`plot_legend`, `AAlogoPlot` logomaker kwargs)
+visual-only styling passthroughs (`plot_legend`, `AALogoPlot` logomaker kwargs)
 and whole-class gaps awaiting a dedicated suite (`AAMut`/`SeqMut`). It is kept
 small; the test reports a *test-covered* percentage (allowlist excluded) that must
 stay ≥95%, so allowlist growth is visible drift.

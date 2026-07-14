@@ -12,7 +12,7 @@ The public `*Plot` methods returned **three different shapes** with no
 predictable rule:
 
 - `(Figure, Axes)` — `AAclustPlot.eval`, `CPPPlot.eval` / `ranking` / `profile` /
-  `heatmap` / `feature_map`, `dPULearnPlot.eval`, `AAlogoPlot.single_logo` /
+  `heatmap` / `feature_map`, `dPULearnPlot.eval`, `AALogoPlot.single_logo` /
   `multi_logo`.
 - `Axes` only — `CPPPlot.feature` / `update_seq_size`, `AAclustPlot.correlation`,
   `dPULearnPlot.pca`, `AAMutPlot.*`, `SeqMutPlot.*`.

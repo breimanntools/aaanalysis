@@ -1,6 +1,11 @@
 # ADR-0040 — Golden pipelines: the `aaanalysis.pipe` (ap) convenience API
 
-Status: Accepted — 2026-06-24
+Status: Accepted — 2026-06-24 (amended 2026-07-14 — verb names aligned to the shipped `aaanalysis.pipe` API)
+
+> **Amended (2026-07-14): shipped verb names.** Two interim names in this ADR were superseded before
+> release — `predict_labels` shipped as **`predict_samples`** (ADR-0046) and `sample_windows` as
+> **`obtain_samples`**. The names are updated inline below to match the shipped API; `design_mutations`
+> and `evaluate_models` remain **planned** (not yet built).
 
 Implements the user-facing convenience-facade half of
 [ADR-0038](0038-agentic-readiness-boundary.md) (AAanalysis owns convenience; the
@@ -20,7 +25,7 @@ The fix is a second, opt-in API — `import aaanalysis.pipe as ap` — of **gold
 pipelines**: one function each for the workflow users run most often. This mirrors
 Matplotlib's two interfaces (the explicit `Axes`/`Figure` API and the `pyplot`
 façade): reach for `ap` like `plt` for the common case, drop to the primitives for
-full control. A first pipeline (`ap.predict`, now `predict_labels` under D1) shipped
+full control. A first pipeline (`ap.predict`, later `predict_samples`) shipped
 in #244; this ADR sets the conventions before the namespace grows and goes public.
 
 ## Decision
@@ -30,12 +35,12 @@ with every existing module-level function in the package (`load_dataset`,
 `comp_seq_sim`, `scan_motif`, …) — there is no bare-verb precedent. The verb encodes
 the role: result-verbs (`find`, `predict`, `explain`, `design`, `evaluate`) are Ends;
 producer-verbs (`get`, `select`, `sample`, `embed`) are Means. (The #244 seed
-`ap.predict` is renamed `ap.predict_labels` under this schema; it is experimental
+`ap.predict` is renamed `ap.predict_samples` under this schema; it is experimental
 and unreleased, so the rename is hard, no deprecation.)
 
 **D2. Tiered model — "golden pipeline" means an End.**
 - **Ends** are deliverables: one call returns the thing the user wanted. These are the
-  golden pipelines: `find_features`, `predict_labels`, `explain_features` (*pro*),
+  golden pipelines: `find_features`, `predict_samples`, `explain_features` (*pro*),
   `design_mutations`, `evaluate_models`.
 - **Means** are producers of an *input* to an End (reliable negatives, a reduced scale
   set, sampled windows, embeddings). A Means is a **flag** on the End it feeds by
@@ -68,11 +73,11 @@ top-level CONFIRM-FIRST API surface.
 
 **D6. Catalog (the planned pipelines).** Built as their primitive is ready; not all at
 once:
-- *Ends:* `find_features` (CPP), `predict_labels` (TreeModel), `explain_features`
+- *Ends:* `find_features` (CPP), `predict_samples` (TreeModel), `explain_features`
   (ShapModel, *pro*), `design_mutations` (AAMut/SeqMut), `evaluate_models`
   (metrics + TreeModel).
 - *Means (flag-first):* reliable negatives (dPULearn → `dpulearn=`), scale reduction
-  (AAclust → `subcategories=`), `sample_windows` (AAWindowSampler), `embed_sequences`
+  (AAclust → `subcategories=`), `obtain_samples` (AAWindowSampler), `embed_sequences`
   (EmbeddingPreprocessor, *pro* `[embed]`).
 - *Future (pipeline lands with its primitive):* `map_structure` (#119/#120), `evolve`
   (#57), `active_learn` (#60), `estimate_uncertainty` (#16/#53).

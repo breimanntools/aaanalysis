@@ -30,7 +30,7 @@ Regenerate this table with:
 | [0019](0019-fimo-source-build-in-ci.md) | Build FIMO from source on the Linux CI matrix to gate `scan_motif` end-to-end | Accepted | 2026-06-05 |  |
 | [0020](0020-negative-sampler-subsumed-by-aawindowsampler.md) | Issue #66 `NegativeSampler` is subsumed by `AAWindowSampler` | Accepted | 2026-06-05 |  |
 | [0021](0021-scan-motif-fimo-significance.md) | `scan_motif` is a true FIMO significance scanner, not a parity twin | Accepted | 2026-06-05 |  |
-| [0022](0022-prediction-task-level-taxonomy.md) | Prediction-task taxonomy: residue / domain / protein, by unit-of-comparison | Accepted | 2026-06-06 |  |
+| [0022](0022-prediction-task-level-taxonomy.md) | Prediction-task taxonomy: residue / domain / protein, by unit-of-comparison | Accepted | 2026-06-06 | amended 2026-07-14 — reconciled the level vocabulary with the shipped `AAPred.predict(level=)` API |
 | [0023](0023-tree-model-select-features.md) | `TreeModel.select_features` is a post-fit method, not a new selector class | Accepted | 2026-06-06 |  |
 | [0024](0024-feature-map-shap-via-shap-plot.md) | `feature_map` gains SHAP support via the `shap_plot` toggle, not issue #63's `stack_by` / `df_imp` | Accepted | 2026-06-06 |  |
 | [0025](0025-interpretability-tiered-explainable-scale-sets.md) | Interpretability-tiered "explainable" scale sets in `load_scales` | Accepted | 2026-06-06 |  |
@@ -47,7 +47,7 @@ Regenerate this table with:
 | [0037](0037-perf-ab-gate.md) | Same-runner A/B vs the latest PyPI release makes wall-clock a merge gate | Accepted | 2026-06-22 |  |
 | [0038](0038-agentic-readiness-boundary.md) | Agentic-readiness boundary: usability/improvability is ours, agent integration is ProtXplain's | Accepted | 2026-06-23 |  |
 | [0039](0039-plot-return-contract.md) | One uniform `(fig, ax)` return contract for every `*Plot` method | Accepted | 2026-06-24 |  |
-| [0040](0040-golden-pipelines-convenience-api.md) | Golden pipelines: the `aaanalysis.pipe` (ap) convenience API | Accepted | 2026-06-24 |  |
+| [0040](0040-golden-pipelines-convenience-api.md) | Golden pipelines: the `aaanalysis.pipe` (ap) convenience API | Accepted | 2026-06-24 | amended 2026-07-14 — verb names aligned to the shipped `aaanalysis.pipe` API |
 | [0041](0041-pipe-pipeline-conventions.md) | `aaanalysis.pipe` pipeline conventions and the core golden pipelines | Accepted | 2026-06-24 |  |
 | [0042](0042-seqmut-model-guided-prediction-shift.md) | SeqMut model-guided prediction shift (ML-guided directed evolution) | Accepted | 2026-06-24 |  |
 | [0043](0043-seqopt-optimization-layer.md) | SeqOpt optimization layer (SHAP-guided, fuzzy-labeled multi-objective directed evolution) | Accepted | 2026-06-24 |  |

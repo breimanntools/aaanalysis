@@ -1,6 +1,6 @@
 # ADR-0022 — Prediction-task taxonomy: residue / domain / protein, by unit-of-comparison
 
-Status: Accepted — 2026-06-06
+Status: Accepted — 2026-06-06 (amended 2026-07-14 — reconciled the level vocabulary with the shipped `AAPred.predict(level=)` API)
 
 ## Context
 
@@ -20,6 +20,14 @@ vocabulary.
 (`AA_*`), Domain (`DOM_*`), Protein (`SEQ_*`). "Protein-level" is the
 user-facing alias of the `SEQ_` prefix; `SEQ_` is read as "sequence", not a
 distinct third concept.
+
+> **Amended (2026-07-14): reconciled with the shipped `AAPred.predict(level=)` API.** The predictor
+> parameter shipped as `level='sequence'/'domain'/'window'` — i.e. it uses `'sequence'` for what this
+> taxonomy calls the **protein** level and `'window'` for the **residue** level. Canonical mapping:
+> `sequence` ↔ protein, `domain` ↔ domain, `window` ↔ residue. The conceptual taxonomy
+> (residue/domain/protein) remains the **docs/glossary** vocabulary; the `predict(level=)` values are
+> the **API** spelling. The original "avoid 'sequence level'" rejected-alternative below is superseded
+> for the API parameter only (the glossary term stays "protein level").
 
 **D2 — Residue level has two sub-modes, not two levels.** *single-residue* (odd
 `aa_window_size`, a site *on* a residue — PTM/modification) and

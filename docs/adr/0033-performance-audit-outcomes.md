@@ -58,7 +58,7 @@ not redo**, with the reason for each.
 | AlphaFold/UniProt pool + opt-in concurrency | data_handling_pro | identical data | wall-clock | #190 |
 | `encode_disulfide`, `_plddt` reuse, DSSP aligner reuse | StructurePreprocessor | identical | 16–48× / 2.2× | #194 |
 | `filter_correlation_`, redundancy `df_cor`→numpy, `_greedy_simplify_` copy-drop | feature_engineering | identical | ~3.3× / ~3.4× | #195 |
-| `AAMut.comp_substitution_impact`, `get_sliding_aa_window` | protein_design / data_handling | identical | ~19× / ~1.8× | #196 |
+| `AAMut.comp_substitution_impact`, `get_sliding_aa_window` | protein_engineering / data_handling | identical | ~19× / ~1.8× | #196 |
 | `_eligible_candidates_` (numpy filter + hoisted `interp_arr`) | CPP simplify | byte-identical | **~2–3.5×** (audit's "~66×" did NOT hold) | #198 |
 | `candidate_centers_` memory follow-up (`searchsorted`) | AAWindowSampler | byte-identical | **O(n) memory (6.5 MB → ~0)**, slightly faster | #202 |
 | `encode_pdb` shared per-entry chain pick (across ~13 encoders) | StructurePreprocessor | byte-identical (+ error envelope) | removes ~13× walk-redundancy; **end-to-end modest** (extraction-bound) | #205 |
@@ -139,7 +139,7 @@ comparison is only meaningful on the shared core (`CPP.run`, `AAclust.fit`,
 | `encode_pae` O(L²) loops | already numpy-bound per row — broadcasting was a wash |
 | `_compute_centers` / `_position_aa_freq` | one-time / not hot |
 | `comp_seq_cons` | marginal **and** unexported dead code (no caller/test) |
-| `AAlogo.get_df_logo_info` | no single-call redundancy; caching = cross-method API change |
+| `AALogo.get_df_logo_info` | no single-call redundancy; caching = cross-method API change |
 | `_retrieve_tmd_aligned` | `str.pad` measured **slower** than the `apply` it would replace |
 | `_get_aa_window_odd/even` | string-slice bound, not append-bound |
 | `SeqMut.build_scan_plan` | `iterrows`-bound; the append is a wash |
