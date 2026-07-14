@@ -100,22 +100,28 @@ class TestEncodePdbEdges:
         assert any("parse failed" in str(x.message) for x in w)
         assert not bool(df_out.iloc[0, -1])  # *_ok column False
 
-    def test_encoder_fail_sets_not_ok(self, tmp_path):
+    def test_encoder_fail_isolates_feature(self, tmp_path):
+        # Per-feature isolation (issue #340): a per-encoder RuntimeError NaNs
+        # only that feature's column and keeps the entry (pdb_ok stays True),
+        # emitting one UserWarning naming the feature.
+        import numpy as np
         (tmp_path / "P1.pdb").write_text("x")
         strp = aa.StructurePreprocessor(verbose=False)
         # The shared per-entry chain pick runs in the frontend before the
         # encoders, so stub it (the dummy structure is never really walked);
-        # the encoder still raises to exercise the row-degrade path.
+        # the encoder still raises to exercise the feature-isolation path.
         with patch(f"{MODULE}.load_structure", return_value=object()), \
              patch(f"{MODULE}._resolve_best_chain",
                    return_value=(None, None, None, 0.0)), \
              patch(f"{MODULE}.encode_bfactor", side_effect=RuntimeError("enc boom")):
             with warnings.catch_warnings(record=True) as w:
                 warnings.simplefilter("always")
-                _, df_out = strp.encode_pdb(df_seq=_df_one(), pdb_folder=str(tmp_path),
+                d, df_out = strp.encode_pdb(df_seq=_df_one(), pdb_folder=str(tmp_path),
                                            features=["bfactor"], return_df=True)
-        assert any("encoder" in str(x.message) for x in w)
-        assert not bool(df_out.iloc[0, -1])
+        assert any("encoder" in str(x.message) and "bfactor" in str(x.message)
+                   for x in w)
+        assert bool(df_out.iloc[0, -1])  # pdb_ok stays True (entry kept)
+        assert np.isnan(d["P1"]).all()   # the isolated feature column is NaN
 
     def test_on_failure_raise(self, tmp_path):
         # no PDB file -> failure -> raise (a 'not found' warning fires first)
@@ -203,16 +209,21 @@ class TestEncodePaeSuccess:
                        features=["pae_row_mean"])
         assert "AF_TINY" in capsys.readouterr().out
 
-    def test_encoder_fail_sets_not_ok(self, tmp_path):
+    def test_encoder_fail_isolates_feature(self, tmp_path):
+        # Per-feature isolation (issue #340): NaN only the failing feature,
+        # keep the entry (pae_ok stays True), one warning naming the feature.
+        import numpy as np
         df = _pae_df(tmp_path)
         strp = aa.StructurePreprocessor(verbose=False)
         with patch(f"{MODULE}.encode_pae_row_mean", side_effect=RuntimeError("boom")):
             with warnings.catch_warnings(record=True) as w:
                 warnings.simplefilter("always")
-                _, df_out = strp.encode_pae(df_seq=df, pae_folder=str(tmp_path),
+                d, df_out = strp.encode_pae(df_seq=df, pae_folder=str(tmp_path),
                                            features=["pae_row_mean"], return_df=True)
-        assert any("encoder" in str(x.message) for x in w)
-        assert not bool(df_out.iloc[0, -1])
+        assert any("encoder" in str(x.message) and "pae_row_mean" in str(x.message)
+                   for x in w)
+        assert bool(df_out.iloc[0, -1])  # pae_ok stays True (entry kept)
+        assert np.isnan(d["AF_TINY"]).all()
 
 
 class TestEncodeDomainsInline:
@@ -256,14 +267,19 @@ class TestEncodeDomainsInline:
         assert any("parse failed" in str(x.message) for x in w)
         assert not bool(df_out.iloc[0, -1])
 
-    def test_encoder_fail_sets_not_ok(self):
+    def test_encoder_fail_isolates_feature(self):
+        # Per-feature isolation (issue #340): NaN only the failing feature,
+        # keep the entry (domain_ok stays True), one warning naming it.
+        import numpy as np
         strp = aa.StructurePreprocessor(verbose=False)
         with patch(f"{MODULE}.encode_domain_boundary",
                    side_effect=RuntimeError("dom boom")):
             with warnings.catch_warnings(record=True) as w:
                 warnings.simplefilter("always")
-                _, df_out = strp.encode_domains(df_seq=self._df(),
+                d, df_out = strp.encode_domains(df_seq=self._df(),
                                                features=["domain_boundary"],
                                                return_df=True)
-        assert any("encoder" in str(x.message) for x in w)
-        assert not bool(df_out.iloc[0, -1])
+        assert any("encoder" in str(x.message) and "domain_boundary" in str(x.message)
+                   for x in w)
+        assert bool(df_out.iloc[0, -1])  # domain_ok stays True (entry kept)
+        assert np.isnan(d["P1"]).all()

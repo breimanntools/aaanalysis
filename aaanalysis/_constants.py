@@ -89,6 +89,8 @@ STR_FILE_TYPE = "tsv"
 # df_seq
 COL_ENTRY = "entry"     # ACC, protein entry, uniprot id
 COL_NAME = "name"       # Entry name, Protein name, Uniprot Name
+COL_GENE = "gene"       # human-readable gene symbol (bundled after 'entry' in every load_dataset table)
+COL_DISPLAY_NAME = "display_name"  # optional human-readable protein label (consulted by the sample resolver)
 COL_LABEL = "label"
 COL_SEQ = "sequence"
 COL_JMD_N = "jmd_n"
@@ -476,7 +478,18 @@ STR_PRINCIPLE_CV_POOLED = "cv_pooled"    # custom-splitter cross-validation, eac
 STR_PRINCIPLE_HOLDOUT = "holdout"
 LIST_PRINCIPLES = [STR_PRINCIPLE_CV, STR_PRINCIPLE_CV_POOLED, STR_PRINCIPLE_HOLDOUT]
 LIST_METRICS_PRED = ["accuracy", "balanced_accuracy", "precision", "recall", "f1", "roc_auc"]
+# Probability metrics — need class probabilities (predict_proba), not just hard labels. Hard-label
+# metrics (accuracy/balanced_accuracy/precision/recall/f1) only need predict, so an estimator
+# without predict_proba (e.g. LinearSVC, SVC(probability=False)) can still be evaluated on them.
+LIST_METRICS_PRED_PROBA = ["roc_auc"]
 COLS_EVAL_PRED = [COL_MODEL, COL_METRIC, COL_PRINCIPLE, COL_SCORE, COL_SCORE_STD]
+
+# Score-to-group band assignment (AAPred.score_to_group): the numeric range a set of band
+# thresholds must lie within, so probabilities and percentages can't be silently mixed.
+STR_SCORE_RANGE_PERCENT = "percent"      # scores/thresholds on a 0-100 percent scale
+STR_SCORE_RANGE_PROBA = "proba"          # scores/thresholds on a 0-1 probability scale
+LIST_SCORE_RANGES = [STR_SCORE_RANGE_PERCENT, STR_SCORE_RANGE_PROBA]
+DICT_SCORE_RANGE_BOUNDS = {STR_SCORE_RANGE_PERCENT: (0.0, 100.0), STR_SCORE_RANGE_PROBA: (0.0, 1.0)}
 
 # Baseline-featurizer comparison in AAPred.eval(baseline=...): tag each df_eval row with the
 # feature set behind it ('cpp' for the bound CPP features vs a non-positional baseline).

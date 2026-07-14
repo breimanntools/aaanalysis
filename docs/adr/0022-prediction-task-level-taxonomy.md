@@ -1,6 +1,6 @@
 # ADR-0022 — Prediction-task taxonomy: residue / domain / protein, by unit-of-comparison
 
-Status: Accepted — 2026-06-06
+Status: Accepted — 2026-06-06 (amended 2026-07-14 — reconciled the level vocabulary with the shipped `AAPred.predict(level=)` API)
 
 ## Context
 
@@ -20,6 +20,23 @@ vocabulary.
 (`AA_*`), Domain (`DOM_*`), Protein (`SEQ_*`). "Protein-level" is the
 user-facing alias of the `SEQ_` prefix; `SEQ_` is read as "sequence", not a
 distinct third concept.
+
+> **Amended (2026-07-14): one level, one documented correspondence across the API.** The maintainer's
+> decision is to **keep the operational names in code and present the mapping explicitly** (not rename).
+> Each level has three synonyms depending on where you stand — the biological unit (glossary), the
+> `load_dataset` dataset-name prefix, and the `AAPred.predict(level=)` value:
+>
+> | biological level (glossary) | `load_dataset` prefix | `AAPred.predict(level=)` |
+> |---|---|---|
+> | residue | `AA_*` | `'window'` (a residue is represented by a window) |
+> | domain | `DOM_*` | `'domain'` |
+> | protein | `SEQ_*` | `'sequence'` (the general term — any whole sequence, typically a protein) |
+>
+> So `'sequence'` is embraced as the API / general spelling of the **protein** level (a whole chain, or
+> any full sequence), and `'window'` as the operational spelling of the **residue** level. This
+> correspondence is documented inline in `load_dataset` and `AAPred.predict`, which cross-reference
+> each other; the glossary keeps residue / domain / protein as the biological vocabulary.
+> This supersedes the original "avoid 'sequence level'" rejected-alternative for the API parameter.
 
 **D2 — Residue level has two sub-modes, not two levels.** *single-residue* (odd
 `aa_window_size`, a site *on* a residue — PTM/modification) and

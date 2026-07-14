@@ -34,7 +34,7 @@ beyond the issue's original "pure-Python core NSGA-II reusing `SeqMut.combine`" 
 Because SHAP attribution is the central engine (not an optional add-on), `SeqOpt` imports
 `ShapModel` directly and is gated behind the `pro` extra exactly like `ShapModel`
 (`shap` is already in `_EXTRA_MODULES["pro"]`). This does **not** contradict ADR-0042 D2's "no SHAP
-dependency forced": that decision keeps `SeqMut` and the `protein_design` **core** module SHAP-free;
+dependency forced": that decision keeps `SeqMut` and the `protein_engineering` **core** module SHAP-free;
 the new optimizer lives in a separate `*_pro` module. `SeqMut` (core) remains the fitness engine and
 is imported by `SeqOpt`.
 
@@ -43,7 +43,7 @@ is imported by `SeqOpt`.
 > NSGA-II/EA layer + plots are SHAP-free). `ShapModel` is therefore imported **lazily** inside the
 > impact path, so SeqOpt is importable in a base install; constructing `mode="impact"` without
 > `shap` raises a friendly `aaanalysis[pro]` hint. `SeqOpt`/`SeqOptPlot` + the `_backend/seqopt/`
-> code moved from `protein_design_pro/` into the core `protein_design/` subpackage, and the
+> code moved from the proposed `*_pro` subpackage into the core `protein_engineering/` subpackage, and the
 > now-empty `protein_design_pro` package was removed. The pro-gating in `aaanalysis/__init__.py` is
 > replaced by core exports.
 
@@ -103,7 +103,7 @@ both return `ut.FigAxResult`. Full `random_state`/`seed` threading (constructor 
 ## Consequences
 
 - New `pro` surface: `aa.SeqOpt` / `aa.SeqOptPlot`, gated like `ShapModel`; changing it later is a
-  breaking change. `protein_design_pro` joins the backend-import-hygiene `DEDICATED_OWNERS` map.
+  breaking change. `protein_engineering` joins the backend-import-hygiene `DEDICATED_OWNERS` map.
 - `df_pareto` / `df_seqopt_eval` join `DICT_DF_SCHEMAS`; new EA domain terms enter `CONTEXT.md`
   (population, generation, Pareto front, non-dominated rank, crowding distance, hypervolume,
   fuzzy-labeled SHAP guidance).

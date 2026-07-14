@@ -36,7 +36,7 @@ model is trusted to expose `predict_proba`; the engine reuses the wild-type and 
 matrices it already builds for ΔCPP, so no extra heavy computation. `TreeModel` returns the
 positive-class `(pred, pred_std)` tuple — the std drives the heatmap's "score ± std" title — while a
 scikit-learn classifier returns the 2-D probability matrix and `target_class` selects the column
-(default: positive class). This keeps `protein_design` in **core** (no SHAP dependency forced).
+(default: positive class). This keeps `protein_engineering` in **core** (no SHAP dependency forced).
 
 **D3 — `SeqMut` *scores*; all *search/optimization* lives in a separate `SeqOpt` class.** `SeqMut`
 adds `combine` — scoring explicit **combined variants** (several point mutations applied to one

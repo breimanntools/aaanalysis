@@ -98,15 +98,25 @@ class TestStpEncodePdb:
                            features=["bfactor"])
 
     def test_invalid_depth_without_msms(self):
-        # When msms is missing, requesting 'depth' must raise.
+        # Per-feature isolation (issue #340): with msms missing and default
+        # on_failure='nan', requesting 'depth' NaN-fills only that feature and
+        # warns once; on_failure='raise' still raises.
+        MODULE = "aaanalysis.data_handling_pro._struct_preproc"
         strp = aa.StructurePreprocessor(verbose=False)
-        if shutil.which("msms") is None:
+        with patch(f"{MODULE}.is_msms_available", return_value=False):
+            with warnings.catch_warnings(record=True) as w:
+                warnings.simplefilter("always")
+                d = strp.encode_pdb(df_seq=_df_one(),
+                                   pdb_folder=str(PDB_FIXTURES),
+                                   features=["bfactor", "depth"])
+            assert not np.isnan(d["P1"][:, 0]).all()   # bfactor kept
+            assert np.isnan(d["P1"][:, 1]).all()       # depth isolated
+            assert sum("depth" in str(x.message) and "msms" in str(x.message)
+                       for x in w) == 1
             with pytest.raises(RuntimeError, match="msms"):
                 strp.encode_pdb(df_seq=_df_one(),
                                pdb_folder=str(PDB_FIXTURES),
-                               features=["depth"])
-        else:
-            pytest.skip("msms available — skip absence assertion")
+                               features=["depth"], on_failure="raise")
 
     def test_invalid_unsafe_entry(self):
         df = pd.DataFrame({"entry": ["../etc"], "sequence": ["ACDE"]})

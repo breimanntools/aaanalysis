@@ -82,6 +82,8 @@ def explain_features(df_feat: pd.DataFrame,
                      list_model_classes: Optional[List[Type[BaseEstimator]]] = None,
                      label_target_class: int = 1,
                      samples: Union[int, str, List[int], List[str], None] = None,
+                     add_sample_mean_dif: bool = False,
+                     label_ref: int = 0,
                      name_test: str = "TEST",
                      name_ref: str = "REF",
                      plot: bool = True,
@@ -105,6 +107,12 @@ def explain_features(df_feat: pd.DataFrame,
     colours by the first requested sample's impact and the impacts of all of them are added to
     ``df_feat``.
 
+    .. warning::
+
+        **Experimental.** This ``aaanalysis.pipe`` (``ap``) golden pipeline is under active
+        development; its API (signatures, defaults, return objects) may change between minor releases
+        without the usual deprecation cycle. Pin a version if you depend on the current behaviour.
+
     Parameters
     ----------
     df_feat : pd.DataFrame, shape (n_features, n_feature_info)
@@ -124,6 +132,16 @@ def explain_features(df_feat: pd.DataFrame,
         Sample(s) to explain, given as row position(s) in the feature matrix or ``entry`` name(s)
         from ``df_seq``. If ``None``, the most confidently predicted ``label_target_class`` sample is
         selected automatically.
+    add_sample_mean_dif : bool, default=False
+        If ``True``, also enrich the returned ``df_feat`` with per-sample **mean-difference** columns
+        ``mean_dif_'name'`` (each explained sample's feature value minus the ``label_ref`` group
+        average) alongside the SHAP ``feat_impact_'name'`` columns, for the same sample(s) and names.
+        This is the per-sample contrast a sample-level CPP-SHAP map/ranking is coloured by (via
+        :meth:`ShapModel.add_sample_mean_dif`); compute stays separate from plotting. Default
+        ``False`` leaves the returned columns unchanged.
+    label_ref : int, default=0
+        Reference-group label whose per-feature average each sample is contrasted against for the
+        ``mean_dif_'name'`` columns. Used only when ``add_sample_mean_dif=True``.
     name_test : str, default="TEST"
         Name of the test (positive) group, shown on the feature map.
     name_ref : str, default="REF"
@@ -142,7 +160,8 @@ def explain_features(df_feat: pd.DataFrame,
     Returns
     -------
     df_feat_shap : pd.DataFrame, shape (n_features, n_feature_info+n)
-        ``df_feat`` with the per-sample SHAP feature impact added as ``feat_impact_'name'`` column(s).
+        ``df_feat`` with the per-sample SHAP feature impact added as ``feat_impact_'name'`` column(s),
+        plus per-sample ``mean_dif_'name'`` column(s) when ``add_sample_mean_dif=True``.
     ax : matplotlib.axes.Axes or None
         The Axes of the SHAP-coloured feature map, or ``None`` if ``plot=False``.
     evals : None
@@ -167,6 +186,8 @@ def explain_features(df_feat: pd.DataFrame,
     df_feat = ut.check_df_feat(df_feat=df_feat)
     ut.check_df_seq(df_seq=df_seq)
     ut.check_number_range(name="label_target_class", val=label_target_class, min_val=0, just_int=True)
+    ut.check_bool(name="add_sample_mean_dif", val=add_sample_mean_dif)
+    ut.check_number_range(name="label_ref", val=label_ref, min_val=0, just_int=True)
     ut.check_str(name="name_test", val=name_test)
     ut.check_str(name="name_ref", val=name_ref)
     ut.check_bool(name="plot", val=plot)
@@ -190,6 +211,15 @@ def explain_features(df_feat: pd.DataFrame,
         df_feat = sm.add_feat_impact(df_feat=df_feat, samples=samples_list[0], names=names[0], df_seq=df_seq)
     else:
         df_feat = sm.add_feat_impact(df_feat=df_feat, samples=samples_list, names=names, df_seq=df_seq)
+    # Optionally enrich with the per-sample mean-difference columns (sample minus label_ref average),
+    # matched to the same sample(s) / name(s) as the SHAP impact — compute only, no extra plot.
+    if add_sample_mean_dif:
+        if len(samples_list) == 1:
+            df_feat = sm.add_sample_mean_dif(X, labels=labels, label_ref=label_ref, df_feat=df_feat,
+                                             samples=samples_list[0], names=names[0], df_seq=df_seq)
+        else:
+            df_feat = sm.add_sample_mean_dif(X, labels=labels, label_ref=label_ref, df_feat=df_feat,
+                                             samples=samples_list, names=names, df_seq=df_seq)
     # Draw the SHAP-coloured feature map for the first requested sample's impact
     ax = None
     if plot:

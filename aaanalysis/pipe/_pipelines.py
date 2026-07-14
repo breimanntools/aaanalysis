@@ -157,6 +157,12 @@ def predict_samples(list_df_feat: FeatArg,
     and refits it on all samples to give a deployable predictor. The fitted predictors are returned
     as a dictionary together with a tidy cross-validated comparison table.
 
+    .. warning::
+
+        **Experimental.** This ``aaanalysis.pipe`` (``ap``) golden pipeline is under active
+        development; its API (signatures, defaults, return objects) may change between minor releases
+        without the usual deprecation cycle. Pin a version if you depend on the current behaviour.
+
     Parameters
     ----------
     list_df_feat : pd.DataFrame or list or dict

@@ -52,20 +52,20 @@ _Avoid_: args_seq, seq_kwargs, part_seqs.
 ### Prediction-task taxonomy vocabulary
 
 **prediction level**:
-The biological unit a task predicts over, and the organizing backbone of the user-facing docs. Three levels, encoded in the `load_dataset` name-prefix scheme: **residue level** (`AA_*`), **domain level** (`DOM_*`), **protein level** (`SEQ_*`). The level is a convenient label for two deeper axes — the **unit of comparison** and **reference construction** — which actually determine the CPP setup. See ADR-0022.
+The biological unit a task predicts over, and the organizing backbone of the user-facing docs. Three levels, encoded in the `load_dataset` name-prefix scheme: **residue level** (`AA_*`), **domain level** (`DOM_*`), **protein level** (`SEQ_*`). The **same three levels** are scored by `AAPred.predict(level=)` — one documented correspondence: `AA_`→`level='window'` (residues represented as windows), `DOM_`→`level='domain'`, `SEQ_`→`level='sequence'` (the general/API spelling of protein level). `load_dataset` and `AAPred.predict` cross-reference each other. The level is a convenient label for two deeper axes — the **unit of comparison** and **reference construction** — which actually determine the CPP setup. See ADR-0022.
 _Avoid_: scale (reserved for AA physicochemical scales), granularity, task type (too generic).
 
 **residue level**:
-Per-residue / windowed prediction; datasets `AA_*`; the **unit of comparison** is a fixed-length **window** (`AAWindowSampler`). Two **sub-modes**: **single-residue** (odd `aa_window_size` — a site *on* a residue, e.g. a PTM) and **between-residues** (even window — a scissile bond P1│P1′, e.g. cleavage). Sub-modes, not separate levels: they differ only by window parity.
+Per-residue / windowed prediction; datasets `AA_*`; `AAPred.predict(level='window')`; the **unit of comparison** is a fixed-length **window** (`AAWindowSampler`). Two **sub-modes**: **single-residue** (odd `aa_window_size` — a site *on* a residue, e.g. a PTM) and **between-residues** (even window — a scissile bond P1│P1′, e.g. cleavage). Sub-modes, not separate levels: they differ only by window parity.
 _Avoid_: position level, site level (ambiguous across the two sub-modes), residue-pair level (the "between" case is a sub-mode, not a level).
 
 **domain level**:
-Prediction over a defined sub-region of a protein; datasets `DOM_*` (e.g. `DOM_GSEC`); the **unit of comparison** is the **part** set derived from `tmd_start`/`tmd_stop` (`jmd_n` / `tmd` / `jmd_c`). CPP is native here.
+Prediction over a defined sub-region of a protein; datasets `DOM_*` (e.g. `DOM_GSEC`); `AAPred.predict(level='domain')`; the **unit of comparison** is the **part** set derived from `tmd_start`/`tmd_stop` (`jmd_n` / `tmd` / `jmd_c`). CPP is native here.
 _Avoid_: region level, segment level (segment is a split type).
 
 **protein level**:
-Whole-chain prediction; datasets `SEQ_*`; the whole sequence is the part. "Protein-level" is the **user-facing alias of the `SEQ_` prefix** (`SEQ_` = "sequence", not a third concept). Short peptides are the clean sub-case — the chain *is* the window.
-_Avoid_: sequence level (use only when naming the `SEQ_` prefix spelling itself), global level.
+Whole-chain prediction; datasets `SEQ_*`; `AAPred.predict(level='sequence')`; the whole sequence is the part. "Protein level" is the biological name; **`sequence` is the general / API spelling** (any full amino-acid chain, typically a protein but not restricted to one) — the `SEQ_` prefix and `AAPred.predict(level='sequence')`. Short peptides are the clean sub-case — the chain *is* the window.
+_Avoid_: global level; conflating the level name with the [[df_seq]] `sequence` column (the level `'sequence'` = whole-chain prediction, the column = the residue string).
 
 **unit of comparison**:
 The part CPP profiles for a task — a **window** (residue level), a **part** set (domain level), or the **whole chain** (protein level). One of the two axes that genuinely define a use-case class. See ADR-0022 (D3).
@@ -508,6 +508,9 @@ _Avoid_: the standalone `aa.plot_rank` (removed — folded into `AAPredPlot`); `
 **score-grid heatmap**:
 An **arbitrary wide-numeric matrix** rendered as an annotated heatmap with the best (or worst) cell(s) boxed — the generic 2-D parameter-sweep view (e.g. part × scale, n_train × n_dpu). `AAPredPlot.eval(df_eval, kind="heatmap", highlight=...)`; `df_eval` is any rows × cols numeric frame, with no prediction-specific schema required. This is the package's general annotated-matrix renderer; it just lives on `AAPredPlot.eval` rather than under a dedicated top-level name.
 _Avoid_: assuming a standalone `aa.plot_heatmap` exists (it does not — this is the generic matrix surface); `CPPPlot.heatmap` (a CPP **feature** map built from `df_feat`/`df_cat`, not a free matrix); `pipe.plot_eval` / `ap.plot_eval` (a find_features **sweep** grid keyed on named CPP axes such as `list_parts`/`scale`, not an arbitrary matrix).
+**confidence group** (score band):
+An **ordered categorical** mapping of per-sample prediction scores into named bands delimited by sorted `thresholds` — each an *inclusive lower bound* (right-open bands `[t_{i-1}, t_i)`) — with one more low-to-high `label` than thresholds. The stateless `AAPred.score_to_group(scores, thresholds, labels, score_range)` is the single source of truth for these boundaries; `AAPredPlot.predict_group(band=True)` colours by the same rule. `score_range` (`percent`/`proba`) bounds the thresholds so probabilities and percentages can't be silently mixed; `NaN` scores stay missing.
+_Avoid_: confusing it with [bootstrap CI] (a score *interval*, not a grouping); "class label" (that is `predict(threshold=)`'s binary output).
 
 ### Feature selection vocabulary
 
@@ -774,7 +777,7 @@ _Avoid_: importance (reserved for per-feature `feat_importance`).
 
 **FigAxResult / `(fig, ax)` contract**:
 The single return shape of every public `*Plot` method (`AAclustPlot`, `CPPPlot`,
-`dPULearnPlot`, `AAMutPlot`, `SeqMutPlot`, `AAlogoPlot`). `FigAxResult` is a thin
+`dPULearnPlot`, `AAMutPlot`, `SeqMutPlot`, `AALogoPlot`). `FigAxResult` is a thin
 `tuple` subclass (`ut.FigAxResult`) that unpacks as `fig, ax = ...` and indexes
 like a 2-tuple, and **also forwards attribute access to `ax`** so legacy
 `ax = ...; ax.set_title(...)` still works — the proxy that lets the unification

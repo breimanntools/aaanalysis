@@ -29,8 +29,14 @@ Added
   new ``[embed]`` extra isolates the heavy ``torch`` / ``transformers`` dependencies.
 - :class:`~aaanalysis.StructurePreprocessor` (``[pro]``): Converts PDB / CIF / AlphaFold files (and PAE
   sidecars) into ``[0, 1]``-normalized per-residue tensors (``get_dssp``, ``encode_dssp``,
-  ``encode_pdb``, ``encode_pae``, ``get_domains``, ``encode_domains``, ``build_scales``,
-  ``build_cat``).
+  ``encode_pdb``, ``encode_pae``, ``get_domains``, ``encode_domains``, ``encode``,
+  ``build_scales``, ``build_cat``). ``encode`` is a single feature/backend router that
+  dispatches each requested feature key to its owning encoder and merges the outputs into
+  one ``dict_num``, so callers no longer need to know the DSSP / PDB / PAE / domain split.
+  Failure isolation is **per-feature**: an unavailable feature (e.g. ``depth`` without the
+  external ``msms`` binary) or a per-entry encoder error now fills only that feature's
+  column(s) with NaN, keeps every other feature, and emits one actionable ``UserWarning``
+  — instead of NaN-ing the whole protein (``on_failure='raise'`` still raises).
 - :class:`~aaanalysis.AnnotationPreprocessor` (``[pro]``): Fetches UniProt (or ingests user / predictor)
   per-residue PTM and functional-site annotations and encodes them into tensors
   (``fetch_uniprot``, ``ingest``, ``register_feature``, ``encode``, ``build_scales``,
@@ -49,6 +55,14 @@ Added
   unchanged; input never mutated). Enables analyzing short, variable-length parts at a finer,
   uniform resolution via *pad* → :class:`~aaanalysis.CPP` (``accept_gaps=True``) → larger uniform
   ``n_split_max`` than the shortest real part allows.
+- :func:`~aaanalysis.load_dataset`: Every bundled dataset now carries a human-readable ``gene``
+  column immediately after ``entry`` — the UniProt gene symbol for the domain datasets
+  (``DOM_GSEC`` / ``DOM_GSEC_PU``) and a positional ``name_<row>`` placeholder for the amino-acid /
+  sequence datasets (whose entries are synthetic). All other columns are byte-identical. The
+  ``gene`` column lets a ``sample`` selector resolve by gene symbol:
+  :func:`~aaanalysis.SequenceFeature.get_seq_kws` (and the ``sample_kws`` plot path) now consult the
+  optional ``gene`` / ``display_name`` columns of ``df_seq`` (order: ``entry`` → ``gene`` →
+  ``display_name`` → ``name``), so ``sample="APP"`` resolves on ``DOM_GSEC``.
 
 **Feature Engineering**
 
@@ -155,10 +169,12 @@ Added
 - **``sample_kws`` bundle on CPPPlot plots**: :meth:`~aaanalysis.CPPPlot.feature_map`,
   :meth:`~aaanalysis.CPPPlot.heatmap`, and :meth:`~aaanalysis.CPPPlot.profile` take a structured
   ``sample_kws=dict(sample, df_seq, df_parts)`` — the bundled alternative to providing the TMD-JMD
-  sequences directly. ``sample`` accepts an entry name / id / accession (``str``) or a row position
-  (``int``); it resolves that sample's sequence band (and, for the SHAP variants, the per-sample
-  ``feat_impact`` column) from ``df_parts`` and **overrides** any explicitly passed ``tmd_seq`` /
-  ``jmd_n_seq`` / ``jmd_c_seq``. The displayed sequence stays faithful to the ``df_parts`` the features
+  sequences directly. ``sample`` accepts an ``entry`` name or a value from the optional ``name`` column
+  of ``df_seq`` (``str``), or a row position (``int``); a ``name`` is resolved to its ``entry``, and a
+  selector that matches nothing or is ambiguous (a duplicated ``entry`` or a ``name`` shared by several
+  entries) raises a ``ValueError``. It resolves that sample's sequence band (and, for the SHAP variants,
+  the per-sample ``feat_impact`` column) from ``df_parts`` and **overrides** any explicitly passed
+  ``tmd_seq`` / ``jmd_n_seq`` / ``jmd_c_seq``. The displayed sequence stays faithful to the ``df_parts`` the features
   map to, so its own lengths set the grid geometry (``tmd_len`` / ``jmd_n_len`` / ``jmd_c_len`` apply
   only when no sequence is shown). See the keyword-dict parameters overview in the docstring guide.
 - :meth:`~aaanalysis.SequenceFeature.get_feature_descriptions`: One standardized, human-readable
@@ -224,6 +240,13 @@ Added
   :meth:`~aaanalysis.AAPred.predict` (mean over the ensemble, std across models). Like
   :meth:`~aaanalysis.AAPred.eval` it cross-validates the constructor models and needs no prior
   :meth:`~aaanalysis.AAPred.fit`; deterministic under ``random_state``.
+- :meth:`~aaanalysis.AAPred.score_to_group`: New stateless staticmethod mapping prediction scores
+  to an **ordered categorical** of named confidence bands (``thresholds`` delimit the bands,
+  ``labels`` names them low-to-high; each threshold is an inclusive lower bound). ``score_range``
+  (``'percent'`` / ``'proba'``) bounds the thresholds so probabilities and percentages can't be
+  silently mixed; ``NaN`` scores stay missing and a ``pd.Series`` input keeps its index. It is the
+  single source of truth for the band boundaries used by
+  :meth:`~aaanalysis.AAPredPlot.predict_group` (``band=True``), so a table and its plot always agree.
 - :meth:`~aaanalysis.AAPredPlot.eval`: New ``kind='heatmap'`` that renders any 2D score grid
   (rows x columns are the two sweep axes) as a square annotated heatmap and boxes the best cell(s)
   with a full-cell frame — ``highlight`` selects how many (a positive int for the top-N,
@@ -401,6 +424,12 @@ Added
   carries the publication eval figures (``ax.eval``) and ``df_eval`` has one
   ``<metric>_mean``/``_std`` column per metric plus ``stage`` / ``is_pareto`` / ``rank``
   / ``is_selected``.
+- **ap.explain_features**: New opt-in ``add_sample_mean_dif`` (+ ``label_ref``) that enriches the
+  returned ``df_feat`` with per-sample **mean-difference** columns ``mean_dif_'name'`` (each explained
+  sample's feature value minus the ``label_ref`` group average) alongside the SHAP
+  ``feat_impact_'name'`` columns, for the same sample(s) — reusing :meth:`~aaanalysis.ShapModel.add_sample_mean_dif`
+  so compute stays separate from plotting. Default ``add_sample_mean_dif=False`` leaves the output
+  unchanged.
 - **ap.predict_samples**: Trains and cross-validates every ``(feature set × model)`` combination
   over one ``df_seq`` in a single call, returning the refit predictors and a tidy comparison table.
   With ``plot=True`` (the default) it now also draws the **model comparison** bar plot (hue = model,
@@ -461,6 +490,14 @@ Added
 Changed
 ~~~~~~~
 
+- :class:`~aaanalysis.AAPred`: **capability-based estimator validation** — the constructor now
+  requires only ``predict`` (hard-label prediction), so a probability-free estimator such as
+  ``SVC(kernel="linear")`` is accepted. ``predict_proba`` is validated *per operation*: it is
+  required only when :meth:`~aaanalysis.AAPred.eval` is asked for a probability metric (``roc_auc``)
+  and by the probability-scoring paths (:meth:`~aaanalysis.AAPred.predict` /
+  :meth:`~aaanalysis.AAPred.predict_oof`), with an actionable error naming the metric when it is
+  missing. Estimators that support ``predict_proba`` are unaffected (default RandomForest paths
+  unchanged).
 - :class:`~aaanalysis.TreeModel`: **per-round seeding fix** — with a fixed ``random_state`` (or the
   global ``options["random_state"]``), :meth:`~aaanalysis.TreeModel.fit` now reseeds each round to
   ``random_state + i`` so the rounds are independent. Previously every round fit identical estimators,

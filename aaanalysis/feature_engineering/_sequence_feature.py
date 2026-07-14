@@ -230,6 +230,51 @@ def check_match_df_seq_df_parts(df_seq=None, entry=None, jmd_n_seq="", tmd_seq="
             raise ValueError(f"'df_seq' and 'df_parts' do not match for entry ('{entry}'): the TMD-JMD parts differ.")
 
 
+def resolve_sample_entry(df_seq=None, df_parts=None, sample=None) -> str:
+    """Resolve a ``sample`` selector to a single, unique ``df_parts`` entry name.
+
+    ``sample`` may be a row position (int), an ``entry`` name (str) from the ``df_parts`` index, or —
+    when ``df_seq`` carries the optional ``gene`` / ``display_name`` / ``name`` columns (the ``gene``
+    column is bundled by :func:`load_dataset`) — a human-readable label (str) that is mapped to
+    its ``entry``, consulting those columns in that priority order. The selector must identify exactly
+    one protein: a value that matches nothing, or that is ambiguous (a duplicated ``entry`` in
+    ``df_parts`` or a label shared by several entries), raises a ``ValueError`` asking the caller to
+    disambiguate with the ``entry`` name or a row position (int).
+    """
+    entries = list(df_parts.index)
+    if isinstance(sample, (int, np.integer)) and not isinstance(sample, bool):
+        ut.check_number_range(name="sample", val=int(sample), min_val=0, max_val=len(df_parts) - 1, just_int=True)
+        return entries[int(sample)]
+    if not isinstance(sample, str):
+        raise ValueError(f"'sample' ({sample}) should be an entry name (str) or a row position (int).")
+    # 1) Match against the df_parts index (entry); must be unique.
+    n_entry = entries.count(sample)
+    if n_entry > 1:
+        raise ValueError(f"'sample' ('{sample}') matches {n_entry} rows in the 'df_parts' index; it is not "
+                         f"unique. Pass a row position (int) to select one.")
+    if n_entry == 1:
+        return sample
+    # 2) Fall back to the optional human-readable columns of df_seq (gene -> display_name -> name),
+    #    in priority order; the first present column that yields a unique match wins.
+    for col in (ut.COL_GENE, ut.COL_DISPLAY_NAME, ut.COL_NAME):
+        if col not in df_seq.columns:
+            continue
+        matched = list(dict.fromkeys(df_seq.loc[df_seq[col] == sample, ut.COL_ENTRY]))
+        if len(matched) > 1:
+            raise ValueError(f"'sample' ('{sample}') matches several '{col}' entries {matched}; it is "
+                             f"not unique. Pass the 'entry' name or a row position (int) to select one.")
+        if len(matched) == 1:
+            entry = matched[0]
+            if entries.count(entry) != 1:
+                raise ValueError(f"'sample' ('{sample}') maps to entry ('{entry}') via '{col}', which does not "
+                                 f"occur exactly once in the 'df_parts' index. Pass a row position (int).")
+            return entry
+    # 3) Nothing matched.
+    raise ValueError(f"'sample' ('{sample}') is neither an 'entry' in the 'df_parts' index nor a "
+                     f"'{ut.COL_GENE}' / '{ut.COL_DISPLAY_NAME}' / '{ut.COL_NAME}' in 'df_seq'. "
+                     f"First entries are: {entries[:5]}.")
+
+
 # II Main Functions
 class SequenceFeature:
     """
@@ -457,8 +502,11 @@ class SequenceFeature:
             Sequence parts DataFrame (indexed by ``entry``) as produced by :meth:`SequenceFeature.get_df_parts`
             and passed to :meth:`CPP.run`. Defines the TMD-JMD geometry; must be consistent with ``df_seq``.
         sample : int or str
-            The protein to extract, given either as a row position in ``df_parts`` or as an entry name (str)
-            from its index.
+            The protein to extract, given as a row position (int) in ``df_parts``, an ``entry`` name (str)
+            from its index, or — when ``df_seq`` provides the optional ``name`` column — a protein ``name``
+            (str), which is resolved to its ``entry``. Must identify exactly one protein: an unknown or
+            ambiguous selector (a duplicated ``entry`` or a ``name`` shared by several entries) raises a
+            ``ValueError``.
 
         Returns
         -------
@@ -479,17 +527,8 @@ class SequenceFeature:
         # Check input
         ut.check_df(name="df_seq", df=df_seq, cols_required=[ut.COL_ENTRY])
         ut.check_df(name="df_parts", df=df_parts)
-        entries = list(df_parts.index)
-        if isinstance(sample, str):
-            if sample not in entries:
-                raise ValueError(f"'sample' ({sample}) should be an entry in the index of 'df_parts'. "
-                                 f"First entries are: {entries[:5]}")
-            row, entry = df_parts.loc[sample], sample
-        elif isinstance(sample, (int, np.integer)) and not isinstance(sample, bool):
-            ut.check_number_range(name="sample", val=int(sample), min_val=0, max_val=len(df_parts) - 1, just_int=True)
-            row, entry = df_parts.iloc[int(sample)], entries[int(sample)]
-        else:
-            raise ValueError(f"'sample' ({sample}) should be an entry name (str) or a row position (int).")
+        entry = resolve_sample_entry(df_seq=df_seq, df_parts=df_parts, sample=sample)
+        row = df_parts.loc[entry]
         # Recover the basic parts from df_parts (JMD lengths encoded in the parts) and verify against df_seq
         jmd_n_seq, tmd_seq, jmd_c_seq = recover_seq_parts_from_df_parts_row(row=row)
         check_match_df_seq_df_parts(df_seq=df_seq, entry=entry,

@@ -58,10 +58,18 @@ class TestAAPredInit:
         with pytest.raises(ValueError):
             aa.AAPred(list_metrics=["not_a_metric"])
 
-    def test_model_without_predict_proba_raises(self):
+    def test_model_without_predict_proba_constructs(self):
+        # Capability-based validation: a hard-label estimator (no predict_proba) is now accepted
+        # at construction; predict_proba is validated per operation instead.
         from sklearn.svm import LinearSVC
-        with pytest.raises(ValueError):
-            aa.AAPred(list_model_classes=[LinearSVC])
+        aap = aa.AAPred(list_model_classes=[LinearSVC])
+        assert aap is not None
+
+    def test_model_without_predict_raises(self):
+        # An object with no predict at all cannot be a prediction model.
+        from sklearn.preprocessing import StandardScaler
+        with pytest.raises(ValueError, match="predict"):
+            aa.AAPred(models=[StandardScaler()])
 
     def test_mismatched_kwargs_length_raises(self):
         with pytest.raises(ValueError):
@@ -720,3 +728,75 @@ class TestAAPredPredictOOFComplex:
                             random_state=rs).predict_oof(X, labels)
         assert np.allclose(df_pred["score"].to_numpy(), oof, atol=1e-9)
         assert 0.0 <= roc_auc_score(labels, df_pred["score"].to_numpy()) <= 1.0
+
+
+class TestAAPredCapabilityValidation:
+    """Capability-based estimator validation (#409): predict_proba required only where scored."""
+
+    def test_hard_label_estimator_constructs_via_models(self):
+        aap = aa.AAPred(models=[SVC(kernel="linear")], random_state=0)
+        assert aap is not None
+
+    def test_eval_hard_metric_without_predict_proba(self):
+        # KPI: SVC(kernel="linear") (no predict_proba) evaluates a hard-label metric under LOO.
+        X, labels = _data()
+        df_eval = aa.AAPred(models=[SVC(kernel="linear")], random_state=0).eval(
+            X, labels, cv=LeaveOneOut(), metrics=["balanced_accuracy"])
+        assert (df_eval["metric"] == "balanced_accuracy").all()
+        assert df_eval["score"].between(0, 1).all()
+
+    def test_eval_hard_metric_kfold_without_predict_proba(self):
+        X, labels = _data()
+        df_eval = aa.AAPred(models=[SVC(kernel="linear")], random_state=0).eval(
+            X, labels, n_cv=3, metrics=["accuracy", "f1"])
+        assert df_eval["score"].between(0, 1).all()
+
+    def test_eval_proba_metric_without_predict_proba_raises(self):
+        # KPI: requesting a probability metric on a proba-less estimator raises, naming the metric.
+        X, labels = _data()
+        with pytest.raises(ValueError, match="roc_auc"):
+            aa.AAPred(models=[SVC(kernel="linear")], random_state=0).eval(
+                X, labels, metrics=["roc_auc"])
+
+    def test_eval_proba_metric_error_mentions_predict_proba(self):
+        X, labels = _data()
+        with pytest.raises(ValueError, match="predict_proba"):
+            aa.AAPred(models=[SVC(kernel="linear")], random_state=0).eval(
+                X, labels, metrics=["balanced_accuracy", "roc_auc"])
+
+    def test_eval_proba_metric_with_proba_estimator_ok(self):
+        # Regression: proba paths unchanged for estimators that support predict_proba.
+        X, labels = _data()
+        df_eval = aa.AAPred(models=[SVC(kernel="linear", probability=True)], random_state=0).eval(
+            X, labels, n_cv=3, metrics=["roc_auc"])
+        assert df_eval["score"].between(0, 1).all()
+
+    def test_default_rf_roc_auc_unchanged(self):
+        # Regression: the default RandomForest (has predict_proba) still evaluates roc_auc.
+        X, labels = _data()
+        df_eval = aa.AAPred(random_state=0).eval(X, labels, metrics=["roc_auc"])
+        assert (df_eval["metric"] == "roc_auc").all()
+
+    def test_predict_oof_without_predict_proba_raises(self):
+        X, labels = _data()
+        with pytest.raises(ValueError, match="predict_proba"):
+            aa.AAPred(models=[SVC(kernel="linear")], random_state=0).predict_oof(X, labels)
+
+    def test_predict_oof_with_proba_estimator_ok(self):
+        X, labels = _data()
+        df_pred = aa.AAPred(models=[SVC(kernel="linear", probability=True)],
+                            random_state=0).predict_oof(X, labels, n_cv=3)
+        assert df_pred["score"].between(0, 1).all()
+
+    def test_error_names_offending_estimator(self):
+        X, labels = _data()
+        with pytest.raises(ValueError, match="SVC"):
+            aa.AAPred(models=[SVC(kernel="linear")], random_state=0).eval(
+                X, labels, metrics=["roc_auc"])
+
+    def test_mixed_ensemble_missing_proba_raises(self):
+        # One proba-less model in an ensemble is enough to block a probability metric.
+        X, labels = _data()
+        with pytest.raises(ValueError, match="roc_auc"):
+            aa.AAPred(models=["rf", SVC(kernel="linear")], random_state=0).eval(
+                X, labels, metrics=["roc_auc"])

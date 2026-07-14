@@ -346,8 +346,8 @@ _SAMPLE_KWS_KEYS = ("sample", "df_seq", "df_parts")
 def unpack_sample_kws(sample_kws=None, resolve_seq=True):
     """Validate a ``sample_kws`` bundle and return ``(sample, df_seq, df_parts)``.
 
-    ``sample_kws`` is a structured bundle (fixed key set): ``sample`` (an entry name / id / accession
-    ``str`` or a row-position ``int``) plus ``df_seq`` and ``df_parts`` (both required for
+    ``sample_kws`` is a structured bundle (fixed key set): ``sample`` (an ``entry`` name or
+    ``name``-column value ``str``, or a row-position ``int``) plus ``df_seq`` and ``df_parts`` (both required for
     sequence-level plots, to resolve the TMD-JMD parts). Returns ``(None, None, None)`` when
     ``sample_kws`` is ``None`` (the shortcut is simply not used).
     """
@@ -388,10 +388,10 @@ def resolve_sample_kws(sample=None, df_seq=None, df_parts=None,
             raise ValueError("'df_seq' and 'df_parts' are required in 'sample_kws' to resolve the "
                              "TMD-JMD parts for sequence-level plots.")
         # Lazy import to avoid a circular import at module load (same subpackage).
-        from aaanalysis.feature_engineering._sequence_feature import SequenceFeature
+        from aaanalysis.feature_engineering._sequence_feature import SequenceFeature, resolve_sample_entry
         seq_kws = SequenceFeature().get_seq_kws(df_seq=df_seq, df_parts=df_parts, sample=sample)
-        # get_seq_kws validated 'sample'; map an int position to its entry name for 'col_imp'.
-        name = sample if is_str else df_parts.index[int(sample)]
+        # Key 'col_imp' by the resolved entry name (a row position or a 'name'-column value maps to it).
+        name = resolve_sample_entry(df_seq=df_seq, df_parts=df_parts, sample=sample)
         # 'sample_kws' resolves the TMD-JMD parts and WINS over any explicitly given sequences.
         if verbose and any(s is not None for s in (jmd_n_seq, tmd_seq, jmd_c_seq)):
             ut.print_out("'sample_kws' overrides the given 'tmd_seq' / 'jmd_n_seq' / 'jmd_c_seq'.")
@@ -1142,8 +1142,8 @@ class CPPPlot:
             Length of the y-ticks (>0).
         sample_kws : dict, optional
             Structured bundle selecting one sample for a sample-level CPP-SHAP profile — the bundled
-            alternative to providing the TMD-JMD sequences directly. Fixed keys: ``sample`` (an entry
-            name / id / accession ``str`` or a row-position ``int``), ``df_seq`` and ``df_parts``.
+            alternative to providing the TMD-JMD sequences directly. Fixed keys: ``sample`` (an
+            ``entry`` name or ``name``-column value ``str``, or a row-position ``int``), ``df_seq`` and ``df_parts``.
             When given, ``col_imp`` is resolved to ``feat_impact_<entry>``, the TMD-JMD sequence parts
             are read from ``df_parts`` via :meth:`SequenceFeature.get_seq_kws`, and ``shap_plot`` is
             set to ``True`` automatically. It **overrides** any explicitly passed ``tmd_seq`` /
@@ -1477,8 +1477,8 @@ class CPPPlot:
             Length of the x-ticks (>0).
         sample_kws : dict, optional
             Structured bundle selecting one sample to draw its TMD-JMD sequence band — the bundled
-            alternative to providing the sequences directly. Fixed keys: ``sample`` (an entry name /
-            id / accession ``str`` or a row-position ``int``), ``df_seq`` and ``df_parts``. The
+            alternative to providing the sequences directly. Fixed keys: ``sample`` (an ``entry`` name
+            or ``name``-column value ``str``, or a row-position ``int``), ``df_seq`` and ``df_parts``. The
             TMD-JMD parts are read from ``df_parts`` via :meth:`SequenceFeature.get_seq_kws` and
             **override** any explicitly passed ``tmd_seq`` / ``jmd_n_seq`` / ``jmd_c_seq``. Because the
             displayed sequence must stay faithful to the ``df_parts`` the features map to, the
@@ -1922,7 +1922,7 @@ class CPPPlot:
         sample_kws : dict, optional
             Structured bundle selecting one sample for a sample-level CPP-SHAP feature map — the
             bundled alternative to providing the TMD-JMD sequences directly. Fixed keys: ``sample``
-            (an entry name / id / accession ``str`` or a row-position ``int``), ``df_seq`` and
+            (an ``entry`` name or ``name``-column value ``str``, or a row-position ``int``), ``df_seq`` and
             ``df_parts``. When given, ``col_imp`` is resolved to ``feat_impact_<entry>`` (an int
             position is mapped to its entry name via ``df_parts``), the TMD-JMD sequence parts are
             read from ``df_parts`` via :meth:`SequenceFeature.get_seq_kws`, and ``shap_plot`` is set

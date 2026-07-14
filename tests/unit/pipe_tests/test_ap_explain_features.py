@@ -200,3 +200,56 @@ class TestExplainFeaturesHelpers:
         samples, names = _normalize_samples_names([entry0, 1], df_seq=df_seq)
         assert samples == [entry0, 1]
         assert names == [entry0, str(df_seq["entry"].iloc[1])]
+
+
+class TestExplainFeaturesMeanDif:
+    """Per-sample mean-difference enrichment: add_sample_mean_dif / label_ref (#412)."""
+
+    def test_default_adds_no_per_sample_mean_dif(self):
+        # The bare group-level 'mean_dif' from df_feat is always present; the per-sample
+        # 'mean_dif_<name>' columns must NOT appear unless requested.
+        df_shap, _, _ = ap.explain_features(df_feat.copy(), df_seq, labels, samples=entry0,
+                                            plot=False, random_state=0)
+        assert not any(c.startswith("mean_dif_") for c in df_shap.columns)
+
+    def test_adds_per_sample_mean_dif_column(self):
+        df_shap, _, _ = ap.explain_features(df_feat.copy(), df_seq, labels, samples=entry0,
+                                            add_sample_mean_dif=True, plot=False, random_state=0)
+        assert f"feat_impact_{entry0}" in df_shap.columns
+        assert f"mean_dif_{entry0}" in df_shap.columns
+
+    def test_mean_dif_for_multiple_samples(self):
+        e1 = str(df_seq["entry"].iloc[1])
+        df_shap, _, _ = ap.explain_features(df_feat.copy(), df_seq, labels, samples=[entry0, e1],
+                                            add_sample_mean_dif=True, plot=False, random_state=0)
+        assert f"mean_dif_{entry0}" in df_shap.columns and f"mean_dif_{e1}" in df_shap.columns
+
+    def test_mean_dif_matches_shapmodel_primitive(self):
+        # The enriched column equals the lower-level ShapModel.add_sample_mean_dif output.
+        X = sf.feature_matrix(features=df_feat["feature"], df_parts=df_parts)
+        expected = aa.ShapModel.add_sample_mean_dif(X, labels=labels, label_ref=0,
+                                                    df_feat=df_feat.copy(), samples=entry0,
+                                                    names=entry0, df_seq=df_seq)[f"mean_dif_{entry0}"]
+        df_shap, _, _ = ap.explain_features(df_feat.copy(), df_seq, labels, samples=entry0,
+                                            add_sample_mean_dif=True, label_ref=0, plot=False,
+                                            random_state=0)
+        assert np.allclose(df_shap[f"mean_dif_{entry0}"].to_numpy(),
+                           expected.to_numpy(), atol=1e-9)
+
+    def test_label_ref_changes_mean_dif(self):
+        d0, _, _ = ap.explain_features(df_feat.copy(), df_seq, labels, samples=entry0,
+                                       add_sample_mean_dif=True, label_ref=0, plot=False, random_state=0)
+        d1, _, _ = ap.explain_features(df_feat.copy(), df_seq, labels, samples=entry0,
+                                       add_sample_mean_dif=True, label_ref=1, plot=False, random_state=0)
+        assert not np.allclose(d0[f"mean_dif_{entry0}"].to_numpy(),
+                               d1[f"mean_dif_{entry0}"].to_numpy())
+
+    def test_add_sample_mean_dif_non_bool_raises(self):
+        with pytest.raises(ValueError):
+            ap.explain_features(df_feat.copy(), df_seq, labels, samples=entry0,
+                                add_sample_mean_dif="yes", plot=False, random_state=0)
+
+    def test_label_ref_negative_raises(self):
+        with pytest.raises(ValueError):
+            ap.explain_features(df_feat.copy(), df_seq, labels, samples=entry0,
+                                add_sample_mean_dif=True, label_ref=-1, plot=False, random_state=0)

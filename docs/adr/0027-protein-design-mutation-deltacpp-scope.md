@@ -16,7 +16,7 @@ The model-free ΔCPP path is unchanged and remains the default. `AAMut` stays de
 ## Context
 
 Issue #37 ("Finish AAmut & SeqMut for Protein Design", v1.2) asked to turn the
-four empty `aaanalysis/protein_design/` stubs (`AAMut`, `AAMutPlot`, `SeqMut`,
+four empty `aaanalysis/protein_engineering/` stubs (`AAMut`, `AAMutPlot`, `SeqMut`,
 `SeqMutPlot`, all raising `NotImplementedError`) into a working CPP-guided
 mutation/design module. #37 is the **gate** for the protein-design chain — #57
 (ML-guided directed evolution), #59 (multi-objective optimization), #60 (active
@@ -67,7 +67,7 @@ primitive testable on its own terms and the CPP coupling in one place.
 subclasses the `Tool`/`Wrapper` ABCs (like `AAWindowSampler`/`SequenceFeature`):
 `AAMut.run`/`eval`, `SeqMut.mutate`/`scan`/`suggest`/`eval`. The stub `fit` is
 dropped — neither class wraps a model. No heavy/fragile dependency is introduced,
-so `protein_design` stays in **core** (no `pro` gate).
+so `protein_engineering` stays in **core** (no `pro` gate).
 
 ## Rejected alternatives
 

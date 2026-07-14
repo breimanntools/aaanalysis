@@ -13,6 +13,7 @@ from aaanalysis.template_classes import Wrapper
 
 from ._backend.aa_pred.aa_pred_fit import fit_models, predict_proba_models, predict_proba_oof
 from ._backend.aa_pred.aa_pred_eval import eval_models
+from ._backend.aa_pred.aa_pred_group import assign_band_index
 
 
 # I Helper Functions
@@ -95,6 +96,50 @@ def featurize_seq(df_feat=None, df_scales=None, df_seq=None, list_parts=None, **
     return np.asarray(X)
 
 
+def _estimators_missing_method(list_estimators=None, method=None):
+    """Class names of estimator *instances* that don't implement ``method``.
+
+    Checks the configured instances (not the classes), so a capability toggled at construction
+    is honored — e.g. ``SVC(probability=False)`` has no ``predict_proba`` while
+    ``SVC(probability=True)`` does.
+    """
+    return sorted({type(e).__name__ for e in list_estimators if not hasattr(e, method)})
+
+
+def check_estimators_predict(list_estimators=None):
+    """Every estimator must implement ``predict`` (hard-label prediction is always required)."""
+    missing = _estimators_missing_method(list_estimators=list_estimators, method="predict")
+    if missing:
+        raise ValueError(f"Estimators {missing} do not implement 'predict'; 'AAPred' needs each "
+                         f"model to support hard-label prediction.")
+
+
+def check_estimators_proba(list_estimators=None, metrics=None, context=None):
+    """Require ``predict_proba`` only where class probabilities are actually needed.
+
+    Capability-based validation: pass ``metrics`` to enforce it **only** when a probability metric
+    (``ut.LIST_METRICS_PRED_PROBA``, e.g. ``roc_auc``) is requested — the error then names that
+    metric. Pass ``context`` (e.g. ``'predict_oof'``) for a path that always scores a positive-class
+    probability, where ``predict_proba`` is unconditionally required.
+    """
+    if metrics is not None:
+        proba_metrics = [m for m in metrics if m in ut.LIST_METRICS_PRED_PROBA]
+        if not proba_metrics:
+            return
+        missing = _estimators_missing_method(list_estimators=list_estimators, method="predict_proba")
+        if missing:
+            raise ValueError(f"'metrics' ({proba_metrics}) need class probabilities ('predict_proba'), "
+                             f"but estimators {missing} do not implement it; drop the probability "
+                             f"metric(s) or pass estimators with 'predict_proba' (e.g. "
+                             f"'SVC(probability=True)').")
+    else:
+        missing = _estimators_missing_method(list_estimators=list_estimators, method="predict_proba")
+        if missing:
+            raise ValueError(f"'{context}' scores a positive-class probability and needs "
+                             f"'predict_proba', but estimators {missing} do not implement it; pass "
+                             f"estimators with 'predict_proba' (e.g. 'SVC(probability=True)').")
+
+
 def check_baseline(baseline=None):
     """Resolve the ``baseline`` selector into an ordered, de-duplicated list of kinds (or None).
 
@@ -159,6 +204,12 @@ class AAPred(Wrapper):
     kept for deployment. It intentionally does **not** perform hyperparameter optimization —
     pass configured estimators and it evaluates and deploys them.
 
+    .. warning::
+
+        **Experimental.** This class is part of the new v1.1.0 prediction layer and is under active
+        development; its API (signatures, defaults, return objects) may change between minor releases
+        without the usual deprecation cycle. Pin a version if you depend on the current behaviour.
+
     .. versionadded:: 1.1.0
 
     Notes
@@ -190,10 +241,13 @@ class AAPred(Wrapper):
             ``"svm"``, ``"rf"``; see ``aaanalysis.utils.LIST_PRED_MODELS``) and/or configured
             scikit-learn estimator instances, in any mix. This is the recommended way to
             select models; it is mutually exclusive with ``list_model_classes``. Each model
-            must implement ``predict_proba``.
+            must implement ``predict``; ``predict_proba`` is required only for probability
+            metrics (e.g. ``roc_auc``) and the :meth:`predict` / :meth:`predict_oof` scoring
+            paths, so a hard-label estimator such as ``SVC(kernel="linear")`` is accepted.
         list_model_classes : list of Type[ClassifierMixin or BaseEstimator], default=[RandomForestClassifier]
             Model classes to evaluate and deploy (legacy alternative to ``models``). Each
-            must implement ``predict_proba``.
+            must implement ``predict`` (``predict_proba`` only where a probability is scored,
+            as for ``models``).
         list_model_kwargs : list of dict, optional
             Keyword arguments for each model in ``list_model_classes`` (same length).
         list_metrics : list of str, default=["accuracy", "balanced_accuracy", "f1", "roc_auc"]
@@ -242,7 +296,7 @@ class AAPred(Wrapper):
                     est = _set_random_state_if_supported(m(), random_state, only_if_unset=False)
                 else:  # a configured estimator instance: clone + seed only if the user left it unset
                     est = _set_random_state_if_supported(clone(m), random_state, only_if_unset=True)
-                ut.check_mode_class(model_class=type(est))  # ensure predict_proba
+                ut.check_mode_class(model_class=type(est))  # ensure it is a model class
                 list_estimators.append(est)
             list_model_classes = [type(e) for e in list_estimators]
             _list_model_kwargs = [{} for _ in list_estimators]  # introspection placeholder
@@ -263,9 +317,12 @@ class AAPred(Wrapper):
             for model_class, model_kwargs in zip(list_model_classes, list_model_kwargs):
                 ut.check_mode_class(model_class=model_class)
                 model_kwargs = ut.check_model_kwargs(model_class=model_class, model_kwargs=model_kwargs,
-                                                     method_to_check="predict_proba", random_state=random_state)
+                                                     method_to_check="predict", random_state=random_state)
                 _list_model_kwargs.append(model_kwargs)
             list_estimators = [cls(**kw) for cls, kw in zip(list_model_classes, _list_model_kwargs)]
+        # Every model must support hard-label prediction; predict_proba is validated per operation
+        # (probability metrics in eval, and the predict / predict_oof scoring paths) instead.
+        check_estimators_predict(list_estimators=list_estimators)
         # Metric parameters
         if list_metrics is None:
             list_metrics = ["accuracy", "balanced_accuracy", "f1", "roc_auc"]
@@ -462,6 +519,9 @@ class AAPred(Wrapper):
         ut.check_match_X_labels(X=X, labels=labels)
         check_binary_labels(labels=labels)
         metrics = check_metrics(metrics=metrics) if metrics is not None else self._list_metrics
+        # predict_proba is required only for probability metrics (e.g. roc_auc); hard-label metrics
+        # score fine on any estimator with predict.
+        check_estimators_proba(list_estimators=self._list_estimators, metrics=metrics)
         # A custom splitter defines its own folds (pooled scoring), so it bypasses the
         # smallest-class-count cap that the integer n_cv path enforces.
         if cv is not None:
@@ -558,6 +618,7 @@ class AAPred(Wrapper):
         if label_pos not in classes:
             raise ValueError(f"'label_pos' ({label_pos}) should be one of the labels: {classes}")
         check_n_cv(n_cv=n_cv, labels=labels)
+        check_estimators_proba(list_estimators=self._list_estimators, context="predict_oof")
         # Out-of-fold scoring: clone the constructor's estimators and cross-validate (no prior fit)
         pred, pred_std = predict_proba_oof(X=X, labels=labels,
                                            list_estimators=self._list_estimators,
@@ -565,6 +626,88 @@ class AAPred(Wrapper):
                                            label_pos=label_pos)
         df_pred = pd.DataFrame({ut.COL_SCORE: pred, ut.COL_SCORE_STD: pred_std})
         return df_pred
+
+    @staticmethod
+    def score_to_group(scores: ut.ArrayLike1D,
+                       thresholds: List[Union[int, float]],
+                       labels: List[str],
+                       score_range: str = "percent",
+                       ) -> pd.Series:
+        """
+        Map prediction scores to an ordered categorical of named confidence groups.
+
+        A stateless classifier that turns continuous scores into human-readable, ordered bands
+        (e.g. ``"low" < "medium" < "high"``): ``thresholds`` delimit the bands and ``labels`` names
+        them from the lowest to the highest scores. Each threshold is an **inclusive lower bound**,
+        so a score equal to a threshold falls in the band *above* it (right-open bands
+        ``[t_{i-1}, t_i)``); a score below the first threshold takes the first label and a score at
+        or above the last threshold the last label. This is the single source of truth for the band
+        boundaries also used by :meth:`AAPredPlot.predict_group` (``band=True``), so a table, a
+        filter, and the plotted colouring always agree.
+
+        .. versionadded:: 1.1.0
+
+        Parameters
+        ----------
+        scores : array-like, shape (n_samples,)
+            Per-sample prediction scores to classify. A ``pd.Series`` keeps its index; ``NaN``
+            scores are preserved as missing (unassigned) groups.
+        thresholds : list of int or float
+            Band boundaries in **strictly increasing** order, each an inclusive lower bound. ``n``
+            thresholds define ``n + 1`` bands and must lie within the ``score_range`` bounds.
+        labels : list of str
+            One name per band, ordered from the lowest-score band to the highest; length must be
+            ``len(thresholds) + 1`` and the names must be unique. Sets the category order of the
+            returned series.
+        score_range : str, default="percent"
+            Numeric range the scores and thresholds live on: ``'percent'`` (``[0, 100]``) or
+            ``'proba'`` (``[0, 1]``). Thresholds outside the range raise, which rejects silently
+            mixing probabilities and percentages.
+
+        Returns
+        -------
+        group : pd.Series
+            Ordered categorical (``pd.Categorical``, ``ordered=True``) row-aligned with ``scores``
+            (index preserved), whose categories are ``labels`` in the given low-to-high order.
+            ``NaN`` input scores map to missing values.
+
+        See Also
+        --------
+        * :meth:`AAPredPlot.predict_group` for plotting scores coloured by these same confidence
+          bands.
+
+        Examples
+        --------
+        .. include:: examples/aap_score_to_group.rst
+        """
+        # Check input
+        index = scores.index if isinstance(scores, pd.Series) else None
+        scores = ut.check_array_like(name="scores", val=scores, dtype="float", expected_dim=1, allow_nan=True)
+        thresholds = ut.check_list_like(name="thresholds", val=thresholds, accept_str=False, min_len=1)
+        for i, t in enumerate(thresholds):
+            ut.check_number_val(name=f"thresholds[{i}]", val=t, just_int=False)
+        labels = ut.check_list_like(name="labels", val=labels, accept_str=True, min_len=2)
+        ut.check_str_options(name="score_range", val=score_range, list_str_options=ut.LIST_SCORE_RANGES)
+        if len(labels) != len(thresholds) + 1:
+            raise ValueError(f"'labels' (n={len(labels)}) should have exactly one more element than "
+                             f"'thresholds' (n={len(thresholds)}); one label per band.")
+        if len(set(labels)) != len(labels):
+            raise ValueError(f"'labels' ({labels}) should be unique (one distinct name per band).")
+        ths = [float(t) for t in thresholds]
+        if any(ths[i] >= ths[i + 1] for i in range(len(ths) - 1)):
+            raise ValueError(f"'thresholds' ({thresholds}) should be sorted in strictly increasing order.")
+        lo, hi = ut.DICT_SCORE_RANGE_BOUNDS[score_range]
+        out_of_range = [t for t in ths if t < lo or t > hi]
+        if out_of_range:
+            raise ValueError(f"'thresholds' ({out_of_range}) should lie within the '{score_range}' "
+                             f"score range [{lo}, {hi}] (mixing probabilities and percentages is rejected).")
+        # Assign each score to its confidence band (shared boundary rule); NaN scores stay missing
+        scores = np.asarray(scores, dtype=float)
+        idx = assign_band_index(scores, ths)
+        group = np.asarray(labels, dtype=object)[idx]
+        group[np.isnan(scores)] = np.nan
+        cat = pd.Categorical(group, categories=list(labels), ordered=True)
+        return pd.Series(cat, index=index, name=ut.COL_GROUP)
 
     def predict(self,
                 df_seq: pd.DataFrame,
@@ -580,13 +723,18 @@ class AAPred(Wrapper):
         """
         Predict from raw sequences at a chosen level: whole protein, domain, or residue window.
 
-        One predictor for all three granularities, selected with ``level``:
+        One predictor for all three **prediction levels**, selected with ``level``. These are the
+        package's prediction-level taxonomy: the ``AA_`` / ``DOM_`` / ``SEQ_`` dataset prefixes of
+        :func:`~aaanalysis.load_dataset` map 1:1 to them.
 
-        * ``'sequence'`` — one score per protein (sequence level).
-        * ``'domain'`` — a boundary-sensitivity scan: the TMD boundaries are shifted by every
-          offset in ``[-window, +window]`` and each shifted definition is featurized and scored.
-        * ``'window'`` — a per-residue profile: a length-``tmd_len`` window is slid along each
-          sequence (spaced by ``step``) and scored at every valid position.
+        * ``'sequence'`` — **protein level** (``SEQ_*`` datasets): one score per whole sequence.
+          "Sequence" is the general term — a full amino-acid chain, typically a protein.
+        * ``'domain'`` — **domain level** (``DOM_*`` datasets): a boundary-sensitivity scan; the TMD
+          boundaries are shifted by every offset in ``[-window, +window]`` and each shifted definition
+          is featurized and scored.
+        * ``'window'`` — **residue level** (``AA_*`` datasets): a per-residue profile; each residue is
+          represented by a length-``tmd_len`` window slid along the sequence (spaced by ``step``) and
+          scored at every valid position.
 
         Each level featurizes with the bound ``df_feat`` and averages the fitted-model ensemble.
         When ``threshold`` is given, a ``predicted_label`` column is added (score at or above the
@@ -604,7 +752,9 @@ class AAPred(Wrapper):
             DataFrame containing an ``entry`` column of unique protein identifiers and a
             ``sequence`` column; ``level='domain'`` additionally needs ``tmd_start`` / ``tmd_stop``.
         level : str, default="sequence"
-            Prediction granularity: ``'sequence'``, ``'domain'``, or ``'window'``.
+            Prediction level (see :func:`~aaanalysis.load_dataset` for the matching dataset prefixes):
+            ``'sequence'`` = protein / whole-sequence level (``SEQ_*``), ``'domain'`` = domain level
+            (``DOM_*``), ``'window'`` = residue level (``AA_*``, residues represented as windows).
         threshold : int or float, optional
             If given (in ``[0, 1]``), add a ``predicted_label`` column (score ``>= threshold`` ->
             ``label_pos``, else the negative class). ``None`` (default) returns scores only.
@@ -633,6 +783,9 @@ class AAPred(Wrapper):
         See Also
         --------
         * :meth:`AAPred.eval` for cross-validated model evaluation (``df_eval``).
+        * :func:`~aaanalysis.load_dataset` — benchmark datasets grouped by the same three prediction
+          levels (``AA_`` = residue → ``level='window'``, ``DOM_`` = domain → ``level='domain'``,
+          ``SEQ_`` = protein → ``level='sequence'``).
 
         Examples
         --------
@@ -641,6 +794,7 @@ class AAPred(Wrapper):
         # Check input
         check_is_fitted(list_models=self.list_models_)
         check_featurizer(df_feat=self._df_feat)
+        check_estimators_proba(list_estimators=self._list_estimators, context="predict")
         ut.check_df_seq(df_seq=df_seq)
         if level not in ("sequence", "domain", "window"):
             raise ValueError(f"'level' ('{level}') must be 'sequence', 'domain', or 'window'.")

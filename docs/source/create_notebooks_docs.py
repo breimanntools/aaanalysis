@@ -79,7 +79,67 @@ def _linkify_api(rst):
         for n in fun:
             rst = re.sub(w + r'(?:aa\.)?' + re.escape(n) + w,
                          ':func:`~aaanalysis.' + n + '`', rst)
-    return rst
+    return _refit_grid_tables(rst)
+
+
+# nbconvert draws pandoc-style grid tables with fixed-width borders sized to the
+# *markdown* cell text. ``_linkify_api`` then rewrites a code literal
+# (``TreeModel.select_features``) into a longer cross-reference role
+# (:meth:`~aaanalysis.TreeModel.select_features`) in place, pushing that cell past
+# its border so docutils reports "Malformed table". These helpers re-measure every
+# column from the (possibly widened) cell text and redraw the borders + rows to fit,
+# keeping the links and a table that still parses.
+_GRID_BORDER = re.compile(r'^\s*\+[-=]+(?:\+[-=]+)*\+\s*$')
+_GRID_ROW = re.compile(r'^\s*\|.*\|\s*$')
+
+
+def _reflow_grid_block(block):
+    """Redraw one grid-table block with columns re-measured from current cell text."""
+    indent = re.match(r'^(\s*)', block[0]).group(1)
+    parsed, ncols = [], 0
+    for line in block:
+        s = line.strip()
+        if s.startswith('+'):
+            fill = '=' if '=' in s else '-'
+            ncols = max(ncols, len(s.strip('+').split('+')))
+            parsed.append(('border', fill))
+        else:
+            cells = s.split('|')[1:-1]  # drop the empty edges from the outer pipes
+            ncols = max(ncols, len(cells))
+            parsed.append(('row', cells))
+    widths = [0] * ncols
+    for kind, payload in parsed:
+        if kind == 'row':
+            for c, cell in enumerate(payload):
+                widths[c] = max(widths[c], len(cell.strip()))
+    out = []
+    for kind, payload in parsed:
+        if kind == 'border':
+            out.append(indent + '+' + '+'.join(payload * (w + 2) for w in widths) + '+')
+        else:
+            cells = [' ' + (payload[c].strip() if c < len(payload) else '').ljust(widths[c]) + ' '
+                     for c in range(ncols)]
+            out.append(indent + '|' + '|'.join(cells) + '|')
+    return out
+
+
+def _refit_grid_tables(rst):
+    """Re-pad every grid table so post-linkify cell growth cannot break the borders."""
+    lines = rst.split('\n')
+    out, i, n = [], 0, len(rst.split('\n'))
+    while i < n:
+        # A grid table always opens with a ``+---+`` border; a bare ``|`` line is an
+        # rst line-block, so requiring the leading border avoids touching those.
+        if _GRID_BORDER.match(lines[i]):
+            j = i
+            while j < n and (_GRID_BORDER.match(lines[j]) or _GRID_ROW.match(lines[j])):
+                j += 1
+            out.extend(_reflow_grid_block(lines[i:j]))
+            i = j
+        else:
+            out.append(lines[i])
+            i += 1
+    return '\n'.join(out)
 
 
 # Helper functions

@@ -346,73 +346,101 @@ form above (``cpp``, ``aac``, ``aam``, ``seqm``, ``seqo``, ``aap``, ``aaws``,
      - plot companions
      - ``cpp_plot``, ``aap_plot``, ``seqo_plot``
 
-.. list-table:: Canonical class abbreviations
-   :header-rows: 1
-   :widths: 35 20 25
+The full registry follows, **grouped by pipeline stage in the exact order of the**
+:ref:`API reference <api>`, so reading top-to-bottom traces the same workflow
+(``load → sequence analysis → features → PU learning → model → predict → engineer``).
+The left column links to each :ref:`API <api>` section; the ``Extra`` column marks
+``pro``-extra classes. Within a stage, a logic class and its ``*Plot`` companion share
+one row, and parallel-modality families run sequence → structure → embedding → annotation.
 
-   * - Class
+.. list-table:: Canonical class abbreviations (ordered as the :ref:`API reference <api>`)
+   :header-rows: 1
+   :widths: 22 34 22 22
+
+   * - Section
+     - Class
      - Abbr.
      - Extra
-   * - :class:`~aaanalysis.SequencePreprocessor`
+   * - :ref:`Data Handling <data_api>`
+     - :class:`~aaanalysis.SequencePreprocessor`
      - ``seqp``
      -
-   * - :class:`~aaanalysis.EmbeddingPreprocessor`
-     - ``embp``
-     -
-   * - :class:`~aaanalysis.AALogo` / :class:`~aaanalysis.AALogoPlot`
-     - ``aal`` / ``aal_plot``
-     -
-   * - :class:`~aaanalysis.AAWindowSampler`
-     - ``aaws``
-     -
-   * - :class:`~aaanalysis.AAclust` / :class:`~aaanalysis.AAclustPlot`
-     - ``aac`` / ``aac_plot``
-     -
-   * - :class:`~aaanalysis.SequenceFeature`
-     - ``sf``
-     -
-   * - :class:`~aaanalysis.NumericalFeature`
-     - ``nf``
-     -
-   * - :class:`~aaanalysis.CPP` / :class:`~aaanalysis.CPPPlot`
-     - ``cpp`` / ``cpp_plot``
-     -
-   * - :class:`~aaanalysis.CPPGrid`
-     - ``cppg``
-     -
-   * - :class:`~aaanalysis.CPPStructurePlot`
-     - ``cpps_plot``
-     - ``pro``
-   * - :class:`~aaanalysis.dPULearn` / :class:`~aaanalysis.dPULearnPlot`
-     - ``dpul`` / ``dpul_plot``
-     -
-   * - :class:`~aaanalysis.AAMut` / :class:`~aaanalysis.AAMutPlot`
-     - ``aam`` / ``aam_plot``
-     -
-   * - :class:`~aaanalysis.SeqMut` / :class:`~aaanalysis.SeqMutPlot`
-     - ``seqm`` / ``seqm_plot``
-     -
-   * - :class:`~aaanalysis.SeqOpt` / :class:`~aaanalysis.SeqOptPlot`
-     - ``seqo`` / ``seqo_plot``
-     - core (``mode="impact"`` needs ``pro``)
-   * - :class:`~aaanalysis.TreeModel`
-     - ``tm``
-     -
-   * - :class:`~aaanalysis.AAPred` / :class:`~aaanalysis.AAPredPlot`
-     - ``aap`` / ``aap_plot``
-     -
-   * - :class:`~aaanalysis.ReliabilityModel` / :class:`~aaanalysis.ReliabilityModelPlot`
-     - ``rm`` / ``rm_plot``
-     -
-   * - :class:`~aaanalysis.ShapModel`
-     - ``sm``
-     - ``pro``
-   * - :class:`~aaanalysis.StructurePreprocessor`
+   * -
+     - :class:`~aaanalysis.StructurePreprocessor`
      - ``strp``
      - ``pro``
-   * - :class:`~aaanalysis.AnnotationPreprocessor`
+   * -
+     - :class:`~aaanalysis.EmbeddingPreprocessor`
+     - ``embp``
+     -
+   * -
+     - :class:`~aaanalysis.AnnotationPreprocessor`
      - ``annp``
      - ``pro``
+   * - :ref:`Sequence Analysis <sequence_analysis_api>`
+     - :class:`~aaanalysis.AALogo` / :class:`~aaanalysis.AALogoPlot`
+     - ``aal`` / ``aal_plot``
+     -
+   * -
+     - :class:`~aaanalysis.AAWindowSampler`
+     - ``aaws``
+     -
+   * - :ref:`Feature Engineering <feature_engineering_api>`
+     - :class:`~aaanalysis.AAclust` / :class:`~aaanalysis.AAclustPlot`
+     - ``aac`` / ``aac_plot``
+     -
+   * -
+     - :class:`~aaanalysis.SequenceFeature`
+     - ``sf``
+     -
+   * -
+     - :class:`~aaanalysis.NumericalFeature`
+     - ``nf``
+     -
+   * -
+     - :class:`~aaanalysis.CPP` / :class:`~aaanalysis.CPPPlot`
+     - ``cpp`` / ``cpp_plot``
+     -
+   * -
+     - :class:`~aaanalysis.CPPGrid`
+     - ``cppg``
+     -
+   * -
+     - :class:`~aaanalysis.CPPStructurePlot`
+     - ``cpps_plot``
+     - ``pro``
+   * - :ref:`PU Learning <pu_learning_api>`
+     - :class:`~aaanalysis.dPULearn` / :class:`~aaanalysis.dPULearnPlot`
+     - ``dpul`` / ``dpul_plot``
+     -
+   * - :ref:`Explainable AI <explainable_ai_api>`
+     - :class:`~aaanalysis.TreeModel`
+     - ``tm``
+     -
+   * -
+     - :class:`~aaanalysis.ShapModel`
+     - ``sm``
+     - ``pro``
+   * - :ref:`Prediction <prediction_api>`
+     - :class:`~aaanalysis.AAPred` / :class:`~aaanalysis.AAPredPlot`
+     - ``aap`` / ``aap_plot``
+     -
+   * -
+     - :class:`~aaanalysis.ReliabilityModel` / :class:`~aaanalysis.ReliabilityModelPlot`
+     - ``rm`` / ``rm_plot``
+     -
+   * - :ref:`Protein Engineering <protein_engineering_api>`
+     - :class:`~aaanalysis.AAMut` / :class:`~aaanalysis.AAMutPlot`
+     - ``aam`` / ``aam_plot``
+     -
+   * -
+     - :class:`~aaanalysis.SeqMut` / :class:`~aaanalysis.SeqMutPlot`
+     - ``seqm`` / ``seqm_plot``
+     -
+   * -
+     - :class:`~aaanalysis.SeqOpt` / :class:`~aaanalysis.SeqOptPlot`
+     - ``seqo`` / ``seqo_plot``
+     - core (``mode="impact"`` needs ``pro``)
 
 Reserved future abbreviations
 -----------------------------
@@ -594,7 +622,7 @@ Name any new one ``<noun>_kws`` and add it to the table below.
        :meth:`~aaanalysis.CPP` bootstrap configuration.
    * - ``sample_kws``
      - structured bundle
-     - Fixed keys ``sample`` (an entry name / id / accession ``str`` or a row-position ``int``),
+     - Fixed keys ``sample`` (an ``entry`` name or ``name``-column value ``str``, or a row-position ``int``),
        ``df_seq`` and ``df_parts`` — selects one sample for :meth:`~aaanalysis.CPPPlot.feature_map` /
        :meth:`~aaanalysis.CPPPlot.heatmap` / :meth:`~aaanalysis.CPPPlot.profile`, resolving its TMD-JMD
        sequence (and per-sample ``feat_impact`` column) from ``df_parts``. The bundled alternative to
@@ -788,9 +816,13 @@ The API reference (``docs/source/api.rst``) is ordered to read as the analysis
 **pipeline**, not alphabetically. A newly integrated public symbol must be slotted
 in by these rules:
 
-#. **Sections follow the workflow:** Data Handling → Sequence Analysis → Feature
-   Engineering → PU Learning → Explainable AI → Protein Engineering → Utility Functions
-   (data in → analyse → engineer features → model → design → helpers).
+#. **Sections follow the workflow:** :ref:`Data Handling <data_api>` →
+   :ref:`Sequence Analysis <sequence_analysis_api>` →
+   :ref:`Feature Engineering <feature_engineering_api>` →
+   :ref:`PU Learning <pu_learning_api>` → :ref:`Explainable AI <explainable_ai_api>` →
+   :ref:`Prediction <prediction_api>` → :ref:`Protein Engineering <protein_engineering_api>` →
+   :ref:`Utility Functions <utility_functions_api>`
+   (data in → analyse → engineer features → model → predict → design → helpers).
 #. **Within a section, follow data flow:** inputs/loaders first, then the
    processing classes, then combiners/outputs (Data Handling = loaders →
    preprocessors → :func:`~aaanalysis.combine_dict_nums`).
