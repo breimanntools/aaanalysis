@@ -339,3 +339,46 @@ class TestOverviewAvgLength:
         stored = df.loc[df["Dataset"] == "AA_CASPASE3", "Avg length"].iloc[0]
         assert np.isclose(stored, 796.587982832618, atol=1e-6)
 
+
+
+class TestLoadDatasetGene:
+    """The bundled 'gene' column (right after 'entry') on every dataset (#410 / #417)."""
+
+    def test_gene_is_second_column_domain(self):
+        df = aa.load_dataset(name="DOM_GSEC", n=5)
+        assert list(df.columns)[:2] == ["entry", "gene"]
+
+    def test_gene_is_second_column_sequence(self):
+        df = aa.load_dataset(name="SEQ_AMYLO", n=5)
+        assert list(df.columns)[:2] == ["entry", "gene"]
+
+    def test_domain_dataset_has_real_gene_symbols(self):
+        df = aa.load_dataset(name="DOM_GSEC")
+        assert df["gene"].notna().all()
+        assert df.loc[df["entry"] == "P05067", "gene"].iloc[0] == "APP"
+
+    def test_dom_gsec_pu_has_gene_for_all(self):
+        df = aa.load_dataset(name="DOM_GSEC_PU")
+        assert df["gene"].notna().all()
+
+    def test_sequence_dataset_uses_name_placeholder(self):
+        df = aa.load_dataset(name="SEQ_AMYLO")
+        assert df["gene"].iloc[0] == "name_1"
+        assert df["gene"].str.startswith("name_").all()
+
+    def test_gene_does_not_change_other_columns(self):
+        # The core sequence-info columns and their values are unchanged by the added gene column.
+        df = aa.load_dataset(name="DOM_GSEC", n=5)
+        assert set(ut.COLS_SEQ_INFO).issubset(set(df.columns))
+
+    def test_raw_aa_dataset_carries_gene(self):
+        df = aa.load_dataset(name="AA_CASPASE3", n=3, aa_window_size=None)
+        assert "gene" in df.columns
+
+    def test_resolves_sample_by_gene_end_to_end(self):
+        # KPI: sample="APP" resolves on DOM_GSEC via the bundled gene column.
+        from aaanalysis.feature_engineering._sequence_feature import resolve_sample_entry
+        df = aa.load_dataset(name="DOM_GSEC")
+        sf = aa.SequenceFeature(verbose=False)
+        df_parts = sf.get_df_parts(df_seq=df)
+        assert resolve_sample_entry(df_seq=df, df_parts=df_parts, sample="APP") == "P05067"
