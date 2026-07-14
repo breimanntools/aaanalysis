@@ -469,6 +469,14 @@ Added
 Changed
 ~~~~~~~
 
+- :class:`~aaanalysis.AAPred`: **capability-based estimator validation** — the constructor now
+  requires only ``predict`` (hard-label prediction), so a probability-free estimator such as
+  ``SVC(kernel="linear")`` is accepted. ``predict_proba`` is validated *per operation*: it is
+  required only when :meth:`~aaanalysis.AAPred.eval` is asked for a probability metric (``roc_auc``)
+  and by the probability-scoring paths (:meth:`~aaanalysis.AAPred.predict` /
+  :meth:`~aaanalysis.AAPred.predict_oof`), with an actionable error naming the metric when it is
+  missing. Estimators that support ``predict_proba`` are unaffected (default RandomForest paths
+  unchanged).
 - :class:`~aaanalysis.TreeModel`: **per-round seeding fix** — with a fixed ``random_state`` (or the
   global ``options["random_state"]``), :meth:`~aaanalysis.TreeModel.fit` now reseeds each round to
   ``random_state + i`` so the rounds are independent. Previously every round fit identical estimators,
