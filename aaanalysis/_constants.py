@@ -484,6 +484,13 @@ LIST_METRICS_PRED = ["accuracy", "balanced_accuracy", "precision", "recall", "f1
 LIST_METRICS_PRED_PROBA = ["roc_auc"]
 COLS_EVAL_PRED = [COL_MODEL, COL_METRIC, COL_PRINCIPLE, COL_SCORE, COL_SCORE_STD]
 
+# Score-to-group band assignment (AAPred.score_to_group): the numeric range a set of band
+# thresholds must lie within, so probabilities and percentages can't be silently mixed.
+STR_SCORE_RANGE_PERCENT = "percent"      # scores/thresholds on a 0-100 percent scale
+STR_SCORE_RANGE_PROBA = "proba"          # scores/thresholds on a 0-1 probability scale
+LIST_SCORE_RANGES = [STR_SCORE_RANGE_PERCENT, STR_SCORE_RANGE_PROBA]
+DICT_SCORE_RANGE_BOUNDS = {STR_SCORE_RANGE_PERCENT: (0.0, 100.0), STR_SCORE_RANGE_PROBA: (0.0, 1.0)}
+
 # Baseline-featurizer comparison in AAPred.eval(baseline=...): tag each df_eval row with the
 # feature set behind it ('cpp' for the bound CPP features vs a non-positional baseline).
 COL_FEATURES = "features"       # feature set behind a df_eval row: 'cpp' | a baseline kind

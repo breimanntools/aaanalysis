@@ -13,6 +13,7 @@ from aaanalysis.template_classes import Wrapper
 
 from ._backend.aa_pred.aa_pred_fit import fit_models, predict_proba_models, predict_proba_oof
 from ._backend.aa_pred.aa_pred_eval import eval_models
+from ._backend.aa_pred.aa_pred_group import assign_band_index
 
 
 # I Helper Functions
@@ -202,6 +203,12 @@ class AAPred(Wrapper):
     by feature separation, ``AAPred`` takes a *fixed* feature set and trains models that are
     kept for deployment. It intentionally does **not** perform hyperparameter optimization —
     pass configured estimators and it evaluates and deploys them.
+
+    .. warning::
+
+        **Experimental.** This class is part of the new v1.1.0 prediction layer and is under active
+        development; its API (signatures, defaults, return objects) may change between minor releases
+        without the usual deprecation cycle. Pin a version if you depend on the current behaviour.
 
     .. versionadded:: 1.1.0
 
@@ -619,6 +626,88 @@ class AAPred(Wrapper):
                                            label_pos=label_pos)
         df_pred = pd.DataFrame({ut.COL_SCORE: pred, ut.COL_SCORE_STD: pred_std})
         return df_pred
+
+    @staticmethod
+    def score_to_group(scores: ut.ArrayLike1D,
+                       thresholds: List[Union[int, float]],
+                       labels: List[str],
+                       score_range: str = "percent",
+                       ) -> pd.Series:
+        """
+        Map prediction scores to an ordered categorical of named confidence groups.
+
+        A stateless classifier that turns continuous scores into human-readable, ordered bands
+        (e.g. ``"low" < "medium" < "high"``): ``thresholds`` delimit the bands and ``labels`` names
+        them from the lowest to the highest scores. Each threshold is an **inclusive lower bound**,
+        so a score equal to a threshold falls in the band *above* it (right-open bands
+        ``[t_{i-1}, t_i)``); a score below the first threshold takes the first label and a score at
+        or above the last threshold the last label. This is the single source of truth for the band
+        boundaries also used by :meth:`AAPredPlot.predict_group` (``band=True``), so a table, a
+        filter, and the plotted colouring always agree.
+
+        .. versionadded:: 1.1.0
+
+        Parameters
+        ----------
+        scores : array-like, shape (n_samples,)
+            Per-sample prediction scores to classify. A ``pd.Series`` keeps its index; ``NaN``
+            scores are preserved as missing (unassigned) groups.
+        thresholds : list of int or float
+            Band boundaries in **strictly increasing** order, each an inclusive lower bound. ``n``
+            thresholds define ``n + 1`` bands and must lie within the ``score_range`` bounds.
+        labels : list of str
+            One name per band, ordered from the lowest-score band to the highest; length must be
+            ``len(thresholds) + 1`` and the names must be unique. Sets the category order of the
+            returned series.
+        score_range : str, default="percent"
+            Numeric range the scores and thresholds live on: ``'percent'`` (``[0, 100]``) or
+            ``'proba'`` (``[0, 1]``). Thresholds outside the range raise, which rejects silently
+            mixing probabilities and percentages.
+
+        Returns
+        -------
+        group : pd.Series
+            Ordered categorical (``pd.Categorical``, ``ordered=True``) row-aligned with ``scores``
+            (index preserved), whose categories are ``labels`` in the given low-to-high order.
+            ``NaN`` input scores map to missing values.
+
+        See Also
+        --------
+        * :meth:`AAPredPlot.predict_group` for plotting scores coloured by these same confidence
+          bands.
+
+        Examples
+        --------
+        .. include:: examples/aap_score_to_group.rst
+        """
+        # Check input
+        index = scores.index if isinstance(scores, pd.Series) else None
+        scores = ut.check_array_like(name="scores", val=scores, dtype="float", expected_dim=1, allow_nan=True)
+        thresholds = ut.check_list_like(name="thresholds", val=thresholds, accept_str=False, min_len=1)
+        for i, t in enumerate(thresholds):
+            ut.check_number_val(name=f"thresholds[{i}]", val=t, just_int=False)
+        labels = ut.check_list_like(name="labels", val=labels, accept_str=True, min_len=2)
+        ut.check_str_options(name="score_range", val=score_range, list_str_options=ut.LIST_SCORE_RANGES)
+        if len(labels) != len(thresholds) + 1:
+            raise ValueError(f"'labels' (n={len(labels)}) should have exactly one more element than "
+                             f"'thresholds' (n={len(thresholds)}); one label per band.")
+        if len(set(labels)) != len(labels):
+            raise ValueError(f"'labels' ({labels}) should be unique (one distinct name per band).")
+        ths = [float(t) for t in thresholds]
+        if any(ths[i] >= ths[i + 1] for i in range(len(ths) - 1)):
+            raise ValueError(f"'thresholds' ({thresholds}) should be sorted in strictly increasing order.")
+        lo, hi = ut.DICT_SCORE_RANGE_BOUNDS[score_range]
+        out_of_range = [t for t in ths if t < lo or t > hi]
+        if out_of_range:
+            raise ValueError(f"'thresholds' ({out_of_range}) should lie within the '{score_range}' "
+                             f"score range [{lo}, {hi}] (mixing probabilities and percentages is rejected).")
+        # Assign each score to its confidence band (shared boundary rule); NaN scores stay missing
+        scores = np.asarray(scores, dtype=float)
+        idx = assign_band_index(scores, ths)
+        group = np.asarray(labels, dtype=object)[idx]
+        group[np.isnan(scores)] = np.nan
+        cat = pd.Categorical(group, categories=list(labels), ordered=True)
+        return pd.Series(cat, index=index, name=ut.COL_GROUP)
 
     def predict(self,
                 df_seq: pd.DataFrame,
