@@ -476,6 +476,10 @@ STR_PRINCIPLE_CV_POOLED = "cv_pooled"    # custom-splitter cross-validation, eac
 STR_PRINCIPLE_HOLDOUT = "holdout"
 LIST_PRINCIPLES = [STR_PRINCIPLE_CV, STR_PRINCIPLE_CV_POOLED, STR_PRINCIPLE_HOLDOUT]
 LIST_METRICS_PRED = ["accuracy", "balanced_accuracy", "precision", "recall", "f1", "roc_auc"]
+# Probability metrics — need class probabilities (predict_proba), not just hard labels. Hard-label
+# metrics (accuracy/balanced_accuracy/precision/recall/f1) only need predict, so an estimator
+# without predict_proba (e.g. LinearSVC, SVC(probability=False)) can still be evaluated on them.
+LIST_METRICS_PRED_PROBA = ["roc_auc"]
 COLS_EVAL_PRED = [COL_MODEL, COL_METRIC, COL_PRINCIPLE, COL_SCORE, COL_SCORE_STD]
 
 # Baseline-featurizer comparison in AAPred.eval(baseline=...): tag each df_eval row with the
