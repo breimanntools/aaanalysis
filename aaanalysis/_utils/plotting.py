@@ -10,6 +10,7 @@ import matplotlib.lines as mlines
 import warnings
 
 from .check_type import check_number_range
+from .utils_output import print_out
 
 
 # I Helper function
@@ -180,7 +181,7 @@ def plot_gco(option='font.size', show_options=False):
     """Get current option from plotting context"""
     current_context = sns.plotting_context()
     if show_options:
-        print(current_context)
+        print_out(current_context)
     try:
         option_value = current_context[option]  # Typically font_size
     except KeyError:
