@@ -91,5 +91,3 @@ StructurePreprocessor::get_domains::on_failure
 StructurePreprocessor::get_domains::pdb_folder
 StructurePreprocessor::get_domains::threshold
 StructurePreprocessor::get_dssp::gap_handling
-scan_motif::None::bg_file
-scan_motif::None::pos_col
