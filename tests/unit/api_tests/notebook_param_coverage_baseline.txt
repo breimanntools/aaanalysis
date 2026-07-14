@@ -40,16 +40,3 @@ CPPStructurePlot::plot_linked::pdb
 CPPStructurePlot::plot_linked::sequence
 CPPStructurePlot::plot_linked::shap_plot
 CPPStructurePlot::plot_linked::tmd_seq
-EmbeddingPreprocessor::build_cat::df_stds
-EmbeddingPreprocessor::build_cat::metric
-EmbeddingPreprocessor::build_cat::random_state
-EmbeddingPreprocessor::build_scales::return_std
-EmbeddingPreprocessor::encode::clip
-EmbeddingPreprocessor::encode::return_df
-EmbeddingPreprocessor::fetch_embeddings::allow_oversized
-EmbeddingPreprocessor::fetch_embeddings::batch_size
-EmbeddingPreprocessor::fetch_embeddings::device
-EmbeddingPreprocessor::fetch_embeddings::layer
-EmbeddingPreprocessor::fetch_embeddings::max_length
-EmbeddingPreprocessor::fetch_embeddings::on_failure
-EmbeddingPreprocessor::fetch_embeddings::source
