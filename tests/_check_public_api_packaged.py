@@ -49,7 +49,7 @@ pkg_dir = Path(str(files("aaanalysis")))
 if (pkg_dir.parent / "pyproject.toml").is_file():
     _fail(f"aaanalysis resolved to a source/sdist tree, not an install: {pkg_dir}")
 
-# --- 1. Every public __all__ symbol imports from the wheel --------------------
+# --- 1. Every public __all__ symbol imports from the install ------------------
 missing = [name for name in aa.__all__ if not hasattr(aa, name)]
 if missing:
     _fail(f"names in aaanalysis.__all__ are not importable from the install: {missing}")
@@ -86,17 +86,17 @@ for name, probe in _GATED.items():
         _fail(f"stub {name!r} did not raise when called with its extra {probe!r} absent")
 print(f"OK: {len(_GATED)} pro/dev symbols degrade to missing_feature_stub when their extra is absent")
 
-# --- 3. Bundled _data resources load from the wheel ---------------------------
+# --- 3. Bundled _data resources load from the install -------------------------
 # A missing package-data glob surfaces here as a FileNotFoundError from the loader;
-# wrap it so the gate reports "package data missing from the wheel", not a raw
+# wrap it so the gate reports "package data missing from the distribution", not a raw
 # pandas traceback, and name the exact glob that failed to ship.
 def _load(call, what, glob):
     try:
         df = call()
     except FileNotFoundError as exc:
-        _fail(f"{what} could not read bundled package data ({glob} missing from the wheel): {exc}")
+        _fail(f"{what} could not read bundled package data ({glob} missing from the distribution): {exc}")
     if df.empty:
-        _fail(f"{what} returned an empty frame - bundled {glob} missing from the wheel")
+        _fail(f"{what} returned an empty frame - bundled {glob} missing from the distribution")
     return df
 
 df_scales = _load(aa.load_scales, "load_scales()", "_data/*.tsv")
