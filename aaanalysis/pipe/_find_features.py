@@ -351,6 +351,14 @@ def find_features(labels: ut.ArrayLike1D,
     ranked by tree-based importance and drawn as the CPP feature map. At ``search="fast"`` no search
     is run — the result is byte-identical to the explicit single-CPP path.
 
+    .. warning::
+
+        **Experimental.** This ``aaanalysis.pipe`` (``ap``) golden pipeline is under active
+        development; its API and its **reported cross-validation scores** may change between minor
+        releases without the usual deprecation cycle. Feature selection currently runs on the full
+        labeled set, so the reported scores are an in-sample (optimistic) ranking signal rather than
+        a held-out generalization estimate. Pin a version if you depend on the current behaviour.
+
     Parameters
     ----------
     labels : array-like, shape (n_samples,)

@@ -107,6 +107,12 @@ def explain_features(df_feat: pd.DataFrame,
     colours by the first requested sample's impact and the impacts of all of them are added to
     ``df_feat``.
 
+    .. warning::
+
+        **Experimental.** This ``aaanalysis.pipe`` (``ap``) golden pipeline is under active
+        development; its API (signatures, defaults, return objects) may change between minor releases
+        without the usual deprecation cycle. Pin a version if you depend on the current behaviour.
+
     Parameters
     ----------
     df_feat : pd.DataFrame, shape (n_features, n_feature_info)
