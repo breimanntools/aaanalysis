@@ -156,6 +156,17 @@ Added
   + amino-acid-class ``df_cat`` (feed to :meth:`~aaanalysis.CPP.run` with a whole-part ``Segment(1,1)``
   split to get amino-acid composition as a real ``df_feat`` / feature map); for ``k>=2`` ``df_scales`` is
   ``None`` (a k-mer is not a per-residue scale) and ``df_cat`` categorizes the k-mers by residue class.
+- **SequenceFeature.acc**: Order-aware scale **auto-covariance** (ACC) baseline featurizer — for
+  each scale and lag ``k`` (``1 .. n_lag``) the mean-centered auto-covariance of that scale's
+  values along a sequence span, a ``(n_seq, n_scales * n_lag)`` matrix in lag-major column order
+  (``list_parts=None`` → whole ``jmd_n`` + ``tmd`` + ``jmd_c``), dropping gaps / non-canonical
+  residues before the covariance. The lag extension of ``scale_composition`` (same default scales,
+  span, and NaN handling): where the scale mean is order-blind, ``acc`` keeps short-range sequential
+  order in scale-space while staying position-agnostic — the natural middle point between
+  ``scale_composition`` and CPP for a "baseline vs CPP" comparison. Only the auto-covariance over the
+  full default scales is computed (no cross-covariance, ``n_scales * n_lag`` columns). A lag whose
+  span is too short (``N - k < 1``) is ``NaN``; fully vectorized (segment sums, no per-sequence
+  loop); optional ``return_df=True`` for a labeled frame (``f"{scale}_lag{k}"`` columns).
 - **SequenceFeature.get_df_parts_from_windows**: Assemble a reference ``df_parts`` from
   per-part window sets (e.g. ``AAWindowSampler.sample_synthetic`` output).
 - **SequenceFeature.get_seq_kws**: Return one protein's ``{jmd_n_seq, tmd_seq, jmd_c_seq}``
@@ -212,11 +223,12 @@ Added
   status), a calibration curve (``reliability_diagram``), the out-of-distribution score distribution
   (``ood_hist``), and a score-vs-OOD ``trust_map`` colored by the ``reliable`` flag.
 - :meth:`~aaanalysis.AAPred.eval`: New ``baseline`` option to compare the bound (CPP) features
-  against simple, non-positional **composition baselines** built internally from ``df_seq`` —
+  against simple, non-positional **baselines** built internally from ``df_seq`` —
   ``'scale'`` (:meth:`~aaanalysis.SequenceFeature.scale_composition`), ``'aac'``
-  (:meth:`~aaanalysis.SequenceFeature.aa_composition`), and ``'dpc'``
-  (:meth:`~aaanalysis.SequenceFeature.dipeptide_composition`); ``baseline=True`` selects the scale
-  baseline. Each baseline is cross-validated with the same models and folds and appended to
+  (:meth:`~aaanalysis.SequenceFeature.aa_composition`), ``'dpc'``
+  (:meth:`~aaanalysis.SequenceFeature.dipeptide_composition`), and ``'acc'``
+  (:meth:`~aaanalysis.SequenceFeature.acc`, the order-aware scale auto-covariance); ``baseline=True``
+  selects the scale baseline. Each baseline is cross-validated with the same models and folds and appended to
   ``df_eval`` under a new leading ``features`` column (``'cpp'`` for the bound rows), so the whole
   "CPP vs baseline" comparison comes from one call. Purely additive: with ``baseline=None``
   (default) ``df_eval`` is byte-identical to before (no ``features`` column).

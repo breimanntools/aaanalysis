@@ -498,7 +498,8 @@ STR_FEATURES_CPP = "cpp"        # tag for the bound CPP-feature rows when baseli
 STR_BASELINE_SCALE = "scale"    # SequenceFeature.scale_composition (scale-average baseline)
 STR_BASELINE_AAC = "aac"        # SequenceFeature.aa_composition (amino-acid composition)
 STR_BASELINE_DPC = "dpc"        # SequenceFeature.dipeptide_composition (dipeptide composition)
-LIST_BASELINE_KINDS = [STR_BASELINE_SCALE, STR_BASELINE_AAC, STR_BASELINE_DPC]
+STR_BASELINE_ACC = "acc"        # SequenceFeature.acc (scale auto-covariance, order-aware)
+LIST_BASELINE_KINDS = [STR_BASELINE_SCALE, STR_BASELINE_AAC, STR_BASELINE_DPC, STR_BASELINE_ACC]
 COLS_EVAL_PRED_FEATURES = [COL_FEATURES] + COLS_EVAL_PRED
 
 # Prediction reliability (ReliabilityModel) — per-sample trust columns
