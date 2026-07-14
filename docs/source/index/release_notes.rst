@@ -585,6 +585,14 @@ Changed
   (``.github/pyright_baseline.txt``) drives the type-contract count down per subpackage
   (now 887, every public-API signature pyright-clean). None gate a merge or change the
   public API.
+- **Packaging gate**: a ``Packaging`` workflow (``.github/workflows/packaging.yml``) builds the
+  sdist + wheel with ``python -m build`` on every push / PR to ``master``, installs the built
+  **wheel** into a fresh base-deps-only venv (no ``[dev]`` / ``[pro]``), and asserts that every
+  :data:`aaanalysis.__all__` symbol imports, that ``pro`` / ``dev`` symbols degrade to an install
+  hint when their extra is absent, and that bundled ``_data`` resources load — across the
+  min + max supported Python (3.10, 3.14). It catches a missing package-data file or a broken
+  re-export before a release reaches PyPI, where the editable dev matrix cannot. No public-API
+  change.
 
 Changed
 ~~~~~~~
