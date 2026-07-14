@@ -425,31 +425,82 @@ class StructurePreprocessor:
           :func:`aaanalysis.combine_dict_nums`. The accompanying
           ``(df_scales, df_cat)`` pair names the D dimensions for the
           redundancy filter and output columns.
-        * **Feature value range — always normalized to ``[0, 1]``** (NaN for
+        * **Feature value range, always normalized to ``[0, 1]``** (NaN for
           unresolved positions). Use the table below to de-normalize back to
           raw units if needed:
 
-          ============================  ==========================  =========================================  ====================================
-          Feature key                   Raw range                   Recipe → normalized                        Inverse (de-normalize)
-          ============================  ==========================  =========================================  ====================================
-          ``ss3`` / ``ss8``             {0, 1} (one-hot)            identity                                   identity
-          ``rasa``                      [0, ~1.2]                   ``clip(x, 0, 1)``                          identity (clipped)
-          ``phi_psi_sincos``            [-1, 1]                     ``(x + 1) / 2``                            ``x * 2 - 1``  (in [-1, 1])
-          ``bfactor``                   [0, 100+] Å²                ``clip(x / 100, 0, 1)``                    ``x * 100``  (lossy when ≥1)
-          ``depth``                     [0, ~15] Å                  ``clip(x / 15, 0, 1)``                     ``x * 15``  (lossy when ≥1)
-          ``plddt``                     [0, 100]                    ``x / 100``                                ``x * 100``
-          ``plddt_disorder``            {0, 1}                      identity                                   identity
-          ``plddt_tier``                {0, 1} (4-dim one-hot)      identity                                   identity
-          ``chi1_sincos`` / ``chi2_sincos``  [-1, 1]                ``(x + 1) / 2``                            ``x * 2 - 1``  (in [-1, 1])
-          ``ca_centroid_dist``          [0, ~40] Å                  ``clip(x / 40, 0, 1)``                     ``x * 40``  (lossy when ≥1)
-          ``ca_centroid_dist_norm``     [0, ~2] (Rg units)          ``clip(x / 2, 0, 1)``                      ``x * 2``  (lossy when ≥1)
-          ``contact_count_8A``          [0, ~30]                    ``clip(x / 30, 0, 1)``                     ``x * 30``  (lossy when ≥1)
-          ``contact_count_12A``         [0, ~80]                    ``clip(x / 80, 0, 1)``                     ``x * 80``  (lossy when ≥1)
-          ``hse``                       [0, ~30]                    ``clip(x / 30, 0, 1)``                     ``x * 30``  (lossy when ≥1)
-          ``pae_row_*`` / ``pae_local_mean`` / ``pae_distal_mean`` / ``pae_band_means``
-                                        [0, 31.75] Å                ``clip(x / 31.75, 0, 1)``                  ``x * 31.75``
-          ``pae_asymmetry``             [0, ~10] Å                  ``clip(x / 10, 0, 1)``                     ``x * 10``  (lossy when ≥1)
-          ============================  ==========================  =========================================  ====================================
+          .. list-table::
+             :header-rows: 1
+             :widths: 34 22 30 34
+
+             * - Feature key
+               - Raw range
+               - Recipe → normalized
+               - Inverse (de-normalize)
+             * - ``ss3`` / ``ss8``
+               - {0, 1} (one-hot)
+               - identity
+               - identity
+             * - ``rasa``
+               - [0, ~1.2]
+               - ``clip(x, 0, 1)``
+               - identity (clipped)
+             * - ``phi_psi_sincos``
+               - [-1, 1]
+               - ``(x + 1) / 2``
+               - ``x * 2 - 1`` (in [-1, 1])
+             * - ``bfactor``
+               - [0, 100+] Å²
+               - ``clip(x / 100, 0, 1)``
+               - ``x * 100`` (lossy when ≥1)
+             * - ``depth``
+               - [0, ~15] Å
+               - ``clip(x / 15, 0, 1)``
+               - ``x * 15`` (lossy when ≥1)
+             * - ``plddt``
+               - [0, 100]
+               - ``x / 100``
+               - ``x * 100``
+             * - ``plddt_disorder``
+               - {0, 1}
+               - identity
+               - identity
+             * - ``plddt_tier``
+               - {0, 1} (4-dim one-hot)
+               - identity
+               - identity
+             * - ``chi1_sincos`` / ``chi2_sincos``
+               - [-1, 1]
+               - ``(x + 1) / 2``
+               - ``x * 2 - 1`` (in [-1, 1])
+             * - ``ca_centroid_dist``
+               - [0, ~40] Å
+               - ``clip(x / 40, 0, 1)``
+               - ``x * 40`` (lossy when ≥1)
+             * - ``ca_centroid_dist_norm``
+               - [0, ~2] (Rg units)
+               - ``clip(x / 2, 0, 1)``
+               - ``x * 2`` (lossy when ≥1)
+             * - ``contact_count_8A``
+               - [0, ~30]
+               - ``clip(x / 30, 0, 1)``
+               - ``x * 30`` (lossy when ≥1)
+             * - ``contact_count_12A``
+               - [0, ~80]
+               - ``clip(x / 80, 0, 1)``
+               - ``x * 80`` (lossy when ≥1)
+             * - ``hse``
+               - [0, ~30]
+               - ``clip(x / 30, 0, 1)``
+               - ``x * 30`` (lossy when ≥1)
+             * - ``pae_row_*`` / ``pae_local_mean`` / ``pae_distal_mean`` / ``pae_band_means``
+               - [0, 31.75] Å
+               - ``clip(x / 31.75, 0, 1)``
+               - ``x * 31.75``
+             * - ``pae_asymmetry``
+               - [0, ~10] Å
+               - ``clip(x / 10, 0, 1)``
+               - ``x * 10`` (lossy when ≥1)
 
           The recipes are the source of truth in
           ``feature_registry.NORMALIZATION_RECIPES``; this table is generated
