@@ -1,17 +1,5 @@
 # Known undemonstrated example-notebook params (backlog to burn down; NEVER add rows).
 # Enforced by test_notebook_param_coverage.py. Prediction notebooks are excluded (held to zero).
-AnnotationPreprocessor::build_cat::dim_names_override
-AnnotationPreprocessor::build_scales::dim_names_override
-AnnotationPreprocessor::build_scales::return_std
-AnnotationPreprocessor::encode::on_mismatch
-AnnotationPreprocessor::encode::return_df
-AnnotationPreprocessor::fetch_uniprot::max_workers
-AnnotationPreprocessor::fetch_uniprot::timeout
-AnnotationPreprocessor::register_feature::normalization
-AnnotationPreprocessor::to_df_seq::aa_context_col
-AnnotationPreprocessor::to_df_seq::exclude_other_annotations
-AnnotationPreprocessor::to_df_seq::match_residue_type
-AnnotationPreprocessor::to_df_seq::pos_col
 CPPStructurePlot::__init__::df_scales
 CPPStructurePlot::explore::chain
 CPPStructurePlot::explore::col_imp
@@ -65,5 +53,3 @@ EmbeddingPreprocessor::fetch_embeddings::layer
 EmbeddingPreprocessor::fetch_embeddings::max_length
 EmbeddingPreprocessor::fetch_embeddings::on_failure
 EmbeddingPreprocessor::fetch_embeddings::source
-scan_motif::None::bg_file
-scan_motif::None::pos_col

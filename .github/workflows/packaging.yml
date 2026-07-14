@@ -1,0 +1,98 @@
+name: Packaging
+
+# Build the sdist + wheel and prove that BOTH install clean and the full public
+# API imports on a base-deps-only environment. The test matrices install the
+# editable source tree (where every module + data file always exists), so a
+# missing package-data glob, a bad build-backend include, a broken __init__
+# re-export, or a sdist that omits the Cython sources only surfaces after a user
+# pip-installs the release. This gate catches it first. Runs on every push/PR to
+# master (no paths-ignore) so it can be made a required status check without the
+# "skipped-but-required" branch-protection trap.
+on:
+  push:
+    branches:
+      - master
+  pull_request:
+    branches:
+      - master
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: ${{ github.ref != 'refs/heads/master' }}
+
+jobs:
+  build-and-smoke:
+    name: Packaging smoke (py${{ matrix.python-version }})
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        # Min + max supported Python (matches the unit-matrix brackets). The wheel
+        # carries the compiled Cython extension, so it is ABI-specific (cp310 vs
+        # cp314) — each leg builds and installs its own wheel; a single wheel cannot
+        # cover the matrix. The sdist is portable, but is built + installed per leg
+        # too so the source build is exercised on both interpreters.
+        python-version: ['3.10', '3.14']
+
+    steps:
+      - uses: actions/checkout@v6
+
+      - name: Set up Python ${{ matrix.python-version }}
+        uses: actions/setup-python@v6
+        with:
+          python-version: ${{ matrix.python-version }}
+
+      - name: Build sdist + wheel (default python -m build)
+        # The default `python -m build` builds the sdist, then builds the wheel
+        # *from that sdist* — the wheel-from-sdist chain a plain `pip install
+        # aaanalysis` release relies on. It works because MANIFEST.in ships the
+        # Cython source `_filters_c/_inner.pyx` into the sdist (the generated
+        # `_inner.c` rides along as the cythonized extension source), so the
+        # sdist can cythonize. This directly exercises the path a bare
+        # `python -m build` and a source install take.
+        run: |
+          python -m pip install --upgrade pip build
+          python -m build --outdir dist
+
+      - name: Assert exactly one wheel and one sdist
+        run: |
+          shopt -s nullglob
+          whls=(dist/*.whl); sdists=(dist/*.tar.gz)
+          echo "wheels:  ${whls[*]:-<none>}"
+          echo "sdists:  ${sdists[*]:-<none>}"
+          [ "${#whls[@]}" -eq 1 ]   || { echo "::error::expected exactly 1 wheel, got ${#whls[@]}"; exit 1; }
+          [ "${#sdists[@]}" -eq 1 ] || { echo "::error::expected exactly 1 sdist, got ${#sdists[@]}"; exit 1; }
+
+      - name: Install the built wheel into a clean base-deps-only venv
+        # A fresh venv (not the job interpreter, which carries `build` + pip) proves
+        # the install resolves ONLY the wheel's base [project.dependencies] — no
+        # [dev], no [pro]. That is what catches missing package data / bad includes.
+        run: |
+          python -m venv "$RUNNER_TEMP/wheel-venv"
+          "$RUNNER_TEMP/wheel-venv/bin/python" -m pip install --upgrade pip
+          "$RUNNER_TEMP/wheel-venv/bin/python" -m pip install dist/*.whl
+
+      - name: Public-API import + bundled-data check (wheel)
+        # Run from a neutral cwd + by absolute path so sys.path[0] is tests/ (no
+        # aaanalysis there) and `import aaanalysis` resolves to the installed
+        # distribution, never the checkout. The script's own source-tree guard is
+        # the backstop.
+        run: |
+          cd "$RUNNER_TEMP"
+          "$RUNNER_TEMP/wheel-venv/bin/python" "$GITHUB_WORKSPACE/tests/_check_public_api_packaged.py"
+
+      - name: Install from the sdist into a separate clean base-deps-only venv
+        # A source install: pip builds the extension from the sdist's shipped
+        # Cython sources (isolated build, Cython from build-system.requires). This
+        # is the `pip install aaanalysis --no-binary` / `pip install <sdist>` path;
+        # it fails if the sdist omits `_inner.pyx`. A dedicated venv (not the wheel
+        # one) forces a real build instead of a no-op reinstall.
+        run: |
+          python -m venv "$RUNNER_TEMP/sdist-venv"
+          "$RUNNER_TEMP/sdist-venv/bin/python" -m pip install --upgrade pip
+          "$RUNNER_TEMP/sdist-venv/bin/python" -m pip install dist/*.tar.gz
+
+      - name: Public-API import + bundled-data check (sdist)
+        run: |
+          cd "$RUNNER_TEMP"
+          "$RUNNER_TEMP/sdist-venv/bin/python" "$GITHUB_WORKSPACE/tests/_check_public_api_packaged.py"

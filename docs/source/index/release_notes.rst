@@ -585,6 +585,14 @@ Changed
   (``.github/pyright_baseline.txt``) drives the type-contract count down per subpackage
   (now 887, every public-API signature pyright-clean). None gate a merge or change the
   public API.
+- **Packaging gate**: a ``Packaging`` workflow (``.github/workflows/packaging.yml``) builds the
+  sdist + wheel with the default ``python -m build`` on every push / PR to ``master``, then installs
+  **both** the built wheel and the sdist into separate fresh base-deps-only venvs (no ``[dev]`` /
+  ``[pro]``) and asserts that every :data:`aaanalysis.__all__` symbol imports, that ``pro`` / ``dev``
+  symbols degrade to an install hint when their extra is absent, and that bundled ``_data`` resources
+  load — across the min + max supported Python (3.10, 3.14). It catches a missing package-data file,
+  a broken re-export, or a sdist that cannot build before a release reaches PyPI, where the editable
+  dev matrix cannot. No public-API change.
 
 Changed
 ~~~~~~~
@@ -600,6 +608,12 @@ Changed
 Fixed
 ~~~~~
 
+- **Source install from the sdist now builds**: the published sdist previously omitted the Cython
+  source ``_filters_c/_inner.pyx``, so the default ``python -m build`` (which builds the wheel from
+  the sdist) and any source install (``pip install <sdist>``, ``pip install aaanalysis --no-binary``)
+  failed to cythonize. A ``MANIFEST.in`` now ships the Cython sources into the sdist, so both paths
+  build and import the compiled extension. The shipped wheels (the default install) were never
+  affected. No public-API change.
 - **Composite-plot furniture no longer lands on the heatmap**: :meth:`~aaanalysis.CPPPlot.feature_map`
   and :meth:`~aaanalysis.CPPPlot.heatmap` place their colorbar and legends below the grid in figure
   coordinates. Ending a cell with the usual ``plt.tight_layout(); plt.show()`` re-packed the axes and
