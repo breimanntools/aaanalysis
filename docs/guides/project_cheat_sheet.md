@@ -190,7 +190,7 @@ CI/CD tools automate testing and deployment.
 
 - **Test Coverage** (`test_coverage.yml`): Runs on push/PR to master. Installs `.[pro]`, runs pytest with coverage, uploads to Codecov.
 - **Integration & E2E Tests** (`integration_e2e.yml`): Runs on push/PR to master. Core-only, offline; runs `tests/integration` + `tests/e2e` on Ubuntu py3.10 + 3.14 (excluded from the Unit Tests matrix — ADR-0031).
-- **Packaging** (`packaging.yml`): Runs on push/PR to master. Builds sdist + wheel with `python -m build`, installs the wheel into a fresh base-deps-only venv, and asserts the public API imports + bundled `_data` loads (Ubuntu py3.10 + 3.14).
+- **Packaging** (`packaging.yml`): Runs on push/PR to master. Builds sdist + wheel with the default `python -m build`, installs **both** the wheel and the sdist into separate fresh base-deps-only venvs, and asserts the public API imports + bundled `_data` loads (Ubuntu py3.10 + 3.14). The sdist ships the Cython sources via `MANIFEST.in`.
 - **Build Wheels** (`build_wheels.yml`): Runs on release. Builds wheels via cibuildwheel and publishes to PyPI.
 
 (Workflows are managed via YAML files in `.github/workflows/`; no bash commands needed.)

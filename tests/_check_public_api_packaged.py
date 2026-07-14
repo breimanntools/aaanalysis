@@ -1,57 +1,59 @@
-"""Guard: the built wheel installs clean and its full public API imports.
+"""Guard: the built wheel and sdist install clean and the full public API imports.
 
 This is **not** a pytest test — it is a standalone script run against a freshly
-built wheel installed into a clean, **base-deps-only** venv (no ``[dev]`` / no
-``[pro]``). The packaging CI gate (``.github/workflows/packaging.yml``) builds
-the wheel + sdist with ``python -m build`` and runs this on the min + max
-supported Python. Its whole reason to exist is that the editable dev matrix
-imports the *source tree* (where every module and data file always exists), so a
-missing ``[tool.setuptools.package-data]`` entry, a bad build-backend include, or
-a broken ``__init__`` re-export only surfaces *after* a user ``pip install``s the
-release — the most expensive moment to find it. This script catches it first.
+built distribution (wheel **or** sdist) installed into a clean, **base-deps-only**
+venv (no ``[dev]`` / no ``[pro]``). The packaging CI gate
+(``.github/workflows/packaging.yml``) builds the wheel + sdist with
+``python -m build`` and runs this against **each** install — wheel and sdist — on
+the min + max supported Python. Its whole reason to exist is that the editable dev
+matrix imports the *source tree* (where every module and data file always exists),
+so a missing ``[tool.setuptools.package-data]`` entry, a bad build-backend include,
+a broken ``__init__`` re-export, or a sdist that omits the Cython sources only
+surfaces *after* a user ``pip install``s the release — the most expensive moment to
+find it. This script catches it first.
 
 It is a sibling of ``tests/_check_py_typed_packaged.py`` (the narrower
 ``py.typed``-in-wheel guard the cibuildwheel ``test-command`` runs); this one
-covers the general build -> install-from-wheel -> public-API-import contract.
+covers the general build -> install (wheel or sdist) -> public-API-import contract.
 
 Run as ``python <this-file>`` **from a directory that is not the repo root** so
-``import aaanalysis`` resolves to the installed wheel, never the checkout — the
-source-tree guard below fails loudly if it did resolve to source anyway. It
+``import aaanalysis`` resolves to the installed distribution, never the checkout —
+the source-tree guard below fails loudly if it did resolve to source anyway. It
 checks three things:
 
-1. every name in :data:`aaanalysis.__all__` is importable from the wheel;
+1. every name in :data:`aaanalysis.__all__` is importable from the install;
 2. each ``pro`` / ``dev`` optional-dependency symbol degrades to a
    ``missing_feature_stub`` (raising ``ImportError`` with an install hint when
    called) instead of breaking the import, whenever its extra is absent;
 3. bundled ``_data`` resources load — a representative ``load_scales()`` (top
    level ``_data/*.tsv``) and ``load_dataset(...)`` (``_data/benchmarks/*.tsv``)
-   succeed, proving the package data shipped in the wheel.
+   succeed, proving the package data shipped in the distribution.
 """
 import importlib.util
 import sys
 from importlib.resources import files
 from pathlib import Path
 
-import aaanalysis as aa  # resolves to the installed wheel; see module docstring
+import aaanalysis as aa  # resolves to the installed distribution; see module docstring
 
 
 def _fail(msg):
     sys.exit(f"FAIL: {msg}")
 
 
-# --- 0. Resolve to the installed wheel, never the source / sdist tree ---------
-# An installed wheel lives under site-packages: its parent holds no pyproject.toml.
-# The repo checkout (and an unpacked sdist) does — importing from there would let a
-# missing package-data entry pass unnoticed, defeating the whole gate.
+# --- 0. Resolve to the installed distribution, never the source / sdist tree --
+# An installed distribution lives under site-packages: its parent holds no
+# pyproject.toml. The repo checkout (and an unpacked sdist) does — importing from
+# there would let a missing package-data entry pass unnoticed, defeating the gate.
 pkg_dir = Path(str(files("aaanalysis")))
 if (pkg_dir.parent / "pyproject.toml").is_file():
-    _fail(f"aaanalysis resolved to a source/sdist tree, not an installed wheel: {pkg_dir}")
+    _fail(f"aaanalysis resolved to a source/sdist tree, not an install: {pkg_dir}")
 
 # --- 1. Every public __all__ symbol imports from the wheel --------------------
 missing = [name for name in aa.__all__ if not hasattr(aa, name)]
 if missing:
-    _fail(f"names in aaanalysis.__all__ are not importable from the wheel: {missing}")
-print(f"OK: all {len(aa.__all__)} aaanalysis.__all__ symbols import from the installed wheel")
+    _fail(f"names in aaanalysis.__all__ are not importable from the install: {missing}")
+print(f"OK: all {len(aa.__all__)} aaanalysis.__all__ symbols import from the installed distribution")
 
 # --- 2. Optional-dependency symbols degrade to missing_feature_stub -----------
 # When an extra is absent these are not in __all__; __init__ swaps each for a
@@ -102,4 +104,4 @@ df_seq = _load(lambda: aa.load_dataset(name="DOM_GSEC", n=2), "load_dataset('DOM
                "_data/benchmarks/*.tsv")
 print(f"OK: bundled _data loads (scales {df_scales.shape}, DOM_GSEC {df_seq.shape})")
 
-print("PASS: built wheel installs clean and its public API imports")
+print("PASS: built distribution installs clean and its public API imports")
