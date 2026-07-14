@@ -234,10 +234,12 @@ def resolve_sample_entry(df_seq=None, df_parts=None, sample=None) -> str:
     """Resolve a ``sample`` selector to a single, unique ``df_parts`` entry name.
 
     ``sample`` may be a row position (int), an ``entry`` name (str) from the ``df_parts`` index, or —
-    when ``df_seq`` carries the optional ``name`` column — a protein ``name`` (str) that is mapped to
-    its ``entry``. The selector must identify exactly one protein: a value that matches nothing, or that
-    is ambiguous (a duplicated ``entry`` in ``df_parts`` or a ``name`` shared by several entries), raises
-    a ``ValueError`` asking the caller to disambiguate with the ``entry`` name or a row position (int).
+    when ``df_seq`` carries the optional ``gene`` / ``display_name`` / ``name`` columns (the ``gene``
+    column is bundled by :func:`load_dataset`) — a human-readable label (str) that is mapped to
+    its ``entry``, consulting those columns in that priority order. The selector must identify exactly
+    one protein: a value that matches nothing, or that is ambiguous (a duplicated ``entry`` in
+    ``df_parts`` or a label shared by several entries), raises a ``ValueError`` asking the caller to
+    disambiguate with the ``entry`` name or a row position (int).
     """
     entries = list(df_parts.index)
     if isinstance(sample, (int, np.integer)) and not isinstance(sample, bool):
@@ -252,21 +254,25 @@ def resolve_sample_entry(df_seq=None, df_parts=None, sample=None) -> str:
                          f"unique. Pass a row position (int) to select one.")
     if n_entry == 1:
         return sample
-    # 2) Fall back to the optional 'name' column of df_seq (name -> entry).
-    if ut.COL_NAME in df_seq.columns:
-        matched = list(dict.fromkeys(df_seq.loc[df_seq[ut.COL_NAME] == sample, ut.COL_ENTRY]))
+    # 2) Fall back to the optional human-readable columns of df_seq (gene -> display_name -> name),
+    #    in priority order; the first present column that yields a unique match wins.
+    for col in (ut.COL_GENE, ut.COL_DISPLAY_NAME, ut.COL_NAME):
+        if col not in df_seq.columns:
+            continue
+        matched = list(dict.fromkeys(df_seq.loc[df_seq[col] == sample, ut.COL_ENTRY]))
         if len(matched) > 1:
-            raise ValueError(f"'sample' ('{sample}') matches several '{ut.COL_NAME}' entries {matched}; it is "
+            raise ValueError(f"'sample' ('{sample}') matches several '{col}' entries {matched}; it is "
                              f"not unique. Pass the 'entry' name or a row position (int) to select one.")
         if len(matched) == 1:
             entry = matched[0]
             if entries.count(entry) != 1:
-                raise ValueError(f"'sample' ('{sample}') maps to entry ('{entry}'), which does not occur exactly "
-                                 f"once in the 'df_parts' index. Pass a row position (int) to select one.")
+                raise ValueError(f"'sample' ('{sample}') maps to entry ('{entry}') via '{col}', which does not "
+                                 f"occur exactly once in the 'df_parts' index. Pass a row position (int).")
             return entry
     # 3) Nothing matched.
     raise ValueError(f"'sample' ('{sample}') is neither an 'entry' in the 'df_parts' index nor a "
-                     f"'{ut.COL_NAME}' in 'df_seq'. First entries are: {entries[:5]}.")
+                     f"'{ut.COL_GENE}' / '{ut.COL_DISPLAY_NAME}' / '{ut.COL_NAME}' in 'df_seq'. "
+                     f"First entries are: {entries[:5]}.")
 
 
 # II Main Functions

@@ -216,3 +216,50 @@ class TestGetSeqKwsNameResolution:
         """A row position keeps resolving positionally regardless of the 'name' column."""
         sf = aa.SequenceFeature(verbose=False)
         assert sf.get_seq_kws(df_seq=self._df_seq_named(), df_parts=_df_parts(), sample=1) == _manual_parts(1)
+
+
+class TestGetSeqKwsGeneResolution:
+    """Resolve 'sample' by the optional 'gene' / 'display_name' columns (bundled by load_dataset)."""
+
+    @staticmethod
+    def _df_seq_meta():
+        d = df_seq.copy()
+        d["gene"] = ["GENE_" + e for e in d["entry"]]
+        d["display_name"] = ["Name " + e for e in d["entry"]]
+        return d
+
+    def test_resolve_by_gene(self):
+        d = self._df_seq_meta()
+        assert resolve_sample_entry(df_seq=d, df_parts=_df_parts(), sample="GENE_" + ENTRIES[1]) == ENTRIES[1]
+
+    def test_resolve_by_display_name(self):
+        d = self._df_seq_meta()
+        assert resolve_sample_entry(df_seq=d, df_parts=_df_parts(), sample="Name " + ENTRIES[2]) == ENTRIES[2]
+
+    def test_gene_matches_same_parts_as_entry(self):
+        sf = aa.SequenceFeature(verbose=False)
+        d, dp = self._df_seq_meta(), _df_parts()
+        for pos, entry in enumerate(ENTRIES):
+            assert sf.get_seq_kws(df_seq=d, df_parts=dp, sample="GENE_" + entry) == _manual_parts(pos)
+
+    def test_entry_takes_precedence_over_gene(self):
+        d = self._df_seq_meta()
+        assert resolve_sample_entry(df_seq=d, df_parts=_df_parts(), sample=ENTRIES[0]) == ENTRIES[0]
+
+    def test_gene_takes_precedence_over_display_name(self):
+        # A token that exists in both gene and display_name (for different entries) resolves via gene.
+        d = df_seq.copy()
+        d["gene"] = ["shared"] + ["g_" + e for e in ENTRIES[1:]]
+        d["display_name"] = ["dn_" + e for e in ENTRIES[:-1]] + ["shared"]
+        # 'shared' is the gene of ENTRIES[0] and the display_name of ENTRIES[-1]; gene wins.
+        assert resolve_sample_entry(df_seq=d, df_parts=_df_parts(), sample="shared") == ENTRIES[0]
+
+    def test_ambiguous_gene_raises(self):
+        d = df_seq.copy()
+        d["gene"] = ["dup"] * len(d)
+        with pytest.raises(ValueError, match="not unique"):
+            resolve_sample_entry(df_seq=d, df_parts=_df_parts(), sample="dup")
+
+    def test_absent_gene_raises(self):
+        with pytest.raises(ValueError, match="gene"):
+            resolve_sample_entry(df_seq=self._df_seq_meta(), df_parts=_df_parts(), sample="GENE_UNKNOWN")

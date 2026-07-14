@@ -55,6 +55,14 @@ Added
   unchanged; input never mutated). Enables analyzing short, variable-length parts at a finer,
   uniform resolution via *pad* → :class:`~aaanalysis.CPP` (``accept_gaps=True``) → larger uniform
   ``n_split_max`` than the shortest real part allows.
+- :func:`~aaanalysis.load_dataset`: Every bundled dataset now carries a human-readable ``gene``
+  column immediately after ``entry`` — the UniProt gene symbol for the domain datasets
+  (``DOM_GSEC`` / ``DOM_GSEC_PU``) and a positional ``name_<row>`` placeholder for the amino-acid /
+  sequence datasets (whose entries are synthetic). All other columns are byte-identical. The
+  ``gene`` column lets a ``sample`` selector resolve by gene symbol:
+  :func:`~aaanalysis.SequenceFeature.get_seq_kws` (and the ``sample_kws`` plot path) now consult the
+  optional ``gene`` / ``display_name`` columns of ``df_seq`` (order: ``entry`` → ``gene`` →
+  ``display_name`` → ``name``), so ``sample="APP"`` resolves on ``DOM_GSEC``.
 
 **Feature Engineering**
 

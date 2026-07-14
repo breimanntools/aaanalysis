@@ -159,7 +159,10 @@ def load_dataset(name: str = "Overview",
     .. versionchanged:: 1.1.0
         Added the ``verbose`` parameter, which reports how many entries each
         removal step (``min_len``, ``max_len``, and ``non_canonical_aa='remove'``)
-        dropped. The returned data is unchanged.
+        dropped. The returned data is unchanged. Every dataset now carries a
+        human-readable ``gene`` column immediately after ``entry`` (the UniProt
+        gene symbol for the domain datasets, a positional ``name_<row>`` placeholder
+        for the amino-acid / sequence datasets); all other columns are unchanged.
 
     Parameters
     ----------
@@ -198,7 +201,7 @@ def load_dataset(name: str = "Overview",
     -------
     df_seq : pd.DataFrame
         When ``name`` is not ``'Overview'``: the selected sequence dataset with
-        columns ``entry, sequence, label`` (plus ``tmd_start, tmd_stop,
+        columns ``entry, gene, sequence, label`` (plus ``tmd_start, tmd_stop,
         jmd_n, tmd, jmd_c`` for domain-level datasets).
     df : pd.DataFrame
         When ``name='Overview'``: a summary table of all available benchmarks
@@ -227,6 +230,11 @@ def load_dataset(name: str = "Overview",
     ``df_seq`` includes these columns:
 
     * 'entry': Protein identifier, either the UniProt accession number or an id based on index.
+    * 'gene': Human-readable gene symbol (UniProt gene name for the domain datasets; a positional
+      ``name_<row>`` placeholder for the amino-acid / sequence datasets, whose entries are synthetic).
+      Lets a ``sample`` selector be resolved by gene symbol (see :meth:`SequenceFeature.get_seq_kws`).
+      Present for the domain / sequence datasets and the raw amino-acid tables; amino-acid **windowing**
+      (``aa_window_size``) rebuilds per-position entries and does not carry it.
     * 'sequence': Amino acid sequence.
     * 'label': Binary classification label (0 for negatives, 1 for positives).
     * 'tmd_start', 'tmd_stop': Start and stop positions of target middle domain

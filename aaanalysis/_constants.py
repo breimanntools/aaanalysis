@@ -89,6 +89,8 @@ STR_FILE_TYPE = "tsv"
 # df_seq
 COL_ENTRY = "entry"     # ACC, protein entry, uniprot id
 COL_NAME = "name"       # Entry name, Protein name, Uniprot Name
+COL_GENE = "gene"       # human-readable gene symbol (bundled after 'entry' in every load_dataset table)
+COL_DISPLAY_NAME = "display_name"  # optional human-readable protein label (consulted by the sample resolver)
 COL_LABEL = "label"
 COL_SEQ = "sequence"
 COL_JMD_N = "jmd_n"
