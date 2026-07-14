@@ -1,4 +1,4 @@
-# ADR-XXXX — Packaging gate: build wheel/sdist, install from the wheel, import the public API
+# ADR-0060 — Packaging gate: build wheel/sdist, install from the wheel, import the public API
 
 Status: Accepted — 2026-07-14
 
