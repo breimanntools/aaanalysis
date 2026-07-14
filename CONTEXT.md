@@ -52,20 +52,20 @@ _Avoid_: args_seq, seq_kwargs, part_seqs.
 ### Prediction-task taxonomy vocabulary
 
 **prediction level**:
-The biological unit a task predicts over, and the organizing backbone of the user-facing docs. Three levels, encoded in the `load_dataset` name-prefix scheme: **residue level** (`AA_*`), **domain level** (`DOM_*`), **protein level** (`SEQ_*`). The level is a convenient label for two deeper axes — the **unit of comparison** and **reference construction** — which actually determine the CPP setup. See ADR-0022.
+The biological unit a task predicts over, and the organizing backbone of the user-facing docs. Three levels, encoded in the `load_dataset` name-prefix scheme: **residue level** (`AA_*`), **domain level** (`DOM_*`), **protein level** (`SEQ_*`). The **same three levels** are scored by `AAPred.predict(level=)` — one documented correspondence: `AA_`→`level='window'` (residues represented as windows), `DOM_`→`level='domain'`, `SEQ_`→`level='sequence'` (the general/API spelling of protein level). `load_dataset` and `AAPred.predict` cross-reference each other. The level is a convenient label for two deeper axes — the **unit of comparison** and **reference construction** — which actually determine the CPP setup. See ADR-0022.
 _Avoid_: scale (reserved for AA physicochemical scales), granularity, task type (too generic).
 
 **residue level**:
-Per-residue / windowed prediction; datasets `AA_*`; the **unit of comparison** is a fixed-length **window** (`AAWindowSampler`). Two **sub-modes**: **single-residue** (odd `aa_window_size` — a site *on* a residue, e.g. a PTM) and **between-residues** (even window — a scissile bond P1│P1′, e.g. cleavage). Sub-modes, not separate levels: they differ only by window parity.
+Per-residue / windowed prediction; datasets `AA_*`; `AAPred.predict(level='window')`; the **unit of comparison** is a fixed-length **window** (`AAWindowSampler`). Two **sub-modes**: **single-residue** (odd `aa_window_size` — a site *on* a residue, e.g. a PTM) and **between-residues** (even window — a scissile bond P1│P1′, e.g. cleavage). Sub-modes, not separate levels: they differ only by window parity.
 _Avoid_: position level, site level (ambiguous across the two sub-modes), residue-pair level (the "between" case is a sub-mode, not a level).
 
 **domain level**:
-Prediction over a defined sub-region of a protein; datasets `DOM_*` (e.g. `DOM_GSEC`); the **unit of comparison** is the **part** set derived from `tmd_start`/`tmd_stop` (`jmd_n` / `tmd` / `jmd_c`). CPP is native here.
+Prediction over a defined sub-region of a protein; datasets `DOM_*` (e.g. `DOM_GSEC`); `AAPred.predict(level='domain')`; the **unit of comparison** is the **part** set derived from `tmd_start`/`tmd_stop` (`jmd_n` / `tmd` / `jmd_c`). CPP is native here.
 _Avoid_: region level, segment level (segment is a split type).
 
 **protein level**:
-Whole-chain prediction; datasets `SEQ_*`; the whole sequence is the part. "Protein-level" is the **user-facing alias of the `SEQ_` prefix** (`SEQ_` = "sequence", not a third concept). Short peptides are the clean sub-case — the chain *is* the window.
-_Avoid_: sequence level (use only when naming the `SEQ_` prefix spelling itself), global level.
+Whole-chain prediction; datasets `SEQ_*`; `AAPred.predict(level='sequence')`; the whole sequence is the part. "Protein level" is the biological name; **`sequence` is the general / API spelling** (any full amino-acid chain, typically a protein but not restricted to one) — the `SEQ_` prefix and `AAPred.predict(level='sequence')`. Short peptides are the clean sub-case — the chain *is* the window.
+_Avoid_: global level; conflating the level name with the [[df_seq]] `sequence` column (the level `'sequence'` = whole-chain prediction, the column = the residue string).
 
 **unit of comparison**:
 The part CPP profiles for a task — a **window** (residue level), a **part** set (domain level), or the **whole chain** (protein level). One of the two axes that genuinely define a use-case class. See ADR-0022 (D3).
@@ -207,7 +207,7 @@ _Avoid_: banded regression (reserved for the deferred banded-regression task), g
 Four *distinct* labeling concepts, each with one canonical parameter name — similar
 spellings name different things, so they are kept separate rather than unified:
 - **`label_test` / `label_ref`** — the two groups of a **contrast** (positive/test vs
-  reference): `CPP.run`/`eval`, `AAlogo.get_df_logo`.
+  reference): `CPP.run`/`eval`, `AALogo.get_df_logo`.
 - **`labels`** — a **single** 1D per-sample class-label vector `(n_samples,)`:
   `CPP.run`, `TreeModel.fit`/`eval`, `ShapModel.fit`, `dPULearn.fit`.
 - **`list_labels`** — a **2D list of labelings** `(n_datasets, n_samples)` with
@@ -303,7 +303,7 @@ _Avoid_: similarity filter (overloaded), redundancy filter (too narrow — cover
 ### Embedding-based feature engineering vocabulary
 
 **EmbeddingPreprocessor**:
-Public core class in `aaanalysis/data_handling/` for protein-language-model (PLM) embeddings, instance-based (`ep = EmbeddingPreprocessor()`). Its primary method `encode` turns raw per-residue embeddings into a `[0, 1]`-normalized [[dict_num]] for `CPP.run_num`; the secondary `build_scales` / `build_cat` pair derives [[pseudo-scale]]s / [[pseudo-category]]s for the scale-based `CPP.run` path. Mirrors the family shape of `StructurePreprocessor` / `AnnotationPreprocessor` (all three: `encode*` → dict_num, then `build_scales` / `build_cat`).
+Public core class in `aaanalysis/data_handling/` for protein-language-model (PLM) embeddings, instance-based (`embp = EmbeddingPreprocessor()`). Its primary method `encode` turns raw per-residue embeddings into a `[0, 1]`-normalized [[dict_num]] for `CPP.run_num`; the secondary `build_scales` / `build_cat` pair derives [[pseudo-scale]]s / [[pseudo-category]]s for the scale-based `CPP.run` path. Mirrors the family shape of `StructurePreprocessor` / `AnnotationPreprocessor` (all three: `encode*` → dict_num, then `build_scales` / `build_cat`).
 _Avoid_: PLMPreprocessor, ESMPreprocessor (too narrow).
 
 **encode** (embedding):
@@ -333,7 +333,7 @@ A canonical string identifier in the `StructurePreprocessor` registry that maps 
 _Avoid_: feature_id (collides with the `df_feat.feature` column), dim_key.
 
 **StructurePreprocessor**:
-Public class in `aaanalysis/data_handling_pro/` that converts PDB / CIF / AlphaFold files (and AF PAE sidecars) into [[dict_num]]-shape per-residue numerical tensors for `CPP.run_num`. Mirrors `EmbeddingPreprocessor`'s instance-based pattern (`stp = StructurePreprocessor()`). Nine public methods: `fetch_alphafold` (bulk download of AF-DB model + PAE files into a folder — see [[fetch_alphafold]]), `get_dssp` (raw DSSP list output), `encode_dssp` (DSSP → dict_num), `encode_pdb` (raw PDB → dict_num, includes AF model-file features), `encode_pae` (AF PAE sidecar → dict_num), `get_domains` (raw domain segmentation via afragmenter/chainsaw), `encode_domains` (domain files → dict_num), `build_scales` (corpus-derived per-AA-mean df_scales), `build_cat` (corpus-free df_cat metadata). The four `encode_*` methods return a **bare `dict_num` by default**; pass `return_df=True` for the `(dict_num, df_seq_out)` form, where `df_seq_out` echoes `df_seq` with a per-row `*_ok` status column. All encoder outputs are normalized to `[0, 1]` per the registry's `NORMALIZATION_RECIPES`; the inverse formulas are documented in the class docstring. `verbose` is constructor-only (no per-call override — see [[preprocessor verb taxonomy]]). Pro-extra gated (biopython; `requests` for `fetch_alphafold`); `msms` is a runtime check inside `encode_pdb(features=['depth'])`.
+Public class in `aaanalysis/data_handling_pro/` that converts PDB / CIF / AlphaFold files (and AF PAE sidecars) into [[dict_num]]-shape per-residue numerical tensors for `CPP.run_num`. Mirrors `EmbeddingPreprocessor`'s instance-based pattern (`strp = StructurePreprocessor()`). Nine public methods: `fetch_alphafold` (bulk download of AF-DB model + PAE files into a folder — see [[fetch_alphafold]]), `get_dssp` (raw DSSP list output), `encode_dssp` (DSSP → dict_num), `encode_pdb` (raw PDB → dict_num, includes AF model-file features), `encode_pae` (AF PAE sidecar → dict_num), `get_domains` (raw domain segmentation via afragmenter/chainsaw), `encode_domains` (domain files → dict_num), `build_scales` (corpus-derived per-AA-mean df_scales), `build_cat` (corpus-free df_cat metadata). The four `encode_*` methods return a **bare `dict_num` by default**; pass `return_df=True` for the `(dict_num, df_seq_out)` form, where `df_seq_out` echoes `df_seq` with a per-row `*_ok` status column. All encoder outputs are normalized to `[0, 1]` per the registry's `NORMALIZATION_RECIPES`; the inverse formulas are documented in the class docstring. `verbose` is constructor-only (no per-call override — see [[preprocessor verb taxonomy]]). Pro-extra gated (biopython; `requests` for `fetch_alphafold`); `msms` is a runtime check inside `encode_pdb(features=['depth'])`.
 _Avoid_: PDBPreprocessor, DSSPPreprocessor (too narrow).
 
 **fetch_alphafold**:
@@ -367,7 +367,7 @@ _Avoid_: calling the `'husl'` rainbow "continuous", calling `'viridis'` "divergi
 ### Annotation-based feature engineering vocabulary
 
 **AnnotationPreprocessor**:
-Public pro-extra class in `aaanalysis/data_handling_pro/` that fetches per-residue PTM / functional-site annotations from UniProt (or ingests user/predictor labels), maps them into the canonical [[df_annot]] schema, and encodes them into `[0, 1]`-normalized per-residue [[dict_num]] tensors for `CPP.run_num`. Mirrors `StructurePreprocessor`'s instance-based pattern (`ap = AnnotationPreprocessor()`): `fetch_uniprot` (UniProt JSON → df_annot), `ingest` (user table → df_annot, open-vocabulary auto-register), `register_feature` (explicit open-vocabulary registration / override), `encode` (df_annot → dict_num; bare `dict_num` by default, `return_df=True` adds a `(dict_num, df_seq_out)` status echo with an `encode_ok` column — mirroring `StructurePreprocessor.encode_*`), `build_scales` (corpus per-AA-mean df_scales), `build_cat` (corpus-free df_cat), and `to_df_seq` (df_annot → df_seq with a `pos` column + an `aa_context` eligibility mask for residue-type-matched `AAWindowSampler` negatives — the seq-mode window-split path). Pro-gated (`requests`).
+Public pro-extra class in `aaanalysis/data_handling_pro/` that fetches per-residue PTM / functional-site annotations from UniProt (or ingests user/predictor labels), maps them into the canonical [[df_annot]] schema, and encodes them into `[0, 1]`-normalized per-residue [[dict_num]] tensors for `CPP.run_num`. Mirrors `StructurePreprocessor`'s instance-based pattern (`annp = AnnotationPreprocessor()`): `fetch_uniprot` (UniProt JSON → df_annot), `ingest` (user table → df_annot, open-vocabulary auto-register), `register_feature` (explicit open-vocabulary registration / override), `encode` (df_annot → dict_num; bare `dict_num` by default, `return_df=True` adds a `(dict_num, df_seq_out)` status echo with an `encode_ok` column — mirroring `StructurePreprocessor.encode_*`), `build_scales` (corpus per-AA-mean df_scales), `build_cat` (corpus-free df_cat), and `to_df_seq` (df_annot → df_seq with a `pos` column + an `aa_context` eligibility mask for residue-type-matched `AAWindowSampler` negatives — the seq-mode window-split path). Pro-gated (`requests`).
 _Avoid_: PTMPreprocessor (too narrow — also handles functional sites), UniProtPreprocessor (also ingests non-UniProt user labels).
 
 **df_annot**:
@@ -505,6 +505,10 @@ _Avoid_: denoising, blurring (attenuates peaks).
 A per-protein **max-score-vs-rank** scatter colored by group (substrate / hold-out / non-substrate) with optional threshold lines — the standard deployed-predictor sanity check. Lives on `AAPredPlot.predict_group(kind="rank_scatter")` (its logic twin is `AAPred`, which produces the per-protein scores it visualizes).
 _Avoid_: the standalone `aa.plot_rank` (removed — folded into `AAPredPlot`); `kind="ranking"` (the per-candidate leaderboard **bars**, a different figure); `CPPPlot.ranking` (ranks *features* from `df_feat`).
 
+**score-grid heatmap**:
+An **arbitrary wide-numeric matrix** rendered as an annotated heatmap with the best (or worst) cell(s) boxed — the generic 2-D parameter-sweep view (e.g. part × scale, n_train × n_dpu). `AAPredPlot.eval(df_eval, kind="heatmap", highlight=...)`; `df_eval` is any rows × cols numeric frame, with no prediction-specific schema required. This is the package's general annotated-matrix renderer; it just lives on `AAPredPlot.eval` rather than under a dedicated top-level name.
+_Avoid_: assuming a standalone `aa.plot_heatmap` exists (it does not — this is the generic matrix surface); `CPPPlot.heatmap` (a CPP **feature** map built from `df_feat`/`df_cat`, not a free matrix); `pipe.plot_eval` / `ap.plot_eval` (a find_features **sweep** grid keyed on named CPP axes such as `list_parts`/`scale`, not an arbitrary matrix).
+
 ### Feature selection vocabulary
 
 **feature selection**:
@@ -586,7 +590,7 @@ The strategy `ShapModel.fit` selects to turn a soft label `p` ∈ (0, 1) into a 
 _Avoid_: fuzzy mode, blend mode, soft-label aggregation.
 
 **CPPStructurePlot**:
-Public **pro** plotting class in `aaanalysis/feature_engineering_pro/` (abbr `csp`) that paints per-residue CPP / CPP-SHAP **feature impact** onto a 3D protein structure. Its single method `map_structure(df_feat, pdb=…|uniprot=…)` maps each feature to the residues it spans (`get_positions_`, shifted to absolute residue numbers by `start`) and aggregates `col_imp` per residue with the **same normalized-sum** `CPPPlot.profile` uses — never a re-implemented per-position loop. It **reuses** the shared CPP position backend and the `StructurePreprocessor` structure parser (no duplication; a thin chain-by-id Cα/pLDDT extractor is the only new structure code). Modes: `"impact"` (white→`COLOR_SHAP_POS`/`COLOR_SHAP_NEG` ramp with a `sign·sqrt` perceptual transform) and `"plddt"` (AlphaFold confidence palette); focus `"whole"`/`"fade"`/`"zoom"`. Returns a [[StructureView]]. The structure-side companion to `CPPPlot` for the **CPP-SHAP analysis** level.
+Public **pro** plotting class in `aaanalysis/feature_engineering_pro/` (abbr `cpps_plot`) that paints per-residue CPP / CPP-SHAP **feature impact** onto a 3D protein structure. Its single method `map_structure(df_feat, pdb=…|uniprot=…)` maps each feature to the residues it spans (`get_positions_`, shifted to absolute residue numbers by `start`) and aggregates `col_imp` per residue with the **same normalized-sum** `CPPPlot.profile` uses — never a re-implemented per-position loop. It **reuses** the shared CPP position backend and the `StructurePreprocessor` structure parser (no duplication; a thin chain-by-id Cα/pLDDT extractor is the only new structure code). Modes: `"impact"` (white→`COLOR_SHAP_POS`/`COLOR_SHAP_NEG` ramp with a `sign·sqrt` perceptual transform) and `"plddt"` (AlphaFold confidence palette); focus `"whole"`/`"fade"`/`"zoom"`. Returns a [[StructureView]]. The structure-side companion to `CPPPlot` for the **CPP-SHAP analysis** level.
 _Avoid_: structure_plot, plot_structure (the verb-noun method is `map_structure`), CPPStructure (it is a plot class, suffix `Plot`).
 
 **StructureView**:
@@ -712,15 +716,15 @@ human- and sklearn-idiomatic convenience is **AAanalysis**. A boundary, like the
 missing. See ADR-0038.
 
 **golden pipeline**:
-A user-facing one-call function in the stateless `aaanalysis.pipe` (`aap`)
+A user-facing one-call function in the stateless `aaanalysis.pipe` (`ap`)
 namespace that chains primitives into a common workflow. Thin (no own algorithm),
 opt-in, defaults **byte-identical** to the explicit primitive path; emits plain
 numpy/pandas (plus a Matplotlib `Axes` when it plots) that feed sklearn and torch
 equally (torch stays the `[embed]` extra). It is **AAanalysis** convenience, not
 ProtXplain. Named `verb_noun` (the only schema), the verb signalling **End** vs
-**Means**. The mpl analogy: `aap` is to the primitives as `pyplot` is to the
+**Means**. The mpl analogy: `ap` is to the primitives as `pyplot` is to the
 `Axes`/`Figure` API. In the user-facing docs the two tiers are named the
-**implicit interface** (`aap`, the golden pipelines) and the **explicit
+**implicit interface** (`ap`, the golden pipelines) and the **explicit
 interface** (`aa`, the building blocks) — the same pyplot-vs-objects split, kept
 verbatim in `docs/source/api.rst` and `getting_started.rst`. See ADR-0040.
 _Avoid_: "verb" / "tool" (those name the ProtXplain agent-integration layer);
@@ -741,7 +745,7 @@ _Avoid_: treating a producer step as an End.
 A step that prepares an **input** for an End (reliable negatives, a reduced scale
 set, sampled windows, embeddings). Exposed as a **flag** on the End it feeds by
 default (`find_features(dpulearn=True, subcategories=…)`); promoted to a standalone
-`aap` producer (`sample_windows`, `embed_sequences`) only on genuine standalone
+`ap` producer (`sample_windows`, `embed_sequences`) only on genuine standalone
 need — never both a flag and a function for the same canonical path.
 _Avoid_: "helper" (overloaded); making every Means a standalone function.
 
@@ -770,7 +774,7 @@ _Avoid_: importance (reserved for per-feature `feat_importance`).
 
 **FigAxResult / `(fig, ax)` contract**:
 The single return shape of every public `*Plot` method (`AAclustPlot`, `CPPPlot`,
-`dPULearnPlot`, `AAMutPlot`, `SeqMutPlot`, `AAlogoPlot`). `FigAxResult` is a thin
+`dPULearnPlot`, `AAMutPlot`, `SeqMutPlot`, `AALogoPlot`). `FigAxResult` is a thin
 `tuple` subclass (`ut.FigAxResult`) that unpacks as `fig, ax = ...` and indexes
 like a 2-tuple, and **also forwards attribute access to `ax`** so legacy
 `ax = ...; ax.set_title(...)` still works — the proxy that lets the unification
