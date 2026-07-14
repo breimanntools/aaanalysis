@@ -67,4 +67,5 @@ Regenerate this table with:
 | [0057](0057-v2-api-naming-and-future-xai-layer.md) | v2 API naming system and the future XAI `*Explainer` layer | Accepted | 2026-07-12 |  |
 | [0058](0058-aapred-eval-pooled-cv-splitter.md) | `AAPred.eval` accepts a custom CV splitter and scores it by pooled out-of-fold prediction | Accepted | 2026-07-12 |  |
 | [0059](0059-aapred-predict-oof-scores.md) | AAPred.predict_oof: cross-validated out-of-fold scores for the training set | Accepted | 2026-07-12 |  |
+| [0060](0060-packaging-install-from-wheel-gate.md) | Packaging gate: ship the sdist sources, build wheel + sdist, install from both, import the public API | Accepted | 2026-07-14 |  |
 <!-- ADR-INDEX:END -->

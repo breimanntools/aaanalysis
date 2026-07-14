@@ -1,0 +1,11 @@
+# Ship the Cython sources into the sdist so a source install can rebuild the
+# compiled extension. Without this the sdist omits `_filters_c/_inner.pyx`, so
+# the default `python -m build` (wheel-from-sdist) and `pip install <sdist>`
+# both fail to cythonize. The wheel carries the precompiled `.so` and needs
+# none of these; only the sdist does. The generated `_inner.c` rides along
+# automatically as the cythonized extension source. See docs/adr/0060-*.md.
+#
+# There are no `.pxd` files today; add `*.pxd` here alongside `*.pyx` if a
+# Cython declaration file is ever introduced (setuptools warns on a glob that
+# matches nothing, so it is not listed pre-emptively).
+recursive-include aaanalysis *.pyx
