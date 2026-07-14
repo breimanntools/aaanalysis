@@ -151,7 +151,11 @@ def load_dataset(name: str = "Overview",
     """
     Load protein benchmarking datasets.
 
-    The benchmarks are categorized into amino acid ('AA'), domain ('DOM'), and sequence ('SEQ') level datasets.
+    The benchmarks are grouped by the package's three **prediction levels**, encoded in the dataset
+    name prefix: residue level (``'AA_*'``), domain level (``'DOM_*'``), and protein / sequence level
+    (``'SEQ_*'``). These are the same three levels scored by :meth:`~aaanalysis.AAPred.predict` via its
+    ``level`` argument — ``AA_`` ↔ ``level='window'`` (residues are represented as windows), ``DOM_``
+    ↔ ``level='domain'``, and ``SEQ_`` ↔ ``level='sequence'`` (a whole sequence, typically a protein).
     By default, an overview table is provided (``name='Overview'``). For in-depth details, refer to [Breimann24a]_.
 
     .. versionadded:: 0.1.0
@@ -209,9 +213,9 @@ def load_dataset(name: str = "Overview",
     -----
     Available datasets (pass as ``name``), grouped by level:
 
-    * Amino acid level (``'AA_*'``): 'AA_CASPASE3', 'AA_FURIN', 'AA_LDR',
+    * Residue level (``'AA_*'``, amino-acid windows): 'AA_CASPASE3', 'AA_FURIN', 'AA_LDR',
       'AA_MMP2', 'AA_RNABIND', 'AA_SA'.
-    * Sequence level (``'SEQ_*'``): 'SEQ_AMYLO', 'SEQ_CAPSID', 'SEQ_DISULFIDE',
+    * Protein / sequence level (``'SEQ_*'``): 'SEQ_AMYLO', 'SEQ_CAPSID', 'SEQ_DISULFIDE',
       'SEQ_LOCATION', 'SEQ_SOLUBLE', 'SEQ_TAIL'.
     * Domain level (``'DOM_*'``): 'DOM_GSEC', 'DOM_GSEC_PU'.
 
@@ -238,6 +242,8 @@ def load_dataset(name: str = "Overview",
     --------
     * Overview of all benchmarks in :ref:`t1_overview_benchmarks`.
     * Step-by-step guide in the `Data Loading Tutorial <tutorial2a_data_loader.html>`_.
+    * :meth:`~aaanalysis.AAPred.predict` — scores raw sequences at these same three prediction levels
+      (``AA_`` → ``level='window'``, ``DOM_`` → ``level='domain'``, ``SEQ_`` → ``level='sequence'``).
 
     Examples
     --------

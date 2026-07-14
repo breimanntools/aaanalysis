@@ -634,13 +634,18 @@ class AAPred(Wrapper):
         """
         Predict from raw sequences at a chosen level: whole protein, domain, or residue window.
 
-        One predictor for all three granularities, selected with ``level``:
+        One predictor for all three **prediction levels**, selected with ``level``. These are the
+        package's prediction-level taxonomy: the ``AA_`` / ``DOM_`` / ``SEQ_`` dataset prefixes of
+        :func:`~aaanalysis.load_dataset` map 1:1 to them.
 
-        * ``'sequence'`` — one score per protein (sequence level).
-        * ``'domain'`` — a boundary-sensitivity scan: the TMD boundaries are shifted by every
-          offset in ``[-window, +window]`` and each shifted definition is featurized and scored.
-        * ``'window'`` — a per-residue profile: a length-``tmd_len`` window is slid along each
-          sequence (spaced by ``step``) and scored at every valid position.
+        * ``'sequence'`` — **protein level** (``SEQ_*`` datasets): one score per whole sequence.
+          "Sequence" is the general term — a full amino-acid chain, typically a protein.
+        * ``'domain'`` — **domain level** (``DOM_*`` datasets): a boundary-sensitivity scan; the TMD
+          boundaries are shifted by every offset in ``[-window, +window]`` and each shifted definition
+          is featurized and scored.
+        * ``'window'`` — **residue level** (``AA_*`` datasets): a per-residue profile; each residue is
+          represented by a length-``tmd_len`` window slid along the sequence (spaced by ``step``) and
+          scored at every valid position.
 
         Each level featurizes with the bound ``df_feat`` and averages the fitted-model ensemble.
         When ``threshold`` is given, a ``predicted_label`` column is added (score at or above the
@@ -658,7 +663,9 @@ class AAPred(Wrapper):
             DataFrame containing an ``entry`` column of unique protein identifiers and a
             ``sequence`` column; ``level='domain'`` additionally needs ``tmd_start`` / ``tmd_stop``.
         level : str, default="sequence"
-            Prediction granularity: ``'sequence'``, ``'domain'``, or ``'window'``.
+            Prediction level (see :func:`~aaanalysis.load_dataset` for the matching dataset prefixes):
+            ``'sequence'`` = protein / whole-sequence level (``SEQ_*``), ``'domain'`` = domain level
+            (``DOM_*``), ``'window'`` = residue level (``AA_*``, residues represented as windows).
         threshold : int or float, optional
             If given (in ``[0, 1]``), add a ``predicted_label`` column (score ``>= threshold`` ->
             ``label_pos``, else the negative class). ``None`` (default) returns scores only.
@@ -687,6 +694,9 @@ class AAPred(Wrapper):
         See Also
         --------
         * :meth:`AAPred.eval` for cross-validated model evaluation (``df_eval``).
+        * :func:`~aaanalysis.load_dataset` — benchmark datasets grouped by the same three prediction
+          levels (``AA_`` = residue → ``level='window'``, ``DOM_`` = domain → ``level='domain'``,
+          ``SEQ_`` = protein → ``level='sequence'``).
 
         Examples
         --------
