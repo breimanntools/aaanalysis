@@ -232,6 +232,13 @@ Added
   :meth:`~aaanalysis.AAPred.predict` (mean over the ensemble, std across models). Like
   :meth:`~aaanalysis.AAPred.eval` it cross-validates the constructor models and needs no prior
   :meth:`~aaanalysis.AAPred.fit`; deterministic under ``random_state``.
+- :meth:`~aaanalysis.AAPred.score_to_group`: New stateless staticmethod mapping prediction scores
+  to an **ordered categorical** of named confidence bands (``thresholds`` delimit the bands,
+  ``labels`` names them low-to-high; each threshold is an inclusive lower bound). ``score_range``
+  (``'percent'`` / ``'proba'``) bounds the thresholds so probabilities and percentages can't be
+  silently mixed; ``NaN`` scores stay missing and a ``pd.Series`` input keeps its index. It is the
+  single source of truth for the band boundaries used by
+  :meth:`~aaanalysis.AAPredPlot.predict_group` (``band=True``), so a table and its plot always agree.
 - :meth:`~aaanalysis.AAPredPlot.eval`: New ``kind='heatmap'`` that renders any 2D score grid
   (rows x columns are the two sweep axes) as a square annotated heatmap and boxes the best cell(s)
   with a full-cell frame — ``highlight`` selects how many (a positive int for the top-N,

@@ -508,6 +508,9 @@ _Avoid_: the standalone `aa.plot_rank` (removed — folded into `AAPredPlot`); `
 **score-grid heatmap**:
 An **arbitrary wide-numeric matrix** rendered as an annotated heatmap with the best (or worst) cell(s) boxed — the generic 2-D parameter-sweep view (e.g. part × scale, n_train × n_dpu). `AAPredPlot.eval(df_eval, kind="heatmap", highlight=...)`; `df_eval` is any rows × cols numeric frame, with no prediction-specific schema required. This is the package's general annotated-matrix renderer; it just lives on `AAPredPlot.eval` rather than under a dedicated top-level name.
 _Avoid_: assuming a standalone `aa.plot_heatmap` exists (it does not — this is the generic matrix surface); `CPPPlot.heatmap` (a CPP **feature** map built from `df_feat`/`df_cat`, not a free matrix); `pipe.plot_eval` / `ap.plot_eval` (a find_features **sweep** grid keyed on named CPP axes such as `list_parts`/`scale`, not an arbitrary matrix).
+**confidence group** (score band):
+An **ordered categorical** mapping of per-sample prediction scores into named bands delimited by sorted `thresholds` — each an *inclusive lower bound* (right-open bands `[t_{i-1}, t_i)`) — with one more low-to-high `label` than thresholds. The stateless `AAPred.score_to_group(scores, thresholds, labels, score_range)` is the single source of truth for these boundaries; `AAPredPlot.predict_group(band=True)` colours by the same rule. `score_range` (`percent`/`proba`) bounds the thresholds so probabilities and percentages can't be silently mixed; `NaN` scores stay missing.
+_Avoid_: confusing it with [bootstrap CI] (a score *interval*, not a grouping); "class label" (that is `predict(threshold=)`'s binary output).
 
 ### Feature selection vocabulary
 

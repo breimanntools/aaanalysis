@@ -14,6 +14,7 @@ from ._backend.aa_pred.aa_pred_plot_comparison import plot_comparison_
 from ._backend.aa_pred.aa_pred_plot_ranking import plot_ranking_, ranking_figheight
 from ._backend.aa_pred.aa_pred_plot_rank_scatter import plot_rank_scatter_
 from ._backend.aa_pred.aa_pred_plot_clustermap import plot_clustermap_
+from ._backend.aa_pred.aa_pred_group import assign_band_index
 
 
 # I Helper Functions
@@ -73,8 +74,12 @@ def _resolve_band_colors(band_colors, cmap, n_bands):
 
 
 def _band_index(left_edge, sorted_thresholds):
-    """Band index (0-based, low -> high) of a bar whose left edge is ``left_edge``."""
-    return int(np.searchsorted(sorted_thresholds, left_edge, side="right"))
+    """Band index (0-based, low -> high) of a bar whose left edge is ``left_edge``.
+
+    Delegates to the shared ``assign_band_index`` kernel so the histogram banding and
+    :meth:`AAPred.score_to_group` use one boundary convention (thresholds as inclusive lower bounds).
+    """
+    return int(assign_band_index(left_edge, sorted_thresholds))
 
 
 def _check_highlight_cells(highlight, data):
