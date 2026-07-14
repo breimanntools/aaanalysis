@@ -173,6 +173,35 @@ class TestSampleGoldenHeatmap:
         assert png_a == png_b
 
 
+class TestSampleNameResolution:
+    """sample_kws['sample'] resolves a protein 'name' (df_seq column) to its entry-keyed impact column."""
+
+    @staticmethod
+    def _df_seq_named():
+        d = DF_SEQ.copy()
+        d["name"] = ["prot_" + e for e in d["entry"]]
+        return d
+
+    def test_name_equals_entry(self):
+        # sample given as the 'name'-column value maps to the same entry -> byte-identical figure
+        cpp = aa.CPPPlot(verbose=False)
+        df_feat = _df_feat()
+        skw_name = dict(sample="prot_" + ACC, df_seq=self._df_seq_named(), df_parts=DF_PARTS)
+        fig_a, _ = cpp.feature_map(df_feat=df_feat, sample_kws=SKW)
+        png_a = _png(fig_a)
+        plt.close("all")
+        fig_b, _ = cpp.feature_map(df_feat=df_feat, sample_kws=skw_name)
+        png_b = _png(fig_b)
+        plt.close("all")
+        assert png_a == png_b
+
+    def test_unknown_name_raises(self):
+        cpp = aa.CPPPlot(verbose=False)
+        with pytest.raises(ValueError, match="neither an 'entry'"):
+            cpp.feature_map(df_feat=_df_feat(),
+                            sample_kws=dict(sample="prot_UNKNOWN", df_seq=self._df_seq_named(), df_parts=DF_PARTS))
+
+
 class TestSampleErrors:
     """Negative cases for the sample shortcut."""
 

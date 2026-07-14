@@ -155,10 +155,12 @@ Added
 - **``sample_kws`` bundle on CPPPlot plots**: :meth:`~aaanalysis.CPPPlot.feature_map`,
   :meth:`~aaanalysis.CPPPlot.heatmap`, and :meth:`~aaanalysis.CPPPlot.profile` take a structured
   ``sample_kws=dict(sample, df_seq, df_parts)`` — the bundled alternative to providing the TMD-JMD
-  sequences directly. ``sample`` accepts an entry name / id / accession (``str``) or a row position
-  (``int``); it resolves that sample's sequence band (and, for the SHAP variants, the per-sample
-  ``feat_impact`` column) from ``df_parts`` and **overrides** any explicitly passed ``tmd_seq`` /
-  ``jmd_n_seq`` / ``jmd_c_seq``. The displayed sequence stays faithful to the ``df_parts`` the features
+  sequences directly. ``sample`` accepts an ``entry`` name or a value from the optional ``name`` column
+  of ``df_seq`` (``str``), or a row position (``int``); a ``name`` is resolved to its ``entry``, and a
+  selector that matches nothing or is ambiguous (a duplicated ``entry`` or a ``name`` shared by several
+  entries) raises a ``ValueError``. It resolves that sample's sequence band (and, for the SHAP variants,
+  the per-sample ``feat_impact`` column) from ``df_parts`` and **overrides** any explicitly passed
+  ``tmd_seq`` / ``jmd_n_seq`` / ``jmd_c_seq``. The displayed sequence stays faithful to the ``df_parts`` the features
   map to, so its own lengths set the grid geometry (``tmd_len`` / ``jmd_n_len`` / ``jmd_c_len`` apply
   only when no sequence is shown). See the keyword-dict parameters overview in the docstring guide.
 - :meth:`~aaanalysis.SequenceFeature.get_feature_descriptions`: One standardized, human-readable

@@ -4,6 +4,7 @@ import numpy as np
 from hypothesis import given, settings
 import hypothesis.strategies as some
 import aaanalysis as aa
+from aaanalysis.feature_engineering._sequence_feature import resolve_sample_entry
 import pytest
 
 # Set default deadline
@@ -157,3 +158,61 @@ class TestGetSeqKwsComplex:
         df_seq_parts.loc[0, "tmd"] = "AAAAAAAAAA"
         with pytest.raises(ValueError, match="do not match"):
             sf.get_seq_kws(df_seq=df_seq_parts, df_parts=_df_parts(["jmd_n", "tmd", "jmd_c"]), sample=0)
+
+
+class TestGetSeqKwsNameResolution:
+    """Resolve 'sample' by the optional 'name' column, with existence + uniqueness guards."""
+
+    @staticmethod
+    def _df_seq_named():
+        d = df_seq.copy()
+        d["name"] = ["prot_" + e for e in d["entry"]]
+        return d
+
+    def test_resolve_by_name_matches_entry(self):
+        """A 'name'-column value resolves to the same parts as its entry / position."""
+        sf = aa.SequenceFeature(verbose=False)
+        d, dp = self._df_seq_named(), _df_parts()
+        for pos, entry in enumerate(ENTRIES):
+            by_name = sf.get_seq_kws(df_seq=d, df_parts=dp, sample="prot_" + entry)
+            assert by_name == sf.get_seq_kws(df_seq=d, df_parts=dp, sample=entry) == _manual_parts(pos)
+
+    def test_resolve_sample_entry_by_name(self):
+        d = self._df_seq_named()
+        assert resolve_sample_entry(df_seq=d, df_parts=_df_parts(), sample="prot_" + ENTRIES[2]) == ENTRIES[2]
+
+    def test_entry_takes_precedence_over_name(self):
+        """A string that is a valid entry resolves as the entry even when a 'name' column exists."""
+        d = self._df_seq_named()
+        assert resolve_sample_entry(df_seq=d, df_parts=_df_parts(), sample=ENTRIES[1]) == ENTRIES[1]
+
+    def test_unknown_name_raises(self):
+        sf = aa.SequenceFeature(verbose=False)
+        with pytest.raises(ValueError, match="neither an 'entry'"):
+            sf.get_seq_kws(df_seq=self._df_seq_named(), df_parts=_df_parts(), sample="prot_UNKNOWN")
+
+    def test_unknown_string_without_name_column_raises(self):
+        """Without a 'name' column, a non-entry string still raises (entry-only path)."""
+        sf = aa.SequenceFeature(verbose=False)
+        with pytest.raises(ValueError, match="neither an 'entry'"):
+            sf.get_seq_kws(df_seq=df_seq, df_parts=_df_parts(), sample="prot_" + ENTRIES[0])
+
+    def test_ambiguous_name_raises(self):
+        """A 'name' shared by several entries is ambiguous -> ValueError."""
+        sf = aa.SequenceFeature(verbose=False)
+        d = df_seq.copy()
+        d["name"] = ["dup"] * len(d)
+        with pytest.raises(ValueError, match="not unique"):
+            sf.get_seq_kws(df_seq=d, df_parts=_df_parts(), sample="dup")
+
+    def test_duplicate_entry_index_raises(self):
+        """An entry that occurs twice in the df_parts index is ambiguous -> ValueError."""
+        sf = aa.SequenceFeature(verbose=False)
+        dp_dup = pd.concat([_df_parts(), _df_parts().iloc[[0]]])
+        with pytest.raises(ValueError, match="not unique"):
+            sf.get_seq_kws(df_seq=df_seq, df_parts=dp_dup, sample=ENTRIES[0])
+
+    def test_int_position_still_works_with_name_column(self):
+        """A row position keeps resolving positionally regardless of the 'name' column."""
+        sf = aa.SequenceFeature(verbose=False)
+        assert sf.get_seq_kws(df_seq=self._df_seq_named(), df_parts=_df_parts(), sample=1) == _manual_parts(1)
