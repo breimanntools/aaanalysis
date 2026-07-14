@@ -283,18 +283,38 @@ class TestDomainIoBranches:
 
 
 class TestEncodePdbDepthNoMsms:
-    """encode_pdb 'depth' dispatch: msms unavailable -> RuntimeError path
-    (the _extras.check_msms_available raise + the L1016 dispatch arm)."""
+    """encode_pdb 'depth' dispatch when msms is unavailable (issue #340).
 
-    def test_depth_raises_when_msms_missing(self):
-        if shutil.which("msms") is not None:
-            pytest.skip("msms present; this exercises the missing-tool arm")
+    Default on_failure='nan' isolates 'depth' to its own NaN column and keeps
+    the other features; on_failure='raise' still raises with an install hint.
+    msms is mocked absent so the behavior is deterministic in any environment.
+    """
+
+    _MODULE = "aaanalysis.data_handling_pro._struct_preproc"
+
+    def test_depth_isolated_when_msms_missing(self):
         td = tempfile.TemporaryDirectory()
         shutil.copy(PDB_FIXTURES / "AF_TINY.pdb", Path(td.name) / "AF_TINY.pdb")
         strp = aa.StructurePreprocessor(verbose=False)
-        with pytest.raises(RuntimeError, match="msms"):
-            strp.encode_pdb(df_seq=_df_af(), pdb_folder=td.name,
-                           features=["depth"])
+        with patch(f"{self._MODULE}.is_msms_available", return_value=False):
+            with warnings.catch_warnings(record=True) as w:
+                warnings.simplefilter("always")
+                d = strp.encode_pdb(df_seq=_df_af(), pdb_folder=td.name,
+                                   features=["bfactor", "depth"])
+        assert not np.isnan(d["AF_TINY"][:, 0]).all()   # bfactor kept
+        assert np.isnan(d["AF_TINY"][:, 1]).all()       # depth isolated
+        assert sum("depth" in str(x.message) and "msms" in str(x.message)
+                   for x in w) == 1
+        td.cleanup()
+
+    def test_depth_raises_when_msms_missing_and_on_failure_raise(self):
+        td = tempfile.TemporaryDirectory()
+        shutil.copy(PDB_FIXTURES / "AF_TINY.pdb", Path(td.name) / "AF_TINY.pdb")
+        strp = aa.StructurePreprocessor(verbose=False)
+        with patch(f"{self._MODULE}.is_msms_available", return_value=False):
+            with pytest.raises(RuntimeError, match="msms"):
+                strp.encode_pdb(df_seq=_df_af(), pdb_folder=td.name,
+                               features=["depth"], on_failure="raise")
         td.cleanup()
 
 

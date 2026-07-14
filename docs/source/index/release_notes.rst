@@ -29,8 +29,14 @@ Added
   new ``[embed]`` extra isolates the heavy ``torch`` / ``transformers`` dependencies.
 - :class:`~aaanalysis.StructurePreprocessor` (``[pro]``): Converts PDB / CIF / AlphaFold files (and PAE
   sidecars) into ``[0, 1]``-normalized per-residue tensors (``get_dssp``, ``encode_dssp``,
-  ``encode_pdb``, ``encode_pae``, ``get_domains``, ``encode_domains``, ``build_scales``,
-  ``build_cat``).
+  ``encode_pdb``, ``encode_pae``, ``get_domains``, ``encode_domains``, ``encode``,
+  ``build_scales``, ``build_cat``). ``encode`` is a single feature/backend router that
+  dispatches each requested feature key to its owning encoder and merges the outputs into
+  one ``dict_num``, so callers no longer need to know the DSSP / PDB / PAE / domain split.
+  Failure isolation is **per-feature**: an unavailable feature (e.g. ``depth`` without the
+  external ``msms`` binary) or a per-entry encoder error now fills only that feature's
+  column(s) with NaN, keeps every other feature, and emits one actionable ``UserWarning``
+  — instead of NaN-ing the whole protein (``on_failure='raise'`` still raises).
 - :class:`~aaanalysis.AnnotationPreprocessor` (``[pro]``): Fetches UniProt (or ingests user / predictor)
   per-residue PTM and functional-site annotations and encodes them into tensors
   (``fetch_uniprot``, ``ingest``, ``register_feature``, ``encode``, ``build_scales``,
