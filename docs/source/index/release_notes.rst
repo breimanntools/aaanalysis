@@ -418,6 +418,13 @@ Added
   Public, named constants for the canonical sample-group colors (positive / negative /
   unlabeled / reliable-negative). They equal the ``plot_get_cdict("DICT_COLOR")["SAMPLES_*"]``
   values exactly, so a named constant replaces indexing the color dict by string key.
+- **options['plot_settings']**: Opt-in, session-persistent :func:`~aaanalysis.plot_settings`.
+  Assign a dict of :func:`~aaanalysis.plot_settings` keyword arguments (e.g.
+  ``aa.options['plot_settings'] = {'font_scale': 1.2, 'weight_bold': True}``) and every subsequent
+  ``*Plot`` figure adopts the publication style automatically, so :func:`~aaanalysis.plot_settings`
+  need not be repeated before each plot. The default (``None``) applies no implicit styling and keeps
+  plot output byte-identical; the style is (re)applied only when the option's value changes, so an
+  explicit :func:`~aaanalysis.plot_settings` call takes precedence for the figures drawn after it.
 
 **Golden Pipelines**
 
