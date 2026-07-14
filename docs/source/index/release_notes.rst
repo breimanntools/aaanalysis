@@ -409,6 +409,12 @@ Added
   carries the publication eval figures (``ax.eval``) and ``df_eval`` has one
   ``<metric>_mean``/``_std`` column per metric plus ``stage`` / ``is_pareto`` / ``rank``
   / ``is_selected``.
+- **ap.explain_features**: New opt-in ``add_sample_mean_dif`` (+ ``label_ref``) that enriches the
+  returned ``df_feat`` with per-sample **mean-difference** columns ``mean_dif_'name'`` (each explained
+  sample's feature value minus the ``label_ref`` group average) alongside the SHAP
+  ``feat_impact_'name'`` columns, for the same sample(s) — reusing :meth:`~aaanalysis.ShapModel.add_sample_mean_dif`
+  so compute stays separate from plotting. Default ``add_sample_mean_dif=False`` leaves the output
+  unchanged.
 - **ap.predict_samples**: Trains and cross-validates every ``(feature set × model)`` combination
   over one ``df_seq`` in a single call, returning the refit predictors and a tidy comparison table.
   With ``plot=True`` (the default) it now also draws the **model comparison** bar plot (hue = model,
