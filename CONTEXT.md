@@ -507,7 +507,7 @@ _Avoid_: the standalone `aa.plot_rank` (removed — folded into `AAPredPlot`); `
 
 **score-grid heatmap**:
 An **arbitrary wide-numeric matrix** rendered as an annotated heatmap with the best (or worst) cell(s) boxed — the generic 2-D parameter-sweep view (e.g. part × scale, n_train × n_dpu). `AAPredPlot.eval(df_eval, kind="heatmap", highlight=...)`; `df_eval` is any rows × cols numeric frame, with no prediction-specific schema required. This is the package's general annotated-matrix renderer; it just lives on `AAPredPlot.eval` rather than under a dedicated top-level name.
-_Avoid_: assuming a standalone `aa.plot_heatmap` exists (it does not — this is the generic matrix surface); `CPPPlot.heatmap` (a CPP **feature** map built from `df_feat`/`df_cat`, not a free matrix); `pipe.plot_eval` / `aap.plot_eval` (a find_features **sweep** grid keyed on named CPP axes such as `list_parts`/`scale`, not an arbitrary matrix).
+_Avoid_: assuming a standalone `aa.plot_heatmap` exists (it does not — this is the generic matrix surface); `CPPPlot.heatmap` (a CPP **feature** map built from `df_feat`/`df_cat`, not a free matrix); `pipe.plot_eval` / `ap.plot_eval` (a find_features **sweep** grid keyed on named CPP axes such as `list_parts`/`scale`, not an arbitrary matrix).
 
 ### Feature selection vocabulary
 
@@ -716,15 +716,15 @@ human- and sklearn-idiomatic convenience is **AAanalysis**. A boundary, like the
 missing. See ADR-0038.
 
 **golden pipeline**:
-A user-facing one-call function in the stateless `aaanalysis.pipe` (`aap`)
+A user-facing one-call function in the stateless `aaanalysis.pipe` (`ap`)
 namespace that chains primitives into a common workflow. Thin (no own algorithm),
 opt-in, defaults **byte-identical** to the explicit primitive path; emits plain
 numpy/pandas (plus a Matplotlib `Axes` when it plots) that feed sklearn and torch
 equally (torch stays the `[embed]` extra). It is **AAanalysis** convenience, not
 ProtXplain. Named `verb_noun` (the only schema), the verb signalling **End** vs
-**Means**. The mpl analogy: `aap` is to the primitives as `pyplot` is to the
+**Means**. The mpl analogy: `ap` is to the primitives as `pyplot` is to the
 `Axes`/`Figure` API. In the user-facing docs the two tiers are named the
-**implicit interface** (`aap`, the golden pipelines) and the **explicit
+**implicit interface** (`ap`, the golden pipelines) and the **explicit
 interface** (`aa`, the building blocks) — the same pyplot-vs-objects split, kept
 verbatim in `docs/source/api.rst` and `getting_started.rst`. See ADR-0040.
 _Avoid_: "verb" / "tool" (those name the ProtXplain agent-integration layer);
@@ -745,7 +745,7 @@ _Avoid_: treating a producer step as an End.
 A step that prepares an **input** for an End (reliable negatives, a reduced scale
 set, sampled windows, embeddings). Exposed as a **flag** on the End it feeds by
 default (`find_features(dpulearn=True, subcategories=…)`); promoted to a standalone
-`aap` producer (`sample_windows`, `embed_sequences`) only on genuine standalone
+`ap` producer (`sample_windows`, `embed_sequences`) only on genuine standalone
 need — never both a flag and a function for the same canonical path.
 _Avoid_: "helper" (overloaded); making every Means a standalone function.
 
