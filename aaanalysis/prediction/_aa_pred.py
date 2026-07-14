@@ -204,6 +204,12 @@ class AAPred(Wrapper):
     kept for deployment. It intentionally does **not** perform hyperparameter optimization —
     pass configured estimators and it evaluates and deploys them.
 
+    .. warning::
+
+        **Experimental.** This class is part of the new v1.1.0 prediction layer and is under active
+        development; its API (signatures, defaults, return objects) may change between minor releases
+        without the usual deprecation cycle. Pin a version if you depend on the current behaviour.
+
     .. versionadded:: 1.1.0
 
     Notes
