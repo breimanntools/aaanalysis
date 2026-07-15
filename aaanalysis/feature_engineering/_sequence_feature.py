@@ -28,6 +28,7 @@ from ._backend.cpp.utils_feature import (get_df_parts_,
                                          get_df_pos_, get_df_pos_parts_)
 from ._backend.cpp.sequence_feature import (get_split_kws_, get_features_, get_feature_names_,
                                             get_feature_descriptions_, get_df_feat_, get_scale_composition_,
+                                            get_acc_,
                                             get_aa_composition_, get_dipeptide_composition_, get_kmer_composition_,
                                             get_composition_scales_,
                                             get_labels_ovr_, get_labels_ovo_, get_labels_quantile_,
@@ -1289,6 +1290,124 @@ class SequenceFeature:
         if return_scales:
             df_scales, df_cat = get_composition_scales_(k=k)
             return X, df_scales, df_cat
+        return X
+
+    def acc(self,
+            df_seq: pd.DataFrame,
+            df_scales: Optional[pd.DataFrame] = None,
+            list_parts: Optional[Union[str, List[str]]] = None,
+            n_lag: int = 1,
+            return_df: bool = False,
+            ) -> Union[ut.ArrayLike2D, pd.DataFrame]:
+        """
+        Create the scale auto-covariance (ACC) baseline matrix for given sequences and scales.
+
+        Builds the no-positional-split, **order-aware scale baseline** featurization: for each
+        sequence the requested Parts are concatenated into one span and, for every scale and lag
+        ``k`` (``1 .. n_lag``), the mean-centered auto-covariance of that scale's values along the
+        span is computed, yielding the ``(n_seq, n_scales * n_lag)`` matrix ``X``. Unlike
+        :meth:`SequenceFeature.scale_composition`, which reduces each scale to a single span mean
+        (an order-blind average), this method measures how each scale's value at one residue
+        co-varies with its value ``k`` residues later — the lag extension of ``scale_composition``
+        that keeps short-range sequential order in scale-space while staying position-agnostic.
+
+        **Application.** Use this as the **order-aware, non-positional baseline** in a "baseline vs
+        CPP" comparison: it is the natural middle point between :meth:`scale_composition` (an
+        order-blind scale mean) and :class:`CPP` (fully positional Part-Split-Scale features). Fit
+        the same classifier on this ACC ``X`` and on a :class:`CPP` :meth:`feature_matrix` to show
+        how much CPP's positional features add over a plain lag-covariance encoding. It is *not* a
+        positional feature set — reach for :class:`CPP` when you need where-along-the-sequence
+        information. This is the scale-covariance analogue of the auto-cross-covariance (ACC)
+        descriptors used by sequence-featurization tools such as iFeature / PROFEAT [Chen18]_.
+
+        **Definition.** For a span with per-position scale matrix ``S`` (shape ``L_span x
+        n_scales``) restricted to the residues present in ``df_scales.index``, let ``mean_j`` be the
+        mean of column ``j`` over the ``N`` scored residues. For lag ``k``,
+        ``AC(j, k) = sum_{i=1}^{N-k} (S[i, j] - mean_j) * (S[i + k, j] - mean_j) / (N - k)``. If
+        ``N - k < 1`` for a given lag (span too short), that lag's entries are ``NaN``.
+
+        **Scale basis.** Only the **auto-covariance** (each scale with itself at lag ``k``) over the
+        **full default** ``df_scales`` is computed — no cross-covariance between different scales
+        and no scale-set swap. This is the clean lag extension of :meth:`scale_composition` (same
+        default scales, span, and NaN handling), giving ``n_scales * n_lag`` columns; the full
+        cross-covariance would be ``n_scales * (n_scales - 1) * n_lag`` columns and is intentionally
+        out of scope.
+
+        .. versionadded:: 1.1.0
+
+        Parameters
+        ----------
+        df_seq : pd.DataFrame, shape (n_samples, n_seq_info)
+            DataFrame containing an ``entry`` column with unique protein identifiers and sequence information
+            in a distinct format: **Position-based**, **Part-based**, **Sequence-based**, or **Sequence-TMD-based**
+            (the same input accepted by :meth:`SequenceFeature.get_df_parts`).
+        df_scales : pd.DataFrame, shape (n_letters, n_scales), optional
+            DataFrame of scales with letters (amino acids) as index. Default from :meth:`load_scales`
+            unless specified in ``options['df_scales']``. The index defines which residues are scored;
+            residues absent from it are dropped before the covariance is taken.
+        list_parts : str or list of str, optional
+            Names of the sequence parts to cover (see :class:`SequenceFeature` for valid parts).
+            If ``None`` (default), the whole TMD-JMD span ``jmd_n`` + ``tmd`` + ``jmd_c`` (the ``tmd_jmd``
+            part) is used. Multiple parts are concatenated per sequence before the covariance is taken.
+        n_lag : int, default=1
+            Number of lags (``>= 1``). Lags ``1 .. n_lag`` are computed; the output has
+            ``n_scales * n_lag`` columns in lag-major order (all scales for lag 1, then all scales for
+            lag 2, ...). Larger lags need longer spans (lag ``k`` needs at least ``k + 1`` scored residues).
+        return_df : bool, default=False
+            If ``True``, return a labeled ``pd.DataFrame`` (rows indexed like ``df_parts``, one column per
+            scale-and-lag named ``f"{scale}_lag{k}"``) instead of a plain numpy array.
+
+        Returns
+        -------
+        X : array-like, shape (n_samples, n_scales * n_lag)
+            Scale auto-covariance matrix containing, per sequence, the lag-``1 .. n_lag`` mean-centered
+            auto-covariance of each scale over the span residues (lag-major column order). Returned as a
+            ``pd.DataFrame`` (``f"{scale}_lag{k}"`` columns) when ``return_df=True``.
+
+        Notes
+        -----
+        * **Missing / non-canonical residues**: a residue is used only if it is an index label of
+          ``df_scales``. Gap symbols (``'-'``) and any other non-canonical symbol (e.g. ``'X'``) are
+          dropped **before** the covariance per the package convention, so the scored residues form one
+          contiguous chain and a lag-``k`` pair spans over a dropped residue rather than being broken by it.
+        * A lag ``k`` whose span has fewer than ``k + 1`` scored residues (``N - k < 1``) has its columns
+          filled with ``NaN``; a span with fewer than two scored residues (too short for lag 1) is an
+          all-``NaN`` row, and a ``UserWarning`` naming the count is emitted when ``verbose=True``.
+        * This is a no-positional-split covariance only; positional splits remain the job of :class:`CPP`.
+
+        See Also
+        --------
+        * :meth:`SequenceFeature.scale_composition` for the order-blind scale-average baseline (lag-0 mean).
+        * :meth:`SequenceFeature.dipeptide_composition` for the order-aware residue-frequency (DPC) baseline.
+        * :meth:`SequenceFeature.feature_matrix` for the positional Part-Split-Scale feature matrix.
+
+        Examples
+        --------
+        .. include:: examples/sf_acc.rst
+        """
+        # Load defaults
+        if df_scales is None:
+            df_scales = ut.load_default_scales()
+        # Check input
+        ut.check_df_seq(df_seq=df_seq)
+        check_df_scales(df_scales=df_scales)
+        ut.check_number_range(name="n_lag", val=n_lag, min_val=1, just_int=True)
+        ut.check_bool(name="return_df", val=return_df)
+        list_parts = ut.check_list_parts(list_parts=list_parts, return_default=False, accept_none=True)
+        n_lag = int(n_lag)
+        # Resolve parts: None -> whole TMD-JMD span (jmd_n + tmd + jmd_c, the "tmd_jmd" part)
+        list_parts_used = ["tmd_jmd"] if list_parts is None else list_parts
+        # Build the sequence parts and the auto-covariance matrix
+        df_parts = self.get_df_parts(df_seq=df_seq, list_parts=list_parts_used)
+        X, n_kept = get_acc_(df_parts=df_parts, df_scales=df_scales, n_lag=n_lag)
+        # Warn about rows too short for the smallest lag (all-NaN output)
+        n_short = int((n_kept < 2).sum())
+        if n_short > 0 and self.verbose:
+            warnings.warn(f"{n_short} sequence(s) have fewer than two scored residues in the selected "
+                          f"parts (too short for lag 1); their auto-covariance row is all-NaN.")
+        if return_df:
+            columns = [f"{scale}_lag{k}" for k in range(1, n_lag + 1) for scale in df_scales.columns]
+            return pd.DataFrame(X, index=df_parts.index, columns=columns)
         return X
 
     def prune_by_variance(self,

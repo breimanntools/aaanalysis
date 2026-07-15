@@ -490,6 +490,34 @@ class TestAAPredEvalBaseline:
         with pytest.raises(ValueError):
             aa.AAPred(models=["rf"], random_state=0).eval(X, labels, df_seq=df_seq, baseline="nope")
 
+    def test_baseline_acc_adds_one_row_and_none_unchanged(self, baseline_data):
+        # 'acc' (scale auto-covariance, #428): with one model + one metric it appends exactly one
+        # cross-validation row tagged 'acc', while baseline unset stays byte-identical.
+        df_seq, labels, X = baseline_data
+        d_none = aa.AAPred(models=["rf"], random_state=0).eval(X, labels, metrics=["accuracy"])
+        d_plain = aa.AAPred(models=["rf"], random_state=0).eval(X, labels, metrics=["accuracy"],
+                                                                baseline=None)
+        pd.testing.assert_frame_equal(d_none, d_plain)  # baseline unset is unchanged
+        d_acc = aa.AAPred(models=["rf"], random_state=0).eval(X, labels, metrics=["accuracy"],
+                                                              df_seq=df_seq, baseline="acc")
+        assert set(d_acc["features"]) == {"cpp", "acc"}
+        assert (d_acc["features"] == "acc").sum() == 1               # exactly one acc row added
+        assert (d_acc["features"] == "cpp").sum() == len(d_none)     # cpp block unchanged in size
+        assert set(d_acc[d_acc["features"] == "acc"]["principle"]) == {"cv"}
+
+    def test_baseline_acc_reproduces_manual_featurize_then_eval(self, baseline_data):
+        # KPI parity: the 'acc' rows equal a standalone eval of SequenceFeature.acc(df_seq).
+        df_seq, labels, X = baseline_data
+        d_base = aa.AAPred(models=["rf"], random_state=0).eval(
+            X, labels, metrics=["accuracy", "f1"], df_seq=df_seq, baseline="acc")
+        X_acc = np.asarray(aa.SequenceFeature().acc(df_seq=df_seq))
+        d_manual = aa.AAPred(models=["rf"], random_state=0).eval(X_acc, labels,
+                                                                 metrics=["accuracy", "f1"])
+        acc_rows = d_base[d_base["features"] == "acc"].reset_index(drop=True)
+        merged = acc_rows.merge(d_manual, on=["model", "metric", "principle"], suffixes=("_b", "_m"))
+        assert len(merged) == len(d_manual)
+        assert np.allclose(merged["score_b"], merged["score_m"])
+
     def test_baseline_all_invalid_row_raises_clear_error(self, baseline_data):
         # A sequence with no canonical residue in the span yields an all-NaN featurizer row;
         # it must raise a clear AAPred-level ValueError, not a cryptic sklearn NaN crash.

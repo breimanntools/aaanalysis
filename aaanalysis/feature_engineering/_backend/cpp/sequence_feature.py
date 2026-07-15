@@ -187,6 +187,76 @@ def get_scale_composition_(df_parts=None, df_scales=None):
     return X, n_kept
 
 
+# Auto-covariance (ACC) baseline featurization
+def get_acc_(df_parts=None, df_scales=None, n_lag=1):
+    """Per-sequence scale auto-covariance over the concatenated sequence parts (vectorized).
+
+    Order-aware, non-positional lag extension of :func:`get_scale_composition_`: for each row of
+    ``df_parts`` the part strings are concatenated into one span; every residue that is not a
+    single-letter index label of ``df_scales`` (gaps ``'-'`` and any other non-canonical symbol)
+    is dropped, and for every scale ``j`` and lag ``k`` (``1 .. n_lag``) the mean-centered
+    auto-covariance ``AC(j, k) = sum_i (S[i, j] - mean_j) * (S[i + k, j] - mean_j) / (N - k)`` is
+    computed over the ``N`` scored residues of the span (``mean_j`` = that scale's mean over all
+    ``N`` residues; sum over the ``N - k`` in-span pairs). The result is the
+    ``(n_seq, n_scales * n_lag)`` matrix ``X`` in lag-major column order (all scales for lag 1,
+    then all scales for lag 2, ...); ``n_kept`` reports ``N`` per row so the frontend can warn.
+    A lag with ``N - k < 1`` yields ``NaN`` for its entries, so a span with fewer than two scored
+    residues (too short for lag 1) becomes an all-``NaN`` row.
+
+    Vectorization mirrors :func:`get_scale_composition_`: every residue of every span is flattened
+    once into one shared ``(M, n_scales)`` scale matrix tagged by owning sequence, the per-sequence
+    per-scale means are formed with a single segment sum (``np.add.at``), and each lag's
+    within-sequence residue-pair products are segment-summed the same way. There is no per-sequence
+    Python loop or ``DataFrame.loc`` (the only Python loop is over the ``n_lag`` lags, a small
+    constant); a same-sequence mask (``seq_ids[:-k] == seq_ids[k:]``) drops pairs that would
+    straddle two spans in the concatenated flatten.
+    """
+    n_seq = len(df_parts)
+    scales_arr = df_scales.to_numpy(dtype=float)                   # (n_letters, n_scales)
+    n_scales = scales_arr.shape[1]
+    # Byte -> scale-row lookup (-1 = non-scored); only single-character labels can match a residue
+    lut = np.full(256, -1, dtype=np.intp)
+    for row, aa in enumerate(df_scales.index):
+        if len(aa) == 1 and ord(aa) < 256:
+            lut[ord(aa)] = row
+    # Flatten every residue of every span, tracking its owning sequence
+    # (df_parts columns are guaranteed str by the frontend's get_df_parts)
+    spans = df_parts.agg("".join, axis=1).to_list()
+    lengths = np.fromiter((len(s) for s in spans), dtype=np.intp, count=n_seq)
+    codes = np.frombuffer("".join(spans).encode("latin-1", "replace"), dtype=np.uint8)
+    seq_ids = np.repeat(np.arange(n_seq), lengths)
+    rows = lut[codes]                                              # scale row per residue
+    valid = rows >= 0
+    seq_ids, rows = seq_ids[valid], rows[valid]
+    n_kept = np.bincount(seq_ids, minlength=n_seq).astype(int)     # N scored residues per span
+    X = np.full((n_seq, n_scales * n_lag), np.nan)
+    m = seq_ids.shape[0]
+    if m == 0:                                                     # no scored residue anywhere
+        return X, n_kept
+    # Center each scored residue's scale row by its span's per-scale mean
+    V = scales_arr[rows]                                          # (M, n_scales)
+    seq_sum = np.zeros((n_seq, n_scales))
+    np.add.at(seq_sum, seq_ids, V)
+    with np.errstate(invalid="ignore"):
+        means = seq_sum / n_kept[:, None]                        # 0 / 0 -> NaN for empty spans
+    C = V - means[seq_ids]                                        # (M, n_scales) centered
+    # Per lag: sum the within-span residue-pair products, divide by the (N - k) pair count.
+    # Residues are contiguous within a span in the flatten, so seq_ids[p] == seq_ids[p + k]
+    # already implies p and p + k are a valid in-span pair k apart.
+    for k in range(1, n_lag + 1):
+        if m <= k:                                               # no pair of this lag fits any span
+            continue
+        same = seq_ids[:-k] == seq_ids[k:]
+        pair_seq = seq_ids[:-k][same]
+        prod = C[:-k][same] * C[k:][same]                        # (n_pairs, n_scales)
+        cov_sum = np.zeros((n_seq, n_scales))
+        np.add.at(cov_sum, pair_seq, prod)
+        pair_cnt = np.bincount(pair_seq, minlength=n_seq).astype(float)   # N - k per span (>= 0)
+        with np.errstate(invalid="ignore"):
+            X[:, (k - 1) * n_scales:k * n_scales] = cov_sum / pair_cnt[:, None]  # 0 / 0 -> NaN
+    return X, n_kept
+
+
 def _canonical_codes_(df_parts=None):
     """Flatten every residue of every span to a canonical index (0..19), dropping non-canonical.
 

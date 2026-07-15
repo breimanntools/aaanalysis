@@ -176,8 +176,10 @@ def build_baseline_matrices(df_seq=None, list_kinds=None, df_scales=None, list_p
             X_baseline = sf.scale_composition(df_seq=df_seq, df_scales=df_scales, list_parts=list_parts)
         elif kind == ut.STR_BASELINE_AAC:
             X_baseline = sf.aa_composition(df_seq=df_seq, list_parts=list_parts)
-        else:  # ut.STR_BASELINE_DPC
+        elif kind == ut.STR_BASELINE_DPC:
             X_baseline = sf.dipeptide_composition(df_seq=df_seq, list_parts=list_parts)
+        else:  # ut.STR_BASELINE_ACC
+            X_baseline = sf.acc(df_seq=df_seq, df_scales=df_scales, list_parts=list_parts)
         X_baseline = np.asarray(X_baseline)
         if np.isnan(X_baseline).any():
             n_bad = int(np.isnan(X_baseline).any(axis=1).sum())
@@ -500,10 +502,12 @@ class AAPred(Wrapper):
             Baseline featurizer(s) to cross-validate alongside the bound features. ``True`` uses
             the scale-composition baseline (``'scale'``); a str or list selects among
             ``'scale'`` (:meth:`SequenceFeature.scale_composition`), ``'aac'``
-            (:meth:`SequenceFeature.aa_composition`), and ``'dpc'``
-            (:meth:`SequenceFeature.dipeptide_composition`). ``None`` (default) adds no baseline.
-            Baselines average over ``list_parts`` with :meth:`SequenceFeature.get_df_parts`' default
-            JMD lengths; match the geometry used to build ``X`` so the comparison is not confounded.
+            (:meth:`SequenceFeature.aa_composition`), ``'dpc'``
+            (:meth:`SequenceFeature.dipeptide_composition`), and ``'acc'``
+            (:meth:`SequenceFeature.acc`, the order-aware scale auto-covariance). ``None`` (default)
+            adds no baseline. Baselines cover ``list_parts`` with
+            :meth:`SequenceFeature.get_df_parts`' default JMD lengths; match the geometry used to
+            build ``X`` so the comparison is not confounded.
         list_parts : str or list of str, optional
             Sequence parts averaged into each baseline (passed to the featurizers). Defaults to
             the whole ``tmd_jmd`` span. Used only when ``baseline`` is set.
