@@ -874,6 +874,9 @@ class AAPred(Wrapper):
         score_range : str, default="proba"
             Scale of the returned ``score`` / ``score_std`` columns: ``'proba'`` for the native
             probabilities in ``[0, 1]``, ``'percent'`` for the same values scaled to ``[0, 100]``.
+            The output column is the generic ``score`` (shared with :meth:`predict` /
+            :meth:`predict_oof`), so ``'percent'`` returns a 0-100 score even though this method
+            computes probabilities.
 
         Returns
         -------
