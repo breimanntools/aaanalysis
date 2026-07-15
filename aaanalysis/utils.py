@@ -85,6 +85,7 @@ from ._utils.check_plots import (check_fig,
 
 # Internal utility functions
 from ._utils.utils_output import (print_out,
+                                  set_logger_verbosity,
                                   print_start_progress,
                                   print_progress,
                                   print_end_progress)

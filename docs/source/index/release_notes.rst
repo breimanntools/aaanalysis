@@ -605,6 +605,18 @@ Changed
   load — across the min + max supported Python (3.10, 3.14). It catches a missing package-data file,
   a broken re-export, or a sdist that cannot build before a release reaches PyPI, where the editable
   dev matrix cannot. No public-API change.
+- **Named logger for library output**: all package messages now flow through
+  ``logging.getLogger("aaanalysis")``. ``print_out`` (``ut.print_out``) is a thin, permanent
+  shim over ``logger.info(...)`` — the function name and signature are unchanged, so every
+  call site is unaffected. Power users can now attach handlers, capture output in pytest's
+  ``caplog``, redirect it to a file, or raise/lower verbosity with
+  ``logging.getLogger("aaanalysis").setLevel(...)`` (or the ``ut.set_logger_verbosity`` helper).
+  The logger level is an independent power-user control: the existing ``verbose`` flag /
+  ``options['verbose']`` continue to gate output at the call sites exactly as before, so a
+  global ``options['verbose']`` never mutes an object explicitly built with ``verbose=True``.
+  A single default stdout handler reproduces the previous blue-coloured output, so on-screen
+  behaviour is unchanged (no new dependency; stdlib ``logging`` only). The live progress bar
+  keeps writing to stdout directly. No public-API change.
 
 Changed
 ~~~~~~~

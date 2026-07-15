@@ -135,7 +135,11 @@ def display_df(df: Optional[pd.DataFrame] = None,
     ut.check_number_range(name="n_cols", val=n_cols, min_val=-n_cols_, max_val=None, accept_none=True, just_int=True)
     _check_show(name="show_only_col", val=col_to_show, df=df)
     _check_show(name="show_only_row", val=row_to_show, df=df)
-    # Show shape before filtering
+    # Show shape before filtering.
+    # Carve-out: display_df is a notebook DISPLAY primitive, not a status logger. The shape
+    # line is an explicit, always-on part of its rendered output (users opt in via
+    # show_shape=True, typically together with options["verbose"]=False), so it stays a
+    # plain, uncoloured, un-gated print rather than routing through the verbose-gated logger.
     if show_shape:
         print(f"DataFrame shape: {df.shape}")
     # Filtering
