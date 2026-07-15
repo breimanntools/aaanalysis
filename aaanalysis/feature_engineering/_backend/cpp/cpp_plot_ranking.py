@@ -152,10 +152,22 @@ def _add_annotation_right(sub_fig=None, an_in_val=2, max_val=10.0, text_size=8):
             sub_fig.annotate(f"{round(val, 1)}%", (x, p.get_y() + p.get_height()/2), **args_right)
 
 
+def _add_rank_info(ax=None, x=0.0, y=0.0, str_sum="", shap_plot=False, args=None):
+    """Draw the ranking-info key inside the impact panel: the Σ total, and (for SHAP) a
+    positive/negative sign key. Left-aligned and non-bold, to sit quietly beside the bars."""
+    ax.text(x, y, str_sum, weight="normal", **args)
+    if shap_plot:
+        ax.text(x, y + 1, "negative", weight="normal", color=ut.COLOR_SHAP_NEG, va="top", **args)
+        ax.text(x, y + 1, "positive", weight="normal", color=ut.COLOR_SHAP_POS, va="bottom", **args)
+
+
 def plot_feature_rank(ax=None, df_feat=None, n=20, xlim=(0, 4),
                       fontsize_annotation=8, col_imp=ut.COL_FEAT_IMPORT,
                       shap_plot=False, rank_info_xy=None):
-    """Plots the feature ranking based on `df` on the axis `ax`, adjusting for SHAP values if `shap_plot` is True."""
+    """Plots the feature ranking based on `df` on the axis `ax`, adjusting for SHAP values if `shap_plot` is True.
+
+    The Σ total (and, for SHAP, the positive/negative sign key) is placed inside the impact panel just
+    to the right of the bars, left-aligned. ``rank_info_xy`` overrides that ``(x, y)`` position."""
     df_feat = df_feat.copy()
     plt.sca(ax)
     if shap_plot:
@@ -168,25 +180,21 @@ def plot_feature_rank(ax=None, df_feat=None, n=20, xlim=(0, 4),
     sub_fig = sns.barplot(ax=ax, data=df_feat, y="feature", x=col_imp, **args)
     plt.yticks(range(0, n), list(df_feat[ut.COL_SUBCAT]))
     plt.ylabel("")
-
-    # Set x-axis limits
+    # Set x-axis limits and the per-bar '%' labels
     xlim = plt.xlim() if xlim is None else xlim
-    x_max = max(df_feat[col_imp].max(), xlim[1])
-    xlim = (xlim[0], x_max)
-    plt.xlim(xlim)
-
-    _add_annotation_right(sub_fig=sub_fig, text_size=fontsize_annotation, an_in_val=x_max/2, max_val=xlim[1])
-    # Add legend
+    x_data_max = max(df_feat[col_imp].max(), xlim[1])
+    plt.xlim(xlim[0], x_data_max)
+    _add_annotation_right(sub_fig=sub_fig, text_size=fontsize_annotation,
+                          an_in_val=x_data_max / 2, max_val=x_data_max)
+    # Σ (and, for SHAP, the sign key) sits inside the panel, left-aligned, in the bottom rows. Anchor
+    # it just past the SHORT bottom bars (where it actually sits) rather than the longest bar, so it
+    # stays beside the bars and to the left instead of floating out in the right margin.
+    # ``rank_info_xy`` overrides (x, y).
     str_sum = f"Σ={round(df_feat[col_imp].sum(), 1)}%"
-    args = dict(ha="right", size=fontsize_annotation)
-    rank_info_xy_default = (xlim[1]*1.1, n-2.5)
-    _rank_info_xy = ut.adjust_tuple_elements(tuple_in=rank_info_xy,
-                                            tuple_default=rank_info_xy_default)
-    x, y = _rank_info_xy
-    plt.text(x, y, str_sum, weight="normal", **args)
-    if shap_plot:
-        plt.text(x, y+1, "negative", weight="bold", color=ut.COLOR_SHAP_NEG, va="top", **args)
-        plt.text(x, y+1, "positive", weight="bold", color=ut.COLOR_SHAP_POS, va="bottom", **args)
+    band_max = float(df_feat[col_imp].iloc[max(0, n - 3):].max()) if n else 0.0
+    x, y = ut.adjust_tuple_elements(tuple_in=rank_info_xy, tuple_default=(band_max + 1.1, n - 2.5))
+    _add_rank_info(ax=ax, x=x, y=y, str_sum=str_sum, shap_plot=shap_plot,
+                   args=dict(ha="left", size=fontsize_annotation))
 
 
 # II Main Functions
@@ -194,7 +202,7 @@ def plot_ranking(df_feat=None,
                  n_top=15, rank=False,
                  col_dif=None, col_imp=None,
                  shap_plot=False,
-                 figsize=(7, 5),
+                 figsize=(8.5, 5),
                  tmd_len=20, jmd_n_len=10, jmd_c_len=10,
                  tmd_color="mediumspringgreen", jmd_color="blue",
                  tmd_jmd_alpha=0.075,

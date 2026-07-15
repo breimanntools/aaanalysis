@@ -289,3 +289,49 @@ class TestAddSampleMeanDifDfSeq:
         with pytest.raises(ValueError):
             aa.ShapModel.add_sample_mean_dif(valid_X, labels=valid_labels, df_feat=create_df_feat(),
                                              df_seq=df_seq, samples="NOT_AN_ENTRY")
+
+
+class TestAddSampleMeanDifXRef:
+    """External reference matrix via ``X_ref`` (explain each sample against a separate population)."""
+
+    def test_x_ref_matches_vstack_reference(self):
+        # KPI: X_ref=X_others reproduces the old "vstack samples + Others, label_ref=0" result
+        # byte-for-byte, without the manual concatenation / synthetic labels.
+        X_others = valid_X[15:20]
+        positions = [0, 2, 4]
+        names = ["A", "B", "C"]
+        entries = [df_seq["entry"].iloc[p] for p in positions]
+        _Xc = np.vstack([valid_X[positions], X_others])
+        _lc = np.array([1] * len(positions) + [0] * len(X_others))
+        df_old = aa.ShapModel.add_sample_mean_dif(_Xc, labels=_lc, label_ref=0, df_feat=create_df_feat(),
+                                                  samples=list(range(len(positions))), names=names)
+        df_new = aa.ShapModel.add_sample_mean_dif(valid_X, df_feat=create_df_feat(), X_ref=X_others,
+                                                  samples=entries, names=names, df_seq=df_seq)
+        for name in names:
+            assert np.array_equal(df_old[f"mean_dif_{name}"].to_numpy(),
+                                  df_new[f"mean_dif_{name}"].to_numpy())
+
+    def test_x_ref_no_labels_needed(self):
+        entry = df_seq["entry"].iloc[0]
+        df_feat = aa.ShapModel.add_sample_mean_dif(valid_X, df_feat=create_df_feat(), X_ref=valid_X[15:20],
+                                                   samples=entry, df_seq=df_seq)
+        assert f"mean_dif_{entry}" in df_feat.columns
+
+    def test_x_ref_positional_samples(self):
+        df_feat = aa.ShapModel.add_sample_mean_dif(valid_X, df_feat=create_df_feat(), X_ref=valid_X[15:20],
+                                                   samples=[0, 1], names=["A", "B"])
+        assert "mean_dif_A" in df_feat.columns and "mean_dif_B" in df_feat.columns
+
+    def test_x_ref_and_labels_mutually_exclusive_raises(self):
+        with pytest.raises(ValueError):
+            aa.ShapModel.add_sample_mean_dif(valid_X, labels=valid_labels, df_feat=create_df_feat(),
+                                             X_ref=valid_X[15:20], samples=0, names="A")
+
+    def test_x_ref_feature_mismatch_raises(self):
+        with pytest.raises(ValueError):
+            aa.ShapModel.add_sample_mean_dif(valid_X, df_feat=create_df_feat(), X_ref=valid_X[15:20, :10],
+                                             samples=0, names="A")
+
+    def test_neither_x_ref_nor_labels_raises(self):
+        with pytest.raises(ValueError):
+            aa.ShapModel.add_sample_mean_dif(valid_X, df_feat=create_df_feat(), samples=0, names="A")

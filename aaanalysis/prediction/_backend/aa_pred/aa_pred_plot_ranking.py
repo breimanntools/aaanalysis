@@ -7,6 +7,7 @@ import seaborn as sns
 from matplotlib import pyplot as plt
 
 import aaanalysis.utils as ut
+from .aa_pred_plot_legend import place_legend_below_
 
 
 # I Helper Functions
@@ -42,8 +43,11 @@ def _cutoff_labels(thresholds):
 def plot_ranking_(df_pred=None, col_name="name", col_score="score", col_group=None,
                   col_std=None, dict_color=None, thresholds=(50, 80), top_n=None, ascending=False,
                   ax=None, figsize=None, xlabel="Prediction score", title=None,
-                  sort="score", group_order=None):
-    """Draw the ranked-candidate horizontal bar plot. Returns (fig, ax)."""
+                  sort="score", group_order=None, legend_title=None, draw_legend=True):
+    """Draw the ranked-candidate horizontal bar plot. Returns (fig, ax).
+
+    ``draw_legend=False`` suppresses this panel's own legend so a multi-panel caller can place a
+    single combined legend below the whole figure."""
     if col_group is not None and sort == "group":
         # Cluster bars by group (following `group_order`), ranked by score within each group.
         order = list(group_order) if group_order is not None else list(dict.fromkeys(df_pred[col_group].tolist()))
@@ -85,11 +89,11 @@ def plot_ranking_(df_pred=None, col_name="name", col_score="score", col_group=No
     if title is not None:  # extra pad so the title clears the cut-off labels
         ax.set_title(title, pad=22 if any(cut_labels) else None)
     present = list(dict.fromkeys(d[col_group].tolist())) if col_group is not None else []
-    if len(present) >= 2:
+    if draw_legend and len(present) >= 2:
         # Legend shows only the groups drawn in this panel, in their draw order (so a per-group
         # panel does not advertise the whole palette); a single-group panel needs no legend.
         handles = [plt.Rectangle((0, 0), 1, 1, color=dict_color[g]) for g in present]
-        ax.legend(handles, present, frameon=False, fontsize=9, loc="lower right")
+        place_legend_below_(ax=ax, handles=handles, labels=present, title=legend_title, fontsize=9)
     ax.margins(y=0.01)
     ax.set_xlim(left=0)  # bars start flush at the y-axis (drop the default left margin/gap)
     sns.despine(ax=ax)

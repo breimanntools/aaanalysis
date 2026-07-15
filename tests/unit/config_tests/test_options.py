@@ -12,6 +12,7 @@ from aaanalysis.config import (
     check_verbose,
     check_random_state,
     check_auto_font,
+    check_legend_title_bold,
     check_jmd_n_len,
     check_jmd_c_len,
     options,
@@ -100,6 +101,22 @@ class TestCheckOptionBranches:
             assert check_auto_font() is True
         finally:
             aa.options["auto_font"] = False
+
+    def test_legend_title_bold_default_off(self):
+        assert aa.options["legend_title_bold"] is False
+        assert check_legend_title_bold() is False
+
+    def test_set_legend_title_bold(self):
+        try:
+            aa.options["legend_title_bold"] = True
+            assert aa.options["legend_title_bold"] is True
+            assert check_legend_title_bold() is True
+        finally:
+            aa.options["legend_title_bold"] = False
+
+    def test_invalid_legend_title_bold_type(self):
+        with pytest.raises(ValueError):
+            aa.options["legend_title_bold"] = "yes"
 
     # Negative: invalid values rejected at assignment time
     def test_invalid_random_state(self):

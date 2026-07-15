@@ -136,6 +136,32 @@ class TestFilterCoverage:
             assert isinstance(selected_scale_ids, list)
             assert all(isinstance(scale_id, str) for scale_id in selected_scale_ids)
 
+    def test_df_scales_parameter(self):
+        """'df_scales' derives 'X' + 'scale_ids' and matches the explicit X/scale_ids call."""
+        df_scales = aa.load_scales()
+        sub = df_scales.iloc[:, :80]
+        df_cat = aa.load_scales(name="scales_cat")
+        scale_ids = list(sub.columns)
+        names_ref = df_cat[df_cat["scale_id"].isin(scale_ids)]["subcategory"].to_list()
+        selected_df_scales = aa.AAclust(random_state=42).filter_coverage(df_scales=sub, df_cat=df_cat)
+        selected_X = aa.AAclust(random_state=42).filter_coverage(X=sub.T, scale_ids=scale_ids,
+                                                                 names_ref=names_ref, df_cat=df_cat)
+        assert isinstance(selected_df_scales, list)
+        assert all(isinstance(s, str) for s in selected_df_scales)
+        assert selected_df_scales == selected_X
+
+    def test_names_ref_derived(self):
+        """Omitting 'names_ref' derives it from 'scale_ids' + 'df_cat' and matches the explicit call."""
+        df_scales = aa.load_scales()
+        sub = df_scales.iloc[:, :80]
+        df_cat = aa.load_scales(name="scales_cat")
+        scale_ids = list(sub.columns)
+        names_ref = df_cat[df_cat["scale_id"].isin(scale_ids)]["subcategory"].to_list()
+        selected_derived = aa.AAclust(random_state=42).filter_coverage(X=sub.T, scale_ids=scale_ids, df_cat=df_cat)
+        selected_explicit = aa.AAclust(random_state=42).filter_coverage(X=sub.T, scale_ids=scale_ids,
+                                                                        names_ref=names_ref, df_cat=df_cat)
+        assert selected_derived == selected_explicit
+
     # Negative test cases
     def test_invalid_X_parameter(self):
         """Test with invalid 'X' parameter."""
@@ -219,3 +245,19 @@ class TestFilterCoverage:
             aac.filter_coverage(X=X, scale_ids=scale_ids, names_ref=names_ref, df_cat=df_cat, col_name=[])
         with pytest.raises(ValueError):
             aac.filter_coverage(X=X, scale_ids=scale_ids, names_ref=names_ref, df_cat=df_cat, col_name={})
+
+    def test_invalid_df_scales_parameter(self):
+        """'df_scales' is mutually exclusive with 'X'/'scale_ids' and must be a valid scales frame."""
+        df_scales = aa.load_scales()
+        sub = df_scales.iloc[:, :20]
+        df_cat = aa.load_scales(name="scales_cat")
+        scale_ids = list(sub.columns)
+        aac = aa.AAclust()
+        with pytest.raises(ValueError):
+            aac.filter_coverage(df_scales=sub, X=sub.T, df_cat=df_cat)
+        with pytest.raises(ValueError):
+            aac.filter_coverage(df_scales=sub, scale_ids=scale_ids, df_cat=df_cat)
+        with pytest.raises(ValueError):
+            aac.filter_coverage(df_scales="invalid", df_cat=df_cat)
+        with pytest.raises(ValueError):
+            aac.filter_coverage(df_scales=[], df_cat=df_cat)

@@ -801,12 +801,13 @@ class AAclust(Wrapper):
         return df_scales_selected
 
     def filter_coverage(self,
-                        X: ut.ArrayLike2D,
-                        scale_ids: List[str],
-                        names_ref: List[str],
+                        X: Optional[ut.ArrayLike2D] = None,
+                        scale_ids: Optional[List[str]] = None,
+                        names_ref: Optional[List[str]] = None,
                         min_coverage: int = 100,
                         df_cat: Optional[pd.DataFrame] = None,
-                        col_name: Literal['category', 'subcategory', 'scale_name'] = "subcategory"
+                        col_name: Literal['category', 'subcategory', 'scale_name'] = "subcategory",
+                        df_scales: Optional[pd.DataFrame] = None,
                         ) -> List[str]:
         """
         Select a redundancy-reduced set of numerical scales with defined subcategory coverage.
@@ -823,13 +824,16 @@ class AAclust(Wrapper):
 
         Parameters
         ----------
-        X : array-like, shape (n_scales, n_features)
-            Feature matrix. `Rows` correspond to scales and `columns` to amino acids.
-        scale_ids : list of str
-            List of scale IDs corresponding to the rows in ``X``.
-        names_ref : list of str
+        X : array-like, shape (n_scales, n_features), optional
+            Feature matrix. `Rows` correspond to scales and `columns` to amino acids. Provide together
+            with ``scale_ids``, or pass ``df_scales`` instead (which derives both).
+        scale_ids : list of str, optional
+            List of scale IDs corresponding to the rows in ``X``. Provide together with ``X``, or pass
+            ``df_scales`` instead.
+        names_ref : list of str, optional
             List of reference sample names ('subcategories') representing the desired subcategories for coverage.
-            Must contain the same unique elements as the unique subcategories associated with ``scale_ids``
+            Must contain the same unique elements as the unique subcategories associated with ``scale_ids``.
+            If ``None``, it is derived from ``scale_ids`` and ``df_cat`` (the subcategories of the input scales).
         min_coverage : int, default=100
             Minimum coverage percentage of unique subcategories to be achieved by the selected clusters.
         df_cat : pd.DataFrame
@@ -837,6 +841,10 @@ class AAclust(Wrapper):
             the specified ``col_name``. Required columns are 'scale_id', 'category', 'subcategory', and 'scale_name'.
         col_name : {'category', 'subcategory', 'scale_name'}, default='subcategory'
              Column name in ``df_cat`` that contains the subcategory information (alternatively, category or scale name).
+        df_scales : pd.DataFrame, shape (n_features, n_scales), optional
+            Scale matrix with scales as `columns` (scale IDs) and amino acids as `rows`, as returned by
+            :func:`load_scales`. Convenience alternative to ``X`` + ``scale_ids``: when given, ``X`` and
+            ``scale_ids`` are derived from it and must not be passed.
 
         Returns
         -------
@@ -853,9 +861,15 @@ class AAclust(Wrapper):
         .. include:: examples/aac_filter_coverage.rst
         """
         # Check input
+        # Resolve the scale input: either 'df_scales' (scales as columns) or 'X' + 'scale_ids'.
+        if df_scales is not None:
+            if X is not None or scale_ids is not None:
+                raise ValueError("'df_scales' is mutually exclusive with 'X'/'scale_ids'; provide one input mode.")
+            check_df_scales(df_scales=df_scales, accept_none=False)
+            scale_ids = list(df_scales.columns)
+            X = df_scales.T.to_numpy()
         X = ut.check_X(X=X, min_n_samples=2)
         scale_ids = ut.check_list_like(name="scale_ids", val=scale_ids, accept_none=False)
-        names_ref = ut.check_list_like(name="names_ref", val=names_ref, accept_none=False)
         ut.check_number_range(name="min_coverage", val=min_coverage, just_int=True,
                               min_val=10, max_val=100, accept_none=False)
         if df_cat is None:
@@ -863,6 +877,11 @@ class AAclust(Wrapper):
         check_df_cat(df_cat=df_cat, accept_none=False)
         ut.check_str_options(name="col_name", val=col_name,
                              list_str_options=[ut.COL_CAT, ut.COL_SUBCAT, ut.COL_SCALE_NAME])
+        # 'names_ref' is the reference set of subcategories to cover; when omitted it is derived from
+        # the input scales (it is required to equal exactly those subcategories, so the default is safe).
+        if names_ref is None:
+            names_ref = df_cat[df_cat[ut.COL_SCALE_ID].isin(scale_ids)][col_name].to_list()
+        names_ref = ut.check_list_like(name="names_ref", val=names_ref, accept_none=False)
         check_match_X_scale_ids(X=X, scale_ids=scale_ids, accept_none=False)
         check_match_scale_ids_names(scale_ids=scale_ids, names=names_ref, df_cat=df_cat, col_name=col_name)
         # Set number of unique names as number of initial clusters

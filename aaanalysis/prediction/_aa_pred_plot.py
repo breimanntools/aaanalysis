@@ -11,9 +11,11 @@ from matplotlib.figure import Figure
 
 import aaanalysis.utils as ut
 from ._backend.aa_pred.aa_pred_plot_comparison import plot_comparison_
-from ._backend.aa_pred.aa_pred_plot_ranking import plot_ranking_, ranking_figheight
+from ._backend.aa_pred.aa_pred_plot_ranking import (plot_ranking_, ranking_figheight,
+                                                    _resolve_group_colors)
 from ._backend.aa_pred.aa_pred_plot_rank_scatter import plot_rank_scatter_
 from ._backend.aa_pred.aa_pred_plot_clustermap import plot_clustermap_
+from ._backend.aa_pred.aa_pred_plot_legend import place_legend_below_
 from ._backend.aa_pred.aa_pred_group import assign_band_index
 
 
@@ -693,6 +695,13 @@ class AAPredPlot:
                        cmap: str = "GnBu",
                        xlabel: Optional[str] = None,
                        ylabel: Optional[str] = None,
+                       legend_title: Optional[str] = None,
+                       line_thresholds: Optional[Union[int, float, List[Union[int, float]]]] = None,
+                       score_range: Optional[Tuple[Union[int, float], Union[int, float]]] = None,
+                       annotate_at: Optional[Union[int, float]] = None,
+                       show_n: bool = False,
+                       threshold_labels: Optional[List[str]] = None,
+                       legend_loc: Optional[str] = None,
                        ) -> Tuple[Figure, Axes]:
         """
         Visualize across-samples prediction scores, dispatched by ``kind``.
@@ -825,6 +834,31 @@ class AAPredPlot:
             x-axis label; defaults to a per-kind label.
         ylabel : str, optional
             y-axis label; defaults to a per-kind label.
+        legend_title : str, optional
+            Title of the color-key legend, which is placed **below the plot** (house style, shared
+            across the group / eval figures: frameless, left-aligned, non-bold — set
+            ``options['legend_title_bold']=True`` for bold). Defaults to a per-kind label
+            (``'Class'`` / ``'Group'``); pass ``''`` for an untitled legend, which is also used
+            automatically when the legend has a single entry.
+        line_thresholds : int, float, or list, optional
+            (``kind='hist'``) Which ``thresholds`` are drawn as dashed guide lines. ``None``
+            (default) draws one line per threshold; pass a subset to keep the band coloring at all
+            ``thresholds`` while drawing lines only at some (e.g. band at ``[20, 50, 80]`` but lines
+            only at the ``[20, 80]`` confidence cut-offs).
+        score_range : tuple, optional
+            (``kind='hist'``) ``(low, high)`` bin span and x-limit. When given, the bars are binned
+            across this full range (e.g. ``(0, 100)`` for a percentage score, so they span 0-100
+            regardless of the observed min/max); ``None`` (default) bins over the observed data range.
+        annotate_at : int or float, optional
+            (``kind='cutoff'``) Write each curve's recovery percentage at this cut-off next to it.
+        show_n : bool, default=False
+            (``kind='cutoff'``) Append the group size ``(n=…)`` to each legend label.
+        threshold_labels : list of str, optional
+            (``kind='cutoff'``) Labels drawn above the ``thresholds`` guide lines (e.g.
+            ``["LC cut-off", "HC cut-off"]``).
+        legend_loc : str, optional
+            (``kind='cutoff'``) Place the legend **inside** the axes at this matplotlib location
+            (e.g. ``"lower left"``) instead of below the plot.
 
         Returns
         -------
@@ -851,7 +885,9 @@ class AAPredPlot:
                 scores=data, labels=labels, ax=ax, figsize=figsize, bins=bins,
                 thresholds=thresholds, band=band, dict_color=dict_color, band_colors=band_colors,
                 cmap=cmap, xlabel=_default(xlabel, "Prediction score"),
-                ylabel=_default(ylabel, "Number of samples"))
+                ylabel=_default(ylabel, "Number of samples"),
+                legend_title=_default(legend_title, "Class"), line_thresholds=line_thresholds,
+                score_range=score_range)
         if kind == "ranking":
             # Ranking keeps its LC/HC cut-off lines at (50, 80) by default (pass an empty list for none);
             # the shared ``thresholds`` param is ``None`` by default (= no lines) for the other kinds.
@@ -860,14 +896,16 @@ class AAPredPlot:
                 col_std=col_std, dict_color=dict_color,
                 thresholds=(50, 80) if thresholds is None else thresholds, top_n=top_n,
                 ascending=ascending, ax=ax, figsize=figsize,
-                xlabel=_default(xlabel, "Prediction score"), title=title,
-                panel_col=panel_col, panels=panels, sort=sort, group_order=group_order)
+                xlabel=_default(xlabel, "Prediction score [%]"), title=title,
+                panel_col=panel_col, panels=panels, sort=sort, group_order=group_order,
+                legend_title=_default(legend_title, "Group"))
         if kind == "rank_scatter":
             return AAPredPlot._plot_rank_scatter(
                 df_rank=data, col_score=col_score, col_group=col_group, group_order=group_order,
                 dict_color=dict_color, thresholds=thresholds, marker_size=marker_size, ax=ax,
                 figsize=figsize, xlabel=_default(xlabel, "Protein rank"),
-                ylabel=_default(ylabel, "Max score per protein"))
+                ylabel=_default(ylabel, "Max score per protein"),
+                legend_title=_default(legend_title, "Group"))
         if kind == "scatter":
             if scores_y is None:
                 raise ValueError("'kind'='scatter' requires 'scores_y' (the second predictor's scores).")
@@ -875,12 +913,15 @@ class AAPredPlot:
                 scores_x=data, scores_y=scores_y, labels=labels, ax=ax, figsize=figsize,
                 dict_color=dict_color, marker_size=marker_size, diagonal=diagonal,
                 xlabel=_default(xlabel, "Predictor 1 score"),
-                ylabel=_default(ylabel, "Predictor 2 score"))
+                ylabel=_default(ylabel, "Predictor 2 score"),
+                legend_title=_default(legend_title, "Class"))
         # kind == "cutoff"
         return AAPredPlot._plot_cutoff(
             scores=data, labels=labels, ax=ax, figsize=figsize, n_steps=n_steps, color=None,
             dict_color=dict_color, thresholds=thresholds, xlabel=_default(xlabel, "Score cutoff"),
-            ylabel=_default(ylabel, "Samples above cutoff [%]"))
+            ylabel=_default(ylabel, "Samples above cutoff [%]"),
+            legend_title=_default(legend_title, "Group"), annotate_at=annotate_at, show_n=show_n,
+            threshold_labels=threshold_labels, legend_loc=legend_loc)
 
     @staticmethod
     def group_cluster(X: Union[pd.DataFrame, ut.ArrayLike2D],
@@ -998,6 +1039,7 @@ class AAPredPlot:
              vmax: Optional[Union[int, float]] = None,
              cmap: str = "viridis",
              cbar_label: Optional[str] = None,
+             legend_title: Optional[str] = None,
              ) -> Tuple[Figure, Axes]:
         """
         Visualize model / feature-set evaluation, dispatched by ``kind``.
@@ -1103,6 +1145,11 @@ class AAPredPlot:
             (``kind='heatmap'``) Label of the colorbar; defaults to ``"Score"``.
 
             .. versionadded:: 1.1.0
+        legend_title : str, optional
+            (``kind='eval'``/``'comparison'``) Title of the color-key legend, placed **below the
+            plot** (house style: frameless, left-aligned, non-bold — set
+            ``options['legend_title_bold']=True`` for bold). Defaults to a per-kind label (the model
+            / group name); pass ``''`` for an untitled legend.
 
         Returns
         -------
@@ -1126,13 +1173,15 @@ class AAPredPlot:
         if kind == "eval":
             return AAPredPlot._eval_bars(
                 df_eval=df_eval, ax=ax, figsize=_default(figsize, (7, 5)),
-                dict_color=dict_color, baseline=baseline, ylabel=ylabel)
+                dict_color=dict_color, baseline=baseline, ylabel=ylabel,
+                legend_title=_default(legend_title, "Model"))
         if kind == "heatmap":
             return AAPredPlot._plot_heatmap(
                 df_eval=df_eval, ax=ax, figsize=_default(figsize, (6, 5)),
                 annotate=annotate, annotation_fmt=annotation_fmt,
                 highlight=highlight, vmin=vmin, vmax=vmax, cmap=cmap,
-                cbar_label=_default(cbar_label, "Score"), title=title)
+                cbar_label=_default(cbar_label, "Score"), title=title,
+                xlabel=xlabel, ylabel=ylabel)
         # kind == "comparison"
         return AAPredPlot._plot_comparison(
             df_eval=df_eval, group=group, condition=condition, value=value, baseline=baseline,
@@ -1140,12 +1189,12 @@ class AAPredPlot:
             group_order=group_order, condition_order=condition_order, dict_color=dict_color,
             bar_width=bar_width, ax=ax, figsize=_default(figsize, (7, 4.2)), xlabel=xlabel,
             ylabel=ylabel, title=title, ylim=ylim, fontsize_annotations=fontsize_annotations,
-            xtick_rotation=xtick_rotation)
+            xtick_rotation=xtick_rotation, legend_title=_default(legend_title, group.capitalize()))
 
     # III Private renderers (one per kind; kept as the original drawing logic)
     @staticmethod
     def _eval_bars(df_eval, ax=None, figsize=(7, 5), dict_color=None, baseline=None,
-                   ylabel="Score"):
+                   ylabel="Score", legend_title=None):
         """Grouped bar plot comparing methods across metrics (hue = model)."""
         # Check input
         cols = ut.COLS_EVAL_PRED
@@ -1204,14 +1253,14 @@ class AAPredPlot:
         ax.set_xticks(x)
         ax.set_xticklabels(metrics, rotation=30, ha="right")
         ax.set_ylabel(ylabel)
-        ax.legend(frameon=False, fontsize=8)
+        place_legend_below_(ax=ax, title=legend_title, fontsize=8)
         sns.despine(ax=ax)
         return ut.FigAxResult(fig, ax)
 
     @staticmethod
     def _plot_heatmap(df_eval, ax=None, figsize=(6, 5), annotate=True, annotation_fmt=None,
                       highlight="max", vmin=None, vmax=None, cmap="viridis", cbar_label="Score",
-                      title=None):
+                      title=None, xlabel=None, ylabel=None):
         """Square annotated heatmap of a 2D score grid, boxing the optimal cell."""
         # Check input
         ut.check_df(name="df_eval", df=df_eval, accept_none=False, accept_nan=True)
@@ -1224,6 +1273,8 @@ class AAPredPlot:
         ut.check_str(name="cmap", val=cmap, accept_none=False)
         ut.check_str(name="cbar_label", val=cbar_label, accept_none=True)
         ut.check_str(name="title", val=title, accept_none=True)
+        ut.check_str(name="xlabel", val=xlabel, accept_none=True)
+        ut.check_str(name="ylabel", val=ylabel, accept_none=True)
         try:
             data = np.asarray(df_eval.to_numpy(), dtype=float)
         except (ValueError, TypeError):
@@ -1243,12 +1294,23 @@ class AAPredPlot:
         ax.tick_params(left=False, bottom=False)
         plt.setp(ax.get_yticklabels(), rotation=0)
         plt.setp(ax.get_xticklabels(), rotation=0)
-        # Box the selected cell(s) with a full-cell frame flush to the grid lines
+        if xlabel is not None:
+            ax.set_xlabel(xlabel)
+        if ylabel is not None:
+            ax.set_ylabel(ylabel)
+        # Box the selected cell(s) with a frame inset slightly inside the cell (matches the
+        # hand-rolled house heatmap: a crisp box that does not sit on the grid lines).
         for i, j in highlight_cells:
-            ax.add_patch(plt.Rectangle((j, i), 1, 1, fill=False, edgecolor="black", lw=3,
-                                       clip_on=False))
-        # Colorbar tracking the axes height, with an edge drawn on the tick (right) side
-        cb = fig.colorbar(ax.collections[-1], ax=ax, fraction=0.046, pad=0.04, label=cbar_label)
+            ax.add_patch(plt.Rectangle((j + 0.04, i + 0.04), 0.92, 0.92, fill=False,
+                                       edgecolor="black", lw=3, clip_on=False))
+        # Slim colorbar sized to the heatmap grid itself: a cax anchored in the grid's data
+        # coordinates (just right of the grid, spanning its full height) tracks the square-aspect
+        # grid exactly, so it never over-runs the grid on a non-square df_eval the way a fixed
+        # axes-fraction colorbar (``fraction=...``) does when ``square=True`` letterboxes the grid.
+        # As a child of ``ax`` it also survives a later ``tight_layout()``.
+        n_rows, n_cols = data.shape
+        cax = ax.inset_axes([n_cols + 0.25, 0, 0.15, n_rows], transform=ax.transData)
+        cb = fig.colorbar(ax.collections[-1], cax=cax, label=cbar_label)
         cb.outline.set_visible(False)
         cb.ax.add_line(plt.Line2D([1, 1], [0, 1], transform=cb.ax.transAxes, color="black",
                                   linewidth=plt.rcParams["axes.linewidth"], clip_on=False))
@@ -1261,7 +1323,7 @@ class AAPredPlot:
                          baseline=None, baseline_label=None, annotate=True, annotation_fmt=None,
                          group_order=None, condition_order=None, dict_color=None, bar_width=0.8,
                          ax=None, figsize=(7, 4.2), xlabel=None, ylabel="Score", title=None,
-                         ylim=None, fontsize_annotations=10, xtick_rotation=0):
+                         ylim=None, fontsize_annotations=10, xtick_rotation=0, legend_title=None):
         """Grouped method x condition comparison barplot with value labels and a baseline."""
         # Check input
         ut.check_str(name="group", val=group)
@@ -1302,14 +1364,14 @@ class AAPredPlot:
                                    condition_order=condition_order, dict_color=dict_color, bar_width=bar_width,
                                    ax=ax, figsize=figsize, xlabel=xlabel, ylabel=ylabel, title=title,
                                    ylim=ylim, fontsize_annotations=fontsize_annotations,
-                                   xtick_rotation=xtick_rotation)
+                                   xtick_rotation=xtick_rotation, legend_title=legend_title)
         return ut.FigAxResult(fig, ax)
 
     @staticmethod
     def _plot_ranking(df_pred, col_name="name", col_score="score", col_group=None, col_std=None,
                       dict_color=None, thresholds=(50, 80), top_n=None, ascending=False, ax=None,
                       figsize=None, xlabel="Prediction score", title=None, panel_col=None,
-                      panels=None, sort="score", group_order=None):
+                      panels=None, sort="score", group_order=None, legend_title=None):
         """Ranked candidates as horizontal bars colored by class, with cut-off lines.
 
         ``panel_col`` (a column) or ``panels`` (a ``{title: [group values]}`` dict) split the bars
@@ -1348,7 +1410,7 @@ class AAPredPlot:
                                     col_group=col_group, col_std=col_std, dict_color=dict_color,
                                     thresholds=thresholds, top_n=top_n, ascending=ascending, ax=ax,
                                     figsize=figsize, xlabel=xlabel, title=title, sort=sort,
-                                    group_order=group_order)
+                                    group_order=group_order, legend_title=legend_title)
             return ut.FigAxResult(fig, ax)
         if ax is not None:
             raise ValueError("'panels'/'panel_col' draw multiple panels and require 'ax' (None).")
@@ -1358,16 +1420,26 @@ class AAPredPlot:
         fig, axes = plt.subplots(1, len(panel_specs), figsize=figsize, sharex=True, squeeze=False)
         axes = axes[0]
         for (ptitle, sub, pgo), ax_i in zip(panel_specs, axes):
+            # Suppress each panel's own legend; one combined legend goes below the whole figure.
             plot_ranking_(df_pred=sub, col_name=col_name, col_score=col_score, col_group=col_group,
                           col_std=col_std, dict_color=dict_color, thresholds=thresholds, top_n=top_n,
                           ascending=ascending, ax=ax_i, figsize=figsize, xlabel=xlabel, sort=sort,
-                          group_order=pgo, title=ptitle if title is None else f"{title}: {ptitle}")
+                          group_order=pgo, title=ptitle if title is None else f"{title}: {ptitle}",
+                          draw_legend=False)
+        if col_group is not None:
+            all_groups = (list(group_order) if group_order is not None
+                          else list(dict.fromkeys(df_pred[col_group].tolist())))
+            colors = _resolve_group_colors(all_groups, dict_color)
+            handles = [plt.Rectangle((0, 0), 1, 1, color=colors[g]) for g in all_groups]
+            place_legend_below_(fig=fig, handles=handles, labels=all_groups,
+                                title=legend_title, fontsize=9, y=0.02)
         return ut.FigAxResult(fig, axes)
 
     @staticmethod
     def _plot_rank_scatter(df_rank, col_score="score", col_group=None, group_order=None,
                            dict_color=None, thresholds=None, marker_size=25, ax=None,
-                           figsize=None, xlabel="Protein rank", ylabel="Max score per protein"):
+                           figsize=None, xlabel="Protein rank", ylabel="Max score per protein",
+                           legend_title=None):
         """Per-protein rank scatter: max-score-per-protein sorted by score, colored by group."""
         # Check input
         if col_group is None:
@@ -1400,7 +1472,8 @@ class AAPredPlot:
         fig, ax = plot_rank_scatter_(df_rank=df_rank, col_score=col_score, col_group=col_group,
                                      group_order=group_order, dict_color=dict_color,
                                      thresholds=list_thresholds, ax=ax, figsize=figsize,
-                                     marker_size=marker_size, xlabel=xlabel, ylabel=ylabel)
+                                     marker_size=marker_size, xlabel=xlabel, ylabel=ylabel,
+                                     legend_title=legend_title)
         return ut.FigAxResult(fig, ax)
 
     @staticmethod
@@ -1446,7 +1519,8 @@ class AAPredPlot:
     @staticmethod
     def _plot_hist(scores, labels=None, ax=None, figsize=(6, 4.5), bins=20, thresholds=None,
                    band=False, dict_color=None, band_colors=None, cmap="viridis",
-                   xlabel="Prediction score", ylabel="Number of samples"):
+                   xlabel="Prediction score", ylabel="Number of samples", legend_title=None,
+                   line_thresholds=None, score_range=None):
         """Histogram of per-sample prediction scores, class-separated or confidence-banded."""
         # Check input
         scores = ut.check_array_like(name="scores", val=scores, expected_dim=1)
@@ -1465,6 +1539,10 @@ class AAPredPlot:
             list_thresholds = list(thresholds) if isinstance(thresholds, (list, tuple)) else [thresholds]
             for i, t in enumerate(list_thresholds):
                 ut.check_number_val(name=f"thresholds[{i}]", val=t, just_int=False)
+        if line_thresholds is not None:
+            _lt = list(line_thresholds) if isinstance(line_thresholds, (list, tuple)) else [line_thresholds]
+            for i, t in enumerate(_lt):
+                ut.check_number_val(name=f"line_thresholds[{i}]", val=t, just_int=False)
         if band:
             if not list_thresholds:
                 raise ValueError("'band' (True) should be used with 'thresholds' delimiting the "
@@ -1475,9 +1553,16 @@ class AAPredPlot:
         # Resolve colors
         dict_color = dict(dict_color) if dict_color is not None else {}
         default_cycle = [ut.COLOR_POS, ut.COLOR_NEG, ut.COLOR_REL_NEG, ut.COLOR_UNL]
+        # Bin over the full ``score_range`` when given (so the bars span it, e.g. 0-100 for a
+        # percentage score), otherwise over the observed data range.
+        if score_range is not None:
+            ut.check_lim(name="score_range", val=score_range)
+            lo, hi = float(score_range[0]), float(score_range[1])
+        else:
+            lo, hi = float(np.min(scores)), float(np.max(scores))
         # Draw
         fig, ax = _new_ax(ax=ax, figsize=figsize)
-        bin_edges = np.linspace(float(np.min(scores)), float(np.max(scores)), bins + 1)
+        bin_edges = np.linspace(lo, hi, bins + 1)
         if band:
             sorted_ths = sorted(list_thresholds)
             band_colors = _resolve_band_colors(band_colors=band_colors, cmap=cmap, n_bands=len(sorted_ths) + 1)
@@ -1491,9 +1576,18 @@ class AAPredPlot:
                 color = dict_color.get(lab, default_cycle[i % len(default_cycle)])
                 ax.hist(np.asarray(scores)[np.asarray(labels) == lab], bins=bin_edges, alpha=0.7,
                         color=color, edgecolor="black", linewidth=0.6, label=str(lab))
-            ax.legend(frameon=False)
-        for t in list_thresholds:
+            place_legend_below_(ax=ax, title=legend_title)
+        # Draw dashed guide lines. By default one per threshold; ``line_thresholds`` restricts them
+        # (e.g. band-color at [20, 50, 80] but a line only at the [20, 80] confidence cut-offs, so
+        # the 50 split inside the low-confidence zone carries no line).
+        if line_thresholds is None:
+            draw_ths = list_thresholds
+        else:
+            draw_ths = list(line_thresholds) if isinstance(line_thresholds, (list, tuple)) else [line_thresholds]
+        for t in draw_ths:
             ax.axvline(t, color="0.3", linestyle="--", linewidth=1.3)
+        if score_range is not None:
+            ax.set_xlim(lo, hi)
         ax.set_xlabel(xlabel)
         ax.set_ylabel(ylabel)
         sns.despine(ax=ax)
@@ -1502,7 +1596,7 @@ class AAPredPlot:
     @staticmethod
     def _plot_scatter(scores_x, scores_y, labels=None, ax=None, figsize=(5.5, 5.5), dict_color=None,
                       marker_size=30, diagonal=True, xlabel="Predictor 1 score",
-                      ylabel="Predictor 2 score"):
+                      ylabel="Predictor 2 score", legend_title=None):
         """2D scatter comparing per-sample scores of two predictors."""
         # Check input
         scores_x = ut.check_array_like(name="scores_x", val=scores_x, expected_dim=1)
@@ -1537,7 +1631,7 @@ class AAPredPlot:
                 mask = la == lab
                 ax.scatter(sx[mask], sy[mask], s=marker_size, color=color,
                            edgecolors="white", linewidths=0.3, label=str(lab))
-            ax.legend(frameon=False)
+            place_legend_below_(ax=ax, title=legend_title)
         ax.set_xlabel(xlabel)
         ax.set_ylabel(ylabel)
         sns.despine(ax=ax)
@@ -1546,10 +1640,14 @@ class AAPredPlot:
     @staticmethod
     def _plot_cutoff(scores, labels=None, ax=None, figsize=(6, 4.5), n_steps=101, color=None,
                      dict_color=None, thresholds=None, xlabel="Score cutoff",
-                     ylabel="Samples above cutoff [%]"):
+                     ylabel="Samples above cutoff [%]", legend_title=None,
+                     annotate_at=None, show_n=False, threshold_labels=None, legend_loc=None):
         """Line plot of the percentage of samples scoring at or above each cutoff.
 
         With ``labels`` given, one survival curve is drawn per group over a common cutoff grid.
+        ``annotate_at`` writes each curve's recovery % at that cut-off; ``show_n`` appends the group
+        size to the legend labels; ``threshold_labels`` labels the ``thresholds`` guide lines;
+        ``legend_loc`` places the legend inside at that matplotlib location (else below the axes).
         """
         # Check input
         scores = ut.check_array_like(name="scores", val=scores, expected_dim=1)
@@ -1570,6 +1668,16 @@ class AAPredPlot:
             list_thresholds = list(thresholds) if isinstance(thresholds, (list, tuple)) else [thresholds]
             for i, t in enumerate(list_thresholds):
                 ut.check_number_val(name=f"thresholds[{i}]", val=t, just_int=False)
+        ut.check_number_val(name="annotate_at", val=annotate_at, accept_none=True)
+        ut.check_bool(name="show_n", val=show_n)
+        ut.check_list_like(name="threshold_labels", val=threshold_labels, accept_none=True)
+        ut.check_str(name="legend_loc", val=legend_loc, accept_none=True)
+
+        def _annotate(g_scores, col):
+            if annotate_at is not None:
+                rec = 100.0 * np.mean(g_scores >= annotate_at)
+                ax.text(annotate_at + 2, rec, f"{rec:.0f}%", color=col, va="center", fontsize="small")
+
         # Compute over a common cutoff grid so grouped curves are comparable
         scores = np.asarray(scores, dtype=float)
         cutoffs = np.linspace(float(np.min(scores)), float(np.max(scores)), n_steps)
@@ -1577,7 +1685,9 @@ class AAPredPlot:
         fig, ax = _new_ax(ax=ax, figsize=figsize)
         if labels is None:
             pct = np.array([100.0 * np.mean(scores >= c) for c in cutoffs])
-            ax.plot(cutoffs, pct, color=color or ut.COLOR_FEAT_POS, linewidth=2)
+            col = color or ut.COLOR_FEAT_POS
+            ax.plot(cutoffs, pct, color=col, linewidth=2)
+            _annotate(scores, col)
         else:
             labels = np.asarray(labels)
             dict_color = dict(dict_color) if dict_color is not None else {}
@@ -1585,11 +1695,24 @@ class AAPredPlot:
             for i, lab in enumerate(sorted(set(labels.tolist()))):
                 g_scores = scores[labels == lab]
                 pct = np.array([100.0 * np.mean(g_scores >= c) for c in cutoffs])
-                ax.plot(cutoffs, pct, color=dict_color.get(lab, default_cycle[i % len(default_cycle)]),
-                        linewidth=2, label=str(lab))
-            ax.legend(frameon=False)
-        for t in list_thresholds:
+                col = dict_color.get(lab, default_cycle[i % len(default_cycle)])
+                lab_txt = f"{lab} (n={len(g_scores)})" if show_n else str(lab)
+                ax.plot(cutoffs, pct, color=col, linewidth=2, label=lab_txt)
+                _annotate(g_scores, col)
+            if legend_loc is not None:
+                weight = "bold" if ut.check_legend_title_bold() else "normal"
+                leg = ax.legend(loc=legend_loc, frameon=False, fontsize="small",
+                                title=legend_title or None,
+                                title_fontproperties={"weight": weight, "size": "small"} if legend_title else None)
+                if leg is not None:
+                    leg._legend_box.align = "left"
+            else:
+                place_legend_below_(ax=ax, title=legend_title)
+        for k, t in enumerate(list_thresholds):
             ax.axvline(t, color="0.3", linestyle="--", linewidth=1.3)
+            if threshold_labels is not None and k < len(threshold_labels) and threshold_labels[k]:
+                ax.text(t, 1.005, threshold_labels[k], transform=ax.get_xaxis_transform(),
+                        ha="center", va="bottom", fontsize="small", clip_on=False)
         ax.set_xlabel(xlabel)
         ax.set_ylabel(ylabel)
         ax.set_ylim(0, 100)

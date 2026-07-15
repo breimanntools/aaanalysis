@@ -25,6 +25,7 @@ _dict_options = {
     'df_scales': None,
     'df_cat': None,
     'auto_font': True,
+    'legend_title_bold': False,
 }
 
 
@@ -133,6 +134,17 @@ def check_auto_font():
     return auto_font
 
 
+def check_legend_title_bold():
+    """Return whether plot-legend titles are drawn bold package-wide.
+
+    Global toggle (no per-call argument). ``False`` (default) matches the house style
+    (frameless, left-aligned, non-bold title); set ``True`` for bold legend titles.
+    """
+    legend_title_bold = options["legend_title_bold"]
+    check_bool(name="legend_title_bold (option)", val=legend_title_bold)
+    return legend_title_bold
+
+
 def check_jmd_n_len(jmd_n_len=None):
     """Check if general JMD-N length is given and adjust it globally."""
     global_jmd_n_len = options["jmd_n_len"]
@@ -183,6 +195,8 @@ def _check_option(name_option="", option=None):
     if name_option == "allow_multiprocessing":
         check_bool(name=name_option, val=option)
     if name_option == "auto_font":
+        check_bool(name=name_option, val=option)
+    if name_option == "legend_title_bold":
         check_bool(name=name_option, val=option)
     if "jmd" in name_option and "len" in name_option:
         check_number_range(name=name_option, val=option,
@@ -254,6 +268,10 @@ class Settings:
         needed. An explicit ``figsize`` always wins (auto-sizing is skipped). When
         ``False``, plots keep their fixed default figure size, reproducing the previous
         (pre-auto-font) output.
+    legend_title_bold : bool, default=False
+        Global toggle for the font weight of plot-legend titles. ``False`` (default) matches
+        the house style (frameless, left-aligned, non-bold title); set ``True`` for bold
+        legend titles.
 
     See Also
     --------
