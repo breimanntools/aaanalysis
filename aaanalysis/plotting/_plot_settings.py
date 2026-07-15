@@ -12,6 +12,12 @@ import warnings
 
 LIST_FONTS = ['Arial', 'Courier New', 'DejaVu Sans', 'Times New Roman', 'Verdana']
 
+# Last plot_settings kwargs applied from the session-persistent options['plot_settings'] (or
+# ``None`` if it was never applied). The lazy application re-applies only when the option's value
+# changes, so it is idempotent across a figure's many context reads and — once a style is in
+# place — never re-clobbers an explicit plot_settings() call made afterwards.
+_LAST_APPLIED_PLOT_SETTINGS = None
+
 
 # I Helper functions
 # Check plot_settings
@@ -203,3 +209,30 @@ def plot_settings(font_scale: Union[int, float] = 1,
         plt.rcParams["legend.frameon"] = False
         plt.rcParams["legend.fontsize"] = "medium"
         plt.rcParams["legend.loc"] = 'upper right'
+
+
+def apply_session_plot_settings() -> None:
+    """Apply the session-persistent ``options['plot_settings']``, if opted in.
+
+    Reads ``aaanalysis.options['plot_settings']``. When it holds a non-empty ``dict`` of
+    :func:`plot_settings` keyword arguments, those settings are applied so :func:`plot_settings`
+    need not be repeated before each figure (the resulting :data:`matplotlib.rcParams` then persist
+    for the rest of the session). Application is idempotent: the style is (re)applied only the first
+    time or when the option's value changes, so a figure's many context reads never re-run it and an
+    explicit :func:`plot_settings` call made afterwards is preserved (taking precedence for every
+    following figure). When ``None`` (default) or empty, this is a no-op and the global settings are
+    left untouched, keeping plot output byte-identical to the current default.
+
+    This is called by the shared plot entry points; it is internal and not part of the public API.
+    """
+    global _LAST_APPLIED_PLOT_SETTINGS
+    session_kws = ut.options["plot_settings"]
+    # None / {} -> no-op (byte-identical default). A non-empty dict is applied only when it differs
+    # from the last applied style, so it is not re-run on every context read and does not clobber a
+    # later explicit plot_settings() call (whose rcParams stay in place while the option is unchanged).
+    if not session_kws:
+        return
+    if session_kws == _LAST_APPLIED_PLOT_SETTINGS:
+        return
+    plot_settings(**session_kws)
+    _LAST_APPLIED_PLOT_SETTINGS = dict(session_kws)

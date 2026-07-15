@@ -7,7 +7,7 @@ This is a script for setting system level options for AAanalysis.
 from typing import Dict, Any
 import os
 
-from ._utils.check_type import check_bool, check_number_val, check_number_range, check_str
+from ._utils.check_type import check_bool, check_number_val, check_number_range, check_str, check_dict
 from ._utils.check_data import check_df
 
 # System level options
@@ -26,6 +26,7 @@ _dict_options = {
     'df_cat': None,
     'auto_font': True,
     'legend_title_bold': False,
+    'plot_settings': None,
 }
 
 
@@ -198,6 +199,10 @@ def _check_option(name_option="", option=None):
         check_bool(name=name_option, val=option)
     if name_option == "legend_title_bold":
         check_bool(name=name_option, val=option)
+    if name_option == "plot_settings":
+        # None (default) keeps plotting byte-identical; a dict of plot_settings keyword
+        # arguments is applied lazily by the plot entry points (session-persistent style).
+        check_dict(name=name_option, val=option, accept_none=True)
     if "jmd" in name_option and "len" in name_option:
         check_number_range(name=name_option, val=option,
                            min_val=0, accept_none=True, just_int=True)
@@ -272,6 +277,16 @@ class Settings:
         Global toggle for the font weight of plot-legend titles. ``False`` (default) matches
         the house style (frameless, left-aligned, non-bold title); set ``True`` for bold
         legend titles.
+    plot_settings : dict or None, default=None
+        Opt-in, session-persistent :func:`plot_settings`. When set to a dictionary of
+        :func:`plot_settings` keyword arguments (e.g. ``{'font_scale': 1.2, 'weight_bold': True}``),
+        those publication settings are applied automatically the first time any ``*Plot`` method
+        draws a figure, so :func:`plot_settings` need not be repeated before every plot. The
+        resulting :data:`matplotlib.rcParams` then persist for the rest of the session. When
+        ``None`` (default), no styling is applied implicitly and plot output is byte-identical to
+        the current default (calling :func:`plot_settings` yourself, or not at all). The session
+        style is (re)applied only when this option's value changes, so an explicit
+        :func:`plot_settings` call takes precedence for every figure drawn after it.
 
     See Also
     --------

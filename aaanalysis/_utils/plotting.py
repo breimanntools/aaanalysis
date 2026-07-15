@@ -179,6 +179,12 @@ def _check_linestyle(linestyle=None, list_cat=None, marker=None):
 # DEV: General function for plot_gcfs
 def plot_gco(option='font.size', show_options=False):
     """Get current option from plotting context"""
+    # Shared entry point for the publication *Plot classes: apply the session-persistent
+    # options['plot_settings'] once before any figure text is sized/drawn. No-op when unset
+    # (default), so plot output stays byte-identical unless the user opts in. Imported lazily
+    # to avoid an import-time cycle with the public plotting layer.
+    from ..plotting._plot_settings import apply_session_plot_settings
+    apply_session_plot_settings()
     current_context = sns.plotting_context()
     if show_options:
         print_out(current_context)
