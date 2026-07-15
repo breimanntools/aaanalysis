@@ -326,6 +326,13 @@ def check_match_df_feat_shap_values(df_feat=None, shap_values=None, drop=False, 
                                  f"To override, set 'drop=True'.\n These columns comprise: {existing_impact_cols}")
 
 
+def check_match_X_X_ref(X=None, X_ref=None):
+    """Verify the external reference matrix 'X_ref' has the same number of features as 'X'."""
+    if X.shape[1] != X_ref.shape[1]:
+        raise ValueError(f"'X_ref' ({X_ref.shape[1]} features) should have the same number of "
+                         f"features as 'X' ({X.shape[1]} features).")
+
+
 # II Main Functions
 class ShapModel(Wrapper):
     """
@@ -791,7 +798,7 @@ class ShapModel(Wrapper):
 
     @staticmethod
     def add_sample_mean_dif(X: ut.ArrayLike2D,
-                            labels: ut.ArrayLike1D,
+                            labels: Optional[ut.ArrayLike1D] = None,
                             label_ref: int = 0,
                             *,
                             df_feat: pd.DataFrame,
@@ -801,6 +808,7 @@ class ShapModel(Wrapper):
                             group_average: bool = False,
                             df_seq: Optional[pd.DataFrame] = None,
                             sample_positions: Union[int, List[int], str, List[str], None] = None,
+                            X_ref: Optional[ut.ArrayLike2D] = None,
                             ) -> pd.DataFrame:
         """
         Compute the feature value difference between selected samples and a reference group average.
@@ -826,14 +834,19 @@ class ShapModel(Wrapper):
 
         .. versionadded:: 0.1.0
 
+        .. versionchanged:: 1.2.0
+           Added ``X_ref`` for an explicit external reference group; ``labels`` is now optional.
+
         Parameters
         ----------
         X : array-like, shape (n_samples, n_features)
             Feature matrix. `Rows` typically correspond to proteins and `columns` to features.
-        labels : array-like, shape (n_samples)
-            Class labels for samples in ``X`` (typically, 1=positive, 0=negative).
+        labels : array-like, shape (n_samples), optional
+            Class labels for samples in ``X`` (typically, 1=positive, 0=negative). Required unless an
+            external reference matrix ``X_ref`` is given (the two are mutually exclusive); with ``X_ref``
+            the reference is ``X_ref`` itself and ``labels`` / ``label_ref`` are unused.
         label_ref : int, default=0,
-            Class label of reference group in ``labels``.
+            Class label of reference group in ``labels`` (ignored when ``X_ref`` is given).
         df_feat : pd.DataFrame, shape (n_features, n_feature_info)
             Feature DataFrame with a unique identifier, scale information, statistics, and positions for each feature.
         drop : bool, default=False
@@ -860,6 +873,11 @@ class ShapModel(Wrapper):
             Required only when ``samples`` is given as entry name(s).
         sample_positions : int, list of int, str, list of str, or None
             Deprecated alias for ``samples`` (removed in 1.2.0).
+        X_ref : array-like, shape (n_ref_samples, n_features), optional
+            External reference feature matrix. When given, the reference group average (MEAN_REF) is
+            ``X_ref.mean(axis=0)`` and ``labels`` / ``label_ref`` are not needed — use this to explain
+            each sample against a *separate* population (e.g. an ``others`` set not contained in ``X``),
+            avoiding the manual concatenation of samples and reference rows into one labelled matrix.
 
         Returns
         -------
@@ -875,10 +893,17 @@ class ShapModel(Wrapper):
         X = ut.check_X(X=X)
         n_samples, n_feat = X.shape
         ut.check_X_unique_samples(X=X, min_n_unique_samples=2)
-        ut.check_number_val(name="label_ref", val=label_ref, just_int=True)
-        labels = ut.check_labels(labels=labels, vals_required=[label_ref],
-                                 len_required=n_samples, allow_other_vals=True,
-                                 accept_float=True) # Accept fuzzy labeling by default
+        # Reference group: an explicit external matrix ('X_ref') or the in-matrix 'label_ref' group.
+        if X_ref is not None:
+            if labels is not None:
+                raise ValueError("'X_ref' and 'labels' are mutually exclusive; provide one reference source.")
+            X_ref = ut.check_X(X=X_ref, min_n_samples=1)
+            check_match_X_X_ref(X=X, X_ref=X_ref)
+        else:
+            ut.check_number_val(name="label_ref", val=label_ref, just_int=True)
+            labels = ut.check_labels(labels=labels, vals_required=[label_ref],
+                                     len_required=n_samples, allow_other_vals=True,
+                                     accept_float=True) # Accept fuzzy labeling by default
         samples = resolve_samples_alias(samples=samples, sample_positions=sample_positions)
         df_feat = ut.check_df_feat(df_feat=df_feat)
         ut.check_bool(name="drop", val=drop)
@@ -894,5 +919,5 @@ class ShapModel(Wrapper):
         df_feat = add_sample_mean_dif_(X, labels=labels, label_ref=label_ref,
                                        df_feat=df_feat, drop=drop,
                                        sample_positions=sample_positions, names=names,
-                                       group_average=group_average)
+                                       group_average=group_average, X_ref=X_ref)
         return df_feat

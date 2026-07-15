@@ -9,6 +9,7 @@ import seaborn as sns
 from matplotlib import pyplot as plt
 
 import aaanalysis.utils as ut
+from .aa_pred_plot_legend import place_legend_below_
 
 
 # I Helper Functions
@@ -58,7 +59,7 @@ def plot_comparison_(df_eval=None, group="group", condition="condition", value="
                      baseline=50, baseline_label=None, annotate=True, annotation_fmt=None,
                      group_order=None, condition_order=None, dict_color=None, bar_width=0.8,
                      ax=None, figsize=(7, 4.2), xlabel=None, ylabel="Score", title=None,
-                     ylim=None, fontsize_annotations=10, xtick_rotation=0):
+                     ylim=None, fontsize_annotations=10, xtick_rotation=0, legend_title=None):
     """Draw the grouped comparison barplot. Returns (fig, ax)."""
     group_order = _resolve_order(df_eval[group].tolist(), group_order, "group_order")
     condition_order = _resolve_order(df_eval[condition].tolist(), condition_order, "condition_order")
@@ -108,6 +109,6 @@ def plot_comparison_(df_eval=None, group="group", condition="condition", value="
     elif heights_max > 0:
         top = heights_max if baseline is None else max(heights_max, baseline)
         ax.set_ylim(top=top * (1.15 if annotate else 1.05))
-    ax.legend(loc="upper left", bbox_to_anchor=(1.01, 1.0), frameon=False)
+    place_legend_below_(ax=ax, title=legend_title)
     sns.despine(ax=ax)
     return fig, ax

@@ -8,6 +8,7 @@ import seaborn as sns
 from matplotlib import pyplot as plt
 
 import aaanalysis.utils as ut
+from .aa_pred_plot_legend import place_legend_below_
 
 
 # I Helper Functions
@@ -54,7 +55,8 @@ def _resolve_group_colors(group_order: List[str], dict_color: Optional[Dict[str,
 # II Main Functions
 def plot_rank_scatter_(df_rank=None, col_score="score", col_group="group", group_order=None,
                        dict_color=None, thresholds=None, ax=None, figsize=None, marker_size=25,
-                       xlabel="Protein rank", ylabel="Max score per protein", fontsize_labels=None):
+                       xlabel="Protein rank", ylabel="Max score per protein", fontsize_labels=None,
+                       legend_title=None):
     """Draw the per-protein rank scatter. Returns (fig, ax)."""
     # Resolve order + colors
     if group_order is None:
@@ -89,6 +91,6 @@ def plot_rank_scatter_(df_rank=None, col_score="score", col_group="group", group
         ax.axhline(t, color="grey", linestyle="--", linewidth=1)
     ax.set_xlabel(xlabel, fontsize=fontsize_labels)
     ax.set_ylabel(ylabel, fontsize=fontsize_labels)
-    ax.legend()
+    place_legend_below_(ax=ax, title=legend_title)
     sns.despine(ax=ax)
     return fig, ax

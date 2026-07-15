@@ -544,6 +544,8 @@ LABEL_MEAN_DIF = "Mean difference"
 # Standard colors
 COLOR_SHAP_POS = '#FF0D57'  # (255, 13, 87)
 COLOR_SHAP_NEG = '#1E88E5'  # (30, 136, 229)
+COLOR_SHAP_POS_LC = '#F9779E'  # (249, 119, 158) lighter positive tint (low-confidence band)
+COLOR_SHAP_NEG_LC = '#83BBEC'  # (131, 187, 236) lighter negative tint (low-confidence band)
 # Linked-selection highlight (CPPStructurePlot.interactive): the same colour marks the picked
 # residue in the 3D structure and its feature-map column, so the link reads at a glance.
 COLOR_LINK_HIGHLIGHT = '#00E5FF'  # (0, 229, 255) bright cyan, distinct from the SHAP ramp
@@ -568,6 +570,8 @@ COLOR_SAMPLES_REL_NEG = COLOR_REL_NEG
 
 DICT_COLOR = {"SHAP_POS": COLOR_SHAP_POS,
               "SHAP_NEG": COLOR_SHAP_NEG,
+              "SHAP_POS_LC": COLOR_SHAP_POS_LC,
+              "SHAP_NEG_LC": COLOR_SHAP_NEG_LC,
               "FEAT_POS": COLOR_FEAT_POS,
               "FEAT_NEG": COLOR_FEAT_NEG,
               "FEAT_IMP": COLOR_FEAT_IMP,

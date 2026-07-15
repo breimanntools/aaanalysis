@@ -205,13 +205,14 @@ class TestAAPredPlotEvalHeatmap:
         assert r.fig is not None and r.ax is not None
 
     def test_boxes_best_cell_by_default(self):
-        # highlight defaults to 1: the box lands on the argmax cell, flush to the cell (no inset).
+        # highlight defaults to 1: the box lands on the argmax cell, inset slightly inside the
+        # cell (matches the house heatmap style: a crisp frame off the grid lines).
         g = _grid()
         r = aa.AAPredPlot().eval(g, kind="heatmap")
         i, j = np.unravel_index(np.argmax(g.to_numpy()), g.shape)
         assert _box_cell(r.ax) == (int(i), int(j))
         box = [p for p in r.ax.patches if type(p).__name__ == "Rectangle" and p.get_fill() is False][0]
-        assert box.get_width() == 1 and box.get_height() == 1  # full-cell frame
+        assert box.get_width() == 0.92 and box.get_height() == 0.92  # inset frame
 
     def test_highlight_top_n(self):
         # highlight=3 boxes the three highest-value cells.
@@ -632,6 +633,12 @@ class TestAAPredPlotPredictHist:
             aa.AAPredPlot().predict_group(scores, kind="hist", band=True,
                                           thresholds=[0.3, 0.7], band_colors=["#000000"])
 
+    def test_line_thresholds_draws_vertical_lines(self):
+        scores, labels = _scores()
+        fig, ax = aa.AAPredPlot().predict_group(scores, kind="hist", line_thresholds=[0.3, 0.7])
+        # one vertical reference line per requested threshold
+        assert len(ax.get_lines()) == 2
+
 
 class TestAAPredPlotPredictScatter:
     def test_returns_fig_ax(self):
@@ -753,6 +760,28 @@ class TestAAPredPlotPredictCutoff:
         for line in ax.get_lines():
             y = line.get_ydata()
             assert np.all(np.diff(y) <= 1e-9)
+
+    def test_annotate_at_marks_recovery(self):
+        scores, labels = _scores()
+        fig, ax = aa.AAPredPlot().predict_group(scores, kind="cutoff", labels=labels, annotate_at=0.8)
+        assert ax is not None
+
+    def test_show_n_appends_counts_to_legend(self):
+        scores, labels = _scores()
+        fig, ax = aa.AAPredPlot().predict_group(scores, kind="cutoff", labels=labels, show_n=True)
+        assert ax.get_legend() is not None
+
+    def test_threshold_labels_label_the_lines(self):
+        scores, labels = _scores()
+        fig, ax = aa.AAPredPlot().predict_group(scores, kind="cutoff", thresholds=[0.5],
+                                                threshold_labels=["cut-off"])
+        assert ax is not None
+
+    def test_legend_loc_places_legend_inside(self):
+        scores, labels = _scores()
+        fig, ax = aa.AAPredPlot().predict_group(scores, kind="cutoff", labels=labels,
+                                                legend_loc="lower left")
+        assert ax.get_legend() is not None
 
 
 class TestAAPredPlotPredictGroupInvalidKind:

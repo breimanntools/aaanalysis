@@ -27,6 +27,22 @@ protein prediction; `pro` extra for heavy deps; semver-strict v1) and the standa
 >   sample resolution (#407), and the `_kws` docs convention (#403).
 > - **✅ Milestones: 0 unmilestoned** (the 10 new gaps — #391/#392/#393/#408–#414 — were assigned
 >   2026-07-14; see the Milestones section).
+>
+> **Later on 2026-07-14 (v1.1 refresh).** The whole in-flight epic-#414 PR cluster merged
+> (#415/#416/#417/#418), plus **#274/#421 packaging gates** (PR #420) and the **#345 param-coverage
+> backlog** (PRs #422–#425 + #427, baseline deleted). All now **CLOSED**. **#336** epic's last child
+> **#341** also closed → **#336 epic CLOSED (completed) 2026-07-14**. Epics **#106** and **#126** each
+> now collapse to a single open child (#109, #131 respectively) — noted in a status comment on both;
+> close each when its child lands. The **data-flow diagram lane closed** — #227 (infogram asset) and
+> #226 (Usage Principles swap-in) were both already shipped/merged on master and verified complete.
+> **#335** later closed (composition family shipped) and its ACC tail spun out to **#428**.
+> **v1.1 open is now 8 issues** (#35, #75, #80, #106, #109, #126, #131, #428); **no open PRs**.
+> Local occupied lane: the AAPredPlot prediction-plotting layer (`_aa_pred_plot.py` + `aa_pred_plot_*`
+> backends + new `aa_pred_plot_legend.py`) + `aap_plot_*` notebooks + `use_case1` (#109 g-sec). The only remaining *code* gaps in v1.1 are
+> **#335** (ACC featurizer) and **#131** (session plot style) + **#75** (logging); the rest are
+> docs/epics. Working-tree note: `use_case1_gamma_secretase.ipynb`, `_aa_pred_plot.py`, and
+> `cpp_plot_ranking.py` are **modified locally (uncommitted)** — the user is continuing g-sec/#109
+> work in this checkout, so treat #109 and the prediction-plot files as an occupied lane.
 
 ## Snapshot
 - **Open issues: 66** (was 57 on 2026-07-10; +10 new grill/group-plot issues, −1 closed #340). Verdict split:
@@ -178,8 +194,9 @@ v1.5 ×5 · v2.X ×11** = 66.
 ### Prediction / evaluation / design
 | # | prio | ms | verdict | note |
 |---|---|---|---|---|
-| 335 | 2 | v1.1 | 🔄 partial | scale/AAC/DPC/kmer + `eval(baseline=)` shipped (#360/#382). **Only ACC(`n_lag`) remains** — needs a curated small scale-set (avoids `n_scales²`); kept open as ACC tracker. |
-| 336 | 2 | v1.1 | ☑️ ~done | 4/4 concrete children closed (#337–#340). Only #335 ACC tail remains → **recommend close** (or keep = #335 tracker). |
+| 335 | 2 | v1.1 | ☑️ **CLOSED** | Composition family shipped (scale/AAC/DPC/kmer + `CPP.run_composit` + `eval(baseline=)`, #360/#382). ACC tail carved out to **#428**. |
+| 428 | 3 | v1.1 | 🟢 **IMPLEMENTED (local `feat/428-acc` @ a3aa5ce5)** | `SequenceFeature.acc` = auto-covariance only over full default scales (`n_scales·n_lag`); `STR_BASELINE_ACC` + `AAPred.eval` wired; 36 tests + notebook + release note. Verified green. No CONFIRM-FIRST surface. **Independent lane** (no config.py/plotting.py). Awaiting review/push. |
+| 336 | 2 | v1.1 | ☑️ **CLOSED (completed)** | **All 5 concrete children closed** (#337–#341). Epic closed 2026-07-14; ACC tail tracked on #335, minor items fold into #106. |
 | 91 | 1 | v1.3 | 🔄 Ready-ish | Decide `ModelEvaluator(Tool)`+Plot vs. helpers. Reuse `comp_bootstrap_ci`+`metrics`; sits beside `AAPred.eval`. Groups with #411/#276. |
 | 276 | 3 | v1.3 | 🔄 Revisit | Paper-fidelity nested-CV Monte-Carlo + ensembles behind `predict_samples`. Oversized — scope down; overlaps #411's nested-CV. |
 | 37 | 1 | v1.2 | ☑️ merged, kept open | AAMut/SeqMut merged; the design gate for #57/#59/#60/#261. Decide "done" vs. remaining design verbs. |
@@ -203,21 +220,21 @@ v1.5 ×5 · v2.X ×11** = 66.
 |---|---|---|---|---|
 | 241 | 2 | v1.2 | 🔄 partial | Facade shipped (`find_features`/`predict_samples`/`explain_features`/`plot_eval`/`obtain_samples`). **Remaining: `SequenceFeatureTransformer`** (sklearn, leak-free) + reconcile issue text with shipped verbs. |
 | 126 | 2 | v1.1 | 🔄 epic | Drive children; the pipe API is its realization. |
-| 131 | 2 | v1.1 | 🔄 | Session-persistent plot style (CONFIRM-FIRST `config.py`); unset → byte-identical. |
+| 131 | 2 | v1.1 | 🟢 **IMPLEMENTED (local `feat/131-plot-settings` @ 884b4e27)** | `options['plot_settings']` applied lazily via `plot_gco`; unset → byte-identical (39 visual-regression tests unchanged). **CONFIRM-FIRST `config.py`** edited. **Merge-couples with #75** (both edit `_utils/plotting.py` `plot_gco` + adjacent `config.py` imports → serialize). Awaiting review/push. |
 | 87 | 3 | v1.3 | 🔄 | Named CPP strategy preset; doc-first. |
-| 75 | 3 | v1.1 | 🔄 | Route output through logging, keep `print_out` shim. |
+| 75 | 3 | v1.1 | 🟢 **IMPLEMENTED (local `feat/75-logging` @ 041d454e)** | `print_out`→`logging.getLogger("aaanalysis")`; `set_logger_verbosity` mapped from `check_verbose`; 12 caplog tests. **CONFIRM-FIRST `config.py`** edited. `display_df` shape-print left un-routed on purpose (grep=1 not 0). **Merge-couples with #131** (`plot_gco` + `config.py`). Awaiting review/push. |
 
 ### CI / packaging / docs
 | # | prio | ms | verdict | note |
 |---|---|---|---|---|
-| 274 | 1 | v1.1 | ✅ Ready | Wheel/sdist + install-from-wheel + `__all__` import gate before v1.1. CONFIRM-FIRST workflows. |
-| 345 | ? | v1.1 | 🔄 partial | Baseline 257 → ~93 (PR #363). Burn down per-subpackage; docs-only; ideal parallel lane. |
+| 274 | 1 | v1.1 | ☑️ **CLOSED** | Packaging gates shipped (PR #420, bc14cc12): wheel+sdist build, install-from-wheel/sdist smoke, `__all__` import test, `MANIFEST.in` ships `*.pyx`. #421 folded in. |
+| 345 | ? | v1.1 | ☑️ **CLOSED** | Param-coverage backlog burned to 0 across 5 subpackage PRs (#422/#423/#424/#425/#427); baseline file deleted → gate is now a permanent zero-gap check. |
 | 106 | 1 | v1.1 | 🔄 epic | Docs-architecture parent; one owner. |
 | 109 | 2 | v1.1 | 🔄 | Examples › Use Cases (g-sec shipped; #389/#413 modernize it). Confirm boundary vs protocols. |
-| 227 | 3 | v1.1 | 🔄 | Data-flow infogram artwork; blocks #226. |
-| 226 | 3 | v1.1 | 🔄 | Swap infogram into `usage_principles.rst`; blocked-by #227. |
+| 227 | 3 | v1.1 | ☑️ **CLOSED** | Infogram shipped: `_artwork/diagrams/dataflow_map.png` + editable `_static/dataflow_map.html` + `.pdf` vector; all labels verified against public API. (Vector is PDF not `.svg` — optional parity follow-up.) |
+| 226 | 3 | v1.1 | ☑️ **CLOSED** | Usage Principles consumes the infogram; `components.png`/`connections.png` retired to `legacy/`, prose links the ecosystem map; one data-flow figure remains. |
 | 80 | 3 | v1.1 | ✅ | seaborn-style tutorial gallery; new docs dep = CONFIRM-FIRST. |
-| 35 | 2 | v1.1 | ✅ | Protocols epic (mostly shipped); tail = scale-selection protocol. |
+| 35 | 2 | v1.1 | ☑️ ~done | Protocols pillar shipped (`protocols.rst` grid + `protocol1_cpp_signature`…`protocol10_validation`, core 4 present). Tail = P0–P12 renumber + a couple pipeline protocols (scale-selection). |
 
 ### Data / schema / ecosystem
 | # | prio | ms | verdict | note |

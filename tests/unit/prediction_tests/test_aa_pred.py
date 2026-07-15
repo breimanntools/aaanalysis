@@ -578,6 +578,34 @@ class TestAAPredPredict:
         assert pred.shape == (len(X),) and pred_std.shape == (len(X),)
         assert pred.min() >= 0 and pred.max() <= 1
 
+    def test_predict_score_range_default_proba(self, seq_fitted):
+        aap, df_seq, _ = seq_fitted
+        assert aap.predict(df_seq.head(5), level="sequence")["score"].between(0, 1).all()
+
+    def test_predict_score_range_percent_equals_proba_x100(self, seq_fitted):
+        aap, df_seq, _ = seq_fitted
+        d_proba = aap.predict(df_seq.head(5), level="sequence")
+        d_pct = aap.predict(df_seq.head(5), level="sequence", score_range="percent")
+        assert np.allclose(d_pct["score"].to_numpy(), d_proba["score"].to_numpy() * 100)
+
+    def test_predict_threshold_consistent_across_ranges(self, seq_fitted):
+        # (proba, 0.5) and (percent, 50) select the same label since percent = proba * 100.
+        aap, df_seq, _ = seq_fitted
+        lp = aap.predict(df_seq.head(5), level="sequence", threshold=0.5)["predicted_label"].to_numpy()
+        lc = aap.predict(df_seq.head(5), level="sequence", threshold=50,
+                         score_range="percent")["predicted_label"].to_numpy()
+        assert np.array_equal(lp, lc)
+
+    def test_predict_threshold_out_of_score_range_raises(self, seq_fitted):
+        aap, df_seq, _ = seq_fitted
+        with pytest.raises(ValueError):
+            aap.predict(df_seq.head(3), level="sequence", threshold=50)  # 50 invalid for proba [0, 1]
+
+    def test_predict_invalid_score_range_raises(self, seq_fitted):
+        aap, df_seq, _ = seq_fitted
+        with pytest.raises(ValueError):
+            aap.predict(df_seq.head(3), level="sequence", score_range="pct")
+
 
 def _oof_ensemble(random_state=42):
     """A small 3-model ensemble mirroring the study's substratome scoring (sans xgboost)."""
@@ -673,6 +701,22 @@ class TestAAPredPredictOOF:
         X, labels = _data()
         with pytest.raises(ValueError):
             aa.AAPred(random_state=0).predict_oof(X, labels, label_pos=5)
+
+    def test_score_range_default_proba(self):
+        X, labels = _data()
+        assert aa.AAPred(random_state=0).predict_oof(X, labels)["score"].between(0, 1).all()
+
+    def test_score_range_percent_equals_proba_x100(self):
+        X, labels = _data()
+        d_proba = aa.AAPred(models=_oof_ensemble(), random_state=7).predict_oof(X, labels)
+        d_pct = aa.AAPred(models=_oof_ensemble(), random_state=7).predict_oof(X, labels, score_range="percent")
+        assert np.allclose(d_pct["score"], d_proba["score"] * 100)
+        assert np.allclose(d_pct["score_std"], d_proba["score_std"] * 100)
+
+    def test_invalid_score_range_raises(self):
+        X, labels = _data()
+        with pytest.raises(ValueError):
+            aa.AAPred(random_state=0).predict_oof(X, labels, score_range="pct")
 
 
 class TestAAPredPredictOOFComplex:
@@ -800,3 +844,170 @@ class TestAAPredCapabilityValidation:
         with pytest.raises(ValueError, match="roc_auc"):
             aa.AAPred(models=["rf", SVC(kernel="linear")], random_state=0).eval(
                 X, labels, metrics=["roc_auc"])
+
+
+class TestAAPredPredictProba:
+    """AAPred.predict_proba — score a precomputed feature matrix with the fitted ensemble."""
+
+    def test_columns(self):
+        X, labels = _data()
+        aap = aa.AAPred(models=["rf"], random_state=0).fit(X, labels)
+        assert list(aap.predict_proba(X).columns) == ["score", "score_std"]
+
+    def test_row_aligned_with_X(self):
+        X, labels = _data()
+        X_new, _ = _data(n_per_class=7, seed=9)
+        aap = aa.AAPred(models=["rf"], random_state=0).fit(X, labels)
+        assert len(aap.predict_proba(X_new)) == len(X_new)
+
+    def test_scores_in_range(self):
+        X, labels = _data()
+        aap = aa.AAPred(models=["rf", "log_reg"], random_state=0).fit(X, labels)
+        assert aap.predict_proba(X)["score"].between(0, 1).all()
+
+    def test_score_std_non_negative(self):
+        X, labels = _data()
+        aap = aa.AAPred(models=["rf", "extra_trees", "log_reg"], random_state=0).fit(X, labels)
+        assert (aap.predict_proba(X)["score_std"] >= 0).all()
+
+    def test_single_model_std_is_zero(self):
+        X, labels = _data()
+        aap = aa.AAPred(models=["rf"], random_state=0).fit(X, labels)
+        assert np.allclose(aap.predict_proba(X)["score_std"].to_numpy(), 0.0)
+
+    def test_accepts_dataframe_X(self):
+        X, labels = _data()
+        aap = aa.AAPred(models=["rf"], random_state=0).fit(X, labels)
+        df_pred = aap.predict_proba(pd.DataFrame(X))
+        assert list(df_pred.columns) == ["score", "score_std"] and len(df_pred) == len(X)
+
+    def test_score_range_default_proba(self):
+        X, labels = _data()
+        aap = aa.AAPred(models=["rf"], random_state=0).fit(X, labels)
+        assert aap.predict_proba(X)["score"].between(0, 1).all()
+
+    def test_score_range_percent_equals_proba_x100(self):
+        X, labels = _data()
+        aap = aa.AAPred(models=["rf", "log_reg"], random_state=0).fit(X, labels)
+        d_proba = aap.predict_proba(X)
+        d_pct = aap.predict_proba(X, score_range="percent")
+        assert np.allclose(d_pct["score"], d_proba["score"] * 100)
+        assert np.allclose(d_pct["score_std"], d_proba["score_std"] * 100)
+
+    def test_invalid_score_range_raises(self):
+        X, labels = _data()
+        aap = aa.AAPred(models=["rf"], random_state=0).fit(X, labels)
+        with pytest.raises(ValueError):
+            aap.predict_proba(X, score_range="pct")
+
+    def test_single_sample(self):
+        # min_n_samples=1: a one-row candidate matrix scores fine (no identical-samples guard).
+        X, labels = _data()
+        aap = aa.AAPred(models=["rf"], random_state=0).fit(X, labels)
+        df_pred = aap.predict_proba(X[:1])
+        assert len(df_pred) == 1 and df_pred["score"].between(0, 1).all()
+
+    @settings(max_examples=5, deadline=None)
+    @given(n_per_class=some.integers(min_value=3, max_value=12),
+           n_feat=some.integers(min_value=2, max_value=8))
+    def test_shape_invariant(self, n_per_class, n_feat):
+        X, labels = _data(n_per_class=n_per_class, n_feat=n_feat)
+        aap = aa.AAPred(models=["rf"], random_state=0).fit(X, labels)
+        df_pred = aap.predict_proba(X)
+        assert df_pred.shape == (len(X), 2)
+        assert df_pred["score"].between(0, 1).all()
+
+    def test_reproducible(self):
+        X, labels = _data()
+        X_new, _ = _data(n_per_class=8, seed=5)
+        d1 = aa.AAPred(models=["rf"], random_state=0).fit(X, labels).predict_proba(X_new)
+        d2 = aa.AAPred(models=["rf"], random_state=0).fit(X, labels).predict_proba(X_new)
+        assert np.allclose(d1["score"].to_numpy(), d2["score"].to_numpy())
+
+    def test_before_fit_raises(self):
+        X, _ = _data()
+        with pytest.raises(ValueError):
+            aa.AAPred(models=["rf"], random_state=0).predict_proba(X)
+
+    def test_non_proba_estimator_raises(self):
+        from sklearn.svm import LinearSVC
+        X, labels = _data()
+        aap = aa.AAPred(models=[LinearSVC()], random_state=0).fit(X, labels)
+        with pytest.raises(ValueError):
+            aap.predict_proba(X)
+
+    def test_none_X_raises(self):
+        X, labels = _data()
+        aap = aa.AAPred(models=["rf"], random_state=0).fit(X, labels)
+        with pytest.raises(ValueError):
+            aap.predict_proba(None)
+
+    def test_1d_X_raises(self):
+        X, labels = _data()
+        aap = aa.AAPred(models=["rf"], random_state=0).fit(X, labels)
+        with pytest.raises(ValueError):
+            aap.predict_proba(np.array([0.1, 0.2, 0.3]))
+
+    def test_nan_X_raises(self):
+        X, labels = _data()
+        aap = aa.AAPred(models=["rf"], random_state=0).fit(X, labels)
+        X_bad = X.copy()
+        X_bad[0, 0] = np.nan
+        with pytest.raises(ValueError):
+            aap.predict_proba(X_bad)
+
+
+class TestAAPredPredictProbaComplex:
+    """Cross-checks and exact-equivalence behavior of AAPred.predict_proba."""
+
+    def test_matches_hand_rolled_ensemble(self):
+        # KPI: predict_proba reproduces the study's manual substratome scoring
+        # (np.vstack([m.predict_proba(X_new)[:, 1] for m in ensemble]).mean(0)) within 1e-9.
+        X, labels = _data(n_per_class=25, seed=3)
+        X_new, _ = _data(n_per_class=12, seed=99)
+        rs = 7
+        aap = aa.AAPred(models=_oof_ensemble(random_state=rs), random_state=rs).fit(X, labels)
+        # Reference: score X_new the notebook way, straight off the fitted deployment models.
+        ref = np.vstack([m.predict_proba(X_new)[:, list(m.classes_).index(1)]
+                         for m in aap.list_models_])
+        df_pred = aap.predict_proba(X_new)
+        assert np.allclose(df_pred["score"].to_numpy(), ref.mean(0), atol=1e-9, rtol=0)
+        assert np.allclose(df_pred["score_std"].to_numpy(), ref.std(0), atol=1e-9, rtol=0)
+
+    def test_independent_refit_matches(self):
+        # Fitting an identical ensemble independently and scoring the notebook way reproduces it.
+        X, labels = _data(n_per_class=20, seed=1)
+        X_new, _ = _data(n_per_class=6, seed=2)
+        rs = 4
+        ref_models = [clone(m).fit(X, labels) for m in _oof_ensemble(random_state=rs)]
+        ref = np.vstack([m.predict_proba(X_new)[:, 1] for m in ref_models]).mean(0)
+        df_pred = (aa.AAPred(models=_oof_ensemble(random_state=rs), random_state=rs)
+                   .fit(X, labels).predict_proba(X_new))
+        assert np.allclose(df_pred["score"].to_numpy(), ref, atol=1e-9, rtol=0)
+
+    def test_matches_predict_sequence_level(self, seq_fitted):
+        # predict_proba(X) equals predict(df_seq, level='sequence') when X is that df_seq's matrix
+        # -> the matrix path and the raw-sequence path share one scoring contract.
+        aap, df_seq, X = seq_fitted
+        df_a = aap.predict_proba(X)
+        df_b = aap.predict(df_seq, level="sequence")
+        assert np.allclose(df_a["score"].to_numpy(), df_b["score"].to_numpy(), atol=1e-9)
+        assert np.allclose(df_a["score_std"].to_numpy(), df_b["score_std"].to_numpy(), atol=1e-9)
+
+    def test_label_pos_zero_scores_complement(self):
+        # A single model's positive-class score for label_pos=0 is 1 - the label_pos=1 score.
+        X, labels = _data(n_per_class=20)
+        X_new, _ = _data(n_per_class=8, seed=6)
+        s1 = (aa.AAPred(models=["rf"], random_state=0)
+              .fit(X, labels, label_pos=1).predict_proba(X_new)["score"].to_numpy())
+        s0 = (aa.AAPred(models=["rf"], random_state=0)
+              .fit(X, labels, label_pos=0).predict_proba(X_new)["score"].to_numpy())
+        assert np.allclose(s0, 1 - s1, atol=1e-9)
+
+    def test_feature_count_mismatch_raises(self):
+        # X with a different feature count than training is rejected by the fitted estimator.
+        X, labels = _data(n_feat=6)
+        X_bad, _ = _data(n_feat=8, seed=3)
+        aap = aa.AAPred(models=["rf"], random_state=0).fit(X, labels)
+        with pytest.raises(ValueError):
+            aap.predict_proba(X_bad)

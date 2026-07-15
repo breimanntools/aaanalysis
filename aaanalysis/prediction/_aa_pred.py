@@ -188,6 +188,17 @@ def build_baseline_matrices(df_seq=None, list_kinds=None, df_scales=None, list_p
     return dict_X_baseline
 
 
+def _apply_score_range(df_pred=None, score_range=None):
+    """Return ``df_pred`` with its score columns on the requested range. ``proba`` [0, 1] is the
+    native scale of the ensemble probabilities; ``percent`` multiplies ``score`` / ``score_std``
+    (whichever columns are present) by 100 so scores read as a 0-100 percentage."""
+    if score_range == ut.STR_SCORE_RANGE_PERCENT:
+        for col in (ut.COL_SCORE, ut.COL_SCORE_STD):
+            if col in df_pred.columns:
+                df_pred[col] = df_pred[col] * 100
+    return df_pred
+
+
 # II Main Functions
 class AAPred(Wrapper):
     """
@@ -563,6 +574,7 @@ class AAPred(Wrapper):
                     labels: ut.ArrayLike1D,
                     label_pos: int = 1,
                     n_cv: int = 5,
+                    score_range: str = "proba",
                     ) -> pd.DataFrame:
         """
         Score the training set with cross-validated out-of-fold per-sample probabilities.
@@ -592,6 +604,9 @@ class AAPred(Wrapper):
             Label of the positive class whose out-of-fold probability is scored.
         n_cv : int, default=5
             Number of stratified cross-validation folds (must not exceed the smallest class count).
+        score_range : str, default="proba"
+            Scale of the returned ``score`` / ``score_std`` columns: ``'proba'`` for the native
+            probabilities in ``[0, 1]``, ``'percent'`` for the same values scaled to ``[0, 100]``.
 
         Returns
         -------
@@ -618,6 +633,7 @@ class AAPred(Wrapper):
         if label_pos not in classes:
             raise ValueError(f"'label_pos' ({label_pos}) should be one of the labels: {classes}")
         check_n_cv(n_cv=n_cv, labels=labels)
+        ut.check_str_options(name="score_range", val=score_range, list_str_options=ut.LIST_SCORE_RANGES)
         check_estimators_proba(list_estimators=self._list_estimators, context="predict_oof")
         # Out-of-fold scoring: clone the constructor's estimators and cross-validate (no prior fit)
         pred, pred_std = predict_proba_oof(X=X, labels=labels,
@@ -625,7 +641,7 @@ class AAPred(Wrapper):
                                            n_cv=n_cv, random_state=self._random_state,
                                            label_pos=label_pos)
         df_pred = pd.DataFrame({ut.COL_SCORE: pred, ut.COL_SCORE_STD: pred_std})
-        return df_pred
+        return _apply_score_range(df_pred=df_pred, score_range=score_range)
 
     @staticmethod
     def score_to_group(scores: ut.ArrayLike1D,
@@ -719,6 +735,7 @@ class AAPred(Wrapper):
                 step: int = 1,
                 jmd_n_len: int = 10,
                 jmd_c_len: int = 10,
+                score_range: str = "proba",
                 ) -> pd.DataFrame:
         """
         Predict from raw sequences at a chosen level: whole protein, domain, or residue window.
@@ -756,8 +773,9 @@ class AAPred(Wrapper):
             ``'sequence'`` = protein / whole-sequence level (``SEQ_*``), ``'domain'`` = domain level
             (``DOM_*``), ``'window'`` = residue level (``AA_*``, residues represented as windows).
         threshold : int or float, optional
-            If given (in ``[0, 1]``), add a ``predicted_label`` column (score ``>= threshold`` ->
-            ``label_pos``, else the negative class). ``None`` (default) returns scores only.
+            If given (within the ``score_range`` bounds: ``[0, 1]`` for ``'proba'``, ``[0, 100]`` for
+            ``'percent'``), add a ``predicted_label`` column (score ``>= threshold`` -> ``label_pos``,
+            else the negative class). ``None`` (default) returns scores only.
         list_parts : list of str, optional
             Sequence parts to build for featurization. Defaults to the standard CPP parts.
         window : int, default=3
@@ -771,6 +789,9 @@ class AAPred(Wrapper):
             (``level='window'`` only) N-terminal flank required around each window.
         jmd_c_len : int, default=10
             (``level='window'`` only) C-terminal flank required around each window.
+        score_range : str, default="proba"
+            Scale of the returned ``score`` / ``score_std`` columns (and of ``threshold``):
+            ``'proba'`` for native probabilities in ``[0, 1]``, ``'percent'`` for ``[0, 100]``.
 
         Returns
         -------
@@ -798,8 +819,10 @@ class AAPred(Wrapper):
         ut.check_df_seq(df_seq=df_seq)
         if level not in ("sequence", "domain", "window"):
             raise ValueError(f"'level' ('{level}') must be 'sequence', 'domain', or 'window'.")
+        ut.check_str_options(name="score_range", val=score_range, list_str_options=ut.LIST_SCORE_RANGES)
         if threshold is not None:
-            ut.check_number_range(name="threshold", val=threshold, min_val=0, max_val=1, just_int=False)
+            lo, hi = ut.DICT_SCORE_RANGE_BOUNDS[score_range]
+            ut.check_number_range(name="threshold", val=threshold, min_val=lo, max_val=hi, just_int=False)
         # Dispatch to the level-specific predictor
         if level == "sequence":
             df_pred = self._predict_seq(df_seq=df_seq, list_parts=list_parts)
@@ -810,11 +833,73 @@ class AAPred(Wrapper):
                 raise ValueError("'tmd_len' is required for level='window'.")
             df_pred = self._predict_window(df_seq=df_seq, tmd_len=tmd_len, step=step,
                                            jmd_n_len=jmd_n_len, jmd_c_len=jmd_c_len, list_parts=list_parts)
+        # Scale scores to the requested range first, so 'threshold' is compared on that same range
+        df_pred = _apply_score_range(df_pred=df_pred, score_range=score_range)
         # Optional class labels from the score
         if threshold is not None:
             df_pred[ut.COL_PRED_LABEL] = np.where(df_pred[ut.COL_SCORE] >= threshold,
                                                   self.label_pos_, self.label_neg_)
         return df_pred
+
+    def predict_proba(self,
+                      X: ut.ArrayLike2D,
+                      score_range: str = "proba",
+                      ) -> pd.DataFrame:
+        """
+        Score a precomputed feature matrix with the fitted deployment ensemble.
+
+        The matrix-level counterpart of :meth:`predict`: where :meth:`predict` takes raw sequences
+        (``df_seq``) and rebuilds the feature matrix internally, ``predict_proba`` scores an ``X``
+        you already hold, so a feature matrix built once (e.g. for a large candidate set such as a
+        substratome) is scored directly without re-featurizing. Each fitted model returns its
+        positive-class probability and the per-sample scores are reduced to a mean and a std across
+        the model ensemble, matching the ``score`` / ``score_std`` shape of :meth:`predict` and
+        :meth:`predict_oof`.
+
+        Unlike :meth:`predict`, this needs **no** bound ``df_feat`` (it operates purely on the given
+        matrix) but does require a prior :meth:`fit`, since it scores with the deployment models in
+        ``list_models_``. ``X`` must have the same features, in the same order, as the matrix passed
+        to :meth:`fit`.
+
+        .. note::
+           Requires a prior :meth:`fit`.
+
+        .. versionadded:: 1.1.0
+
+        Parameters
+        ----------
+        X : array-like, shape (n_samples, n_features)
+            Feature matrix to score. Columns must match the features (and their order) used in
+            :meth:`fit`.
+        score_range : str, default="proba"
+            Scale of the returned ``score`` / ``score_std`` columns: ``'proba'`` for the native
+            probabilities in ``[0, 1]``, ``'percent'`` for the same values scaled to ``[0, 100]``.
+
+        Returns
+        -------
+        df_pred : pd.DataFrame, shape (n_samples, 2)
+            Per-sample predictions, row-aligned with ``X``, with columns ``score`` (mean
+            positive-class probability over the model ensemble) and ``score_std`` (std across
+            models; ``0`` for a single model).
+
+        See Also
+        --------
+        * :meth:`AAPred.predict` for scoring raw sequences (``df_seq``) with internal featurization.
+        * :meth:`AAPred.predict_oof` for honest cross-validated scores of the *training* set.
+
+        Examples
+        --------
+        .. include:: examples/aap_predict_proba.rst
+        """
+        # Check input
+        check_is_fitted(list_models=self.list_models_)
+        check_estimators_proba(list_estimators=self._list_estimators, context="predict_proba")
+        X = ut.check_X(X=X, min_n_samples=1)
+        ut.check_str_options(name="score_range", val=score_range, list_str_options=ut.LIST_SCORE_RANGES)
+        # Score the precomputed matrix with the fitted ensemble (mean/std over models)
+        pred, pred_std = self._predict_X(X=X)
+        df_pred = pd.DataFrame({ut.COL_SCORE: pred, ut.COL_SCORE_STD: pred_std})
+        return _apply_score_range(df_pred=df_pred, score_range=score_range)
 
     def _predict_X(self, X):
         """Averaged positive-class score for a feature matrix (fitted-model ensemble)."""

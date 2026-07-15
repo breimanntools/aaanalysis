@@ -843,7 +843,7 @@ class CPPPlot:
             Figure dimensions (width, height) in inches. When ``None`` (default) and the global
             ``auto_font`` option is enabled, the height grows with ``n_top`` (width and fonts
             fixed); any explicit ``figsize`` is honored as a fixed size. With ``auto_font``
-            disabled, ``None`` falls back to ``(7, 5)``.
+            disabled, ``None`` falls back to ``(8.5, 5)``.
 
             .. versionchanged:: 1.1.0
                 Defaults to ``None`` and participates in ``auto_font``; explicit ``figsize`` wins.
@@ -948,7 +948,9 @@ class CPPPlot:
         # and fonts stay fixed. Grow-only: floored at the default height (5) so a short
         # ranking keeps the roomier default bar spacing rather than shrinking.
         if figsize is None:
-            figsize = (7, max(5, ranking_figheight(n_top))) if ut.check_auto_font() else (7, 5)
+            # Width 8.5 (up from 7) so the three panels' x-axis labels (e.g. "<test> - <ref> [%]"
+            # next to "Importance [%]") do not collide; height grows with n_top under auto_font.
+            figsize = (8.5, max(5, ranking_figheight(n_top))) if ut.check_auto_font() else (8.5, 5)
         # Plot ranking
         fig, axes = plot_ranking(df_feat=df_feat.copy(),
                                  n_top=n_top, rank=rank,

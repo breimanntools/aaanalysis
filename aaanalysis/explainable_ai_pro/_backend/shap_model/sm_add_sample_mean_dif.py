@@ -4,16 +4,20 @@ import pandas as pd
 import aaanalysis.utils as ut
 
 def add_sample_mean_dif_(X, labels=None, label_ref=0, df_feat=None, drop=False,
-                         sample_positions=None, names=None, group_average=False):
+                         sample_positions=None, names=None, group_average=False, X_ref=None):
     """ Compute the feature value difference between selected samples and a reference group average,
      and include into feature DataFrame."""
     if drop:
         # Keep original mean_dif
         columns = [x for x in list(df_feat) if ut.COL_MEAN_DIF not in x or x in [ut.COL_MEAN_DIF, ut.COL_ABS_MEAN_DIF]]
         df_feat = df_feat[columns]
-    # Compute mean of reference group
-    ref_group_mask = np.asarray([l == label_ref for l in labels])
-    ref_group_mean = X[ref_group_mask].mean(axis=0)
+    # Compute mean of reference group: an explicit external reference matrix if given, otherwise the
+    # in-matrix group selected by 'label_ref'.
+    if X_ref is not None:
+        ref_group_mean = np.asarray(X_ref).mean(axis=0)
+    else:
+        ref_group_mask = np.asarray([l == label_ref for l in labels])
+        ref_group_mean = X[ref_group_mask].mean(axis=0)
     # Generate column names based on 'names'
     if not group_average:
         col_names = [f'{ut.COL_MEAN_DIF}_{name}' for name in names]
