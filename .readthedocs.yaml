@@ -15,6 +15,24 @@ build:
 sphinx:
   configuration: docs/source/conf.py
 
+# Versioned docs (what a reader lands on)
+# ---------------------------------------
+# conf.py derives `version` / `release` from aaanalysis.__version__, so every build
+# is labelled with the version it actually documents, and a non-tag build renders the
+# "unreleased development version" banner (docs/source/_templates/layout.html).
+#
+# The rest is Read the Docs PROJECT ADMIN, not repo config -- it cannot be set from
+# this file and has to be done once in the RTD dashboard:
+#   1. Admin > Versions: activate the release tag versions (v1.0.3, ...). RTD only
+#      builds tags it has been told to activate; without this there is nothing for
+#      `stable` to point at.
+#   2. Admin > Settings > Default version: `stable` (not `latest`), so the bare
+#      https://aaanalysis.readthedocs.io/ URL and search results land readers on the
+#      newest *release* rather than the dev branch. RTD maintains the `stable` alias
+#      automatically from the highest active semver tag.
+#   3. Admin > Settings > Default branch: `master` (the `latest` alias).
+# Tag naming is `vX.Y.Z`; RTD sorts `stable` by semver, so consistent tags matter.
+
 python:
   install:
     - method: pip
