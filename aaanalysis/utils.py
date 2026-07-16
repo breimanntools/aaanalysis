@@ -96,6 +96,7 @@ from ._utils.utils_plot_elements import (plot_add_bars,
 from ._utils.utils_plot_parts import (add_tmd_jmd_bar,
                                       add_tmd_jmd_text,
                                       add_tmd_jmd_xticks,
+                                      align_part_text_below_xticks,
                                       highlight_tmd_area)
 
 # External (system-level) utility functions (only backend)

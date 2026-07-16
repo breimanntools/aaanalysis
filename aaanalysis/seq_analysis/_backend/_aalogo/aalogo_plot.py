@@ -43,11 +43,11 @@ def _add_tmd_jmd_label(ax=None, x_shift=0.0, fontsize_tmd_jmd=None, weight_tmd_j
     name_tmd = ut.options["name_tmd"]
     name_jmd_n = ut.options["name_jmd_n"]
     name_jmd_c = ut.options["name_jmd_c"]
-    ut.add_tmd_jmd_text(ax=ax, x_shift=x_shift,
-                        fontsize_tmd_jmd=fontsize_tmd_jmd, weight_tmd_jmd=weight_tmd_jmd,
-                        tmd_len=tmd_len, jmd_n_len=jmd_n_len, jmd_c_len=jmd_c_len,
-                        name_tmd=name_tmd, name_jmd_n=name_jmd_n, name_jmd_c=name_jmd_c,
-                        start=start, height_factor=height_factor)
+    return ut.add_tmd_jmd_text(ax=ax, x_shift=x_shift,
+                               fontsize_tmd_jmd=fontsize_tmd_jmd, weight_tmd_jmd=weight_tmd_jmd,
+                               tmd_len=tmd_len, jmd_n_len=jmd_n_len, jmd_c_len=jmd_c_len,
+                               name_tmd=name_tmd, name_jmd_n=name_jmd_n, name_jmd_c=name_jmd_c,
+                               start=start, height_factor=height_factor)
 
 
 def _add_name_data(ax=None, name_data=None, name_data_pos=None, fontsize=None, color="black"):
@@ -102,6 +102,7 @@ def single_logo_(df_logo=None, df_logo_info=None,
 
     # Add part annotations
     args_parts = dict(ax=ax_logo, tmd_len=tmd_len, jmd_n_len=jmd_n_len, jmd_c_len=jmd_c_len)
+    part_texts = None
     if target_p1_site is not None:
         _add_p_sites(ax_logo=ax_logo, df_logo=_df_logo,
                      target_p1_site=target_p1_site, xtick_size=xtick_size)
@@ -110,8 +111,8 @@ def single_logo_(df_logo=None, df_logo_info=None,
                            tmd_color=tmd_color, bar_height_factor=1.8)
         ut.add_tmd_jmd_xticks(**args_parts, x_shift=0, start=start, xtick_size=xtick_size,
                               xtick_width=xtick_width, xtick_length=xtick_length)
-        _add_tmd_jmd_label(**args_parts, x_shift=-0.5, height_factor=2.6, start=start,
-                           fontsize_tmd_jmd=fontsize_tmd_jmd, weight_tmd_jmd=weight_tmd_jmd)
+        part_texts = _add_tmd_jmd_label(**args_parts, x_shift=-0.5, height_factor=2.6, start=start,
+                                        fontsize_tmd_jmd=fontsize_tmd_jmd, weight_tmd_jmd=weight_tmd_jmd)
     if highlight_tmd_area:
         ut.highlight_tmd_area(**args_parts, x_shift=-0.5, tmd_color=tmd_color,
                               alpha=highlight_alpha, start=start)
@@ -134,6 +135,10 @@ def single_logo_(df_logo=None, df_logo_info=None,
 
     plt.tight_layout()
     plt.subplots_adjust(hspace=0)
+
+    # Measured only once the layout above is settled: the part labels share a row with the x-tick
+    # labels, which collide with them on a narrow figure.
+    ut.align_part_text_below_xticks(ax=ax_logo, part_texts=part_texts)
 
     if df_logo_info is not None:
         axes = (ax_logo, ax_info)
@@ -161,6 +166,7 @@ def multi_logo_(list_df_logo=None, list_df_logo_info=None, target_p1_site=None,
     n_plots = len(list_df_logo)
     figsize = (figsize_per_logo[0], figsize_per_logo[1] * n_plots)
     show_info = list_df_logo_info is not None
+    part_texts = None
 
     # Create figure layout: an optional (info_bar, logo) pair per group. A nested
     # gridspec keeps each pair tight (inner hspace=0) while spacing the groups
@@ -224,10 +230,10 @@ def multi_logo_(list_df_logo=None, list_df_logo_info=None, target_p1_site=None,
                 ut.add_tmd_jmd_xticks(**args_parts, x_shift=0, start=start,
                                       xtick_size=xtick_size, xtick_width=xtick_width,
                                       xtick_length=xtick_length - n_plots * 1.3)
-                _add_tmd_jmd_label(**args_parts, x_shift=-0.5,
-                                   height_factor=2.3 * n_plots, start=start,
-                                   fontsize_tmd_jmd=fontsize_tmd_jmd,
-                                   weight_tmd_jmd=weight_tmd_jmd)
+                part_texts = _add_tmd_jmd_label(**args_parts, x_shift=-0.5,
+                                                height_factor=2.3 * n_plots, start=start,
+                                                fontsize_tmd_jmd=fontsize_tmd_jmd,
+                                                weight_tmd_jmd=weight_tmd_jmd)
             else:
                 ax_logo.set_xticks([])
         if highlight_tmd_area:
@@ -257,8 +263,14 @@ def multi_logo_(list_df_logo=None, list_df_logo_info=None, target_p1_site=None,
         ax.set_ylim(0, y_max_actual)
 
     # The nested gridspec already sets group/pair spacing; tight_layout fights it.
+    if not show_info:
+        plt.tight_layout()
+        plt.subplots_adjust(hspace=0.33)
+
+    # Measured only once the layout above is settled: the part labels share a row with the x-tick
+    # labels, which collide with them on a narrow figure.
+    ut.align_part_text_below_xticks(ax=axes[-1], part_texts=part_texts)
+
     if show_info:
         return fig, [(axes[i], list_ax_info[i]) for i in range(n_plots)]
-    plt.tight_layout()
-    plt.subplots_adjust(hspace=0.33)
     return fig, axes
