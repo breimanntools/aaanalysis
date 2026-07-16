@@ -34,15 +34,21 @@ scopes — `"fold"` changes only how configurations are *scored/ranked during se
 final artifact. A cost `UserWarning` fires for `selection_scope="fold"` with `search="exhaustive"`
 (the widest grid), and the docstring pairs `"fold"` with `search="fast"`/`"balanced"`.
 
-### Scope of the nesting (and what stays global)
+### Scope of the nesting (and what runs on all data)
 
-Fold nesting is applied at every configuration-ranking score: Stage 1 grid, Stage 2 axis refine
-(both via `_grid_stage`), the `search="fast"` single-config score, the Stage-3 base winner-config
-score, and the Stage-3 **simplify** keep-guard (scored by re-running run+simplify per fold). The
-Stage-3 **recursive-feature-elimination** refinement is **global-only**: honest per-fold RFE is a
-wrapper-level nested-CV Monte-Carlo, which is the separate paper-fidelity engine tracked in **#276**.
-In `"fold"` mode `find_features` therefore returns the simplify-refined winner (RFE is skipped). This
-boundary keeps #411 scoped to the *selection* leakage the issue describes without absorbing #276.
+Fold nesting is applied at every **configuration-selection** score: Stage 1 grid and Stage 2 axis
+refine (both via `_grid_stage`) and the `search="fast"` single-config score. That is where the
+selection leakage the issue describes lives — which configuration wins, and what score is reported
+for it.
+
+The winner's **Stage-3 refinement** (`CPP.simplify` + recursive feature elimination) runs on **all
+data in both scopes**, producing the final returned `df_feat` (the winning configuration refit on
+all data — outer-CV semantics). So `"fold"` does **not** drop any refinement capability: simplify
+and RFE behave exactly as in `"global"`; only the *config-selection* scores that precede them are
+nested. (An earlier iteration nested the simplify keep-guard and skipped RFE in fold mode; that was
+reverted to avoid silently dropping the second-step RFE capability and to keep the `"global"` path
+byte-identical.) Truly nesting the whole selection+refinement *wrapper* per fold is the separate
+paper-fidelity nested-CV Monte-Carlo engine tracked in **#276**.
 
 ## Consequences
 

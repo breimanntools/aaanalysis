@@ -199,13 +199,13 @@ def _cv_scores(X, labels, models=None, cv=5, metrics=None, random_state=None):
 
 def _config_selector(df_scales=None, split_kws=None, n_filter=None, max_cor=0.5, max_overlap=0.5,
                      label_test=1, label_ref=0, simplify_strategy=None, do_simplify=False,
-                     ml_cv=None, random_state=None, n_jobs=None):
+                     random_state=None, n_jobs=None):
     """Build a per-fold feature selector for one CPP configuration.
 
-    Returns ``select(df_parts_train, labels_train) -> df_feat`` that re-runs ``CPP.run`` (and,
-    when ``do_simplify``, ``CPP.simplify`` with the requested ``ml_cv`` fold count) on the **train
-    split only** — the leak-free counterpart of selecting on the full labeled set. The returned
-    features are then built for both the train and the held-out fold by the caller.
+    Returns ``select(df_parts_train, labels_train) -> df_feat`` that re-runs ``CPP.run`` (and, when
+    ``do_simplify``, ``CPP.simplify``) on the **train split only** — the leak-free counterpart of
+    selecting on the full labeled set. The returned features are then built for both the train and
+    the held-out fold by the caller.
     """
     def select(df_parts_train, labels_train):
         cpp = CPP(df_parts=df_parts_train, df_scales=df_scales, split_kws=split_kws,
@@ -213,9 +213,8 @@ def _config_selector(df_scales=None, split_kws=None, n_filter=None, max_cor=0.5,
         df_feat = cpp.run(labels=labels_train, label_test=label_test, label_ref=label_ref,
                           n_filter=n_filter, max_cor=max_cor, max_overlap=max_overlap, n_jobs=n_jobs)
         if do_simplify and df_feat is not None and len(df_feat) > 1:
-            simplify_kws = {} if ml_cv is None else {"ml_cv": ml_cv}
             df_feat = cpp.simplify(df_feat=df_feat, labels=labels_train, strategy=simplify_strategy,
-                                   label_test=label_test, label_ref=label_ref, **simplify_kws)
+                                   label_test=label_test, label_ref=label_ref)
         return df_feat
     return select
 
@@ -465,8 +464,10 @@ def find_features(labels: ut.ArrayLike1D,
           ``df_eval`` scores are held-out generalization estimates (typically lower). It re-runs CPP
           per fold, so it is much more expensive; pair it with ``search="fast"`` / ``"balanced"``.
           The returned ``df_feat`` is always the winning configuration refit on all data
-          (outer-CV semantics). Nesting covers the configuration-ranking scores (Stages 1–2 and the
-          simplify refine); recursive-feature-elimination refinement stays global-only.
+          (outer-CV semantics). Nesting applies to the **configuration-selection** scores (the
+          Stage-1/2 grid and the ``"fast"`` single-configuration score); the winner's second-step
+          refinement (:meth:`CPP.simplify` + recursive feature elimination) runs on all data in
+          **both** scopes, so no refinement capability is lost in ``"fold"`` mode.
     kws : dict, optional
         Bounded power-user overrides; each pins a swept lever to a single value (unknown keys raise).
         Recognized keys: ``n_explain``, ``n_split_max`` (max ``Segment`` splits), ``len_max`` (max
@@ -800,70 +801,35 @@ def _run_search(sf=None, labels=None, df_seq=None, cfg=None, simplify=True, mode
     split_kws_win = _split_kws_for(split_types=win2["split_types"],
                                    n_split_max=win2["n_split_max"], len_max=cfg["len_max"])
     rows3 = []
-    if selection_scope == "fold":
-        # Honest nested Stage-3: score the winner config (and its simplify variant) with per-fold
-        # re-selection. RFE refinement is global-only (per-fold RFE is the paper-fidelity nested-CV
-        # Monte-Carlo engine tracked in #276), so fold mode returns the simplify-refined winner.
-        base_select = _config_selector(df_scales=df_scales_win, split_kws=split_kws_win,
-                                       n_filter=win2["n_filter"], max_cor=cfg["max_cor"],
-                                       max_overlap=cfg["max_overlap"], label_test=label_test,
-                                       label_ref=label_ref, do_simplify=False,
-                                       random_state=random_state, n_jobs=n_jobs)
-        base = _nested_cv_scores(select=base_select, df_parts=df_parts_win, labels=labels,
-                                 models=models, cv=cv, metrics=metrics, df_scales_all=df_scales_all,
-                                 sf=sf, n_jobs=n_jobs)
-        if simplify:
-            cpp_win = CPP(df_parts=df_parts_win, df_scales=df_scales_win, split_kws=split_kws_win,
-                          random_state=random_state, verbose=verbose)
-            df_simpl = cpp_win.simplify(df_feat=df_feat_win, labels=labels,
-                                        strategy=cfg["simplify_strategy"], ml_cv=cv,
-                                        label_test=label_test, label_ref=label_ref)
-            if df_simpl is not None and 0 < len(df_simpl) < len(df_feat_win):
-                simpl_select = _config_selector(df_scales=df_scales_win, split_kws=split_kws_win,
-                                                n_filter=win2["n_filter"], max_cor=cfg["max_cor"],
-                                                max_overlap=cfg["max_overlap"], label_test=label_test,
-                                                label_ref=label_ref,
-                                                simplify_strategy=cfg["simplify_strategy"],
-                                                do_simplify=True, ml_cv=cv, random_state=random_state,
-                                                n_jobs=n_jobs)
-                new = _nested_cv_scores(select=simpl_select, df_parts=df_parts_win, labels=labels,
-                                        models=models, cv=cv, metrics=metrics,
-                                        df_scales_all=df_scales_all, sf=sf, n_jobs=n_jobs)
-                base_means = np.array([base[m][0] for m in metrics])
-                new_means = np.array([new[m][0] for m in metrics])
-                dominated = np.all(base_means >= new_means) and np.any(base_means > new_means)
-                if not dominated:
-                    df_feat_win, base = df_simpl.reset_index(drop=True), new
-                    rows3.append(_eval_row(stage="refine", list_parts=win2["list_parts"],
-                                           split_types=win2["split_types"],
-                                           n_split_max=win2["n_split_max"],
-                                           scale_spec=win2["scale_spec"], n_filter=win2["n_filter"],
-                                           n_features=len(df_feat_win), n_jmd=win2["n_jmd"],
-                                           scores=base, metrics=metrics, selection_scope="fold"))
-    else:
-        X_win = sf.feature_matrix(features=df_feat_win[ut.COL_FEATURE], df_parts=df_parts_win,
-                                  df_scales=df_scales_all, n_jobs=n_jobs)
-        base = _cv_scores(X_win, labels, models=models, cv=cv, metrics=metrics, random_state=random_state)
-        if simplify:
-            cpp_win = CPP(df_parts=df_parts_win, df_scales=df_scales_win, split_kws=split_kws_win,
-                          random_state=random_state, verbose=verbose)
-            df_simpl = cpp_win.simplify(df_feat=df_feat_win, labels=labels,
-                                        strategy=cfg["simplify_strategy"], ml_cv=cv,
-                                        label_test=label_test, label_ref=label_ref)
-            X_simpl = sf.feature_matrix(features=df_simpl[ut.COL_FEATURE], df_parts=df_parts_win,
-                                        df_scales=df_scales_all, n_jobs=n_jobs)
-            df_feat_win, base, kept = _refine_keep(df_simpl, X_simpl, df_feat_win, base, labels=labels,
-                                                   models=models, cv=cv, metrics=metrics,
-                                                   random_state=random_state)
-            if kept:
-                rows3.append(_eval_row(stage="refine", list_parts=win2["list_parts"],
-                                       split_types=win2["split_types"], n_split_max=win2["n_split_max"],
-                                       scale_spec=win2["scale_spec"], n_filter=win2["n_filter"],
-                                       n_features=len(df_feat_win), n_jmd=win2["n_jmd"],
-                                       scores=base, metrics=metrics))
-        df_feat_win, df_parts_win = _refine_rfe_winner(
-            df_feat_win, df_parts_win, df_scales_all, base, sf=sf, labels=labels, models=models, cv=cv,
-            metrics=metrics, random_state=random_state, n_jobs=n_jobs, rows3=rows3, win=win2)
+    # Stage 3 refines the winner (simplify + RFE) on ALL data in both scopes — the returned df_feat is
+    # the winning configuration refit on all data (outer-CV semantics), so the full second-step
+    # refinement capability is identical in "global" and "fold". Fold mode changes only how the
+    # *configuration-selection* scores are computed (Stages 1-2 + the fast path, nested above); the
+    # winner's refinement is scored on all data. This keeps the "global" default byte-identical.
+    X_win = sf.feature_matrix(features=df_feat_win[ut.COL_FEATURE], df_parts=df_parts_win,
+                              df_scales=df_scales_all, n_jobs=n_jobs)
+    base = _cv_scores(X_win, labels, models=models, cv=cv, metrics=metrics, random_state=random_state)
+    if simplify:
+        cpp_win = CPP(df_parts=df_parts_win, df_scales=df_scales_win, split_kws=split_kws_win,
+                      random_state=random_state, verbose=verbose)
+        df_simpl = cpp_win.simplify(df_feat=df_feat_win, labels=labels,
+                                    strategy=cfg["simplify_strategy"], ml_cv=cv,
+                                    label_test=label_test, label_ref=label_ref)
+        X_simpl = sf.feature_matrix(features=df_simpl[ut.COL_FEATURE], df_parts=df_parts_win,
+                                    df_scales=df_scales_all, n_jobs=n_jobs)
+        df_feat_win, base, kept = _refine_keep(df_simpl, X_simpl, df_feat_win, base, labels=labels,
+                                               models=models, cv=cv, metrics=metrics,
+                                               random_state=random_state)
+        if kept:
+            rows3.append(_eval_row(stage="refine", list_parts=win2["list_parts"],
+                                   split_types=win2["split_types"], n_split_max=win2["n_split_max"],
+                                   scale_spec=win2["scale_spec"], n_filter=win2["n_filter"],
+                                   n_features=len(df_feat_win), n_jmd=win2["n_jmd"],
+                                   scores=base, metrics=metrics, selection_scope=selection_scope))
+    df_feat_win, df_parts_win = _refine_rfe_winner(
+        df_feat_win, df_parts_win, df_scales_all, base, sf=sf, labels=labels, models=models, cv=cv,
+        metrics=metrics, random_state=random_state, n_jobs=n_jobs, rows3=rows3, win=win2,
+        selection_scope=selection_scope)
 
     # Assemble df_eval: all stages stacked. is_selected marks the actually-returned df_feat (the
     # final refined winner = the last kept refine row, else the Stage-2 winner) — which need NOT be
@@ -883,7 +849,8 @@ def _run_search(sf=None, labels=None, df_seq=None, cfg=None, simplify=True, mode
 
 
 def _refine_rfe_winner(df_feat, df_parts, df_scales_all, base, sf=None, labels=None, models=None,
-                       cv=5, metrics=None, random_state=None, n_jobs=None, rows3=None, win=None):
+                       cv=5, metrics=None, random_state=None, n_jobs=None, rows3=None, win=None,
+                       selection_scope="global"):
     """RFE post-step on the winner: keep the reduced set only if it is not Pareto-dominated."""
     n_feat = len(df_feat)
     base_means = np.array([base[m][0] for m in metrics])
@@ -907,5 +874,5 @@ def _refine_rfe_winner(df_feat, df_parts, df_scales_all, base, sf=None, labels=N
                                split_types=win["split_types"], n_split_max=win["n_split_max"],
                                scale_spec=win["scale_spec"], n_filter=win["n_filter"],
                                n_features=len(df_feat_new), n_jmd=win["n_jmd"],
-                               scores=base_new, metrics=metrics))
+                               scores=base_new, metrics=metrics, selection_scope=selection_scope))
     return df_feat_new, df_parts

@@ -448,10 +448,11 @@ Added
   labeled set, so the scores are an in-sample (optimistic) ranking signal — and remains
   byte-identical. ``"fold"`` re-selects CPP features on the **train split only** inside every
   fold of every configuration score (Stages 1–2 and the simplify refine), so ``df_eval`` reports
-  held-out (typically lower) generalization estimates instead; the returned ``df_feat`` is still
-  the winner refit on all data. ``df_eval`` gains a ``selection_scope`` column, and a
-  ``UserWarning`` flags the costly ``"fold"`` + ``search="exhaustive"`` combination. Per-fold
-  recursive-feature-elimination refinement stays global-only (the paper-fidelity nested-CV engine).
+  held-out (typically lower) generalization estimates instead. The winner's second-step refinement
+  (:meth:`~aaanalysis.CPP.simplify` + recursive feature elimination) runs on all data in **both**
+  scopes, so no refinement capability is lost in ``"fold"``; the returned ``df_feat`` is the winner
+  refit on all data. ``df_eval`` gains a ``selection_scope`` column, and a ``UserWarning`` flags the
+  costly ``"fold"`` + ``search="exhaustive"`` combination.
 - **ap.explain_features**: New opt-in ``add_sample_mean_dif`` (+ ``label_ref``) that enriches the
   returned ``df_feat`` with per-sample **mean-difference** columns ``mean_dif_'name'`` (each explained
   sample's feature value minus the ``label_ref`` group average) alongside the SHAP
