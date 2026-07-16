@@ -69,4 +69,5 @@ Regenerate this table with:
 | [0059](0059-aapred-predict-oof-scores.md) | AAPred.predict_oof: cross-validated out-of-fold scores for the training set | Accepted | 2026-07-12 |  |
 | [0060](0060-packaging-install-from-wheel-gate.md) | Packaging gate: ship the sdist sources, build wheel + sdist, install from both, import the public API | Accepted | 2026-07-14 |  |
 | [0061](0061-model-evaluator-repeated-cv-bootstrap-ci.md) | ModelEvaluator: repeated cross-validation, bootstrap CIs, and paired model comparison | Accepted | 2026-07-16 |  |
+| [0062](0062-find-features-nested-selection-scope.md) | find_features nested feature selection (selection_scope="global"|"fold") | Accepted | 2026-07-16 |  |
 <!-- ADR-INDEX:END -->
