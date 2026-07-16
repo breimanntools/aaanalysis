@@ -45,6 +45,7 @@ fig, ax = alp.single_logo(
 
 fig = plt.gcf()
 fig.set_size_inches(7, 7)
-plt.tight_layout()
+# NOTE: no extra plt.tight_layout() here — single_logo already lays out the panels
+# and sets subplots_adjust(hspace=0); a second tight_layout re-opens the bits/logo gap.
 fig.savefig(OUT, dpi=150, facecolor="white")
 print("saved", OUT)

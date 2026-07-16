@@ -505,6 +505,14 @@ Added
   the **golden pipelines** (``import aaanalysis.pipe as ap``), one function per pipeline.
   Golden pipelines are no longer mixed into the building-block page or the Tutorials
   section; Getting Started links both references.
+- **Tutorial gallery**: the *Tutorials* landing page now opens with a seaborn-style grid
+  of thumbnail cards — one real headline figure per tool tutorial (Data Loader, Scales
+  Loader, AAclust, SequenceFeature, CPP, Data representations, dPULearn, ShapModel,
+  Evaluation, Protein engineering) — so the tool catalog is scannable at a glance, mirroring
+  the Protocols gallery. Each tile is rendered from the actual AAanalysis pipeline on bundled
+  fixtures (generator: ``docs/source/_artwork/thumb_scripts/make_tutorial_thumbs.py``). The
+  Protocols gallery thumbnails were also refreshed against the current CPPPlot layout so the
+  two galleries render consistently.
 
 Changed
 ~~~~~~~
