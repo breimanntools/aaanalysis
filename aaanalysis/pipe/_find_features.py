@@ -199,13 +199,13 @@ def _cv_scores(X, labels, models=None, cv=5, metrics=None, random_state=None):
 
 def _config_selector(df_scales=None, split_kws=None, n_filter=None, max_cor=0.5, max_overlap=0.5,
                      label_test=1, label_ref=0, simplify_strategy=None, do_simplify=False,
-                     random_state=None, n_jobs=None):
+                     ml_cv=None, random_state=None, n_jobs=None):
     """Build a per-fold feature selector for one CPP configuration.
 
     Returns ``select(df_parts_train, labels_train) -> df_feat`` that re-runs ``CPP.run`` (and,
-    when ``do_simplify``, ``CPP.simplify``) on the **train split only** — the leak-free counterpart
-    of selecting on the full labeled set. The returned features are then built for both the train
-    and the held-out fold by the caller.
+    when ``do_simplify``, ``CPP.simplify`` with the requested ``ml_cv`` fold count) on the **train
+    split only** — the leak-free counterpart of selecting on the full labeled set. The returned
+    features are then built for both the train and the held-out fold by the caller.
     """
     def select(df_parts_train, labels_train):
         cpp = CPP(df_parts=df_parts_train, df_scales=df_scales, split_kws=split_kws,
@@ -213,8 +213,9 @@ def _config_selector(df_scales=None, split_kws=None, n_filter=None, max_cor=0.5,
         df_feat = cpp.run(labels=labels_train, label_test=label_test, label_ref=label_ref,
                           n_filter=n_filter, max_cor=max_cor, max_overlap=max_overlap, n_jobs=n_jobs)
         if do_simplify and df_feat is not None and len(df_feat) > 1:
+            simplify_kws = {} if ml_cv is None else {"ml_cv": ml_cv}
             df_feat = cpp.simplify(df_feat=df_feat, labels=labels_train, strategy=simplify_strategy,
-                                   label_test=label_test, label_ref=label_ref)
+                                   label_test=label_test, label_ref=label_ref, **simplify_kws)
         return df_feat
     return select
 
@@ -224,38 +225,44 @@ def _nested_cv_scores(select=None, df_parts=None, labels=None, models=None, cv=5
     """Nested-CV score of a CPP configuration: re-select features on each train fold (leak-free).
 
     Mirrors ``_cv_scores``' aggregation and fold geometry (``StratifiedKFold`` with ``shuffle=False``,
-    the classifier + integer-``cv`` default that ``cross_validate`` uses), so the only difference from
+    the classifier + integer-``cv`` default that ``cross_validate`` uses); the only difference from
     the global scorer is that the feature set is re-selected on the train split of every fold via
-    ``select(df_parts_train, labels_train)`` instead of being fixed. Returns ``{metric: (mean, std)}``
-    averaged over folds then over models.
+    ``select(df_parts_train, labels_train)``. The per-fold selection and both feature-matrix builds
+    are model-independent, so they are done **once per fold** (not once per model). A **degenerate**
+    train fold (no features selected) scores the worst value ``0.0`` for that fold rather than being
+    skipped, so the mean is always over exactly ``cv`` folds and never ``NaN`` (which would corrupt
+    the downstream Pareto / rank / dominance logic). Returns ``{metric: (mean, std)}`` averaged over
+    folds then over models.
     """
     labels_arr = np.asarray(labels)
     folds = list(StratifiedKFold(n_splits=cv).split(np.zeros(len(labels_arr)), labels_arr))
-    means = {m: [] for m in metrics}
-    stds = {m: [] for m in metrics}
-    for est in models:
-        fold_scores = {m: [] for m in metrics}
-        for train_idx, test_idx in folds:
-            df_parts_tr = df_parts.iloc[train_idx]
-            df_parts_te = df_parts.iloc[test_idx]
-            y_tr, y_te = labels_arr[train_idx], labels_arr[test_idx]
-            df_feat_tr = select(df_parts_tr, y_tr)
-            if df_feat_tr is None or len(df_feat_tr) == 0:
-                continue  # degenerate train fold: no features selected, skip
-            feats = df_feat_tr[ut.COL_FEATURE]
-            X_tr = sf.feature_matrix(features=feats, df_parts=df_parts_tr,
-                                     df_scales=df_scales_all, n_jobs=n_jobs)
-            X_te = sf.feature_matrix(features=feats, df_parts=df_parts_te,
-                                     df_scales=df_scales_all, n_jobs=n_jobs)
+    per_model = [{m: [] for m in metrics} for _ in models]
+    for train_idx, test_idx in folds:
+        df_parts_tr = df_parts.iloc[train_idx]
+        df_parts_te = df_parts.iloc[test_idx]
+        y_tr, y_te = labels_arr[train_idx], labels_arr[test_idx]
+        df_feat_tr = select(df_parts_tr, y_tr)
+        if df_feat_tr is None or len(df_feat_tr) == 0:
+            # Degenerate fold: this config selected no features on the train split, so it cannot
+            # generalize -> worst score, counted, so the mean stays over exactly cv folds.
+            for mi in range(len(models)):
+                for metric in metrics:
+                    per_model[mi][metric].append(0.0)
+            continue
+        feats = df_feat_tr[ut.COL_FEATURE]
+        X_tr = sf.feature_matrix(features=feats, df_parts=df_parts_tr, df_scales=df_scales_all, n_jobs=n_jobs)
+        X_te = sf.feature_matrix(features=feats, df_parts=df_parts_te, df_scales=df_scales_all, n_jobs=n_jobs)
+        for mi, est in enumerate(models):
             m_est = clone(est)
             m_est.fit(X_tr, y_tr)
             for metric in metrics:
-                fold_scores[metric].append(float(get_scorer(metric)(m_est, X_te, y_te)))
-        for metric in metrics:
-            vals = fold_scores[metric]
-            means[metric].append(float(np.mean(vals)) if vals else float("nan"))
-            stds[metric].append(float(np.std(vals)) if vals else float("nan"))
-    return {m: (float(np.nanmean(means[m])), float(np.nanmean(stds[m]))) for m in metrics}
+                per_model[mi][metric].append(float(get_scorer(metric)(m_est, X_te, y_te)))
+    out = {}
+    for metric in metrics:
+        model_means = [float(np.mean(per_model[mi][metric])) for mi in range(len(models))]
+        model_stds = [float(np.std(per_model[mi][metric])) for mi in range(len(models))]
+        out[metric] = (float(np.mean(model_means)), float(np.mean(model_stds)))
+    return out
 
 
 def _load_scale_spec(spec, subcategories=None):
@@ -817,7 +824,7 @@ def _run_search(sf=None, labels=None, df_seq=None, cfg=None, simplify=True, mode
                                                 max_overlap=cfg["max_overlap"], label_test=label_test,
                                                 label_ref=label_ref,
                                                 simplify_strategy=cfg["simplify_strategy"],
-                                                do_simplify=True, random_state=random_state,
+                                                do_simplify=True, ml_cv=cv, random_state=random_state,
                                                 n_jobs=n_jobs)
                 new = _nested_cv_scores(select=simpl_select, df_parts=df_parts_win, labels=labels,
                                         models=models, cv=cv, metrics=metrics,

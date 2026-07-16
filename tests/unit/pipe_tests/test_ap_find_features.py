@@ -580,3 +580,41 @@ class TestFindFeaturesSelectionScope:
             with pytest.raises(RuntimeError):
                 ap.find_features(labels=labels, df_seq=df_seq, search="exhaustive",
                                  selection_scope="fold", plot=False, random_state=0)
+
+
+class TestFindFeaturesSelectionScopeInternals:
+    """Regression tests for the fold-scope scorer internals (review findings)."""
+
+    def test_degenerate_fold_scores_zero_not_nan(self):
+        # A config that selects no features on every train fold must score 0.0 (finite), never NaN
+        # (NaN would crash rank().astype(int) and corrupt Pareto/dominance selection).
+        from aaanalysis.pipe._find_features import _nested_cv_scores, _resolve_models
+        df_parts = sf.get_df_parts(df_seq=df_seq)
+        models = _resolve_models("svm", random_state=0)
+        empty = pd.DataFrame({"feature": []})
+        out = _nested_cv_scores(select=lambda dp, y: empty, df_parts=df_parts, labels=labels,
+                                models=models, cv=5, metrics=["balanced_accuracy"],
+                                df_scales_all=aa.load_scales(name="scales"), sf=sf, n_jobs=1)
+        mean, std = out["balanced_accuracy"]
+        assert np.isfinite(mean) and np.isfinite(std)
+        assert mean == 0.0
+
+    def test_selects_once_per_fold_not_per_model(self):
+        # The per-fold re-selection is model-independent, so it must run once per fold, not once
+        # per (fold, model) — otherwise fold mode is needlessly multiplied by len(models).
+        from aaanalysis.pipe._find_features import (_nested_cv_scores, _resolve_models,
+                                                    _config_selector)
+        df_parts = sf.get_df_parts(df_seq=df_seq)
+        df_scales = aa.load_scales(name="scales")
+        real = _config_selector(df_scales=df_scales, n_filter=25, random_state=0, n_jobs=1)
+        df_feat_real = real(df_parts, np.asarray(labels))
+        calls = {"n": 0}
+
+        def counting_select(dp, y):
+            calls["n"] += 1
+            return df_feat_real
+
+        models = _resolve_models(["svm", "rf", "log_reg"], random_state=0)
+        _nested_cv_scores(select=counting_select, df_parts=df_parts, labels=labels, models=models,
+                          cv=5, metrics=["balanced_accuracy"], df_scales_all=df_scales, sf=sf, n_jobs=1)
+        assert calls["n"] == 5  # 5 folds, NOT 5 * 3 models
