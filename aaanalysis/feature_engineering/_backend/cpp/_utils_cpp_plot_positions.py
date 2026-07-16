@@ -397,29 +397,44 @@ def align_bottom_furniture_(fig=None, ax=None, gap_in=_FURNITURE_GAP_IN, item_ga
     cat_w = cat_legend.get_window_extent(renderer).width / dpi if cat_legend is not None else 0.0
     imp_w = imp_legend.get_window_extent(renderer).width / dpi if imp_legend is not None else 0.0
     cbar_w_in = (cbar_right_in - cbar_left_in) if cbar_left_in is not None else 0.0
+    # The centred "Feature value" label spans WIDER than the colorbar bar, so judge the fit by the
+    # colorbar's full horizontal footprint (bar + label), measured with the importance legend hidden
+    # (it is a child of cbar_ax). Otherwise the wide label overflows into the right-aligned importance
+    # legend even though the thin bar "fits" -- the narrow-figure overlap this fixes.
+    cbar_w_eff = cbar_w_in
+    if cbar_ax is not None:
+        if imp_legend is not None:
+            imp_legend.set_visible(False)
+            fig.canvas.draw()
+        cbar_w_eff = max(cbar_w_in, cbar_ax.get_tightbbox(renderer).width / dpi)
+        if imp_legend is not None:
+            imp_legend.set_visible(True)
     left_in = left_disp / dpi
     right_in = max(a.get_position().x1 for a in fig.axes if a is not cbar_ax) * w_in
     content_w = right_in - left_in
-    fits = (cat_w + cbar_w_in + imp_w + 2 * item_gap_in) <= content_w
-    # A LEFT-anchored category legend clears the CENTRED colorbar only if it fits within the left
-    # half of the content width (twice the legend plus the colorbar and two gaps), not merely the raw
-    # sum -- otherwise the left legend runs into the centred colorbar. Below that bound the legend is
-    # clustered just left of the colorbar instead (the branch below).
-    two_fit = (2 * cat_w + cbar_w_in + 2 * item_gap_in) <= content_w
+    # Collision-based placement (not sum-based): the colorbar is CENTRED, so its wide "Feature value"
+    # label can reach past a side-anchored legend even when the item widths "sum to fit". Anchor each
+    # side legend to its content edge only if the centred colorbar's footprint (bar + label) clears it;
+    # otherwise move it off the row -- the category legend just left of the colorbar, the importance
+    # legend to a second row below it.
+    cbar_center_in = 0.5 * (grid.x0 + grid.x1) * w_in
+    cbar_half = cbar_w_eff / 2.0
+    cat_clears = (left_in + cat_w + item_gap_in) <= (cbar_center_in - cbar_half)
+    imp_clears = imp_legend is None or ((cbar_center_in + cbar_half + item_gap_in) <= (right_in - imp_w))
     # Scale-category legend: left content edge if the row has room, else clustered just left of the
     # (centred) colorbar so it never overlaps it.
     if cat_legend is not None:
-        if fits or two_fit:
+        if cat_clears:
             cat_legend.set_loc("upper left")
             cat_legend.set_bbox_to_anchor((left_in / w_in, top_frac), transform=fig.transFigure)
         elif cbar_left_in is not None:
             cat_legend.set_loc("upper right")
             cat_legend.set_bbox_to_anchor(((cbar_left_in - item_gap_in) / w_in, top_frac), transform=fig.transFigure)
-    # Feature-importance legend: right content edge when all three fit the row; otherwise drop it to
-    # a SECOND row below the colorbar (still right-aligned), so the narrow top row only holds the
+    # Feature-importance legend: right content edge when it clears the centred colorbar; otherwise drop
+    # it to a SECOND row below the colorbar (still right-aligned), so the narrow top row only holds the
     # category legend + colorbar.
     if imp_legend is not None:
-        if fits:
+        if imp_clears:
             imp_legend.set_loc("upper right")
             imp_legend.set_bbox_to_anchor((right_in / w_in, top_frac), transform=fig.transFigure)
         elif cbar_ax is not None and cbar_right_in is not None:
