@@ -66,6 +66,17 @@ Added
 
 **Feature Engineering**
 
+- :class:`~aaanalysis.SequenceFeatureTransformer`: A scikit-learn transformer
+  (``BaseEstimator`` + ``TransformerMixin``) that wraps the ``get_df_parts`` ->
+  :meth:`~aaanalysis.CPP.run` -> :meth:`~aaanalysis.SequenceFeature.feature_matrix` chain so CPP
+  feature **selection happens on the training fold only**: ``fit(X, y)`` selects features from a
+  ``df_seq`` (or ``df_parts``) + labels and stores them (``features_`` / ``df_feat_``), and
+  ``transform(X)`` applies the **same** features -> the numeric matrix. Dropped into a
+  :class:`sklearn.pipeline.Pipeline` (or :func:`sklearn.model_selection.cross_val_score`), the test
+  fold never influences which features are chosen — the leak-free counterpart of selecting on the
+  full labeled set. Follows the scikit-learn estimator contract (cloneable, validation in ``fit``,
+  learned state with a trailing underscore) and supports ``get_feature_names_out`` /
+  ``set_output(transform="pandas")``. Core (no new dependency; scikit-learn is already required).
 - :class:`~aaanalysis.CPPGrid`: ``Tool``-style wrapper (``run`` + ``eval``) that runs a parallel grid
   sweep of :class:`~aaanalysis.CPP` configurations in one call; configurations differing only in
   ``n_filter`` collapse into a single run. ``eval(sort_by=...)`` scores the

@@ -398,6 +398,10 @@ one row, and parallel-modality families run sequence → structure → embedding
      - ``nf``
      -
    * -
+     - :class:`~aaanalysis.SequenceFeatureTransformer`
+     - ``sft``
+     -
+   * -
      - :class:`~aaanalysis.CPP` / :class:`~aaanalysis.CPPPlot`
      - ``cpp`` / ``cpp_plot``
      -

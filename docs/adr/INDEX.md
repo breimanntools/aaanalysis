@@ -68,4 +68,5 @@ Regenerate this table with:
 | [0058](0058-aapred-eval-pooled-cv-splitter.md) | `AAPred.eval` accepts a custom CV splitter and scores it by pooled out-of-fold prediction | Accepted | 2026-07-12 |  |
 | [0059](0059-aapred-predict-oof-scores.md) | AAPred.predict_oof: cross-validated out-of-fold scores for the training set | Accepted | 2026-07-12 |  |
 | [0060](0060-packaging-install-from-wheel-gate.md) | Packaging gate: ship the sdist sources, build wheel + sdist, install from both, import the public API | Accepted | 2026-07-14 |  |
+| [0063](0063-sequence-feature-transformer.md) | SequenceFeatureTransformer: leak-free CPP selection as a scikit-learn transformer | Accepted | 2026-07-16 |  |
 <!-- ADR-INDEX:END -->
