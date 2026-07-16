@@ -25,6 +25,11 @@ _IMP_BAR_SCALE = 1 / 6
 _IMP_BAR_TOP_MIN_CELLS, _IMP_BAR_TOP_MAX_CELLS = 2.5, 5.5
 _IMP_BAR_RIGHT_MIN_CELLS, _IMP_BAR_RIGHT_MAX_CELLS = 3.5, 7.5
 
+# Length (points) of the top strip's y-tick mark, and the offset its value is drawn at. Both render on
+# the INNER (left) side of the right-hand spine, so the value is offset far enough to clear the mark.
+_IMP_BAR_TICK_LEN = 3
+_IMP_BAR_TICK_PAD = _IMP_BAR_TICK_LEN + 1.5
+
 # Absolute backstop (inches) on the right importance-bar column width. The cell-unit clamp above
 # already bounds the column on the constant-cell sizer path (column = right_cells * cell_w). On the
 # FIXED-figure path (no sizer: an explicit figsize with auto_font off / cell_size unset) the column
@@ -163,11 +168,11 @@ def plot_feat_importance_bars_pos(ax=None,
         v_max = max(1, int(np.ceil(max(list_imp) - 1e-9)))
         ax.set_ylim(0, v_max)
     # Keep the y-axis (spine) on the RIGHT, directly next to the "Cumulative feature importance"
-    # label -- the tick VALUE is repositioned to the left of that spine in the frontend.
+    # label -- the tick mark and its value are placed on the spine's inner side by plot_feature_map.
     sns.despine(ax=ax, bottom=False, top=True, left=True, right=False)
     # Adjust ticks
     ax.set_xticks([])
-    ax.tick_params(axis='y', length=3, pad=1)
+    ax.tick_params(axis='y', length=_IMP_BAR_TICK_LEN, pad=1)
 
 
 def add_feat_importance_map(ax=None, df_feat=None, df_cat=None,
@@ -350,9 +355,7 @@ def plot_feature_map(df_feat=None, df_cat=None,
         args_ticks_0 = dict(show_zero=False, show_only_max=show_only_max, precision=1)
 
         # Plot the top per-position bars first; their cumulative-importance max drives the corner
-        # layout. The taller that strip is (larger max), the more room there is between the max value
-        # at the top and the "Cumulative feature importance" label below, so three cases keep them
-        # from overlapping (see _corner_case below).
+        # layout.
         top_ymax = None
         if add_imp_bar_top:
             plot_feat_importance_bars_pos(ax=ax_bt,
@@ -365,11 +368,8 @@ def plot_feature_map(df_feat=None, df_cat=None,
                                           **args_len)
             top_ymax = (float(ax_bt.get_ylim()[1]) if shap_plot
                         else max([p.get_height() for p in ax_bt.patches] + [0.0]))
-        # Two thresholds on the top strip's cumulative max keep the corner readable:
-        #   - the subcategory x-tick is dropped on the shortest strips (top_ymax <= 1.5; the values are
-        #     already printed on the bars) and shown above that;
-        #   - the top-bars y-tick (mark AND number, always on the same side) sits on the LEFT for a
-        #     short strip (top_ymax <= 3) and on the RIGHT for a tall one (> 3, the standard look).
+        # The subcategory x-tick is dropped on the shortest strips (top_ymax <= 1.5; the values are
+        # already printed on the bars) and shown above that.
         # For SHAP impact the right per-subcategory bars carry no on-bar value labels, so keep the
         # subcategory importance axis (its only scale reference); for plain importance drop it on the
         # shortest strips where the values are already printed on the bars.
@@ -413,23 +413,25 @@ def plot_feature_map(df_feat=None, df_cat=None,
             ut.ticks_0(ax_br, **args_ticks_0)
 
         if add_imp_bar_top:
-            # The y-axis spine stays on the RIGHT (next to the "Cumulative feature importance" label).
-            # A short strip (top_ymax <= 3) renders the max value to the LEFT of that spine; a tall
-            # one to the RIGHT of it -- the standard look. Both at the subcategory x-tick's font size.
+            # The y-axis spine stays on the RIGHT, directly next to the "Cumulative feature
+            # importance" label, but the tick MARK and its VALUE both render on the spine's INNER
+            # (left) side. Drawing them outward -- matplotlib's default for a right-hand axis --
+            # runs the value straight through that label, which is the overlap this corner exists to
+            # avoid; the strip's height does not reliably buy enough clearance, so the inner side is
+            # unconditional rather than a fallback for short strips.
+            # Place the number AT the actual strip top. For plain importance the axis top is an
+            # integer (whole-percent cumulative); for SHAP impact it is the raw fractional max, so
+            # format it to one decimal instead of ceiling it (which would float above the strip).
             ax_bt.yaxis.set_ticks_position("right")
-            if top_ymax > 3:
-                ut.ticks_0(ax_bt, axis="y", **args_ticks_0)
-                ax_bt.tick_params(axis="y", labelsize=fontsize_annotations, length=3)
-            else:
-                # Place the number AT the actual strip top. For plain importance the axis top is an
-                # integer (whole-percent cumulative); for SHAP impact it is the raw fractional max, so
-                # format it to one decimal instead of ceiling it (which would float above the strip).
-                y_top = float(ax_bt.get_ylim()[1])
-                v_label = f"{y_top:.1f}" if shap_plot else f"{int(round(y_top))}"
-                ax_bt.set_yticks([y_top])
-                ax_bt.tick_params(axis="y", labelleft=False, labelright=False, length=3)
-                ax_bt.text(1.0, y_top, f"{v_label} ", transform=ax_bt.get_yaxis_transform(),
-                           ha="right", va="center", size=fontsize_annotations, clip_on=False)
+            y_top = float(ax_bt.get_ylim()[1])
+            v_label = f"{y_top:.1f}" if shap_plot else f"{int(round(y_top))}"
+            ax_bt.set_yticks([y_top])
+            ax_bt.tick_params(axis="y", labelleft=False, labelright=False,
+                              length=_IMP_BAR_TICK_LEN, direction="in")
+            ax_bt.annotate(v_label, xy=(1.0, y_top), xycoords=ax_bt.get_yaxis_transform(),
+                           xytext=(-_IMP_BAR_TICK_PAD, 0), textcoords="offset points",
+                           ha="right", va="center", size=fontsize_annotations,
+                           annotation_clip=False)
 
     # Plot heatmap
     plot_heatmap_(df_feat=df_feat.copy(), df_cat=df_cat,

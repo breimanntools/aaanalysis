@@ -131,6 +131,46 @@ def _numeric_tick_overlaps(fig):
     return bad
 
 
+_IMP_BAR_LABEL = "Cumulative\nfeature\nimportance"
+
+
+def _imp_bar_label_artist(fig):
+    """The "Cumulative feature importance" label artist, or None.
+
+    It is set with ``set_xlabel``, so it lives in ``ax.xaxis.label`` and NOT in ``ax.texts``:
+    a texts-only scan finds nothing and reports a vacuous "no overlap". Callers must assert
+    this is non-None before trusting ``_imp_label_number_overlaps``.
+    """
+    for ax in fig.axes:
+        for t in list(ax.texts) + [ax.xaxis.label, ax.yaxis.label]:
+            if t.get_visible() and t.get_text().strip() == _IMP_BAR_LABEL:
+                return t
+    return None
+
+
+def _imp_label_number_overlaps(fig, lab):
+    """Numbers drawn through the "Cumulative feature importance" label ``lab``.
+
+    The top strip's cumulative value sits next to that label, so it is the one number that can
+    collide with it. That value renders as a real y-TICK label or as a text artist depending on
+    placement, so both artist kinds are collected -- scanning only one kind misses a rendering.
+
+    Returns a list of ``(number, overlap_px)`` tuples (empty = clean).
+    """
+    fig.savefig(io.BytesIO(), format="png", dpi=fig.dpi)
+    r = fig.canvas.get_renderer()
+    numbers = [t for ax in fig.axes
+               for t in list(ax.texts) + list(ax.get_xticklabels()) + list(ax.get_yticklabels())
+               if t.get_visible() and _NUMERIC.match(t.get_text().strip())]
+    lb = lab.get_window_extent(renderer=r)
+    bad = []
+    for num in numbers:
+        it = Bbox.intersection(lb, num.get_window_extent(renderer=r))
+        if it and it.width > 0 and it.height > 0:
+            bad.append((num.get_text().strip(), round(it.width * it.height, 1)))
+    return bad
+
+
 class TestOverlapDetector:
     """Self-validation of the overlap detector itself (independent of any fix)."""
 
@@ -352,6 +392,47 @@ class TestFontStableAndNoOverlap:
 
 def _fm(n_subcat, **kwargs):
     return aa.CPPPlot().feature_map(make_dense_df_feat(n_subcat), **kwargs)
+
+
+class TestCumulativeImportanceLabelClear:
+    """The top strip's cumulative value never renders through its own axis label.
+
+    The value and its tick mark belong on the INNER (left) side of the top strip's right-hand
+    spine. Drawing them outward -- matplotlib's default for a right-hand axis -- puts them
+    straight through the "Cumulative feature importance" label sitting just right of that spine.
+    ``n_subcat`` drives the strip's cumulative max (5 -> 1, 20 -> 4, 40 -> 8), which used to
+    select the placement; the invariant must hold on both sides of that old threshold.
+    """
+
+    def setup_method(self):
+        aa.options["verbose"] = False
+
+    def teardown_method(self):
+        plt.close("all")
+
+    @pytest.mark.parametrize("n_subcat", [5, 20, 40, 74])
+    def test_value_does_not_overlap_label(self, n_subcat):
+        fig, ax = _fm(n_subcat, figsize=(7, 7), fontsize_annotations=12, fontsize_titles=12)
+        lab = _imp_bar_label_artist(fig)
+        assert lab is not None, "label artist not found -- the overlap check would be vacuous"
+        bad = _imp_label_number_overlaps(fig, lab)
+        assert bad == [], f"number(s) drawn through the label at n={n_subcat}: {bad}"
+
+    @pytest.mark.parametrize("n_subcat", [5, 20, 40])
+    def test_value_sits_left_of_spine_at_strip_top(self, n_subcat):
+        # The value renders wholly left of the strip's right-hand spine (clearing the label) and
+        # stays centred on the strip top, so it reads as that axis' max rather than floating.
+        fig, ax = _fm(n_subcat)
+        fig.savefig(io.BytesIO(), format="png", dpi=fig.dpi)
+        r = fig.canvas.get_renderer()
+        strip = next(a for a in fig.axes
+                     if len([p for p in a.patches if hasattr(p, "get_height")]) >= N_POSITIONS)
+        nums = [t for t in strip.texts if _NUMERIC.match(t.get_text().strip())]
+        assert len(nums) == 1, f"expected one cumulative value, got {[t.get_text() for t in nums]}"
+        box = strip.get_window_extent(renderer=r)
+        nb = nums[0].get_window_extent(renderer=r)
+        assert nb.x1 <= box.x1, f"value at n={n_subcat} spills right of the spine"
+        assert abs((nb.y0 + nb.y1) / 2 - box.y1) <= 1, f"value at n={n_subcat} is off the strip top"
 
 
 class TestFigureGrows:
