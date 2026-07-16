@@ -521,6 +521,26 @@ COLS_RELIABILITY = [COL_SCORE, COL_SCORE_STD, COL_CI_LOW, COL_CI_HIGH, COL_OOD_S
                     COL_AD_KNN, COL_AD_MAHALANOBIS, COL_AD_LEVERAGE, COL_SCORE_CAL, COL_MARGIN,
                     COL_ENTROPY, COL_CONFORMAL_SET, COL_RELIABLE]
 
+# ModelEvaluator (repeated cross-validation + bootstrap CIs + paired comparison). Reuses
+# COL_MODEL / COL_METRIC / COL_SCORE / COL_SCORE_STD (AAPred block) and COL_CI_LOW / COL_CI_HIGH
+# (reliability block, defined above).
+COL_ROUND = "round"             # 0-based cross-validation repeat index (multi-seed aggregation)
+COL_FOLD = "fold"               # 0-based fold index within a round
+COL_N_SCORES = "n_scores"       # number of fold scores aggregated (n_cv * n_rounds)
+COL_MODEL_A = "model_a"         # first model of a paired comparison
+COL_MODEL_B = "model_b"         # second model of a paired comparison
+COL_DELTA = "delta"             # signed per-fold mean difference (score_a - score_b)
+COL_DELTA_STD = "delta_std"     # std of the per-fold paired differences
+COL_P_VALUE = "p_value"         # two-sided Wilcoxon signed-rank p-value of the paired differences
+# Metrics: LIST_METRICS_PRED plus mcc (Matthews correlation coefficient), the headline model-quality
+# metric for evaluation and paired comparison. 'mcc' is label-value agnostic (like accuracy /
+# balanced_accuracy); precision/recall/f1 follow sklearn's binary pos_label=1 convention.
+LIST_METRICS_MODELEVAL = LIST_METRICS_PRED + ["mcc"]
+COLS_SCORES_MODELEVAL = [COL_ROUND, COL_FOLD, COL_MODEL, COL_METRIC, COL_SCORE]
+COLS_EVAL_MODELEVAL = [COL_MODEL, COL_METRIC, COL_SCORE, COL_SCORE_STD, COL_CI_LOW, COL_CI_HIGH, COL_N_SCORES]
+COLS_COMPARE_MODELEVAL = [COL_MODEL_A, COL_MODEL_B, COL_METRIC, COL_DELTA, COL_DELTA_STD,
+                          COL_CI_LOW, COL_CI_HIGH, COL_P_VALUE]
+
 # Labels
 LABEL_FEAT_VAL = "Feature value"
 LABEL_HIST_COUNT = "Number of proteins"
