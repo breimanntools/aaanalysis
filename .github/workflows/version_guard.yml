@@ -1,0 +1,53 @@
+name: Version Guard
+
+# Asserts that [project] version in pyproject.toml is strictly ahead of the latest
+# release published on PyPI, so a development tree never reports an already-published
+# version (both would otherwise answer the same string to importlib.metadata, making
+# two materially different installs indistinguishable).
+#
+# Code-gated: docs-only changes cannot alter the declared version, so they carry the
+# same paths-ignore as the other code-gated workflows. pyproject.toml is not a docs
+# path, so every version edit still runs this guard.
+on:
+  push:
+    branches:
+      - master
+    paths-ignore:
+      - 'docs/**'
+      - '**/*.md'
+      - '**/*.rst'
+  pull_request:
+    branches:
+      - master
+    paths-ignore:
+      - 'docs/**'
+      - '**/*.md'
+      - '**/*.rst'
+
+# Cancel a superseded in-progress run on the same branch/PR.
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  version-ahead:
+    name: Version ahead of PyPI
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          # Full history + tags: the guard falls back to the latest vX.Y.Z tag when
+          # the PyPI API is unreachable, and the default shallow checkout fetches
+          # no tags at all.
+          fetch-depth: 0
+      - name: Set up Python
+        uses: actions/setup-python@v6
+        with:
+          python-version: '3.12'
+      - name: Install packaging
+        run: python -m pip install --upgrade packaging
+      - name: Check the version is ahead of the latest PyPI release
+        run: python .github/scripts/check_version_ahead.py

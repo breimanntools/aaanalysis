@@ -363,6 +363,30 @@ AAanalysis follows `Semantic Versioning <https://semver.org/spec/v2.0.0.html>`_
 is exactly the set of symbols re-exported by ``aaanalysis/__init__.py`` (anything
 starting with ``_`` is private and may change without notice).
 
+Version truth
+-------------
+
+``master`` must **never** report a version that is already published on PyPI. The
+version in ``pyproject.toml`` is maintained by hand and always names the *next,
+unreleased* number, so a development checkout and a released install are never
+indistinguishable to ``importlib.metadata`` (and therefore to bug reports, cached
+environments, coding agents, and reproducibility records).
+
+CI enforces this: the ``Version Guard`` workflow runs
+``.github/scripts/check_version_ahead.py``, which fails when the declared version is
+not strictly greater than the latest release published on PyPI (falling back to the
+latest ``vX.Y.Z`` git tag when the network is unavailable). Run it locally with:
+
+.. code-block:: bash
+
+   python .github/scripts/check_version_ahead.py
+   python .github/scripts/check_version_ahead.py --offline   # git tags only
+
+The version is deliberately **not** derived from git tags (e.g. setuptools-scm),
+which would attach ``.devN`` / ``+g<sha>`` suffixes to every commit. Release tags are
+named ``vX.Y.Z``; the pre-1.0 ``0.1.1`` tag predates that convention and the guard
+accepts both spellings.
+
 Deprecation policy
 ------------------
 
@@ -422,9 +446,11 @@ AAanalysis is packaged with the setuptools build backend (for the Cython kernel)
 
       pip install uv
 
-2. **Update the version**
+2. **Confirm the version to release**
 
-   Update the version number (**MAJOR.MINOR.PATCH**) in ``pyproject.toml``.
+   ``master`` already carries the next unreleased version (see `Version truth`_), so
+   the number in ``pyproject.toml`` is normally the one you are about to release.
+   Confirm it still matches the change set instead of bumping it a second time.
 
    Versioning follows semantic versioning:
 
@@ -432,7 +458,8 @@ AAanalysis is packaged with the setuptools build backend (for the Cython kernel)
    - **MINOR**: backward-compatible new functionality
    - **PATCH**: backward-compatible bug fixes
 
-   Alternatively, uv can update the version automatically:
+   If the number needs to change, edit ``[project] version`` in ``pyproject.toml``
+   (uv can do it for you):
 
    .. code-block:: bash
 
@@ -441,6 +468,9 @@ AAanalysis is packaged with the setuptools build backend (for the Cython kernel)
       uv version --bump minor
       # or
       uv version --bump major
+
+   Then rename the ``Unreleased`` heading in ``CHANGELOG.md`` and
+   ``docs/source/index/release_notes.rst`` to this version with its release date.
 
 3. **Build the package**
 
@@ -465,3 +495,19 @@ AAanalysis is packaged with the setuptools build backend (for the Cython kernel)
 5. **Verify the upload**
 
    After publishing, verify that the package appears correctly on PyPI and that the metadata and files are accurate.
+
+6. **Tag the release, then bump master ahead again**
+
+   Tag the released commit and push the tag:
+
+   .. code-block:: bash
+
+      git tag -a v1.1.0 -m "v1.1.0"
+      git push origin v1.1.0
+
+   Then **immediately** bump ``[project] version`` in ``pyproject.toml`` to the next
+   unreleased number (e.g. ``1.2.0``) and open a fresh ``Unreleased`` section in
+   ``CHANGELOG.md`` and ``docs/source/index/release_notes.rst``. This is the step that
+   keeps `Version truth`_ intact: until it lands, ``master`` reports a version that is
+   already on PyPI and the ``Version Guard`` workflow fails -- by design, as the
+   reminder that the bump is still owed.
