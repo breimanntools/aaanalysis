@@ -210,3 +210,26 @@ class TestParityWithManualPath:
         # Same selected features, byte-identical feature matrix.
         assert sft.features_ == df_feat["feature"].tolist()
         np.testing.assert_allclose(X_sft, np.asarray(X_manual), rtol=0, atol=0)
+
+
+class TestFitGuards:
+    """Cover the fit/transform input-guard edges (clear errors instead of cryptic failures)."""
+
+    def test_non_dataframe_X_raises(self, data):
+        _, labels = data
+        with pytest.raises(ValueError, match="DataFrame"):
+            aa.SequenceFeatureTransformer(n_filter=25, random_state=0).fit([[1, 2], [3, 4]], labels)
+
+    def test_y_length_mismatch_raises(self, data):
+        df_seq, labels = data
+        with pytest.raises(ValueError, match="n_samples"):
+            aa.SequenceFeatureTransformer(n_filter=25, random_state=0).fit(df_seq, labels[:-2])
+
+    def test_empty_selection_raises(self, data, monkeypatch):
+        # A config that selects no features must raise a clear error at fit time (not defer a
+        # cryptic feature_matrix crash to transform). Force CPP.run to return an empty df_feat.
+        df_seq, labels = data
+        import aaanalysis.feature_engineering._sequence_feature_transformer as mod
+        monkeypatch.setattr(mod.CPP, "run", lambda self, *a, **k: pd.DataFrame({"feature": []}))
+        with pytest.raises(ValueError, match="selected no features"):
+            aa.SequenceFeatureTransformer(n_filter=25, random_state=0).fit(df_seq, labels)
