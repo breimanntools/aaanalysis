@@ -8,7 +8,7 @@ Status: Accepted — 2026-06-24 (amended 2026-07-14 — verb names aligned to th
 > and `evaluate_models` remain **planned** (not yet built).
 
 Implements the user-facing convenience-facade half of
-[ADR-0038](0038-agentic-readiness-boundary.md) (AAanalysis owns convenience; the
+[ADR-0038](0038-aaanalysis-protxplain-border.md) (AAanalysis owns convenience; the
 machine-readable tool contract is ProtXplain's). This ADR fixes the naming schema,
 the Ends/Means model, the return/state contracts, and the documentation exposure for
 the `aaanalysis.pipe` namespace, so the pipelines added over time stay consistent.

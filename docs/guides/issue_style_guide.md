@@ -90,7 +90,9 @@ title and can never be "done".
 - [ ] <measurable, binary; at least one quantified>
 
 ## Scope / non-goals
-- <what's out; core-vs-pro / ProtXplain boundary>
+- <what's out; name the layer explicitly — core vs `aaanalysis[pro]` (open, heavy
+  optional deps) vs ProtXplain (closed agent/decision layer). Never write
+  "ProtXplain / pro": they are two different boundaries.>
 
 ## Dependencies
 - blocked-by #N · relates ADR-XXXX

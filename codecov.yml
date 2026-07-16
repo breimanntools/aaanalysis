@@ -1,4 +1,4 @@
-# Codecov configuration (ADR-0016).
+# Codecov configuration.
 #
 # Measure the PACKAGE only — the CI job uploads coverage for `aaanalysis`
 # (not `--cov=./`, which counted the test files and inflated the badge to ~95%
@@ -32,7 +32,7 @@ coverage:
 # Per-area visibility. cpp_core is the numeric CPP pipeline (the scientific
 # core). Kept INFORMATIONAL for now (it contains files not yet at 100%, e.g.
 # the streaming filters); flip `informational: false` + raise its target to
-# 100% once the component reaches it (ADR-0016 climb).
+# 100% once the component reaches it.
 component_management:
   individual_components:
     - component_id: cpp_core

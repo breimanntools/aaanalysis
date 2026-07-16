@@ -168,7 +168,7 @@ Optimizations that Change Output
 Most optimizations must be **byte-identical** to the code they replace. An
 optimization that changes output at all — even only at the floating-point
 last-bit (ULP) level or in tie-breaks — is acceptable only under the
-**numerical-equivalence tolerance policy** (ADR-0032), which defines three tiers
+**numerical-equivalence tolerance policy**, which defines three tiers
 of acceptable change and the evidence each requires:
 
 - **T1 — Byte-identical** (default): output is bit-for-bit identical. Covered by
@@ -192,7 +192,7 @@ of acceptable change and the evidence each requires:
 3. It states the **tolerance / band numerically** (T2: ``atol=1e-10, rtol=0`` +
    the discrete-decision artifacts that stay equal; T3: e.g. ΔAUC ≤ 0.005,
    kept-feature Jaccard ≥ 0.95) and names the canonical dataset(s).
-4. It commits a **regression anchor** extending the ADR-0015 pattern
+4. It commits a **regression anchor** following the established pattern
    (``@pytest.mark.regression``, pinned to the canonical Linux / floor-Python
    cell, run only in the non-gating nightly) that freezes the decision artifact /
    value (T2) or the banded metric (T3).
@@ -632,7 +632,7 @@ Quality gates
      - ``.github/workflows/main.yml`` ("Unit Tests"): ``pytest tests -m "not regression and not integration and not e2e" -x -n auto`` on **Ubuntu py3.10–3.14** + **Windows py3.10 & 3.14** (Windows brackets min+max; the full Windows range and the ``-m regression`` exact-value CPP anchor run in the nightly).
    * - **Integration & E2E**
      - cross-component seams + protocol workflows pass
-     - ``.github/workflows/integration_e2e.yml`` ("Integration & E2E Tests"): ``pytest tests/integration tests/e2e -m "not regression" -n auto`` on **Ubuntu py3.10 + 3.14** (core-only, offline). The fourth master-gating workflow (push + PR to master); excluded from the Unit Tests matrix so it runs once (ADR-0031).
+     - ``.github/workflows/integration_e2e.yml`` ("Integration & E2E Tests"): ``pytest tests/integration tests/e2e -m "not regression" -n auto`` on **Ubuntu py3.10 + 3.14** (core-only, offline). The fourth master-gating workflow (push + PR to master); excluded from the Unit Tests matrix so it runs once.
    * - **Coverage**
      - **≥ 88 %** line coverage, package-only
      - ``.github/workflows/test_coverage.yml``: ``pytest … --cov=aaanalysis --cov-fail-under=88`` (+ Codecov ``patch`` / ``project``). Measured on the package only (``--cov=aaanalysis``, never ``--cov=./``).

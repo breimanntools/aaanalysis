@@ -97,7 +97,7 @@ and a suite of site-localization metrics and plotting helpers.
   pool**). Output labels always use the package convention (1 = positive,
   0 = negative, 2 = unlabeled); the recommended input encoding is unchanged.
 - Numerical-equivalence tolerance policy for performance optimizations
-  (developer-facing; ADR-0032, checklist in `CONTRIBUTING.rst`): three tiers —
+  (developer-facing; checklist in `CONTRIBUTING.rst`): three tiers —
   **T1** byte-identical (default), **T2** numerically-equivalent
   (`allclose(atol=1e-10, rtol=0)` + identical discrete decisions), **T3**
   statistically-equivalent (quality metric within a documented band) — with the

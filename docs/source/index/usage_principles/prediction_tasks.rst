@@ -4,7 +4,7 @@
    I have, and which AAanalysis workflow solves it?". It hosts the prediction-task
    class table and routes each task to its workflow / protocol (#35). Canonical
    vocabulary lives in the Glossary (and, deeper, in CONTEXT.md); the taxonomy is
-   recorded in ADR-0022. Keep the table's two lead columns — unit of comparison and
+   recorded in the decision log. Keep the table's two lead columns — unit of comparison and
    reference construction — as the load-bearing axes; the level is the label.
 ..
 

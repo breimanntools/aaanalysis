@@ -12,7 +12,7 @@ at the end of the pytest session. It lives under ``.github/scripts/`` (not
 Branch coverage cannot be gated with ``pytest --cov-fail-under`` directly:
 once ``--cov-branch`` is on, that flag checks the *combined* line+branch number,
 which would silently re-define the line gate. Parsing the two rates separately
-keeps an honest, independent line floor and branch floor (ADR-0016 D4).
+keeps an honest, independent line floor and branch floor.
 
 This is CI tooling, not library code, so it prints to stdout for the CI log
 (the package itself never calls ``print`` — it uses ``ut.print_out``).
@@ -28,7 +28,7 @@ import xml.etree.ElementTree as ET
 from pathlib import Path
 
 # Committed gates in percent. Ratcheted at-or-just-below the measured baseline
-# (ADR-0016); raise only once the suite clears the next step. The line gate
+# raise only once the suite clears the next step. The line gate
 # mirrors the historical --cov-fail-under=88.
 LINE_GATE = 88.0
 BRANCH_GATE = 80.0

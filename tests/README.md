@@ -16,7 +16,7 @@ and golden-value checks for the scientific core.
 ## Test tiers (unit · integration · e2e)
 
 Three tiers with **distinct jobs** (full taxonomy + rationale in
-`.claude/rules/testing.md` and **ADR-0031**). The rule that keeps them from
+`.claude/rules/testing.md`). The rule that keeps them from
 overlapping: *don't re-test at a higher tier what a lower tier already covers.*
 
 | Tier | Directory | Job | Negatives are… | Hypothesis is… |
@@ -37,7 +37,7 @@ overlapping: *don't re-test at a higher tier what a lower tier already covers.*
   protocol uses a `pro` feature it substitutes the core path.
 - Both tiers assert **structural/range** artifacts (shapes, schema columns, metrics in
   `[0, 1]`, finiteness, monotonic ranking) and **never frozen exact values** — exact-value
-  freezing is the CPP regression anchor's job (ADR-0015). Their shared seeded spine lives
+  freezing is the CPP regression anchor's job. Their shared seeded spine lives
   in `tests/_pipeline.py`; integration exposes it as session fixtures in
   `tests/integration/conftest.py`, and e2e imports the builders directly. Count is bounded
   by *seams × workflows*, not by unit-test volume.
@@ -71,7 +71,7 @@ appear as their own check and never double-run.
 
 ## Coverage policy
 
-Current: **line ~98%, branch ~95%** (gates 88% / 80%, ratcheting per ADR-0016).
+Current: **line ~98%, branch ~95%** (gates 88% / 80%, ratcheted upward as the suite clears each step).
 
 Branch coverage is pursued **only via the public API**. The arcs that remain uncovered
 are not gaps in the tests — they are **unreachable from the public surface by design**,

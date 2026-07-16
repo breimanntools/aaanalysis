@@ -165,7 +165,7 @@ Optimizations that Change Output
 Most optimizations must be **byte-identical** to the code they replace. An
 optimization that changes output at all — even only at the floating-point
 last-bit (ULP) level or in tie-breaks — is acceptable only under the
-**numerical-equivalence tolerance policy** (ADR-0032), which defines three tiers
+**numerical-equivalence tolerance policy**, which defines three tiers
 of acceptable change and the evidence each requires:
 
 - **T1 — Byte-identical** (default): output is bit-for-bit identical. Covered by
@@ -189,7 +189,7 @@ of acceptable change and the evidence each requires:
 3. It states the **tolerance / band numerically** (T2: ``atol=1e-10, rtol=0`` +
    the discrete-decision artifacts that stay equal; T3: e.g. ΔAUC ≤ 0.005,
    kept-feature Jaccard ≥ 0.95) and names the canonical dataset(s).
-4. It commits a **regression anchor** extending the ADR-0015 pattern
+4. It commits a **regression anchor** following the established pattern
    (``@pytest.mark.regression``, pinned to the canonical Linux / floor-Python
    cell, run only in the non-gating nightly) that freezes the decision artifact /
    value (T2) or the banded metric (T3).

@@ -23,8 +23,9 @@ def _feature_sha(df_feat):
 # Frozen redundancy-reduced feature sets on the canonical DOM_GSEC cell
 # (CPP(random_state=42).run(labels, redundancy=...), n_jobs=1). (n_features, sha256(sorted ids)[:16]).
 # 'legacy' pins byte-identity to prior versions (guards the set(x) branch against silent drift);
-# 'exact' is the T3 regression anchor promised by ADR-0050 / ADR-0032. Regression-marked so it
-# runs in the nightly, not the blocking gate (matches the ADR-0015 exact-value anchor policy).
+# 'exact' is the T3 regression anchor for the exact-position redundancy filter, required because
+# that filter changes output. Regression-marked so it runs in the nightly, not the blocking gate:
+# exact-value anchors are pinned to one interpreter/OS cell and would be flaky across the matrix.
 _ANCHORS = {"legacy": (100, "70eeb5b3b6633948"), "exact": (100, "5b7cb30d1112de5a")}
 
 

@@ -44,7 +44,7 @@ GOLDEN_WORKFLOW = [
      "out": "figure · feat_impact"},
 ]
 
-# Prediction-task taxonomy (ADR-0022): the level is a proxy; what actually
+# Prediction-task taxonomy: the level is a proxy; what actually
 # determines the CPP setup is the unit profiled + how the reference is built.
 PREDICTION_LEVELS = [
     {"level": "Residue", "prefix": "AA_*",

@@ -691,8 +691,9 @@ _Avoid_: result (overloaded), output (overloaded).
 ### Agentic-readiness & package-boundary vocabulary
 
 These name the scope of the **agentic-readiness** program and the line between
-AAanalysis and **ProtXplain** (the downstream agent-integration package). See
-ADR-0035 (the original boundary) and ADR-0038 (the refinement below).
+AAanalysis and **ProtXplain** (the downstream agent, decision and execution
+system). ADR-0038 is the single authoritative border ADR; everything below
+follows it.
 
 **agentic readiness**:
 Making the OSS primitives maximally **legible, typed, contracted, and
@@ -707,16 +708,46 @@ _Avoid_: "agent support" (overloaded — conflates the two audiences below).
 **two agent audiences**:
 The distinction that resolves the word "agent". Agents that *improve* AAanalysis
 are served **in** AAanalysis (types, contracts, tests, templates). Agents that
-*use* AAanalysis as a tool are served by **ProtXplain** (the MCP /
-machine-readable tool contract). Usability + improvability stay here;
-tool-integration goes downstream.
+*use* AAanalysis as a tool are served by **ProtXplain**. Usability +
+improvability stay here; tool-integration goes downstream.
 
-**machine-readable tool contract (boundary)**:
-The border between the two packages. The MCP server, JSON/tool schemas, verb
-orchestration, and selection/ranking/decision/OOD logic are **ProtXplain**;
-human- and sklearn-idiomatic convenience is **AAanalysis**. A boundary, like the
-**relational / interaction (scope boundary)** — not a feature AAanalysis is
-missing. See ADR-0038.
+**three layers**:
+The two boundaries that get confused with each other. **AAanalysis core** (open,
+lightweight deps) and **AAanalysis[pro]** (open, heavy/fragile optional deps) are
+separated by *dependency weight* — a packaging boundary. **ProtXplain** (closed)
+is separated by *agent decision logic* — the commercial boundary. `pro` is open
+source; nothing becomes closed by being `pro`.
+_Avoid_: "ProtXplain / pro" (names one boundary where there are two — always
+resolve to a specific layer).
+
+**the border (AAanalysis ↔ ProtXplain)**:
+The **semantically complete, externally invokable autonomous-agent contract, and
+its decision and execution layer** — agent tool IDs, JSON Schema, MCP definitions,
+capability semantics, typed result envelopes, structured error codes, tool/workflow
+selection and recovery policy. All **ProtXplain**. Ordinary Python introspection
+(signatures, type hints, `py.typed`, docstrings, DataFrames) is **not** "the
+contract" in this sense and stays open, as does human- and sklearn-idiomatic
+convenience. A boundary, like the **relational / interaction (scope boundary)** —
+not a feature AAanalysis is missing.
+_Avoid_: "machine-readable tool contract" (Python signatures already are
+machine-readable — the phrase reads as withholding ordinary legibility).
+
+**uncertainty measurement vs uncertainty policy**:
+AAanalysis *calculates* uncertainty (reliability models, confidence intervals,
+bootstrap stability, repeated CV, calibration, scientific OOD / applicability
+scores). ProtXplain *acts* on it (thresholds, refusal, fallback, escalation to a
+human). Uncertainty estimation is open science; uncertainty-driven action is
+closed product logic.
+_Avoid_: "OOD/uncertainty logic is ProtXplain's" (too broad — it reads as
+withholding the shipped reliability algorithms).
+
+**scientific selection vs tool/workflow selection**:
+AAanalysis selects *inside* a defined method (feature selection, scale ranking,
+model selection within an evaluation, hyperparameter and CPP-configuration search,
+Pareto optimization, bootstrap stability ranking). ProtXplain selects *the method*
+(which tool, which workflow, which preset, what to do next).
+_Avoid_: bare "selection and ranking" for the closed layer — write **tool/workflow
+selection and ranking**.
 
 **golden pipeline**:
 A user-facing one-call function in the stateless `aaanalysis.pipe` (`ap`)
@@ -729,9 +760,16 @@ ProtXplain. Named `verb_noun` (the only schema), the verb signalling **End** vs
 `Axes`/`Figure` API. In the user-facing docs the two tiers are named the
 **implicit interface** (`ap`, the golden pipelines) and the **explicit
 interface** (`aa`, the building blocks) — the same pyplot-vs-objects split, kept
-verbatim in `docs/source/api.rst` and `getting_started.rst`. See ADR-0040.
+verbatim in `docs/source/api.rst` and `getting_started.rst`. See ADR-0040. To stay
+on the open side of the border it must be single-objective, stateless,
+deterministic when seeded, free of network services, dynamic tool discovery,
+benchmark-conditioned method selection, agent-specific JSON contracts, task-planning
+loops and any hidden ProtXplain call (the boundary rule, ADR-0038 D8) — otherwise it
+is an **agent workflow** and belongs downstream.
 _Avoid_: "verb" / "tool" (those name the ProtXplain agent-integration layer);
-calling a **Means** a golden pipeline (only an **End** is one).
+calling a **Means** a golden pipeline (only an **End** is one); "agent-facing
+golden pipeline" (implies it *is* the agent layer — a pipeline whose output an
+agent may consume is **agent-consumable**).
 
 **End** (golden pipeline):
 A golden pipeline that returns a **deliverable** — the thing the user wanted:
