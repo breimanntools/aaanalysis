@@ -527,3 +527,113 @@ class TestFindFeaturesHelpers:
     def test_split_type_sets_start_with_segment(self):
         for sts in _SPLIT_TYPE_SETS:
             assert sts[0] == "Segment"
+
+
+class TestFindFeaturesSelectionScope:
+    """selection_scope='global' (default, byte-identical) vs 'fold' (honest nested CV)."""
+
+    def test_invalid_selection_scope(self):
+        with pytest.raises(ValueError):
+            ap.find_features(labels=labels, df_seq=df_seq, search="fast",
+                             selection_scope="nope", plot=False)
+
+    def test_global_has_scope_column(self):
+        _, _, df_eval = ap.find_features(labels=labels, df_seq=df_seq, search="fast",
+                                         selection_scope="global", plot=False, random_state=0)
+        assert "selection_scope" in df_eval.columns
+        assert set(df_eval["selection_scope"]) == {"global"}
+
+    def test_fold_returns_triple_and_scope_column(self):
+        df_feat, ax, df_eval = ap.find_features(labels=labels, df_seq=df_seq, search="fast",
+                                                selection_scope="fold", plot=False, random_state=0)
+        assert isinstance(df_feat, pd.DataFrame) and df_feat.shape[0] > 0
+        assert ax is None
+        assert set(df_eval["selection_scope"]) == {"fold"}
+
+    def test_fold_score_not_greater_than_global(self):
+        # Removing the selection leakage cannot inflate the honest CV score above the in-sample one.
+        _, _, dfe_g = ap.find_features(labels=labels, df_seq=df_seq, search="fast",
+                                       selection_scope="global", plot=False, random_state=0)
+        _, _, dfe_f = ap.find_features(labels=labels, df_seq=df_seq, search="fast",
+                                       selection_scope="fold", plot=False, random_state=0)
+        assert dfe_f["balanced_accuracy_mean"].iloc[0] <= dfe_g["balanced_accuracy_mean"].iloc[0] + 1e-9
+
+    def test_fold_returns_same_all_data_winner_as_global(self):
+        # The returned df_feat is always the winner refit on all data (outer-CV semantics), so the
+        # feature set does not depend on the scoring scope for the single fast configuration.
+        dff_g, _, _ = ap.find_features(labels=labels, df_seq=df_seq, search="fast",
+                                       selection_scope="global", plot=False, random_state=0)
+        dff_f, _, _ = ap.find_features(labels=labels, df_seq=df_seq, search="fast",
+                                       selection_scope="fold", plot=False, random_state=0)
+        assert dff_g["feature"].tolist() == dff_f["feature"].tolist()
+
+    def test_fold_exhaustive_warns(self, monkeypatch):
+        # The cost UserWarning is emitted during validation, before the (expensive) search runs;
+        # stub the search so the test stays fast while still exercising the warning path.
+        import aaanalysis.pipe._find_features as ff
+
+        def _boom(**kwargs):
+            raise RuntimeError("stop before the expensive nested search")
+
+        monkeypatch.setattr(ff, "_run_search", _boom)
+        with pytest.warns(UserWarning, match="selection_scope='fold'"):
+            with pytest.raises(RuntimeError):
+                ap.find_features(labels=labels, df_seq=df_seq, search="exhaustive",
+                                 selection_scope="fold", plot=False, random_state=0)
+
+
+class TestFindFeaturesSelectionScopeInternals:
+    """Regression tests for the fold-scope scorer internals (review findings)."""
+
+    def test_degenerate_fold_scores_zero_not_nan(self):
+        # A config that selects no features on every train fold must score 0.0 (finite), never NaN
+        # (NaN would crash rank().astype(int) and corrupt Pareto/dominance selection).
+        from aaanalysis.pipe._find_features import _nested_cv_scores, _resolve_models
+        df_parts = sf.get_df_parts(df_seq=df_seq)
+        models = _resolve_models("svm", random_state=0)
+        empty = pd.DataFrame({"feature": []})
+        out = _nested_cv_scores(select=lambda dp, y: empty, df_parts=df_parts, labels=labels,
+                                models=models, cv=5, metrics=["balanced_accuracy"],
+                                df_scales_all=aa.load_scales(name="scales"), sf=sf, n_jobs=1)
+        mean, std = out["balanced_accuracy"]
+        assert np.isfinite(mean) and np.isfinite(std)
+        assert mean == 0.0
+
+    def test_selects_once_per_fold_not_per_model(self):
+        # The per-fold re-selection is model-independent, so it must run once per fold, not once
+        # per (fold, model) — otherwise fold mode is needlessly multiplied by len(models).
+        from aaanalysis.pipe._find_features import (_nested_cv_scores, _resolve_models,
+                                                    _config_selector)
+        df_parts = sf.get_df_parts(df_seq=df_seq)
+        df_scales = aa.load_scales(name="scales")
+        real = _config_selector(df_scales=df_scales, n_filter=25, random_state=0, n_jobs=1)
+        df_feat_real = real(df_parts, np.asarray(labels))
+        calls = {"n": 0}
+
+        def counting_select(dp, y):
+            calls["n"] += 1
+            return df_feat_real
+
+        models = _resolve_models(["svm", "rf", "log_reg"], random_state=0)
+        _nested_cv_scores(select=counting_select, df_parts=df_parts, labels=labels, models=models,
+                          cv=5, metrics=["balanced_accuracy"], df_scales_all=df_scales, sf=sf, n_jobs=1)
+        assert calls["n"] == 5  # 5 folds, NOT 5 * 3 models
+
+    def test_grid_stage_fold_branch(self):
+        # Directly exercise the _grid_stage fold branch (staged-search config scoring): a full
+        # balanced+fold find_features would be a slow test excluded from the coverage run, so this
+        # covers the nested-scoring path with a minimal one-config grid and cv=2.
+        from aaanalysis.pipe._find_features import _grid_stage, _resolve_config, _resolve_models
+        cfg = _resolve_config(search="fast")
+        models = _resolve_models("svm", random_state=0)
+        rows, payloads = _grid_stage(
+            sf=sf, df_seq=df_seq,
+            parts=[cfg["part_sets"][0]], split_sets=[_SPLIT_TYPE_SETS[-1]],
+            n_split_vals=[15], specs=[("explain", 30)], n_filters=[25], n_jmd_vals=[10],
+            cfg=cfg, labels=labels, models=models, cv=2, metrics=["balanced_accuracy"],
+            subcategories=None, df_scales_all=aa.load_scales(name="scales"),
+            random_state=0, n_jobs=1, stage="sensitivity", parts_cache={},
+            selection_scope="fold")
+        assert len(rows) >= 1
+        assert all(r["selection_scope"] == "fold" for r in rows)
+        assert all(0.0 <= r["balanced_accuracy_mean"] <= 1.0 for r in rows)

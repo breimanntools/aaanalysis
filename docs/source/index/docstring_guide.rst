@@ -433,6 +433,10 @@ one row, and parallel-modality families run sequence → structure → embedding
      - :class:`~aaanalysis.ReliabilityModel` / :class:`~aaanalysis.ReliabilityModelPlot`
      - ``rm`` / ``rm_plot``
      -
+   * -
+     - :class:`~aaanalysis.ModelEvaluator` / :class:`~aaanalysis.ModelEvaluatorPlot`
+     - ``me`` / ``me_plot``
+     -
    * - :ref:`Protein Engineering <protein_engineering_api>`
      - :class:`~aaanalysis.AAMut` / :class:`~aaanalysis.AAMutPlot`
      - ``aam`` / ``aam_plot``

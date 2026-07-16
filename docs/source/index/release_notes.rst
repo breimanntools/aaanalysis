@@ -233,6 +233,18 @@ Added
   a per-sample ``ranking`` (each prediction's score with its uncertainty interval, colored by trust
   status), a calibration curve (``reliability_diagram``), the out-of-distribution score distribution
   (``ood_hist``), and a score-vs-OOD ``trust_map`` colored by the ``reliable`` flag.
+- :class:`~aaanalysis.ModelEvaluator`: Rigorous, model-agnostic evaluation harness for a feature
+  matrix ``X`` and ``labels``. ``run`` scores one or more scikit-learn models by **repeated
+  stratified cross-validation** (multi-seed mean/std over ``n_cv * n_rounds`` folds) with a
+  **percentile bootstrap confidence interval** of the mean per (model, metric); ``eval`` compares
+  the models **pairwise on the same folds** with a signed ``delta`` (e.g. ΔMCC), a bootstrap CI on
+  the paired differences, and a two-sided **Wilcoxon signed-rank** ``p_value``. Metrics add ``mcc``
+  (Matthews correlation coefficient) to the prediction metric set; both outputs are byte-identical
+  under ``random_state`` and reuse :func:`~aaanalysis.comp_bootstrap_ci` — no new dependency.
+- :class:`~aaanalysis.ModelEvaluatorPlot`: Visualizes :class:`~aaanalysis.ModelEvaluator` output —
+  ``scores`` draws grouped confidence-interval bars of the cross-validated scores per (model,
+  metric), and ``compare`` draws the paired comparison as signed delta bars with CI whiskers and
+  significance stars.
 - :meth:`~aaanalysis.AAPred.eval`: New ``baseline`` option to compare the bound (CPP) features
   against simple, non-positional **baselines** built internally from ``df_seq`` —
   ``'scale'`` (:meth:`~aaanalysis.SequenceFeature.scale_composition`), ``'aac'``
@@ -454,6 +466,16 @@ Added
   carries the publication eval figures (``ax.eval``) and ``df_eval`` has one
   ``<metric>_mean``/``_std`` column per metric plus ``stage`` / ``is_pareto`` / ``rank``
   / ``is_selected``.
+- **ap.find_features**: New ``selection_scope="global"|"fold"`` for an opt-in **honest
+  nested cross-validation**. ``"global"`` (default) is unchanged — CPP selects on the full
+  labeled set, so the scores are an in-sample (optimistic) ranking signal — and remains
+  byte-identical. ``"fold"`` re-selects CPP features on the **train split only** inside every
+  fold of every configuration score (Stages 1–2 and the simplify refine), so ``df_eval`` reports
+  held-out (typically lower) generalization estimates instead. The winner's second-step refinement
+  (:meth:`~aaanalysis.CPP.simplify` + recursive feature elimination) runs on all data in **both**
+  scopes, so no refinement capability is lost in ``"fold"``; the returned ``df_feat`` is the winner
+  refit on all data. ``df_eval`` gains a ``selection_scope`` column, and a ``UserWarning`` flags the
+  costly ``"fold"`` + ``search="exhaustive"`` combination.
 - **ap.explain_features**: New opt-in ``add_sample_mean_dif`` (+ ``label_ref``) that enriches the
   returned ``df_feat`` with per-sample **mean-difference** columns ``mean_dif_'name'`` (each explained
   sample's feature value minus the ``label_ref`` group average) alongside the SHAP

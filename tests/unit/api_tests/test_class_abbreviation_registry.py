@@ -54,6 +54,8 @@ REGISTRY = {
     "AAPredPlot": "aap_plot",
     "ReliabilityModel": "rm",
     "ReliabilityModelPlot": "rm_plot",
+    "ModelEvaluator": "me",
+    "ModelEvaluatorPlot": "me_plot",
     "ShapModel": "sm",
     "StructurePreprocessor": "strp",
     "AnnotationPreprocessor": "annp",

@@ -106,6 +106,8 @@ Prediction
     AAPredPlot
     ReliabilityModel
     ReliabilityModelPlot
+    ModelEvaluator
+    ModelEvaluatorPlot
 
 .. _protein_engineering_api:
 
