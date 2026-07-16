@@ -7,16 +7,17 @@ single highest-impact axis against ``n_filter``; Stage 3 refines the winning fea
 configuration across all metrics wins, scored by the average cross-validated performance of one or
 more models.
 """
-from typing import Optional, List, Tuple, Union, Dict
+from typing import Optional, List, Tuple, Union, Dict, Literal
 import warnings
 import numpy as np
 import pandas as pd
 from matplotlib.axes import Axes
-from sklearn.base import BaseEstimator
+from sklearn.base import BaseEstimator, clone
 from sklearn.svm import SVC
 from sklearn.ensemble import RandomForestClassifier
 from sklearn.linear_model import LogisticRegression
-from sklearn.model_selection import cross_validate
+from sklearn.model_selection import cross_validate, StratifiedKFold
+from sklearn.metrics import get_scorer
 
 import aaanalysis.utils as ut
 from aaanalysis.feature_engineering import SequenceFeature, CPP, CPPGrid, CPPPlot
@@ -196,6 +197,67 @@ def _cv_scores(X, labels, models=None, cv=5, metrics=None, random_state=None):
     return {m: (float(np.mean(means[m])), float(np.mean(stds[m]))) for m in metrics}
 
 
+def _config_selector(df_scales=None, split_kws=None, n_filter=None, max_cor=0.5, max_overlap=0.5,
+                     label_test=1, label_ref=0, simplify_strategy=None, do_simplify=False,
+                     random_state=None, n_jobs=None):
+    """Build a per-fold feature selector for one CPP configuration.
+
+    Returns ``select(df_parts_train, labels_train) -> df_feat`` that re-runs ``CPP.run`` (and,
+    when ``do_simplify``, ``CPP.simplify``) on the **train split only** — the leak-free counterpart
+    of selecting on the full labeled set. The returned features are then built for both the train
+    and the held-out fold by the caller.
+    """
+    def select(df_parts_train, labels_train):
+        cpp = CPP(df_parts=df_parts_train, df_scales=df_scales, split_kws=split_kws,
+                  random_state=random_state, verbose=False)
+        df_feat = cpp.run(labels=labels_train, label_test=label_test, label_ref=label_ref,
+                          n_filter=n_filter, max_cor=max_cor, max_overlap=max_overlap, n_jobs=n_jobs)
+        if do_simplify and df_feat is not None and len(df_feat) > 1:
+            df_feat = cpp.simplify(df_feat=df_feat, labels=labels_train, strategy=simplify_strategy,
+                                   label_test=label_test, label_ref=label_ref)
+        return df_feat
+    return select
+
+
+def _nested_cv_scores(select=None, df_parts=None, labels=None, models=None, cv=5, metrics=None,
+                      df_scales_all=None, sf=None, n_jobs=None):
+    """Nested-CV score of a CPP configuration: re-select features on each train fold (leak-free).
+
+    Mirrors ``_cv_scores``' aggregation and fold geometry (``StratifiedKFold`` with ``shuffle=False``,
+    the classifier + integer-``cv`` default that ``cross_validate`` uses), so the only difference from
+    the global scorer is that the feature set is re-selected on the train split of every fold via
+    ``select(df_parts_train, labels_train)`` instead of being fixed. Returns ``{metric: (mean, std)}``
+    averaged over folds then over models.
+    """
+    labels_arr = np.asarray(labels)
+    folds = list(StratifiedKFold(n_splits=cv).split(np.zeros(len(labels_arr)), labels_arr))
+    means = {m: [] for m in metrics}
+    stds = {m: [] for m in metrics}
+    for est in models:
+        fold_scores = {m: [] for m in metrics}
+        for train_idx, test_idx in folds:
+            df_parts_tr = df_parts.iloc[train_idx]
+            df_parts_te = df_parts.iloc[test_idx]
+            y_tr, y_te = labels_arr[train_idx], labels_arr[test_idx]
+            df_feat_tr = select(df_parts_tr, y_tr)
+            if df_feat_tr is None or len(df_feat_tr) == 0:
+                continue  # degenerate train fold: no features selected, skip
+            feats = df_feat_tr[ut.COL_FEATURE]
+            X_tr = sf.feature_matrix(features=feats, df_parts=df_parts_tr,
+                                     df_scales=df_scales_all, n_jobs=n_jobs)
+            X_te = sf.feature_matrix(features=feats, df_parts=df_parts_te,
+                                     df_scales=df_scales_all, n_jobs=n_jobs)
+            m_est = clone(est)
+            m_est.fit(X_tr, y_tr)
+            for metric in metrics:
+                fold_scores[metric].append(float(get_scorer(metric)(m_est, X_te, y_te)))
+        for metric in metrics:
+            vals = fold_scores[metric]
+            means[metric].append(float(np.mean(vals)) if vals else float("nan"))
+            stds[metric].append(float(np.std(vals)) if vals else float("nan"))
+    return {m: (float(np.nanmean(means[m])), float(np.nanmean(stds[m]))) for m in metrics}
+
+
 def _load_scale_spec(spec, subcategories=None):
     """Build the ``df_scales`` for one scale spec ``("explain", n)`` / ``("top60", k)``."""
     kind, val = spec
@@ -326,6 +388,7 @@ def find_features(labels: ut.ArrayLike1D,
                   model: Union[str, BaseEstimator, List] = "svm",
                   cv: int = 5,
                   metric: Union[str, List[str]] = "balanced_accuracy",
+                  selection_scope: Literal["global", "fold"] = "global",
                   kws: Optional[dict] = None,
                   subcategories: Optional[List[str]] = None,
                   top_n: Optional[int] = None,
@@ -355,9 +418,11 @@ def find_features(labels: ut.ArrayLike1D,
 
         **Experimental.** This ``aaanalysis.pipe`` (``ap``) golden pipeline is under active
         development; its API and its **reported cross-validation scores** may change between minor
-        releases without the usual deprecation cycle. Feature selection currently runs on the full
-        labeled set, so the reported scores are an in-sample (optimistic) ranking signal rather than
-        a held-out generalization estimate. Pin a version if you depend on the current behaviour.
+        releases without the usual deprecation cycle. By default (``selection_scope="global"``)
+        feature selection runs on the full labeled set, so the reported scores are an in-sample
+        (optimistic) ranking signal rather than a held-out generalization estimate; pass
+        ``selection_scope="fold"`` for the honest nested regime. Pin a version if you depend on the
+        current behaviour.
 
     Parameters
     ----------
@@ -381,6 +446,20 @@ def find_features(labels: ut.ArrayLike1D,
         Number of cross-validation folds for the selection score, must be > 1.
     metric : str or list of str, default="balanced_accuracy"
         Cross-validation scoring metric(s). A list triggers multi-objective Pareto selection.
+    selection_scope : {"global", "fold"}, default="global"
+        Where CPP feature selection happens relative to the cross-validation.
+
+        - ``"global"`` (default): CPP selects features on the **full** labeled set and the model is
+          cross-validated on that fixed feature matrix. Fast, but the reported scores are an
+          in-sample (optimistic) ranking signal — feature selection has seen the test fold.
+        - ``"fold"``: an **honest nested** regime — within every fold of every configuration score,
+          CPP re-selects features on the **train split only**, the model is fit on the train
+          features and scored on the held-out fold. This removes the selection leakage, so the
+          ``df_eval`` scores are held-out generalization estimates (typically lower). It re-runs CPP
+          per fold, so it is much more expensive; pair it with ``search="fast"`` / ``"balanced"``.
+          The returned ``df_feat`` is always the winning configuration refit on all data
+          (outer-CV semantics). Nesting covers the configuration-ranking scores (Stages 1–2 and the
+          simplify refine); recursive-feature-elimination refinement stays global-only.
     kws : dict, optional
         Bounded power-user overrides; each pins a swept lever to a single value (unknown keys raise).
         Recognized keys: ``n_explain``, ``n_split_max`` (max ``Segment`` splits), ``len_max`` (max
@@ -444,6 +523,8 @@ def find_features(labels: ut.ArrayLike1D,
     """
     # Validate (thin facade: the wrapped primitives validate the rest)
     ut.check_str_options(name="search", val=search, list_str_options=list(_MODES))
+    ut.check_str_options(name="selection_scope", val=selection_scope,
+                         list_str_options=["global", "fold"])
     ut.check_df_seq(df_seq=df_seq)
     ut.check_bool(name="simplify", val=simplify)
     for m in (model if isinstance(model, (list, tuple)) else [model]):
@@ -458,6 +539,11 @@ def find_features(labels: ut.ArrayLike1D,
     ut.check_number_range(name="random_state", val=random_state, min_val=0,
                           accept_none=True, just_int=True)
     ut.check_bool(name="verbose", val=verbose)
+    if selection_scope == "fold" and search == "exhaustive":
+        warnings.warn(
+            "'find_features': selection_scope='fold' with search='exhaustive' re-runs CPP feature "
+            "selection inside every cross-validation fold for every configuration in the widest "
+            "grid, which is very expensive. Consider search='balanced' or 'fast'.", UserWarning)
     cfg = _resolve_config(search=search, kws=kws)
     models = _resolve_models(model, random_state=random_state)
 
@@ -470,7 +556,7 @@ def find_features(labels: ut.ArrayLike1D,
     common = dict(sf=sf, labels=labels, df_seq=df_seq, cfg=cfg, simplify=simplify, models=models,
                   cv=cv, metrics=metrics, subcategories=subcategories, label_test=label_test,
                   label_ref=label_ref, df_scales_all=df_scales_all, random_state=random_state,
-                  n_jobs=n_jobs, verbose=verbose)
+                  n_jobs=n_jobs, verbose=verbose, selection_scope=selection_scope)
     if search == "fast":
         df_feat, df_parts_win, df_eval = _run_fast(**common)
     else:
@@ -501,12 +587,13 @@ def find_features(labels: ut.ArrayLike1D,
 
 
 def _eval_row(stage=None, list_parts=None, split_types=None, n_split_max=None, scale_spec=None,
-              n_filter=None, n_features=None, n_jmd=None, scores=None, metrics=None):
+              n_filter=None, n_features=None, n_jmd=None, scores=None, metrics=None,
+              selection_scope="global"):
     """Assemble one ``df_eval`` row (descriptors + per-metric mean/std columns)."""
     row = {"stage": stage, "list_parts": ",".join(list_parts),
            "split_types": ",".join(split_types), "pattern_mode": _PATTERN_MODE[tuple(split_types)],
            "n_split_max": n_split_max, "scale": _scale_label(scale_spec), "n_jmd": n_jmd,
-           "n_filter": n_filter, "n_features": n_features}
+           "n_filter": n_filter, "n_features": n_features, "selection_scope": selection_scope}
     for m in metrics:
         row[m + "_mean"], row[m + "_std"] = scores[m]
     return row
@@ -514,7 +601,7 @@ def _eval_row(stage=None, list_parts=None, split_types=None, n_split_max=None, s
 
 def _run_fast(sf=None, labels=None, df_seq=None, cfg=None, simplify=True, models=None, cv=5,
               metrics=None, subcategories=None, label_test=1, label_ref=0, df_scales_all=None,
-              random_state=None, n_jobs=None, verbose=False):
+              random_state=None, n_jobs=None, verbose=False, selection_scope="global"):
     """Single default configuration: the explicit CPP path, byte-identical to writing it by hand."""
     list_parts, split_types = cfg["part_sets"][0], _SPLIT_TYPE_SETS[-1]
     spec = cfg["scale_specs"][0]
@@ -542,13 +629,26 @@ def _run_fast(sf=None, labels=None, df_seq=None, cfg=None, simplify=True, models
         # single-CPP chain; the search modes instead keep the refine only if not Pareto-dominated.
         df_feat = cpp.simplify(df_feat=df_feat, labels=labels, strategy=cfg["simplify_strategy"],
                                label_test=label_test, label_ref=label_ref)
-    X = sf.feature_matrix(features=df_feat[ut.COL_FEATURE], df_parts=df_parts,
-                          df_scales=df_scales_all, n_jobs=n_jobs)
-    scores = _cv_scores(X, labels, models=models, cv=cv, metrics=metrics, random_state=random_state)
+    if selection_scope == "fold":
+        # Honest nested score: re-run this exact CPP config (run + optional simplify) on each train
+        # fold. The returned df_feat above stays the full-data selection (outer-CV semantics).
+        select = _config_selector(df_scales=df_scales, split_kws=split_kws,
+                                   n_filter=cfg["n_filter_vals"][0], max_cor=cfg["max_cor"],
+                                   max_overlap=cfg["max_overlap"], label_test=label_test,
+                                   label_ref=label_ref, simplify_strategy=cfg["simplify_strategy"],
+                                   do_simplify=simplify, random_state=random_state, n_jobs=n_jobs)
+        scores = _nested_cv_scores(select=select, df_parts=df_parts, labels=labels, models=models,
+                                   cv=cv, metrics=metrics, df_scales_all=df_scales_all, sf=sf,
+                                   n_jobs=n_jobs)
+    else:
+        X = sf.feature_matrix(features=df_feat[ut.COL_FEATURE], df_parts=df_parts,
+                              df_scales=df_scales_all, n_jobs=n_jobs)
+        scores = _cv_scores(X, labels, models=models, cv=cv, metrics=metrics, random_state=random_state)
     df_eval = pd.DataFrame([_eval_row(stage="single", list_parts=list_parts, split_types=split_types,
                                       n_split_max=cfg["n_split_max_vals"][0], scale_spec=spec,
                                       n_filter=cfg["n_filter_vals"][0], n_features=len(df_feat),
-                                      n_jmd=n_jmd, scores=scores, metrics=metrics)])
+                                      n_jmd=n_jmd, scores=scores, metrics=metrics,
+                                      selection_scope=selection_scope)])
     df_eval["is_pareto"] = True
     df_eval["rank"] = 1
     df_eval["is_selected"] = True
@@ -558,7 +658,8 @@ def _run_fast(sf=None, labels=None, df_seq=None, cfg=None, simplify=True, models
 def _grid_stage(sf=None, df_seq=None, parts=None, split_sets=None, n_split_vals=None, specs=None,
                 n_filters=None, n_jmd_vals=None, cfg=None, labels=None, label_test=1, label_ref=0,
                 models=None, cv=5, metrics=None, subcategories=None, df_scales_all=None,
-                random_state=None, n_jobs=None, verbose=False, stage=None, parts_cache=None):
+                random_state=None, n_jobs=None, verbose=False, stage=None, parts_cache=None,
+                selection_scope="global"):
     """Run a CPPGrid sweep over the given axis levels, CV-score every config, return eval rows.
 
     Returns ``(rows, payloads)`` aligned: ``payloads[i]`` carries the kept ``df_feat`` and the parts
@@ -607,14 +708,30 @@ def _grid_stage(sf=None, df_seq=None, parts=None, split_sets=None, n_split_vals=
         sts = split_sets[int(rec["split_types"])] if len(split_sets) > 1 else split_sets[0]
         spec = scale_specs[int(rec["df_scales"])] if len(scale_specs) > 1 else scale_specs[0]
         df_parts_i = _parts_for(lp, n_jmd)
-        X_i = sf.feature_matrix(features=df_feat_i[ut.COL_FEATURE], df_parts=df_parts_i,
-                                df_scales=df_scales_all, n_jobs=n_jobs)
-        scores = _cv_scores(X_i, labels, models=models, cv=cv, metrics=metrics,
-                            random_state=random_state)
+        if selection_scope == "fold":
+            # Honest nested score: re-run this candidate's CPP config (pre-simplify, matching the
+            # global path which scores CPPGrid's run output) on each train fold.
+            spec_idx = int(rec["df_scales"]) if len(scale_specs) > 1 else 0
+            split_kws_i = _split_kws_for(split_types=sts, n_split_max=int(rec["n_split_max"]),
+                                         len_max=cfg["len_max"])
+            select = _config_selector(df_scales=scale_dfs[spec_idx], split_kws=split_kws_i,
+                                      n_filter=int(rec["n_filter"]), max_cor=cfg["max_cor"],
+                                      max_overlap=cfg["max_overlap"], label_test=label_test,
+                                      label_ref=label_ref, do_simplify=False,
+                                      random_state=random_state, n_jobs=n_jobs)
+            scores = _nested_cv_scores(select=select, df_parts=df_parts_i, labels=labels,
+                                       models=models, cv=cv, metrics=metrics,
+                                       df_scales_all=df_scales_all, sf=sf, n_jobs=n_jobs)
+        else:
+            X_i = sf.feature_matrix(features=df_feat_i[ut.COL_FEATURE], df_parts=df_parts_i,
+                                    df_scales=df_scales_all, n_jobs=n_jobs)
+            scores = _cv_scores(X_i, labels, models=models, cv=cv, metrics=metrics,
+                                random_state=random_state)
         rows.append(_eval_row(stage=stage, list_parts=lp, split_types=sts,
                               n_split_max=int(rec["n_split_max"]), scale_spec=spec,
                               n_filter=int(rec["n_filter"]), n_features=len(df_feat_i),
-                              n_jmd=n_jmd, scores=scores, metrics=metrics))
+                              n_jmd=n_jmd, scores=scores, metrics=metrics,
+                              selection_scope=selection_scope))
         payloads.append({"df_feat": df_feat_i.reset_index(drop=True), "df_parts": df_parts_i,
                          "list_parts": lp, "split_types": sts, "n_split_max": int(rec["n_split_max"]),
                          "scale_spec": spec, "n_filter": int(rec["n_filter"]), "n_jmd": n_jmd})
@@ -623,13 +740,14 @@ def _grid_stage(sf=None, df_seq=None, parts=None, split_sets=None, n_split_vals=
 
 def _run_search(sf=None, labels=None, df_seq=None, cfg=None, simplify=True, models=None, cv=5,
                 metrics=None, subcategories=None, label_test=1, label_ref=0, df_scales_all=None,
-                random_state=None, n_jobs=None, verbose=False):
+                random_state=None, n_jobs=None, verbose=False, selection_scope="global"):
     """Staged sensitivity search: Cartesian P×S×Scale → dominant axis × n_filter → simplify+RFE."""
     parts_cache = {}
     common = dict(sf=sf, df_seq=df_seq, cfg=cfg, labels=labels, label_test=label_test,
                   label_ref=label_ref, models=models, cv=cv, metrics=metrics,
                   subcategories=subcategories, df_scales_all=df_scales_all,
-                  random_state=random_state, n_jobs=n_jobs, verbose=verbose, parts_cache=parts_cache)
+                  random_state=random_state, n_jobs=n_jobs, verbose=verbose, parts_cache=parts_cache,
+                  selection_scope=selection_scope)
     ref_nfilter = max(cfg["n_filter_vals"])
 
     # Stage 1 — full Cartesian Part × Split × Scale × JMD-length at the reference n_filter.
@@ -669,35 +787,76 @@ def _run_search(sf=None, labels=None, df_seq=None, cfg=None, simplify=True, mode
     # Stage 3 — refine the winner (simplify + RFE), each kept only if not Pareto-dominated.
     df_feat_win, df_parts_win = win2["df_feat"], win2["df_parts"]
     df_scales_win = _load_scale_spec(win2["scale_spec"], subcategories=subcategories)
-    X_win = sf.feature_matrix(features=df_feat_win[ut.COL_FEATURE], df_parts=df_parts_win,
-                              df_scales=df_scales_all, n_jobs=n_jobs)
-    base = _cv_scores(X_win, labels, models=models, cv=cv, metrics=metrics, random_state=random_state)
+    # Rebuild the winner's split_kws (Segment n_split_max / Pattern len_max). CPP auto-caps it to
+    # short / free-peptide parts (no raise); simplify operates on the existing df_feat (it never
+    # reads split_kws), so this does not change the result for normal parts.
+    split_kws_win = _split_kws_for(split_types=win2["split_types"],
+                                   n_split_max=win2["n_split_max"], len_max=cfg["len_max"])
     rows3 = []
-    if simplify:
-        # Rebuild the winner's split_kws (Segment n_split_max / Pattern len_max). CPP auto-caps it to
-        # short / free-peptide parts (no raise); simplify operates on the existing df_feat (it never
-        # reads split_kws), so this does not change the result for normal parts.
-        split_kws_win = _split_kws_for(split_types=win2["split_types"],
-                                       n_split_max=win2["n_split_max"], len_max=cfg["len_max"])
-        cpp_win = CPP(df_parts=df_parts_win, df_scales=df_scales_win, split_kws=split_kws_win,
-                      random_state=random_state, verbose=verbose)
-        df_simpl = cpp_win.simplify(df_feat=df_feat_win, labels=labels,
-                                    strategy=cfg["simplify_strategy"], ml_cv=cv,
-                                    label_test=label_test, label_ref=label_ref)
-        X_simpl = sf.feature_matrix(features=df_simpl[ut.COL_FEATURE], df_parts=df_parts_win,
-                                    df_scales=df_scales_all, n_jobs=n_jobs)
-        df_feat_win, base, kept = _refine_keep(df_simpl, X_simpl, df_feat_win, base, labels=labels,
-                                               models=models, cv=cv, metrics=metrics,
-                                               random_state=random_state)
-        if kept:
-            rows3.append(_eval_row(stage="refine", list_parts=win2["list_parts"],
-                                   split_types=win2["split_types"], n_split_max=win2["n_split_max"],
-                                   scale_spec=win2["scale_spec"], n_filter=win2["n_filter"],
-                                   n_features=len(df_feat_win), n_jmd=win2["n_jmd"],
-                                   scores=base, metrics=metrics))
-    df_feat_win, df_parts_win = _refine_rfe_winner(
-        df_feat_win, df_parts_win, df_scales_all, base, sf=sf, labels=labels, models=models, cv=cv,
-        metrics=metrics, random_state=random_state, n_jobs=n_jobs, rows3=rows3, win=win2)
+    if selection_scope == "fold":
+        # Honest nested Stage-3: score the winner config (and its simplify variant) with per-fold
+        # re-selection. RFE refinement is global-only (per-fold RFE is the paper-fidelity nested-CV
+        # Monte-Carlo engine tracked in #276), so fold mode returns the simplify-refined winner.
+        base_select = _config_selector(df_scales=df_scales_win, split_kws=split_kws_win,
+                                       n_filter=win2["n_filter"], max_cor=cfg["max_cor"],
+                                       max_overlap=cfg["max_overlap"], label_test=label_test,
+                                       label_ref=label_ref, do_simplify=False,
+                                       random_state=random_state, n_jobs=n_jobs)
+        base = _nested_cv_scores(select=base_select, df_parts=df_parts_win, labels=labels,
+                                 models=models, cv=cv, metrics=metrics, df_scales_all=df_scales_all,
+                                 sf=sf, n_jobs=n_jobs)
+        if simplify:
+            cpp_win = CPP(df_parts=df_parts_win, df_scales=df_scales_win, split_kws=split_kws_win,
+                          random_state=random_state, verbose=verbose)
+            df_simpl = cpp_win.simplify(df_feat=df_feat_win, labels=labels,
+                                        strategy=cfg["simplify_strategy"], ml_cv=cv,
+                                        label_test=label_test, label_ref=label_ref)
+            if df_simpl is not None and 0 < len(df_simpl) < len(df_feat_win):
+                simpl_select = _config_selector(df_scales=df_scales_win, split_kws=split_kws_win,
+                                                n_filter=win2["n_filter"], max_cor=cfg["max_cor"],
+                                                max_overlap=cfg["max_overlap"], label_test=label_test,
+                                                label_ref=label_ref,
+                                                simplify_strategy=cfg["simplify_strategy"],
+                                                do_simplify=True, random_state=random_state,
+                                                n_jobs=n_jobs)
+                new = _nested_cv_scores(select=simpl_select, df_parts=df_parts_win, labels=labels,
+                                        models=models, cv=cv, metrics=metrics,
+                                        df_scales_all=df_scales_all, sf=sf, n_jobs=n_jobs)
+                base_means = np.array([base[m][0] for m in metrics])
+                new_means = np.array([new[m][0] for m in metrics])
+                dominated = np.all(base_means >= new_means) and np.any(base_means > new_means)
+                if not dominated:
+                    df_feat_win, base = df_simpl.reset_index(drop=True), new
+                    rows3.append(_eval_row(stage="refine", list_parts=win2["list_parts"],
+                                           split_types=win2["split_types"],
+                                           n_split_max=win2["n_split_max"],
+                                           scale_spec=win2["scale_spec"], n_filter=win2["n_filter"],
+                                           n_features=len(df_feat_win), n_jmd=win2["n_jmd"],
+                                           scores=base, metrics=metrics, selection_scope="fold"))
+    else:
+        X_win = sf.feature_matrix(features=df_feat_win[ut.COL_FEATURE], df_parts=df_parts_win,
+                                  df_scales=df_scales_all, n_jobs=n_jobs)
+        base = _cv_scores(X_win, labels, models=models, cv=cv, metrics=metrics, random_state=random_state)
+        if simplify:
+            cpp_win = CPP(df_parts=df_parts_win, df_scales=df_scales_win, split_kws=split_kws_win,
+                          random_state=random_state, verbose=verbose)
+            df_simpl = cpp_win.simplify(df_feat=df_feat_win, labels=labels,
+                                        strategy=cfg["simplify_strategy"], ml_cv=cv,
+                                        label_test=label_test, label_ref=label_ref)
+            X_simpl = sf.feature_matrix(features=df_simpl[ut.COL_FEATURE], df_parts=df_parts_win,
+                                        df_scales=df_scales_all, n_jobs=n_jobs)
+            df_feat_win, base, kept = _refine_keep(df_simpl, X_simpl, df_feat_win, base, labels=labels,
+                                                   models=models, cv=cv, metrics=metrics,
+                                                   random_state=random_state)
+            if kept:
+                rows3.append(_eval_row(stage="refine", list_parts=win2["list_parts"],
+                                       split_types=win2["split_types"], n_split_max=win2["n_split_max"],
+                                       scale_spec=win2["scale_spec"], n_filter=win2["n_filter"],
+                                       n_features=len(df_feat_win), n_jmd=win2["n_jmd"],
+                                       scores=base, metrics=metrics))
+        df_feat_win, df_parts_win = _refine_rfe_winner(
+            df_feat_win, df_parts_win, df_scales_all, base, sf=sf, labels=labels, models=models, cv=cv,
+            metrics=metrics, random_state=random_state, n_jobs=n_jobs, rows3=rows3, win=win2)
 
     # Assemble df_eval: all stages stacked. is_selected marks the actually-returned df_feat (the
     # final refined winner = the last kept refine row, else the Stage-2 winner) — which need NOT be

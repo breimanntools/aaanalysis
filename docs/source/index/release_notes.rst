@@ -443,6 +443,15 @@ Added
   carries the publication eval figures (``ax.eval``) and ``df_eval`` has one
   ``<metric>_mean``/``_std`` column per metric plus ``stage`` / ``is_pareto`` / ``rank``
   / ``is_selected``.
+- **ap.find_features**: New ``selection_scope="global"|"fold"`` for an opt-in **honest
+  nested cross-validation**. ``"global"`` (default) is unchanged — CPP selects on the full
+  labeled set, so the scores are an in-sample (optimistic) ranking signal — and remains
+  byte-identical. ``"fold"`` re-selects CPP features on the **train split only** inside every
+  fold of every configuration score (Stages 1–2 and the simplify refine), so ``df_eval`` reports
+  held-out (typically lower) generalization estimates instead; the returned ``df_feat`` is still
+  the winner refit on all data. ``df_eval`` gains a ``selection_scope`` column, and a
+  ``UserWarning`` flags the costly ``"fold"`` + ``search="exhaustive"`` combination. Per-fold
+  recursive-feature-elimination refinement stays global-only (the paper-fidelity nested-CV engine).
 - **ap.explain_features**: New opt-in ``add_sample_mean_dif`` (+ ``label_ref``) that enriches the
   returned ``df_feat`` with per-sample **mean-difference** columns ``mean_dif_'name'`` (each explained
   sample's feature value minus the ``label_ref`` group average) alongside the SHAP

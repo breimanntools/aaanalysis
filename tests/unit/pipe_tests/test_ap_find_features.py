@@ -527,3 +527,56 @@ class TestFindFeaturesHelpers:
     def test_split_type_sets_start_with_segment(self):
         for sts in _SPLIT_TYPE_SETS:
             assert sts[0] == "Segment"
+
+
+class TestFindFeaturesSelectionScope:
+    """selection_scope='global' (default, byte-identical) vs 'fold' (honest nested CV)."""
+
+    def test_invalid_selection_scope(self):
+        with pytest.raises(ValueError):
+            ap.find_features(labels=labels, df_seq=df_seq, search="fast",
+                             selection_scope="nope", plot=False)
+
+    def test_global_has_scope_column(self):
+        _, _, df_eval = ap.find_features(labels=labels, df_seq=df_seq, search="fast",
+                                         selection_scope="global", plot=False, random_state=0)
+        assert "selection_scope" in df_eval.columns
+        assert set(df_eval["selection_scope"]) == {"global"}
+
+    def test_fold_returns_triple_and_scope_column(self):
+        df_feat, ax, df_eval = ap.find_features(labels=labels, df_seq=df_seq, search="fast",
+                                                selection_scope="fold", plot=False, random_state=0)
+        assert isinstance(df_feat, pd.DataFrame) and df_feat.shape[0] > 0
+        assert ax is None
+        assert set(df_eval["selection_scope"]) == {"fold"}
+
+    def test_fold_score_not_greater_than_global(self):
+        # Removing the selection leakage cannot inflate the honest CV score above the in-sample one.
+        _, _, dfe_g = ap.find_features(labels=labels, df_seq=df_seq, search="fast",
+                                       selection_scope="global", plot=False, random_state=0)
+        _, _, dfe_f = ap.find_features(labels=labels, df_seq=df_seq, search="fast",
+                                       selection_scope="fold", plot=False, random_state=0)
+        assert dfe_f["balanced_accuracy_mean"].iloc[0] <= dfe_g["balanced_accuracy_mean"].iloc[0] + 1e-9
+
+    def test_fold_returns_same_all_data_winner_as_global(self):
+        # The returned df_feat is always the winner refit on all data (outer-CV semantics), so the
+        # feature set does not depend on the scoring scope for the single fast configuration.
+        dff_g, _, _ = ap.find_features(labels=labels, df_seq=df_seq, search="fast",
+                                       selection_scope="global", plot=False, random_state=0)
+        dff_f, _, _ = ap.find_features(labels=labels, df_seq=df_seq, search="fast",
+                                       selection_scope="fold", plot=False, random_state=0)
+        assert dff_g["feature"].tolist() == dff_f["feature"].tolist()
+
+    def test_fold_exhaustive_warns(self, monkeypatch):
+        # The cost UserWarning is emitted during validation, before the (expensive) search runs;
+        # stub the search so the test stays fast while still exercising the warning path.
+        import aaanalysis.pipe._find_features as ff
+
+        def _boom(**kwargs):
+            raise RuntimeError("stop before the expensive nested search")
+
+        monkeypatch.setattr(ff, "_run_search", _boom)
+        with pytest.warns(UserWarning, match="selection_scope='fold'"):
+            with pytest.raises(RuntimeError):
+                ap.find_features(labels=labels, df_seq=df_seq, search="exhaustive",
+                                 selection_scope="fold", plot=False, random_state=0)
