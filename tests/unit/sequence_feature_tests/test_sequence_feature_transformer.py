@@ -188,3 +188,25 @@ class TestTransform:
         out = sft.fit_transform(df_seq, labels)
         assert isinstance(out, pd.DataFrame)
         assert list(out.columns) == sft.features_
+
+
+class TestParityWithManualPath:
+    """The transformer must reproduce the explicit CPP.run -> SequenceFeature.feature_matrix path."""
+
+    def test_features_and_matrix_match_manual_cpp_run(self, data):
+        df_seq, labels = data
+        full_scales = aa.load_scales(name="scales")
+        # Manual path: get_df_parts -> CPP.run -> feature_matrix (full scales), matching the
+        # transformer's default config (split_kws=None, df_scales=None -> full, n_filter=25).
+        sf = aa.SequenceFeature()
+        df_parts = sf.get_df_parts(df_seq=df_seq)
+        cpp = aa.CPP(df_parts=df_parts, df_scales=full_scales, random_state=0)
+        df_feat = cpp.run(labels=labels, n_filter=25, n_jobs=1)
+        X_manual = sf.feature_matrix(features=df_feat["feature"], df_parts=df_parts,
+                                     df_scales=full_scales, n_jobs=1)
+        # Transformer path (same config, no simplify).
+        sft = aa.SequenceFeatureTransformer(n_filter=25, simplify=False, random_state=0)
+        X_sft = sft.fit_transform(df_seq, labels)
+        # Same selected features, byte-identical feature matrix.
+        assert sft.features_ == df_feat["feature"].tolist()
+        np.testing.assert_allclose(X_sft, np.asarray(X_manual), rtol=0, atol=0)
