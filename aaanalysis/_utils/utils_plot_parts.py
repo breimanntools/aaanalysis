@@ -45,12 +45,12 @@ def _add_part_text(ax=None, text=None, start=1.0, len_part=10.0, fontsize=None,
         bar_height = _get_bar_height(ax=ax)
     y = _get_y(ax=ax, bar_height=bar_height, height_factor=height_factor, reversed_weight=-1)
     x = start + len_part / 2    # Middle of part
-    return ax.text(x, y, text,
-                   horizontalalignment='center',
-                   verticalalignment='top',
-                   fontsize=fontsize,
-                   fontweight=fontweight,
-                   color='black')
+    ax.text(x, y, text,
+            horizontalalignment='center',
+            verticalalignment='top',
+            fontsize=fontsize,
+            fontweight=fontweight,
+            color='black')
 
 
 # Helper class
@@ -99,53 +99,19 @@ def add_tmd_jmd_text(ax=None, x_shift=0, fontsize_tmd_jmd=None, weight_tmd_jmd="
                      name_tmd="TMD", name_jmd_n="JMD-N", name_jmd_c="JMD-C",
                      tmd_len=20, jmd_n_len=10, jmd_c_len=10, start=1,
                      height_factor=1.3, bar_height=None):
-    """Add text labels for TMD and JMD regions. Returns the created text artists."""
+    """Add text labels for TMD and JMD regions."""
     pp = PlotPart(tmd_len=tmd_len, jmd_n_len=jmd_n_len, jmd_c_len=jmd_c_len, start=start)
     jmd_n_start, tmd_start, jmd_c_start = pp.get_starts(x_shift=x_shift)
     exists_jmd_n = jmd_n_len > 0
     exists_jmd_c = jmd_c_len > 0
-    part_texts = []
     if fontsize_tmd_jmd is None or fontsize_tmd_jmd > 0:
         args = dict(ax=ax, fontsize=fontsize_tmd_jmd, fontweight=weight_tmd_jmd,
                     height_factor=height_factor, bar_height=bar_height)
-        part_texts.append(_add_part_text(start=tmd_start, len_part=tmd_len, text=name_tmd, **args))
+        _add_part_text(start=tmd_start, len_part=tmd_len, text=name_tmd, **args)
         if exists_jmd_n:
-            part_texts.append(_add_part_text(start=jmd_n_start, text=name_jmd_n, len_part=jmd_n_len, **args))
+            _add_part_text(start=jmd_n_start, text=name_jmd_n, len_part=jmd_n_len, **args)
         if exists_jmd_c:
-            part_texts.append(_add_part_text(start=jmd_c_start, text=name_jmd_c, len_part=jmd_c_len, **args))
-    return part_texts
-
-
-def align_part_text_below_xticks(ax=None, part_texts=None, gap_pt=6.0):
-    """Drop the TMD/JMD part labels to a row below the x-tick labels if the two would collide.
-
-    Each part label is centred on its part span in data coordinates, but its width is fixed in
-    points, so the tick labels bounding that span close in on the label as the figure narrows until
-    the two overlap. On collision every part label moves down by the same amount, keeping their
-    shared baseline, until they clear the lowest tick label. A figure with room to spare never
-    collides and is left untouched.
-
-    ``gap_pt`` is deliberately larger than a hairline: a caller that runs ``tight_layout`` after the
-    plot reflows the axes to fit the dropped labels, which shortens the cleared gap by a couple of
-    points. The margin keeps the two rows apart through that reflow.
-    """
-    xtick_labels = [t for t in ax.get_xticklabels() if t.get_text() and t.get_visible()]
-    if not part_texts or not xtick_labels:
-        return
-    fig = ax.get_figure()
-    fig.canvas.draw()
-    renderer = fig.canvas.get_renderer()
-    bb_ticks = [t.get_window_extent(renderer) for t in xtick_labels]
-    bb_parts = [t.get_window_extent(renderer) for t in part_texts]
-    if not any(bb_part.overlaps(bb_tick) for bb_part in bb_parts for bb_tick in bb_ticks):
-        return
-    gap = gap_pt * fig.dpi / 72
-    shift = max(b.y1 for b in bb_parts) - (min(b.y0 for b in bb_ticks) - gap)
-    if shift <= 0:
-        return
-    offset = mpl.transforms.ScaledTranslation(0, -shift / fig.dpi, fig.dpi_scale_trans)
-    for part_text in part_texts:
-        part_text.set_transform(part_text.get_transform() + offset)
+            _add_part_text(start=jmd_c_start, text=name_jmd_c, len_part=jmd_c_len, **args)
 
 
 def add_tmd_jmd_xticks(ax=None, x_shift=0, xtick_size=11.0, xtick_width=2.0, xtick_length=5.0,
