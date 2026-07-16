@@ -28,7 +28,7 @@ def _check_supervised_labels(labels=None, label_test=1, label_ref=0):
 
 
 # II Main Functions
-class SequenceFeatureTransformer(BaseEstimator, TransformerMixin):
+class SequenceFeatureTransformer(TransformerMixin, BaseEstimator):
     """
     SequenceFeatureTransformer: leak-free CPP feature selection as a scikit-learn transformer.
 
@@ -83,8 +83,11 @@ class SequenceFeatureTransformer(BaseEstimator, TransformerMixin):
             CPP split configuration (see :meth:`SequenceFeature.get_split_kws`). ``None`` uses the
             CPP default (Segment + Pattern + PeriodicPattern).
         df_scales : pd.DataFrame, shape (n_letters, n_scales), optional
-            Amino-acid scales used for feature selection and the feature matrix. ``None`` uses the
-            bundled AAontology scales (:func:`load_scales`).
+            Amino-acid scales used for CPP feature selection — the **bundled AAontology scales or a
+            subset** of them. ``None`` (default) uses the full bundled set (:func:`load_scales`). The
+            feature matrix is always built from the full bundled scales so a :meth:`CPP.simplify`
+            scale swap still resolves. A genuinely custom (non-AAontology) scale set is not supported
+            here, because CPP validates scale coverage against the bundled category table.
         n_filter : int, default=100
             Number of features CPP selects (passed to :meth:`CPP.run`).
         label_test : int, default=1
@@ -173,23 +176,33 @@ class SequenceFeatureTransformer(BaseEstimator, TransformerMixin):
         ut.check_bool(name="simplify", val=self.simplify)
         ut.check_number_range(name="max_overlap", val=self.max_overlap, min_val=0.0, max_val=1.0, just_int=False)
         ut.check_number_range(name="max_cor", val=self.max_cor, min_val=0.0, max_val=1.0, just_int=False)
+        ut.check_number_range(name="random_state", val=self.random_state, min_val=0,
+                              accept_none=True, just_int=True)
+        verbose = ut.check_verbose(self.verbose)
         df_parts = self._to_df_parts(X)
         labels = _check_supervised_labels(labels=y, label_test=self.label_test, label_ref=self.label_ref)
         if len(labels) != len(df_parts):
             raise ValueError(f"'y' n_samples ({len(labels)}) should match X n_samples ({len(df_parts)}).")
-        # Select features (CPP run on this fold only)
-        df_scales = self.df_scales if self.df_scales is not None else load_scales(name="scales")
-        cpp = CPP(df_parts=df_parts, split_kws=self.split_kws, df_scales=df_scales,
-                  random_state=self.random_state, verbose=False)
+        # Select features (CPP run on this fold only). Selection uses the caller's scales (or the full
+        # bundled set); the feature matrix is always built from the full bundled scales so a simplify
+        # scale swap (which draws from the full AAontology pool) still resolves at transform time.
+        df_scales_sel = self.df_scales if self.df_scales is not None else load_scales(name="scales")
+        cpp = CPP(df_parts=df_parts, split_kws=self.split_kws, df_scales=df_scales_sel,
+                  random_state=self.random_state, verbose=verbose)
         df_feat = cpp.run(labels=labels, label_test=self.label_test, label_ref=self.label_ref,
                           n_filter=self.n_filter, max_cor=self.max_cor, max_overlap=self.max_overlap,
                           n_jobs=self.n_jobs)
         if self.simplify and df_feat is not None and len(df_feat) > 1:
             df_feat = cpp.simplify(df_feat=df_feat, labels=labels,
                                    label_test=self.label_test, label_ref=self.label_ref)
+        if df_feat is None or len(df_feat) == 0:
+            raise ValueError("'SequenceFeatureTransformer.fit': CPP selected no features on this data; "
+                             "relax 'n_filter' / 'max_overlap' / 'max_cor' or check the labels / input.")
         self.df_feat_ = df_feat.reset_index(drop=True)
         self.features_ = self.df_feat_[ut.COL_FEATURE].tolist()
-        self._df_scales_ = df_scales
+        self.df_scales_ = load_scales(name="scales")
+        self._part_cols_ = list(df_parts.columns)
+        self._verbose_ = verbose
         return self
 
     def transform(self, X):
@@ -215,8 +228,13 @@ class SequenceFeatureTransformer(BaseEstimator, TransformerMixin):
         """
         check_is_fitted(self, "features_")
         df_parts = self._to_df_parts(X)
-        X_out = SequenceFeature(verbose=False).feature_matrix(
-            features=self.features_, df_parts=df_parts, df_scales=self._df_scales_, n_jobs=self.n_jobs)
+        missing = set(self._part_cols_) - set(df_parts.columns)
+        if missing:
+            raise ValueError(f"'SequenceFeatureTransformer.transform': X is missing the part "
+                             f"column(s) {sorted(missing)} present at fit; pass the same kind of "
+                             f"input (a 'df_seq', or a 'df_parts' with the same part geometry).")
+        X_out = SequenceFeature(verbose=self._verbose_).feature_matrix(
+            features=self.features_, df_parts=df_parts, df_scales=self.df_scales_, n_jobs=self.n_jobs)
         return np.asarray(X_out)
 
     def get_feature_names_out(self, input_features=None):

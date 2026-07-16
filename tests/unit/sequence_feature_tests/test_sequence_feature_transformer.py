@@ -44,9 +44,13 @@ class TestSklearnContract:
         assert sft.get_params()["n_filter"] == 10 and sft.get_params()["simplify"] is True
 
     def test_sklearn_tags(self):
-        tags = aa.SequenceFeatureTransformer().__sklearn_tags__()
+        from sklearn.utils import get_tags
+        tags = get_tags(aa.SequenceFeatureTransformer())
         assert tags.target_tags.required is True
         assert tags.no_validation is True
+        # Base-class order (TransformerMixin first) must populate transformer_tags (else tag-based
+        # introspection like check_estimator / meta-estimators crash on None).
+        assert tags.transformer_tags is not None
 
 
 # --------------------------------------------------------------------------- constructor params
@@ -114,6 +118,27 @@ class TestFit:
         with pytest.raises(ValueError):
             aa.SequenceFeatureTransformer(label_test=1, label_ref=1).fit(df_seq, labels)
 
+    def test_invalid_random_state(self, data):
+        df_seq, labels = data
+        with pytest.raises(ValueError):
+            aa.SequenceFeatureTransformer(random_state=-1).fit(df_seq, labels)
+
+    def test_verbose_threads_without_error(self, data):
+        # verbose is threaded to CPP/SequenceFeature (previously inert); it must run cleanly.
+        df_seq, labels = data
+        sft = aa.SequenceFeatureTransformer(n_filter=25, random_state=0, verbose=True).fit(df_seq, labels)
+        assert len(sft.features_) == 25
+
+    def test_simplify_custom_scale_subset_transform_resolves(self, data):
+        # With simplify + a custom AAontology scale subset, the feature matrix is built from the full
+        # bundled scales, so a simplify scale swap still resolves at transform (no crash).
+        df_seq, labels = data
+        subset = aa.load_scales(name="scales").iloc[:, :40]
+        sft = aa.SequenceFeatureTransformer(df_scales=subset, n_filter=30, simplify=True,
+                                            random_state=0).fit(df_seq, labels)
+        X = sft.transform(df_seq)
+        assert X.shape[0] == len(df_seq)
+
 
 # --------------------------------------------------------------------------- transform
 class TestTransform:
@@ -129,6 +154,14 @@ class TestTransform:
         from sklearn.exceptions import NotFittedError
         with pytest.raises(NotFittedError):
             aa.SequenceFeatureTransformer().transform(df_seq)
+
+    def test_transform_x_kind_mismatch_raises(self, data):
+        # fit on a df_seq, transform on a df_parts of a different geometry -> clear error.
+        df_seq, labels = data
+        sft = aa.SequenceFeatureTransformer(n_filter=25, random_state=0).fit(df_seq, labels)
+        df_parts_bad = pd.DataFrame({"entry": df_seq["entry"].values, "tmd": "AAAAAA"})
+        with pytest.raises(ValueError):
+            sft.transform(df_parts_bad)
 
     def test_fit_transform_equals_fit_then_transform(self, data):
         df_seq, labels = data
