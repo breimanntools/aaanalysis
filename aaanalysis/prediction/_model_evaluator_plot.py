@@ -93,6 +93,9 @@ class ModelEvaluatorPlot:
         n_models = df_eval[ut.COL_MODEL].nunique()
         if colors is None:
             colors = ut.plot_get_clist_(n_colors=n_models)
+        elif len(colors) < n_models:
+            raise ValueError(f"'colors' (n={len(colors)}) should provide at least one color per "
+                             f"model (n_models={n_models}).")
         fig, ax = plot_scores(df_eval=df_eval, colors=colors, figsize=figsize, metrics=metrics)
         return ut.FigAxResult(fig, ax)
 

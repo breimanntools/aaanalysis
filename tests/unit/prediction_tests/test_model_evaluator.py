@@ -9,6 +9,7 @@ from sklearn.ensemble import RandomForestClassifier
 
 import aaanalysis as aa
 import aaanalysis.utils as ut
+from aaanalysis.prediction._model_evaluator import _make_unique_names
 
 settings.register_profile("ci", deadline=None)
 settings.load_profile("ci")
@@ -257,3 +258,36 @@ class TestModelEvaluatorGoldenValues:
         df_eval = me.run(X, labels, n_cv=5, n_rounds=1)
         assert not df_eval[ut.COL_SCORE].isna().any()
         assert len(me.eval(metric="mcc")) == 1
+
+
+# ------------------------------------------------------------- review-finding regressions (#91)
+class TestModelEvaluatorReviewRegressions:
+    def test_labels_must_be_zero_one(self):
+        # {1, 2} is two-class but not {0,1}: metrics would silently disagree, so it must raise.
+        X, _ = _data()
+        labels = np.array([1] * (len(X) // 2) + [2] * (len(X) - len(X) // 2))
+        me = aa.ModelEvaluator(models="rf", random_state=0)
+        with pytest.raises(ValueError):
+            me.run(X, labels)
+
+    def test_per_call_seed_reproducible_with_none_constructor(self):
+        # Constructor seed None + per-call random_state must still be byte-identical across runs
+        # (the estimators are seeded from the effective per-call seed).
+        X, labels = _data()
+        me1 = aa.ModelEvaluator(models=["rf", "svm"], random_state=None)
+        me2 = aa.ModelEvaluator(models=["rf", "svm"], random_state=None)
+        df1 = me1.run(X, labels, n_rounds=2, random_state=42)
+        df2 = me2.run(X, labels, n_rounds=2, random_state=42)
+        pd.testing.assert_frame_equal(df1, df2)
+
+    def test_eval_default_metric_falls_back_when_mcc_absent(self):
+        X, labels = _data()
+        me = aa.ModelEvaluator(models=["rf", "svm"], list_metrics=["accuracy"], random_state=0)
+        me.run(X, labels)
+        df_cmp = me.eval()  # no metric given, run did not compute mcc -> falls back to 'accuracy'
+        assert df_cmp[ut.COL_METRIC].iloc[0] == "accuracy"
+
+    def test_make_unique_names_no_collision(self):
+        # A user name colliding with the auto suffix must not produce duplicate labels.
+        out = _make_unique_names(["rf", "rf", "rf_1"])
+        assert len(out) == len(set(out)) == 3

@@ -85,3 +85,21 @@ class TestModelEvaluatorPlotCompare:
     def test_invalid_missing_columns(self):
         with pytest.raises(ValueError):
             aa.ModelEvaluatorPlot.compare(df_eval=None)
+
+
+# ------------------------------------------------------------- review-finding regressions (#91)
+class TestModelEvaluatorPlotReviewRegressions:
+    def test_scores_too_few_colors_raises(self, evaluated):
+        df_eval, _ = evaluated  # 3 models
+        with pytest.raises(ValueError):
+            aa.ModelEvaluatorPlot.scores(df_eval=df_eval, colors=["red"])
+        plt.close("all")
+
+    def test_compare_ci_none_draws_without_nan(self):
+        X, labels = _data()
+        me = aa.ModelEvaluator(models=["rf", "svm"], random_state=0)
+        me.run(X, labels)
+        df_cmp = me.eval(metric="mcc", ci=None)  # NaN ci_low/ci_high
+        fig, ax = aa.ModelEvaluatorPlot.compare(df_eval=df_cmp)
+        assert fig is not None
+        plt.close("all")

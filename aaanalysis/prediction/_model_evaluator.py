@@ -24,17 +24,30 @@ def _set_random_state_if_supported(estimator=None, random_state=None, only_if_un
 
 
 def _make_unique_names(names=None):
-    """De-duplicate model labels by 1-based suffix so every row stays uniquely referable."""
+    """De-duplicate model labels so every row stays uniquely referable.
+
+    A repeated name gets a 1-based suffix, and the suffixed candidate is bumped until it does not
+    collide with any original name or an already-assigned label (so inputs like ``["rf", "rf",
+    "rf_1"]`` never emit two identical labels).
+    """
     counts = {}
     for name in names:
         counts[name] = counts.get(name, 0) + 1
-    seen, out = {}, []
+    originals = set(names)
+    seen, used, out = {}, set(), []
     for name in names:
         if counts[name] == 1:
-            out.append(name)
+            label = name
         else:
             seen[name] = seen.get(name, 0) + 1
-            out.append(f"{name}_{seen[name]}")
+            k = seen[name]
+            label = f"{name}_{k}"
+            while label in originals or label in used:
+                k += 1
+                label = f"{name}_{k}"
+            seen[name] = k
+        used.add(label)
+        out.append(label)
     return out
 
 
@@ -83,10 +96,17 @@ def check_n_cv(n_cv=None, labels=None):
 
 
 def check_binary_labels(labels=None):
-    """Check that labels define exactly two classes (ModelEvaluator scores binary classifiers)."""
-    classes = list(np.unique(labels))
-    if len(classes) != 2:
-        raise ValueError(f"'labels' should define exactly two classes for 'ModelEvaluator', got {classes}.")
+    """Check that labels are exactly the two classes 0 and 1 (ModelEvaluator scores binary classifiers).
+
+    Requiring ``{0, 1}`` (not just any two classes) keeps every metric consistent on which class is
+    positive: the hard-label metrics (precision/recall/f1) use scikit-learn's ``pos_label=1`` and
+    ``roc_auc`` treats the greater label as positive, so an arbitrary two-class set (e.g. ``{1, 2}``)
+    would make them silently disagree or raise.
+    """
+    classes = sorted(int(c) for c in np.unique(labels))
+    if classes != [0, 1]:
+        raise ValueError(f"'labels' should contain exactly the two classes 0 and 1 for "
+                         f"'ModelEvaluator', got {classes}.")
     return classes
 
 
@@ -280,7 +300,7 @@ class ModelEvaluator(Tool):
         return df_eval
 
     def eval(self,
-             metric: str = "mcc",
+             metric: Optional[str] = None,
              ci: Optional[float] = 0.95,
              random_state: Optional[int] = None,
              ) -> pd.DataFrame:
@@ -296,8 +316,9 @@ class ModelEvaluator(Tool):
 
         Parameters
         ----------
-        metric : str, default="mcc"
-            Metric to compare on. Must be one of the metrics computed by the last :meth:`run`.
+        metric : str, optional
+            Metric to compare on; must be one of the metrics computed by the last :meth:`run`.
+            Defaults to ``"mcc"`` when it was computed, otherwise the first metric of that run.
         ci : float, optional
             Central confidence level in ``(0, 1)`` for the bootstrap CI of the paired differences.
             If ``None``, ``ci_low`` / ``ci_high`` are ``NaN``. Default is ``0.95``.
@@ -321,6 +342,10 @@ class ModelEvaluator(Tool):
         if len(self._list_model_names) < 2:
             raise ValueError(f"'ModelEvaluator.eval' needs at least two models to compare, got "
                              f"{self._list_model_names}. Pass two or more models to the constructor.")
+        # Default to mcc when the last run computed it, else its first metric (so eval() never
+        # crashes just because run(metrics=...) excluded mcc).
+        if metric is None:
+            metric = "mcc" if "mcc" in self._metrics_run else self._metrics_run[0]
         ut.check_str_options(name="metric", val=metric, list_str_options=self._metrics_run)
         if ci is not None:
             ut.check_number_range(name="ci", val=ci, min_val=0.0, max_val=1.0,

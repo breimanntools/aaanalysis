@@ -58,9 +58,14 @@ def plot_compare(df_eval=None, color_pos=None, color_neg=None, figsize=(6, 4), a
     labels = [f"{a}\nvs {b}" for a, b in zip(df[ut.COL_MODEL_A], df[ut.COL_MODEL_B])]
     y = np.arange(len(df))
     delta = df[ut.COL_DELTA].to_numpy(dtype=float)
-    lower = np.clip(delta - df[ut.COL_CI_LOW].to_numpy(dtype=float), 0, None)
-    upper = np.clip(df[ut.COL_CI_HIGH].to_numpy(dtype=float) - delta, 0, None)
-    xerr = np.vstack([lower, upper])
+    delta_std = df[ut.COL_DELTA_STD].to_numpy(dtype=float)
+    ci_low = df[ut.COL_CI_LOW].to_numpy(dtype=float)
+    ci_high = df[ut.COL_CI_HIGH].to_numpy(dtype=float)
+    # Fall back to +/- delta_std where the bootstrap CI is NaN (eval was called with ci=None), so
+    # the whiskers are still drawn instead of NaN-degenerate.
+    low = np.where(np.isnan(ci_low), delta - delta_std, ci_low)
+    high = np.where(np.isnan(ci_high), delta + delta_std, ci_high)
+    xerr = np.vstack([np.clip(delta - low, 0, None), np.clip(high - delta, 0, None)])
     bar_colors = [color_pos if d >= 0 else color_neg for d in delta]
     fig, ax = plt.subplots(figsize=figsize)
     ax.barh(y, delta, color=bar_colors, edgecolor="white", linewidth=0.5)

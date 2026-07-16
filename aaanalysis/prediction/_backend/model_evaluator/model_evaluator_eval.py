@@ -42,6 +42,21 @@ def _score_predictions(labels_true, pred_label, pred_proba, metrics):
     return scores
 
 
+def _seed_estimator(estimator, random_state):
+    """Seed a fresh clone with ``random_state`` only where the estimator left it unset.
+
+    Keeps per-call ``random_state`` reproducible even when the constructor seed was ``None`` (the
+    estimators would otherwise stay unseeded), while respecting a seed the user pinned on a passed
+    estimator instance.
+    """
+    est = clone(estimator)
+    if random_state is not None:
+        params = est.get_params(deep=False)
+        if "random_state" in params and params["random_state"] is None:
+            est.set_params(random_state=random_state)
+    return est
+
+
 def _ordered_scores(df_scores, name, metric):
     """Fold scores for one model x metric in a stable (round, fold) order (for paired alignment)."""
     mask = (df_scores[ut.COL_MODEL] == name) & (df_scores[ut.COL_METRIC] == metric)
@@ -88,7 +103,7 @@ def comp_fold_scores(X, labels, list_estimators=None, list_model_names=None, met
             X_train, X_test = X[train_idx], X[test_idx]
             y_train, y_test = labels[train_idx], labels[test_idx]
             for name, estimator in zip(list_model_names, list_estimators):
-                est = clone(estimator)
+                est = _seed_estimator(estimator, random_state)
                 est.fit(X_train, y_train)
                 pred_label = est.predict(X_test)
                 pred_proba = est.predict_proba(X_test)[:, -1] if needs_proba else None
