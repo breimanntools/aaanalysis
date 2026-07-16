@@ -39,9 +39,11 @@ df_rank = pd.DataFrame({
 })
 
 # --- Plot (clean square thumbnail) --------------------------------------
+# (aa.plot_rank was removed; the per-protein rank scatter now lives on AAPredPlot.)
 aa.plot_settings(font_scale=1.5, weight_bold=False)
-fig, ax = aa.plot_rank(df_rank=df_rank, threshold=0.7, marker_size=90,
-                       ylabel="Out-of-fold substrate probability")
+fig, ax = aa.AAPredPlot().predict_group(df_rank, kind="rank_scatter", col_group="group",
+                                        col_score="score", thresholds=0.7, marker_size=90,
+                                        ylabel="Out-of-fold substrate probability")
 ax.set_title("Per-protein rank", size=aa.plot_gcfs() + 2)
 
 fig.set_size_inches(7, 7)

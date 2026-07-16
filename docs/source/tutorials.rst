@@ -16,6 +16,35 @@ here for the mechanics instead of repeating them — so the two stay distinct wi
 overlap. New to AAanalysis? Begin with :ref:`Getting Started <getting_started>` for
 your first result, then return here to go deeper on each tool.
 
+The tutorials at a glance — each tile is the headline figure of one tutorial;
+click it to open that tutorial. The full, section-ordered list follows below.
+
+.. raw:: html
+
+   <style>
+   .aa-tutorial-gallery{display:grid;grid-template-columns:repeat(5,1fr);gap:14px;margin:1.6em 0;}
+   .aa-tutorial-gallery a{display:flex;flex-direction:column;text-decoration:none;color:inherit;
+     border:1px solid #dcdcdc;border-radius:6px;padding:7px;background:#fff;
+     transition:border-color .15s ease,box-shadow .15s ease,transform .15s ease;}
+   .aa-tutorial-gallery a:hover{border-color:#8a8a8a;box-shadow:0 3px 10px rgba(0,0,0,.13);transform:translateY(-2px);}
+   .aa-tutorial-gallery img{width:100%;height:auto;border-radius:3px;}
+   .aa-tutorial-gallery .cap{margin-top:6px;text-align:center;font-size:.82em;font-weight:600;line-height:1.2;}
+   @media(max-width:900px){.aa-tutorial-gallery{grid-template-columns:repeat(3,1fr);}}
+   @media(max-width:560px){.aa-tutorial-gallery{grid-template-columns:repeat(2,1fr);}}
+   </style>
+   <div class="aa-tutorial-gallery">
+     <a href="generated/tutorial2a_data_loader.html"><img src="_static/img/thumbs/tut2a.png" alt="Load datasets"><div class="cap">Load datasets</div></a>
+     <a href="generated/tutorial2b_scales_loader.html"><img src="_static/img/thumbs/tut2b.png" alt="Load amino acid scales"><div class="cap">Load scales</div></a>
+     <a href="generated/tutorial3a_aaclust.html"><img src="_static/img/thumbs/tut3a.png" alt="AAclust scale clustering"><div class="cap">AAclust</div></a>
+     <a href="generated/tutorial3b_sequence_feature.html"><img src="_static/img/thumbs/tut3b.png" alt="SequenceFeature"><div class="cap">SequenceFeature</div></a>
+     <a href="generated/tutorial3c_cpp.html"><img src="_static/img/thumbs/tut3c.png" alt="CPP feature engineering"><div class="cap">CPP</div></a>
+     <a href="generated/tutorial3d_data_representations.html"><img src="_static/img/thumbs/tut3d.png" alt="Data representations"><div class="cap">Data representations</div></a>
+     <a href="generated/tutorial4a_dpulearn.html"><img src="_static/img/thumbs/tut4a.png" alt="dPULearn PU learning"><div class="cap">dPULearn</div></a>
+     <a href="generated/tutorial5a_shap_model.html"><img src="_static/img/thumbs/tut5a.png" alt="ShapModel explanation"><div class="cap">ShapModel</div></a>
+     <a href="generated/tutorial6_comparison_harness.html"><img src="_static/img/thumbs/tut6.png" alt="Evaluation and comparison"><div class="cap">Evaluation</div></a>
+     <a href="generated/tutorial7_protein_engineering.html"><img src="_static/img/thumbs/tut7.png" alt="SeqOpt protein engineering"><div class="cap">Protein engineering</div></a>
+   </div>
+
 Data Handling
 -------------
 Learn how to load protein benchmarking datasets and amino acid scale sets in the **Data Loader** and **Scale Loader**  tutorials.
