@@ -38,6 +38,7 @@ DEDICATED_OWNERS = {
     },
     "prediction": {
         "aa_pred": {"_aa_pred", "_aa_pred_plot"},
+        "model_evaluator": {"_model_evaluator", "_model_evaluator_plot"},
     },
 }
 
