@@ -45,7 +45,7 @@ limitations — do not "fix" them opportunistically.
   `sort_cols_feat`), not a typed model. Agent-facing typed I/O contracts
   (Pydantic `CPPRequest`/`CPPResult`, JSON/MCP tool schemas) live downstream in
   **ProtXplain**, never in this package. See ADR-0038 (the single border ADR;
-  D11 carries this rule).
+  D12 carries this rule).
 - **Don't re-attempt the rejected performance optimizations.** A whole-library
   perf audit already tried and dropped many candidates — FASTA `iterrows`,
   TreeModel CV parallelization, `encode_pae` loops, AAclust binary-search `k`

@@ -10,7 +10,7 @@ Status: Accepted — 2026-06-22
 An agent-readiness review recommended a static type checker so an agent gets a read-time
 contract plus a checker that catches mistakes before runtime. The package already **mandates
 type hints on every public parameter and return** (`code-conventions.md`) and validates
-inputs at runtime via `ut.check_*` (ADR-0038 D11) — but it ships **no `py.typed` marker**, so
+inputs at runtime via `ut.check_*` (ADR-0038 D12) — but it ships **no `py.typed` marker**, so
 those annotations are **invisible to every downstream consumer**, including ProtXplain
 (which wraps AAanalysis and would type-check against it). The standing `sharp-edges.md`
 position was "no type checker until v2."
@@ -55,7 +55,7 @@ D3. **Adopt pyright now — `basic` mode, non-blocking (advisory CI), public-API
   pyright errors (the bulk of the first-run baseline) remain **advisory** and are burned down
   over time **without gating** anything. Breaking a public annotation becomes a breaking change.
 - pyright runs advisory in CI; backend/internal annotations are tightened later, working inward.
-- Validation remains `ut.check_*` (ADR-0038 D11); this ADR adds *static* checking, not runtime
+- Validation remains `ut.check_*` (ADR-0038 D12); this ADR adds *static* checking, not runtime
   enforcement.
 
 ## Out of scope
