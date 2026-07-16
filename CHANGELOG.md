@@ -42,6 +42,12 @@ and a suite of site-localization metrics and plotting helpers.
 - `Version Guard` CI workflow (`.github/scripts/check_version_ahead.py`): fails a
   build unless `[project] version` is strictly ahead of the latest release published
   on PyPI (git-tag fallback offline), so `master` never reports a published version.
+- `get_provenance(random_state, data)`: opt-in, JSON-serializable plain-`dict`
+  provenance record carrying the **effective resolved seed** (after the
+  `options['random_state']` override), a deterministic-vs-stochastic flag, the
+  package / Python / key-dependency versions, the git commit when resolvable, and
+  an optional `sha256` input hash. Nothing attaches it to outputs; no return type
+  changes.
 
 ### Changed
 - **Version bumped to `1.1.0`** (from the published `1.0.3`), so a development

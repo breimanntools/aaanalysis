@@ -139,6 +139,7 @@ Utility Functions
     comp_per_protein_ap
     comp_smooth_scores
     display_df
+    get_provenance
     options
     plot_gcfs
     plot_get_cdict

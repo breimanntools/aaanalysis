@@ -17,6 +17,7 @@ from .metrics import (comp_auc_adjusted, comp_bic_score, comp_kld,
                       comp_per_protein_ap, comp_detection_metrics,
                       comp_bootstrap_ci, comp_smooth_scores)
 from .config import options
+from ._provenance import get_provenance
 from ._constants import (COLOR_SAMPLES_POS, COLOR_SAMPLES_NEG,
                         COLOR_SAMPLES_UNL, COLOR_SAMPLES_REL_NEG)
 
@@ -88,7 +89,8 @@ __all__ = [
     "COLOR_SAMPLES_NEG",
     "COLOR_SAMPLES_UNL",
     "COLOR_SAMPLES_REL_NEG",
-    "options"
+    "options",
+    "get_provenance"
 ]
 
 
