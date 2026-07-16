@@ -36,6 +36,7 @@ REGISTRY = {
     "AAclustPlot": "aac_plot",
     "SequenceFeature": "sf",
     "NumericalFeature": "nf",
+    "SequenceFeatureTransformer": "sft",
     "CPP": "cpp",
     "CPPGrid": "cppg",
     "CPPPlot": "cpp_plot",

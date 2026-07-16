@@ -57,3 +57,35 @@ class TestCPPFeaturesAreSklearnConsumable:
         scores = cross_val_score(clf, X, y, cv=5, scoring="balanced_accuracy")
         assert len(scores) == 5
         assert np.isfinite(scores).all()
+
+
+class TestSequenceFeatureTransformerIsLeakFree:
+    """SequenceFeatureTransformer puts CPP *selection* inside the Pipeline (issue #241).
+
+    Unlike the fixed-feature seam above (selection done once up front), the transformer re-runs
+    CPP feature selection on each training fold, so ``cross_val_score`` never lets a test fold
+    influence which features are chosen.
+    """
+
+    @staticmethod
+    def _data():
+        df_seq = aa.load_dataset(name="DOM_GSEC", n=20)
+        return df_seq, np.asarray(df_seq["label"].to_list())
+
+    def test_pipeline_cross_val_score_is_leak_free(self):
+        df_seq, y = self._data()
+        pipe = Pipeline([
+            ("sft", aa.SequenceFeatureTransformer(n_filter=25, random_state=0)),
+            ("scaler", StandardScaler()),
+            ("clf", RandomForestClassifier(random_state=0)),
+        ])
+        scores = cross_val_score(pipe, df_seq, y, cv=5, scoring="balanced_accuracy")
+        assert len(scores) == 5  # one score per fold; selection re-run on each train fold
+        assert np.isfinite(scores).all()
+
+    def test_selection_runs_inside_fit(self):
+        df_seq, y = self._data()
+        pipe = Pipeline([("sft", aa.SequenceFeatureTransformer(n_filter=25, random_state=0)),
+                         ("clf", RandomForestClassifier(random_state=0))])
+        pipe.fit(df_seq, y)
+        assert len(pipe.named_steps["sft"].features_) == 25

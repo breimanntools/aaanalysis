@@ -4,7 +4,8 @@ from .data_handling import (load_dataset, load_scales, load_features, get_labels
                             EmbeddingPreprocessor,
                             combine_dict_nums)
 from .seq_analysis import AALogo, AALogoPlot, AAWindowSampler
-from .feature_engineering import AAclust, AAclustPlot, SequenceFeature, NumericalFeature, CPP, CPPGrid, CPPPlot
+from .feature_engineering import (AAclust, AAclustPlot, SequenceFeature, NumericalFeature, CPP,
+                                  CPPGrid, CPPPlot, SequenceFeatureTransformer)
 from .pu_learning import dPULearn, dPULearnPlot
 from .explainable_ai import TreeModel
 from .prediction import (AAPred, AAPredPlot, ReliabilityModel, ReliabilityModelPlot,
@@ -53,6 +54,7 @@ __all__ = [
     "CPP",
     "CPPGrid",
     "CPPPlot",
+    "SequenceFeatureTransformer",
     "dPULearn",
     "dPULearnPlot",
     "AAMut",

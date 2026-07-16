@@ -65,6 +65,7 @@ Feature Engineering
     AAclust
     AAclustPlot
     SequenceFeature
+    SequenceFeatureTransformer
     NumericalFeature
     CPP
     CPPGrid
