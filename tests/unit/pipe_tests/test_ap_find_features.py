@@ -618,3 +618,22 @@ class TestFindFeaturesSelectionScopeInternals:
         _nested_cv_scores(select=counting_select, df_parts=df_parts, labels=labels, models=models,
                           cv=5, metrics=["balanced_accuracy"], df_scales_all=df_scales, sf=sf, n_jobs=1)
         assert calls["n"] == 5  # 5 folds, NOT 5 * 3 models
+
+    def test_grid_stage_fold_branch(self):
+        # Directly exercise the _grid_stage fold branch (staged-search config scoring): a full
+        # balanced+fold find_features would be a slow test excluded from the coverage run, so this
+        # covers the nested-scoring path with a minimal one-config grid and cv=2.
+        from aaanalysis.pipe._find_features import _grid_stage, _resolve_config, _resolve_models
+        cfg = _resolve_config(search="fast")
+        models = _resolve_models("svm", random_state=0)
+        rows, payloads = _grid_stage(
+            sf=sf, df_seq=df_seq,
+            parts=[cfg["part_sets"][0]], split_sets=[_SPLIT_TYPE_SETS[-1]],
+            n_split_vals=[15], specs=[("explain", 30)], n_filters=[25], n_jmd_vals=[10],
+            cfg=cfg, labels=labels, models=models, cv=2, metrics=["balanced_accuracy"],
+            subcategories=None, df_scales_all=aa.load_scales(name="scales"),
+            random_state=0, n_jobs=1, stage="sensitivity", parts_cache={},
+            selection_scope="fold")
+        assert len(rows) >= 1
+        assert all(r["selection_scope"] == "fold" for r in rows)
+        assert all(0.0 <= r["balanced_accuracy_mean"] <= 1.0 for r in rows)
