@@ -428,8 +428,13 @@ def align_bottom_furniture_(fig=None, ax=None, gap_in=_FURNITURE_GAP_IN, item_ga
             cat_legend.set_loc("upper left")
             cat_legend.set_bbox_to_anchor((left_in / w_in, top_frac), transform=fig.transFigure)
         elif cbar_left_in is not None:
+            # Clustered just left of the colorbar, but never past the left content edge: a legend
+            # wider than the gap beside the colorbar would otherwise be anchored off-canvas and lose
+            # its title to the figure edge. Clamping keeps it flush left instead -- crowding the
+            # colorbar is recoverable (grow_to_fit widens the figure), a clipped title is not.
+            anchor_in = max(cbar_left_in - item_gap_in, left_in + cat_w)
             cat_legend.set_loc("upper right")
-            cat_legend.set_bbox_to_anchor(((cbar_left_in - item_gap_in) / w_in, top_frac), transform=fig.transFigure)
+            cat_legend.set_bbox_to_anchor((anchor_in / w_in, top_frac), transform=fig.transFigure)
     # Feature-importance legend: right content edge when it clears the centred colorbar; otherwise drop
     # it to a SECOND row below the colorbar (still right-aligned), so the narrow top row only holds the
     # category legend + colorbar.
