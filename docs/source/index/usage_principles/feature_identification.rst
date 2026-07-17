@@ -13,8 +13,11 @@ biology beyond mere sequence motifs.
 
    In AAanalysis this is the :class:`~aaanalysis.CPP` class, with
    :class:`~aaanalysis.SequenceFeature` for building parts and splits and
-   :class:`~aaanalysis.CPPPlot` for the figures. See the :ref:`API reference <api>`
-   and the :ref:`tutorials <tutorials>`.
+   :class:`~aaanalysis.CPPPlot` for the figures. The golden pipeline
+   :func:`~aaanalysis.pipe.find_features` automates the search. See the
+   :ref:`API reference <api>`, the :ref:`tutorials <tutorials>`, and the
+   :ref:`Evaluation Regimes <eval_feature_selection>` chapter for how to read a
+   feature-selection score.
 
 The core idea of CPP is its feature concept:
 
@@ -48,4 +51,16 @@ CPP uses by default 120 continuous (segments) and 210 discontinuous (patterns an
 
 Scales can be chosen from **AAontology**, our two-level scale classification, based on their category or subcategory
 classification. To then select a redundancy-reduced scale set, AAanalysis provides the :class:`~aaanalysis.AAclust` clustering wrapper.
+
+Once features are identified, the number a CPP or model score reports depends on *how* it was
+produced. The default exploratory search ranks features but does not estimate generalization,
+while an honest nested regime, a final refit, and an external test set each answer a different
+question. The :func:`~aaanalysis.pipe.find_features` ``selection_scope`` knob moves feature
+selection in and out of the cross-validation to switch between them. See the
+:ref:`Evaluation Regimes <eval_feature_selection>` chapter for how to read each score.
+
+.. toctree::
+   :maxdepth: 1
+
+   /index/evaluation/eval_feature_selection
 
