@@ -76,3 +76,5 @@ selection, modelling, explanation, and validation.
    generated/protocol8_prediction
    generated/protocol9_interpretability
    generated/protocol10_validation
+
+.. ci docs-gate validation probe (PR is a throwaway, will be closed unmerged)
