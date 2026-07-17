@@ -17,15 +17,20 @@ limitations — do not "fix" them opportunistically.
 - **`config.py` is documented as untested.** Adding unit tests when
   touching it is welcomed.
 - **No pre-commit, no ruff** — out of scope until v2. **Type checking is NOT deferred:**
-  the package ships `py.typed` and `pyright` runs **non-blocking (advisory)** in CI,
-  public-API-first (`_backend` excluded for now); mypy is not used. See ADR-0036.
-  The advisory diagnostic count is being driven down in small, per-subpackage steps
-  against a committed high-water mark in `.github/pyright_baseline.txt`
-  (`.github/scripts/check_pyright_budget.py` reports count + delta in the advisory
-  workflow, never gating). When a burn-down PR clears diagnostics, **lower** that
-  number to the new count in the same PR; never raise it. Prefer honest signatures
-  over runtime `assert`s, and a narrow `# pyright: ignore[<rule>]` (with an inline
-  reason) only for a genuine stub false positive.
+  the package ships `py.typed` and `pyright` runs as a **no-regression ratchet** in CI
+  (`pyright.yml`), public-API-first (`_backend` excluded for now); mypy is not used
+  (the `mypy aaanalysis/__init__.py --follow-imports=skip` step was removed from CI as
+  toothless). See ADR-0036. The pyright version is **pinned** in the workflow so the
+  committed high-water mark is reproducible; bumping pyright is a deliberate re-baseline.
+  The diagnostic count is being driven down in small, per-subpackage steps against that
+  mark in `.github/pyright_baseline.txt` (`.github/scripts/check_pyright_budget.py`
+  reports count + delta and **exits non-zero when the count exceeds the baseline** —
+  the ratchet step gates the job, blocking *new* diagnostics while allowing the existing
+  backlog to merge). It is **not** a clean/strict gate: merging at or below the baseline
+  is fine. When a burn-down PR clears diagnostics, **lower** that number to the new count
+  in the same PR; never raise it. Prefer honest signatures over runtime `assert`s, and a
+  narrow `# pyright: ignore[<rule>]` (with an inline reason) only for a genuine stub false
+  positive.
 - **`pyproject.toml` carries both `[project]` and `[tool.poetry]` blocks.**
   Edit `[project]` only.
 - **MEME format alphabet quirk** (relevant only for `aa.scan_motif`): the

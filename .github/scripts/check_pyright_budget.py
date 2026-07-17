@@ -1,18 +1,21 @@
 """
-This is a script for the advisory pyright diagnostics ratchet.
+This is a script for the pyright diagnostics no-regression ratchet.
 
-AAanalysis ships ``py.typed`` and runs pyright **advisory only** (public-API
-first; ``pyrightconfig.json`` excludes ``aaanalysis/**/_backend``). The type
-contract is being deepened by driving the diagnostic count down in small,
-per-subpackage steps. This script records that progress as a committed
-high-water mark (``.github/pyright_baseline.txt``) and reports each run against
-it, so every PR can show a strict, non-increasing total.
+AAanalysis ships ``py.typed`` and runs pyright **public-API first**
+(``pyrightconfig.json`` excludes ``aaanalysis/**/_backend``). The type contract
+is being deepened by driving the diagnostic count down in small, per-subpackage
+steps. This script records that progress as a committed high-water mark
+(``.github/pyright_baseline.txt``) and reports each run against it, so every PR
+shows a strict, non-increasing total.
 
-It is **never a merge gate**: the ``Type Check (advisory)`` workflow runs it
-under ``continue-on-error``, so the report lands in the CI log without ever
-failing the build (consistent with the deferred-lint stance). Locally it exits
-non-zero on a *regression* (count above the committed budget) so a developer
-gets an actionable signal; an improvement prints the new number to commit.
+It is a **no-regression gate**, not a clean/strict gate: the ``Type Check
+(ratchet)`` workflow runs it *without* ``continue-on-error``, so the job fails
+whenever the count rises ABOVE the committed budget (new type errors are
+blocked) but passes at or below it (the existing backlog is allowed to merge).
+Both CI and local runs exit non-zero on a *regression* (count above the
+committed budget) and zero at or below it; an improvement prints the new,
+lower number to commit. The pyright version is pinned in the workflow so the
+committed budget is reproducible.
 
 This is CI tooling, not library code, so it prints to stdout for the CI log
 (the package itself never calls ``print`` — it uses ``ut.print_out``).
