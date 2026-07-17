@@ -43,7 +43,9 @@ def main():
     fig, ax = cpp_plot.feature_map(df_feat=df_feat, shap_plot=True,
                                    col_val="mean_dif_APP", col_imp="feat_impact_APP",
                                    name_test="APP", figsize=(7, 7), **seq_kws)
-    plt.title("CPP-SHAP feature map for APP", fontsize=fs + 4, weight="bold")
+    # suptitle, not plt.title: after feature_map the current axes IS the heatmap, so
+    # plt.title would draw the title into the cumulative-impact bar chart above it.
+    fig.suptitle("CPP-SHAP feature map for APP", fontsize=fs + 4, weight="bold")
 
     fig.set_size_inches(7, 7)
     # Leave headroom so the title is not clipped (saved without bbox_inches="tight").
