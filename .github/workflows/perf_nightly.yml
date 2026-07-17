@@ -26,10 +26,10 @@ on:
   pull_request:
     branches:
       - master
-    paths-ignore:
-      - 'docs/**'
-      - '**/*.md'
-      - '**/*.rst'
+    # NO paths-ignore on the PR trigger: the benchmark is a REQUIRED check, and a
+    # path-skipped workflow never reports it, so a docs-only PR would block forever. The
+    # `changes` job skips it on a docs-only diff (docs can't affect timings) while still
+    # reporting success. The `push` trigger keeps its paths-ignore below.
   schedule:
     - cron: "0 5 * * *"   # 05:00 UTC daily heartbeat (after the 04:00 nightly)
   workflow_dispatch: {}
@@ -39,7 +39,46 @@ concurrency:
   cancel-in-progress: ${{ github.event_name == 'pull_request' }}
 
 jobs:
+  # On a docs-only PR the benchmark below skips (docs can't affect timings) yet still
+  # reports success. Fail-safe: anything not purely docs (docs/**, *.md, *.rst), a non-PR
+  # event (schedule / dispatch / push), or a detection failure runs the full benchmark.
+  changes:
+    runs-on: ubuntu-latest
+    outputs:
+      code: ${{ steps.filter.outputs.code }}
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
+      - id: filter
+        shell: bash
+        env:
+          BASE: ${{ github.event.pull_request.base.sha }}
+          HEAD: ${{ github.event.pull_request.head.sha }}
+        run: |
+          if [ "${{ github.event_name }}" != "pull_request" ]; then
+            echo "code=true" >> "$GITHUB_OUTPUT"; exit 0
+          fi
+          files="$(git diff --name-only "${BASE}...${HEAD}" || true)"
+          echo "Changed files:"; printf '%s\n' "$files"
+          # Count files that are NOT docs (docs/**, *.md, *.rst). Use -c (a count), not
+          # -vq: BSD and GNU grep disagree on the exit status of `-vq`, but the count is
+          # identical on both. Fail-safe: an empty list, or any doubt, runs the full check.
+          if [ -z "$files" ]; then
+            echo "code=true" >> "$GITHUB_OUTPUT"
+          else
+            n_code=$(printf '%s\n' "$files" | grep -vcE '^(docs/|.*\.md$|.*\.rst$)' || true)
+            if [ "${n_code:-1}" -gt 0 ]; then
+              echo "code=true" >> "$GITHUB_OUTPUT"
+            else
+              echo "code=false" >> "$GITHUB_OUTPUT"
+            fi
+          fi
+
   benchmark:
+    needs: changes
+    # Skipped on a docs-only PR (reports skipped = passing); docs can't affect timings.
+    if: needs.changes.outputs.code == 'true'
     name: A/B benchmark hot paths (Linux/py3.11)
     runs-on: ubuntu-latest
     env:
