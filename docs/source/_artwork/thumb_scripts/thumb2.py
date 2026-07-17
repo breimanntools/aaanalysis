@@ -13,7 +13,10 @@ import aaanalysis as aa
 OUT = "/Users/stephanbreimann/Programming/1Packages/aaanalysis/docs/source/_static/img/thumbs/protocol2.png"
 
 aa.options["verbose"] = False
-aa.plot_settings(font_scale=1.25, weight_bold=False)
+# Settings mirror the gamma-secretase use case (font_scale=0.85, 9x3 per logo). A logo
+# reads wide and short: squeezing 25 positions into a square stretches the letters and
+# leaves the position ticks no room beside the part labels.
+aa.plot_settings(font_scale=0.85)
 
 # Pooled (no-label) set; a fuller set gives a more meaningful conservation signal.
 df_seq = aa.load_dataset(name="DOM_GSEC", n=50)
@@ -35,16 +38,16 @@ df_logo_info = al.get_df_logo_info(df_parts=df_parts, tmd_len=TMD_LEN)
 
 alp = aa.AALogoPlot(jmd_n_len=JMD_N_LEN, jmd_c_len=JMD_C_LEN, verbose=False)
 # Passing df_logo_info renders the bits/conservation bar ON TOP of the logo.
+# fontsize_tmd_jmd is left at its default so the JMD-N/TMD/JMD-C labels stay directly
+# under the part bar at a size that clears the position ticks.
 fig, ax = alp.single_logo(
     df_logo=df_logo,
     df_logo_info=df_logo_info,
-    figsize=(7, 7),
-    fontsize_tmd_jmd=15,
-    weight_tmd_jmd="bold",
+    figsize=(9, 3),
 )
 
 fig = plt.gcf()
-fig.set_size_inches(7, 7)
+fig.set_size_inches(9, 3)
 # NOTE: no extra plt.tight_layout() here — single_logo already lays out the panels
 # and sets subplots_adjust(hspace=0); a second tight_layout re-opens the bits/logo gap.
 fig.savefig(OUT, dpi=150, facecolor="white")
