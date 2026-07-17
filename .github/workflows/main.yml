@@ -13,10 +13,12 @@ on:
   pull_request:
     branches:
       - master
-    paths-ignore:
-      - 'docs/**'
-      - '**/*.md'
-      - '**/*.rst'
+    # NO paths-ignore on the PR trigger, on purpose. These matrix jobs are REQUIRED
+    # status checks: a workflow skipped by a path filter never reports its contexts, so
+    # a docs-only PR would sit blocked forever "waiting for status". Instead the workflow
+    # always runs on PRs and the `changes` job below skips the heavy work on a docs-only
+    # diff, so the required contexts still report success. The `push` trigger keeps its
+    # paths-ignore (a docs-only master push is not merge-gated and can skip to save runners).
 
 # Cancel a superseded in-progress run on PR branches (saves runner minutes), but
 # NOT on master: a cancelled run's conclusion renders as red "failing" on the
@@ -45,8 +47,45 @@ jobs:
             echo 'matrix={"include":[{"os":"ubuntu-latest","python-version":"3.10"},{"os":"ubuntu-latest","python-version":"3.11"},{"os":"ubuntu-latest","python-version":"3.12"},{"os":"ubuntu-latest","python-version":"3.13"},{"os":"ubuntu-latest","python-version":"3.14"},{"os":"windows-2022","python-version":"3.10"},{"os":"windows-2022","python-version":"3.14"}]}' >> "$GITHUB_OUTPUT"
           fi
 
+  # Is there anything in this PR a code check cares about? On a docs-only diff the
+  # required jobs below run but skip their heavy steps, reporting success without the
+  # matrix. Fail-safe: anything that is not purely docs (docs/**, *.md, *.rst), a
+  # non-PR event, or any detection failure, runs the full check.
+  changes:
+    runs-on: ubuntu-latest
+    outputs:
+      code: ${{ steps.filter.outputs.code }}
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
+      - id: filter
+        shell: bash
+        env:
+          BASE: ${{ github.event.pull_request.base.sha }}
+          HEAD: ${{ github.event.pull_request.head.sha }}
+        run: |
+          if [ "${{ github.event_name }}" != "pull_request" ]; then
+            echo "code=true" >> "$GITHUB_OUTPUT"; exit 0
+          fi
+          files="$(git diff --name-only "${BASE}...${HEAD}" || true)"
+          echo "Changed files:"; printf '%s\n' "$files"
+          # Count files that are NOT docs (docs/**, *.md, *.rst). Use -c (a count), not
+          # -vq: BSD and GNU grep disagree on the exit status of `-vq`, but the count is
+          # identical on both. Fail-safe: an empty list, or any doubt, runs the full check.
+          if [ -z "$files" ]; then
+            echo "code=true" >> "$GITHUB_OUTPUT"
+          else
+            n_code=$(printf '%s\n' "$files" | grep -vcE '^(docs/|.*\.md$|.*\.rst$)' || true)
+            if [ "${n_code:-1}" -gt 0 ]; then
+              echo "code=true" >> "$GITHUB_OUTPUT"
+            else
+              echo "code=false" >> "$GITHUB_OUTPUT"
+            fi
+          fi
+
   test:
-    needs: configure
+    needs: [configure, changes]
     runs-on: ${{ matrix.os }}
     strategy:
       fail-fast: true
@@ -71,19 +110,20 @@ jobs:
           ${{ runner.os }}-pip-${{ matrix.python-version }}-
 
     - name: Install package and test dependencies
+      if: needs.changes.outputs.code == 'true'
       run: |
         python -m pip install --upgrade pip
         pip install -e .[pro]
         pip install pytest hypothesis ipython pytest-xdist
 
     - name: Install cd-hit (Ubuntu)
-      if: runner.os == 'Linux'
+      if: runner.os == 'Linux' && needs.changes.outputs.code == 'true'
       run: |
         sudo apt-get update
         sudo apt-get install -y cd-hit
 
     - name: Install mmseqs2 (Ubuntu)
-      if: runner.os == 'Linux'
+      if: runner.os == 'Linux' && needs.changes.outputs.code == 'true'
       run: |
         sudo apt-get update
         sudo apt-get install -y mmseqs2
@@ -93,7 +133,7 @@ jobs:
     # built from source on Linux and cached on the version key. @fimo_required
     # tests skip on Windows.
     - name: Cache MEME suite (FIMO)
-      if: runner.os == 'Linux'
+      if: runner.os == 'Linux' && needs.changes.outputs.code == 'true'
       id: cache-meme
       uses: actions/cache@v5
       with:
@@ -101,7 +141,7 @@ jobs:
         key: ${{ runner.os }}-meme-5.5.8
 
     - name: Build FIMO from MEME suite (Ubuntu)
-      if: runner.os == 'Linux' && steps.cache-meme.outputs.cache-hit != 'true'
+      if: runner.os == 'Linux' && steps.cache-meme.outputs.cache-hit != 'true' && needs.changes.outputs.code == 'true'
       run: |
         sudo apt-get update
         sudo apt-get install -y build-essential zlib1g-dev
@@ -114,10 +154,11 @@ jobs:
         make install
 
     - name: Add FIMO to PATH (Ubuntu)
-      if: runner.os == 'Linux'
+      if: runner.os == 'Linux' && needs.changes.outputs.code == 'true'
       run: echo "$HOME/meme-install/bin" >> "$GITHUB_PATH"
 
     - name: Run Tests
+      if: needs.changes.outputs.code == 'true'
       # Fast PR gate: the exact-value regression anchor (-m regression, ADR-0015),
       # the integration/e2e tiers (own `Integration & E2E Tests` workflow,
       # ADR-0031), and the heavy `slow` tier (multi-minute pipe sweeps; run by the
