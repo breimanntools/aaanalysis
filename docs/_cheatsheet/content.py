@@ -431,7 +431,8 @@ GOTCHAS = [
     "count classes via df_seq['label'].",
     "Compositional vs positional is not a flag — it <b>emerges from split_kws</b>.",
     "Reproducibility: layered seeds — seed= ▸ random_state= ▸ "
-    "options['random_state'] ▸ default.",
+    "options['random_state'] ▸ default; <b>options wins</b>. "
+    "<b>get_provenance(random_state, data)</b> records which seed actually applied.",
     "<b>DOM_*</b> parts need tmd_start/tmd_stop in df_seq; <b>[pro]</b> features "
     "need <span style='font-family:\"AA Mono\",monospace'>pip install 'aaanalysis[pro]'</span>.",
 ]

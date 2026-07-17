@@ -649,3 +649,9 @@ STR_CMAP_CPP = "CPP"
 STR_CMAP_SHAP = "SHAP"
 STR_DICT_COLOR = "DICT_COLOR"
 STR_DICT_CAT = "DICT_CAT"
+
+
+# Provenance record — the runtime dependencies whose version can change a computed
+# result, so they are worth recording alongside the effective seed. Deliberately
+# narrow: presentation-only packages (matplotlib, seaborn) do not alter numbers.
+LIST_KEY_DEPENDENCIES = ["numpy", "pandas", "scikit-learn", "scipy"]

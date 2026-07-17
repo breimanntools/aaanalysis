@@ -46,6 +46,18 @@ Added
 - **get_labels**: Derives a binary ``int`` label vector from a sequence DataFrame's
   label column (``positive_label`` mapped to ``1``, everything else to ``0``) — the
   single-call form of the recurring ``(df[col] == x).astype(int).to_numpy()`` expression.
+- :func:`~aaanalysis.get_provenance`: An **opt-in**, JSON-serializable plain ``dict``
+  recording how a run can be reproduced. Its one field that external code cannot easily
+  recover is the **effective resolved seed** — ``random_state`` is resolved through the
+  same check the tools use, so the record reports the seed that actually takes effect,
+  including when ``options['random_state']`` overrides the value passed at the call site.
+  Alongside it: a ``deterministic`` flag, ``aaanalysis`` / Python / key-dependency
+  versions, the git commit when resolvable (``None`` for a regular install), and an
+  optional stable ``sha256`` fingerprint of the input via ``data``. It is **opt-in only**:
+  nothing attaches it to any output, no return type changes, and default results stay
+  byte-identical plain numpy / pandas. The record carries no timestamp or hostname —
+  every field is something that can change a result, which is what lets two records be
+  compared as a reproducibility key. No new dependency.
 - :func:`~aaanalysis.combine_dict_nums`: Concatenates per-residue tensors (embedding / structure /
   annotation) along the feature axis into one combined :meth:`~aaanalysis.CPP.run_num` input.
 - :meth:`~aaanalysis.SequencePreprocessor.pad_parts`: Pads the sequence-part columns of a
