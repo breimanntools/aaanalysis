@@ -63,25 +63,33 @@ python dev_scripts/dev_aa_window_sampler.py
   labels use `df_seq["label"].to_list()`, not `len(df_seq)`-based assumptions.
 - **Coverage is measured on the package only** — `--cov=aaanalysis`, never
   `--cov=./` (that counts the test files and inflates the number). See ADR-0016.
-- **Pushing to `master` triggers up to 5 code-gated workflows** (Unit Tests, Test
-  Coverage, CodeQL, Integration & E2E Tests, and the Perf A/B regression gate);
-  the same five run on PRs to master, while feature-branch *pushes* trigger none
-  (CI is gated to master push/PR). The exact-value CPP regression anchor
-  (`-m regression`) runs only in the nightly, not the blocking matrix (ADR-0015);
-  the Perf gate benchmarks current-vs-latest-release on one runner (ADR-0037). A
-  6th workflow, **ADR hygiene** (`adr_hygiene.yml`), is path-*scoped* the other
-  way — it carries `paths: ['docs/adr/**']`, so it fires **only** when a push/PR
-  touches an ADR (running `check_adrs.py`: duplicate-number / cross-ref / index
-  gate) and is skipped otherwise.
-- **Docs-only pushes skip the 4 code-gated workflows.** Unit Tests (`main.yml`),
-  CodeQL, Integration & E2E, and the Perf gate (`perf_nightly.yml`) all carry
-  `paths-ignore: ['docs/**', '**/*.md', '**/*.rst']`, so a commit touching only
-  those paths runs **none** of them. Test Coverage (`test_coverage.yml`)
-  deliberately has **no `paths-ignore`** and runs on every master push (the
-  Codecov badge must stay current). So a docs-only push that **doesn't** touch
-  `docs/adr/**` triggers exactly **one** workflow (Test Coverage); one that
-  **does** touch an ADR triggers **two** (Test Coverage + ADR hygiene). Don't
-  tell the user "all 5 will run" for a docs-only change.
+- **A push/PR to `master` triggers up to 8 workflows**, in two groups. Feature-branch
+  *pushes* trigger none (CI is gated to master push/PR). **Verify against
+  `.github/workflows/*` before quoting this — it drifts.**
+  - **Code-gated (6)** — each carries `paths-ignore: ['docs/**', '**/*.md',
+    '**/*.rst']`: **Unit Tests** (`main.yml`), **CodeQL** (`codeql_analysis.yml`),
+    **Integration & E2E Tests** (`integration_e2e.yml`), **Perf (A/B regression gate)**
+    (`perf_nightly.yml`), **Version Guard** (`version_guard.yml`), and **Type Check
+    (advisory)** (`pyright.yml` — reports, never gates).
+  - **Always-run (2)** — deliberately **no `paths-ignore`**, so they run on *every*
+    master push including docs-only: **Test Coverage** (`test_coverage.yml`; the
+    Codecov badge must stay current) and **Packaging** (`packaging.yml`; required
+    checks must not be "skipped-but-required", ADR-0060).
+
+  The exact-value CPP regression anchor (`-m regression`) runs only in the nightly,
+  not the blocking matrix (ADR-0015); the Perf gate benchmarks
+  current-vs-latest-release on one runner (ADR-0037); Version Guard asserts the
+  pyproject version is ahead of the latest PyPI release.
+- **Two more are path-*scoped* the other way** (they fire only for their paths):
+  **ADR hygiene** (`adr_hygiene.yml`, `paths: ['docs/adr/**']` — `check_adrs.py`:
+  duplicate-number / cross-ref / index gate) and **Visual Regression**
+  (`visual_regression.yml`, PR-only, scoped to `aaanalysis/**/*.py` +
+  `tests/unit/plotting_tests/**`).
+- **A docs-only push does NOT skip everything.** It skips all 6 code-gated workflows
+  but still runs the 2 always-run ones — so a docs-only push that **doesn't** touch
+  `docs/adr/**` triggers **two** (Test Coverage + Packaging); one that **does** touch
+  an ADR triggers **three** (+ ADR hygiene). Don't tell the user "all of CI will run"
+  for a docs-only change — nor that nothing will.
 
 ## Git / PR workflow
 

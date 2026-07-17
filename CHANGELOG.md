@@ -39,8 +39,15 @@ and a suite of site-localization metrics and plotting helpers.
   marking public symbols deprecated under the strict-semver policy (internal
   helper; not part of the public API).
 - This `CHANGELOG.md`.
+- `Version Guard` CI workflow (`.github/scripts/check_version_ahead.py`): fails a
+  build unless `[project] version` is strictly ahead of the latest release published
+  on PyPI (git-tag fallback offline), so `master` never reports a published version.
 
 ### Changed
+- **Version bumped to `1.1.0`** (from the published `1.0.3`), so a development
+  checkout is distinguishable from a released install. The version stays manually
+  maintained and always names the next unreleased number; see *Version truth* in
+  `CONTRIBUTING.rst`.
 - **Uniform plot return contract: every `*Plot` method now returns a `(fig, ax)`
   pair.** Previously the methods returned three inconsistent shapes (`(fig, ax)`,
   a bare `Axes`, or `(ax, df)`). The returned object is a thin tuple subclass that

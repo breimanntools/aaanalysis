@@ -653,6 +653,16 @@ Changed
   load — across the min + max supported Python (3.10, 3.14). It catches a missing package-data file,
   a broken re-export, or a sdist that cannot build before a release reaches PyPI, where the editable
   dev matrix cannot. No public-API change.
+- **Version truth**: ``aaanalysis.__version__`` on ``master`` is now ``1.1.0`` and no longer collides
+  with the published ``1.0.3`` release, so a development checkout and a released install are
+  distinguishable — for bug reports, cached environments, and reproducibility records alike. A
+  ``Version Guard`` workflow (``.github/workflows/version_guard.yml``) enforces the invariant on every
+  push / PR to ``master``: ``.github/scripts/check_version_ahead.py`` fails the build unless the
+  declared version is strictly ahead of the latest release published on PyPI (falling back to the
+  latest ``vX.Y.Z`` git tag offline). The version stays a hand-edited ``pyproject.toml`` string —
+  deriving it from git tags was rejected to avoid ``.devN`` / ``+g<sha>`` proliferation. Release
+  procedure gains one closing step: after publishing, bump ``master`` to the next unreleased number
+  (see *Version truth* in ``CONTRIBUTING.rst``). No public-API change.
 - **Named logger for library output**: all package messages now flow through
   ``logging.getLogger("aaanalysis")``. ``print_out`` (``ut.print_out``) is a thin, permanent
   shim over ``logger.info(...)`` — the function name and signature are unchanged, so every

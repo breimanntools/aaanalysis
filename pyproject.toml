@@ -18,7 +18,11 @@ build-backend = "setuptools.build_meta"
 # -------------------------
 [project]
 name = "aaanalysis"
-version = "1.0.3"
+# Manually maintained and always AHEAD of the latest PyPI release, so a development
+# tree never reports an already-published version. After publishing X.Y.Z (and
+# tagging vX.Y.Z), bump this to the next unreleased number in the same step.
+# Enforced by .github/workflows/version_guard.yml.
+version = "1.1.0"
 description = "Python framework for interpretable protein prediction"
 readme = "README.rst"
 requires-python = ">=3.10"
