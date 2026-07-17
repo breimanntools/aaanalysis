@@ -1,0 +1,29 @@
+{# Development-version banner.
+
+   Rendered on every page of a build that is NOT from a release tag: the "latest"
+   branch build on Read the Docs, a PR preview, and any local build. A reader (or an
+   agent) can otherwise land on docs describing unreleased capabilities while running
+   the released package, with nothing on the page to say so.
+
+   `is_dev_build` and `aa_release` come from html_context in conf.py. Extending the
+   theme's layout keeps the banner out of the reST sources, so it cannot interfere
+   with the notebook-derived pages the way an rst_prolog would.
+#}
+{% extends "!layout.html" %}
+
+{% block document %}
+{% if is_dev_build %}
+<div class="admonition warning aa-dev-banner">
+  <p class="admonition-title">Unreleased development version</p>
+  <p>
+    You are reading the documentation for the <strong>unreleased development
+    version</strong> of AAanalysis ({{ aa_release }}). It describes work that is not
+    on PyPI yet, so features documented here may be missing from the version you
+    installed, and may still change.
+    For the documentation matching the latest release, switch to
+    <a href="https://aaanalysis.readthedocs.io/en/stable/">stable</a>.
+  </p>
+</div>
+{% endif %}
+{{ super() }}
+{% endblock %}

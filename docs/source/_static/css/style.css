@@ -166,3 +166,13 @@ a:visited {
     margin-top: 24px;
     margin-bottom: 24px;
 }
+
+/* ------ Unreleased development-version banner ------ */
+/* Rendered by _templates/layout.html on every page of a non-tag build (the
+ * "latest" branch build, a PR preview, or a local build). Sits above the page
+ * body, so it must not inherit the indentation the theme gives admonitions
+ * nested in content. */
+.rst-content .aa-dev-banner,
+.aa-dev-banner {
+    margin: 0 0 24px 0;
+}

@@ -32,8 +32,25 @@ sys.path.insert(0, os.path.abspath('.'))
 project = 'AAanalysis'
 copyright = f'{datetime.now():%Y}, Stephan Breimann'
 author = 'Stephan Breimann'
-version = "latest"
-release = '2023'
+
+# Single source of the version: the package itself. ``aaanalysis.__version__`` reads
+# the installed distribution metadata, which setuptools takes from [project] version
+# in pyproject.toml -- so the docs can never disagree with the package they document.
+# These were previously the hardcoded literals version="latest" / release='2023',
+# which is exactly how the rendered docs came to advertise a 2023 build while the
+# package moved on. Never hardcode them again.
+from aaanalysis import __version__ as _aa_version   # noqa: E402
+
+release = _aa_version                                  # full, e.g. "1.1.0"
+version = ".".join(release.split(".")[:2])             # short X.Y, e.g. "1.1"
+
+# Read the Docs identifies the build via these; a *tag* build is the only build of a
+# published release. The "latest" branch build, a PR preview, and any local build all
+# document unreleased work, so they carry the development banner (_templates/layout.html).
+rtd_version = os.environ.get("READTHEDOCS_VERSION", "")
+rtd_version_type = os.environ.get("READTHEDOCS_VERSION_TYPE", "")
+is_dev_build = rtd_version_type != "tag"
+
 repository_url = "https://github.com/breimanntools/aaanalysis"
 pygments_style = "sphinx"
 todo_include_todos = False
@@ -169,6 +186,10 @@ html_context = {
     'github_repo': 'aaanalysis',
     'github_version': 'master/',
     'conf_py_path': 'docs/source/',  # path from repo root to the dir holding the .rst sources
+    # Consumed by _templates/layout.html to render the unreleased-version banner on
+    # every page of a non-tag build.
+    'is_dev_build': is_dev_build,
+    'aa_release': release,
 }
 
 html_meta = {

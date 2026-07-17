@@ -509,6 +509,15 @@ Added
 
 **Documentation**
 
+- **Docs-version coherence**: the rendered docs now say which version they document.
+  ``conf.py`` derives Sphinx's ``version`` / ``release`` from ``aaanalysis.__version__``
+  (a single source, ultimately ``pyproject.toml``) instead of the hardcoded
+  ``version="latest"`` / ``release='2023'`` literals, which had left the pages
+  advertising a 2023-era build while the package moved on. Any build that is **not**
+  from a release tag — the ``latest`` branch build, a pull-request preview, or a local
+  build — now carries an *unreleased development version* banner on every page, naming
+  the version and linking to ``stable``, so a reader (or an agent) can no longer mistake
+  documentation of unreleased capabilities for the release they installed.
 - **Prediction tasks** concept page (*Usage Principles*): maps a biological question to
   the right workflow via a task table keyed on unit of comparison and reference
   construction, across the residue / domain / protein levels — the front door to the
