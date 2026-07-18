@@ -33,7 +33,7 @@ and a suite of site-localization metrics and plotting helpers.
 - `AAWindowSampler` sequence-window sampler and `scan_motif` (`[pro]`, MEME/FIMO).
 - `aa.metrics` site-localization helpers: `comp_per_protein_ap`,
   `comp_detection_metrics`, `comp_bootstrap_ci`, `comp_smooth_scores`.
-- `plot_rank` per-protein max-score-vs-rank scatter.
+- Per-protein max-score-vs-rank scatter via `AAPredPlot.predict_group(kind="rank_scatter")`.
 - `aa.__version__` top-level attribute.
 - `aaanalysis.utils.deprecated(reason, version_removed)` decorator helper for
   marking public symbols deprecated under the strict-semver policy (internal
