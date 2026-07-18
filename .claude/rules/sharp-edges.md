@@ -28,7 +28,11 @@ limitations — do not "fix" them opportunistically.
   the ratchet step gates the job, blocking *new* diagnostics while allowing the existing
   backlog to merge). It is **not** a clean/strict gate: merging at or below the baseline
   is fine. When a burn-down PR clears diagnostics, **lower** that number to the new count
-  in the same PR; never raise it. Prefer honest signatures over runtime `assert`s, and a
+  in the same PR; never raise it. (One-time exception already applied: switching the ratchet
+  from advisory to gating exposed that the stale `887` mark had drifted — the advisory count
+  was never maintained while the codebase grew — so it was corrected **up** to the true
+  current count `1319`; the never-raise discipline resumes from `1319`.) Prefer honest
+  signatures over runtime `assert`s, and a
   narrow `# pyright: ignore[<rule>]` (with an inline reason) only for a genuine stub false
   positive.
 - **`pyproject.toml` carries both `[project]` and `[tool.poetry]` blocks.**
