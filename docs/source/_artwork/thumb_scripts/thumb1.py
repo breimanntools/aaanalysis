@@ -6,12 +6,18 @@ the CPP feature map. Pipeline: SequenceFeature.get_df_parts ->
 CPP(df_parts).run -> TreeModel.fit + add_feat_importance ->
 CPPPlot().feature_map. Saved as a clean square tile.
 """
+from pathlib import Path
+
 import matplotlib
 matplotlib.use("Agg")
 import matplotlib.pyplot as plt
 import aaanalysis as aa
 
-OUT = "/Users/stephanbreimann/Programming/1Packages/aaanalysis/docs/source/_static/img/thumbs/protocol1.png"
+# Write into the docs tree of whichever checkout this script lives in (repo root
+# or a git worktree), so a worktree render never clobbers the main checkout's
+# tracked thumbnail. thumb1.py sits at docs/source/_artwork/thumb_scripts/, so
+# parents[2] is docs/source/.
+OUT = str(Path(__file__).resolve().parents[2] / "_static" / "img" / "thumbs" / "protocol1.png")
 
 
 def main():
@@ -34,15 +40,26 @@ def main():
     tm = tm.fit(X, labels=labels)
     df_feat = tm.add_feat_importance(df_feat=df_feat)
 
-    # Canonical CPP feature map, sized as a square thumbnail with fonts
-    # bumped a touch for gallery legibility.
+    # Canonical CPP feature map with fonts bumped a touch for gallery legibility.
+    #
+    # The three bottom legends (Scale-category | "Feature value" colorbar |
+    # feature-importance squares) must land in ONE horizontal row. feature_map
+    # composes that bottom furniture itself and, on the fixed-figsize path, lays
+    # the three items out as an aligned row whose fit is decided by the FIGURE
+    # WIDTH, not by legend_imp_xy / cbar_xywh (those are re-anchored by the
+    # auto-alignment and so have no effect here). At the old square 7x7 the wide
+    # centered "Feature value / substrate - non-substrate" colorbar label left no
+    # room on the right, so the importance-squares legend dropped to a second row
+    # BELOW the colorbar. Widening to 8 inches gives the right edge enough room to
+    # keep all three on one line (8 is the minimum width that clears it here);
+    # height stays 7 so the tile stays close to square.
     aa.plot_settings(font_scale=0.65, weight_bold=False)
     cpp_plot = aa.CPPPlot()
     fig, ax = cpp_plot.feature_map(
         df_feat=df_feat,
         name_test="substrate",
         name_ref="non-substrate",
-        figsize=(7, 7),
+        figsize=(8, 7),
         fontsize_titles=12,
         fontsize_labels=13,
         fontsize_annotations=12,
@@ -50,7 +67,7 @@ def main():
         fontsize_tmd_jmd=13,
     )
 
-    fig.set_size_inches(7, 7)
+    fig.set_size_inches(8, 7)
     fig.savefig(OUT, dpi=150, facecolor="white")
     plt.close(fig)
 
