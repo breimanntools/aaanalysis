@@ -1,15 +1,14 @@
 """Gallery thumbnail for Protocol 2: multi-logo sampling-strategy comparison.
 
-Three stacked sequence logos (AALogo / AALogoPlot.multi_logo), one per window
+Two stacked sequence logos (AALogo / AALogoPlot.multi_logo), one per window
 sampling strategy drawn with AAWindowSampler on DOM_GSEC:
 
 * Same-protein: windows from the substrate proteins that carry a positive site.
 * Different-protein: windows from the non-substrate proteins (no positive site).
-* Synthetic: uniform per-residue control windows (background baseline).
 
 Each strategy's fixed-length windows are pooled into a single aligned block and
 profiled with AALogo (composition letter stack + per-position bits bar), so the
-three logos are directly comparable position by position. This is the same
+two logos are directly comparable position by position. This is the same
 figure the protocol notebook shows, saved as a compact ~square tile.
 """
 import sys
@@ -50,14 +49,12 @@ df_same = aaws.sample_same_protein(df_seq=df_seq, n=N_WINDOWS, window_size=WINDO
                                    pos_col="pos", seed=SEED)
 df_diff = aaws.sample_different_protein(df_seq=df_seq, n=N_WINDOWS, window_size=WINDOW_SIZE,
                                         pos_col="pos", seed=SEED)
-df_synth = aaws.sample_synthetic(df_seq=df_seq, n=N_WINDOWS, window_size=WINDOW_SIZE,
-                                 generator="uniform", seed=SEED)
 
 # The sampled windows are equal-length segments (not TMD/JMD parts), so pool each
 # strategy's windows into a single aligned block and profile it with AALogo.
 al = aa.AALogo(logo_type="probability")
 list_df_logo, list_df_logo_info = [], []
-for df in (df_same, df_diff, df_synth):
+for df in (df_same, df_diff):
     df_parts = pd.DataFrame({"tmd": df["window"].to_list()})
     list_df_logo.append(al.get_df_logo(df_parts=df_parts, tmd_len=WINDOW_SIZE))
     list_df_logo_info.append(al.get_df_logo_info(df_parts=df_parts, tmd_len=WINDOW_SIZE))
@@ -68,9 +65,9 @@ alp = aa.AALogoPlot(logo_type="probability", jmd_n_len=0, jmd_c_len=0, verbose=F
 fig, ax = alp.multi_logo(
     list_df_logo=list_df_logo,
     list_df_logo_info=list_df_logo_info,
-    list_name_data=["Same-protein", "Different-protein", "Synthetic"],
+    list_name_data=["Same-protein", "Different-protein"],
     name_data_pos="left",
-    figsize_per_logo=(9, 3),
+    figsize_per_logo=(10, 5),
 )
 
 # save_square tight-crops (so the left-hand strategy names, name_data_pos="left",
