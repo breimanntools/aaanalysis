@@ -12,6 +12,7 @@ profiled with AALogo (composition letter stack + per-position bits bar), so the
 three logos are directly comparable position by position. This is the same
 figure the protocol notebook shows, saved as a compact ~square tile.
 """
+import sys
 from pathlib import Path
 
 import matplotlib
@@ -19,6 +20,9 @@ matplotlib.use("Agg")
 import matplotlib.pyplot as plt
 import pandas as pd
 import aaanalysis as aa
+
+sys.path.insert(0, str(Path(__file__).resolve().parent))
+from _thumb_utils import save_square  # noqa: E402
 
 # Write into the docs tree of whichever checkout this script lives in (repo root
 # or a git worktree), so a worktree render never clobbers the main checkout's
@@ -69,8 +73,6 @@ fig, ax = alp.multi_logo(
     figsize_per_logo=(9, 3),
 )
 
-# bbox_inches="tight" keeps the left-hand strategy names (name_data_pos="left") from
-# being clipped at the figure edge; the result is a compact, near-square tile.
-fig.savefig(OUT, dpi=150, facecolor="white", bbox_inches="tight", pad_inches=0.15)
-plt.close(fig)
-print("saved", OUT)
+# save_square tight-crops (so the left-hand strategy names, name_data_pos="left",
+# are never clipped) then centers the block on a uniform white square tile.
+save_square(OUT)

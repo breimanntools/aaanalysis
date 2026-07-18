@@ -3,9 +3,21 @@
 Stacked bar of the engineered Arm A feature space: counts per Part (x-axis)
 stacked by Split type (Segment / Pattern / PeriodicPattern).
 """
+import sys
+from pathlib import Path
+
 import matplotlib.pyplot as plt
 import seaborn as sns
 import aaanalysis as aa
+
+sys.path.insert(0, str(Path(__file__).resolve().parent))
+from _thumb_utils import save_square  # noqa: E402
+
+# Write into the docs tree of whichever checkout this script lives in (repo root
+# or a git worktree), so a worktree render never clobbers the main checkout's
+# tracked thumbnail. thumb5.py sits at docs/source/_artwork/thumb_scripts/, so
+# parents[2] is docs/source/.
+OUT = str(Path(__file__).resolve().parents[2] / "_static" / "img" / "thumbs" / "protocol5.png")
 
 aa.options["verbose"] = False
 aa.options["random_state"] = 42
@@ -60,6 +72,4 @@ leg._legend_box.align = "center"
 
 fig.set_size_inches(7, 7)
 plt.tight_layout()
-fig.savefig(
-    "/Users/stephanbreimann/Programming/1Packages/aaanalysis/docs/source/_static/img/thumbs/protocol5.png",
-    dpi=150, facecolor="white")
+save_square(OUT)

@@ -3,13 +3,23 @@
 Grouped bar chart of the number of selected features per split type for the
 Compositional vs the Positional feature-engineering recipe.
 """
+import sys
+from pathlib import Path
+
 import matplotlib
 matplotlib.use("Agg")
 import matplotlib.pyplot as plt
 import seaborn as sns
 import aaanalysis as aa
 
-OUT = "/Users/stephanbreimann/Programming/1Packages/aaanalysis/docs/source/_static/img/thumbs/protocol6.png"
+sys.path.insert(0, str(Path(__file__).resolve().parent))
+from _thumb_utils import save_square  # noqa: E402
+
+# Write into the docs tree of whichever checkout this script lives in (repo root
+# or a git worktree), so a worktree render never clobbers the main checkout's
+# tracked thumbnail. thumb6.py sits at docs/source/_artwork/thumb_scripts/, so
+# parents[2] is docs/source/.
+OUT = str(Path(__file__).resolve().parents[2] / "_static" / "img" / "thumbs" / "protocol6.png")
 
 aa.options["verbose"] = False
 aa.options["random_state"] = 42
@@ -65,5 +75,4 @@ aa.plot_legend(ax=ax, dict_color={"Compositional": colors[0], "Positional": colo
 
 fig.set_size_inches(7, 7)
 plt.tight_layout()
-fig.savefig(OUT, dpi=150, facecolor="white")
-print("saved", OUT)
+save_square(OUT)

@@ -7,12 +7,24 @@ few substrate proteins.
 Run:
   COVERAGE_CORE=sysmon python3 docs/source/_artwork/thumb_scripts/thumb3.py
 """
+import sys
+from pathlib import Path
+
 import matplotlib
 matplotlib.use("Agg")
 import matplotlib.pyplot as plt
 import seaborn as sns
 import pandas as pd
 import aaanalysis as aa
+
+sys.path.insert(0, str(Path(__file__).resolve().parent))
+from _thumb_utils import save_square  # noqa: E402
+
+# Write into the docs tree of whichever checkout this script lives in (repo root
+# or a git worktree), so a worktree render never clobbers the main checkout's
+# tracked thumbnail. thumb3.py sits at docs/source/_artwork/thumb_scripts/, so
+# parents[2] is docs/source/.
+OUT = str(Path(__file__).resolve().parents[2] / "_static" / "img" / "thumbs" / "protocol3.png")
 
 aa.options["verbose"] = False
 aa.options["random_state"] = 42
@@ -82,7 +94,4 @@ aa.plot_legend(
 
 plt.tight_layout()
 fig.subplots_adjust(bottom=0.26, top=0.91)
-fig.savefig(
-    "/Users/stephanbreimann/Programming/1Packages/aaanalysis/docs/source/_static/img/thumbs/protocol3.png",
-    dpi=150, facecolor="white")
-print("saved")
+save_square(OUT)
