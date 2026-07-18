@@ -43,8 +43,10 @@ limitations — do not "fix" them opportunistically.
   before serialization.
 - **Don't introduce typed row records** (NamedTuple / dataclass) until the
   v2 migration; backend stays positional-list-based.
-- **Don't add a `SECURITY.md`, ruff config, pre-commit config, or mypy
-  config** — these are explicitly out of scope for now.
+- **Don't add a ruff config, pre-commit config, or mypy config** — these are
+  explicitly out of scope for now. (A minimal `SECURITY.md` — supported versions
+  + a private reporting channel — is now in scope as part of adopting a canonical
+  secure release path; it is no longer excluded here.)
 - **Don't create `AAanalysisError`** or any custom exception base — bare
   `ValueError` / `RuntimeError` is the rule.
 - **Don't add Pydantic / pandera or any schema-validation framework** — not in

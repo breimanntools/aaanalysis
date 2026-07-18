@@ -1,0 +1,120 @@
+name: Release
+
+# Single canonical, hardened release path for AAanalysis.
+#
+# Trigger: publishing a GitHub Release (which creates the v* tag). The job
+# builds the source distribution and the full cibuildwheel matrix, then
+# publishes to PyPI via OIDC *trusted publishing* — no long-lived PyPI API
+# token lives in repo secrets. A manual `workflow_dispatch` builds the same
+# artifacts as a dry run but never publishes (the publish job is gated to the
+# release event), so the build path can be exercised without a real upload.
+#
+# One-time maintainer prerequisite (PyPI-admin action, done on pypi.org, not
+# here): register this repository as a PyPI "trusted publisher" for
+#   workflow:    release.yml
+#   environment: pypi
+# at https://pypi.org/manage/project/aaanalysis/settings/publishing/ . Until
+# that registration exists PyPI rejects the OIDC exchange and the publish step
+# fails closed. The first real publish should be watched by a human.
+#
+# Every third-party action below is pinned to a full commit SHA (with a
+# trailing version comment) rather than a floating tag, so a re-tagged or
+# compromised upstream tag cannot silently change what runs in the release.
+
+on:
+  release:
+    types: [published]
+  workflow_dispatch:
+
+# Least privilege: the workflow defaults to read-only. Only the publish job
+# elevates, and only to `id-token: write` for the OIDC exchange.
+permissions:
+  contents: read
+
+jobs:
+  build_wheels:
+    name: Build wheels (${{ matrix.os }})
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, macos-latest, windows-latest]
+    steps:
+      - name: Check out the repo
+        uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10  # v6.0.3
+
+      - name: Set up QEMU (for Linux aarch64 emulation)
+        if: runner.os == 'Linux'
+        uses: docker/setup-qemu-action@96fe6ef7f33517b61c61be40b68a1882f3264fb8  # v4
+        with:
+          platforms: all
+
+      - name: Build wheels
+        # cibuildwheel reads [tool.cibuildwheel] from pyproject.toml, installs
+        # each built wheel into a clean env, and runs the Cython parity test
+        # against the compiled `_inner.cpython-XYZ.so`. A wheel that is not
+        # bit-exact vs the legacy path fails here, before it can reach PyPI.
+        uses: pypa/cibuildwheel@7940a4c0e76eb2030e473a5f864f291f63ee879b  # v2.21.3
+
+      - name: Upload wheels
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a  # v7
+        with:
+          name: dist-wheels-${{ matrix.os }}
+          path: ./wheelhouse/*.whl
+
+  build_sdist:
+    name: Build source distribution
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out the repo
+        uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10  # v6.0.3
+
+      - name: Set up Python
+        uses: actions/setup-python@ece7cb06caefa5fff74198d8649806c4678c61a1  # v6
+        with:
+          python-version: '3.12'
+
+      - name: Build sdist (PEP 517)
+        # `python -m build --sdist` ships the Cython sources (via MANIFEST.in)
+        # so a source install can cythonize. The wheel-from-sdist chain is
+        # verified separately by the Packaging workflow.
+        run: |
+          python -m pip install --upgrade pip build
+          python -m build --sdist --outdir dist
+
+      - name: Upload sdist
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a  # v7
+        with:
+          name: dist-sdist
+          path: dist/*.tar.gz
+
+  publish:
+    name: Publish to PyPI (OIDC trusted publishing)
+    needs: [build_wheels, build_sdist]
+    runs-on: ubuntu-latest
+    # Publish only for a real GitHub Release. A manual workflow_dispatch run
+    # builds the artifacts above but stops here, so it is a safe dry run.
+    if: github.event_name == 'release'
+    environment:
+      name: pypi
+      url: https://pypi.org/p/aaanalysis
+    # The one place elevated permission is granted: a short-lived OIDC token,
+    # scoped to this job only. No `contents: write`, no secrets.
+    permissions:
+      id-token: write
+    steps:
+      - name: Download all build artifacts
+        uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c  # v8
+        with:
+          path: dist
+          pattern: dist-*
+          merge-multiple: true
+
+      - name: Publish distributions to PyPI via trusted publishing
+        # No `password:` — the action mints a short-lived OIDC token and
+        # exchanges it at PyPI's trusted-publisher endpoint. This requires the
+        # `id-token: write` permission above and a trusted publisher registered
+        # on pypi.org for this repo + workflow + environment.
+        uses: pypa/gh-action-pypi-publish@cef221092ed1bacb1cc03d23a2d87d1d172e277b  # v1.14.0
+        with:
+          packages-dir: dist
