@@ -570,6 +570,38 @@ keeping one medoid (representative) per cluster and annotating `df_seq` with
 scale-correlation redundancy reduction. Pooling per-residue inputs to one vector per protein is
 the caller's job (the method takes a single matrix, not `dict_num`).
 
+**selection_scope** (`"global"` / `"fold"`):
+The `find_features` knob deciding whether CPP **feature selection** sits *outside* or *inside*
+the cross-validation. `"global"` (default) selects features once on the full labeled set, then
+cross-validates the model on that fixed `X` — selection is **outside** CV, so every reported score
+(the whole `df_eval` sweep) is post-selection / **in-sample optimistic**: a valid *relative* ranking
+signal, a misleading *absolute* generalization estimate. `"fold"` **nests** selection: within each
+CV fold, CPP re-runs on the *train split only*, `X_train`/`X_test` are built from those fold-specific
+features, and the test-fold score carries no selection leakage — the **honest** regime. The returned
+[[df_feat]] is always the winning config **refit on all data** (outer-CV semantics), and `df_eval`
+carries a `selection_scope` column naming the regime per score. Byte-identical to the historical
+behavior at the `"global"` default.
+_Avoid_: nested_cv (that is the [[evaluation regime]], not the knob); reading "global" as a scope
+over the whole *dataset* (it names *when* selection runs relative to CV, not *how much* data it sees).
+
+**evaluation regime**:
+The four distinct things a CPP / model score can mean — kept separate because a small-dataset XAI
+workflow silently conflates them and over-trusts the number:
+- **exploratory feature discovery** — run CPP / `find_features(selection_scope="global")` to *surface
+  and rank* candidate determinants; the score ranks features *relatively* and is **not** a
+  generalization estimate. The home of [[determinant discovery]].
+- **honest (nested-CV) evaluation** — `find_features(selection_scope="fold")` (or a hand-rolled
+  nested CV): selection re-runs inside every fold, so the test-fold score is a leakage-free
+  **held-out** estimate of generalization.
+- **final model fitting** — once a config is chosen, **refit on all data** to get the deployable
+  model (`find_features`' returned [[df_feat]]; `TreeModel.fit` on the full set). Its training score
+  is an *artifact of fitting*, never an evaluation number.
+- **external test-set evaluation** — score the final model on data held out from *all* selection and
+  CV; the strongest generalization claim, and the one small biological datasets can rarely afford.
+_Avoid_: reporting a `"global"` sweep score as accuracy/generalization (it is exploratory); calling
+the refit-on-all training score an evaluation; treating honest nested evaluation and external test as
+interchangeable.
+
 ### Explainability (CPP-SHAP) vocabulary
 
 **feature importance**:

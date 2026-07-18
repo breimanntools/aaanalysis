@@ -1,10 +1,15 @@
-name: Type Check (advisory)
+name: Type Check (ratchet)
 
-# pyright runs ADVISORY only — public-API-first (pyrightconfig.json excludes
-# aaanalysis/**/_backend). The check step carries continue-on-error so the job is
-# always green and never gates a merge; the report is in the step log. The
-# method-body Optional burn-down proceeds without blocking. Type hints are the
-# read-time contract; py.typed ships the annotations downstream.
+# pyright runs as a NO-REGRESSION RATCHET, not a clean/strict gate. It is
+# public-API-first (pyrightconfig.json excludes aaanalysis/**/_backend). The
+# budget-check step fails the job only when the diagnostic count rises ABOVE the
+# committed high-water mark (.github/pyright_baseline.txt); merging at or below
+# that mark is allowed, so the method-body Optional burn-down proceeds without a
+# clean-gate. New type errors are blocked; the existing backlog is not. The
+# pyright version is pinned so the committed baseline is reproducible (a bump is a
+# deliberate re-baseline). The raw `pyright` step stays advisory (its report is in
+# the log); only the ratchet step gates. Type hints are the read-time contract;
+# py.typed ships the annotations downstream.
 on:
   push:
     branches:
@@ -36,16 +41,17 @@ jobs:
         with:
           python-version: '3.11'
 
-      - name: Install package + pyright
+      - name: Install package + pyright (pinned)
         run: |
           python -m pip install --upgrade pip
           pip install -e .[pro]
-          pip install pyright
+          # Pin pyright so the committed baseline count is reproducible; a bump is
+          # a deliberate re-baseline (update .github/pyright_baseline.txt with it).
+          pip install pyright==1.1.410
 
-      - name: Run pyright (advisory — never fails the build)
+      - name: Run pyright (advisory report — never fails the build)
         continue-on-error: true
         run: pyright
 
-      - name: Pyright diagnostics ratchet (advisory — never fails the build)
-        continue-on-error: true
+      - name: Pyright diagnostics ratchet (GATES — fails on count above baseline)
         run: python .github/scripts/check_pyright_budget.py

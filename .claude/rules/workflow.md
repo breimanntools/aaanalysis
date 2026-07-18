@@ -70,7 +70,8 @@ python dev_scripts/dev_aa_window_sampler.py
     '**/*.rst']`: **Unit Tests** (`main.yml`), **CodeQL** (`codeql_analysis.yml`),
     **Integration & E2E Tests** (`integration_e2e.yml`), **Perf (A/B regression gate)**
     (`perf_nightly.yml`), **Version Guard** (`version_guard.yml`), and **Type Check
-    (advisory)** (`pyright.yml` — reports, never gates).
+    (ratchet)** (`pyright.yml` — gates on a *rise* above the committed diagnostic
+    baseline; merging at or below it is fine).
   - **Always-run (2)** — deliberately **no `paths-ignore`**, so they run on *every*
     master push including docs-only: **Test Coverage** (`test_coverage.yml`; the
     Codecov badge must stay current) and **Packaging** (`packaging.yml`; required
