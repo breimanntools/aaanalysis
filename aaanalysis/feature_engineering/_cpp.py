@@ -13,7 +13,6 @@ from aaanalysis.template_classes import Tool
 
 # Import supportive class (exception for importing from same sub-package)
 from ._backend.cpp.sequence_feature import get_split_kws_, get_composition_scales_
-from ._backend.cpp.utils_feature import get_df_parts_
 from ._backend.cpp.composition import get_kmer_composit_df_feat_
 from ._backend.check_feature import (
     check_split_kws,

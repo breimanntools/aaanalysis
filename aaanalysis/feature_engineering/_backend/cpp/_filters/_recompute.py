@@ -17,7 +17,6 @@ hot path.
 Bit-identical to legacy via the same ``np.round(..., 5)`` applied in
 ``utils_feature._feature_value``.
 """
-import gc
 from collections import defaultdict
 
 import numpy as np
