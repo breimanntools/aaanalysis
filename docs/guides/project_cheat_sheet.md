@@ -85,7 +85,7 @@ Install extras (works with uv, pip, and poetry):
 6. `uv pip install -e .[dev]`: Install in editable mode with dev extras.
 7. `uv lock`: Update the lockfile.
 8. `uv build`: Build the package.
-9. `uv publish`: Publish to PyPI.
+9. Publishing to PyPI is automated: publish a GitHub Release and the OIDC `release.yml` workflow uploads via trusted publishing (no manual `uv publish`, no tokens).
 
 ### pip (alternative)
 

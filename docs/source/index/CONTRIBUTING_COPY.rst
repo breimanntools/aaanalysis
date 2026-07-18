@@ -485,15 +485,14 @@ AAanalysis is packaged with the setuptools build backend (for the Cython kernel)
 
    This creates the source distribution and wheel files in the ``dist`` directory.
 
-4. **Publish to PyPI**
+4. **Publish to PyPI (automated via trusted publishing, no tokens)**
 
-   Upload the package to PyPI:
-
-   .. code-block:: bash
-
-      uv publish
-
-   You will need valid PyPI credentials or an API token configured for uv (for example via ``UV_PUBLISH_TOKEN`` or ``--token``).
+   Publishing is owned by the canonical release workflow
+   (``.github/workflows/release.yml``): publishing a GitHub Release for the tag
+   builds the wheels and source distribution and uploads them to PyPI via **OIDC
+   trusted publishing**, so there are no long-lived API tokens and no manual
+   ``uv publish`` step. Do not publish manually; the token-based ``uv publish`` /
+   ``UV_PUBLISH_TOKEN`` path has been retired.
 
 5. **Verify the upload**
 
