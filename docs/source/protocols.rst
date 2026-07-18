@@ -31,14 +31,15 @@ protocol; click it to open that protocol.
 .. raw:: html
 
    <style>
-   .aa-protocol-gallery{display:grid;grid-template-columns:repeat(3,1fr);gap:16px;margin:1.6em 0;}
+   .aa-protocol-gallery{display:grid;grid-template-columns:repeat(5,1fr);gap:16px;margin:1.6em 0;}
    .aa-protocol-gallery a{display:flex;flex-direction:column;text-decoration:none;color:inherit;
      border:1px solid #dcdcdc;border-radius:6px;padding:8px;background:#fff;
      transition:border-color .15s ease,box-shadow .15s ease,transform .15s ease;}
    .aa-protocol-gallery a:hover{border-color:#8a8a8a;box-shadow:0 3px 10px rgba(0,0,0,.13);transform:translateY(-2px);}
    .aa-protocol-gallery img{width:100%;height:auto;border-radius:3px;}
    .aa-protocol-gallery .cap{margin-top:7px;text-align:center;font-size:.86em;font-weight:600;line-height:1.2;}
-   @media(max-width:640px){.aa-protocol-gallery{grid-template-columns:repeat(2,1fr);}}
+   @media(max-width:900px){.aa-protocol-gallery{grid-template-columns:repeat(3,1fr);}}
+   @media(max-width:560px){.aa-protocol-gallery{grid-template-columns:repeat(2,1fr);}}
    </style>
    <div class="aa-protocol-gallery">
      <a href="generated/protocol1_cpp_signature.html"><img src="_static/img/thumbs/protocol1.png" alt="P1: CPP signature"><div class="cap">P1: CPP signature</div></a>

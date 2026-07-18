@@ -1,54 +1,76 @@
-"""Gallery thumbnail for Protocol 2: sequence logo (AALogo / AALogoPlot).
+"""Gallery thumbnail for Protocol 2: multi-logo sampling-strategy comparison.
 
-Classic two-panel sequence logo: a per-position information-content (bits) bar on
-top + the composition letter stack below, coloured by amino-acid property, with
-the JMD-N / TMD / JMD-C parts annotated. Standard part sizes (jmd_n_len =
-jmd_c_len = 5).
+Three stacked sequence logos (AALogo / AALogoPlot.multi_logo), one per window
+sampling strategy drawn with AAWindowSampler on DOM_GSEC:
+
+* Same-protein: windows from the substrate proteins that carry a positive site.
+* Different-protein: windows from the non-substrate proteins (no positive site).
+* Synthetic: uniform per-residue control windows (background baseline).
+
+Each strategy's fixed-length windows are pooled into a single aligned block and
+profiled with AALogo (composition letter stack + per-position bits bar), so the
+three logos are directly comparable position by position. This is the same
+figure the protocol notebook shows, saved as a compact ~square tile.
 """
+from pathlib import Path
+
 import matplotlib
 matplotlib.use("Agg")
 import matplotlib.pyplot as plt
+import pandas as pd
 import aaanalysis as aa
 
-OUT = "/Users/stephanbreimann/Programming/1Packages/aaanalysis/docs/source/_static/img/thumbs/protocol2.png"
+# Write into the docs tree of whichever checkout this script lives in (repo root
+# or a git worktree), so a worktree render never clobbers the main checkout's
+# tracked thumbnail. thumb2.py sits at docs/source/_artwork/thumb_scripts/, so
+# parents[2] is docs/source/.
+OUT = str(Path(__file__).resolve().parents[2] / "_static" / "img" / "thumbs" / "protocol2.png")
+
+# Reproducibility knobs, shared with the protocol notebook so the thumbnail
+# matches the figure the reader builds there.
+WINDOW_SIZE, N_WINDOWS, SEED = 15, 120, 42
 
 aa.options["verbose"] = False
-# Settings mirror the gamma-secretase use case (font_scale=0.85, 9x3 per logo). A logo
-# reads wide and short: squeezing 25 positions into a square stretches the letters and
-# leaves the position ticks no room beside the part labels.
+
+# DOM_GSEC pool (n per class -> 2n proteins). Mark each substrate's TMD centre as a
+# positive site and leave the non-substrates unlabeled: sample_same_protein then
+# draws from the substrates (proteins that carry a positive), while
+# sample_different_protein draws from the non-substrates (proteins with none).
+df_seq = aa.load_dataset(name="DOM_GSEC", n=25).copy()
+centre = ((df_seq["tmd_start"] + df_seq["tmd_stop"]) // 2).astype(int)
+df_seq["pos"] = [[int(c)] if lbl == 1 else [] for c, lbl in zip(centre, df_seq["label"])]
+
+# One df_logo per strategy, all windows the same length so the logos are position-aligned.
+aaws = aa.AAWindowSampler(random_state=SEED)
+df_same = aaws.sample_same_protein(df_seq=df_seq, n=N_WINDOWS, window_size=WINDOW_SIZE,
+                                   pos_col="pos", seed=SEED)
+df_diff = aaws.sample_different_protein(df_seq=df_seq, n=N_WINDOWS, window_size=WINDOW_SIZE,
+                                        pos_col="pos", seed=SEED)
+df_synth = aaws.sample_synthetic(df_seq=df_seq, n=N_WINDOWS, window_size=WINDOW_SIZE,
+                                 generator="uniform", seed=SEED)
+
+# The sampled windows are equal-length segments (not TMD/JMD parts), so pool each
+# strategy's windows into a single aligned block and profile it with AALogo.
+al = aa.AALogo(logo_type="probability")
+list_df_logo, list_df_logo_info = [], []
+for df in (df_same, df_diff, df_synth):
+    df_parts = pd.DataFrame({"tmd": df["window"].to_list()})
+    list_df_logo.append(al.get_df_logo(df_parts=df_parts, tmd_len=WINDOW_SIZE))
+    list_df_logo_info.append(al.get_df_logo_info(df_parts=df_parts, tmd_len=WINDOW_SIZE))
+
 aa.plot_settings(font_scale=0.85)
-
-# Pooled (no-label) set; a fuller set gives a more meaningful conservation signal.
-df_seq = aa.load_dataset(name="DOM_GSEC", n=50)
-
-# Standard part sizes: 5-residue JMD flanks around the TMD core.
-JMD_N_LEN, JMD_C_LEN, TMD_LEN = 5, 5, 15
-sf = aa.SequenceFeature()
-df_parts = sf.get_df_parts(
-    df_seq=df_seq,
-    list_parts=["jmd_n", "tmd", "jmd_c"],
-    jmd_n_len=JMD_N_LEN,
-    jmd_c_len=JMD_C_LEN,
+# jmd_n_len = jmd_c_len = 0: the whole pooled window is one aligned block (no JMD flanks).
+alp = aa.AALogoPlot(logo_type="probability", jmd_n_len=0, jmd_c_len=0, verbose=False)
+fig, ax = alp.multi_logo(
+    list_df_logo=list_df_logo,
+    list_df_logo_info=list_df_logo_info,
+    list_name_data=["Same-protein", "Different-protein", "Synthetic"],
+    name_data_pos="left",
+    figsize_per_logo=(9, 3),
 )
 
-# Composition letter stack + the per-position information content (bits).
-al = aa.AALogo()
-df_logo = al.get_df_logo(df_parts=df_parts, tmd_len=TMD_LEN)
-df_logo_info = al.get_df_logo_info(df_parts=df_parts, tmd_len=TMD_LEN)
-
-alp = aa.AALogoPlot(jmd_n_len=JMD_N_LEN, jmd_c_len=JMD_C_LEN, verbose=False)
-# Passing df_logo_info renders the bits/conservation bar ON TOP of the logo.
-# fontsize_tmd_jmd is left at its default so the JMD-N/TMD/JMD-C labels stay directly
-# under the part bar at a size that clears the position ticks.
-fig, ax = alp.single_logo(
-    df_logo=df_logo,
-    df_logo_info=df_logo_info,
-    figsize=(9, 3),
-)
-
-fig = plt.gcf()
-fig.set_size_inches(9, 3)
-# NOTE: no extra plt.tight_layout() here — single_logo already lays out the panels
-# and sets subplots_adjust(hspace=0); a second tight_layout re-opens the bits/logo gap.
-fig.savefig(OUT, dpi=150, facecolor="white")
+# bbox_inches="tight" keeps the left-hand strategy names (name_data_pos="left") from
+# being clipped at the figure edge; the result is a compact, near-square tile.
+fig.savefig(OUT, dpi=150, facecolor="white", bbox_inches="tight", pad_inches=0.15)
+plt.close(fig)
 print("saved", OUT)
