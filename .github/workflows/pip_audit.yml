@@ -1,0 +1,36 @@
+name: Dependency Audit (advisory)
+
+# Runs pip-audit over the installed dependency set and reports known
+# vulnerabilities. ADVISORY only (continue-on-error) so it never gates a merge on
+# a transitive/dev-tool CVE; the report is in the step log. Weekly + on demand.
+# Dependency-review and Dependabot automation are planned follow-ups (issue #444).
+
+on:
+  schedule:
+    - cron: '0 6 * * 1'   # Mondays 06:00 UTC
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  pip-audit:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683  # v4.2.2
+
+      - name: Set up Python
+        uses: actions/setup-python@0b93645e9fea7318ecaed2b359559ac225c90a2b  # v5.3.0
+        with:
+          python-version: '3.11'
+
+      - name: Install package + pip-audit
+        run: |
+          python -m pip install --upgrade pip
+          pip install -e .
+          pip install pip-audit
+
+      - name: Audit installed dependencies (advisory report; never gates)
+        continue-on-error: true
+        run: pip-audit --desc --progress-spinner off
