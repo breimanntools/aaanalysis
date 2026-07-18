@@ -1,0 +1,84 @@
+name: Notebook Examples (canonical subset)
+
+# Executes a small, canonical subset of example notebooks under nbmake on every
+# PR, so a change that breaks a golden-pipeline example fails CI instead of
+# shipping a broken copy-paste target to RTD. Notebook execution was a local-only
+# gate until now.
+#
+# The subset is core-only (no pro / embed / structure extras) and covers the
+# LOAD -> REPRESENT -> REDUCE -> PROFILE -> PREDICT spine, one representative
+# notebook per stage, so the gate stays fast and dependency-light. The full
+# examples + tutorials sweep (heavier deps: torch/transformers, biopython, FIMO,
+# py3Dmol) is left to a nightly and is not built here.
+#
+# paths-ignore mirrors the code-gated workflows: a pure-docs change (docs/**,
+# *.md, *.rst) cannot break a notebook, so it skips. A change to library code or
+# to any tracked notebook still runs the subset.
+on:
+  push:
+    branches:
+      - master
+    paths-ignore:
+      - 'docs/**'
+      - '**/*.md'
+      - '**/*.rst'
+  pull_request:
+    branches:
+      - master
+    paths-ignore:
+      - 'docs/**'
+      - '**/*.md'
+      - '**/*.rst'
+
+# Cancel a superseded in-progress run on PR branches, but let master runs finish
+# so the badge reflects a real pass/fail.
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: ${{ github.ref != 'refs/heads/master' }}
+
+jobs:
+  notebooks:
+    name: Execute canonical example subset
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+
+      - name: Set up Python 3.12
+        uses: actions/setup-python@v6
+        with:
+          python-version: '3.12'
+
+      - name: Cache Python dependencies
+        uses: actions/cache@v5
+        with:
+          path: ~/.cache/pip
+          key: ${{ runner.os }}-pip-nbmake-${{ hashFiles('pyproject.toml') }}
+          restore-keys: |
+            ${{ runner.os }}-pip-nbmake-
+
+      # Base install only — the subset is core-only, so no pro / embed / structure
+      # extras are needed. The editable install compiles the Cython CPP backend.
+      - name: Install package + notebook test deps
+        run: |
+          python -m pip install --upgrade pip
+          pip install -e .
+          pip install pytest nbmake ipykernel
+
+      # nbmake resolves the kernel named in each notebook's metadata ("python3").
+      # Register an ipykernel under that name so the notebooks start on this env.
+      - name: Register the python3 Jupyter kernel
+        run: python -m ipykernel install --user --name python3
+
+      - name: Execute canonical example subset (nbmake)
+        run: >
+          pytest --nbmake --nbmake-timeout=300 -p no:cacheprovider
+          examples/data_handling/load_dataset.ipynb
+          examples/data_handling/load_scales.ipynb
+          examples/feature_engineering/sf_feature_matrix.ipynb
+          examples/feature_engineering/aac_fit.ipynb
+          examples/feature_engineering/cpp_run.ipynb
+          examples/pu_learning/dpul_fit.ipynb
+          examples/explainable_ai/tm_fit.ipynb
+          examples/prediction/aap_fit.ipynb
+        env:
+          MPLBACKEND: Agg
