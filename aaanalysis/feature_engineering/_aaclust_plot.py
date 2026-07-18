@@ -37,18 +37,6 @@ def check_resolve_X_df_scales(X=None, df_scales=None):
     return X
 
 
-def check_match_df_eval_names(df_eval=None, names=None):
-    """Validate the match between the number of samples in df_eval and the length of names"""
-    n_samples = len(df_eval)
-    if names is not None:
-        if len(names) != n_samples:
-            raise ValueError(f"n_samples does not match for 'data' ({n_samples}) and 'names' ({len(names)}).")
-    else:
-        names = [f"Set {i}" for i in range(1, n_samples + 1)]
-    df_eval.index = names
-    return df_eval
-
-
 # Check correlation plot
 def check_match_df_corr_labels(df_corr=None, labels=None):
     """Ensure the number of labels matches the number of samples in df_corr"""
