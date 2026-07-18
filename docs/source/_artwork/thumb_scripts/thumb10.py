@@ -6,6 +6,9 @@ ranked high-to-low and colored by their true group. Substrate TMDs ranking
 above non-substrates, with the deployment threshold drawn in, is the
 one-glance evidence that the CPP signature tracks the labels.
 """
+import sys
+from pathlib import Path
+
 import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
@@ -14,11 +17,17 @@ from sklearn.model_selection import StratifiedKFold, cross_val_predict
 
 import aaanalysis as aa
 
+sys.path.insert(0, str(Path(__file__).resolve().parent))
+from _thumb_utils import save_square  # noqa: E402
+
 aa.options["verbose"] = False
 RS = 42
 
-OUT = ("/Users/stephanbreimann/Programming/1Packages/aaanalysis/"
-       "docs/source/_static/img/thumbs/protocol10.png")
+# Write into the docs tree of whichever checkout this script lives in (repo root
+# or a git worktree), so a worktree render never clobbers the main checkout's
+# tracked thumbnail. thumb10.py sits at docs/source/_artwork/thumb_scripts/, so
+# parents[2] is docs/source/.
+OUT = str(Path(__file__).resolve().parents[2] / "_static" / "img" / "thumbs" / "protocol10.png")
 
 # --- Data + signature (same fixture as the protocol) --------------------
 df_seq = aa.load_dataset(name="DOM_GSEC", n=20)        # 20 per class -> 40 rows
@@ -48,5 +57,4 @@ ax.set_title("Per-protein rank", size=aa.plot_gcfs() + 2)
 
 fig.set_size_inches(7, 7)
 plt.tight_layout()
-fig.savefig(OUT, dpi=150, facecolor="white")
-print("saved", OUT)
+save_square(OUT)

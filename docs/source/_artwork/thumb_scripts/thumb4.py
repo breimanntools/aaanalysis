@@ -3,12 +3,18 @@
 Hand-drawn matplotlib schematic. Three rows, each showing the unit of
 comparison as a coloured bar with a level label and a short italic caption.
 """
+import sys
+from pathlib import Path
+
 import matplotlib
 matplotlib.use("Agg")
 import matplotlib.pyplot as plt
 from matplotlib.patches import FancyBboxPatch
 
 import aaanalysis as aa
+
+sys.path.insert(0, str(Path(__file__).resolve().parent))
+from _thumb_utils import save_square  # noqa: E402
 
 aa.options["verbose"] = False
 aa.plot_settings(font_scale=1.2, weight_bold=False)
@@ -18,7 +24,11 @@ RED, RED_L = "#c0504d", "#e9cccb"
 BLUE, BLUE_L = "#4a6fad", "#c5d2e8"
 GREEN = "#5aa469"
 
-OUT = "/Users/stephanbreimann/Programming/1Packages/aaanalysis/docs/source/_static/img/thumbs/protocol4.png"
+# Write into the docs tree of whichever checkout this script lives in (repo root
+# or a git worktree), so a worktree render never clobbers the main checkout's
+# tracked thumbnail. thumb4.py sits at docs/source/_artwork/thumb_scripts/, so
+# parents[2] is docs/source/.
+OUT = str(Path(__file__).resolve().parents[2] / "_static" / "img" / "thumbs" / "protocol4.png")
 
 
 def bar(ax, x0, y0, w, h, fc, ec="none"):
@@ -71,5 +81,4 @@ for y0, r in zip(row_y, rows):
 
 fig.set_size_inches(7, 7)
 plt.tight_layout()
-fig.savefig(OUT, dpi=150, facecolor="white")
-print("saved", OUT)
+save_square(OUT)

@@ -6,10 +6,20 @@ its real residue position and scale subcategory (red = pushes toward substrate,
 blue = toward non-substrate). Mirrors the headline figure of protocol 9 and the
 CPP-SHAP heatmap of tutorial5a.
 """
+import sys
+from pathlib import Path
+
 import matplotlib.pyplot as plt
 import aaanalysis as aa
 
-OUT = "/Users/stephanbreimann/Programming/1Packages/aaanalysis/docs/source/_static/img/thumbs/protocol9.png"
+sys.path.insert(0, str(Path(__file__).resolve().parent))
+from _thumb_utils import save_square  # noqa: E402
+
+# Write into the docs tree of whichever checkout this script lives in (repo root
+# or a git worktree), so a worktree render never clobbers the main checkout's
+# tracked thumbnail. thumb9.py sits at docs/source/_artwork/thumb_scripts/, so
+# parents[2] is docs/source/.
+OUT = str(Path(__file__).resolve().parents[2] / "_static" / "img" / "thumbs" / "protocol9.png")
 
 
 def main():
@@ -48,10 +58,9 @@ def main():
     fig.suptitle("CPP-SHAP feature map for APP", fontsize=fs + 4, weight="bold")
 
     fig.set_size_inches(7, 7)
-    # Leave headroom so the title is not clipped (saved without bbox_inches="tight").
+    # Leave headroom so the title is not clipped before the square tight-crop.
     fig.subplots_adjust(top=0.92)
-    fig.savefig(OUT, dpi=150, facecolor="white")
-    print("saved", OUT)
+    save_square(OUT)
 
 
 if __name__ == "__main__":

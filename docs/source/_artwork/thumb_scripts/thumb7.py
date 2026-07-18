@@ -7,6 +7,9 @@ prefix, which is the whole point.
 
 Rendered as a 7x7 inch figure at 150 dpi -> 1050x1050 px square.
 """
+import sys
+from pathlib import Path
+
 import matplotlib
 matplotlib.use("Agg")
 import numpy as np
@@ -14,13 +17,20 @@ import matplotlib.pyplot as plt
 
 import aaanalysis as aa
 
+sys.path.insert(0, str(Path(__file__).resolve().parent))
+from _thumb_utils import save_square  # noqa: E402
+
 aa.options["verbose"] = False
 aa.options["random_state"] = 42
 
 # canonical kept/dropped palette (matches the protocol notebook figure)
 GREEN = "tab:green"
 GREY = "lightgray"
-OUT = "/Users/stephanbreimann/Programming/1Packages/aaanalysis/docs/source/_static/img/thumbs/protocol7.png"
+# Write into the docs tree of whichever checkout this script lives in (repo root
+# or a git worktree), so a worktree render never clobbers the main checkout's
+# tracked thumbnail. thumb7.py sits at docs/source/_artwork/thumb_scripts/, so
+# parents[2] is docs/source/.
+OUT = str(Path(__file__).resolve().parents[2] / "_static" / "img" / "thumbs" / "protocol7.png")
 
 # --- data pipeline (P7 model-free recipe) ----------------------------------
 df_seq = aa.load_dataset(name="DOM_GSEC", n=10)      # 20 sequences (10/10)
@@ -72,5 +82,4 @@ aa.plot_legend(
 import seaborn as sns
 sns.despine()
 plt.tight_layout()
-fig.savefig(OUT, dpi=150, facecolor="white")
-print("saved", OUT, "| features", n_feat, "-> kept", n_keep)
+save_square(OUT)

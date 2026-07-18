@@ -7,16 +7,26 @@ Dashed lines mark the positive-class mean per PC.
 
 Rendered as a 7x7 inch figure at 150 dpi -> 1050x1050 px square.
 """
+import sys
+from pathlib import Path
+
 import matplotlib
 matplotlib.use("Agg")
 import matplotlib.pyplot as plt
 
 import aaanalysis as aa
 
+sys.path.insert(0, str(Path(__file__).resolve().parent))
+from _thumb_utils import save_square  # noqa: E402
+
 aa.options["verbose"] = False
 aa.options["random_state"] = 42
 
-OUT = "/Users/stephanbreimann/Programming/1Packages/aaanalysis/docs/source/_static/img/thumbs/protocol8.png"
+# Write into the docs tree of whichever checkout this script lives in (repo root
+# or a git worktree), so a worktree render never clobbers the main checkout's
+# tracked thumbnail. thumb8.py sits at docs/source/_artwork/thumb_scripts/, so
+# parents[2] is docs/source/.
+OUT = str(Path(__file__).resolve().parents[2] / "_static" / "img" / "thumbs" / "protocol8.png")
 
 # Mine the CPP signature on the labelled DOM_GSEC set (same as the protocol).
 df_seq = aa.load_dataset(name="DOM_GSEC", n=25)
@@ -43,5 +53,4 @@ fig.set_size_inches(7, 7)
 # Leave generous headroom at the bottom for the multi-row legend
 # (saved without bbox_inches="tight").
 fig.subplots_adjust(left=0.13, right=0.97, top=0.96, bottom=0.40)
-fig.savefig(OUT, dpi=150, facecolor="white")
-print("saved", OUT)
+save_square(OUT)

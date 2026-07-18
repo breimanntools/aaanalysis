@@ -6,12 +6,16 @@ the CPP feature map. Pipeline: SequenceFeature.get_df_parts ->
 CPP(df_parts).run -> TreeModel.fit + add_feat_importance ->
 CPPPlot().feature_map. Saved as a clean square tile.
 """
+import sys
 from pathlib import Path
 
 import matplotlib
 matplotlib.use("Agg")
 import matplotlib.pyplot as plt
 import aaanalysis as aa
+
+sys.path.insert(0, str(Path(__file__).resolve().parent))
+from _thumb_utils import save_square  # noqa: E402
 
 # Write into the docs tree of whichever checkout this script lives in (repo root
 # or a git worktree), so a worktree render never clobbers the main checkout's
@@ -68,8 +72,7 @@ def main():
     )
 
     fig.set_size_inches(8, 7)
-    fig.savefig(OUT, dpi=150, facecolor="white")
-    plt.close(fig)
+    save_square(OUT)
 
 
 if __name__ == "__main__":
