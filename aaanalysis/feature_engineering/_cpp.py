@@ -117,17 +117,6 @@ def _resolve_bootstrap_kws(bootstrap_kws=None):
     return cfg["rounds"], cfg["resample"], cfg["frac"]
 
 
-def check_sample_in_df_seq(sample_name=None, df_seq=None) -> None:
-    """Check if sample name in df_seq"""
-    list_names = list(df_seq[ut.COL_NAME])
-    if sample_name not in list_names:
-        error = (
-            f"'sample_name' ('{sample_name}') not in '{ut.COL_NAME}' of 'df_seq'."
-            f"\nValid names are: {list_names}"
-        )
-        raise ValueError(error)
-
-
 def check_match_list_df_feat_list_df_parts(list_df_feat=None, list_df_parts=None) -> None:
     """Check if all elements in list are valid feature DataFrames"""
     for df_feat, df_parts in zip(list_df_feat, list_df_parts):
@@ -168,75 +157,6 @@ def check_match_list_df_feat_names_feature_sets(
         raise ValueError(
             f"Length of 'list_df_feat' ({len(list_df_feat)}) and 'names_feature_sets'"
             f" ({len(names_feature_sets)} does not match) "
-        )
-
-
-def _check_dict_num(df_seq=None, dict_num=None):
-    """Validate ``dict_num`` shape/dtype contract."""
-    if not isinstance(dict_num, dict):
-        raise ValueError(
-            f"'dict_num' ({type(dict_num).__name__}) should be a dict mapping entry to "
-            f"np.ndarray of shape (L, D)."
-        )
-    entries = df_seq[ut.COL_ENTRY].to_list()
-    missing = [e for e in entries if e not in dict_num]
-    if missing:
-        preview = missing[:5] + (["..."] if len(missing) > 5 else [])
-        raise ValueError(
-            f"'dict_num' ({len(missing)} missing entries) should contain every entry "
-            f"in 'df_seq'. Missing: {preview}"
-        )
-    ds = []
-    for entry in entries:
-        emb = dict_num[entry]
-        if not isinstance(emb, np.ndarray):
-            raise ValueError(
-                f"'dict_num[{entry!r}]' ({type(emb).__name__}) should be np.ndarray of shape (L, D)."
-            )
-        if emb.ndim != 2:
-            raise ValueError(
-                f"'dict_num[{entry!r}]' (ndim={emb.ndim}) should be 2D of shape (L, D)."
-            )
-        ds.append(emb.shape[1])
-    if len(set(ds)) > 1:
-        raise ValueError(
-            f"'dict_num' (D values: {sorted(set(ds))}) should have a consistent embedding "
-            f"dimensionality D across all entries."
-        )
-
-
-def _check_dict_num_df_scales_match(dict_num=None, df_scales=None):
-    """When ``dict_num`` is supplied, ``df_scales`` columns name the D dimensions."""
-    D = next(iter(dict_num.values())).shape[1]
-    if len(df_scales.columns) != D:
-        raise ValueError(
-            f"'df_scales' (n_columns={len(df_scales.columns)}) should have D={D} columns "
-            f"matching the embedding dimensionality of 'dict_num'."
-        )
-
-
-def check_match_df_seq_df_parts(
-    df_seq=None, df_parts=None, jmd_n_len=None, jmd_c_len=None
-) -> None:
-    """Verify ``df_seq`` derives parts equal to ``df_parts`` (CPP.run_num parity guard)."""
-    list_parts = list(df_parts)
-    try:
-        df_parts_derived = get_df_parts_(
-            df_seq=df_seq,
-            list_parts=list_parts,
-            jmd_n_len=jmd_n_len,
-            jmd_c_len=jmd_c_len,
-        )
-    except Exception as e:
-        raise ValueError(
-            f"'df_seq' could not be turned into parts matching the CPP instance's "
-            f"'df_parts' (jmd_n_len={jmd_n_len}, jmd_c_len={jmd_c_len}): {e}"
-        ) from e
-    if not df_parts_derived.equals(df_parts):
-        raise ValueError(
-            f"'df_seq' derives parts that disagree with the CPP instance's 'df_parts'. "
-            f"For bit-identical parity with CPP.run, pass the same df_seq that produced "
-            f"the constructor's df_parts (and the same jmd_n_len / jmd_c_len)."
         )
 
 

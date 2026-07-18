@@ -176,26 +176,6 @@ def iter_scale_chunks(arr_3d=None, scale_indices=None, pos_buf=None,
         yield chunk_start, chunk_means_buf[..., :Kc]
 
 
-def gather_means_chunked(arr_3d=None, scale_indices=None, pos_buf=None,
-                         max_mem_mb=256):
-    """Materialize the full ``(n_samples, n_splits, K)`` means matrix.
-
-    Convenience wrapper around ``iter_scale_chunks`` that allocates the full
-    output at once. **Avoid this for large K** — use ``iter_scale_chunks``
-    directly so the per-chunk intermediate is the only resident allocation.
-    """
-    n_samples = arr_3d.shape[0]
-    n_splits = pos_buf.shape[1]
-    K = len(scale_indices)
-    means = np.empty((n_samples, n_splits, K), dtype=np.float64)
-    for chunk_start, chunk_means in iter_scale_chunks(
-        arr_3d=arr_3d, scale_indices=scale_indices, pos_buf=pos_buf,
-        max_mem_mb=max_mem_mb,
-    ):
-        means[:, :, chunk_start : chunk_start + chunk_means.shape[2]] = chunk_means
-    return means
-
-
 # II Main Functions
 def recompute_feature_matrix(
     dict_part_vals=None,

@@ -67,12 +67,6 @@ class PlotElements:
             fig.set_size_inches(figsize, forward=True)
         return fig, ax
 
-    @staticmethod
-    def set_title_(title=None, title_kws=None):
-        """Set the title of the plot."""
-        if title_kws is None:
-            title_kws = {}
-        plt.title(title, **title_kws)
 
     @staticmethod
     def set_y_ticks(ax=None, fs=None):

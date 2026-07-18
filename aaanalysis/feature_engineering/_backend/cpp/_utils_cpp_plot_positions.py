@@ -495,12 +495,6 @@ class PlotPartPositions:
         self.stop = start + self.seq_len - 1
 
     # Helper methods
-    def _get_starts(self, x_shift=0):
-        """Calculate the starting positions for JMD and TMD."""
-        jmd_n_start = 0 + x_shift
-        tmd_start = self.jmd_n_len + x_shift
-        jmd_c_start = self.jmd_n_len + self.tmd_len + x_shift
-        return jmd_n_start, tmd_start, jmd_c_start
 
     def _get_middles(self, x_shift=0.0):
         """Calculate the middle positions for JMD and TMD."""
