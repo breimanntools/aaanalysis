@@ -65,6 +65,22 @@ def check_is_fitted(list_models=None):
         raise ValueError("'AAPred' is not fitted; call 'AAPred.fit' first.")
 
 
+def check_match_X_fitted(X=None, list_models=None):
+    """Check that X's feature count matches the fitted deployment models.
+
+    The fitted estimators expose ``n_features_in_`` (set by scikit-learn during ``fit``). A width
+    mismatch is a caller error (wrong feature matrix) that would otherwise surface as scikit-learn's
+    internal ``"X has N features, but <Estimator> is expecting M ..."`` — this raises a message that
+    names ``'X'`` in the package's own voice instead.
+    """
+    n_expected = getattr(list_models[0], "n_features_in_", None)
+    n_got = np.asarray(X).shape[1]
+    if n_expected is not None and n_got != n_expected:
+        raise ValueError(f"'X' n_features ({n_got}) should match the fitted model's n_features "
+                         f"({n_expected}); pass the same features, in the same order, as used in "
+                         f"'AAPred.fit'.")
+
+
 def check_binary_labels(labels=None):
     """Check that labels define exactly two classes (AAPred is a binary predictor)."""
     classes = list(np.unique(labels))
@@ -902,6 +918,7 @@ class AAPred(Wrapper):
         check_is_fitted(list_models=self.list_models_)
         check_estimators_proba(list_estimators=self._list_estimators, context="predict_proba")
         X = ut.check_X(X=X, min_n_samples=1)
+        check_match_X_fitted(X=X, list_models=self.list_models_)
         ut.check_str_options(name="score_range", val=score_range, list_str_options=ut.LIST_SCORE_RANGES)
         # Score the precomputed matrix with the fitted ensemble (mean/std over models)
         pred, pred_std = self._predict_X(X=X)

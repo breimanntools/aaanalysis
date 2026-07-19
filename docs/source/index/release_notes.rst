@@ -711,6 +711,18 @@ Changed
 Fixed
 ~~~~~
 
+- **Clearer failure messages on the golden pipelines**: an invalid call now names the offending
+  input in the package's own voice. :func:`~aaanalysis.pipe.find_features` validates ``labels`` up
+  front, so a single-class or length-misaligned label vector raises a precise ``ValueError``
+  ("``'labels'`` should contain more than one different value" / "should contain N values") instead
+  of an opaque "produced no valid configurations" runtime error, and
+  :meth:`~aaanalysis.AAPred.predict_proba` raises a self-explaining "``'X'`` n_features (...) should
+  match the fitted model's n_features" instead of scikit-learn's internal estimator message when a
+  feature matrix has the wrong width. The failure contract of the golden pipelines and the CPP to
+  :class:`~aaanalysis.AAPred` path (a bare ``ValueError`` / ``RuntimeError``, or an install-hint
+  ``ImportError`` for a missing ``[pro]`` dependency) is now regression-guarded by an integration
+  test suite and, from an installed distribution, by the packaging smoke check. See
+  :ref:`Failure contracts <error_contracts>`.
 - **Source install from the sdist now builds**: the published sdist previously omitted the Cython
   source ``_filters_c/_inner.pyx``, so the default ``python -m build`` (which builds the wheel from
   the sdist) and any source install (``pip install <sdist>``, ``pip install aaanalysis --no-binary``)

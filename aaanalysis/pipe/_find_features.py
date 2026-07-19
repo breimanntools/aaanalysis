@@ -534,6 +534,10 @@ def find_features(labels: ut.ArrayLike1D,
     ut.check_str_options(name="selection_scope", val=selection_scope,
                          list_str_options=["global", "fold"])
     ut.check_df_seq(df_seq=df_seq)
+    # Validate labels up front (one per df_seq row) so a single-class, misaligned, or empty
+    # label vector raises a precise ValueError naming 'labels' here, instead of surfacing later
+    # as an opaque "produced no valid configurations" runtime error from the internal search.
+    ut.check_labels(labels=labels, len_required=len(df_seq))
     ut.check_bool(name="simplify", val=simplify)
     for m in (model if isinstance(model, (list, tuple)) else [model]):
         if isinstance(m, str):
