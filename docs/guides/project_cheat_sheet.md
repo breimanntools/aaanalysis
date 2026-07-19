@@ -191,7 +191,8 @@ CI/CD tools automate testing and deployment.
 - **Test Coverage** (`test_coverage.yml`): Runs on push/PR to master. Installs `.[pro]`, runs pytest with coverage, uploads to Codecov.
 - **Integration & E2E Tests** (`integration_e2e.yml`): Runs on push/PR to master. Core-only, offline; runs `tests/integration` + `tests/e2e` on Ubuntu py3.10 + 3.14 (excluded from the Unit Tests matrix — ADR-0031).
 - **Packaging** (`packaging.yml`): Runs on push/PR to master. Builds sdist + wheel with the default `python -m build`, installs **both** the wheel and the sdist into separate fresh base-deps-only venvs, and asserts the public API imports + bundled `_data` loads (Ubuntu py3.10 + 3.14). The sdist ships the Cython sources via `MANIFEST.in`.
-- **Build Wheels** (`build_wheels.yml`): Runs on release. Builds wheels via cibuildwheel and publishes to PyPI.
+- **Release** (`release.yml`): The sole publisher. Runs when a GitHub Release is published — builds the full `cibuildwheel` matrix + sdist and uploads to PyPI via OIDC trusted publishing (no long-lived tokens; requires the `pypi` trusted publisher + GitHub `pypi` environment). A manual `workflow_dispatch` builds the same artifacts as a dry run but never publishes.
+- **Build Wheels** (`build_wheels.yml`): Manual (`workflow_dispatch`) wheel-build / parity sanity check only. Builds the `cibuildwheel` matrix as downloadable artifacts; does **not** run on release and does **not** publish (publishing is owned by `release.yml`).
 
 (Workflows are managed via YAML files in `.github/workflows/`; no bash commands needed.)
 

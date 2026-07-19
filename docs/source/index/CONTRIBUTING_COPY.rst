@@ -439,78 +439,87 @@ version with its date.
 Building New PyPi package version
 ---------------------------------
 
-AAanalysis is packaged with the setuptools build backend (for the Cython kernel) and released using uv. To create and publish a new version on PyPi, follow these steps:
+AAanalysis compiles a Cython kernel, so every release ships **platform wheels and a
+source distribution**. Publishing is automated and token-free: **cutting a GitHub
+Release is the publish action.** Publishing a Release triggers the canonical workflow
+``.github/workflows/release.yml``, which builds the full wheel matrix (Linux, macOS
+and Windows across every supported Python version) plus the sdist with
+``cibuildwheel``, then uploads them to PyPI over **OIDC trusted publishing** -- no
+long-lived API tokens and no manual ``uv publish`` step. Because every wheel is built
+in CI, the published release installs cleanly with ``pip install aaanalysis``,
+``uv add aaanalysis``, or any other installer, on every supported platform.
 
-1. **Ensure uv is installed**
+**One-time setup** (must already exist before the first release; needed again only if
+the project is re-hosted or the environment is removed):
 
-   If uv is not installed, install it (see https://docs.astral.sh/uv/ for options):
+- a **PyPI trusted publisher** registered for this repository at
+  https://pypi.org/manage/project/aaanalysis/settings/publishing/ , pointing at
+  workflow ``release.yml`` and environment ``pypi``; and
+- a GitHub deployment **environment named** ``pypi``.
 
-   .. code-block:: bash
+Until both exist, PyPI rejects the OIDC exchange and the publish step fails closed.
 
-      pip install uv
+To cut a release:
 
-2. **Confirm the version to release**
+1. **Confirm the version to release.**
 
    ``master`` already carries the next unreleased version (see `Version truth`_), so
-   the number in ``pyproject.toml`` is normally the one you are about to release.
-   Confirm it still matches the change set instead of bumping it a second time.
-
+   the number in ``pyproject.toml`` is normally the one you are about to release --
+   confirm it still matches the change set instead of bumping it a second time.
    Versioning follows semantic versioning:
 
    - **MAJOR**: incompatible API changes
    - **MINOR**: backward-compatible new functionality
    - **PATCH**: backward-compatible bug fixes
 
-   If the number needs to change, edit ``[project] version`` in ``pyproject.toml``
-   (uv can do it for you):
+   If the number must change, edit ``[project] version`` in ``pyproject.toml``
+   (``uv version --bump patch`` / ``minor`` / ``major``).
 
-   .. code-block:: bash
+2. **Stamp the release notes and merge to master.**
 
-      uv version --bump patch
-      # or
-      uv version --bump minor
-      # or
-      uv version --bump major
+   Rename the ``Unreleased`` heading in ``CHANGELOG.md`` and
+   ``docs/source/index/release_notes.rst`` to this version with its release date, and
+   merge that to ``master``. You release *from* this commit.
 
-   Then rename the ``Unreleased`` heading in ``CHANGELOG.md`` and
-   ``docs/source/index/release_notes.rst`` to this version with its release date.
-
-3. **Build the package**
-
-   From the project root directory, build the distribution files:
+3. **(Optional) Local sanity build.**
 
    .. code-block:: bash
 
       uv build
 
-   This creates the source distribution and wheel files in the ``dist`` directory.
+   This writes an sdist and a *single* platform wheel to ``dist/`` -- handy for
+   eyeballing the built metadata, but it is **not** what gets published (the release
+   rebuilds every wheel in CI). Do not upload it by hand.
 
-4. **Publish to PyPI (automated via trusted publishing, no tokens)**
+4. **Cut the GitHub Release.**
 
-   Publishing is owned by the canonical release workflow
-   (``.github/workflows/release.yml``): publishing a GitHub Release for the tag
-   builds the wheels and source distribution and uploads them to PyPI via **OIDC
-   trusted publishing**, so there are no long-lived API tokens and no manual
-   ``uv publish`` step. Do not publish manually; the token-based ``uv publish`` /
-   ``UV_PUBLISH_TOKEN`` path has been retired.
+   Draft a new Release, target the stamped commit, and give it a **new tag**
+   ``vX.Y.Z`` -- the Release creates the tag. Publishing the Release triggers
+   ``release.yml``; watch the run to green. (The build jobs also run on a manual
+   ``workflow_dispatch`` as a dry run, but the publish step runs **only** for a real
+   Release.)
 
-5. **Verify the upload**
+   .. code-block:: text
 
-   After publishing, verify that the package appears correctly on PyPI and that the metadata and files are accurate.
+      GitHub -> Releases -> Draft a new release
+        Choose a tag:  v1.1.0   ("Create new tag: v1.1.0 on publish"); target = release commit
+        Release title: v1.1.0
+        Description:   the release_notes / CHANGELOG entry for this version
+      -> Publish release
 
-6. **Tag the release, then bump master ahead again**
+5. **Verify the upload.**
 
-   Tag the released commit and push the tag:
+   Confirm the version, files and metadata on https://pypi.org/project/aaanalysis/ ,
+   then smoke-test a clean install from PyPI -- e.g. ``pip install aaanalysis`` in a
+   fresh virtual environment (and/or ``uv add aaanalysis`` in a scratch project) --
+   and check ``import aaanalysis as aa; aa.__version__``.
 
-   .. code-block:: bash
+6. **Bump master ahead again.**
 
-      git tag -a v1.1.0 -m "v1.1.0"
-      git push origin v1.1.0
-
-   Then **immediately** bump ``[project] version`` in ``pyproject.toml`` to the next
+   **Immediately** bump ``[project] version`` in ``pyproject.toml`` to the next
    unreleased number (e.g. ``1.2.0``) and open a fresh ``Unreleased`` section in
-   ``CHANGELOG.md`` and ``docs/source/index/release_notes.rst``. This is the step that
-   keeps `Version truth`_ intact: until it lands, ``master`` reports a version that is
+   ``CHANGELOG.md`` and ``docs/source/index/release_notes.rst``. This keeps
+   `Version truth`_ intact: until it lands, ``master`` reports a version that is
    already on PyPI and the ``Version Guard`` workflow fails -- by design, as the
    reminder that the bump is still owed.
 
