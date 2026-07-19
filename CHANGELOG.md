@@ -15,6 +15,8 @@ notes — with cross-references and examples — live in
 
 ## [Unreleased]
 
+## [1.1.0] - 2026-07-19
+
 This release substantially expands the feature-engineering surface: a unified
 feature-preprocessor family (embedding / structure / annotation sources), a
 numerical mode for CPP, a configuration-sweep wrapper, sequence-window sampling,
@@ -192,9 +194,11 @@ and a suite of site-localization metrics and plotting helpers.
 - Test release of the first beta version (`CPP`, `dPULearn`, `AAclust`,
   `SequenceFeature`, `load_dataset`, `load_scales`).
 
-<!-- Only tags 0.1.1, v1.0.0, v1.0.3 exist; intermediate versions (1.0.1/1.0.2,
-     0.1.2–0.1.5) were never tagged, so only the real tags are linked here. -->
-[Unreleased]: https://github.com/breimanntools/aaanalysis/compare/v1.0.3...HEAD
+<!-- Real tags: 0.1.1, v1.0.0, v1.0.3, and v1.1.0 (this release); intermediate
+     versions (1.0.1/1.0.2, 0.1.2–0.1.5) were never tagged, so only the real tags
+     are linked here. -->
+[Unreleased]: https://github.com/breimanntools/aaanalysis/compare/v1.1.0...HEAD
+[1.1.0]: https://github.com/breimanntools/aaanalysis/compare/v1.0.3...v1.1.0
 [1.0.3]: https://github.com/breimanntools/aaanalysis/compare/v1.0.0...v1.0.3
 [1.0.0]: https://github.com/breimanntools/aaanalysis/compare/0.1.1...v1.0.0
 [0.1.1]: https://github.com/breimanntools/aaanalysis/releases/tag/0.1.1
