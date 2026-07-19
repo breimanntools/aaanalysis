@@ -183,6 +183,21 @@ class TestFindFeatures:
             with pytest.raises(ValueError):
                 ap.find_features(labels, df_seq=df_seq, search="fast", model=bad, plot=False)
 
+    def test_invalid_labels(self):
+        # None, single-class, and a length-misaligned vector are all rejected by the frontend
+        # check_labels before the search runs.
+        for bad in [None, [1] * len(df_seq), labels[:-1]]:
+            with pytest.raises(ValueError):
+                ap.find_features(bad, df_seq=df_seq, search="fast", plot=False)
+
+    def test_labels_error_message_is_precise(self):
+        # Regression: a degenerate/misaligned label vector must raise a ValueError naming 'labels',
+        # not surface later as the opaque "produced no valid configurations" runtime error.
+        with pytest.raises(ValueError, match="more than one different value"):
+            ap.find_features([1] * len(df_seq), df_seq=df_seq, search="fast", plot=False)
+        with pytest.raises(ValueError, match=r"'labels' \(n=\d+\) should contain \d+ values"):
+            ap.find_features(labels[:-1], df_seq=df_seq, search="fast", plot=False)
+
     def test_invalid_cv(self):
         for bad in [1, 0, -1, "x"]:
             with pytest.raises(ValueError):

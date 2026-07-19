@@ -928,6 +928,20 @@ class TestAAPredPredictProba:
         with pytest.raises(ValueError):
             aap.predict_proba(X, score_range="pct")
 
+    def test_feature_width_mismatch_raises(self):
+        # A matrix whose width does not match fit raises a self-explaining ValueError naming 'X',
+        # not scikit-learn's internal "<Estimator> is expecting M features".
+        X, labels = _data(n_feat=6)
+        aap = aa.AAPred(models=["rf"], random_state=0).fit(X, labels)
+        with pytest.raises(ValueError,
+                           match=r"'X' n_features \(3\) should match the fitted model's n_features \(6\)"):
+            aap.predict_proba(np.asarray(X)[:, :3])
+
+    def test_unfitted_predict_proba_raises(self):
+        X, _ = _data()
+        with pytest.raises(ValueError, match="'AAPred' is not fitted"):
+            aa.AAPred().predict_proba(X)
+
     def test_single_sample(self):
         # min_n_samples=1: a one-row candidate matrix scores fine (no identical-samples guard).
         X, labels = _data()
