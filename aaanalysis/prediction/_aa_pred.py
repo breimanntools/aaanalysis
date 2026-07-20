@@ -253,7 +253,7 @@ class AAPred(Wrapper):
     """
 
     def __init__(self,
-                 models: Optional[Union[str, "BaseEstimator", List]] = None,
+                 *, models: Optional[Union[str, "BaseEstimator", List]] = None,
                  list_model_classes: Optional[List[Type[Union[ClassifierMixin, BaseEstimator]]]] = None,
                  list_model_kwargs: Optional[List[Dict]] = None,
                  list_metrics: Optional[List[str]] = None,
@@ -376,7 +376,7 @@ class AAPred(Wrapper):
     def fit(self,
             X: ut.ArrayLike2D,
             labels: ut.ArrayLike1D,
-            label_pos: int = 1,
+            *, label_pos: int = 1,
             optimize_hyperparams: bool = False,
             param_grids: Optional[Union[Dict, List[Dict]]] = None,
             n_cv: int = 5,
@@ -453,7 +453,7 @@ class AAPred(Wrapper):
     def eval(self,
              X: ut.ArrayLike2D,
              labels: ut.ArrayLike1D,
-             X_holdout: Optional[ut.ArrayLike2D] = None,
+             *, X_holdout: Optional[ut.ArrayLike2D] = None,
              labels_holdout: Optional[ut.ArrayLike1D] = None,
              metrics: Optional[List[str]] = None,
              n_cv: int = 5,
@@ -592,7 +592,7 @@ class AAPred(Wrapper):
     def predict_oof(self,
                     X: ut.ArrayLike2D,
                     labels: ut.ArrayLike1D,
-                    label_pos: int = 1,
+                    *, label_pos: int = 1,
                     n_cv: int = 5,
                     score_range: str = "proba",
                     ) -> pd.DataFrame:
@@ -667,7 +667,7 @@ class AAPred(Wrapper):
     def score_to_group(scores: ut.ArrayLike1D,
                        thresholds: List[Union[int, float]],
                        labels: List[str],
-                       score_range: str = "percent",
+                       *, score_range: str = "percent",
                        ) -> pd.Series:
         """
         Map prediction scores to an ordered categorical of named confidence groups.
@@ -747,7 +747,7 @@ class AAPred(Wrapper):
 
     def predict(self,
                 df_seq: pd.DataFrame,
-                level: str = "sequence",
+                *, level: str = "sequence",
                 threshold: Optional[Union[int, float]] = None,
                 list_parts: Optional[List[str]] = None,
                 window: int = 3,
@@ -863,7 +863,7 @@ class AAPred(Wrapper):
 
     def predict_proba(self,
                       X: ut.ArrayLike2D,
-                      score_range: str = "proba",
+                      *, score_range: str = "proba",
                       ) -> pd.DataFrame:
         """
         Score a precomputed feature matrix with the fitted deployment ensemble.

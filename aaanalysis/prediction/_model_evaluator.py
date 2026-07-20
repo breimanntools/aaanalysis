@@ -167,7 +167,7 @@ class ModelEvaluator(Tool):
     """
 
     def __init__(self,
-                 models: Optional[Union[str, BaseEstimator, List]] = None,
+                 *, models: Optional[Union[str, BaseEstimator, List]] = None,
                  list_metrics: Optional[List[str]] = None,
                  verbose: bool = True,
                  random_state: Optional[int] = None,
@@ -227,7 +227,7 @@ class ModelEvaluator(Tool):
     def run(self,
             X: ut.ArrayLike2D,
             labels: ut.ArrayLike1D,
-            n_cv: int = 5,
+            *, n_cv: int = 5,
             n_rounds: int = 1,
             metrics: Optional[List[str]] = None,
             ci: Optional[float] = 0.95,
@@ -300,7 +300,7 @@ class ModelEvaluator(Tool):
         return df_eval
 
     def eval(self,
-             metric: Optional[str] = None,
+             *, metric: Optional[str] = None,
              ci: Optional[float] = 0.95,
              random_state: Optional[int] = None,
              ) -> pd.DataFrame:

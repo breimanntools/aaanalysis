@@ -51,7 +51,7 @@ class SeqOptPlot:
 
     """
     def __init__(self,
-                 verbose: bool = False,
+                 *, verbose: bool = False,
                  ):
         """
         Parameters
@@ -70,7 +70,7 @@ class SeqOptPlot:
                      df_pareto: pd.DataFrame,
                      x: str,
                      y: str,
-                     z: Optional[str] = None,
+                     *, z: Optional[str] = None,
                      ax: Optional[Axes] = None,
                      figsize: tuple = (6, 5),
                      front_only: bool = False,
@@ -146,7 +146,7 @@ class SeqOptPlot:
 
     def hypervolume(self,
                     trajectory: ut.ArrayLike1D,
-                    ax: Optional[Axes] = None,
+                    *, ax: Optional[Axes] = None,
                     figsize: tuple = (6, 4),
                     ) -> Tuple[Figure, Axes]:
         """
@@ -186,7 +186,7 @@ class SeqOptPlot:
 
     def convergence(self,
                     history: pd.DataFrame,
-                    figsize: tuple = (6, 7),
+                    *, figsize: tuple = (6, 7),
                     ) -> Tuple[Figure, List[Axes]]:
         """
         Plot per-generation convergence: hypervolume, spread and per-objective best.
@@ -244,7 +244,7 @@ class SeqOptPlot:
     def parallel_coordinates(self,
                              df_pareto: pd.DataFrame,
                              objectives: List[str],
-                             ax: Optional[Axes] = None,
+                             *, ax: Optional[Axes] = None,
                              figsize: tuple = (7, 4),
                              front_only: bool = True,
                              cmap: str = "viridis_r",
@@ -310,7 +310,7 @@ class SeqOptPlot:
 
     def mutation_map(self,
                      df_pareto: pd.DataFrame,
-                     ax: Optional[Axes] = None,
+                     *, ax: Optional[Axes] = None,
                      figsize: tuple = (8, 4),
                      front_only: bool = True,
                      cmap: str = "Reds",
@@ -380,7 +380,7 @@ class SeqOptPlot:
 
     def genealogy(self,
                   df_pareto: pd.DataFrame,
-                  ax: Optional[Axes] = None,
+                  *, ax: Optional[Axes] = None,
                   figsize: tuple = (8, 5),
                   front_only: bool = True,
                   cmap: str = "viridis",
