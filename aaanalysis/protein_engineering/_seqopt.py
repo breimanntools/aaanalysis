@@ -169,7 +169,7 @@ class SeqOpt(Tool):
     ``region``, ``to_aa``), the ``algorithm="greedy"`` baseline, and any ``callable(sequence)``
     objective.
 
-    .. versionadded:: 1.0.0
+    .. versionadded:: 1.1.0
 
     """
     def __init__(self,

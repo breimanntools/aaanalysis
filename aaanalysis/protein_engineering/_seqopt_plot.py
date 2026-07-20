@@ -47,7 +47,7 @@ class SeqOptPlot:
     ``fig, ax = ...``. For backward compatibility, the returned object also forwards attribute
     access to ``ax``.
 
-    .. versionadded:: 1.0.0
+    .. versionadded:: 1.1.0
 
     """
     def __init__(self,
