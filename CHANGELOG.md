@@ -20,9 +20,31 @@ notes — with cross-references and examples — live in
 This release substantially expands the feature-engineering surface: a unified
 feature-preprocessor family (embedding / structure / annotation sources), a
 numerical mode for CPP, a configuration-sweep wrapper, sequence-window sampling,
-and a suite of site-localization metrics and plotting helpers.
+and a suite of site-localization metrics and plotting helpers. It also introduces
+a prediction tier (`AAPred`, `ModelEvaluator`, `ReliabilityModel`), a
+multi-objective design tier (`SeqOpt`), a scikit-learn transformer, and the
+`aaanalysis.pipe` convenience API. The public surface grows from 31 to 54
+re-exported symbols.
 
 ### Added
+- **Prediction tier**: `AAPred` / `AAPredPlot` (evaluate and deploy sequence-based
+  prediction models), `ModelEvaluator` / `ModelEvaluatorPlot` (cross-validated
+  evaluation and paired model comparison with bootstrap confidence intervals), and
+  `ReliabilityModel` / `ReliabilityModelPlot` (per-prediction trust: probability
+  calibration, applicability-domain / out-of-distribution scoring, conformal sets).
+- **Design tier**: `SeqOpt` / `SeqOptPlot` — multi-objective, ML-guided directed
+  evolution over sequence variants (NSGA-II), with Pareto-front, hypervolume,
+  convergence and genealogy plots.
+- `SequenceFeatureTransformer`: leak-free CPP feature selection exposed as a
+  scikit-learn transformer (`fit` / `transform` / `get_feature_names_out`), so CPP
+  features can be used inside a `Pipeline` without leaking across folds.
+- `aaanalysis.pipe` (`ap`): a second, stateless convenience API of high-level
+  "golden pipelines" — `obtain_samples`, `find_features`, `predict_samples` and
+  `plot_eval` (plus `explain_features` under `[pro]`).
+- Named sample-color constants `COLOR_SAMPLES_POS` / `COLOR_SAMPLES_NEG` /
+  `COLOR_SAMPLES_UNL` / `COLOR_SAMPLES_REL_NEG`, so the positive / negative /
+  unlabeled / reliable-negative palette can be referenced by name rather than
+  duplicated as literals.
 - `EmbeddingPreprocessor`, `StructurePreprocessor` (`[pro]`),
   `AnnotationPreprocessor` (`[pro]`), and `combine_dict_nums` for building
   per-residue numerical tensors as `CPP.run_num` input. New `[embed]` extra
@@ -121,10 +143,15 @@ and a suite of site-localization metrics and plotting helpers.
   each as its own tier-declared PR. No user-facing behavior change.
 
 ### Deprecated
-- None. The strict-semver deprecation policy and the `deprecated` decorator are
-  now in force for all future public-API renames and removals.
+- `AAlogo` / `AAlogoPlot` are deprecated in favour of the PascalCase `AALogo` /
+  `AALogoPlot`. The old names remain importable from both `aaanalysis` and
+  `aaanalysis.seq_analysis` and now emit a `DeprecationWarning` on attribute
+  access; they are scheduled for removal in the next major release. Existing code
+  keeps working unchanged — update the import at your convenience.
+- The strict-semver deprecation policy and the `deprecated` decorator are now in
+  force for all further public-API renames and removals.
 
-## [1.0.3] - 2026-04-06
+## [1.0.3] - 2026-04-28
 ### Added
 - `AALogo` and `AALogoPlot` for amino acid logo visualization.
 

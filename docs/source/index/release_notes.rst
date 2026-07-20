@@ -785,11 +785,23 @@ Fixed
     part length, deduped, with a ``UserWarning``. The staged ``balanced`` / ``exhaustive`` searches
     no longer hard-error on short parts. On normal (long-part) inputs the range cap is a no-op.
 
+Deprecated
+~~~~~~~~~~
+
+- **``AAlogo`` / ``AAlogoPlot`` are deprecated** in favour of the PascalCase
+  :class:`~aaanalysis.AALogo` / :class:`~aaanalysis.AALogoPlot`. The old names remain
+  importable from both ``aaanalysis`` and ``aaanalysis.seq_analysis`` and now emit a
+  ``DeprecationWarning`` on attribute access; they are scheduled for removal in the next
+  major release. Existing code keeps working unchanged, so the import can be updated at
+  your convenience.
+- The strict-semver deprecation policy and the ``deprecated`` decorator are now in force
+  for all further public-API renames and removals.
+
 
 Version 1.0 (Stable Version)
 --------------------------------
 
-v1.0.3 (2026-04-06)
+v1.0.3 (2026-04-28)
 --------------------------------
 
 Added
