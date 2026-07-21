@@ -87,8 +87,14 @@ def apply_applicability_domain(state, X_new):
     else:
         maha = np.sqrt(np.clip(np.einsum("ij,jk,ik->i", diff, state["inv_cov"], diff), 0, None))
         leverage = np.einsum("ij,jk,ik->i", diff, state["gram_inv"], diff)
-    return dict(ood_score=(knn / thr if thr > 0 else knn),
-                in_domain=(knn <= thr if thr > 0 else np.ones(len(Xnew), dtype=bool)),
+    # A non-positive or non-finite threshold means the training reference carries no usable
+    # spread (e.g. duplicate or constant rows), so "inside the domain" is not established for
+    # any sample. Report that as unknown (NaN score, in_domain False) rather than waving every
+    # sample through -- a silent all-in-domain verdict is the exact failure an applicability
+    # domain exists to prevent.
+    usable_thr = bool(np.isfinite(thr)) and thr > 0
+    return dict(ood_score=(knn / thr if usable_thr else np.full(len(Xnew), np.nan)),
+                in_domain=(knn <= thr if usable_thr else np.zeros(len(Xnew), dtype=bool)),
                 knn=knn, maha=maha, leverage=leverage)
 
 

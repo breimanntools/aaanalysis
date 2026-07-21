@@ -505,7 +505,7 @@ class AAPredPlot:
 
     @staticmethod
     def predict_sample(data: Optional[pd.DataFrame] = None,
-                       kind: str = "window",
+                       *, kind: str = "window",
                        ax: Optional[Axes] = None,
                        figsize: Optional[Tuple[Union[int, float], Union[int, float]]] = None,
                        entry: Optional[str] = None,
@@ -668,7 +668,7 @@ class AAPredPlot:
 
     @staticmethod
     def predict_group(data: Union[pd.DataFrame, ut.ArrayLike1D, ut.ArrayLike2D],
-                       kind: str = "hist",
+                       *, kind: str = "hist",
                        ax: Optional[Axes] = None,
                        figsize: Optional[Tuple[Union[int, float], Union[int, float]]] = None,
                        labels: Optional[ut.ArrayLike1D] = None,
@@ -925,7 +925,7 @@ class AAPredPlot:
 
     @staticmethod
     def group_cluster(X: Union[pd.DataFrame, ut.ArrayLike2D],
-                      kind: str = "clustermap",
+                      *, kind: str = "clustermap",
                       labels: Optional[ut.ArrayLike1D] = None,
                       dict_color: Optional[Dict[Union[int, str], str]] = None,
                       legend_title: str = "Class",
@@ -1014,7 +1014,7 @@ class AAPredPlot:
 
     @staticmethod
     def eval(df_eval: pd.DataFrame,
-             kind: str = "eval",
+             *, kind: str = "eval",
              ax: Optional[Axes] = None,
              figsize: Optional[Tuple[Union[int, float], Union[int, float]]] = None,
              dict_color: Optional[Union[Dict[str, str], List[str]]] = None,

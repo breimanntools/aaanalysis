@@ -229,6 +229,25 @@ class TestPredict:
         assert df["entropy"].between(0, 1.0001).all()
         assert df["conformal_set"].isin(["neg", "pos", "both", "none"]).all()
 
+    def test_degenerate_reference_is_not_silently_in_domain(self):
+        """A training reference with no spread must not wave every sample through.
+
+        A few distinct rows, each heavily duplicated, passes the unique-samples guard but
+        still drives every training kNN distance to 0, so the domain boundary collapses.
+        Nothing can be established as inside it, and the honest report is 'not in domain'
+        with an undefined score -- never a blanket ``in_domain=True``, which is precisely
+        the failure an applicability domain exists to prevent.
+        """
+        n_features, n_copies = 8, 20
+        distinct = np.array([[0.0] * n_features, [1.0] * n_features, [2.0] * n_features])
+        Xtr = np.repeat(distinct, n_copies, axis=0)
+        ytr = np.array([0, 1] * (len(Xtr) // 2))
+        Xfar = np.full((3, n_features), 99.0)
+        df = aa.ReliabilityModel(random_state=0).fit(Xtr, ytr, n_bootstrap=3).predict(Xfar)
+        assert not df["in_domain"].any()
+        assert df["ood_score"].isna().all()
+        assert not df["reliable"].any()
+
 
 class TestDistinctions:
     """Pin the mental model: score != trust; OOD overrides a high score."""

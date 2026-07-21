@@ -134,7 +134,7 @@ class ReliabilityModel(Wrapper):
     """
 
     def __init__(self,
-                 verbose: bool = True,
+                 *, verbose: bool = True,
                  random_state: Optional[int] = None,
                  ):
         """
@@ -162,7 +162,7 @@ class ReliabilityModel(Wrapper):
     def fit(self,
             X: ut.ArrayLike2D,
             labels: ut.ArrayLike1D,
-            model: Optional[Union[object, List]] = None,
+            *, model: Optional[Union[object, List]] = None,
             label_pos: int = 1,
             k: int = 5,
             ad_percentile: float = 95.0,
@@ -372,7 +372,7 @@ class ReliabilityModel(Wrapper):
             ut.COL_RELIABLE: reliable})
 
     def eval(self,
-             X: Optional[ut.ArrayLike2D] = None,
+             *, X: Optional[ut.ArrayLike2D] = None,
              labels: Optional[ut.ArrayLike1D] = None,
              n_bins: int = 5,
              ) -> pd.DataFrame:

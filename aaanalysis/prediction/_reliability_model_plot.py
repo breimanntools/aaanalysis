@@ -44,7 +44,7 @@ class ReliabilityModelPlot:
 
     @staticmethod
     def ranking(df_rel: pd.DataFrame,
-                names: Optional[list] = None,
+                *, names: Optional[list] = None,
                 figsize: Optional[Tuple[float, float]] = None,
                 top_n: Optional[int] = None,
                 title: Optional[str] = None,
@@ -96,7 +96,7 @@ class ReliabilityModelPlot:
 
     @staticmethod
     def reliability_diagram(df_eval: pd.DataFrame,
-                            figsize: Tuple[float, float] = (5, 5),
+                            *, figsize: Tuple[float, float] = (5, 5),
                             color: str = "tab:blue",
                             title: Optional[str] = None,
                             ax: Optional[Axes] = None,
@@ -137,7 +137,7 @@ class ReliabilityModelPlot:
 
     @staticmethod
     def ood_hist(df_rel: pd.DataFrame,
-                 figsize: Tuple[float, float] = (6, 4.5),
+                 *, figsize: Tuple[float, float] = (6, 4.5),
                  bins: int = 20,
                  color: str = "tab:gray",
                  title: Optional[str] = None,
@@ -182,7 +182,7 @@ class ReliabilityModelPlot:
 
     @staticmethod
     def trust_map(df_rel: pd.DataFrame,
-                  figsize: Tuple[float, float] = (5.5, 5),
+                  *, figsize: Tuple[float, float] = (5.5, 5),
                   title: Optional[str] = None,
                   ax: Optional[Axes] = None,
                   ) -> Tuple[Figure, Axes]:

@@ -169,11 +169,11 @@ class SeqOpt(Tool):
     ``region``, ``to_aa``), the ``algorithm="greedy"`` baseline, and any ``callable(sequence)``
     objective.
 
-    .. versionadded:: 1.0.0
+    .. versionadded:: 1.1.0
 
     """
     def __init__(self,
-                 mode: str = "impact",
+                 *, mode: str = "impact",
                  model: Optional[Any] = None,
                  target_class: Optional[Any] = None,
                  df_seq_ref: Optional[pd.DataFrame] = None,
@@ -384,7 +384,7 @@ class SeqOpt(Tool):
             df_seq: pd.DataFrame,
             df_feat: pd.DataFrame,
             objectives: List[Tuple[str, str, Any]],
-            algorithm: str = "nsga2",
+            *, algorithm: str = "nsga2",
             pop_size: int = 50,
             n_gen: int = 20,
             crossover: str = "uniform",
@@ -625,7 +625,7 @@ class SeqOpt(Tool):
 
     def eval(self,
              df_pareto: pd.DataFrame,
-             ref_point: Optional[ut.ArrayLike1D] = None,
+             *, ref_point: Optional[ut.ArrayLike1D] = None,
              ref_front: Optional[ut.ArrayLike2D] = None,
              ) -> pd.DataFrame:
         """

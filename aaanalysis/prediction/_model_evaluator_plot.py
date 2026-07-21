@@ -41,7 +41,7 @@ class ModelEvaluatorPlot:
 
     @staticmethod
     def scores(df_eval: pd.DataFrame,
-               figsize: Tuple[Union[int, float], Union[int, float]] = (6, 4),
+               *, figsize: Tuple[Union[int, float], Union[int, float]] = (6, 4),
                colors: Optional[List[str]] = None,
                metrics: Optional[List[str]] = None,
                ) -> Tuple[Figure, Axes]:
@@ -101,7 +101,7 @@ class ModelEvaluatorPlot:
 
     @staticmethod
     def compare(df_eval: pd.DataFrame,
-                figsize: Tuple[Union[int, float], Union[int, float]] = (6, 4),
+                *, figsize: Tuple[Union[int, float], Union[int, float]] = (6, 4),
                 colors: Optional[List[str]] = None,
                 alpha: float = 0.05,
                 ) -> Tuple[Figure, Axes]:
