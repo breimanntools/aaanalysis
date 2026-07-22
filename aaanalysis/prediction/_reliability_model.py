@@ -107,6 +107,12 @@ class ReliabilityModel(Wrapper):
     (features here are a descriptor space), calibration follows [Guo17]_ (a raw ``predict_proba`` is
     not a confidence until calibrated), and the conformal set follows [Angelopoulos23]_.
 
+    .. warning::
+
+        **Experimental.** This class is part of the new v1.1.0 prediction layer and is under active
+        development; its API (signatures, defaults, return objects) may change between minor releases
+        without the usual deprecation cycle. Pin a version if you depend on the current behaviour.
+
     .. versionadded:: 1.1.0
 
     Notes

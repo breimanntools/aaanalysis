@@ -169,6 +169,12 @@ class SeqOpt(Tool):
     ``region``, ``to_aa``), the ``algorithm="greedy"`` baseline, and any ``callable(sequence)``
     objective.
 
+    .. warning::
+
+        **Experimental.** This class is part of the new v1.1.0 protein-design/optimization layer and is
+        under active development; its API (signatures, defaults, return objects) may change between minor
+        releases without the usual deprecation cycle. Pin a version if you depend on the current behaviour.
+
     .. versionadded:: 1.1.0
 
     """
