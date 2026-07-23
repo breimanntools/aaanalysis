@@ -7,7 +7,7 @@ single highest-impact axis against ``n_filter``; Stage 3 refines the winning fea
 configuration across all metrics wins, scored by the average cross-validated performance of one or
 more models.
 """
-from typing import Optional, List, Tuple, Union, Dict, Literal
+from typing import Optional, List, Tuple, Union, Dict, Literal, Callable
 import warnings
 import numpy as np
 import pandas as pd
@@ -88,7 +88,7 @@ _LIST_MODELS = [ut.MODEL_SVM, ut.MODEL_RF, ut.MODEL_LOG_REG]
 _PERIODIC_STEP0 = 3
 
 
-def _split_kws_for(split_types=None, n_split_max=15, len_max=15):
+def _split_kws_for(*, split_types: List[str], n_split_max: int = 15, len_max: int = 15) -> dict:
     """Build ``split_kws`` from the frontend ``SequenceFeature.get_split_kws``.
 
     Threads the Segment ``n_split_max`` and Pattern ``len_max`` levers through the public
@@ -98,7 +98,8 @@ def _split_kws_for(split_types=None, n_split_max=15, len_max=15):
                                          n_split_max=n_split_max, len_max=len_max)
 
 
-def _fit_split_kws_to_parts(split_types=None, n_split_max=15, len_max=15, df_parts=None):
+def _fit_split_kws_to_parts(*, split_types: List[str], n_split_max: int = 15, len_max: int = 15,
+                            df_parts: pd.DataFrame) -> dict:
     """Adapt the requested split config to the shortest sequence part (free-peptide safety net).
 
     A part of length ``L`` can only carry a ``Segment`` with ``n_split_max <= L``, a ``Pattern``
@@ -133,7 +134,7 @@ def _fit_split_kws_to_parts(split_types=None, n_split_max=15, len_max=15, df_par
     return split_kws
 
 
-def _cap_n_split_range(sf=None, df_seq=None, cfg=None):
+def _cap_n_split_range(*, sf: SequenceFeature, df_seq: pd.DataFrame, cfg: dict) -> int:
     """Clamp the swept ``n_split_max`` values to the longest achievable shortest part, dedupe, warn.
 
     A ``Segment`` can be split into at most ``L`` pieces on a length-``L`` part, so CPP auto-caps any
@@ -162,7 +163,7 @@ def _cap_n_split_range(sf=None, df_seq=None, cfg=None):
     return cap_len
 
 
-def _resolve_model(model, random_state=None):
+def _resolve_model(model: str, random_state: Optional[int] = None) -> BaseEstimator:
     """Construct one cross-validation estimator (mirrors the CPP.simplify model presets)."""
     if model == ut.MODEL_SVM:
         return SVC(class_weight="balanced", random_state=random_state)
@@ -171,7 +172,8 @@ def _resolve_model(model, random_state=None):
     return LogisticRegression(max_iter=1000, random_state=random_state)
 
 
-def _resolve_models(model, random_state=None):
+def _resolve_models(model: Union[str, BaseEstimator, List],
+                    random_state: Optional[int] = None) -> List[BaseEstimator]:
     """Resolve ``model`` (a name, an estimator, or a list of either) into a list of estimators."""
     items = model if isinstance(model, (list, tuple)) else [model]
     out = []
@@ -180,7 +182,8 @@ def _resolve_models(model, random_state=None):
     return out
 
 
-def _cv_scores(X, labels, models=None, cv=5, metrics=None, random_state=None):
+def _cv_scores(X, labels, *, models: List[BaseEstimator], cv: int = 5, metrics: List[str],
+               random_state: Optional[int] = None) -> Dict[str, Tuple[float, float]]:
     """Cross-validate ``X`` and return ``{metric: (mean, std)}`` averaged over the models.
 
     All metrics are scored in one ``cross_validate`` pass per model (multi-scorer), so adding
@@ -197,9 +200,11 @@ def _cv_scores(X, labels, models=None, cv=5, metrics=None, random_state=None):
     return {m: (float(np.mean(means[m])), float(np.mean(stds[m]))) for m in metrics}
 
 
-def _config_selector(df_scales=None, split_kws=None, n_filter=None, max_cor=0.5, max_overlap=0.5,
-                     label_test=1, label_ref=0, simplify_strategy=None, do_simplify=False,
-                     random_state=None, n_jobs=None):
+def _config_selector(*, df_scales: pd.DataFrame, split_kws: Optional[dict] = None, n_filter: int,
+                     max_cor: float = 0.5, max_overlap: float = 0.5, label_test: int = 1,
+                     label_ref: int = 0, simplify_strategy: Optional[str] = None,
+                     do_simplify: bool = False, random_state: Optional[int] = None,
+                     n_jobs: Optional[int] = None) -> Callable:
     """Build a per-fold feature selector for one CPP configuration.
 
     Returns ``select(df_parts_train, labels_train) -> df_feat`` that re-runs ``CPP.run`` (and, when
@@ -219,8 +224,10 @@ def _config_selector(df_scales=None, split_kws=None, n_filter=None, max_cor=0.5,
     return select
 
 
-def _nested_cv_scores(select=None, df_parts=None, labels=None, models=None, cv=5, metrics=None,
-                      df_scales_all=None, sf=None, n_jobs=None):
+def _nested_cv_scores(*, select: Callable, df_parts: pd.DataFrame, labels: ut.ArrayLike1D,
+                      models: List[BaseEstimator], cv: int = 5, metrics: List[str],
+                      df_scales_all: pd.DataFrame, sf: SequenceFeature,
+                      n_jobs: Optional[int] = None) -> Dict[str, Tuple[float, float]]:
     """Nested-CV score of a CPP configuration: re-select features on each train fold (leak-free).
 
     Mirrors ``_cv_scores``' aggregation and fold geometry (``StratifiedKFold`` with ``shuffle=False``,
@@ -264,7 +271,8 @@ def _nested_cv_scores(select=None, df_parts=None, labels=None, models=None, cv=5
     return out
 
 
-def _load_scale_spec(spec, subcategories=None):
+def _load_scale_spec(spec: Tuple[str, Optional[int]],
+                     subcategories: Optional[List[str]] = None) -> Optional[pd.DataFrame]:
     """Build the ``df_scales`` for one scale spec ``("explain", n)`` / ``("top60", k)``."""
     kind, val = spec
     if kind == "top60":
@@ -372,8 +380,9 @@ def _axis_impact(df_stage, axis_col, metric_keys):
     return float(np.mean(impacts))
 
 
-def _refine_keep(df_feat_new, X_new, df_feat_cur, base_scores, labels=None, models=None, cv=5,
-                 metrics=None, random_state=None):
+def _refine_keep(df_feat_new, X_new, df_feat_cur, base_scores, *, labels: ut.ArrayLike1D,
+                 models: List[BaseEstimator], cv: int = 5, metrics: List[str],
+                 random_state: Optional[int] = None):
     """Keep the refined set iff its CV scores are not Pareto-dominated by the current winner."""
     if df_feat_new is None or len(df_feat_new) == 0 or len(df_feat_new) == len(df_feat_cur):
         return df_feat_cur, base_scores, False
@@ -565,14 +574,15 @@ def find_features(labels: ut.ArrayLike1D,
     # normal (long-part) inputs this is a no-op (no warning, sweep unchanged).
     _cap_n_split_range(sf=sf, df_seq=df_seq, cfg=cfg)
     df_scales_all = load_scales(name="scales")
-    common = dict(sf=sf, labels=labels, df_seq=df_seq, cfg=cfg, simplify=simplify, models=models,
-                  cv=cv, metrics=metrics, subcategories=subcategories, label_test=label_test,
-                  label_ref=label_ref, df_scales_all=df_scales_all, random_state=random_state,
-                  n_jobs=n_jobs, verbose=verbose, selection_scope=selection_scope)
-    if search == "fast":
-        df_feat, df_parts_win, df_eval = _run_fast(**common)
-    else:
-        df_feat, df_parts_win, df_eval = _run_search(**common)
+    # The runner kwargs are spelled out at each call site rather than bundled into a ``**common``
+    # dict: unpacking a dict collapses every value to one union type, which hides the per-parameter
+    # contract from the type checker (and from a reader diffing the two runners).
+    run = _run_fast if search == "fast" else _run_search
+    df_feat, df_parts_win, df_eval = run(
+        sf=sf, labels=labels, df_seq=df_seq, cfg=cfg, simplify=simplify, models=models, cv=cv,
+        metrics=metrics, subcategories=subcategories, label_test=label_test, label_ref=label_ref,
+        df_scales_all=df_scales_all, random_state=random_state, n_jobs=n_jobs, verbose=verbose,
+        selection_scope=selection_scope)
 
     # Rank the winning features by tree-based importance (also required by the feature map); use the
     # full scale set since simplify can swap to correlated scales the feature_matrix still reads.
@@ -598,9 +608,10 @@ def find_features(labels: ut.ArrayLike1D,
     return df_feat, ax, df_eval
 
 
-def _eval_row(stage=None, list_parts=None, split_types=None, n_split_max=None, scale_spec=None,
-              n_filter=None, n_features=None, n_jmd=None, scores=None, metrics=None,
-              selection_scope="global"):
+def _eval_row(*, stage: str, list_parts: List[str], split_types: List[str], n_split_max: int,
+              scale_spec: Tuple[str, Optional[int]], n_filter: int, n_features: int, n_jmd: int,
+              scores: Dict[str, Tuple[float, float]], metrics: List[str],
+              selection_scope: str = "global") -> dict:
     """Assemble one ``df_eval`` row (descriptors + per-metric mean/std columns)."""
     row = {"stage": stage, "list_parts": ",".join(list_parts),
            "split_types": ",".join(split_types), "pattern_mode": _PATTERN_MODE[tuple(split_types)],
@@ -611,9 +622,12 @@ def _eval_row(stage=None, list_parts=None, split_types=None, n_split_max=None, s
     return row
 
 
-def _run_fast(sf=None, labels=None, df_seq=None, cfg=None, simplify=True, models=None, cv=5,
-              metrics=None, subcategories=None, label_test=1, label_ref=0, df_scales_all=None,
-              random_state=None, n_jobs=None, verbose=False, selection_scope="global"):
+def _run_fast(*, sf: SequenceFeature, labels: ut.ArrayLike1D, df_seq: pd.DataFrame, cfg: dict,
+              simplify: bool = True, models: List[BaseEstimator], cv: int = 5,
+              metrics: List[str], subcategories: Optional[List[str]] = None, label_test: int = 1,
+              label_ref: int = 0, df_scales_all: pd.DataFrame, random_state: Optional[int] = None,
+              n_jobs: Optional[int] = None, verbose: bool = False,
+              selection_scope: str = "global") -> Tuple[pd.DataFrame, pd.DataFrame, pd.DataFrame]:
     """Single default configuration: the explicit CPP path, byte-identical to writing it by hand."""
     list_parts, split_types = cfg["part_sets"][0], _SPLIT_TYPE_SETS[-1]
     spec = cfg["scale_specs"][0]
@@ -667,11 +681,15 @@ def _run_fast(sf=None, labels=None, df_seq=None, cfg=None, simplify=True, models
     return df_feat, df_parts, df_eval
 
 
-def _grid_stage(sf=None, df_seq=None, parts=None, split_sets=None, n_split_vals=None, specs=None,
-                n_filters=None, n_jmd_vals=None, cfg=None, labels=None, label_test=1, label_ref=0,
-                models=None, cv=5, metrics=None, subcategories=None, df_scales_all=None,
-                random_state=None, n_jobs=None, verbose=False, stage=None, parts_cache=None,
-                selection_scope="global"):
+def _grid_stage(*, sf: SequenceFeature, df_seq: pd.DataFrame, parts: List[List[str]],
+                split_sets: List[List[str]], n_split_vals: List[int],
+                specs: List[Tuple[str, Optional[int]]], n_filters: List[int],
+                n_jmd_vals: List[int], cfg: dict, labels: ut.ArrayLike1D, label_test: int = 1,
+                label_ref: int = 0, models: List[BaseEstimator], cv: int = 5, metrics: List[str],
+                subcategories: Optional[List[str]] = None, df_scales_all: pd.DataFrame,
+                random_state: Optional[int] = None, n_jobs: Optional[int] = None,
+                verbose: bool = False, stage: str, parts_cache: dict,
+                selection_scope: str = "global") -> Tuple[List[dict], List[dict]]:
     """Run a CPPGrid sweep over the given axis levels, CV-score every config, return eval rows.
 
     Returns ``(rows, payloads)`` aligned: ``payloads[i]`` carries the kept ``df_feat`` and the parts
@@ -750,23 +768,39 @@ def _grid_stage(sf=None, df_seq=None, parts=None, split_sets=None, n_split_vals=
     return rows, payloads
 
 
-def _run_search(sf=None, labels=None, df_seq=None, cfg=None, simplify=True, models=None, cv=5,
-                metrics=None, subcategories=None, label_test=1, label_ref=0, df_scales_all=None,
-                random_state=None, n_jobs=None, verbose=False, selection_scope="global"):
+def _run_search(*, sf: SequenceFeature, labels: ut.ArrayLike1D, df_seq: pd.DataFrame, cfg: dict,
+                simplify: bool = True, models: List[BaseEstimator], cv: int = 5,
+                metrics: List[str], subcategories: Optional[List[str]] = None, label_test: int = 1,
+                label_ref: int = 0, df_scales_all: pd.DataFrame,
+                random_state: Optional[int] = None, n_jobs: Optional[int] = None,
+                verbose: bool = False,
+                selection_scope: str = "global") -> Tuple[pd.DataFrame, pd.DataFrame, pd.DataFrame]:
     """Staged sensitivity search: Cartesian P×S×Scale → dominant axis × n_filter → simplify+RFE."""
     parts_cache = {}
-    common = dict(sf=sf, df_seq=df_seq, cfg=cfg, labels=labels, label_test=label_test,
-                  label_ref=label_ref, models=models, cv=cv, metrics=metrics,
-                  subcategories=subcategories, df_scales_all=df_scales_all,
-                  random_state=random_state, n_jobs=n_jobs, verbose=verbose, parts_cache=parts_cache,
-                  selection_scope=selection_scope)
+
+    def _stage(*, parts: List[List[str]], split_sets: List[List[str]], n_split_vals: List[int],
+               specs: List[Tuple[str, Optional[int]]], n_filters: List[int],
+               n_jmd_vals: List[int], stage: str) -> Tuple[List[dict], List[dict]]:
+        """Run one grid stage, forwarding the run-wide arguments shared by every stage.
+
+        The shared arguments are forwarded by name (rather than bundled into a ``**common`` dict)
+        so each parameter keeps its own declared type at the ``_grid_stage`` call.
+        """
+        return _grid_stage(parts=parts, split_sets=split_sets, n_split_vals=n_split_vals,
+                           specs=specs, n_filters=n_filters, n_jmd_vals=n_jmd_vals, stage=stage,
+                           sf=sf, df_seq=df_seq, cfg=cfg, labels=labels, label_test=label_test,
+                           label_ref=label_ref, models=models, cv=cv, metrics=metrics,
+                           subcategories=subcategories, df_scales_all=df_scales_all,
+                           random_state=random_state, n_jobs=n_jobs, verbose=verbose,
+                           parts_cache=parts_cache, selection_scope=selection_scope)
+
     ref_nfilter = max(cfg["n_filter_vals"])
 
     # Stage 1 — full Cartesian Part × Split × Scale × JMD-length at the reference n_filter.
-    rows1, pay1 = _grid_stage(parts=cfg["part_sets"], split_sets=cfg["split_type_sets"],
-                              n_split_vals=cfg["n_split_max_vals"], specs=cfg["scale_specs"],
-                              n_filters=[ref_nfilter], n_jmd_vals=cfg["n_jmd_vals"],
-                              stage="sensitivity", **common)
+    rows1, pay1 = _stage(parts=cfg["part_sets"], split_sets=cfg["split_type_sets"],
+                         n_split_vals=cfg["n_split_max_vals"], specs=cfg["scale_specs"],
+                         n_filters=[ref_nfilter], n_jmd_vals=cfg["n_jmd_vals"],
+                         stage="sensitivity")
     if not rows1:
         raise RuntimeError("'find_features' produced no valid configurations; relax 'kws' / "
                            "'subcategories' or use a less restrictive 'search'.")
@@ -789,9 +823,8 @@ def _run_search(sf=None, labels=None, df_seq=None, cfg=None, simplify=True, mode
         split2, nsplit2 = [win1["split_types"]], [win1["n_split_max"]]
     specs2 = cfg["scale_specs"] if dominant == "scale" else [win1["scale_spec"]]
     njmd2 = cfg["n_jmd_vals"] if dominant == "n_jmd" else [win1["n_jmd"]]
-    rows2, pay2 = _grid_stage(parts=parts2, split_sets=split2, n_split_vals=nsplit2, specs=specs2,
-                              n_filters=cfg["n_filter_vals"], n_jmd_vals=njmd2, stage="n_filter",
-                              **common)
+    rows2, pay2 = _stage(parts=parts2, split_sets=split2, n_split_vals=nsplit2, specs=specs2,
+                         n_filters=cfg["n_filter_vals"], n_jmd_vals=njmd2, stage="n_filter")
     df2 = pd.DataFrame(rows2)
     win2_pos = _select_pareto_simplest(df2, metrics)
     win2 = pay2[df2.index.get_loc(win2_pos)]
@@ -852,9 +885,11 @@ def _run_search(sf=None, labels=None, df_seq=None, cfg=None, simplify=True, mode
     return df_feat_win, df_parts_win, df_eval
 
 
-def _refine_rfe_winner(df_feat, df_parts, df_scales_all, base, sf=None, labels=None, models=None,
-                       cv=5, metrics=None, random_state=None, n_jobs=None, rows3=None, win=None,
-                       selection_scope="global"):
+def _refine_rfe_winner(df_feat, df_parts, df_scales_all, base, *, sf: SequenceFeature,
+                       labels: ut.ArrayLike1D, models: List[BaseEstimator], cv: int = 5,
+                       metrics: List[str], random_state: Optional[int] = None,
+                       n_jobs: Optional[int] = None, rows3: Optional[List[dict]] = None,
+                       win: Optional[dict] = None, selection_scope: str = "global"):
     """RFE post-step on the winner: keep the reduced set only if it is not Pareto-dominated."""
     n_feat = len(df_feat)
     base_means = np.array([base[m][0] for m in metrics])
