@@ -3,11 +3,11 @@ This is a script for internal plotting part utility functions used in the backen
 """
 import matplotlib.patches as mpatches
 import matplotlib.pyplot as plt
-import matplotlib as mpl
+from matplotlib.axes import Axes
 
 
 # Helper functions
-def _get_bar_height(ax=None, divider=50):
+def _get_bar_height(ax: Axes, divider=50):
     """Calculate bar height for sequence part visualization."""
     ylim = ax.get_ylim()
     width, height = plt.gcf().get_size_inches()
@@ -15,7 +15,7 @@ def _get_bar_height(ax=None, divider=50):
     return bar_height
 
 
-def _get_y(ax=None, bar_height=None, height_factor=1.0, reversed_weight=0):
+def _get_y(ax: Axes, bar_height: float, height_factor=1.0, reversed_weight=0):
     """Determine y-coordinate for bar placement."""
     ylim = ax.get_ylim()
     reversed_y = reversed_weight if ylim[0] > ylim[1] else 1
@@ -23,7 +23,7 @@ def _get_y(ax=None, bar_height=None, height_factor=1.0, reversed_weight=0):
     return y
 
 
-def _add_part_bar(ax=None, start=1.0, len_part=40.0, color="blue", bar_height_factor=1, bar_height=None):
+def _add_part_bar(ax: Axes, start=1.0, len_part=40.0, color="blue", bar_height_factor=1, bar_height=None):
     """Add colored bar for TMD and JMD sequence parts.
 
     ``bar_height`` (in y-data units, i.e. grid rows) pins the bar to a constant thickness independent
@@ -33,12 +33,12 @@ def _add_part_bar(ax=None, start=1.0, len_part=40.0, color="blue", bar_height_fa
     if bar_height is None:
         bar_height = _get_bar_height(ax=ax) * bar_height_factor
     y = _get_y(ax=ax, bar_height=bar_height)
-    bar = mpl.patches.Rectangle((start, y), width=len_part, height=bar_height, linewidth=0,
-                                color=color, zorder=3, clip_on=False)
+    bar = mpatches.Rectangle((start, y), width=len_part, height=bar_height, linewidth=0,
+                             color=color, zorder=3, clip_on=False)
     ax.add_patch(bar)
 
 
-def _add_part_text(ax=None, text=None, start=1.0, len_part=10.0, fontsize=None,
+def _add_part_text(ax: Axes, text: str, start=1.0, len_part=10.0, fontsize=None,
                    fontweight="normal", height_factor=1.3, bar_height=None):
     """Place text marking for TMD and JMD sequence parts."""
     if bar_height is None:
@@ -83,19 +83,21 @@ class PlotPart:
 
 
 # II Main functions
-def add_tmd_jmd_bar(ax=None, x_shift=0, jmd_color="blue", tmd_color="mediumspringgreen",
+def add_tmd_jmd_bar(ax: Axes, x_shift=0, jmd_color="blue", tmd_color="mediumspringgreen",
                     bar_height_factor=1, bar_height=None,
                     tmd_len=20, jmd_n_len=10, jmd_c_len=10, start=1):
     """Add colored bars to indicate TMD and JMD regions."""
     pp = PlotPart(tmd_len=tmd_len, jmd_n_len=jmd_n_len, jmd_c_len=jmd_c_len, start=start)
     jmd_n_start, tmd_start, jmd_c_start = pp.get_starts(x_shift=x_shift)
-    args = dict(bar_height_factor=bar_height_factor, bar_height=bar_height)
-    _add_part_bar(ax=ax, start=jmd_n_start, len_part=jmd_n_len, color=jmd_color, **args)
-    _add_part_bar(ax=ax, start=tmd_start, len_part=tmd_len, color=tmd_color, **args)
-    _add_part_bar(ax=ax, start=jmd_c_start, len_part=jmd_c_len, color=jmd_color, **args)
+    _add_part_bar(ax=ax, start=jmd_n_start, len_part=jmd_n_len, color=jmd_color,
+                  bar_height_factor=bar_height_factor, bar_height=bar_height)
+    _add_part_bar(ax=ax, start=tmd_start, len_part=tmd_len, color=tmd_color,
+                  bar_height_factor=bar_height_factor, bar_height=bar_height)
+    _add_part_bar(ax=ax, start=jmd_c_start, len_part=jmd_c_len, color=jmd_color,
+                  bar_height_factor=bar_height_factor, bar_height=bar_height)
 
 
-def add_tmd_jmd_text(ax=None, x_shift=0, fontsize_tmd_jmd=None, weight_tmd_jmd="normal",
+def add_tmd_jmd_text(ax: Axes, x_shift=0, fontsize_tmd_jmd=None, weight_tmd_jmd="normal",
                      name_tmd="TMD", name_jmd_n="JMD-N", name_jmd_c="JMD-C",
                      tmd_len=20, jmd_n_len=10, jmd_c_len=10, start=1,
                      height_factor=1.3, bar_height=None):
@@ -105,16 +107,20 @@ def add_tmd_jmd_text(ax=None, x_shift=0, fontsize_tmd_jmd=None, weight_tmd_jmd="
     exists_jmd_n = jmd_n_len > 0
     exists_jmd_c = jmd_c_len > 0
     if fontsize_tmd_jmd is None or fontsize_tmd_jmd > 0:
-        args = dict(ax=ax, fontsize=fontsize_tmd_jmd, fontweight=weight_tmd_jmd,
-                    height_factor=height_factor, bar_height=bar_height)
-        _add_part_text(start=tmd_start, len_part=tmd_len, text=name_tmd, **args)
+        _add_part_text(ax=ax, start=tmd_start, len_part=tmd_len, text=name_tmd,
+                       fontsize=fontsize_tmd_jmd, fontweight=weight_tmd_jmd,
+                       height_factor=height_factor, bar_height=bar_height)
         if exists_jmd_n:
-            _add_part_text(start=jmd_n_start, text=name_jmd_n, len_part=jmd_n_len, **args)
+            _add_part_text(ax=ax, start=jmd_n_start, len_part=jmd_n_len, text=name_jmd_n,
+                           fontsize=fontsize_tmd_jmd, fontweight=weight_tmd_jmd,
+                           height_factor=height_factor, bar_height=bar_height)
         if exists_jmd_c:
-            _add_part_text(start=jmd_c_start, text=name_jmd_c, len_part=jmd_c_len, **args)
+            _add_part_text(ax=ax, start=jmd_c_start, len_part=jmd_c_len, text=name_jmd_c,
+                           fontsize=fontsize_tmd_jmd, fontweight=weight_tmd_jmd,
+                           height_factor=height_factor, bar_height=bar_height)
 
 
-def add_tmd_jmd_xticks(ax=None, x_shift=0, xtick_size=11.0, xtick_width=2.0, xtick_length=5.0,
+def add_tmd_jmd_xticks(ax: Axes, x_shift=0, xtick_size=11.0, xtick_width=2.0, xtick_length=5.0,
                        tmd_len=20, jmd_n_len=10, jmd_c_len=10, start=1):
     """Adjust x-ticks for TMD and JMD regions."""
     # Remove the xticks and return early
@@ -141,7 +147,7 @@ def add_tmd_jmd_xticks(ax=None, x_shift=0, xtick_size=11.0, xtick_width=2.0, xti
     ax.tick_params(axis="x", length=xtick_length, color="black", width=xtick_width, bottom=True)
 
 
-def highlight_tmd_area(ax=None, x_shift=0, tmd_color="mediumspringgreen", alpha=0.2,
+def highlight_tmd_area(ax: Axes, x_shift=0, tmd_color="mediumspringgreen", alpha=0.2,
                        tmd_len=20, jmd_n_len=10, jmd_c_len=10, start=1, y_max=None):
     """Highlight the TMD area in the plot."""
     pp = PlotPart(tmd_len=tmd_len, jmd_n_len=jmd_n_len, jmd_c_len=jmd_c_len, start=start)
@@ -149,6 +155,6 @@ def highlight_tmd_area(ax=None, x_shift=0, tmd_color="mediumspringgreen", alpha=
     y_min, _y_max = ax.get_ylim()
     y_max = _y_max if y_max is None else y_max
     height = abs(y_min) + y_max
-    rect = mpl.patches.Rectangle((tmd_start, y_min), width=tmd_len, height=height, linewidth=0,
-                                 color=tmd_color, zorder=0.1, clip_on=True, alpha=alpha)
+    rect = mpatches.Rectangle((tmd_start, y_min), width=tmd_len, height=height, linewidth=0,
+                              color=tmd_color, zorder=0.1, clip_on=True, alpha=alpha)
     ax.add_patch(rect)
