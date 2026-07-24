@@ -81,7 +81,8 @@ def check_steps(steps=None, steps_name="steps_pattern", len_min=2, fixed_len=Fal
     return steps
 
 
-def warn_creation_of_feature_matrix(features=None, df_parts=None, name="Feature matrix") -> None:
+def warn_creation_of_feature_matrix(features: ut.ArrayLike1D, df_parts: pd.DataFrame,
+                                    name="Feature matrix") -> None:
     """Warn if feature matrix gets too large"""
     n_feat = len(features)
     n_samples = len(df_parts)
@@ -94,7 +95,7 @@ def warn_creation_of_feature_matrix(features=None, df_parts=None, name="Feature 
         warnings.warn(warning)
 
 
-def check_match_labels_label_test_label_ref(labels=None, label_test=1, label_ref=0) -> None:
+def check_match_labels_label_test_label_ref(labels: ut.ArrayLike1D, label_test=1, label_ref=0) -> None:
     """Check if labels only contains label_test and label_ref"""
     wrong_labels = [x for x in labels if x not in [label_ref, label_test]]
     unique_wrong_labels = list(set(wrong_labels))
@@ -103,7 +104,8 @@ def check_match_labels_label_test_label_ref(labels=None, label_test=1, label_ref
         raise ValueError(f"'labels' contains {n_wrong_labels} wrong labels: {unique_wrong_labels}")
 
 
-def check_match_df_parts_label_test_label_ref(df_parts=None, labels=None, label_test=1, label_ref=0) -> None:
+def check_match_df_parts_label_test_label_ref(df_parts: pd.DataFrame, labels: ut.ArrayLike1D,
+                                              label_test=1, label_ref=0) -> None:
     """Check if 'jmd_n', 'tmd', and 'jmd_c' in df_parts if amino acid for label_test or label_ref should be retrieved"""
     list_parts = list(df_parts)
     required_parts = ["jmd_n", "tmd", "jmd_c"]
@@ -136,7 +138,8 @@ def check_col_val(col_val=None) -> None:
         raise ValueError(f"'col_val' {col_val} should be one of: {cols_feat}")
 
 
-def check_match_labels_value_sources(labels=None, df_parts=None, dict_num_parts=None, name="labels") -> None:
+def check_match_labels_value_sources(labels: ut.ArrayLike1D, df_parts=None, dict_num_parts=None,
+                                     name="labels") -> None:
     """Check at least one value source is given and each aligns row-wise with labels/targets."""
     if df_parts is None and dict_num_parts is None:
         raise ValueError("Provide at least one of 'df_parts' or 'dict_num_parts' to subset per group.")
@@ -165,7 +168,7 @@ def subset_value_sources(row_mask=None, df_parts=None, dict_num_parts=None):
     return df_parts_sub, dict_num_parts_sub
 
 
-def check_match_df_feat_X(df_feat=None, X=None):
+def check_match_df_feat_X(df_feat: pd.DataFrame, X=None):
     """Check that a pre-computed feature matrix X aligns column-wise with df_feat."""
     X = np.asarray(X)
     if X.ndim != 2:
@@ -179,7 +182,7 @@ def check_match_df_feat_X(df_feat=None, X=None):
     return X
 
 
-def recover_seq_parts_from_df_parts_row(row=None):
+def recover_seq_parts_from_df_parts_row(row: pd.Series):
     """Recover the basic ``(jmd_n_seq, tmd_seq, jmd_c_seq)`` from a single ``df_parts`` row.
 
     The JMD lengths are read off the parts (never given): the basic part set
@@ -212,7 +215,7 @@ def recover_seq_parts_from_df_parts_row(row=None):
     return jmd_n_seq, tmd_seq, jmd_c_seq
 
 
-def check_match_df_seq_df_parts(df_seq=None, entry=None, jmd_n_seq="", tmd_seq="", jmd_c_seq="") -> None:
+def check_match_df_seq_df_parts(df_seq: pd.DataFrame, entry=None, jmd_n_seq="", tmd_seq="", jmd_c_seq="") -> None:
     """Check that the parts recovered from ``df_parts`` are consistent with ``df_seq`` for one protein."""
     mask = df_seq[ut.COL_ENTRY] == entry
     if not mask.any():
@@ -231,7 +234,7 @@ def check_match_df_seq_df_parts(df_seq=None, entry=None, jmd_n_seq="", tmd_seq="
             raise ValueError(f"'df_seq' and 'df_parts' do not match for entry ('{entry}'): the TMD-JMD parts differ.")
 
 
-def resolve_sample_entry(df_seq=None, df_parts=None, sample=None) -> str:
+def resolve_sample_entry(df_seq: pd.DataFrame, df_parts: pd.DataFrame, sample=None) -> str:
     """Resolve a ``sample`` selector to a single, unique ``df_parts`` entry name.
 
     ``sample`` may be a row position (int), an ``entry`` name (str) from the ``df_parts`` index, or —
