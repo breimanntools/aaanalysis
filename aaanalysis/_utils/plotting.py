@@ -3,7 +3,7 @@ This is a script for the backend of the plotting module functions used by other 
 """
 from typing import List, Union
 import seaborn as sns
-import matplotlib as mpl
+import matplotlib.patches as mpatches
 from matplotlib import pyplot as plt
 from matplotlib.lines import Line2D
 import matplotlib.lines as mlines
@@ -18,7 +18,7 @@ def _create_marker(color, label, marker, marker_size, lw, edgecolor, linestyle, 
     """Create custom marker based on input."""
     # Default marker (matching to plot)
     if marker is None:
-        return mpl.patches.Patch(facecolor=color,
+        return mpatches.Patch(facecolor=color,
                                  label=label,
                                  lw=lw,
                                  hatch=hatch,
@@ -65,7 +65,7 @@ def _marker_has_no(marker, val=None):
 
 
 # Checking functions for list inputs
-def _check_list_cat(dict_color=None, list_cat=None):
+def _check_list_cat(dict_color: dict, list_cat=None) -> list:
     """Ensure items in list_cat are keys in dict_color and match in length."""
     if not list_cat:
         return list(dict_color.keys())
@@ -78,7 +78,7 @@ def _check_list_cat(dict_color=None, list_cat=None):
     return list_cat
 
 
-def _check_labels(list_cat=None, labels=None):
+def _check_labels(list_cat: list, labels=None) -> list:
     """Validate labels and match their length to list_cat."""
     if labels is None:
         labels = list_cat
@@ -88,7 +88,7 @@ def _check_labels(list_cat=None, labels=None):
 
 
 # Checking functions for inputs that can be list or single values (redundancy accepted for better user communication)
-def _check_hatches(marker=None, hatch=None, list_cat=None):
+def _check_hatches(marker=None, hatch=None, *, list_cat: list) -> list:
     """Check validity of list_hatche."""
     valid_hatches = ['/', '\\', '|', '-', '+', 'x', 'o', 'O', '.', '*']
     # Check if hatch is valid
@@ -110,7 +110,7 @@ def _check_hatches(marker=None, hatch=None, list_cat=None):
     return list_hatch
 
 
-def _check_marker(marker=None, list_cat=None, lw: Union[int, float] = 0):
+def _check_marker(marker=None, *, list_cat: list, lw: Union[int, float] = 0):
     """Check validity of markers"""
     # Add '-' for line and None for default marker
     valid_markers = [None, "-"] + list(mlines.Line2D.markers.keys())
@@ -132,7 +132,7 @@ def _check_marker(marker=None, list_cat=None, lw: Union[int, float] = 0):
 
 
 def _check_marker_size(marker_size: Union[int, float, List[Union[int, float]]] = 10,
-                       list_cat=None) -> list:
+                       *, list_cat: list) -> list:
     """Check size of markers"""
     # Check if marker_size is valid
     if isinstance(marker_size, (int, float)):
@@ -149,7 +149,7 @@ def _check_marker_size(marker_size: Union[int, float, List[Union[int, float]]] =
     return list_marker_size
 
 
-def _check_linestyle(linestyle=None, list_cat=None, marker=None):
+def _check_linestyle(linestyle=None, *, list_cat: list, marker=None):
     """Check validity of linestyle."""
     _lines = ['-', '--', '-.', ':', ]
     _names = ["solid", "dashed", "dashed-doted", "dotted"]
