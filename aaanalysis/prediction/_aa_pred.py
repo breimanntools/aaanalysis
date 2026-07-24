@@ -17,7 +17,7 @@ from ._backend.aa_pred.aa_pred_group import assign_band_index
 
 
 # I Helper Functions
-def _set_random_state_if_supported(estimator=None, random_state=None, only_if_unset=False):
+def _set_random_state_if_supported(estimator: BaseEstimator, random_state=None, only_if_unset=False):
     """Inject ``random_state`` into an estimator that supports it (for reproducibility).
 
     ``only_if_unset`` protects an explicit seed the user already set on a passed instance;
@@ -38,7 +38,7 @@ def check_metrics(metrics=None):
     return metrics
 
 
-def check_n_cv(n_cv=None, labels=None):
+def check_n_cv(n_cv: int, labels: ut.ArrayLike1D):
     """Check that n_cv is a valid integer not exceeding the smallest class count."""
     ut.check_number_range(name="n_cv", val=n_cv, min_val=2, just_int=True)
     _, counts = np.unique(labels, return_counts=True)
@@ -65,7 +65,7 @@ def check_is_fitted(list_models=None):
         raise ValueError("'AAPred' is not fitted; call 'AAPred.fit' first.")
 
 
-def check_match_X_fitted(X=None, list_models=None):
+def check_match_X_fitted(X, list_models: list):
     """Check that X's feature count matches the fitted deployment models.
 
     The fitted estimators expose ``n_features_in_`` (set by scikit-learn during ``fit``). A width
@@ -81,7 +81,7 @@ def check_match_X_fitted(X=None, list_models=None):
                          f"'AAPred.fit'.")
 
 
-def check_binary_labels(labels=None):
+def check_binary_labels(labels: ut.ArrayLike1D):
     """Check that labels define exactly two classes (AAPred is a binary predictor)."""
     classes = list(np.unique(labels))
     if len(classes) != 2:
@@ -96,7 +96,7 @@ def check_featurizer(df_feat=None):
                          "enable sequence-level prediction (predict at level 'sequence'/'domain'/'window').")
 
 
-def featurize_seq(df_feat=None, df_scales=None, df_seq=None, list_parts=None, **parts_kwargs):
+def featurize_seq(df_feat: pd.DataFrame, df_scales=None, df_seq=None, list_parts=None, **parts_kwargs):
     """Featurize a ``df_seq`` into the CPP feature matrix ``X`` bound to the model.
 
     Uses the single-call ``feature_matrix(df_seq=, df_parts_kws=)`` path (which builds
@@ -112,7 +112,7 @@ def featurize_seq(df_feat=None, df_scales=None, df_seq=None, list_parts=None, **
     return np.asarray(X)
 
 
-def _estimators_missing_method(list_estimators=None, method=None):
+def _estimators_missing_method(list_estimators: list, method: str):
     """Class names of estimator *instances* that don't implement ``method``.
 
     Checks the configured instances (not the classes), so a capability toggled at construction
@@ -122,7 +122,7 @@ def _estimators_missing_method(list_estimators=None, method=None):
     return sorted({type(e).__name__ for e in list_estimators if not hasattr(e, method)})
 
 
-def check_estimators_predict(list_estimators=None):
+def check_estimators_predict(list_estimators: list):
     """Every estimator must implement ``predict`` (hard-label prediction is always required)."""
     missing = _estimators_missing_method(list_estimators=list_estimators, method="predict")
     if missing:
@@ -130,7 +130,7 @@ def check_estimators_predict(list_estimators=None):
                          f"model to support hard-label prediction.")
 
 
-def check_estimators_proba(list_estimators=None, metrics=None, context=None):
+def check_estimators_proba(list_estimators: list, metrics=None, context=None):
     """Require ``predict_proba`` only where class probabilities are actually needed.
 
     Capability-based validation: pass ``metrics`` to enforce it **only** when a probability metric
@@ -175,7 +175,7 @@ def check_baseline(baseline=None):
     return list(dict.fromkeys(baseline))
 
 
-def build_baseline_matrices(df_seq=None, list_kinds=None, df_scales=None, list_parts=None):
+def build_baseline_matrices(df_seq: pd.DataFrame, list_kinds: list, df_scales=None, list_parts=None):
     """Build the ``{kind: X}`` baseline feature matrices from raw sequences (SequenceFeature).
 
     Each baseline is a non-positional, fixed-length sequence descriptor row-aligned with
@@ -206,7 +206,7 @@ def build_baseline_matrices(df_seq=None, list_kinds=None, df_scales=None, list_p
     return dict_X_baseline
 
 
-def _apply_score_range(df_pred=None, score_range=None):
+def _apply_score_range(df_pred: pd.DataFrame, score_range=None):
     """Return ``df_pred`` with its score columns on the requested range. ``proba`` [0, 1] is the
     native scale of the ensemble probabilities; ``percent`` multiplies ``score`` / ``score_std``
     (whichever columns are present) by 100 so scores read as a 0-100 percentage."""
