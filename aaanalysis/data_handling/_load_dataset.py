@@ -55,7 +55,7 @@ def check_aa_window_size(aa_window_size=None, is_cs_dataset=False) -> None:
                          f"Only the following cleavage site datasets can have odd or even sizes: {LIST_CLEAVAGE_SITE_DATA}")
 
 
-def post_check_df_seq(df_seq=None, n=None, name=None) -> None:
+def post_check_df_seq(df_seq: pd.DataFrame, n: Optional[int] = None, name: Optional[str] = None) -> None:
     """Check if length of df_seq is valid"""
     max_n = df_seq[ut.COL_LABEL].value_counts().min()
     warning_message = f"'n' ({n}) is too high since the smaller class for '{name}' contains {max_n} samples." \
@@ -66,15 +66,15 @@ def post_check_df_seq(df_seq=None, n=None, name=None) -> None:
 
 
 # Helper functions
-def _is_aa_level(name=None):
+def _is_aa_level(name: str) -> bool:
     return name.split("_")[0] == "AA"
 
 
-def _is_cleavage_site_dataset(name=None):
+def _is_cleavage_site_dataset(name: str) -> bool:
     return name in LIST_CLEAVAGE_SITE_DATA
 
 
-def _adjust_non_canonical_aa(df=None, non_canonical_aa="remove"):
+def _adjust_non_canonical_aa(df: pd.DataFrame, non_canonical_aa: str = "remove") -> pd.DataFrame:
     """Adjust non-canonical amino acids"""
     if non_canonical_aa == "keep":
         return df
@@ -91,7 +91,7 @@ def _adjust_non_canonical_aa(df=None, non_canonical_aa="remove"):
     return df
 
 
-def _get_aa_window_even(df_seq=None, aa_window_size=9):
+def _get_aa_window_even(df_seq: pd.DataFrame, aa_window_size: int = 9) -> pd.DataFrame:
     """Get amino acid windows from df_seq"""
     min_seq_len = df_seq[ut.COL_SEQ].apply(len).min()
     if df_seq[ut.COL_SEQ].apply(len).min() <= aa_window_size:
@@ -115,7 +115,7 @@ def _get_aa_window_even(df_seq=None, aa_window_size=9):
     return df_seq
 
 
-def _get_aa_window_odd(df_seq=None, aa_window_size=9):
+def _get_aa_window_odd(df_seq: pd.DataFrame, aa_window_size: int = 9) -> pd.DataFrame:
     """Get amino acid windows from df_seq"""
     min_seq_len = df_seq[ut.COL_SEQ].apply(len).min()
     if df_seq[ut.COL_SEQ].apply(len).min() <= aa_window_size:
