@@ -33,7 +33,7 @@ def _compute_auc_sorted(X, labels):
     return np.round(auc_values - 0.5, 3)
 
 
-def auc_adjusted_(X=None, labels=None, label_test=1, n_jobs=None):
+def auc_adjusted_(X: np.ndarray, labels: np.ndarray, label_test=1, n_jobs=None):
     """Get adjusted ROC AUC with pre-sorting and parallel computation."""
     # Get binary labels and precompute ranks for all features
     labels_binary = np.array([int(y == label_test) for y in labels], dtype=DTYPE)
@@ -58,7 +58,7 @@ def _cluster_center(X):
     return X.mean(axis=0)[np.newaxis, :]
 
 
-def _compute_centers(X, labels=None):
+def _compute_centers(X: np.ndarray, labels: np.ndarray):
     """Obtain cluster centers and their labels"""
     labels_centers = list(OrderedDict.fromkeys(labels))
     list_masks = [[i == label for i in labels] for label in labels_centers]
@@ -67,7 +67,7 @@ def _compute_centers(X, labels=None):
     return centers, labels_centers
 
 
-def bic_score_(X, labels=None):
+def bic_score_(X: np.ndarray, labels: np.ndarray):
     """Computes the Bayesian Information Criterion (BIC) metric for given clusters."""
     epsilon = 1e-10  # prevent division by zero
 
@@ -125,7 +125,7 @@ def _comp_kld_chunk(X1_chunk, X2_chunk):
                      for i in range(X1_chunk.shape[1])])
 
 
-def kullback_leibler_divergence_(X=None, labels=None, label_test=0, label_ref=1, n_jobs=1):
+def kullback_leibler_divergence_(X: np.ndarray, labels: np.ndarray, label_test=0, label_ref=1, n_jobs=1):
     """Calculate the average Kullback-Leibler Divergence (KLD) for each feature.
 
     Per-feature KLDs are independent, so chunking across workers yields the same
@@ -189,7 +189,7 @@ def _avg_precision_at_positions(scores, pos_idx, tolerance=0):
     return sum_prec / n_pos
 
 
-def per_protein_ap_(list_scores=None, list_positions=None, tolerance=0):
+def per_protein_ap_(list_scores: list, list_positions: list, tolerance=0):
     """Per-protein average precision over a list of (scores, positive-positions).
 
     ``list_positions`` holds 0-based positive indices per protein. Returns a 1D
@@ -202,7 +202,7 @@ def per_protein_ap_(list_scores=None, list_positions=None, tolerance=0):
 
 
 # Detection metrics at a fixed score threshold (pooled over proteins)
-def detection_metrics_(list_scores=None, list_positions=None, threshold=0.5, tolerance=0):
+def detection_metrics_(list_scores: list, list_positions: list, threshold=0.5, tolerance=0):
     """Pool TP/FP/FN/TN across proteins at a fixed ``threshold`` and return
     ``dict(recall, precision, f1, mcc, tp, fp, fn, tn)``.
 
@@ -243,7 +243,7 @@ def detection_metrics_(list_scores=None, list_positions=None, threshold=0.5, tol
 
 
 # Bootstrap confidence interval over a per-protein metric vector
-def bootstrap_ci_(values=None, n_rounds=1000, ci=0.95, seed=None):
+def bootstrap_ci_(values: np.ndarray, n_rounds=1000, ci=0.95, seed=None):
     """Percentile bootstrap CI of the mean of ``values`` (NaN-aware).
 
     Resamples proteins with replacement ``n_rounds`` times; returns
@@ -278,7 +278,7 @@ def _gaussian_kernel(window, sigma):
     return w / w.sum()
 
 
-def smooth_scores_(scores=None, method="triangular", window=2, sigma=None,
+def smooth_scores_(scores: np.ndarray, method="triangular", window=2, sigma=None,
                    peak_preserving=True):
     """Smooth a 1D per-residue ``scores`` vector with a triangular or Gaussian
     kernel, NaN-aware, optionally peak-preserving.
