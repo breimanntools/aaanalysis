@@ -15,7 +15,7 @@ notes — with cross-references and examples — live in
 
 ## [Unreleased]
 
-## [1.1.0] - 2026-07-19
+## [1.1.0] - 2026-07-29
 
 This release substantially expands the feature-engineering surface: a unified
 feature-preprocessor family (embedding / structure / annotation sources), a
@@ -141,6 +141,11 @@ re-exported symbols.
   evidence + pinned regression anchor each tier requires. Unblocks
   previously-excluded algorithmic optimizations (e.g. AAclust binary-search `k`),
   each as its own tier-declared PR. No user-facing behavior change.
+- Build: the from-source build now requires `setuptools>=83`
+  (`[build-system].requires`), which patches CVE-2026-59890 (an sdist
+  `MANIFEST.in` exclusion bypass on macOS APFS/HFS+ filesystems). Installing the
+  published wheel is unaffected; this only tightens the build backend used when
+  building from the sdist.
 
 ### Deprecated
 - `AAlogo` / `AAlogoPlot` are deprecated in favour of the PascalCase `AALogo` /
