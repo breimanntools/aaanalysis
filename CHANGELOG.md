@@ -15,7 +15,7 @@ notes — with cross-references and examples — live in
 
 ## [Unreleased]
 
-## [1.1.0] - 2026-07-29
+## [1.1.0] - 2026-09-09
 
 This release substantially expands the feature-engineering surface: a unified
 feature-preprocessor family (embedding / structure / annotation sources), a

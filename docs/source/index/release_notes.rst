@@ -6,7 +6,7 @@ Release Notes
 Version 1.1
 --------------------------------
 
-v1.1.0 (2026-07-29)
+v1.1.0 (2026-09-09)
 --------------------------------
 
 This release substantially expands the feature-engineering surface: a unified
