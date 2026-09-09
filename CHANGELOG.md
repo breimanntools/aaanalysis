@@ -146,6 +146,10 @@ re-exported symbols.
   `MANIFEST.in` exclusion bypass on macOS APFS/HFS+ filesystems). Installing the
   published wheel is unaffected; this only tightens the build backend used when
   building from the sdist.
+- Build: Linux wheels are now built and tagged `manylinux_2_28` (glibc >= 2.28:
+  RHEL 8+, Ubuntu 20.04+, Debian 10+) instead of `manylinux2014`. `Pillow>=12.3`
+  (a hard dependency) publishes no wheels below manylinux_2_28, so older-glibc
+  systems could not assemble the dependency stack regardless.
 
 ### Deprecated
 - `AAlogo` / `AAlogoPlot` are deprecated in favour of the PascalCase `AALogo` /

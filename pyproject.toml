@@ -220,6 +220,14 @@ test-command = "python {project}/tests/_check_py_typed_packaged.py && pytest {pr
 
 [tool.cibuildwheel.linux]
 archs = ["x86_64", "aarch64"]
+# Pillow>=12.3 (a hard dependency) ships Linux wheels only for
+# manylinux_2_28, so the default manylinux2014 (glibc 2.17) container
+# cannot install the dependency stack during the wheel test phase.
+# Build and test on manylinux_2_28 (glibc >= 2.28: RHEL 8+, Ubuntu
+# 20.04+, Debian 10+); older-glibc systems could not run the package
+# anyway for lack of installable dependencies.
+manylinux-x86_64-image = "manylinux_2_28"
+manylinux-aarch64-image = "manylinux_2_28"
 
 [tool.cibuildwheel.macos]
 archs = ["x86_64", "arm64"]
