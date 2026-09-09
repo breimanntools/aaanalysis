@@ -199,11 +199,19 @@ aaanalysis = [
 # -------------------------
 [tool.cibuildwheel]
 # Build wheels for the supported Python floor (3.10+) up through 3.14.
-# Skip PyPy (no Cython benefit; numpy + scipy wheels are also limited)
-# and 32-bit linux/win (negligible scientific-Python usage).
+# Skip PyPy (no Cython benefit; numpy + scipy wheels are also limited),
+# 32-bit linux/win (negligible scientific-Python usage), and all musllinux:
+# scikit-learn — a hard dependency — publishes no musl wheels, so the stack
+# is not pip-installable on Alpine regardless, and testing a musl wheel
+# forces an hours-long from-source build of the ML stack in the container.
 build = "cp310-* cp311-* cp312-* cp313-* cp314-*"
-skip = "*-musllinux_i686 *-manylinux_i686 *-win32 pp*"
+skip = "*-musllinux_* *-manylinux_i686 *-win32 pp*"
 build-verbosity = 1
+# aarch64 wheels are built (and shipped) but not test-run: the test phase
+# would execute under QEMU emulation, which multiplies the dependency
+# install + parity test to hours. The x86_64 parity tests still gate the
+# same C kernel.
+test-skip = "*-manylinux_aarch64"
 # Sanity-check the wheel after install against the real, non-editable artifact:
 # (1) the PEP 561 py.typed marker is present in the installed package — catches a
 #     package-data misconfiguration before the wheel ever reaches PyPI. Run as a

@@ -149,7 +149,9 @@ re-exported symbols.
 - Build: Linux wheels are now built and tagged `manylinux_2_28` (glibc >= 2.28:
   RHEL 8+, Ubuntu 20.04+, Debian 10+) instead of `manylinux2014`. `Pillow>=12.3`
   (a hard dependency) publishes no wheels below manylinux_2_28, so older-glibc
-  systems could not assemble the dependency stack regardless.
+  systems could not assemble the dependency stack regardless. musllinux (Alpine)
+  wheels are not provided: `scikit-learn` ships no musl wheels, so the
+  dependency stack is not pip-installable on musl systems either way.
 
 ### Deprecated
 - `AAlogo` / `AAlogoPlot` are deprecated in favour of the PascalCase `AALogo` /
