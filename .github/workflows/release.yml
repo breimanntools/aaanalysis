@@ -54,7 +54,7 @@ jobs:
         # each built wheel into a clean env, and runs the Cython parity test
         # against the compiled `_inner.cpython-XYZ.so`. A wheel that is not
         # bit-exact vs the legacy path fails here, before it can reach PyPI.
-        uses: pypa/cibuildwheel@7940a4c0e76eb2030e473a5f864f291f63ee879b  # v2.21.3
+        uses: pypa/cibuildwheel@8d2b08b68458a16aeb24b64e68a09ab1c8e82084  # v3.4.1
 
       - name: Upload wheels
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a  # v7
