@@ -39,10 +39,10 @@ protein prediction; `pro` extra for heavy deps; semver-strict v1) and the standa
 - **In flight now (open PRs): none.**
 - **Recently resolved on master:** #505 (PR #508), #477 (#501), #486 (#500), #448 (#469),
   #443 (#468), #444 (#467), #460 (#466), #447+#451 (#465), #442+#461 (#464).
-- **The single biggest triage distortion:** **#37 is prio:1 and tracks fully shipped code**
-  (`AAMut`/`SeqMut`/`SeqOpt` + all three `*Plot`, 20 executed notebooks). It makes the tracker
-  read as if protein design is unbuilt. **14 issues are ☑️ shipped-but-open** — clearing them
-  is the highest-value hour on this list and needs a maintainer decision, not code.
+- **The 14 ☑️ issues are PARTIAL, not done** — mean **~57%** complete, individually re-assessed
+  against the code in Step 0. ☑️ here means *Done-or-**Partial***, and in every case it is the
+  second: the shipped implementation is a first draft whose remaining scope still stands.
+  Re-milestone and re-scope them; do **not** close them.
 
 ## Issue ↔ PR activity (secondary)
 
@@ -88,15 +88,39 @@ surface* the change adds:
 | **L** | 3–5 days. New public *class* or module: logic + `Plot` sibling + backend subpackage + registry entries + CONFIRM-FIRST `__init__.py` | `ReliabilityModel`: **917** LOC source + **453** LOC tests + **7** notebooks |
 | **XL** | > 1 week, or blocked until a decision record exists | #276, #483, the omics track |
 
-### Step 0 — Triage debt (≈1 h, zero code) — **do this first**
+### Step 0 — Re-milestone the 14 partially-built issues (≈1 h, zero code)
 
-Close or re-scope the **14 shipped-but-open** issues; each already carries an evidence comment
-(2026-09-10). This is the highest value-per-minute item on the list because it changes what the
-tracker *means*: **#37** is prio:1 and tracks a fully shipped design tier.
+> **Correction (2026-09-10).** An earlier pass of this handoff labelled several of these
+> "shipped — recommend close". That was wrong. The shipped implementation is a **first draft**
+> the maintainer still intends to extend, so these are *partially satisfied intents*, not
+> finished work. Closing them would delete the plan for the remainder. Each was re-assessed
+> against the code; completion and the concrete remainder are below.
 
-- **Close** (superseded by shipped code): #37, #40, #22, #53, #26
-- **Re-scope, don't close** (a real remainder survives): #56, #47, #36, #109, #455, #210, #485,
-  #488, #494
+**Mean completion across the 14: ~57%.** None is done. The action is to **re-milestone and
+re-scope**, not to close — the only genuine close candidate is #22, and only *in favour of*
+#23, which is its unbuilt comparison half verbatim.
+
+| # | done | milestone (now → suggested) | the remainder, in one line | effort |
+|---|---|---|---|---|
+| #26 | **85%** | v1.3 → **v1.2** | the per-residue score shape (`df_pred`, `df_rel`) is unpinned while ProtXplain consumes it **today** — live drift risk | **S–M** |
+| #56 | **80%** | v1.4 → keep (epic) | its 3 children + two unowned gaps: a feature-level `CPPPlot.volcano`, and cross-protein side-by-side comparison | M ×3 |
+| #37 | **75%** | v1.2 → **split** | figure pass (the maintainer's own hold) stays v1.2; AAclust integration + cross-dataset eval → v1.3 | L |
+| #53 | **70%** | v2.X → **gate v1.2, code v1.3** | "SHAP variance **across models**" is genuinely unbuilt — `fit()` averages over models before storing | M–L |
+| #22 | **65%** | v1.3 → **v1.4** | pooled-vector fusion helper + pseudo-category → AAontology mapping; comparison half is #23 | M–L |
+| #485 | **65%** | v1.5 → **split** | memory assertion + per-combination KPI restatement → v1.2; resumable checkpoints → v2.X | S–M / L–XL |
+| #40 | **60%** | v1.3 → **v1.4** | conformational ensembles (4 boxes, zero code) — needs an ADR: `dict_num` has no conformation axis | XL |
+| #36 | **55%** | v1.3 → keep | nothing composes the primitives into the top60 pipeline; determinism/coverage unasserted | S–M |
+| #494 | **55%** | v1.5 → **v1.3** | `[embed]` is installed by **no** workflow — an unmonitored break path in a shipped extra | S–M |
+| #47 | **45%** | v2.X → **carve v1.3** | the no-new-dep half: a PoSHAP API + `ShapModel.eval` (currently `NotImplementedError`) | M ×2 |
+| #488 | **45%** | v1.3 → keep | fold-level rows never reach the *returned* frame; no stored split ids | 4×S + M |
+| #210 | **40%** substance, **0%** of its own KPI | v1.4 → keep (tracker) | it has **no children** — that is literally its acceptance criterion; `ecosystem.rst` is `:orphan:` | S each |
+| #109 | **35%** | v1.4 → **split** | 1 of 7 case studies; residue-level, domain-level and BYO-data genuinely absent | M per notebook |
+| #455 | **25%** | v1.2 → keep gate | 8 of 9 protocols have had no rubric pass; the nbmake gate does not cover `protocols/` | S + L |
+
+**Pull into v1.2 (all S, ~2 days total):** #26's schema entries · #53's dedupe decision record
+(alongside #16, which is prio:1/v1.2 and lands on the same class) · #210's `ecosystem.rst`
+de-orphan · #485's memory assertion · #56's boundary-decision record · #36's determinism and
+coverage tests.
 
 ### Step 1 — #510, alone (M, 1–2 days) — **the gate for everything in Lane A**
 
