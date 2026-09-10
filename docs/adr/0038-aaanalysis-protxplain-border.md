@@ -1,6 +1,6 @@
 # ADR-0038 — The AAanalysis ↔ ProtXplain border: three layers, one direction
 
-Status: Accepted — 2026-06-23 (consolidated 2026-07-16; absorbs and removes the former validation/Pydantic border ADR)
+Status: Accepted — 2026-06-23 (consolidated 2026-07-16; absorbs and removes the former validation/Pydantic border ADR; amended 2026-07-18 — added § G / D20 routing the v1.2–v1.3 trust-and-safety roadmap)
 
 > **AAanalysis is the trusted open scientific engine. ProtXplain is the proprietary
 > decision and execution system that knows how, when and why to use it.**
@@ -457,6 +457,39 @@ Ask in order:
 | A SHAP implementation requiring heavy dependencies | `aaanalysis[pro]` |
 | Interpreting SHAP confidence and selecting the next workflow | ProtXplain |
 
+### § G — Applying the routing rule to the v1.2–v1.3 trust-and-safety roadmap
+
+#### D20. The trust-and-safety primitives are ours; their thresholds, codes and memory are ProtXplain
+
+A 2026-07-18 additive roadmap (issues #473–#494) proposed a family of *safe-design +
+trustworthy-evaluation* features. Run through D19, every one splits on the same D6/D7
+seam: **the measurement, diagnostic, evaluation metric, constraint object and local
+record are open; the threshold-driven action, the stable code taxonomy, the
+cross-project memory and the execution budget are ProtXplain.** This decision records
+the split once so each item is not re-litigated per issue.
+
+| AAanalysis primitive (open) | ProtXplain policy (closed) |
+|---|---|
+| applicability-domain / OOD **score** + status (#473) | the refusal threshold; whether an out-of-domain result abstains, switches model, escalates or triggers an experiment |
+| selective-prediction **risk–coverage metric** (#474) | the coverage/confidence threshold at which to actually abstain |
+| `DesignConstraints` object + rejection reasons (#475) | which constraints are mandatory for a campaign; translating a scientist's brief into a constraint set |
+| candidate **lineage record** of one run (#476) | campaign memory spanning runs, experimental rounds, teams and projects |
+| leakage-audit **findings** (#479) | whether a finding must block a workflow or needs human approval |
+| calibration **metrics** + calibrated probabilities (#480) | whether calibration is good enough to act on |
+| external-validation **report** (#481) | whether the evidence is sufficient for an experimental or commercial claim |
+| benchmark **runner** over shipped baselines (#488) | ranking / selecting the "best" method from accumulated evidence |
+| precise, documented Python **warnings** (D11) | the stable warning → policy **code taxonomy** (D14) |
+
+Three items that read like AAanalysis features are, under this seam, ProtXplain, and
+were deliberately **not** filed in the roadmap: an abstaining `predict_selective` that
+*refuses* samples below a threshold (uncertainty-driven action — D6/D19); a stable
+scientific-warning *code taxonomy* surfaced in results (an error/warning-code taxonomy —
+D14); and a per-call *resource / runtime estimator* (D5, "resource and runtime
+estimates"). AAanalysis keeps the open halves — the risk–coverage *metric* (#474),
+precise documented warnings (D11), and, where a bound is a deterministic safety guard
+rather than a capability estimate, a refuse-unbounded-enumeration guard inside
+`DesignConstraints` (#475).
+
 ---
 
 ## Adjacent ADRs — what each contributes to the border
@@ -522,6 +555,15 @@ the closed adapter consumes (D10, D11).
 - **Deferring release / typing / supply-chain maturity to v2.** Not algorithm or
   API-surface work; deferring lets version divergence and toothless gates persist.
   Rejected; see D17.
+- **An abstaining `predict_selective(...)` in AAanalysis.** Refusing a prediction
+  because confidence or applicability is too low is uncertainty-driven *action*
+  (D6/D19), not measurement. Only the risk–coverage *evaluation* metric (#474) stays
+  open; the refusal threshold and the abstain/escalate decision are ProtXplain.
+  Rejected; see D20.
+- **A stable scientific-warning code taxonomy surfaced in results** (`LOW_SAMPLE_SIZE`,
+  `OUT_OF_DOMAIN`, `POOR_CALIBRATION`, …). This is the error/warning-code taxonomy D14
+  rejects, one level up: AAanalysis keeps precise, documented Python warnings (D11) and
+  the adapter assigns the stable codes it maps to policy. Rejected; see D14/D20.
 
 ## Consequences
 
@@ -549,6 +591,10 @@ the closed adapter consumes (D10, D11).
 - **Nothing about the placement changes:** no MCP server, tool schema, verb
   orchestration, typed request/result model, capability registry, or tool/workflow
   decision logic enters AAanalysis.
+- **The 2026-07-18 additive roadmap is routed by D20.** Issues #473–#494 land as open
+  scientific primitives; their threshold, code-taxonomy, cross-project-memory and
+  resource-scheduling counterparts stay in ProtXplain. No new public exception, error
+  code, capability accessor or result envelope enters AAanalysis as a result.
 
 > ProtXplain does not merely execute AAanalysis. It knows which capability to use,
 > under which conditions, how to combine it with other tools, whether to trust the

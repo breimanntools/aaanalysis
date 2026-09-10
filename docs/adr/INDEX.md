@@ -44,7 +44,7 @@ Regenerate this table with:
 | [0033](0033-performance-audit-outcomes.md) | Whole-library performance audit: accepted wins and rejected optimizations | Accepted | 2026-06-13 |  |
 | [0036](0036-type-hints-contract-checker-deferred-pyright.md) | Ship `py.typed` and adopt pyright (non-blocking) now; type hints are the contract | Accepted | 2026-06-22 |  |
 | [0037](0037-perf-ab-gate.md) | Same-runner A/B vs the latest PyPI release makes wall-clock a merge gate | Accepted | 2026-06-22 |  |
-| [0038](0038-aaanalysis-protxplain-border.md) | The AAanalysis ↔ ProtXplain border: three layers, one direction | Accepted | 2026-06-23 | consolidated 2026-07-16; absorbs and removes the former validation/Pydantic border ADR |
+| [0038](0038-aaanalysis-protxplain-border.md) | The AAanalysis ↔ ProtXplain border: three layers, one direction | Accepted | 2026-06-23 | consolidated 2026-07-16; absorbs and removes the former validation/Pydantic border ADR; amended 2026-07-18 — added § G / D20 routing the v1.2–v1.3 trust-and-safety roadmap |
 | [0039](0039-plot-return-contract.md) | One uniform `(fig, ax)` return contract for every `*Plot` method | Accepted | 2026-06-24 |  |
 | [0040](0040-golden-pipelines-convenience-api.md) | Golden pipelines: the `aaanalysis.pipe` (ap) convenience API | Accepted | 2026-06-24 | amended 2026-07-14 — verb names aligned to the shipped `aaanalysis.pipe` API |
 | [0041](0041-pipe-pipeline-conventions.md) | `aaanalysis.pipe` pipeline conventions and the core golden pipelines | Accepted | 2026-06-24 |  |
