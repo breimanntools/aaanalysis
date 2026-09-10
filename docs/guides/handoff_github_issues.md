@@ -70,45 +70,99 @@ plus the five direct-to-master release commits of 2026-09-09/10.
 
 ---
 
-## ▶ What to work on next (recommended order)
+## ▶ What to work on next — sequenced, with effort
 
-**Zero-code housekeeping first — it changes what everything else looks like:**
+### The effort scale (calibrated on this repo, not generic)
 
-1. **Close the 14 shipped-but-open issues** (maintainer decision, ~1 h): **#37** (prio:1, design
-   tier shipped), **#40** (structure umbrella ~70% delivered, duplicate of #365), **#22** (its
-   only unbuilt section *is* #23), **#26** (`_schemas.py` + contract tests ship), **#53**
-   (uncertainty-XAI fully superseded by `ReliabilityModel`/`ShapModel`/`selection_frequency`),
-   **#56**/**#47** (re-scope to their residuals), **#36**, **#109**, **#455**, **#210**, **#485**,
-   **#488**, **#494** (re-scope, don't close). Each is listed with its evidence in the audit below.
+Effort here is dominated by the **fixed overhead every new public symbol pays**, not by the
+algorithm. A new symbol must clear ~15 gates in `tests/unit/api_tests/` (abbreviation registry,
+docstring contracts, plot-return contract, param coverage, backend-import hygiene), get a
+docstring in house style, an example notebook demonstrating **every** public parameter (a
+permanent zero-gap CI gate), and ~30 tests per method. Sizing therefore keys off *what kind of
+surface* the change adds:
 
-**Then the ready lane — no new dependency, no blocked design decision:**
+| Size | Means | Measured anchor |
+|---|---|---|
+| **S** | ≤ ½ day. No new public symbol; ≤ 2 files; extends existing tests | `ad_nearest_train`: `kneighbors()` already computes the indices, `reliability.py:82` drops them |
+| **M** | 1–2 days. New *method* on an existing class, or a cross-file rename pass. Docstring + notebook params + ~30 tests | `AAPred.predict_oof` (#398) |
+| **L** | 3–5 days. New public *class* or module: logic + `Plot` sibling + backend subpackage + registry entries + CONFIRM-FIRST `__init__.py` | `ReliabilityModel`: **917** LOC source + **453** LOC tests + **7** notebooks |
+| **XL** | > 1 week, or blocked until a decision record exists | #276, #483, the omics track |
 
-2. **#510 API-consistency pass** (prio:2, v1.2) — **must go first in the reliability lane.** The
-   experimental banners are permission to break; #480 adds rows and #473 adds columns to the same
-   frames, so doing them first means renaming twice. Fixes: `ci` percent-vs-fraction clash,
-   `ad_knn_dist` → `ad_knn`, bare `"n"` column, `mcc` missing from `LIST_METRICS_PRED`, and
-   `SeqOpt()` raising on its own default.
-3. **#473 applicability-domain remainder** (~65% shipped) — `ad_nearest_train` is literally one
-   line (`kneighbors` already returns the indices and `reliability.py:82` drops them);
-   `ad_threshold_`/`ad_status` are small. Its candidate-set entry point is the shared dependency
-   of **#522** and **#481**.
-4. **#480 calibration metrics** — the blocker is confirmed: `_reliability_model.py:429` bins the
-   **raw** `score`, never `score_calibrated`, so `calibration_method` cannot move a single number
-   `eval()` returns. Fix that before adding Brier/ECE, or the metrics are constant in the setting.
-5. **#478 group-aware CV splitters** — the real justification (missing from the issue) is that
-   `AAPred.eval` calls `cross_val_score`/`cross_val_predict` **without `groups=`**, so a stock
-   sklearn group splitter silently cannot receive its groups. Implement as thin `groups`-bound
-   wrappers; do not re-derive fold logic.
-6. **#391 dendrogram kind**, **#79 PSSM**, **#87 split_kws preset**, **#93 learning curve**,
-   **#33 export formats**, **#25 benchmark protocol**, **#23 CPP↔embedding correlation**,
-   **#52 surrogate models**, **#509 pipe parity**, **#474 selective prediction**,
-   **#479 leakage audit**, **#27 regions beyond TMD**, **#28 sliding-window CPP** — all ✅ Ready.
+### Step 0 — Triage debt (≈1 h, zero code) — **do this first**
 
-**Needs a decision before any code (don't start cold):** #483 (core-or-pro: a core `CoordinateMap`
-may **not** reuse the Biopython aligner in `data_handling_pro`), #475 (`DesignConstraints` must be
-callable to fit the shipped `constraints=[...]` contract), #276 (needs a boosted-tree extra +
-grids that live in a paper supplement, not the repo), the whole omics track (#273 → #490/#489/#491
-= one go/no-go, not four issues).
+Close or re-scope the **14 shipped-but-open** issues; each already carries an evidence comment
+(2026-09-10). This is the highest value-per-minute item on the list because it changes what the
+tracker *means*: **#37** is prio:1 and tracks a fully shipped design tier.
+
+- **Close** (superseded by shipped code): #37, #40, #22, #53, #26
+- **Re-scope, don't close** (a real remainder survives): #56, #47, #36, #109, #455, #210, #485,
+  #488, #494
+
+### Step 1 — #510, alone (M, 1–2 days) — **the gate for everything in Lane A**
+
+The experimental banners are a **closing window of permission to break**. #473 adds columns and
+#480 adds rows to the very frames #510 renames, so any other order means renaming twice and
+burning a deprecation cycle on names that only shipped weeks ago.
+
+Contents: `ci` fraction-vs-percent clash between `ModelEvaluator.run(ci=0.95)` and
+`ReliabilityModel.fit(ci=90.0)`; `ad_knn_dist` → `ad_knn` (siblings are `ad_mahalanobis` /
+`ad_leverage`); bare `"n"` → `n_samples`; `mcc` into `LIST_METRICS_PRED` **plus** a matching
+`METRIC_SCORE_FUNCS` entry or it validates then `KeyError`s; `SeqOpt()` raising on its own
+default `mode="impact"`; and a deliberate decision on the overloaded `eval` summary row.
+
+### Step 2 — three lanes in parallel (different files, safe in separate sessions)
+
+**Lane A — reliability/eval (serialized, after #510).** Total ≈ 5–8 days.
+
+| # | what | size | note |
+|---|---|---|---|
+| #473 | AD remainder: `ad_nearest_train`, `ad_threshold_`, `ad_status` | **S** | `ad_nearest_train` = return `kneighbors()[1][:,0]`; `"unknown"` maps onto the existing degenerate branch |
+| #473b | candidate-set entry point (`feature_matrix` + `predict` glue) | **M** | the shared dependency of #522 **and** #481 — build it once, deliberately |
+| #480 | score the **calibrated** column, then Brier + ECE | **M** | `_reliability_model.py:429` reads `COL_SCORE` only, so `calibration_method` currently cannot move a single reported number. Fix that *first*; reuse the existing `edges`/mask loop for ECE |
+| #474 | selective prediction (risk–coverage, AURC) | **M** | build `eval_selective` over `predict_oof`'s per-sample frame — **not** a `selective=` kwarg on `eval`, which never materializes per-sample scores |
+
+**Lane B — quick wins (independent files, genuinely parallel).** Total ≈ 4–6 days.
+
+| # | what | size | why it's cheap |
+|---|---|---|---|
+| #87 | `get_split_kws(strategy=...)` preset | **S** | a kwarg, not new symbols; golden test = dict equality vs `Segment(1,1)` |
+| #79 | `NumericalFeature.from_pssm` | **M** | `CPP.run_num` + `extend_alphabet` are already exactly the contract a PSSM satisfies; touches one file |
+| #93 | learning curve | **M** | ship as `ModelEvaluator.learning_curve` + plot sibling → **no** new top-level symbol, so it skips the registry/`__init__` overhead entirely |
+| #25 | benchmark protocol | **M** | docs + script only, no public API; reuse `_data/benchmarks/Overview.tsv` (15 sets, three levels) |
+| #391 | `group_cluster(kind="dendrogram")` | **M** | **trap:** `sns.clustermap` computes linkage internally, so factor an explicit `scipy…linkage` and feed it back via `row_linkage=` or the "identical topology" KPI passes only by coincidence |
+
+**Lane C — pipe hardening (docs/tests only, no behaviour change).** ≈ 2 days.
+
+| # | what | size | note |
+|---|---|---|---|
+| #509 | `predict_samples` parity anchor + ergonomics KPI + notebook gate for `ap` | **M** | `pipe.__all__` includes `explain_features`, a stub in base installs — the enumerator must skip pro-gated entries or the non-`pro` CI legs go red |
+
+### Step 3 — bigger, still unblocked (pick by appetite)
+
+| # | what | size | the cost driver |
+|---|---|---|---|
+| #33 | standardized export + provenance sidecar | **M** | now assembly, not authorship: `DICT_DF_SCHEMAS` + `get_provenance` both ship. Decide parquet-extra vs CSV-only |
+| #28 | sliding-window CPP | **M** | put it in `aaanalysis/pipe/` as an `ap.` verb, **not** a new top-level class — the issue never considers this and it halves the cost |
+| #478 | group-aware CV splitters | **M–L** | new module + CONFIRM-FIRST `__init__`. Real justification (missing from the issue): `AAPred.eval` calls `cross_val_*` **without `groups=`**, so a stock sklearn group splitter silently cannot receive its groups |
+| #23 | CPP↔embedding correlation | **M–L** | needs a `Plot` sibling → pays full new-symbol overhead. Correlate against `build_scales` pseudo-scales, not raw dims |
+| #52 | surrogate models | **L** | the only XAI item needing **zero** new dependencies; full `ReliabilityModel`-shaped class + `Plot` sibling |
+| #479 | `aa.audit_leakage` | **L** | plus promoting the pipe-private identity helpers to a shared module in the same PR (cross-package backend imports are forbidden) |
+| #27 | regions beyond TMD | **L** | Lane B(CPP) primary; rewrites feature-id construction with a byte-identical-default KPI. Pin a charset validator: a `-` in a region name breaks `PART-SPLIT-SCALE` parsing everywhere |
+
+### Do **not** start cold — decision required first
+
+**#483** (core-or-pro: a core `CoordinateMap` may *not* reuse the Biopython aligner in
+`data_handling_pro`) · **#475** (`DesignConstraints` must be `__call__`-able to fit the shipped
+`constraints=[...]` contract, and its three consumers are not symmetric) · **#276** (needs a
+boosted-tree extra **and** grids that exist only in a paper supplement) · the **omics track**
+(#273 → #490/#489/#491 = one go/no-go, not four issues) · **#429** (its "no changes to `eval`"
+premise is false — `cross_val_predict` requires test folds to partition all samples).
+
+### Suggested first fortnight
+
+Step 0 (1 h) → **#510** (2 d) → then Lane A `#473 → #480` and Lane B `#87 → #79 → #93` in two
+sessions ≈ **8–10 working days**, clearing the v1.2 milestone's reliability half plus four quick
+wins, with no new dependency and no CONFIRM-FIRST `pyproject.toml` edit anywhere.
 
 ---
 
