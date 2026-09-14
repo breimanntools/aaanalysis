@@ -78,14 +78,15 @@ class TestBuildPseudoScales:
             df = aa.EmbeddingPreprocessor().build_scales(df_seq=df_seq, dict_num=embeddings)
         assert list(df.columns) == [f"dim_{i}" for i in range(5)]
 
-    def test_emits_user_warning_about_dataset_dependence(self):
+    def test_dataset_dependence_notice_is_verbose_gated(self, capsys):
         df_seq, embeddings = _make_fixture()
         with warnings.catch_warnings(record=True) as w:
             warnings.simplefilter("always")
-            aa.EmbeddingPreprocessor().build_scales(df_seq=df_seq, dict_num=embeddings)
-        user_warns = [x for x in w if issubclass(x.category, UserWarning)]
-        assert len(user_warns) == 1
-        assert "dataset-dependent" in str(user_warns[0].message).lower()
+            aa.EmbeddingPreprocessor(verbose=False).build_scales(df_seq=df_seq, dict_num=embeddings)
+        assert not [x for x in w if issubclass(x.category, UserWarning)]
+        assert "dataset-dependent" not in capsys.readouterr().out.lower()
+        aa.EmbeddingPreprocessor(verbose=True).build_scales(df_seq=df_seq, dict_num=embeddings)
+        assert "dataset-dependent" in capsys.readouterr().out.lower()
 
     def test_absent_aa_becomes_nan_row(self):
         # Build a corpus that contains only a handful of AAs — others should be NaN

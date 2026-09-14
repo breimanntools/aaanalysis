@@ -13,6 +13,7 @@ O→HN (acceptor) partner offset + energy. Secondary / bifurcated H-bonds
 from typing import List, Tuple
 import shutil
 import tempfile
+import warnings
 from pathlib import Path
 
 
@@ -104,7 +105,12 @@ def run_dssp_full_for_entry_(pdb_path) -> List[ChainFull]:
         except StopIteration:
             raise RuntimeError(f"PDB '{pdb_path}' has no models")
         try:
-            dssp = DSSP(model, str(tmp_pdb), dssp=dssp_bin)
+            with warnings.catch_warnings():
+                # mkdssp 4.x probes every input as mmCIF first and reports the fallback to the
+                # PDB reader on stderr; Biopython re-emits that stderr text as a UserWarning.
+                # The probe is harmless (the file IS a PDB file), so drop that one message.
+                warnings.filterwarnings("ignore", message=".*does not seem to be an mmCIF file.*")
+                dssp = DSSP(model, str(tmp_pdb), dssp=dssp_bin)
         except Exception as e:
             raise RuntimeError(f"DSSP failed on '{pdb_path}': {e}") from e
 

@@ -5,6 +5,8 @@ size-aware model recommendation, and residue→protein pooling. The heavy
 ``torch`` / ``transformers`` compute path lives behind ``_load_model_and_tokenizer``
 and is imported lazily so this module stays importable on a base install.
 """
+import contextlib
+import io
 import os
 import re
 import warnings
@@ -156,13 +158,25 @@ def _load_model_and_tokenizer(model: str, device: str):  # pragma: no cover - lo
             "Computing embeddings requires the 'embed' extra (torch, transformers, "
             "sentencepiece). Install it with:\n\tpip install 'aaanalysis[embed]'") from e
     _hf_logging.set_verbosity_error()  # silence the weight-load report
+    _hf_logging.disable_progress_bar()
+    try:
+        from huggingface_hub.utils import disable_progress_bars as _hub_disable_bars
+        from huggingface_hub.utils import logging as _hub_logging
+        _hub_disable_bars()
+        _hub_logging.set_verbosity_error()
+    except ImportError:  # older huggingface_hub without these helpers
+        pass
     repo = REGISTRY[model]["repo_id"]
-    if REGISTRY[model]["tokenizer"] == "t5":
-        tok = T5Tokenizer.from_pretrained(repo, do_lower_case=False, legacy=True)
-        mdl = T5EncoderModel.from_pretrained(repo)
-    else:
-        tok = AutoTokenizer.from_pretrained(repo)
-        mdl = AutoModel.from_pretrained(repo)
+    # The Hub client and the weight loader write status text ("unauthenticated requests",
+    # "Loading weights ...") straight to stderr, not through warnings/logging; keep that out of
+    # user output (notebooks). Exceptions still propagate normally.
+    with contextlib.redirect_stderr(io.StringIO()):
+        if REGISTRY[model]["tokenizer"] == "t5":
+            tok = T5Tokenizer.from_pretrained(repo, do_lower_case=False, legacy=True)
+            mdl = T5EncoderModel.from_pretrained(repo)
+        else:
+            tok = AutoTokenizer.from_pretrained(repo)
+            mdl = AutoModel.from_pretrained(repo)
     mdl = mdl.to(device).eval()
     return mdl, tok, torch
 

@@ -2176,14 +2176,11 @@ class StructurePreprocessor:
                 raise ValueError(
                     f"'dict_num[{entry!r}].shape[1]' ({arr.shape[1]}) "
                     f"should equal sum of num_dims across features ({D})")
-        warnings.warn(
-            "Pseudo-scales are dataset-dependent (averaged over df_seq + "
-            "dict_num). For reproducible cross-dataset comparison, compute "
-            "them once on a fixed reference corpus and reuse the resulting "
-            "df_scales.",
-            UserWarning,
-            stacklevel=2,
-        )
+        if self._verbose:
+            ut.print_out(
+                "Pseudo-scales are dataset-dependent (averaged over df_seq + "
+                "dict_num). For reproducible cross-dataset comparison, compute "
+                "them once on a fixed reference corpus and reuse the resulting df_scales.")
         # Build per-AA accumulators
         list_aa = list(ut.LIST_CANONICAL_AA)
         aa_to_idx = {a: i for i, a in enumerate(list_aa)}

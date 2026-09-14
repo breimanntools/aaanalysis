@@ -294,13 +294,11 @@ class EmbeddingPreprocessor:
         ut.check_df_seq(df_seq=df_seq)
         _check_per_residue_dict(name="dict_num", df_seq=df_seq, arrays=dict_num)
         ut.check_bool(name="return_std", val=return_std)
-        warnings.warn(
-            "Pseudo-scales are dataset-dependent (averaged over df_seq). "
-            "For reproducible cross-dataset comparison, compute them once on a "
-            "fixed reference corpus and reuse the resulting df_scales.",
-            UserWarning,
-            stacklevel=2,
-        )
+        if self._verbose:
+            ut.print_out(
+                "Pseudo-scales are dataset-dependent (averaged over df_seq). "
+                "For reproducible cross-dataset comparison, compute them once on a "
+                "fixed reference corpus and reuse the resulting df_scales.")
         # Build
         list_aa = list(ut.LIST_CANONICAL_AA)
         result = build_pseudo_scales_(

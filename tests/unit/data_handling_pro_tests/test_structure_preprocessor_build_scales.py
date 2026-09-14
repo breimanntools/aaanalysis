@@ -179,17 +179,18 @@ class TestStpBuildPseudoScales:
                 df_seq=df, dict_num=d, features=["ss3"])
         assert list(df_scales.columns) == ["ss_helix", "ss_strand", "ss_coil"]
 
-    def test_valid_emits_user_warning(self):
+    def test_valid_dataset_dependence_notice_is_verbose_gated(self, capsys):
         df = _df_seq()
         d = _dict_num(df, D=1)
-        strp = aa.StructurePreprocessor(verbose=False)
         with warnings.catch_warnings(record=True) as w:
             warnings.simplefilter("always")
-            strp.build_scales(df_seq=df, dict_num=d,
-                                    features=["bfactor"])
-        user_warns = [x for x in w if issubclass(x.category, UserWarning)]
-        assert any("dataset-dependent" in str(x.message).lower()
-                   for x in user_warns)
+            aa.StructurePreprocessor(verbose=False).build_scales(df_seq=df, dict_num=d,
+                                                                 features=["bfactor"])
+        assert not [x for x in w if issubclass(x.category, UserWarning)]
+        assert "dataset-dependent" not in capsys.readouterr().out.lower()
+        aa.StructurePreprocessor(verbose=True).build_scales(df_seq=df, dict_num=d,
+                                                            features=["bfactor"])
+        assert "dataset-dependent" in capsys.readouterr().out.lower()
 
     def test_valid_constant_input_constant_means(self):
         df = _df_seq()

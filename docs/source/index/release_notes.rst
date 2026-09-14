@@ -47,6 +47,12 @@ Fixed
   ``cbar_xywh`` with a ``y`` value is now honored (the automatic bottom-row layout used to move the
   colorbar back under the grid), and a vertical ``cbar_kws`` orientation puts the ticks on the
   right of the bar.
+- Quiet by default: :meth:`~aaanalysis.StructurePreprocessor.get_dssp` / ``encode_dssp`` no
+  longer re-emit mkdssp's harmless "does not seem to be an mmCIF file" probe as a warning;
+  :meth:`~aaanalysis.EmbeddingPreprocessor.fetch_embeddings` keeps the Hub client's status
+  text and the weight-loading progress bar out of stderr; the ``build_scales`` "pseudo-scales are
+  dataset-dependent" note of the three preprocessors is a verbose-gated message instead of a
+  ``UserWarning``; :class:`~aaanalysis.ShapModel` runs ``shap.KernelExplainer`` silently.
 - Example notebooks: every table is shown with ``display_df``; the ``fetch_alphafold``,
   ``get_dssp``, ``encode_dssp``, ``get_domains``, ``encode_domains`` and ``fetch_uniprot``
   examples are real, executed walkthroughs on AlphaFold models and UniProt records instead of

@@ -36,6 +36,10 @@ notes — with cross-references and examples — live in
 - `aaanalysis.pipe.plot_eval`: axis-impact panel wraps long axis names.
 - `CPPPlot.feature_map` / `heatmap`: explicit `cbar_xywh` (with `y`) is honored by the
   bottom-row layout; vertical colorbars get right-side ticks.
+- Quiet by default: DSSP no longer re-emits mkdssp's mmCIF probe as a warning;
+  `fetch_embeddings` keeps Hub status text / weight-loading bars off stderr; the
+  `build_scales` dataset-dependence note is verbose-gated (was a `UserWarning`);
+  `ShapModel` runs `KernelExplainer` silently.
 - Examples: `display_df` everywhere; real executed `fetch_alphafold`, `get_dssp`,
   `encode_dssp`, `get_domains`, `encode_domains`, `fetch_uniprot` examples;
   `compare_sets_negatives` example no longer depends on `upsetplot` (0.9 breaks on

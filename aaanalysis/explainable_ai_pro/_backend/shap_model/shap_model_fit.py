@@ -70,11 +70,12 @@ def _compute_shap_values(X, labels, model_class=None, model_kwargs=None,
     else:
         explainer = explainer_class(model, **explainer_kwargs)
 
-    # Compute SHAP values
+    # Compute SHAP values (KernelExplainer's own tqdm bar is silenced; ShapModel reports progress itself)
+    kws_values = {"silent": True} if explainer_class == shap.KernelExplainer else {}
     if 'y' in explainer.shap_values.__code__.co_varnames:
-        shap_output = explainer.shap_values(X, y=labels)
+        shap_output = explainer.shap_values(X, y=labels, **kws_values)
     else:
-        shap_output = explainer.shap_values(X)
+        shap_output = explainer.shap_values(X, **kws_values)
 
     # Process SHAP values
     shap_values = _get_shap_values(shap_output, class_index=class_index)
