@@ -15,6 +15,36 @@ notes — with cross-references and examples — live in
 
 ## [Unreleased]
 
+### Fixed
+- `StructurePreprocessor.encode_pae` / `encode`: read the AlphaFold DB PAE JSON layout
+  (a one-element list wrapping the `predicted_aligned_error` dict), so files from
+  `fetch_alphafold` load without a manual unwrap.
+- `CPPPlot.ranking`: the `Σ` total / SHAP sign key no longer overprints the short bars'
+  percentage labels.
+- `SeqOptPlot`: `convergence` y-label fits its panel; `mutation_map` default
+  `figsize=(8, 6)`; `parallel_coordinates` colors by the first objective (with colorbar)
+  when only one front is drawn.
+- Tutorials: typo / wrong-name fixes, four notebooks repaired to pass `nbformat`
+  validation, all tutorials re-executed against the current code.
+- `StructurePreprocessor.get_domains`: AFragmenter adapter reads the current
+  `ClusteringResult` API (0-based `cluster_intervals`); choppings were silently empty.
+- `AALogoPlot`: upright, size-fitted P-site labels for long windows (bottom panel only
+  in `multi_logo`); TMD / JMD part labels shrink on very short parts.
+- `CPPPlot.eval`: bar annotations capped to the bar height (no overprinting).
+- `SeqOptPlot.pareto_front`: solid color for a single front.
+- `AAPredPlot.eval` / comparison charts: long condition names auto-rotated.
+- `aaanalysis.pipe.plot_eval`: axis-impact panel wraps long axis names.
+- `CPPPlot.feature_map` / `heatmap`: explicit `cbar_xywh` (with `y`) is honored by the
+  bottom-row layout; vertical colorbars get right-side ticks.
+- Examples: `display_df` everywhere; real executed `fetch_alphafold`, `get_dssp`,
+  `encode_dssp`, `get_domains`, `encode_domains`, `fetch_uniprot` examples;
+  `compare_sets_negatives` example no longer depends on `upsetplot` (0.9 breaks on
+  pandas 3); nbformat repairs and spelling fixes.
+
+### Documentation
+- New tutorial `tutorial3e_cpp_embeddings_structure`: embeddings and AlphaFold
+  structures into `CPP.run_num`, fusion, and `CPPStructurePlot` painting.
+
 ## [1.1.0] - 2026-09-10
 
 This release substantially expands the feature-engineering surface: a unified

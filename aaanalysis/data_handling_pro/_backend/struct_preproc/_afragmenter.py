@@ -118,10 +118,15 @@ def run_afragmenter_on_pae(pae_path: Path,
         raise RuntimeError(
             f"AFragmenter failed on PAE '{pae_path}': {e}") from e
     # Normalize the upstream output to list-of-list-of-(start, end)
-    # 1-based inclusive tuples. AFragmenter typically returns a list of
-    # lists of (start, end) tuples (one outer per domain, one inner per
-    # contiguous segment). Some versions return a flat list of (s, e)
-    # pairs (one per domain); the helper below handles both shapes.
+    # 1-based inclusive tuples. Current AFragmenter returns a ``ClusteringResult``
+    # whose ``cluster_intervals`` maps cluster id -> list of 0-based inclusive
+    # (start, end) segments; older versions returned a list of lists of
+    # (start, end) tuples (one outer per domain, one inner per contiguous
+    # segment) or a flat list of (s, e) pairs. All three shapes are handled.
+    if hasattr(domains, "cluster_intervals"):
+        intervals = domains.cluster_intervals
+        domains = [[(int(s) + 1, int(e) + 1) for s, e in segs]
+                   for _, segs in sorted(intervals.items())]
     if not isinstance(domains, list):
         raise RuntimeError(
             f"AFragmenter returned {type(domains).__name__}, expected list")

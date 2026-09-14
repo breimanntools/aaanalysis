@@ -45,12 +45,34 @@ def _add_part_text(ax: Axes, text: str, start=1.0, len_part=10.0, fontsize=None,
         bar_height = _get_bar_height(ax=ax)
     y = _get_y(ax=ax, bar_height=bar_height, height_factor=height_factor, reversed_weight=-1)
     x = start + len_part / 2    # Middle of part
+    fontsize = _fit_part_fontsize(ax=ax, text=text, start=start, len_part=len_part, fontsize=fontsize)
+    if fontsize is None:
+        return      # part too narrow for even a small label; the colored bar still marks it
     ax.text(x, y, text,
             horizontalalignment='center',
             verticalalignment='top',
             fontsize=fontsize,
             fontweight=fontweight,
             color='black')
+
+
+def _fit_part_fontsize(ax: Axes, text: str, start=1.0, len_part=10.0, fontsize=None,
+                       min_fontsize=5.0, fill=0.5):
+    """Shrink the part label font so the label stays inside its part (a short JMD of a few residues
+    otherwise collides with the position numbers at both ends, which reach halfway into the part;
+    hence only half the part width is usable). Returns ``None`` when the label would need less
+    than ``min_fontsize`` points."""
+    if fontsize is None:
+        fontsize = plt.rcParams["font.size"]
+    if len_part <= 0 or not text:
+        return fontsize
+    x0, x1 = ax.transData.transform([(start, 0), (start + len_part, 0)])[:, 0]
+    part_px = abs(x1 - x0) * fill
+    text_px = len(text) * fontsize * 0.6 * ax.get_figure().dpi / 72   # ~0.6 em per character
+    if text_px <= part_px:
+        return fontsize
+    fitted = fontsize * part_px / text_px
+    return fitted if fitted >= min_fontsize else None
 
 
 # Helper class

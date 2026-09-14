@@ -290,6 +290,23 @@ class TestStpEncodePae:
         assert np.isnan(d["AF_TINY"]).all()
         assert not bool(df_out["pae_ok"].iloc[0])
 
+    def test_valid_afdb_list_wrapped_layout(self, tmp_path):
+        # AF-DB downloads (fetch_alphafold) wrap the dict in a one-element list:
+        # [{"predicted_aligned_error": [[...]], "max_predicted_aligned_error": 31.75}]
+        L = len(AF_FIXTURE_SEQ)
+        pae = _make_synthetic_pae_json(tmp_path, "AF_TINY", L, name="unused.json")
+        (tmp_path / "AF_TINY.json").write_text(json.dumps([{
+            "predicted_aligned_error": pae.tolist(),
+            "max_predicted_aligned_error": 31.75}]))
+        strp = aa.StructurePreprocessor(verbose=False)
+        d, df_out = strp.encode_pae(return_df=True, df_seq=_df_af(),
+                                   pae_folder=str(tmp_path),
+                                   features=["pae_row_mean"], on_failure="raise")
+        assert bool(df_out["pae_ok"].iloc[0])
+        assert d["AF_TINY"].shape == (L, 1)
+        expected = np.clip(pae.mean(axis=1) / 31.75, 0, 1)
+        np.testing.assert_allclose(d["AF_TINY"][:, 0], expected, atol=1e-6)
+
     def test_valid_af_canonical_filename_fallback(self, tmp_path):
         # When only the AF-DB canonical name is present, resolver finds it.
         src = PDB_FIXTURES / "AF-AF_TINY-F1-predicted_aligned_error_v4.json"

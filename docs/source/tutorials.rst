@@ -39,6 +39,7 @@ click it to open that tutorial. The full, section-ordered list follows below.
      <a href="generated/tutorial3b_sequence_feature.html"><img src="_static/img/thumbs/tut3b.png" alt="SequenceFeature"><div class="cap">SequenceFeature</div></a>
      <a href="generated/tutorial3c_cpp.html"><img src="_static/img/thumbs/tut3c.png" alt="CPP feature engineering"><div class="cap">CPP</div></a>
      <a href="generated/tutorial3d_data_representations.html"><img src="_static/img/thumbs/tut3d.png" alt="Data representations"><div class="cap">Data representations</div></a>
+     <a href="generated/tutorial3e_cpp_embeddings_structure.html"><img src="_static/img/thumbs/tut3e.png" alt="CPP with embeddings and AlphaFold structures"><div class="cap">Embeddings &amp; AlphaFold</div></a>
      <a href="generated/tutorial4a_dpulearn.html"><img src="_static/img/thumbs/tut4a.png" alt="dPULearn PU learning"><div class="cap">dPULearn</div></a>
      <a href="generated/tutorial5a_shap_model.html"><img src="_static/img/thumbs/tut5a.png" alt="ShapModel explanation"><div class="cap">ShapModel</div></a>
      <a href="generated/tutorial6_comparison_harness.html"><img src="_static/img/thumbs/tut6.png" alt="Evaluation and comparison"><div class="cap">Evaluation</div></a>
@@ -59,8 +60,12 @@ Feature Engineering
 -------------------
 Explore interpretable feature engineering, the core of AAanalysis, with the :class:`~aaanalysis.AAclust`, :class:`~aaanalysis.SequenceFeature`,
 and :class:`~aaanalysis.CPP` tutorials, then see how CPP turns different data representations (scales, embeddings, structure)
-into features. Because :meth:`~aaanalysis.SequenceFeature.feature_matrix` returns a plain numeric matrix, these features
-drop directly into a stock ``scikit-learn`` ``Pipeline`` — the prediction protocol demonstrates this end to end.
+into features. The **Embeddings & AlphaFold** tutorial goes deeper on the two heavy representations: the recommended way to
+feed protein language model embeddings (:class:`~aaanalysis.EmbeddingPreprocessor`) and AlphaFold-derived channels
+(:class:`~aaanalysis.StructurePreprocessor`) into :meth:`~aaanalysis.CPP.run_num`, fuse them, and paint the signature onto
+the 3D model with :class:`~aaanalysis.CPPStructurePlot`. Because :meth:`~aaanalysis.SequenceFeature.feature_matrix` returns
+a plain numeric matrix, these features drop directly into a stock ``scikit-learn`` ``Pipeline`` — the prediction protocol
+demonstrates this end to end.
 
 .. toctree::
    :maxdepth: 1
@@ -69,6 +74,7 @@ drop directly into a stock ``scikit-learn`` ``Pipeline`` — the prediction prot
    generated/tutorial3b_sequence_feature
    generated/tutorial3c_cpp
    generated/tutorial3d_data_representations
+   generated/tutorial3e_cpp_embeddings_structure
 
 PU Learning
 -----------

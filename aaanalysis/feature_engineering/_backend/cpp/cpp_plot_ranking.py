@@ -152,6 +152,18 @@ def _add_annotation_right(sub_fig=None, an_in_val=2, max_val=10.0, text_size=8):
             sub_fig.annotate(f"{round(val, 1)}%", (x, p.get_y() + p.get_height()/2), **args_right)
 
 
+def _estimate_text_width(ax=None, n_chars=4, fontsize=8):
+    """Estimate the width of an ``n_chars``-long label in x data units of ``ax`` from the axes
+    width in inches and the current x range (no renderer needed; ~0.6 em per character)."""
+    fig = ax.get_figure()
+    ax_width_in = ax.get_position().width * fig.get_figwidth()
+    x0, x1 = ax.get_xlim()
+    if fontsize is None:
+        fontsize = plt.rcParams["font.size"]   # matplotlib default when no annotation size is given
+    inches = n_chars * fontsize * 0.6 / 72
+    return inches * (x1 - x0) / max(ax_width_in, 1e-6)
+
+
 def _add_rank_info(ax=None, x=0.0, y=0.0, str_sum="", shap_plot=False, args=None):
     """Draw the ranking-info key inside the impact panel: the Σ total, and (for SHAP) a
     positive/negative sign key. Left-aligned and non-bold, to sit quietly beside the bars."""
@@ -188,11 +200,16 @@ def plot_feature_rank(ax=None, df_feat=None, n=20, xlim=(0, 4),
                           an_in_val=x_data_max / 2, max_val=x_data_max)
     # Σ (and, for SHAP, the sign key) sits inside the panel, left-aligned, in the bottom rows. Anchor
     # it just past the SHORT bottom bars (where it actually sits) rather than the longest bar, so it
-    # stays beside the bars and to the left instead of floating out in the right margin.
+    # stays beside the bars and to the left instead of floating out in the right margin. Every short
+    # bar carries its '%' label to the right of the bar end, so the anchor also skips that label's
+    # width (estimated from the font size); otherwise the key overprints the label.
     # ``rank_info_xy`` overrides (x, y).
     str_sum = f"Σ={round(df_feat[col_imp].sum(), 1)}%"
     band_max = float(df_feat[col_imp].iloc[max(0, n - 3):].max()) if n else 0.0
-    x, y = ut.adjust_tuple_elements(tuple_in=rank_info_xy, tuple_default=(band_max + 1.1, n - 2.5))
+    label_width = _estimate_text_width(ax=ax, n_chars=len(f"{round(band_max, 1)}%") + 1,
+                                       fontsize=fontsize_annotation)
+    x, y = ut.adjust_tuple_elements(tuple_in=rank_info_xy,
+                                    tuple_default=(band_max + label_width, n - 2.5))
     _add_rank_info(ax=ax, x=x, y=y, str_sum=str_sum, shap_plot=shap_plot,
                    args=dict(ha="left", size=fontsize_annotation))
 

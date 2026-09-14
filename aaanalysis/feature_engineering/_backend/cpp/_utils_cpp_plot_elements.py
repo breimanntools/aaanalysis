@@ -185,8 +185,10 @@ class PlotElements:
         _cbar_xywh = ut.adjust_tuple_elements(tuple_in=cbar_xywh,
                                               tuple_default=cbar_xywh_default)
 
-        # Create colorbar axes
+        # Create colorbar axes. An explicit vertical position (``y`` given) means the caller places
+        # the colorbar; the automatic bottom-furniture layout then leaves it where it is.
         cbar_ax = fig.add_axes(_cbar_xywh)
+        cbar_ax._aa_cbar_user_placed = cbar_xywh is not None and cbar_xywh[1] is not None
 
         # Prepare colorbar keywords
         _cbar_kws = dict(ticksize=fontsize_labels, label=label)

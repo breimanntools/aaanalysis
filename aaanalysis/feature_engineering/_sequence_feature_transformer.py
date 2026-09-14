@@ -150,6 +150,11 @@ class SequenceFeatureTransformer(TransformerMixin, BaseEstimator):
         """
         Select CPP features from ``(X, y)`` (the training fold) and store them.
 
+        Runs :meth:`CPP.run` on the training fold only, so the selected features never see the
+        held-out samples when the transformer sits inside a scikit-learn ``Pipeline`` under
+        cross-validation. The selected feature ids are kept on the instance and reused by
+        :meth:`transform`.
+
         .. versionadded:: 1.1.0
 
         Parameters
@@ -209,6 +214,11 @@ class SequenceFeatureTransformer(TransformerMixin, BaseEstimator):
         """
         Build the CPP feature matrix ``X`` from the features selected in :meth:`fit`.
 
+        Computes the value of every stored feature id for the given sequences with
+        :meth:`SequenceFeature.feature_matrix`, so a validation or test fold is encoded with exactly
+        the features chosen on the training fold. One column per selected feature, in the order of
+        :meth:`get_feature_names_out`.
+
         .. versionadded:: 1.1.0
 
         Parameters
@@ -239,7 +249,11 @@ class SequenceFeatureTransformer(TransformerMixin, BaseEstimator):
 
     def get_feature_names_out(self, input_features=None):
         """
-        Output feature names — the CPP feature ids selected in :meth:`fit` (one per output column).
+        Output feature names: the CPP feature ids selected in :meth:`fit` (one per output column).
+
+        Each name is a ``PART-SPLIT-SCALE`` feature id, so the columns of :meth:`transform` stay
+        interpretable downstream (for example as row labels of :meth:`CPPPlot.feature_map` or in
+        a ``df_feat`` lookup) and scikit-learn's ``set_output`` / ``Pipeline`` naming works.
 
         .. versionadded:: 1.1.0
 

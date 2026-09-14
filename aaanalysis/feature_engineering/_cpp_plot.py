@@ -1463,7 +1463,9 @@ class CPPPlot:
         cbar_kws : dict of key, value mappings, optional
             Keyword arguments for colorbar passed to :meth:`matplotlib.figure.Figure.colorbar`.
         cbar_xywh : tuple, default=(0.7, None, 0.2, None)
-            Colorbar position and size: x-axis (left), y-axis (bottom), width, height. Values are optimized if ``None``.
+            Colorbar position and size: x-axis (left), y-axis (bottom), width, height, in figure fractions.
+            Values are optimized if ``None``. Giving the ``y`` (bottom) value places the colorbar yourself:
+            the automatic bottom-row layout then leaves it (and the importance legend anchored to it) in place.
         dict_color : dict, optional
             Color dictionary of scale categories classifying scales shown on y-axis. Default from
             :meth:`plot_get_cdict` with ``name='DICT_CAT'``.
@@ -1896,7 +1898,9 @@ class CPPPlot:
         cbar_kws : dict of key, value mappings, optional
             Keyword arguments for colorbar passed to :meth:`matplotlib.figure.Figure.colorbar`.
         cbar_xywh : tuple, default=(0.5, None, 0.2, None)
-            Colorbar position and size: x-axis (left), y-axis (bottom), width, height. Values are optimized if ``None``.
+            Colorbar position and size: x-axis (left), y-axis (bottom), width, height, in figure fractions.
+            Values are optimized if ``None``. Giving the ``y`` (bottom) value places the colorbar yourself:
+            the automatic bottom-row layout then leaves it (and the importance legend anchored to it) in place.
         dict_color : dict, optional
             Color dictionary of scale categories classifying scales shown on y-axis. Default from
             :meth:`plot_get_cdict` with ``name='DICT_CAT'``.

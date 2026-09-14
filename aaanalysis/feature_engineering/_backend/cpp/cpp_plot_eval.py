@@ -11,6 +11,15 @@ BAR_WIDTH = 0.8
 COLOR_BASE = "tab:gray"
 
 # Helper functions
+def _fit_annotation_fontsize(ax=None, n_rows=1, row_fraction=1.0, fontsize=10.0, min_fontsize=5.0):
+    """Cap the bar-annotation font so the label height stays inside one bar: with a small figure
+    (or many feature sets) the stacked pos / neg labels otherwise overprint each other."""
+    fig = ax.get_figure()
+    ax_height_pt = ax.get_position().height * fig.get_figheight() * 72
+    bar_pt = ax_height_pt / max(n_rows, 1) * row_fraction
+    return max(min(fontsize, bar_pt * 0.8), min_fontsize)
+
+
 def _plot_n_features(ax=None, df_eval=None, dict_color=None):
     """Plots stacked bar charts for multiple sets on a single Axes."""
     names = df_eval[ut.COL_NAME].to_list()
@@ -76,9 +85,10 @@ def _plot_avg_mean_dif(ax=None, df_eval=None):
     # Set the width of the bars
     bar_height = BAR_WIDTH/2
     # Plotting
-    fs = ut.plot_gco()
-    args_in = dict(va='center', ha='right', color="white", fontsize=fs-1)
-    args_out = dict(va='center', ha='left', color="black", fontsize=fs-1)
+    fs = _fit_annotation_fontsize(ax=ax, n_rows=len(names), row_fraction=bar_height,
+                                  fontsize=ut.plot_gco() - 1)
+    args_in = dict(va='center', ha='right', color="white", fontsize=fs)
+    args_out = dict(va='center', ha='left', color="black", fontsize=fs)
     max_abs_dif = max([max([abs(x[0]), abs(x[1])]) for x in list_mean_dif])
     for i, (pos, neg) in enumerate(list_mean_dif):
         i_pos = i + bar_height / 2
@@ -105,12 +115,14 @@ def _plot_n_clusters(ax=None, df_eval=None):
     names = df_eval[ut.COL_NAME].to_list()
     # Plotting
     n_max = max(list_n_clusters)
+    fs = _fit_annotation_fontsize(ax=ax, n_rows=len(names), row_fraction=BAR_WIDTH*0.66,
+                                  fontsize=ut.plot_gco())
     for i, n_cluster in enumerate(list_n_clusters):
         ax.barh(i, n_cluster, height=BAR_WIDTH*0.66, color=COLOR_BASE)
         if n_cluster > n_max/2:
-            ax.text(n_cluster, i, n_cluster, va='center', ha='right', color="white")
+            ax.text(n_cluster, i, n_cluster, va='center', ha='right', color="white", fontsize=fs)
         else:
-            ax.text(n_cluster, i, n_cluster, va='center', ha='left', color="black")
+            ax.text(n_cluster, i, n_cluster, va='center', ha='left', color="black", fontsize=fs)
     # Setting the labels and title
     ax.set_yticks(np.arange(len(names)))
     ax.set_yticklabels(names)

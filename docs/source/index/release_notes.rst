@@ -11,6 +11,57 @@ v1.2.0 (Unreleased)
 
 In development.
 
+Fixed
+~~~~~
+
+- :meth:`~aaanalysis.StructurePreprocessor.encode_pae` (and the ``encode`` router) now reads the
+  PAE JSON exactly as the AlphaFold Database serves it, a one-element list wrapping the
+  ``predicted_aligned_error`` dict, so files downloaded by
+  :meth:`~aaanalysis.StructurePreprocessor.fetch_alphafold` load without a manual unwrap.
+- :meth:`~aaanalysis.CPPPlot.ranking`: the ``Σ`` total and the SHAP positive/negative key no longer
+  overprint the percentage labels of the shortest bars; the anchor now skips the label width.
+- :class:`~aaanalysis.SeqOptPlot`: ``convergence`` uses a two-line y-label that fits its third
+  panel, ``mutation_map`` defaults to a taller figure (``figsize=(8, 6)``) so the 20 amino-acid rows
+  stay readable, and ``parallel_coordinates`` colors the lines by the first objective (with a
+  colorbar) when a single front is drawn, where rank coloring made every line the same color.
+- Tutorials: corrected typos and wrong names (e.g. ``load_dataest``, ``plot_setting``,
+  ``ShapExplainer``, ``Part-Slit``, a broken link to the ShapModel tutorial), repaired four
+  notebooks that failed ``nbformat`` validation, and re-executed every tutorial so the stored
+  figures match the current plotting code.
+- :meth:`~aaanalysis.StructurePreprocessor.get_domains`: the AFragmenter adapter now reads the
+  ``ClusteringResult`` that current AFragmenter releases return (0-based ``cluster_intervals``),
+  so ``tool='afragmenter'`` yields real chopping strings instead of silently empty ones.
+- :class:`~aaanalysis.AALogoPlot`: with ``target_p1_site`` the P-site labels of long windows are
+  drawn upright at a size that fits one position, and only under the bottom panel of
+  ``multi_logo``; the TMD / JMD part labels shrink on very short parts instead of overprinting
+  the boundary position numbers (shared by every TMD-JMD plot).
+- :meth:`~aaanalysis.CPPPlot.eval`: the pos / neg mean-difference and cluster-count annotations
+  are capped to the bar height, so they no longer overprint each other in small figures.
+- :meth:`~aaanalysis.SeqOptPlot.pareto_front`: a single front is drawn in one solid color
+  instead of the pale end of the rank colormap.
+- :meth:`~aaanalysis.AAPredPlot.eval` (and every comparison bar chart): long condition names such
+  as ``balanced_accuracy`` are rotated automatically so they and the legend stay readable.
+- :func:`~aaanalysis.pipe.plot_eval`: the axis-impact panel wraps long axis names instead of
+  rotating them into each other.
+- :meth:`~aaanalysis.CPPPlot.feature_map` / :meth:`~aaanalysis.CPPPlot.heatmap`: an explicit
+  ``cbar_xywh`` with a ``y`` value is now honored (the automatic bottom-row layout used to move the
+  colorbar back under the grid), and a vertical ``cbar_kws`` orientation puts the ticks on the
+  right of the bar.
+- Example notebooks: every table is shown with ``display_df``; the ``fetch_alphafold``,
+  ``get_dssp``, ``encode_dssp``, ``get_domains``, ``encode_domains`` and ``fetch_uniprot``
+  examples are real, executed walkthroughs on AlphaFold models and UniProt records instead of
+  commented-out stubs; the ``compare_sets_negatives`` example draws the negative-set overlap
+  with matplotlib because ``upsetplot`` 0.9 does not run on pandas 3; three notebooks were
+  repaired to pass ``nbformat`` validation and spelling mistakes were corrected.
+
+Documentation
+~~~~~~~~~~~~~
+
+- New tutorial *CPP with protein language model embeddings and AlphaFold structures*
+  (``tutorial3e``): the recommended embedding and AlphaFold paths into
+  :meth:`~aaanalysis.CPP.run_num`, source fusion, and painting the signature onto the 3D model
+  with :class:`~aaanalysis.CPPStructurePlot`.
+
 Version 1.1
 --------------------------------
 

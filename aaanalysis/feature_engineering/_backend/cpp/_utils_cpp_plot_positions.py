@@ -322,6 +322,8 @@ def place_colorbar_below_grid_(fig=None, ax=None, gap_in=_CBAR_BELOW_GRID_IN):
     if not ax.collections or ax.collections[0].colorbar is None:
         return
     cbar_ax = ax.collections[0].colorbar.ax
+    if getattr(cbar_ax, "_aa_cbar_user_placed", False):
+        return      # explicit cbar_xywh: the caller placed the colorbar
     w_in, h_in = (float(v) for v in fig.get_size_inches())
     grid_pos = ax.get_position()
     cbar_pos = cbar_ax.get_position()
@@ -349,6 +351,10 @@ def align_bottom_furniture_(fig=None, ax=None, gap_in=_FURNITURE_GAP_IN, item_ga
     cat_legend = ax.get_legend()
     cbar = ax.collections[0].colorbar if (ax.collections and ax.collections[0].colorbar) else None
     cbar_ax = cbar.ax if cbar is not None else None
+    if cbar_ax is not None and getattr(cbar_ax, "_aa_cbar_user_placed", False):
+        # Explicit cbar_xywh: leave the colorbar (and its importance legend) where the caller put
+        # it and lay out only the scale-category legend in the bottom row.
+        cbar_ax = None
     imp_legend = cbar_ax.get_legend() if cbar_ax is not None else None
     grid = ax.get_position()
     # Lowest grid-attached content = min bottom of the grid axes' own tight bbox (position ticks,

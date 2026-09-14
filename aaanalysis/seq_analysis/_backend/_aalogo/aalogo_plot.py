@@ -34,7 +34,20 @@ def _add_p_sites(ax_logo=None, df_logo=None, target_p1_site=None, xtick_size=Non
     x_ticks_labels = list_p_n_term + list_p_c_term
     ax_logo.tick_params(axis="x", length=0, color="black", width=0, bottom=True)
     ax_logo.set_xticks(x_ticks)
-    ax_logo.set_xticklabels(x_ticks_labels, fontsize=xtick_size)
+    # Long windows: horizontal P-site labels (up to 4 characters each) overprint each other,
+    # so stand them upright once there are more positions than fit side by side, and cap the
+    # font so an upright label is no taller than the slot one position occupies.
+    if xtick_size is None:
+        xtick_size = plt.rcParams["xtick.labelsize"]
+        if isinstance(xtick_size, str):
+            xtick_size = plt.rcParams["font.size"]
+    rotation = 0
+    if len(x_ticks) > 15:
+        fig = ax_logo.get_figure()
+        slot_pt = ax_logo.get_position().width * fig.get_figwidth() * 72 / len(x_ticks)
+        xtick_size = max(min(xtick_size, slot_pt * 0.85), 5.0)
+        rotation = 90
+    ax_logo.set_xticklabels(x_ticks_labels, fontsize=xtick_size, rotation=rotation)
 
 
 def _add_tmd_jmd_label(ax=None, x_shift=0.0, fontsize_tmd_jmd=None, weight_tmd_jmd="normal",
@@ -213,8 +226,13 @@ def multi_logo_(list_df_logo=None, list_df_logo_info=None, target_p1_site=None,
         # Add part annotations
         args_parts = dict(ax=ax_logo, tmd_len=tmd_len, jmd_n_len=jmd_n_len, jmd_c_len=jmd_c_len)
         if target_p1_site is not None:
-            _add_p_sites(ax_logo=ax_logo, df_logo=_df_logo,
-                         target_p1_site=target_p1_site, xtick_size=xtick_size)
+            # Only the bottom subplot gets the P-site labels (the panels share the x axis; upright
+            # labels under an upper panel would run into the panel below).
+            if i + 1 == n_plots:
+                _add_p_sites(ax_logo=ax_logo, df_logo=_df_logo,
+                             target_p1_site=target_p1_site, xtick_size=xtick_size)
+            else:
+                ax_logo.set_xticks([])
         else:
             ut.add_tmd_jmd_bar(**args_parts, x_shift=-0.5,
                                jmd_color=jmd_color, tmd_color=tmd_color,

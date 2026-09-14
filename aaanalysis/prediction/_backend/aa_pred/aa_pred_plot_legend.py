@@ -6,6 +6,7 @@ A single house-style legend for the across-samples prediction figures (``predict
 color key the same way instead of each dropping the legend in a different corner.
 """
 from typing import Optional, List
+import matplotlib.transforms as mtransforms
 
 import aaanalysis.utils as ut
 
@@ -31,6 +32,19 @@ def _offset_below_axes(ax):
     return -(below + 0.09)
 
 
+def _below_axes_transform(ax):
+    """Transform anchoring a legend a fixed physical distance (the measured height of the x-tick
+    labels + x-label, plus a small gap) below the axes' bottom edge. Unlike an axes-fraction offset
+    the gap does not shrink when a later ``tight_layout`` makes the axes shorter, so rotated or
+    multi-line tick labels never run into the legend."""
+    fig = ax.get_figure()
+    fig.canvas.draw()
+    ax_bb = ax.get_window_extent()
+    tb = ax.get_tightbbox(fig.canvas.get_renderer())
+    below_in = max(0.0, ax_bb.y0 - tb.y0) / fig.dpi + 0.12
+    return ax.transAxes + mtransforms.ScaledTranslation(0, -below_in, fig.dpi_scale_trans)
+
+
 def place_legend_below_(ax=None, fig=None, handles=None, labels=None, title=None, ncol=None,
                         y=None, fontsize="x-small", title_fontsize="x-small"):
     """Draw a frameless, LEFT-aligned legend centered below the axes (or figure), house style.
@@ -50,8 +64,14 @@ def place_legend_below_(ax=None, fig=None, handles=None, labels=None, title=None
     if title is not None and len(labels) <= 1:
         title = None  # one entry: the label is self-explanatory, a title would be redundant
     ncol = _resolve_ncol(len(labels), ncol)
+    anchor_kws = {}
     if y is None:
-        y = _offset_below_axes(ax) if fig is None else -0.05
+        if fig is None:
+            # Physical (inch-based) gap below the tick labels: robust to a later tight_layout
+            anchor_kws["bbox_transform"] = _below_axes_transform(ax)
+            y = 0.0
+        else:
+            y = -0.05
     title_kws = {}
     if title:
         weight = "bold" if ut.check_legend_title_bold() else "normal"
@@ -59,6 +79,6 @@ def place_legend_below_(ax=None, fig=None, handles=None, labels=None, title=None
     target = fig if fig is not None else ax
     leg = target.legend(handles, labels, title=title, loc="upper center",
                         bbox_to_anchor=(0.5, y), ncol=ncol, frameon=False,
-                        fontsize=fontsize, **title_kws)
+                        fontsize=fontsize, **anchor_kws, **title_kws)
     leg._legend_box.align = "left"  # left-align the title over the entries (house style)
     return leg

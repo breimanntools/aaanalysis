@@ -637,6 +637,12 @@ class SeqOpt(Tool):
         """
         Evaluate a Pareto front: hypervolume, front size, spread and (optionally) convergence.
 
+        Summarizes the quality of the front returned by :meth:`run` as one row of metrics: the
+        dominated hypervolume (how much objective space the front covers above the reference point),
+        the number of non-dominated variants, their spread along the front and, when a reference
+        front is given, the convergence distance to it. Use it to compare runs (objectives, budgets,
+        ``mode``) or to check that a longer run still improves the front.
+
         Parameters
         ----------
         df_pareto : pd.DataFrame

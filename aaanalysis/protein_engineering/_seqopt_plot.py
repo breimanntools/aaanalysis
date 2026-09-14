@@ -8,6 +8,7 @@ import re
 import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
+import matplotlib.colors as mcolors
 from matplotlib.axes import Axes
 from matplotlib.figure import Figure
 
@@ -83,7 +84,13 @@ class SeqOptPlot:
                      cmap: str = "viridis_r",
                      ) -> Tuple[Figure, Axes]:
         """
-        Scatter two (or three) objectives of a Pareto front, colored by non-dominated rank.
+        Scatter two (or three) objectives of a Pareto front.
+
+        Each variant is one point placed by its objective values; the first (``rank=0``) front is
+        connected in ``x`` order to show the trade-off curve. When several fronts are drawn the points
+        are colored by non-dominated rank (with a colorbar); a single front is drawn in one solid color.
+        With ``z`` the plot becomes a 3-D scatter; for more than three objectives use
+        :meth:`parallel_coordinates`.
 
         Parameters
         ----------
@@ -126,26 +133,27 @@ class SeqOptPlot:
         # Plot
         df = df_pareto[df_pareto[ut.COL_RANK] == 0] if front_only else df_pareto
         ranks = df[ut.COL_RANK].to_numpy()
+        # A single front (every rank equal) would map to one pale colormap end; use a solid color.
+        multi_rank = len(np.unique(ranks)) > 1
+        color_kws = dict(c=ranks, cmap=cmap) if multi_rank else dict(color="tab:blue")
         if z is not None:
             if ax is None:
                 fig = plt.figure(figsize=figsize)
                 ax = fig.add_subplot(111, projection="3d")
-            sc = ax.scatter(df[x], df[y], df[z], c=ranks, cmap=cmap, s=40,
-                            edgecolor="white", linewidth=0.5)
+            sc = ax.scatter(df[x], df[y], df[z], s=40, edgecolor="white", linewidth=0.5, **color_kws)
             ax.set_xlabel(x)
             ax.set_ylabel(y)
             ax.set_zlabel(z)
         else:
             if ax is None:
                 _, ax = plt.subplots(figsize=figsize)
-            sc = ax.scatter(df[x], df[y], c=ranks, cmap=cmap, s=45,
-                            edgecolor="white", linewidth=0.5)
+            sc = ax.scatter(df[x], df[y], s=45, edgecolor="white", linewidth=0.5, **color_kws)
             # Connect the first front (sorted by x) to show the trade-off curve.
             front = df_pareto[df_pareto[ut.COL_RANK] == 0].sort_values(x)
             ax.plot(front[x], front[y], color="black", alpha=0.4, zorder=0)
             ax.set_xlabel(x)
             ax.set_ylabel(y)
-        if len(np.unique(ranks)) > 1:
+        if multi_rank:
             cbar = ax.get_figure().colorbar(sc, ax=ax)
             cbar.set_label(ut.COL_RANK)
         return ut.FigAxResult(ax.get_figure(), ax)
@@ -157,6 +165,11 @@ class SeqOptPlot:
                     ) -> Tuple[Figure, Axes]:
         """
         Plot the per-generation hypervolume convergence trace.
+
+        The dominated hypervolume is the standard single-number quality of a multi-objective front
+        (the objective-space volume the front dominates above the reference point); a curve that
+        flattens out signals that :meth:`SeqOpt.run` has converged and more generations would not
+        improve the front. See :meth:`convergence` for the multi-panel view.
 
         Parameters
         ----------
@@ -241,7 +254,8 @@ class SeqOptPlot:
             if mean_c in history and worst_c in history:
                 axes[2].plot(gen, history[mean_c], color=color, alpha=0.6, linewidth=1, ls="--")
                 axes[2].fill_between(gen, history[worst_c], history[c], color=color, alpha=0.12)
-        axes[2].set_ylabel("objective (best / mean band)")
+        # Two short lines: a one-line label overflows the third (one-of-three) panel's height.
+        axes[2].set_ylabel("objective\n(best / mean)")
         axes[2].set_xlabel(ut.COL_GENERATION)
         if best_cols:
             axes[2].legend(fontsize="small")
@@ -258,8 +272,10 @@ class SeqOptPlot:
         """
         Parallel-coordinates plot of a Pareto front over any number of objectives.
 
-        Each variant is a line across the objective axes (min-max normalized per objective),
-        colored by non-dominated rank — the way to read trade-offs for ``> 3`` objectives.
+        Each variant is a line across the objective axes (min-max normalized per objective) — the
+        way to read trade-offs for ``> 3`` objectives. Lines are colored by non-dominated rank when
+        several fronts are drawn; when a single front is shown (the default ``front_only=True``,
+        where every rank is 0) they are colored by the first objective instead, with a colorbar.
 
         Parameters
         ----------
@@ -274,7 +290,8 @@ class SeqOptPlot:
         front_only : bool, default=True
             If ``True``, plot only the first (``rank=0``) front.
         cmap : str, default="viridis_r"
-            Matplotlib colormap name for the rank coloring.
+            Matplotlib colormap name for the line coloring (rank, or the first objective when a
+            single front is shown).
 
         Returns
         -------
@@ -306,18 +323,29 @@ class SeqOptPlot:
         xs = np.arange(len(objectives))
         cmap_obj = plt.get_cmap(cmap)
         ranks = df[ut.COL_RANK].to_numpy()
-        rmax = max(int(ranks.max()), 1)
-        for row, r in zip(Mn, ranks):
-            ax.plot(xs, row, color=cmap_obj(r / rmax), alpha=0.6, linewidth=1.0)
+        if len(np.unique(ranks)) > 1:
+            # Several fronts: color by non-dominated rank
+            norm = mcolors.Normalize(vmin=0, vmax=max(int(ranks.max()), 1))
+            color_vals, color_label = ranks.astype(float), "non-dominated rank"
+        else:
+            # One front (every rank equal): rank coloring would paint every line the same, so
+            # color by the first objective (raw values on the colorbar) to keep the lines legible.
+            norm = mcolors.Normalize(vmin=float(lo[0]), vmax=float(hi[0]) if hi[0] > lo[0] else float(lo[0]) + 1.0)
+            color_vals, color_label = M[:, 0], objectives[0]
+        for row, v in zip(Mn, color_vals):
+            ax.plot(xs, row, color=cmap_obj(norm(v)), alpha=0.8, linewidth=1.2)
         ax.set_xticks(xs)
         ax.set_xticklabels(objectives, rotation=20, ha="right")
         ax.set_ylabel("min-max normalized")
+        mappable = plt.cm.ScalarMappable(norm=norm, cmap=cmap_obj)
+        cbar = ax.get_figure().colorbar(mappable, ax=ax)
+        cbar.set_label(color_label)
         return ut.FigAxResult(ax.get_figure(), ax)
 
     def mutation_map(self,
                      df_pareto: pd.DataFrame,
                      *, ax: Optional[Axes] = None,
-                     figsize: tuple = (8, 4),
+                     figsize: tuple = (8, 6),
                      front_only: bool = True,
                      cmap: str = "Reds",
                      ) -> Tuple[Figure, Axes]:
@@ -334,8 +362,8 @@ class SeqOptPlot:
             Output of :meth:`SeqOpt.run` (its ``variant`` labels are parsed).
         ax : matplotlib.axes.Axes, optional
             Axes to draw on. A new figure is created when ``None``.
-        figsize : tuple, default=(8, 4)
-            Figure size when ``ax`` is None.
+        figsize : tuple, default=(8, 6)
+            Figure size when ``ax`` is None. The height leaves room for the 20 amino-acid rows.
         front_only : bool, default=True
             If ``True``, count only the first (``rank=0``) front.
         cmap : str, default="Reds"

@@ -8,6 +8,7 @@ boxed, plus a marginal-impact bar panel and an ``n_filter`` refinement panel. Ea
 separately so it drops straight into a paper.
 """
 from typing import Optional, Tuple, List, Union
+import textwrap
 import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
@@ -209,7 +210,8 @@ def _fig_marginal(df_grid, axes, score_col, figsize):
     for b, v in zip(bars, vals):
         ax.text(b.get_x() + b.get_width() / 2, v, f"{v:.3f}", ha="center", va="bottom", fontsize=9)
     ax.set_xticks(range(len(names)))
-    ax.set_xticklabels([DICT_AXIS_LABEL.get(a, a) for a in names], rotation=20, ha="right")
+    # Wrap long axis names onto two lines (rotated one-line labels overprint each other)
+    ax.set_xticklabels([textwrap.fill(DICT_AXIS_LABEL.get(a, a), 14) for a in names])
     ax.set_ylabel("Impact (max − min)")
     ax.set_ylim(0, (max(vals) * 1.18) if vals else 1.0)
     ax.set_title(f"Axis impact on {_metric_label(score_col)}", fontsize=11)

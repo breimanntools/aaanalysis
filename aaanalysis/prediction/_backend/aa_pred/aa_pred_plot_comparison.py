@@ -44,6 +44,17 @@ def _resolve_colors(group_order: List, colors: Optional[Union[List, Dict]]) -> D
     return {g: colors[i] for i, g in enumerate(group_order)}
 
 
+def _labels_too_wide(ax=None, labels=None, n_slots=1) -> bool:
+    """True when the widest horizontal tick label would not fit into one category slot."""
+    fig = ax.get_figure()
+    slot_px = ax.get_position().width * fig.get_figwidth() * fig.dpi / max(n_slots, 1)
+    fontsize = plt.rcParams["xtick.labelsize"]
+    if isinstance(fontsize, str):
+        fontsize = plt.rcParams["font.size"]
+    widest = max((len(str(lab)) for lab in labels), default=0)
+    return widest * fontsize * 0.6 * fig.dpi / 72 > 0.95 * slot_px   # ~0.6 em per character
+
+
 def _auto_annotation_fmt(values: np.ndarray) -> str:
     """Pick a value-label format from the data scale."""
     vals = values[~np.isnan(values)]
@@ -95,6 +106,8 @@ def plot_comparison_(df_eval=None, group="group", condition="condition", value="
         ax.axhline(baseline, ls="--", color="black", lw=1,
                    label=baseline_label if baseline_label != "" else "_nolegend_")
     ax.set_xticks(x)
+    if not xtick_rotation and _labels_too_wide(ax=ax, labels=condition_order, n_slots=len(x)):
+        xtick_rotation = 30    # long condition names (e.g. 'balanced_accuracy') would overprint
     if xtick_rotation:
         ax.set_xticklabels(condition_order, rotation=xtick_rotation, ha="right", rotation_mode="anchor")
     else:

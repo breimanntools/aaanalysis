@@ -1251,7 +1251,8 @@ class AAPredPlot:
         if baseline is not None:
             ax.axhline(baseline, color="grey", linestyle="--", linewidth=1)
         ax.set_xticks(x)
-        ax.set_xticklabels(metrics, rotation=30, ha="right")
+        # Anchored rotation keeps neighbouring metric names (e.g. 'balanced_accuracy') apart
+        ax.set_xticklabels(metrics, rotation=35, ha="right", rotation_mode="anchor")
         ax.set_ylabel(ylabel)
         place_legend_below_(ax=ax, title=legend_title, fontsize=8)
         sns.despine(ax=ax)

@@ -140,11 +140,15 @@ def _set_cbar_heatmap(ax=None, dict_cbar=None, cbar_kws=None,
     cbar.set_ticklabels([f"{f(x)}{str_pct}" if float(x) != 0 else str_zero for x in cbar_ticks])
     if "label" in cbar_kws:
         cbar.set_label(label=cbar_kws["label"], weight=weight, size=fontsize)
-    cbar.ax.xaxis.set_ticks_position('top')
-    cbar.ax.xaxis.set_label_position('top')
+    orientation = cbar_kws.get("orientation", None)
+    if orientation == "vertical":
+        cbar.ax.yaxis.set_ticks_position('right')
+        cbar.ax.yaxis.set_label_position('right')
+    else:
+        cbar.ax.xaxis.set_ticks_position('top')
+        cbar.ax.xaxis.set_label_position('top')
 
     # Customization for the thin line on top or right of the colorbar
-    orientation = cbar_kws.get("orientation", None)
     for spine in cbar.ax.spines.values():
         spine.set_visible(False)  # Show only the top spine
     if orientation is not None:
