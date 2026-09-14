@@ -3,7 +3,7 @@ This is a script for the frontend of the SeqOptPlot class for visualizing SeqOpt
 multi-objective directed-evolution results: the Pareto-front objective scatter and the
 per-generation hypervolume convergence trace.
 """
-from typing import Optional, Tuple, List
+from typing import Optional, Tuple, List, Dict, Any
 import re
 import numpy as np
 import pandas as pd
@@ -135,11 +135,11 @@ class SeqOptPlot:
         ranks = df[ut.COL_RANK].to_numpy()
         # A single front (every rank equal) would map to one pale colormap end; use a solid color.
         multi_rank = len(np.unique(ranks)) > 1
-        color_kws = dict(c=ranks, cmap=cmap) if multi_rank else dict(color="tab:blue")
         if z is not None:
             if ax is None:
                 fig = plt.figure(figsize=figsize)
                 ax = fig.add_subplot(111, projection="3d")
+            color_kws: Dict[str, Any] = dict(c=ranks, cmap=cmap) if multi_rank else dict(color="tab:blue")
             sc = ax.scatter(df[x], df[y], df[z], s=40, edgecolor="white", linewidth=0.5, **color_kws)
             ax.set_xlabel(x)
             ax.set_ylabel(y)
@@ -147,7 +147,10 @@ class SeqOptPlot:
         else:
             if ax is None:
                 _, ax = plt.subplots(figsize=figsize)
-            sc = ax.scatter(df[x], df[y], s=45, edgecolor="white", linewidth=0.5, **color_kws)
+            if multi_rank:
+                sc = ax.scatter(df[x], df[y], c=ranks, cmap=cmap, s=45, edgecolor="white", linewidth=0.5)
+            else:
+                sc = ax.scatter(df[x], df[y], color="tab:blue", s=45, edgecolor="white", linewidth=0.5)
             # Connect the first front (sorted by x) to show the trade-off curve.
             front = df_pareto[df_pareto[ut.COL_RANK] == 0].sort_values(x)
             ax.plot(front[x], front[y], color="black", alpha=0.4, zorder=0)
@@ -338,7 +341,8 @@ class SeqOptPlot:
         ax.set_xticklabels(objectives, rotation=20, ha="right")
         ax.set_ylabel("min-max normalized")
         mappable = plt.cm.ScalarMappable(norm=norm, cmap=cmap_obj)
-        cbar = ax.get_figure().colorbar(mappable, ax=ax)
+        fig = ax.get_figure() or plt.gcf()
+        cbar = fig.colorbar(mappable, ax=ax)
         cbar.set_label(color_label)
         return ut.FigAxResult(ax.get_figure(), ax)
 

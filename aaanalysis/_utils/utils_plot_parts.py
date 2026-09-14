@@ -68,7 +68,9 @@ def _fit_part_fontsize(ax: Axes, text: str, start=1.0, len_part=10.0, fontsize=N
         return fontsize
     x0, x1 = ax.transData.transform([(start, 0), (start + len_part, 0)])[:, 0]
     part_px = abs(x1 - x0) * fill
-    text_px = len(text) * fontsize * 0.6 * ax.get_figure().dpi / 72   # ~0.6 em per character
+    fig = ax.get_figure()
+    dpi = fig.dpi if fig is not None else float(plt.rcParams["figure.dpi"])
+    text_px = len(text) * fontsize * 0.6 * dpi / 72   # ~0.6 em per character
     if text_px <= part_px:
         return fontsize
     fitted = fontsize * part_px / text_px

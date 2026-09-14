@@ -211,7 +211,7 @@ def _fig_marginal(df_grid, axes, score_col, figsize):
         ax.text(b.get_x() + b.get_width() / 2, v, f"{v:.3f}", ha="center", va="bottom", fontsize=9)
     ax.set_xticks(range(len(names)))
     # Wrap long axis names onto two lines (rotated one-line labels overprint each other)
-    ax.set_xticklabels([textwrap.fill(DICT_AXIS_LABEL.get(a, a), 14) for a in names])
+    ax.set_xticklabels([textwrap.fill(str(DICT_AXIS_LABEL.get(a, a)), 14) for a in names])
     ax.set_ylabel("Impact (max − min)")
     ax.set_ylim(0, (max(vals) * 1.18) if vals else 1.0)
     ax.set_title(f"Axis impact on {_metric_label(score_col)}", fontsize=11)
