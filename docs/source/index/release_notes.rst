@@ -90,6 +90,15 @@ Added
   over all three split types). Both presets together cover the default split set; the default
   ``strategy=None`` leaves the output unchanged. A preset cannot be combined with non-default
   ``split_types``, ``n_split_min``, or ``n_split_max`` values.
+- :meth:`~aaanalysis.ModelEvaluator.learning_curve` answers "is this task sampling-limited?": it
+  repeats the stratified cross-validation of :meth:`~aaanalysis.ModelEvaluator.run` on stratified,
+  nested subsets of increasing size of every training fold, scores each model on the full,
+  unchanged test fold, and returns one row per (model, training size, metric) with the mean, std,
+  and a bootstrap confidence interval. At the full training-fold size it reproduces
+  :meth:`~aaanalysis.ModelEvaluator.run` exactly, and an identical ``random_state`` gives an
+  identical curve. :meth:`~aaanalysis.ModelEvaluatorPlot.learning_curve` draws the metric versus
+  training size per model with the CI band. A still-rising curve suggests collecting more data; a
+  flat one suggests changing the representation or model.
 
 Fixed
 ~~~~~

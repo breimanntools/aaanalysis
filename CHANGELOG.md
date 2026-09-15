@@ -69,6 +69,9 @@ notes — with cross-references and examples — live in
   calls (`Segment(1,1)`; `Segment(2..15)` + `Pattern` + `PeriodicPattern`).
   `strategy=None` keeps the output unchanged; combining a preset with non-default
   `split_types`, `n_split_min`, or `n_split_max` raises `ValueError` (#87).
+- `ModelEvaluator.learning_curve` / `ModelEvaluatorPlot.learning_curve`: cross-validated
+  metric-vs-training-size curve with bootstrap CIs (stratified, nested subsets of each training
+  fold; test folds untouched) to tell a sampling-limited task from a saturated one (#93).
 
 ### Fixed
 - `ReliabilityModel.fit`: non-finite numbers (`NaN`, `inf`, `-inf`) are rejected for `ci`,
