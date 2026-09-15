@@ -115,6 +115,16 @@ Documentation
 - The documented load → find-features → prediction path is executed in the standard unit suite,
   with its at-most-ten-statement budget read from the same code block displayed on the
   :ref:`Golden Pipelines <golden_pipelines>` page.
+- Protocols *P2: Exploratory sequence analysis* and *P3: Sampling* brought to the
+  protocol quality rubric: each opens with a key mental model and shows every concept it
+  names as a contrast figure (probability versus information logo, real versus shuffled
+  baseline, substrate versus non-substrate logos; distance band, reference composition,
+  anti-leakage and redundancy filters). Every demonstrated
+  :class:`~aaanalysis.AALogo`, :class:`~aaanalysis.AALogoPlot`,
+  :class:`~aaanalysis.SequenceFeature` and :class:`~aaanalysis.AAWindowSampler` call now
+  passes its public parameters by name, including
+  :meth:`~aaanalysis.AAWindowSampler.sample_motif_matched`, and the common mistakes are
+  demonstrated in code. The remaining protocols are unchanged by this pass.
 
 Version 1.1
 --------------------------------
