@@ -403,6 +403,12 @@ class TestFit:
         with pytest.raises(ValueError, match="finite"):
             aa.ReliabilityModel().fit(Xtr, ytr, ad_percentile=p)
 
+    def test_ad_percentile_non_finite_message(self):
+        Xtr, ytr, _ = _data()
+        with pytest.raises(ValueError,
+                           match=r"'ad_percentile' \(inf\) should be a finite float or an integer"):
+            aa.ReliabilityModel().fit(Xtr, ytr, ad_percentile=np.inf)
+
     @pytest.mark.parametrize("a", [float("nan"), np.float64("nan"), float("inf"), float("-inf")])
     def test_conformal_alpha_non_finite_raises(self, a):
         Xtr, ytr, _ = _data()
