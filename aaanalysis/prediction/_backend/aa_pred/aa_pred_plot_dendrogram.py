@@ -9,12 +9,13 @@ import matplotlib.patches as mpatches
 from matplotlib.collections import LineCollection
 from scipy.cluster import hierarchy
 
+import aaanalysis.utils as ut
 from .aa_pred_plot_linkage import sample_correlation_, sample_linkage_
 from .aa_pred_plot_clustermap import resolve_label_colors_
 
 
 # I Helper Functions
-_TREE_COLOR = "black"
+_TREE_COLOR = ut.COLOR_TREE
 _TREE_LW = 1.0
 _NAME_FONTSIZE = 9
 # At most this many leaf names per layout before the names are thinned (every k-th is shown).

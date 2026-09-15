@@ -106,8 +106,11 @@ Added
   tree without the heatmap, with ``layout='rectangular'`` or a radial ``layout='circular'`` tree.
   The leaves are colored by the existing ``labels`` / ``labels_row`` annotations (one strip or
   ring each, with titled legends). The tree comes from the same linkage as
-  ``kind='clustermap'`` (now computed once and handed to seaborn), so both kinds show the same
-  topology and leaf order; the clustermap figure itself is unchanged.
+  ``kind='clustermap'`` (now computed once with ``scipy`` and handed to seaborn), so both kinds
+  show the same topology and leaf order. The clustermap figure itself is unchanged when the
+  optional ``fastcluster`` package is not installed; with ``fastcluster``, seaborn used to
+  compute the linkage internally, so exact ties between equidistant merges may now be broken
+  differently.
 
 Fixed
 ~~~~~

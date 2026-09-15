@@ -79,8 +79,10 @@ notes — with cross-references and examples — live in
   metrics, also when the training folds differ in size (#93).
 - `AAPredPlot.group_cluster`: `kind="dendrogram"` with `layout="rectangular"|"circular"` draws
   the sample relation tree alone, leaves colored by `labels` / `labels_row` (one strip or ring
-  each, titled legends). It reuses the clustermap's linkage (now computed explicitly and passed
-  to seaborn), so both kinds show the same topology; the clustermap figure is unchanged.
+  each, titled legends). It reuses the clustermap's linkage (now computed explicitly with SciPy
+  and passed to seaborn), so both kinds show the same topology; the clustermap figure is
+  unchanged when `fastcluster` is not installed (with `fastcluster`, seaborn used to compute the
+  linkage itself, so exact ties between equidistant merges may be broken differently).
   (Addresses #391)
 
 ### Fixed

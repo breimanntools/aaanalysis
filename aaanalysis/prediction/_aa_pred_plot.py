@@ -25,11 +25,6 @@ from ._backend.aa_pred.aa_pred_group import assign_band_index
 LIST_SAMPLE_KINDS = ["window", "domain", "sequence"]
 # Across-samples plot kinds (of per-sample scores) dispatched by :meth:`AAPredPlot.predict_group`.
 LIST_GROUP_KINDS = ["hist", "ranking", "rank_scatter", "scatter", "cutoff"]
-# Sample-relation plot kinds (of the sample x feature matrix) dispatched by
-# :meth:`AAPredPlot.group_cluster`.
-LIST_CLUSTER_KINDS = ["clustermap", "dendrogram"]
-# Tree layouts of ``kind='dendrogram'`` in :meth:`AAPredPlot.group_cluster`.
-LIST_CLUSTER_LAYOUTS = ["rectangular", "circular"]
 # Evaluation plot kinds dispatched by :meth:`AAPredPlot.eval`.
 LIST_EVAL_KINDS = ["eval", "comparison", "heatmap"]
 # Per-kind figure-size defaults used when ``figsize=None`` (split by method).
@@ -54,7 +49,7 @@ def _new_ax(ax=None, figsize=(6, 5)):
 
 def check_match_kind_layout(kind=None, layout=None):
     """Reject a non-default ``layout`` for a ``group_cluster`` kind that has no tree layout."""
-    if kind != "dendrogram" and layout != LIST_CLUSTER_LAYOUTS[0]:
+    if kind != "dendrogram" and layout != ut.LIST_CLUSTER_LAYOUTS[0]:
         raise ValueError(f"'layout' ('{layout}') should only be set for kind='dendrogram' "
                          f"(got kind='{kind}').")
 
@@ -966,7 +961,7 @@ class AAPredPlot:
 
     @staticmethod
     def group_cluster(X: Union[pd.DataFrame, ut.ArrayLike2D],
-                      *, kind: str = "clustermap",
+                      *, kind: Literal["clustermap", "dendrogram"] = "clustermap",
                       layout: Literal["rectangular", "circular"] = "rectangular",
                       labels: Optional[ut.ArrayLike1D] = None,
                       dict_color: Optional[Dict[Union[int, str], str]] = None,
@@ -1010,6 +1005,9 @@ class AAPredPlot:
             values from :meth:`SequenceFeature.feature_matrix`, or :class:`ShapModel` SHAP values).
         kind : {'clustermap', 'dendrogram'}, default='clustermap'
             Which relation figure to draw.
+
+            .. versionchanged:: 1.2.0
+               Added the ``'dendrogram'`` option.
         layout : {'rectangular', 'circular'}, default='rectangular'
             (``kind='dendrogram'``) Tree layout: ``'rectangular'`` draws the root on the left and
             the leaves in rows on the right; ``'circular'`` draws a radial tree with the root at
@@ -1054,18 +1052,52 @@ class AAPredPlot:
         ax : matplotlib.axes.Axes
             The clustermap heatmap axes, or the tree axes (a polar axes for ``layout='circular'``).
 
+        Raises
+        ------
+        ValueError
+            If ``kind`` is not one of ``'clustermap'`` or ``'dendrogram'``, if ``layout`` is not one
+            of ``'rectangular'`` or ``'circular'``, or if a non-default ``layout`` is combined with
+            ``kind='clustermap'``.
+        ValueError
+            If ``X`` is not a numeric 2D matrix with at least two samples and one feature, or
+            contains missing values.
+        ValueError
+            If ``labels``, ``labels_row``, or ``names`` are not list-like of length ``n_samples``,
+            if ``dict_color`` / ``dict_color_row`` are not dictionaries of valid colors or miss a
+            color for a label, if ``legend_title``, ``legend_title_row``, ``cbar_label``, or
+            ``title`` are not strings, if ``cmap`` is not a valid matplotlib colormap name, or if
+            ``figsize`` is not a tuple of two positive numbers.
+
         See Also
         --------
         * :meth:`AAPredPlot.predict_group` for across-samples views of the prediction scores.
         * :meth:`ShapModel` and :meth:`SequenceFeature.feature_matrix` for the input matrix.
 
+        Notes
+        -----
+        * Samples are related by the **Pearson correlation** between their feature/importance
+          vectors. A sample whose vector has zero variance (e.g. an all-zero SHAP row) correlates
+          with nothing, which yields ``NaN``; such entries are set to 0 (uncorrelated) with a
+          self-correlation of 1, so the clustering stays well-defined.
+        * Both kinds share one **hierarchical linkage**, computed with ``scipy`` (average linkage
+          on the Euclidean distances between the rows of that correlation matrix) and handed to
+          ``seaborn.clustermap`` via ``row_linkage`` / ``col_linkage``. The dendrogram therefore
+          shows the same topology and leaf order as the clustermap's row dendrogram.
+        * ``seaborn`` uses the ``fastcluster`` package for its own linkage when it is installed.
+          Since the linkage is now always computed with ``scipy``, a clustermap drawn on a machine
+          with ``fastcluster`` installed may break exact ties between equidistant merges
+          differently than before (the cluster contents are the same; only the arrangement of tied
+          branches can differ).
+
         Examples
         --------
         .. include:: examples/aap_plot_group_cluster.rst
         """
-        if kind not in LIST_CLUSTER_KINDS:
-            raise ValueError(f"'kind' ('{kind}') must be one of {LIST_CLUSTER_KINDS}.")
-        ut.check_str_options(name="layout", val=layout, list_str_options=LIST_CLUSTER_LAYOUTS)
+        if kind not in ut.LIST_CLUSTER_KINDS:
+            raise ValueError(f"'kind' ('{kind}') must be one of {ut.LIST_CLUSTER_KINDS}.")
+        ut.check_str_options(name="layout", val=layout, list_str_options=ut.LIST_CLUSTER_LAYOUTS)
+        ut.check_cmap(name="cmap", val=cmap)
+        ut.check_str(name="cbar_label", val=cbar_label, accept_none=True)
         check_match_kind_layout(kind=kind, layout=layout)
         if kind == "dendrogram":
             figsize = figsize if figsize is not None else _DICT_DENDROGRAM_FIGSIZE[layout]
@@ -1556,8 +1588,6 @@ class AAPredPlot:
             data=data, names=names, labels=labels, labels_row=labels_row, dict_color=dict_color,
             dict_color_row=dict_color_row, legend_title=legend_title,
             legend_title_row=legend_title_row, figsize=figsize, title=title)
-        ut.check_str(name="cmap", val=cmap)
-        ut.check_str(name="cbar_label", val=cbar_label, accept_none=True)
         # Plot
         fig, ax = plot_clustermap_(data=data, names=names, labels=labels, dict_color=dict_color,
                                    legend_title=legend_title, labels_row=labels_row,

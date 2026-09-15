@@ -13,7 +13,10 @@ from hypothesis import given, settings
 import hypothesis.strategies as some
 
 import aaanalysis as aa
+import matplotlib.colors as mcolors
+
 from aaanalysis.prediction._backend.aa_pred import aa_pred_plot_clustermap as cm_backend
+from aaanalysis.prediction._backend.aa_pred import aa_pred_plot_dendrogram as dn_backend
 from aaanalysis.prediction._backend.aa_pred.aa_pred_plot_linkage import (sample_correlation_,
                                                                          sample_linkage_)
 
@@ -53,6 +56,14 @@ def _leaf_names(r):
 
 def _heatmap_row_names(r):
     return [t.get_text() for t in r.ax.get_yticklabels()]
+
+
+def _rgba(color):
+    return tuple(np.round(mcolors.to_rgba(color), 3))
+
+
+def _patch_colors(ax):
+    return {tuple(np.round(p.get_facecolor(), 3)) for p in ax.patches}
 
 
 def _png_bytes(fig):
@@ -145,10 +156,24 @@ class TestGroupClusterDendrogram:
         assert {(1.0, 0.0, 0.0, 1.0), (0.0, 0.0, 1.0, 1.0)} <= colors
 
     def test_dict_color_row(self):
+        # The lone `labels_row` track is drawn as one strip whose bars carry exactly the
+        # requested colors (6 'hi' bars and 6 'lo' bars), and no heatmap/colorbar is drawn.
         r = aa.AAPredPlot().group_cluster(_imp_data(), kind="dendrogram",
                                           labels_row=["hi", "lo"] * 6,
                                           dict_color_row={"hi": "tab:red", "lo": "tab:blue"})
-        assert r.ax is not None
+        strip = [a for a in r.fig.axes if a is not r.ax and a.patches][0]
+        drawn = [tuple(np.round(p.get_facecolor(), 3)) for p in strip.patches]
+        assert _patch_colors(strip) == {_rgba("tab:red"), _rgba("tab:blue")}
+        assert drawn.count(_rgba("tab:red")) == drawn.count(_rgba("tab:blue")) == 6
+        assert not r.ax.images and not r.ax.patches  # tree axes only: no heatmap, no strip
+
+    def test_dict_color_row_circular_ring(self):
+        r = aa.AAPredPlot().group_cluster(_imp_data(), kind="dendrogram", layout="circular",
+                                          labels_row=["hi", "lo"] * 6,
+                                          dict_color_row={"hi": "tab:red", "lo": "tab:blue"})
+        drawn = [tuple(np.round(p.get_facecolor(), 3)) for p in r.ax.patches]
+        assert set(drawn) == {_rgba("tab:red"), _rgba("tab:blue")}
+        assert drawn.count(_rgba("tab:red")) == drawn.count(_rgba("tab:blue")) == 6
 
     @settings(max_examples=5, deadline=None)
     @given(title=some.text(alphabet="abcdefgh ", min_size=1, max_size=15))
@@ -203,7 +228,7 @@ class TestGroupClusterDendrogram:
     # Negative tests
     def test_invalid_layout(self):
         for layout in ["radial", "", "Circular", None, 1, ["circular"]]:
-            with pytest.raises(ValueError):
+            with pytest.raises(ValueError, match="'layout'"):
                 aa.AAPredPlot().group_cluster(_imp_data(), kind="dendrogram", layout=layout)
 
     def test_layout_with_clustermap_raises(self):
@@ -212,13 +237,13 @@ class TestGroupClusterDendrogram:
 
     def test_invalid_kind(self):
         for kind in ["dendogram", "tree", "", None, 3]:
-            with pytest.raises(ValueError):
+            with pytest.raises(ValueError, match="'kind'"):
                 aa.AAPredPlot().group_cluster(_imp_data(), kind=kind)
 
     def test_invalid_X(self):
         for X in [np.random.RandomState(0).rand(1, 5), None, "abc",
                   np.array([[1.0, np.nan], [0.5, 0.2], [0.1, 0.9]])]:
-            with pytest.raises(ValueError):
+            with pytest.raises(ValueError, match=r"'X'|n_samples"):
                 aa.AAPredPlot().group_cluster(X, kind="dendrogram")
 
     def test_invalid_labels_length(self):
@@ -237,29 +262,42 @@ class TestGroupClusterDendrogram:
 
     def test_invalid_dict_color(self):
         for dict_color in [{"sub": "red"}, {"sub": "red", "non": "not_a_color"}]:
-            with pytest.raises(ValueError):
+            with pytest.raises(ValueError, match=r"colors|'dict_color'"):
                 aa.AAPredPlot().group_cluster(_imp_data(), kind="dendrogram",
                                               labels=["sub", "non"] * 6, dict_color=dict_color)
 
     def test_invalid_dict_color_row(self):
-        with pytest.raises(ValueError):
+        with pytest.raises(ValueError, match=r"colors|'dict_color_row'"):
             aa.AAPredPlot().group_cluster(_imp_data(), kind="dendrogram",
                                           labels_row=["hi", "lo"] * 6, dict_color_row={"hi": "red"})
 
     def test_invalid_legend_title(self):
         for kws in [dict(legend_title=1), dict(legend_title_row=["x"])]:
-            with pytest.raises(ValueError):
+            with pytest.raises(ValueError, match="'legend_title"):
                 aa.AAPredPlot().group_cluster(_imp_data(), kind="dendrogram", **kws)
 
     def test_invalid_figsize(self):
         for figsize in [(0, 5), "big", (5,), (-1, -1)]:
-            with pytest.raises(ValueError):
+            with pytest.raises(ValueError, match="'figsize"):
                 aa.AAPredPlot().group_cluster(_imp_data(), kind="dendrogram", figsize=figsize)
 
     def test_invalid_title(self):
         for title in [1, ["t"]]:
-            with pytest.raises(ValueError):
+            with pytest.raises(ValueError, match="'title'"):
                 aa.AAPredPlot().group_cluster(_imp_data(), kind="dendrogram", title=title)
+
+    def test_invalid_cmap(self):
+        # `cmap` is validated for both kinds, even though the dendrogram ignores it.
+        for kind in ["clustermap", "dendrogram"]:
+            for cmap in ["not_a_cmap", "", None, 5, ["GnBu"]]:
+                with pytest.raises(ValueError, match="'cmap'"):
+                    aa.AAPredPlot().group_cluster(_imp_data(), kind=kind, cmap=cmap)
+
+    def test_invalid_cbar_label(self):
+        for kind in ["clustermap", "dendrogram"]:
+            for cbar_label in [1, ["r"], 0.5]:
+                with pytest.raises(ValueError, match="'cbar_label'"):
+                    aa.AAPredPlot().group_cluster(_imp_data(), kind=kind, cbar_label=cbar_label)
 
 
 class TestGroupClusterDendrogramComplex:
@@ -388,6 +426,56 @@ class TestGroupClusterDendrogramGoldenValues:
         monkeypatch.setattr(cm_backend.sns, "clustermap", without_linkage)
         png_old = _png_bytes(aa.AAPredPlot().group_cluster(X, **kws).fig)
         assert png_new == png_old
+
+    def test_same_linkage_matrix_for_both_kinds(self, monkeypatch):
+        # Topology KPI: the merge pairs AND merge distances of the linkage seaborn clusters the
+        # clustermap with equal those of the linkage the dendrogram kind draws (same input).
+        X = _imp_data(n=16, seed=11)
+        names = _names(16)
+        captured = {}
+        original = sns.clustermap
+
+        def spy_clustermap(*args, **kwargs):
+            grid = original(*args, **kwargs)
+            captured["grid"] = grid
+            return grid
+        monkeypatch.setattr(cm_backend.sns, "clustermap", spy_clustermap)
+        aa.AAPredPlot().group_cluster(X, names=names)
+        plt.close("all")
+        original_linkage = dn_backend.sample_linkage_
+
+        def spy_linkage(*args, **kwargs):
+            out = original_linkage(*args, **kwargs)
+            captured["dendrogram_linkage"] = out
+            return out
+        monkeypatch.setattr(dn_backend, "sample_linkage_", spy_linkage)
+        aa.AAPredPlot().group_cluster(X, kind="dendrogram", names=names)
+        link_cm = np.asarray(captured["grid"].dendrogram_row.linkage)
+        link_dn = np.asarray(captured["dendrogram_linkage"])
+        assert link_cm.shape == link_dn.shape == (15, 4)
+        assert np.array_equal(link_cm[:, :2], link_dn[:, :2])   # merge pairs
+        assert np.array_equal(link_cm[:, 2], link_dn[:, 2])     # merge distances
+        assert np.array_equal(link_cm, link_dn)                 # + cluster sizes
+
+    def test_drawn_tree_heights_equal_clustermap_linkage(self, monkeypatch):
+        # The linkage is not only shared but actually drawn: every rectangular link is drawn at
+        # the merge distance of the clustermap's row linkage.
+        X = _imp_data(n=14, seed=12)
+        captured = {}
+        original = sns.clustermap
+
+        def spy_clustermap(*args, **kwargs):
+            grid = original(*args, **kwargs)
+            captured["grid"] = grid
+            return grid
+        monkeypatch.setattr(cm_backend.sns, "clustermap", spy_clustermap)
+        aa.AAPredPlot().group_cluster(X)
+        plt.close("all")
+        r = aa.AAPredPlot().group_cluster(X, kind="dendrogram")
+        # Rectangular segments are (distance, leaf position): the merge height is the max x.
+        drawn = sorted(float(np.max(seg[:, 0])) for seg in r.ax.collections[0].get_segments())
+        expected = sorted(np.asarray(captured["grid"].dendrogram_row.linkage)[:, 2])
+        assert np.allclose(drawn, expected)
 
     @settings(max_examples=4, deadline=None)
     @given(seed=some.integers(min_value=0, max_value=1000))
