@@ -86,6 +86,12 @@ notes — with cross-references and examples — live in
 - The documented golden path is executed and its statement budget is parsed from the code block on
   the *Golden Pipelines* page, so page and test cannot drift apart.
 - Example notebooks of `aaanalysis.pipe` are held to zero parameter-coverage gaps.
+- Protocols P2 (exploratory sequence analysis) and P3 (sampling) brought to the
+  protocol quality rubric: key mental model, concept-contrast figures (bits vs
+  probability, shuffled baseline, label-split logos; distance band, reference
+  composition, motif-matched lookalikes, similarity filters), each demonstrated
+  method's public parameters covered by name across its calls, and demonstrated
+  mistakes. This pass covers P2 and P3 only; the other protocols are unchanged.
 
 ## [1.1.0] - 2026-09-10
 
