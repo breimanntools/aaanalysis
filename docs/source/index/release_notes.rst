@@ -34,11 +34,12 @@ Added
   inspectable. :meth:`~aaanalysis.ReliabilityModel.predict` appends two columns at the end of its
   table: ``ad_status`` (``inside`` if ``ood_score <= 1``, ``borderline`` up to
   ``1 + ad_borderline``, ``outside`` above, and ``unknown`` when the training reference has no
-  usable spread) and ``ad_nearest_train``, the row index of the closest training sample.
+  usable spread) and ``ad_nearest_train``, the 0-based row index of the closest training sample.
   ``in_domain`` stays the bool shorthand for ``ad_status == "inside"``.
   :meth:`~aaanalysis.ReliabilityModel.fit` gains ``ad_borderline`` (default ``0.1``) and exposes
-  the fitted boundary as ``ad_threshold_`` (so ``ood_score == ad_knn / ad_threshold_``) and the
-  decision rule as ``ad_method_`` (``"knn"``). Existing columns keep their names, order, and
+  the fitted boundary as ``ad_threshold_`` (when it is positive,
+  ``ood_score == ad_knn / ad_threshold_``) and the decision rule as ``ad_method_`` (``"knn"``).
+  Apart from the ``ad_knn_dist`` → ``ad_knn`` rename, existing columns keep their order and
   values. Scoring a mutation-candidate set in one call is not part of this release:
   :meth:`~aaanalysis.ReliabilityModel.predict` still takes a prebuilt feature matrix ``X``, so
   :meth:`~aaanalysis.SeqMut.mutate` or :meth:`~aaanalysis.SeqOpt.run` output is scored by
