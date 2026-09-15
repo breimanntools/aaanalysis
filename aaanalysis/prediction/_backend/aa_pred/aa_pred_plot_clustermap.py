@@ -38,9 +38,11 @@ def _titled_legend(fig, dict_color, title, anchor_y):
 
 
 # II Main Functions
-def plot_clustermap_(data=None, names=None, labels=None, dict_color=None, legend_title="Class",
-                     labels_row=None, dict_color_row=None, legend_title_row=None,
-                     cmap="GnBu", figsize=(11, 11), cbar_label="Pearson correlation (r)",
+def plot_clustermap_(data=None, names=None, labels=None, dict_color=None,
+                     legend_title: str | None = "Class",
+                     labels_row=None, dict_color_row=None, legend_title_row: str | None = None,
+                     cmap="GnBu", figsize=(11, 11),
+                     cbar_label: str | None = "Pearson correlation (r)",
                      title=None):
     """Two-annotation correlation clustermap of per-sample vectors. Returns (fig, ax_heatmap)."""
     n = np.asarray(data).shape[0]
