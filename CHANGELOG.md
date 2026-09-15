@@ -89,9 +89,9 @@ notes — with cross-references and examples — live in
 - Protocols P2 (exploratory sequence analysis) and P3 (sampling) brought to the
   protocol quality rubric: key mental model, concept-contrast figures (bits vs
   probability, shuffled baseline, label-split logos; distance band, reference
-  composition, similarity filters), every demonstrated call passing its public
-  parameters by name (including motif-matched sampling), and demonstrated mistakes.
-  This pass covers P2 and P3 only; the other protocols are unchanged.
+  composition, motif-matched lookalikes, similarity filters), each demonstrated
+  method's public parameters covered by name across its calls, and demonstrated
+  mistakes. This pass covers P2 and P3 only; the other protocols are unchanged.
 
 ## [1.1.0] - 2026-09-10
 

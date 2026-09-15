@@ -119,10 +119,11 @@ Documentation
   protocol quality rubric: each opens with a key mental model and shows every concept it
   names as a contrast figure (probability versus information logo, real versus shuffled
   baseline, substrate versus non-substrate logos; distance band, reference composition,
-  anti-leakage and redundancy filters). Every demonstrated
+  motif-matched lookalikes versus the pool they are drawn from, anti-leakage and
+  redundancy filters). The public parameters of each demonstrated
   :class:`~aaanalysis.AALogo`, :class:`~aaanalysis.AALogoPlot`,
-  :class:`~aaanalysis.SequenceFeature` and :class:`~aaanalysis.AAWindowSampler` call now
-  passes its public parameters by name, including
+  :class:`~aaanalysis.SequenceFeature` and :class:`~aaanalysis.AAWindowSampler` method
+  are covered by name across its calls, including
   :meth:`~aaanalysis.AAWindowSampler.sample_motif_matched`, and the common mistakes are
   demonstrated in code. The remaining protocols are unchanged by this pass.
 
