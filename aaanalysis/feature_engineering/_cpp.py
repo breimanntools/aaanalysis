@@ -497,7 +497,7 @@ class CPP(Tool):
         n_batches: Optional[int] = None,
         n_sample_batches: Optional[int] = None,
         return_stats: bool = False,
-        redundancy: str = "legacy",
+        redundancy: Literal["legacy", "exact"] = "legacy",
     ) -> Union[pd.DataFrame, Tuple[pd.DataFrame, dict]]:
         """
         Perform Comparative Physicochemical Profiling (CPP) algorithm: creation and two-step filtering of
@@ -511,8 +511,10 @@ class CPP(Tool):
         .. versionchanged:: 1.1.0
             Added the ``return_stats`` parameter, returning the filter-funnel statistics alongside ``df_feat``.
 
-        .. versionchanged:: 1.1.0
-            Added the ``n_sample_batches`` parameter for sample-axis batching (memory bounded by batch size, not n).
+        .. versionchanged:: 1.2.0
+            ``n_sample_batches`` now creates exactly the requested number of balanced, non-empty
+            sample batches. ``n_batches`` and ``n_sample_batches`` document their distinct
+            output and memory trade-offs.
 
         .. versionchanged:: 1.1.0
             When the constructor enables bootstrap stability annotation (``CPP(bootstrap=True)``), ``df_feat`` gains a
@@ -523,15 +525,16 @@ class CPP(Tool):
         ----------
         labels : array-like, shape (n_samples,)
             Class labels for samples in sequence DataFrame (typically, test=1, reference=0).
-        label_test : int, default=1,
-            Class label of test group in ``labels``.
-        label_ref : int, default=0,
-            Class label of reference group in ``labels``.
+        label_test : int, default=1
+            Class label in ``labels`` that defines the test group used for feature statistics.
+        label_ref : int, default=0
+            Class label in ``labels`` that defines the reference group used for feature statistics.
         n_filter : int, default=100
             Number of features to be filtered/selected by CPP algorithm. With bootstrap stability selection
             (``CPP(bootstrap=True)``) this still caps the final redundancy-filtered output computed on the full dataset.
-        n_pre_filter : int, optional
-            Number of feature to be pre-filtered by CPP algorithm. If ``None``, a percentage of all features is used.
+        n_pre_filter : int or None, default=None
+            Number of candidate features retained before redundancy filtering. If ``None``,
+            ``pct_pre_filter`` determines this number from all candidate features.
         pct_pre_filter : int, default=5
             Percentage of all features that should remain after the pre-filtering step.
         max_std_test : float, default=0.2
@@ -580,8 +583,11 @@ class CPP(Tool):
             Number of scale-axis batches (2 to ``len(df_scales.columns)``). If ``None``,
             single-pass processing is used. A value reduces the per-batch scale-value tensor
             and usually lowers peak memory at the cost of additional work. The FDR correction
-            is applied separately to each scale batch, so only ``p_val_fdr_bh`` can differ
-            from the single-pass output; ranking and selected features are unchanged.
+            is applied separately to each selected-feature batch, so only ``p_val_fdr_bh`` can
+            differ from the single-pass output; ranking and selected features are unchanged.
+
+            .. versionchanged:: 1.2.0
+                Clarified the per-feature-batch FDR-correction semantics.
         n_sample_batches : int or None, default=None
             Number of non-empty, contiguous sample-axis batches (2 to ``n_samples``). If
             ``None``, sample batching is disabled. A value divides samples into exactly this
@@ -593,7 +599,8 @@ class CPP(Tool):
             change statistics at rounding precision and resolve pathological ties differently.
             Mutually exclusive with ``n_batches`` (which batches over scales).
 
-            .. versionadded:: 1.1.0
+            .. versionchanged:: 1.2.0
+                Creates exactly the requested number of balanced, non-empty batches.
         return_stats : bool, default=False
             If ``True``, also return the filter-funnel statistics (``last_filter_stats_``)
             as a second element ``(df_feat, stats)``; if ``False``, return only ``df_feat``.
@@ -605,9 +612,11 @@ class CPP(Tool):
         df_feat : pd.DataFrame, shape (n_features, n_feature_info)
             Feature DataFrame with a unique identifier, scale information, statistics, and positions for each feature.
             Returned on its own when ``return_stats=False`` (default).
-        stats : dict
-            Filter-funnel statistics of this run (same content as :attr:`CPP.last_filter_stats_`), returned only
-            when ``return_stats=True``, in which case the return value is the tuple ``(df_feat, stats)``.
+        stats : dict[str, int]
+            Filter-funnel counts (same content as :attr:`CPP.last_filter_stats_`):
+            ``n_candidates``, ``n_after_prefilter``, ``n_after_redundancy``, and
+            ``n_final``. Returned only when ``return_stats=True``, in which case
+            the return value is ``(df_feat, stats)``.
 
         Raises
         ------
@@ -867,7 +876,7 @@ class CPP(Tool):
         n_batches: Optional[int] = None,
         n_sample_batches: Optional[int] = None,
         return_stats: bool = False,
-        redundancy: str = "legacy",
+        redundancy: Literal["legacy", "exact"] = "legacy",
     ) -> Union[pd.DataFrame, Tuple[pd.DataFrame, dict]]:
         """
         Numerical-mode Comparative Physicochemical Profiling (CPP): same algorithm as
@@ -904,8 +913,9 @@ class CPP(Tool):
             Class label of reference group in ``labels``.
         n_filter : int, default=100
             Number of features to be filtered/selected by CPP algorithm.
-        n_pre_filter : int, optional
-            Number of features to be pre-filtered. If ``None``, a percentage of all features is used.
+        n_pre_filter : int or None, default=None
+            Number of candidate features retained before redundancy filtering. If ``None``,
+            ``pct_pre_filter`` determines this number from all candidate features.
         pct_pre_filter : int, default=5
             Percentage of all features that should remain after the pre-filtering step.
         max_std_test : float, default=0.2
@@ -949,6 +959,9 @@ class CPP(Tool):
             this trims pass-1 memory but does not bound overall peak RSS — use
             ``n_sample_batches`` for that). Output is bit-exact with the single-pass
             result. Mutually exclusive with ``n_sample_batches``.
+
+            .. versionchanged:: 1.2.0
+                Clarified that only the pass-1 working set is batched.
         n_sample_batches : int or None, default=None
             Number of non-empty, contiguous batches (2 to ``n_samples``) over the **sample**
             axis. If ``None``, single-pass. A value creates exactly this many batches whose
@@ -958,6 +971,9 @@ class CPP(Tool):
             may differ from the single-pass run by ULP-level rounding (after the ``round(3)``
             on the stat columns), which can reorder tie-broken features; hence opt-in, not the
             default. Mutually exclusive with ``n_batches``.
+
+            .. versionchanged:: 1.2.0
+                Creates exactly the requested number of balanced, non-empty batches.
         return_stats : bool, default=False
             If ``True``, also return the filter-funnel statistics (``last_filter_stats_``) as a second
             element ``(df_feat, stats)``; if ``False``, return only ``df_feat``.
@@ -967,16 +983,20 @@ class CPP(Tool):
         df_feat : pd.DataFrame, shape (n_features, n_feature_info)
             Same schema as :meth:`run`.
             Returned on its own when ``return_stats=False`` (default).
-        stats : dict
-            Filter-funnel statistics of this run (same content as :attr:`CPP.last_filter_stats_`), returned only
-            when ``return_stats=True``, in which case the return value is the tuple ``(df_feat, stats)``.
+        stats : dict[str, int]
+            Filter-funnel counts (same content as :attr:`CPP.last_filter_stats_`):
+            ``n_candidates``, ``n_after_prefilter``, ``n_after_redundancy``, and
+            ``n_final``. Returned only when ``return_stats=True``, in which case
+            the return value is ``(df_feat, stats)``.
 
         Raises
         ------
         ValueError
             If ``dict_num_parts`` is ``None`` (use :meth:`run` for seq-mode), or if
             its shape / part names / D don't align with the constructor's
-            ``self.df_parts`` and ``self.df_scales``.
+            ``self.df_parts`` and ``self.df_scales``; if any other argument fails
+            validation; if both batching modes are requested; or if batching is
+            requested while the constructor has ``bootstrap=True``.
 
         Notes
         -----

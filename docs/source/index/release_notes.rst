@@ -115,17 +115,12 @@ Documentation
 - The documented load → find-features → prediction path is executed in the standard unit suite,
   with its at-most-ten-statement budget read from the same code block displayed on the
   :ref:`Golden Pipelines <golden_pipelines>` page.
-- :meth:`~aaanalysis.CPP.run`: the ``n_sample_batches`` description promised that peak memory is
-  bounded by the batch size rather than by the full sample count ``n``. Peak-RSS measurements at a
-  constant batch size over 100, 200 and 400 samples show that it bounds the dominant term, the
-  per-batch scale-value tensor, while the ``(n_samples, n_pre_filter)`` pre-filter survivor matrix
-  and the test statistics computed on it stay resident: peak memory still grows linearly with
-  ``n``, on a roughly 13x flatter slope than the single-pass run. The parameter documentation now
-  states what is bounded and what is not; the behaviour of ``run`` is unchanged.
-- :meth:`~aaanalysis.CPP.run`: ``n_sample_batches`` now creates exactly the requested number of
-  balanced, non-empty sample batches. It bounds the per-batch scale-value tensor, but not total
-  peak memory: the ``(n_samples, n_survivors)`` survivor matrix and its test statistics remain
-  resident. The ``n_batches`` documentation now also states its per-batch FDR-correction semantics.
+- :meth:`~aaanalysis.CPP.run` and :meth:`~aaanalysis.CPP.run_num`: ``n_sample_batches`` now
+  creates exactly the requested number of balanced, non-empty sample batches. It bounds the
+  dominant per-batch working set, but not total peak memory: the pre-filtered candidate matrix and
+  its test statistics remain resident. The documentation now distinguishes this from
+  ``n_batches``: :meth:`~aaanalysis.CPP.run` applies FDR correction per selected-feature batch,
+  while :meth:`~aaanalysis.CPP.run_num` batches only pass-1 statistics.
 
 Version 1.1
 --------------------------------
