@@ -39,7 +39,10 @@ Added
   :meth:`~aaanalysis.ReliabilityModel.fit` gains ``ad_borderline`` (default ``0.1``) and exposes
   the fitted boundary as ``ad_threshold_`` (so ``ood_score == ad_knn / ad_threshold_``) and the
   decision rule as ``ad_method_`` (``"knn"``). Existing columns keep their names, order, and
-  values.
+  values. Scoring a mutation-candidate set in one call is not part of this release:
+  :meth:`~aaanalysis.ReliabilityModel.predict` still takes a prebuilt feature matrix ``X``, so
+  :meth:`~aaanalysis.SeqMut.mutate` or :meth:`~aaanalysis.SeqOpt.run` output is scored by
+  building that matrix with :meth:`~aaanalysis.SequenceFeature.feature_matrix` first.
 
 Changed
 ~~~~~~~
