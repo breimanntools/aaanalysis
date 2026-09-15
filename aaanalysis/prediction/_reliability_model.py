@@ -92,7 +92,7 @@ def _reason_no_calibrator(calibrate_requested=False, calibration_error=None):
     return "no calibrator was fitted"
 
 
-# II Main Class
+# II Main Functions
 class ReliabilityModel(Wrapper):
     """
     Assess **how much to trust** each prediction — the reliability of a score, not the score itself.
@@ -486,12 +486,13 @@ class ReliabilityModel(Wrapper):
         Parameters
         ----------
         X : array-like, shape (n_samples, n_features), optional
-            Evaluation features; the training ``X`` and ``labels`` are used when ``X`` **and**
-            ``labels`` are both ``None`` (a held-out labeled set gives an honest estimate —
+            Evaluation features; the training ``X`` is used when ``X`` is ``None`` (a held-out labeled set gives an honest estimate —
             calibration and conformal were fit on the training data).
         labels : array-like, shape (n_samples,), optional
-            Evaluation labels, matching ``X`` in length; the training labels are used when ``X``
-            **and** ``labels`` are both ``None``. Passing only one of the two raises.
+            Evaluation labels, matching ``X`` in length; the training labels are used when both
+            ``X`` and ``labels`` are ``None``. Labels given with ``X=None`` are scored against
+            the training features and must match them in length. Passing ``X`` without
+            ``labels`` raises.
         n_bins : int, default=5
             Number of equal-width score bins for the calibration curve (and the ECE).
         use_calibrated : bool, default=False
@@ -524,8 +525,8 @@ class ReliabilityModel(Wrapper):
         RuntimeError
             If called before :meth:`fit`.
         ValueError
-            If only one of ``X`` / ``labels`` is given, ``X`` or ``labels`` is invalid or their
-            lengths differ, ``n_bins`` is not an integer >= 2, ``use_calibrated`` or
+            If ``X`` is given without ``labels``, ``X`` or ``labels`` is invalid, their lengths
+            differ, ``labels`` holds a value not observed during :meth:`fit`, ``n_bins`` is not an integer >= 2, ``use_calibrated`` or
             ``add_metrics`` is not a bool, or ``use_calibrated=True`` while no probability
             calibrator is available: either the model was fitted with ``calibrate=False``, or its
             calibration failed (the message names which).
@@ -546,9 +547,10 @@ class ReliabilityModel(Wrapper):
         if X is None and labels is None:
             X, labels = self._X_train, self._y_train
         elif X is None:
-            raise ValueError("'X' (None) should be the evaluation features matching 'labels'; "
-                             "only leaving BOTH 'X' and 'labels' as None evaluates on the "
-                             "training data.")
+            # Explicit labels with default features: score the training matrix against the
+            # supplied labelling. The length check and the observed-label check below reject a
+            # labelling that cannot belong to this training set.
+            X = self._X_train
         elif labels is None:
             raise ValueError("'labels' (None) should be the evaluation labels matching 'X'; "
                              "only leaving BOTH 'X' and 'labels' as None evaluates on the "

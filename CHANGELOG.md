@@ -53,8 +53,9 @@ notes — with cross-references and examples — live in
   `predict` then returned `NaN` `ci_low` / `ci_high` columns.
 - `ReliabilityModel.eval(use_calibrated=True)` no longer claims the model was fitted with
   `calibrate=False` when calibration was requested but failed; the error names the real reason.
-- `ReliabilityModel.eval`: passing only one of `X` / `labels` raises instead of silently
-  ignoring the given one (both default to the training data only when both are `None`).
+- `ReliabilityModel.eval`: passing `X` without `labels` raises instead of silently ignoring the
+  given features. Passing `labels` without `X` scores the training features against that
+  labelling, which must match them in length and may only use labels observed during `fit`.
 - `ReliabilityModelPlot.reliability_diagram` validates `figsize`, `color`, `title`, and `ax`.
 - `StructurePreprocessor.encode_pae` / `encode`: read the AlphaFold DB PAE JSON layout
   (a one-element list wrapping the `predicted_aligned_error` dict), so files from
