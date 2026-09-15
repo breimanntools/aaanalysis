@@ -1,6 +1,7 @@
 """This is a script to test AAPredPlot.group_cluster(kind='dendrogram') and its layouts."""
 import io
 import importlib.util
+import warnings
 
 import matplotlib
 matplotlib.use("Agg")
@@ -85,7 +86,7 @@ def _close_figures():
     plt.close("all")
 
 
-class TestGroupClusterDendrogram:
+class TestGroupCluster:
     """Normal cases: one parameter per test."""
 
     # Positive tests
@@ -222,7 +223,10 @@ class TestGroupClusterDendrogram:
     def test_constant_row_does_not_crash(self):
         data = _imp_data()
         data[0] = 0.0
-        r = aa.AAPredPlot().group_cluster(data, kind="dendrogram", layout="circular")
+        with warnings.catch_warnings():
+            warnings.simplefilter("error", RuntimeWarning)
+            r = aa.AAPredPlot().group_cluster(data, kind="dendrogram",
+                                               layout="circular")
         assert r.ax is not None
 
     # Negative tests
@@ -255,8 +259,13 @@ class TestGroupClusterDendrogram:
         with pytest.raises(ValueError, match="'labels_row'"):
             aa.AAPredPlot().group_cluster(_imp_data(), kind="dendrogram", labels_row=[1, 0])
 
+    def test_unhashable_labels(self):
+        with pytest.raises(ValueError, match="'labels'"):
+            aa.AAPredPlot().group_cluster(_imp_data(), kind="dendrogram",
+                                          labels=[[1]] * 12)
+
     def test_invalid_names(self):
-        for names in [["a", "b"], _names(13)]:
+        for names in [["a", "b"], _names(13), [["a"]] * 12]:
             with pytest.raises(ValueError, match="'names'"):
                 aa.AAPredPlot().group_cluster(_imp_data(), kind="dendrogram", names=names)
 
@@ -300,7 +309,7 @@ class TestGroupClusterDendrogram:
                     aa.AAPredPlot().group_cluster(_imp_data(), kind=kind, cbar_label=cbar_label)
 
 
-class TestGroupClusterDendrogramComplex:
+class TestGroupClusterComplex:
     """Combinations of parameters."""
 
     # Positive tests
@@ -361,20 +370,20 @@ class TestGroupClusterDendrogramComplex:
 
     # Negative tests
     def test_circular_labels_mismatch(self):
-        with pytest.raises(ValueError):
+        with pytest.raises(ValueError, match="'labels_row'"):
             aa.AAPredPlot().group_cluster(_imp_data(), kind="dendrogram", layout="circular",
                                           labels=[1, 0] * 6, labels_row=[1, 0])
 
     def test_clustermap_circular_with_labels(self):
-        with pytest.raises(ValueError, match="kind='dendrogram'"):
+        with pytest.raises(ValueError, match="'layout'"):
             aa.AAPredPlot().group_cluster(_imp_data(), labels=[1, 0] * 6, layout="circular")
 
     def test_bad_layout_and_bad_kind(self):
-        with pytest.raises(ValueError):
+        with pytest.raises(ValueError, match="'kind'"):
             aa.AAPredPlot().group_cluster(_imp_data(), kind="tree", layout="radial")
 
     def test_dict_color_row_without_matching_labels_row(self):
-        with pytest.raises(ValueError):
+        with pytest.raises(ValueError, match="'dict_color_row'"):
             aa.AAPredPlot().group_cluster(_imp_data(), kind="dendrogram", layout="circular",
                                           labels_row=["a", "b"] * 6, dict_color_row={"c": "red"})
 
@@ -384,7 +393,7 @@ class TestGroupClusterDendrogramComplex:
                                           names=_names(5))
 
 
-class TestGroupClusterDendrogramGoldenValues:
+class TestGroupClusterGoldenValues:
     """Topology equivalence between the dendrogram and the clustermap kinds."""
 
     def test_clustermap_receives_seaborn_equivalent_linkage(self, monkeypatch):
@@ -401,6 +410,7 @@ class TestGroupClusterDendrogramGoldenValues:
         X = _imp_data(n=14, seed=5)
         aa.AAPredPlot().group_cluster(X, labels=[1, 0] * 7)
         assert captured["row_linkage"] is not None and captured["col_linkage"] is not None
+        assert captured["row_linkage"] is captured["col_linkage"]
         corr_df = sample_correlation_(data=X)
         own = original(corr_df)
         _assert_linkage_equal(captured["grid"].dendrogram_row.linkage, own.dendrogram_row.linkage)
@@ -516,3 +526,9 @@ class TestGroupClusterDendrogramGoldenValues:
         order = _leaf_names(aa.AAPredPlot().group_cluster(X, kind="dendrogram", names=names))
         idx = {name: i for i, name in enumerate(order)}
         assert abs(idx["a0"] - idx["a2"]) == 1 and abs(idx["b1"] - idx["b3"]) == 1
+
+    def test_hand_computed_correlation_with_constant_row(self):
+        X = np.array([[1.0, 2.0, 3.0], [3.0, 2.0, 1.0], [5.0, 5.0, 5.0]])
+        expected = np.array([[1.0, -1.0, 0.0], [-1.0, 1.0, 0.0],
+                             [0.0, 0.0, 1.0]])
+        np.testing.assert_allclose(sample_correlation_(data=X).to_numpy(), expected)

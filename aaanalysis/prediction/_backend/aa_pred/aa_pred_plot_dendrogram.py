@@ -33,10 +33,13 @@ def _build_tracks(labels=None, dict_color=None, legend_title="Class", labels_row
     """Ordered leaf annotations as (values, label->color, title); ``labels`` is innermost."""
     tracks = []
     if labels is not None:
-        tracks.append((list(labels), resolve_label_colors_(list(labels), dict_color),
+        tracks.append((list(labels), resolve_label_colors_(list(labels), dict_color,
+                                                            name="dict_color"),
                        legend_title or "Class"))
     if labels_row is not None:
-        tracks.append((list(labels_row), resolve_label_colors_(list(labels_row), dict_color_row),
+        tracks.append((list(labels_row), resolve_label_colors_(list(labels_row),
+                                                                dict_color_row,
+                                                                name="dict_color_row"),
                        legend_title_row or "Class"))
     return tracks
 

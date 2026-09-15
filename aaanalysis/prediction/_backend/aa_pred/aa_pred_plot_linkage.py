@@ -23,16 +23,22 @@ _LINKAGE_METRIC = "euclidean"
 def sample_correlation_(data=None, names=None):
     """Sample x sample Pearson correlation of the per-sample vectors, as a labeled DataFrame.
 
-    A sample whose vector has zero variance (e.g. an all-zero SHAP row) yields NaN
-    correlations, which break the hierarchical linkage; those are treated as uncorrelated (0)
-    with self-correlation 1.
+    A sample whose vector has zero variance (e.g. an all-zero SHAP row) is treated as
+    uncorrelated (0) with other samples and has self-correlation 1. The explicit
+    centered dot-product avoids NumPy's divide-by-zero warning for valid input rows.
     """
     values = np.asarray(data, dtype=float)
     n = values.shape[0]
     if names is None:
         names = [str(i) for i in range(n)]
-    corr = np.corrcoef(values)
-    corr = np.nan_to_num(corr, nan=0.0)
+    scale = np.max(np.abs(values), axis=1, keepdims=True)
+    scaled = np.divide(values, scale, out=np.zeros_like(values), where=scale != 0)
+    centered = scaled - scaled.mean(axis=1, keepdims=True)
+    norms = np.linalg.norm(centered, axis=1)
+    denominator = np.outer(norms, norms)
+    corr = np.divide(centered @ centered.T, denominator, out=np.zeros((n, n)),
+                     where=denominator != 0)
+    corr = np.clip(corr, -1.0, 1.0)
     np.fill_diagonal(corr, 1.0)
     return pd.DataFrame(corr, index=list(names), columns=list(names))
 

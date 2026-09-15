@@ -13,13 +13,15 @@ from .aa_pred_plot_linkage import sample_correlation_, sample_linkage_
 
 
 # I Helper Functions
-def resolve_label_colors_(labels, colors):
+def resolve_label_colors_(labels, colors, name="dict_color"):
     """Map each distinct label to a color (dict wins; else the house palette)."""
     order = list(dict.fromkeys(labels))
     if isinstance(colors, dict):
         missing = [g for g in order if g not in colors]
         if missing:
-            raise ValueError(f"'colors' dict is missing colors for labels: {missing}")
+            str_error = (f"'{name}' ({colors}) should contain colors for "
+                         f"labels {missing}.")
+            raise ValueError(str_error)
         return colors
     palette = ut.plot_get_clist_(n_colors=max(len(order), 2))
     return {g: palette[i] for i, g in enumerate(order)}
@@ -48,16 +50,18 @@ def plot_clustermap_(data=None, names=None, labels=None, dict_color=None, legend
     # column linkage, computed explicitly so the dendrogram kind draws the very same tree.
     corr_df = sample_correlation_(data=data, names=names)
     row_linkage = sample_linkage_(corr_df=corr_df, axis=0)
-    col_linkage = sample_linkage_(corr_df=corr_df, axis=1)
+    # Correlation is symmetric, so both axes use the same sample tree.
+    col_linkage = row_linkage
     # Column (top) annotation from `labels`; row (left) annotation from `labels_row`. A single
     # annotation is mirrored onto both sidebars (the matrix is symmetric).
     col_dict = row_dict = None
     col_colors = row_colors = None
     if labels is not None:
-        col_dict = resolve_label_colors_(list(labels), dict_color)
+        col_dict = resolve_label_colors_(list(labels), dict_color, name="dict_color")
         col_colors = pd.Series([col_dict[lbl] for lbl in labels], index=list(names), name="")
     if labels_row is not None:
-        row_dict = resolve_label_colors_(list(labels_row), dict_color_row)
+        row_dict = resolve_label_colors_(list(labels_row), dict_color_row,
+                                         name="dict_color_row")
         row_colors = pd.Series([row_dict[lbl] for lbl in labels_row], index=list(names), name="")
     elif labels is not None:
         row_colors = col_colors
@@ -97,10 +101,11 @@ def plot_clustermap_(data=None, names=None, labels=None, dict_color=None, legend
     # legend sits above the column (top) legend, matching the sample-clustering appendix layout.
     if col_dict is not None and row_dict is not None:
         _titled_legend(g.figure, row_dict, legend_title_row or "Class", 0.055)
-        _titled_legend(g.figure, col_dict, legend_title, 0.012)
+        _titled_legend(g.figure, col_dict, legend_title or "Class", 0.012)
     else:
         single = col_dict if col_dict is not None else row_dict
         if single is not None:
-            single_title = legend_title if col_dict is not None else (legend_title_row or "Class")
+            single_title = (legend_title or "Class") if col_dict is not None \
+                else (legend_title_row or "Class")
             _titled_legend(g.figure, single, single_title, 0.03)
     return g.figure, g.ax_heatmap
