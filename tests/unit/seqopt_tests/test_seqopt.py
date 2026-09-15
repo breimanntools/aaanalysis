@@ -190,7 +190,7 @@ class TestSeqOptRun:
                        region="tmd")
 
     def test_bad_algorithm_raises(self, seqo, wt, df_feat):
-        with pytest.raises(ValueError):
+        with pytest.raises(ValueError, match="'algorithm'"):
             seqo.run(df_seq=wt, df_feat=df_feat, objectives=OBJ, algorithm="cmaes",
                        region="tmd")
 
@@ -219,7 +219,7 @@ class TestSeqOptInit:
             SeqOpt(mode="impact", model=model, df_seq_ref=None, labels=None)
 
     def test_bad_mode_raises(self):
-        with pytest.raises(ValueError):
+        with pytest.raises(ValueError, match="'mode'"):
             SeqOpt(mode="random")
 
     def test_bare_construction_in_base_install(self, monkeypatch):
@@ -354,7 +354,7 @@ class TestSeqOptEval:
         assert de.iloc[0][ut.COL_HYPERVOLUME] >= 0
 
     def test_missing_columns_raises(self, seqo):
-        with pytest.raises(ValueError):
+        with pytest.raises(ValueError, match="df_pareto"):
             seqo.eval(df_pareto=pd.DataFrame({"x": [1]}))
 
 
@@ -384,11 +384,11 @@ class TestSeqOptPlot:
     def test_bad_objective_column_raises(self, seqo, wt, df_feat):
         df = seqo.run(df_seq=wt, df_feat=df_feat, objectives=OBJ, pop_size=6, n_gen=2,
                         n_mut_max=2, region="tmd")
-        with pytest.raises(ValueError):
+        with pytest.raises(ValueError, match="'x'"):
             SeqOptPlot().pareto_front(df_pareto=df, x="nope", y="parsimony")
 
     def test_empty_trajectory_raises(self):
-        with pytest.raises(ValueError):
+        with pytest.raises(ValueError, match="trajectory"):
             SeqOptPlot().hypervolume(trajectory=[])
 
 
@@ -456,7 +456,7 @@ class TestSeqOptVisualization:
 
     def test_parallel_coordinates_one_objective_raises(self, seqo, wt, df_feat):
         df = self._run3(seqo, wt, df_feat)
-        with pytest.raises(ValueError):
+        with pytest.raises(ValueError, match="at least two"):
             SeqOptPlot().parallel_coordinates(df_pareto=df, objectives=["activity"])
 
     def test_callable_sequence_objective(self, seqo, wt, df_feat):
@@ -526,5 +526,5 @@ class TestSeqOptCapabilities:
         assert ut.COL_CONVERGENCE in de.columns and de.iloc[0][ut.COL_CONVERGENCE] >= 0
 
     def test_bad_variation_raises(self, seqo, wt, df_feat):
-        with pytest.raises(ValueError):
+        with pytest.raises(ValueError, match="'variation'"):
             seqo.run(variation="xor", **self._base(wt, df_feat))

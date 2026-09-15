@@ -548,6 +548,14 @@ class AAPred(Wrapper):
             for each baseline's cross-validation rows); with ``baseline=None`` the table is
             unchanged (5 columns).
 
+        Raises
+        ------
+        ValueError
+            If feature or label inputs are invalid or misaligned, a metric, splitter, ``n_cv``,
+            ``list_parts``, or baseline selection is invalid, a probability metric is requested
+            from an estimator without ``predict_proba``, or a held-out input is incomplete or has
+            a different feature count.
+
         Examples
         --------
         .. include:: examples/aap_eval.rst

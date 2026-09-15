@@ -96,7 +96,7 @@ class TestAAPredInit:
         assert aap._list_model_classes == [RandomForestClassifier]
 
     def test_invalid_metric_raises(self):
-        with pytest.raises(ValueError):
+        with pytest.raises(ValueError, match="'metrics'"):
             aa.AAPred(list_metrics=["not_a_metric"])
 
     def test_model_without_predict_proba_constructs(self):
@@ -116,6 +116,11 @@ class TestAAPredInit:
         with pytest.raises(ValueError, match="'df_scales'"):
             aa.AAPred(df_scales="not_a_dataframe")
 
+    def test_df_scales_valid(self):
+        df_scales = ut.load_default_scales()
+        aap = aa.AAPred(df_scales=df_scales)
+        assert aap._df_scales is df_scales
+
     def test_verbose_invalid_raises(self):
         with pytest.raises(ValueError, match="'verbose'"):
             aa.AAPred(verbose="yes")
@@ -126,7 +131,7 @@ class TestAAPredInit:
             aa.AAPred(random_state=random_state)
 
     def test_mismatched_kwargs_length_raises(self):
-        with pytest.raises(ValueError):
+        with pytest.raises(ValueError, match="list_model"):
             aa.AAPred(list_model_classes=[RandomForestClassifier], list_model_kwargs=[{}, {}])
 
 
@@ -150,18 +155,18 @@ class TestAAPredFit:
 
     def test_fit_label_pos_absent_raises(self):
         X, labels = _data()
-        with pytest.raises(ValueError):
+        with pytest.raises(ValueError, match="'label_pos'"):
             aa.AAPred(random_state=0).fit(X, labels, label_pos=9)
 
     def test_fit_mismatched_labels_raises(self):
         X, labels = _data()
-        with pytest.raises(ValueError):
+        with pytest.raises(ValueError, match="n_samples does not match"):
             aa.AAPred(random_state=0).fit(X, labels[:-1])
 
     def test_fit_non_binary_labels_raises(self):
         X, _ = _data(n_per_class=10)
-        labels = np.array([0, 1, 2] * 10)
-        with pytest.raises(ValueError):
+        labels = np.array([0, 1, 2] * 6 + [0, 1])
+        with pytest.raises(ValueError, match="exactly two classes"):
             aa.AAPred(random_state=0).fit(X, labels)
 
     def test_fit_sets_real_negative_label(self):
@@ -183,7 +188,7 @@ class TestAAPredModelsAndHPO:
         assert aap.list_models_[0].kernel == "rbf"
 
     def test_models_and_list_model_classes_mutually_exclusive(self):
-        with pytest.raises(ValueError):
+        with pytest.raises(ValueError, match="either.*models"):
             aa.AAPred(models=["svm"], list_model_classes=[SVC])
 
     def test_optimize_hyperparams_with_param_grids(self):
@@ -219,7 +224,7 @@ class TestAAPredModelsAndHPO:
         assert len(df) >= 1
 
     def test_unknown_model_name_raises(self):
-        with pytest.raises(ValueError):
+        with pytest.raises(ValueError, match="model"):
             aa.AAPred(models="xgboost")  # not in the small registry; pass an instance instead
 
     def test_instance_receives_random_state(self):
@@ -272,18 +277,18 @@ class TestAAPredEval:
 
     def test_eval_n_cv_too_large_raises(self):
         X, labels = _data(n_per_class=4)
-        with pytest.raises(ValueError):
+        with pytest.raises(ValueError, match="n_cv"):
             aa.AAPred(random_state=0).eval(X, labels, n_cv=10)
 
     def test_eval_non_binary_labels_raises(self):
         X, _ = _data(n_per_class=10)
-        labels = np.array([0, 1, 2] * 10)
-        with pytest.raises(ValueError):
+        labels = np.array([0, 1, 2] * 6 + [0, 1])
+        with pytest.raises(ValueError, match="exactly two classes"):
             aa.AAPred(random_state=0).eval(X, labels)
 
     def test_eval_labels_holdout_without_X_raises(self):
         X, labels = _data()
-        with pytest.raises(ValueError):
+        with pytest.raises(ValueError, match="labels_holdout"):
             aa.AAPred(random_state=0).eval(X, labels, labels_holdout=labels)
 
     def test_eval_reproducible(self):
@@ -303,6 +308,13 @@ class TestAAPredEval:
         aap = aa.AAPred(list_metrics=["mcc"])
         assert aap._list_metrics == ["mcc"]
 
+    def test_eval_mcc_without_predict_proba(self):
+        # MCC is a hard-label metric, so it must not require an estimator to expose probabilities.
+        X, labels = _data()
+        df_eval = aa.AAPred(models=[SVC(kernel="linear")], random_state=0).eval(
+            X, labels, metrics=["mcc"])
+        assert set(df_eval["metric"]) == {"mcc"}
+
     def test_eval_mcc_cv(self):
         X, labels = _data()
         df_eval = aa.AAPred(random_state=0).eval(X, labels, metrics=["mcc"])
@@ -318,13 +330,13 @@ class TestAAPredEval:
     @pytest.mark.parametrize("X", [None, np.arange(10), "not_a_matrix"])
     def test_eval_X_invalid_raises(self, X):
         _, labels = _data()
-        with pytest.raises(ValueError):
+        with pytest.raises(ValueError, match="'X'"):
             aa.AAPred(random_state=0).eval(X, labels)
 
     @pytest.mark.parametrize("X_holdout", [np.arange(10), "not_a_matrix"])
     def test_eval_X_holdout_invalid_raises(self, X_holdout):
         X, labels = _data()
-        with pytest.raises(ValueError):
+        with pytest.raises(ValueError, match="'X'"):
             aa.AAPred(random_state=0).eval(X, labels, X_holdout=X_holdout,
                                            labels_holdout=[1, 0] * 5)
 
@@ -340,6 +352,13 @@ class TestAAPredEval:
         X, labels = _data()
         with pytest.raises(ValueError, match="part"):
             aa.AAPred(random_state=0).eval(X, labels, list_parts=list_parts)
+
+    def test_eval_list_parts_valid_without_baseline(self):
+        # Validation is intentionally unconditional: a valid value remains harmless when the
+        # baseline path is disabled, while an invalid value cannot be silently ignored.
+        X, labels = _data()
+        df_eval = aa.AAPred(random_state=0).eval(X, labels, list_parts="tmd")
+        assert set(df_eval["principle"]) == {"cv"}
 
 
 class TestAAPredEvalComplex:
@@ -410,7 +429,7 @@ class TestAAPredEvalComplex:
         X, labels = _data()
         X_holdout, labels_holdout = _data(n_per_class=8, seed=1)
         short = list(labels_holdout[:4]) + list(labels_holdout[-1:])
-        with pytest.raises(ValueError):
+        with pytest.raises(ValueError, match="n_samples does not match"):
             aa.AAPred(random_state=0).eval(X, labels, metrics=["mcc"], X_holdout=X_holdout,
                                            labels_holdout=short)
 
@@ -432,7 +451,7 @@ class TestAAPredEvalComplex:
     def test_eval_holdout_without_labels_holdout_raises(self):
         X, labels = _data()
         X_holdout, _ = _data(n_per_class=8, seed=1)
-        with pytest.raises(ValueError):
+        with pytest.raises(ValueError, match="'labels' should not be None"):
             aa.AAPred(random_state=0).eval(X, labels, metrics=["mcc"], X_holdout=X_holdout)
 
     def test_eval_baseline_with_invalid_list_parts_raises(self, baseline_data):
@@ -590,7 +609,7 @@ class TestAAPredEvalCV:
     def test_cv_invalid_splitter_raises(self):
         X, labels = _data()
         for bad in [5, "loo", object(), [1, 2, 3]]:
-            with pytest.raises(ValueError):
+            with pytest.raises(ValueError, match="'cv'"):
                 aa.AAPred(models=["svm"], random_state=0).eval(X, labels, cv=bad)
 
 
@@ -758,18 +777,18 @@ class TestAAPredEvalBaseline:
 
     def test_baseline_requires_df_seq(self, baseline_data):
         df_seq, labels, X = baseline_data
-        with pytest.raises(ValueError):
+        with pytest.raises(ValueError, match="'df_seq'"):
             aa.AAPred(models=["rf"], random_state=0).eval(X, labels, baseline=True)
 
     def test_baseline_df_seq_length_mismatch_raises(self, baseline_data):
         df_seq, labels, X = baseline_data
-        with pytest.raises(ValueError):
+        with pytest.raises(ValueError, match="n_samples"):
             aa.AAPred(models=["rf"], random_state=0).eval(X, labels, df_seq=df_seq.head(3),
                                                           baseline=True)
 
     def test_baseline_invalid_kind_raises(self, baseline_data):
         df_seq, labels, X = baseline_data
-        with pytest.raises(ValueError):
+        with pytest.raises(ValueError, match="'baseline'"):
             aa.AAPred(models=["rf"], random_state=0).eval(X, labels, df_seq=df_seq, baseline="nope")
 
     def test_baseline_acc_adds_one_row_and_none_unchanged(self, baseline_data):
@@ -800,14 +819,14 @@ class TestAAPredEvalBaseline:
         assert len(merged) == len(d_manual)
         assert np.allclose(merged["score_b"], merged["score_m"])
 
-    def test_baseline_all_invalid_row_raises_clear_error(self, baseline_data):
-        # A sequence with no canonical residue in the span yields an all-NaN featurizer row;
-        # it must raise a clear AAPred-level ValueError, not a cryptic sklearn NaN crash.
+    def test_baseline_sequence_parts_must_match_sequence(self, baseline_data):
+        # Replacing a sequence while retaining its precomputed TMD parts must fail at the sequence
+        # contract, before featurization can produce a cryptic model-level failure.
         df_seq, labels, X = baseline_data
         df_bad = df_seq.copy().reset_index(drop=True)
         col = df_bad.columns.get_loc("sequence")
         df_bad.iloc[0, col] = "X" * len(df_bad.iloc[0]["sequence"])
-        with pytest.raises(ValueError):
+        with pytest.raises(ValueError, match="contained"):
             aa.AAPred(models=["rf"], random_state=0).eval(X, labels, df_seq=df_bad, baseline="aac")
 
 
@@ -854,23 +873,23 @@ class TestAAPredPredict:
     def test_predict_window_without_tmd_len_raises(self, seq_fitted):
         aap, df_seq, _ = seq_fitted
         one = df_seq[df_seq["entry"] == "P05067"][["entry", "sequence"]]
-        with pytest.raises(ValueError):
+        with pytest.raises(ValueError, match="'tmd_len'"):
             aap.predict(one, level="window")
 
     def test_predict_invalid_level_raises(self, seq_fitted):
         aap, df_seq, _ = seq_fitted
-        with pytest.raises(ValueError):
+        with pytest.raises(ValueError, match="'level'"):
             aap.predict(df_seq.head(3), level="bogus")
 
     def test_predict_invalid_threshold_raises(self, seq_fitted):
         aap, df_seq, _ = seq_fitted
-        with pytest.raises(ValueError):
+        with pytest.raises(ValueError, match="'threshold'"):
             aap.predict(df_seq.head(3), level="sequence", threshold=2.0)
 
     def test_predict_before_fit_raises(self):
         df_seq = aa.load_dataset(name="DOM_GSEC", n=5)
         df_feat = aa.load_features(name="DOM_GSEC").head(20)
-        with pytest.raises(ValueError):
+        with pytest.raises(ValueError, match="not fitted"):
             aa.AAPred(df_feat=df_feat).predict(df_seq.head(3), level="sequence")
 
     def test_predict_without_df_feat_raises(self):
@@ -878,7 +897,7 @@ class TestAAPredPredict:
         X, labels = _data()
         aap = aa.AAPred(random_state=0).fit(X, labels)
         df_seq = aa.load_dataset(name="DOM_GSEC", n=5)
-        with pytest.raises(ValueError):
+        with pytest.raises(ValueError, match="df_feat"):
             aap.predict(df_seq.head(3), level="sequence")
 
     def test_predict_X_raw_ensemble_scores(self, seq_fitted):
@@ -908,12 +927,12 @@ class TestAAPredPredict:
 
     def test_predict_threshold_out_of_score_range_raises(self, seq_fitted):
         aap, df_seq, _ = seq_fitted
-        with pytest.raises(ValueError):
+        with pytest.raises(ValueError, match="'threshold'"):
             aap.predict(df_seq.head(3), level="sequence", threshold=50)  # 50 invalid for proba [0, 1]
 
     def test_predict_invalid_score_range_raises(self, seq_fitted):
         aap, df_seq, _ = seq_fitted
-        with pytest.raises(ValueError):
+        with pytest.raises(ValueError, match="'score_range'"):
             aap.predict(df_seq.head(3), level="sequence", score_range="pct")
 
 
@@ -988,28 +1007,28 @@ class TestAAPredPredictOOF:
 
     def test_non_binary_labels_raises(self):
         X, _ = _data(n_per_class=10)
-        labels = np.array([0, 1, 2] * 10)
-        with pytest.raises(ValueError):
+        labels = np.array([0, 1, 2] * 6 + [0, 1])
+        with pytest.raises(ValueError, match="exactly two classes"):
             aa.AAPred(random_state=0).predict_oof(X, labels)
 
     def test_mismatched_labels_raises(self):
         X, _ = _data(n_per_class=10)
-        with pytest.raises(ValueError):
+        with pytest.raises(ValueError, match="n_samples does not match"):
             aa.AAPred(random_state=0).predict_oof(X, np.array([1, 0, 1]))
 
     def test_n_cv_too_large_raises(self):
         X, labels = _data(n_per_class=4)
-        with pytest.raises(ValueError):
+        with pytest.raises(ValueError, match="n_cv"):
             aa.AAPred(random_state=0).predict_oof(X, labels, n_cv=10)
 
     def test_n_cv_below_two_raises(self):
         X, labels = _data()
-        with pytest.raises(ValueError):
+        with pytest.raises(ValueError, match="n_cv"):
             aa.AAPred(random_state=0).predict_oof(X, labels, n_cv=1)
 
     def test_invalid_label_pos_raises(self):
         X, labels = _data()
-        with pytest.raises(ValueError):
+        with pytest.raises(ValueError, match="'label_pos'"):
             aa.AAPred(random_state=0).predict_oof(X, labels, label_pos=5)
 
     def test_score_range_default_proba(self):
@@ -1025,7 +1044,7 @@ class TestAAPredPredictOOF:
 
     def test_invalid_score_range_raises(self):
         X, labels = _data()
-        with pytest.raises(ValueError):
+        with pytest.raises(ValueError, match="'score_range'"):
             aa.AAPred(random_state=0).predict_oof(X, labels, score_range="pct")
 
 
@@ -1207,7 +1226,7 @@ class TestAAPredPredictProba:
     def test_invalid_score_range_raises(self):
         X, labels = _data()
         aap = aa.AAPred(models=["rf"], random_state=0).fit(X, labels)
-        with pytest.raises(ValueError):
+        with pytest.raises(ValueError, match="'score_range'"):
             aap.predict_proba(X, score_range="pct")
 
     def test_feature_width_mismatch_raises(self):
@@ -1250,26 +1269,26 @@ class TestAAPredPredictProba:
 
     def test_before_fit_raises(self):
         X, _ = _data()
-        with pytest.raises(ValueError):
+        with pytest.raises(ValueError, match="not fitted"):
             aa.AAPred(models=["rf"], random_state=0).predict_proba(X)
 
     def test_non_proba_estimator_raises(self):
         from sklearn.svm import LinearSVC
         X, labels = _data()
         aap = aa.AAPred(models=[LinearSVC()], random_state=0).fit(X, labels)
-        with pytest.raises(ValueError):
+        with pytest.raises(ValueError, match="predict_proba"):
             aap.predict_proba(X)
 
     def test_none_X_raises(self):
         X, labels = _data()
         aap = aa.AAPred(models=["rf"], random_state=0).fit(X, labels)
-        with pytest.raises(ValueError):
+        with pytest.raises(ValueError, match="'X'"):
             aap.predict_proba(None)
 
     def test_1d_X_raises(self):
         X, labels = _data()
         aap = aa.AAPred(models=["rf"], random_state=0).fit(X, labels)
-        with pytest.raises(ValueError):
+        with pytest.raises(ValueError, match="'X'"):
             aap.predict_proba(np.array([0.1, 0.2, 0.3]))
 
     def test_nan_X_raises(self):
@@ -1277,7 +1296,7 @@ class TestAAPredPredictProba:
         aap = aa.AAPred(models=["rf"], random_state=0).fit(X, labels)
         X_bad = X.copy()
         X_bad[0, 0] = np.nan
-        with pytest.raises(ValueError):
+        with pytest.raises(ValueError, match="'X'"):
             aap.predict_proba(X_bad)
 
 
@@ -1333,5 +1352,5 @@ class TestAAPredPredictProbaComplex:
         X, labels = _data(n_feat=6)
         X_bad, _ = _data(n_feat=8, seed=3)
         aap = aa.AAPred(models=["rf"], random_state=0).fit(X, labels)
-        with pytest.raises(ValueError):
+        with pytest.raises(ValueError, match="n_features"):
             aap.predict_proba(X_bad)

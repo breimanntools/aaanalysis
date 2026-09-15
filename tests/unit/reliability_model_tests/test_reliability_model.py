@@ -36,12 +36,12 @@ class TestReliabilityModelInit:
 
     @pytest.mark.parametrize("rs", [-1, 1.5, "x"])
     def test_random_state_invalid(self, rs):
-        with pytest.raises(ValueError):
+        with pytest.raises(ValueError, match="'random_state'"):
             aa.ReliabilityModel(random_state=rs)
 
     @pytest.mark.parametrize("v", [None, "yes", 3])
     def test_verbose_invalid(self, v):
-        with pytest.raises(ValueError):
+        with pytest.raises(ValueError, match="'verbose'"):
             aa.ReliabilityModel(verbose=v)
 
 
@@ -76,29 +76,29 @@ class TestFit:
 
     def test_label_pos_absent_raises(self):
         Xtr, ytr, _ = _data()
-        with pytest.raises(ValueError):
+        with pytest.raises(ValueError, match="'label_pos'"):
             aa.ReliabilityModel().fit(Xtr, ytr, label_pos=7)
 
     def test_X_labels_mismatch_raises(self):
         Xtr, ytr, _ = _data()
-        with pytest.raises(ValueError):
+        with pytest.raises(ValueError, match="n_samples does not match"):
             aa.ReliabilityModel().fit(Xtr, ytr[:-3])
 
     def test_empty_model_list_raises(self):
         Xtr, ytr, _ = _data()
-        with pytest.raises(ValueError):
+        with pytest.raises(ValueError, match="empty list"):
             aa.ReliabilityModel().fit(Xtr, ytr, model=[])
 
     def test_non_binary_labels_raises(self):
         X, y = make_classification(n_samples=90, n_features=8, n_informative=5, n_classes=3,
                                    n_clusters_per_class=1, random_state=0)
-        with pytest.raises(ValueError):
+        with pytest.raises(ValueError, match="binary labels"):
             aa.ReliabilityModel().fit(X, y)
 
     def test_model_without_predict_proba_raises(self):
         from sklearn.svm import SVC
         Xtr, ytr, _ = _data()
-        with pytest.raises(ValueError):                      # SVC() has no predict_proba by default
+        with pytest.raises(ValueError, match="predict_proba"):  # SVC() has no predict_proba by default
             aa.ReliabilityModel().fit(Xtr, ytr, model=SVC().fit(Xtr, ytr))
 
     def test_unfitted_aapred_rejected(self):
@@ -106,7 +106,7 @@ class TestFit:
 
         class _Pred:
             list_models_ = None                              # unfitted AAPred
-        with pytest.raises(ValueError):
+        with pytest.raises(ValueError, match="not fitted"):
             aa.ReliabilityModel().fit(Xtr, ytr, model=_Pred())
 
     @pytest.mark.parametrize("k", [1, 3, 10])
@@ -117,7 +117,7 @@ class TestFit:
     @pytest.mark.parametrize("k", [0, -1, 2.5])
     def test_k_invalid(self, k):
         Xtr, ytr, _ = _data()
-        with pytest.raises(ValueError):
+        with pytest.raises(ValueError, match="'k'"):
             aa.ReliabilityModel().fit(Xtr, ytr, k=k)
 
     @pytest.mark.parametrize("p", [1, 50, 100])
@@ -128,7 +128,7 @@ class TestFit:
     @pytest.mark.parametrize("p", [0, 101, -5])
     def test_ad_percentile_invalid(self, p):
         Xtr, ytr, _ = _data()
-        with pytest.raises(ValueError):
+        with pytest.raises(ValueError, match="'ad_percentile'"):
             aa.ReliabilityModel().fit(Xtr, ytr, ad_percentile=p)
 
     @settings(max_examples=5, deadline=None)
@@ -140,7 +140,7 @@ class TestFit:
     @pytest.mark.parametrize("ci", [0, 0.0, 1, 1.0, -0.1, 120, "0.9", None])
     def test_ci_invalid(self, ci):
         Xtr, ytr, _ = _data()
-        with pytest.raises(ValueError):
+        with pytest.raises(ValueError, match="'ci'"):
             aa.ReliabilityModel().fit(Xtr, ytr, ci=ci)
 
     @pytest.mark.parametrize("ci", [50, 90, 90.0, 99])
@@ -220,12 +220,12 @@ class TestFit:
     @pytest.mark.parametrize("nb", [-1, 2.5])
     def test_n_bootstrap_invalid(self, nb):
         Xtr, ytr, _ = _data()
-        with pytest.raises(ValueError):
+        with pytest.raises(ValueError, match="'n_bootstrap'"):
             aa.ReliabilityModel().fit(Xtr, ytr, n_bootstrap=nb)
 
     def test_calibration_method_invalid(self):
         Xtr, ytr, _ = _data()
-        with pytest.raises(ValueError):
+        with pytest.raises(ValueError, match="'calibration_method'"):
             aa.ReliabilityModel().fit(Xtr, ytr, calibration_method="bogus")
 
     @pytest.mark.parametrize("m", ["isotonic", "sigmoid"])
@@ -243,7 +243,7 @@ class TestFit:
     @pytest.mark.parametrize("a", [-0.1, 1.5])
     def test_conformal_alpha_invalid(self, a):
         Xtr, ytr, _ = _data()
-        with pytest.raises(ValueError):
+        with pytest.raises(ValueError, match="'conformal_alpha'"):
             aa.ReliabilityModel().fit(Xtr, ytr, conformal_alpha=a)
 
 
@@ -261,13 +261,13 @@ class TestPredict:
 
     def test_before_fit_raises(self):
         _, _, Xte = _data()
-        with pytest.raises(RuntimeError):
+        with pytest.raises(RuntimeError, match="fit.*predict"):
             aa.ReliabilityModel().predict(Xte)
 
     def test_feature_mismatch_raises(self):
         Xtr, ytr, Xte = _data()
         rm = aa.ReliabilityModel(random_state=0).fit(Xtr, ytr, n_bootstrap=3)
-        with pytest.raises(ValueError):
+        with pytest.raises(ValueError, match="features"):
             rm.predict(Xte[:, :4])
 
     def test_ood_point_flagged(self):
@@ -409,15 +409,33 @@ class TestEval:
         ev = aa.ReliabilityModel(random_state=0).fit(Xtr, ytr, n_bootstrap=5).eval(n_bins=3)
         assert len(ev) == 3 + 1                              # bins + summary
 
+    def test_eval_uses_labels_with_default_training_features(self):
+        Xtr, ytr, _ = _data()
+        rm = aa.ReliabilityModel(random_state=0).fit(Xtr, ytr, n_bootstrap=3)
+        # These valid but deliberately unbalanced labels must not be overwritten with ytr merely
+        # because X defaults to the training feature matrix.
+        labels_eval = np.array([1] * (len(ytr) - 10) + [0] * 10)
+        ev = rm.eval(labels=labels_eval, n_bins=3)
+        bins = ev[ev["bin"] != "summary"]
+        bins = bins[bins["n_samples"] > 0]
+        weighted_rate = np.average(bins["empirical_pos"], weights=bins["n_samples"])
+        assert weighted_rate == pytest.approx(labels_eval.mean())
+
+    def test_eval_unknown_labels_raise(self):
+        Xtr, ytr, _ = _data()
+        rm = aa.ReliabilityModel(random_state=0).fit(Xtr, ytr, n_bootstrap=3)
+        with pytest.raises(ValueError, match="labels observed"):
+            rm.eval(labels=np.array([2] * (len(ytr) - 1) + [0]))
+
     def test_eval_before_fit_raises(self):
-        with pytest.raises(RuntimeError):
+        with pytest.raises(RuntimeError, match="fit.*eval"):
             aa.ReliabilityModel().eval()
 
     @pytest.mark.parametrize("nb", [1, 0, -2])
     def test_eval_n_bins_invalid(self, nb):
         Xtr, ytr, _ = _data()
         rm = aa.ReliabilityModel(random_state=0).fit(Xtr, ytr, n_bootstrap=3)
-        with pytest.raises(ValueError):
+        with pytest.raises(ValueError, match="n_bins"):
             rm.eval(n_bins=nb)
 
 

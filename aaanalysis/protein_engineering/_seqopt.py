@@ -225,6 +225,14 @@ class SeqOpt(Tool):
         verbose : bool, default=False
             If ``True``, verbose outputs are enabled.
 
+        Raises
+        ------
+        ValueError
+            If ``mode``, ``df_scales``, or ``random_state`` is invalid; if the model arguments are
+            invalid; or if ``mode='impact'`` lacks ``model``, ``df_seq_ref``, or ``labels``.
+        ImportError
+            If ``mode='impact'`` is selected without the optional ``aaanalysis[pro]`` dependency.
+
         See Also
         --------
         * :class:`SeqMut` whose ``combine`` scores the variants (the fitness engine).

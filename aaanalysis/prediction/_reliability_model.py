@@ -67,7 +67,7 @@ def check_finite(name: str, val: float):
     which reports the type.
     """
     if isinstance(val, (float, np.floating)) and not np.isfinite(val):
-        raise ValueError(f"'{name}' should be a finite float or an integer, but got {val}.")
+        raise ValueError(f"'{name}' ({val}) should be a finite float or an integer.")
 
 
 def check_ci(ci: float):
@@ -435,10 +435,12 @@ class ReliabilityModel(Wrapper):
         Parameters
         ----------
         X : array-like, optional
-            Evaluation features; the training ``X`` is used if ``None`` (a held-out labeled set
-            gives an honest estimate — calibration and conformal were fit on the training data).
+            Evaluation features. The training ``X`` is used if ``None``. A held-out labeled set
+            gives an honest estimate because calibration and conformal were fit on the training
+            data.
         labels : array-like, optional
-            Evaluation labels; the training labels are used if ``None``.
+            Evaluation labels, using only class labels observed during :meth:`fit`. The training
+            labels are used if ``None``, independently of whether ``X`` is supplied.
         n_bins : int, default=5
             Number of equal-width score bins for the calibration curve.
 
@@ -454,6 +456,9 @@ class ReliabilityModel(Wrapper):
         ------
         RuntimeError
             If called before :meth:`fit`.
+        ValueError
+            If ``X`` and ``labels`` have different lengths, ``X`` has a different feature count
+            than the training data, or ``labels`` contains a class not observed during :meth:`fit`.
 
         Examples
         --------
@@ -462,10 +467,17 @@ class ReliabilityModel(Wrapper):
         if self._ad_state is None:
             raise RuntimeError("Call 'fit' before 'eval'.")
         if X is None:
-            X, labels = self._X_train, self._y_train
+            X = self._X_train
+        if labels is None:
+            labels = self._y_train
         X = ut.check_X(X=X)
         labels = ut.check_labels(labels=labels)
         ut.check_match_X_labels(X=X, labels=labels)
+        train_classes = set(np.unique(self._y_train).tolist())
+        unknown_labels = sorted(set(np.unique(labels).tolist()) - train_classes)
+        if unknown_labels:
+            raise ValueError(f"'labels' ({unknown_labels}) should contain only labels observed "
+                             f"during 'fit' ({sorted(train_classes)}).")
         ut.check_number_range(name="n_bins", val=n_bins, min_val=2, just_int=True)
         y = (np.asarray(labels) == self.label_pos_).astype(int)
         df = self.predict(X)
