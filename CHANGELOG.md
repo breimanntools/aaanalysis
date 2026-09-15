@@ -35,7 +35,6 @@ notes — with cross-references and examples — live in
   point that would score `SeqMut` / `SeqOpt` output in one call. `predict` still takes a
   prebuilt feature matrix `X`, so a candidate set is scored by building that matrix with
   `SequenceFeature.feature_matrix` first.
-  order, and values (addresses #473).
 - Output contract for the prediction tier, advancing the per-sample and per-residue half of
   the documented boundary contract (addresses #26; the `df_feat` half is already covered by
   `DICT_DF_FEAT` / the CPP output schema): `DICT_DF_SCHEMAS` now documents `df_pred`
@@ -43,6 +42,8 @@ notes — with cross-references and examples — live in
   `df_eval_reliability` (`ReliabilityModel.eval`), rendered on the Data Schemas page and guarded
   by contract tests that pin the column names, order and dtypes as literals, so a renamed,
   dropped, retyped or undocumented column fails even if the schema is edited to match. The
+  `score` column is documented per scale (`proba` -> `[0, 1]`, `percent` -> `[0, 100]`), so
+  both `AAPred.predict(score_range=...)` outputs are checked against the same contract. The
   domain level's `is_best` column is now routed through `COL_IS_BEST` (no output change).
 
 ### Changed
