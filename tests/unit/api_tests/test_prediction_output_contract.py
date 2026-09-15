@@ -177,6 +177,14 @@ def rm_fitted():
 
 
 @pytest.fixture(scope="module")
+def rm_uncalibrated():
+    X, y = make_classification(n_samples=120, n_features=8, n_informative=5,
+                               n_redundant=1, random_state=0)
+    rm = aa.ReliabilityModel(random_state=0).fit(X[:90], y[:90], calibrate=False)
+    return rm, X[90:]
+
+
+@pytest.fixture(scope="module")
 def rm_degenerate():
     """A degenerate training reference: with n_features >= n_samples the covariance is
     rank-deficient, so ad_mahalanobis / ad_leverage are not identifiable and come back
@@ -303,6 +311,8 @@ class TestDfPredContract:
         _assert_conforms(df_pct, "df_pred", scale=ut.STR_SCORE_RANGE_PERCENT)
         np.testing.assert_allclose(df_pct["score"].to_numpy(),
                                    df_proba["score"].to_numpy() * 100)
+        np.testing.assert_allclose(df_pct["score_std"].to_numpy(),
+                                   df_proba["score_std"].to_numpy() * 100)
 
     def test_percent_frame_fails_the_proba_contract(self, aap_fitted):
         """The per-scale range is a real gate: the scales are not interchangeable."""
@@ -336,6 +346,13 @@ class TestReliabilityOutputContract:
         df = rm.predict(X_ood)
         _assert_conforms(df, "df_rel")
         assert not bool(df["in_domain"].iloc[0])
+
+    def test_uncalibrated_ambiguity_uses_ensemble_score(self, rm_uncalibrated):
+        rm, X_test = rm_uncalibrated
+        df = rm.predict(X_test)
+        assert df["score_calibrated"].isna().all()
+        np.testing.assert_allclose(df["margin"].to_numpy(),
+                                   np.abs(df["score"].to_numpy() - 0.5) * 2)
 
     def test_df_eval_reliability(self, rm_fitted):
         rm, X_test, y_test = rm_fitted
