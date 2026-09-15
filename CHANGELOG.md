@@ -34,6 +34,12 @@ notes — with cross-references and examples — live in
   - `AAPred` and `SeqOpt` now validate `df_scales`, and `AAPred.eval` validates `list_parts`, in
     their frontend checks: an invalid value raises a `ValueError` naming the parameter instead of
     failing later (or being silently ignored).
+### Added
+- `SequenceFeature.get_split_kws(strategy=...)`: `"compositional"` / `"positional"` CPP
+  strategy presets, equal to the explicit `split_types` / `n_split_min` / `n_split_max`
+  calls (`Segment(1,1)`; `Segment(2..15)` + `Pattern` + `PeriodicPattern`). Default
+  `None` keeps the output unchanged; combining a preset with non-default split args
+  raises `ValueError` (#87).
 
 ### Fixed
 - `ReliabilityModel.fit`: non-finite numbers (`NaN`, `inf`, `-inf`) are rejected for `ci`,
