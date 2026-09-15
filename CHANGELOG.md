@@ -34,6 +34,10 @@ notes — with cross-references and examples — live in
   - `AAPred` and `SeqOpt` now validate `df_scales`, and `AAPred.eval` validates `list_parts`, in
     their frontend checks: an invalid value raises a `ValueError` naming the parameter instead of
     failing later (or being silently ignored).
+### Added
+- `ModelEvaluator.learning_curve` / `ModelEvaluatorPlot.learning_curve`: cross-validated
+  metric-vs-training-size curve with bootstrap CIs (stratified, nested subsets of each training
+  fold; test folds untouched) to tell a sampling-limited task from a saturated one (#93).
 
 ### Fixed
 - `ReliabilityModel.fit`: non-finite numbers (`NaN`, `inf`, `-inf`) are rejected for `ci`,

@@ -8,7 +8,19 @@ from matplotlib.axes import Axes
 from matplotlib.figure import Figure
 
 import aaanalysis.utils as ut
-from ._backend.model_evaluator.model_evaluator_plot import plot_scores, plot_compare
+from ._backend.model_evaluator.model_evaluator_plot import plot_scores, plot_compare, plot_learning_curve
+
+
+# I Helper Functions
+def check_metric_curve(metric: Optional[str], df_curve: pd.DataFrame) -> str:
+    """Resolve the metric to plot: ``mcc`` when present, else the first metric of ``df_curve``."""
+    list_metrics = list(dict.fromkeys(df_curve[ut.COL_METRIC]))
+    if len(list_metrics) == 0:
+        raise ValueError("'df_curve' should contain at least one row.")
+    if metric is None:
+        return "mcc" if "mcc" in list_metrics else list_metrics[0]
+    ut.check_str_options(name="metric", val=metric, list_str_options=list_metrics)
+    return metric
 
 
 # II Main Functions
@@ -19,7 +31,8 @@ class ModelEvaluatorPlot:
     Visualizes the two ``ModelEvaluator`` tables: :meth:`scores` draws grouped confidence-interval
     bars of the cross-validated scores per (model, metric) from :meth:`ModelEvaluator.run`, and
     :meth:`compare` draws the paired model comparison from :meth:`ModelEvaluator.eval` as signed
-    delta bars with bootstrap-CI whiskers and significance markers.
+    delta bars with bootstrap-CI whiskers and significance markers. :meth:`learning_curve` draws the
+    metric versus training size from :meth:`ModelEvaluator.learning_curve` with a CI band.
 
     Every plotting method returns a ``(fig, ax)`` pair (a thin tuple subclass): unpack as
     ``fig, ax = ...``. For backward compatibility, the returned object also forwards attribute
@@ -154,4 +167,69 @@ class ModelEvaluatorPlot:
             colors = [ut.COLOR_POS, ut.COLOR_NEG]
         fig, ax = plot_compare(df_eval=df_eval, color_pos=colors[0], color_neg=colors[1],
                                figsize=figsize, alpha=alpha)
+        return ut.FigAxResult(fig, ax)
+
+    @staticmethod
+    def learning_curve(df_curve: pd.DataFrame,
+                       *, metric: Optional[str] = None,
+                       figsize: Tuple[Union[int, float], Union[int, float]] = (6, 4),
+                       colors: Optional[List[str]] = None,
+                       show_ci: bool = True,
+                       ) -> Tuple[Figure, Axes]:
+        """
+        Plot a learning curve: one metric versus training size per model, with a CI band.
+
+        One line per model connects the mean cross-validated score at each training size; the
+        shaded band shows the bootstrap confidence interval of the mean (falling back to the fold
+        std where the CI is ``NaN``). A curve still rising at the largest size suggests the task is
+        sampling-limited; a flat curve suggests it has saturated.
+
+        .. versionadded:: 1.2.0
+
+        Parameters
+        ----------
+        df_curve : pd.DataFrame, shape (n_models * n_train_sizes * n_metrics, 8)
+            Learning-curve table from :meth:`ModelEvaluator.learning_curve` with columns ``model``,
+            ``train_size``, ``metric``, ``score``, ``score_std``, ``ci_low``, ``ci_high``, and
+            ``n_scores``.
+        metric : str, optional
+            Metric to plot; must be one of the metrics in ``df_curve``. Defaults to ``"mcc"`` when
+            present, otherwise the first metric of ``df_curve``.
+        figsize : tuple, default=(6, 4)
+            Figure dimensions (width, height) in inches.
+        colors : list of str, optional
+            One color per model (in first-appearance order). Defaults to the package color list.
+        show_ci : bool, default=True
+            If ``True``, draw the confidence band (``ci_low`` / ``ci_high``, or ``score_std`` where
+            the CI is ``NaN``) around each curve.
+
+        Returns
+        -------
+        fig : Figure
+            Figure object for the learning-curve plot.
+        ax : Axes
+            Axes object of the learning-curve line plot.
+
+        See Also
+        --------
+        * :meth:`ModelEvaluator.learning_curve`: the respective computation method.
+
+        Examples
+        --------
+        .. include:: examples/me_plot_learning_curve.rst
+        """
+        # Check input
+        ut.check_df(name="df_curve", df=df_curve, cols_required=ut.COLS_CURVE_MODELEVAL, accept_none=False)
+        metric = check_metric_curve(metric=metric, df_curve=df_curve)
+        ut.check_figsize(figsize=figsize, accept_none=False)
+        ut.check_list_colors(name="colors", val=colors, accept_none=True)
+        ut.check_bool(name="show_ci", val=show_ci)
+        # Plotting
+        n_models = df_curve[ut.COL_MODEL].nunique()
+        if colors is not None and len(colors) < n_models:
+            raise ValueError(f"'colors' (n={len(colors)}) should provide at least one color per "
+                             f"model (n_models={n_models}).")
+        list_colors = colors if colors is not None else ut.plot_get_clist_(n_colors=n_models)
+        fig, ax = plot_learning_curve(df_curve=df_curve, metric=metric, colors=list_colors,
+                                      figsize=figsize, show_ci=show_ci)
         return ut.FigAxResult(fig, ax)

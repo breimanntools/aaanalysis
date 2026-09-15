@@ -6,12 +6,13 @@ from typing import Optional, List, Union
 import numpy as np
 import pandas as pd
 from sklearn.base import BaseEstimator, clone
+from sklearn.model_selection import StratifiedKFold
 
 import aaanalysis.utils as ut
 from aaanalysis.template_classes import Tool
 
 from ._backend.model_evaluator.model_evaluator_eval import (comp_fold_scores, aggregate_scores,
-                                                            compare_models)
+                                                            compare_models, comp_learning_curve)
 
 
 # I Helper Functions
@@ -122,6 +123,50 @@ def check_estimators_proba(list_estimators=None, metrics=None):
                          f"(e.g. 'SVC(probability=True)').")
 
 
+def check_train_sizes(train_sizes, labels, n_cv: int) -> List[int]:
+    """Check ``train_sizes`` and resolve it into sorted, unique absolute training-subset sizes.
+
+    Sizes are either all fractions in ``(0, 1]`` or all integers >= 2, relative to (and capped by)
+    the smallest training fold of stratified ``n_cv``-fold cross-validation, so every size is
+    available in every fold.
+    """
+    train_sizes = ut.check_list_like(name="train_sizes", val=train_sizes, accept_none=False, min_len=2)
+    is_number = [isinstance(s, (int, float, np.integer, np.floating)) and not isinstance(s, (bool, np.bool_))
+                 for s in train_sizes]
+    if not all(is_number):
+        raise ValueError(f"'train_sizes' ({train_sizes}) should contain only numbers.")
+    all_int = all(isinstance(s, (int, np.integer)) for s in train_sizes)
+    all_float = all(isinstance(s, (float, np.floating)) for s in train_sizes)
+    if not (all_int or all_float):
+        raise ValueError(f"'train_sizes' ({train_sizes}) should be either all fractions (float) or "
+                         f"all absolute sample counts (int), not a mix.")
+    # Smallest training-fold size (fold sizes do not depend on shuffling).
+    labels = np.asarray(labels)
+    cv = StratifiedKFold(n_splits=n_cv)
+    n_train_min = min(len(train_idx) for train_idx, _ in cv.split(np.zeros((len(labels), 1)), labels))
+    if all_float:
+        for s in train_sizes:
+            ut.check_number_range(name="train_sizes", val=float(s), min_val=0.0, max_val=1.0,
+                                  just_int=False, exclusive_limits=False)
+            if s <= 0:
+                raise ValueError(f"'train_sizes' fractions ({train_sizes}) should be in (0, 1].")
+        sizes = [int(np.floor(float(s) * n_train_min)) for s in train_sizes]
+    else:
+        sizes = [int(s) for s in train_sizes]
+    too_small = [s for s in sizes if s < 2]
+    too_large = [s for s in sizes if s > n_train_min]
+    if too_small:
+        raise ValueError(f"'train_sizes' ({train_sizes}) resolve to training subsets with fewer than "
+                         f"2 samples ({sizes}); at least one sample per class is needed.")
+    if too_large:
+        raise ValueError(f"'train_sizes' ({train_sizes}) should not exceed the smallest training "
+                         f"fold size ({n_train_min} samples for n_cv={n_cv}).")
+    if len(set(sizes)) != len(sizes):
+        raise ValueError(f"'train_sizes' ({train_sizes}) resolve to duplicate training subset sizes "
+                         f"({sizes} of at most {n_train_min} samples); pass distinct sizes.")
+    return sorted(sizes)
+
+
 def check_is_run(df_scores=None):
     """Check that ModelEvaluator.run has been called before eval."""
     if df_scores is None:
@@ -140,6 +185,10 @@ class ModelEvaluator(Tool):
     two or more models **pairwise on the same folds** with a signed ``delta`` (e.g. ΔMCC) and a
     two-sided Wilcoxon signed-rank significance test. Both are reproducible under ``random_state``
     and reuse :func:`comp_bootstrap_ci` and scikit-learn metrics — no new dependency.
+
+    :meth:`learning_curve` repeats the cross-validation on stratified subsets of increasing size of
+    each training fold, showing whether a task is still sampling-limited (the score keeps rising
+    with more data) or has saturated (a different representation or model is needed).
 
     Where :class:`AAPred` deploys a fitted model and :class:`TreeModel` ranks features,
     ``ModelEvaluator`` answers "how well does this model generalize, and is model A really better
@@ -354,3 +403,99 @@ class ModelEvaluator(Tool):
         # Compare
         return compare_models(self.df_scores_, list_model_names=self._list_model_names,
                               metric=metric, ci=ci, ci_seed=random_state)
+
+    def learning_curve(self,
+                       X: ut.ArrayLike2D,
+                       labels: ut.ArrayLike1D,
+                       *, train_sizes: Optional[ut.ArrayLike1D] = None,
+                       n_cv: int = 5,
+                       n_rounds: int = 1,
+                       metrics: Optional[List[str]] = None,
+                       ci: Optional[float] = 0.95,
+                       random_state: Optional[int] = None,
+                       ) -> pd.DataFrame:
+        """
+        Evaluate every model at increasing training sizes to show whether a task is sampling-limited.
+
+        Runs the same repeated stratified cross-validation as :meth:`run`, but within each training
+        fold fits every model on a stratified subset of each size in ``train_sizes`` and scores it
+        on the **full, unchanged test fold** (the test fold is never subsampled and never used for
+        training). Within a fold, the subsets are nested (a larger subset contains the smaller
+        ones), and the largest possible size reproduces the scores of :meth:`run`. The per-fold
+        scores are aggregated per (model, training size, metric) into a mean, a population std, a
+        percentile bootstrap confidence interval of the mean, and the fold count.
+
+        A curve that is still rising at the largest size suggests that more data will help; a
+        curve that has flattened suggests changing the representation or model instead. The
+        decision is left to the user.
+
+        .. versionadded:: 1.2.0
+
+        Parameters
+        ----------
+        X : array-like, shape (n_samples, n_features)
+            Feature matrix.
+        labels : array-like, shape (n_samples,)
+            Binary class labels for the samples in ``X``.
+        train_sizes : array-like, optional
+            Training-subset sizes (at least two, distinct), either all fractions in ``(0, 1]`` or
+            all absolute sample counts (int >= 2), relative to the smallest training fold. Fractions
+            are rounded down to sample counts. Defaults to ``[0.2, 0.4, 0.6, 0.8, 1.0]``.
+        n_cv : int, default=5
+            Number of stratified cross-validation folds per round (must not exceed the smallest
+            class count).
+        n_rounds : int, default=1
+            Number of cross-validation repeats (multi-seed aggregation). The total number of fold
+            scores per (model, training size, metric) is ``n_cv * n_rounds``.
+        metrics : list of str, optional
+            Performance metrics to compute. Defaults to ``list_metrics`` from the constructor.
+        ci : float, optional
+            Central confidence level in ``(0, 1)`` for the percentile bootstrap CI of the mean.
+            If ``None``, the ``ci_low`` / ``ci_high`` columns are ``NaN``. Default is ``0.95``.
+        random_state : int, optional
+            Per-call seed overriding the constructor's ``random_state`` for the folds, the training
+            subsets, and the bootstrap CI.
+
+        Returns
+        -------
+        df_curve : pd.DataFrame, shape (n_models * n_train_sizes * n_metrics, 8)
+            Long-format learning-curve table with columns ``model``, ``train_size`` (number of
+            training samples, ascending), ``metric``, ``score`` (mean over folds), ``score_std``
+            (population std over folds), ``ci_low`` / ``ci_high`` (bootstrap CI of the mean,
+            ``NaN`` when ``ci`` is ``None``), and ``n_scores`` (fold count).
+
+        Notes
+        -----
+        * Unlike :meth:`run`, this method does not change ``df_scores_`` or ``df_eval_``, so a
+          subsequent :meth:`eval` still compares the models of the last :meth:`run`.
+
+        See Also
+        --------
+        * :meth:`ModelEvaluatorPlot.learning_curve` for plotting the curve with its CI band.
+
+        Examples
+        --------
+        .. include:: examples/me_learning_curve.rst
+        """
+        # Check input
+        X = ut.check_X(X=X)
+        labels = ut.check_labels(labels=labels)
+        ut.check_match_X_labels(X=X, labels=labels)
+        check_binary_labels(labels=labels)
+        check_n_cv(n_cv=n_cv, labels=labels)
+        if train_sizes is None:
+            train_sizes = ut.LIST_TRAIN_SIZES_MODELEVAL
+        train_sizes = check_train_sizes(train_sizes=train_sizes, labels=labels, n_cv=n_cv)
+        ut.check_number_range(name="n_rounds", val=n_rounds, min_val=1, just_int=True)
+        metrics = check_metrics(metrics=metrics) if metrics is not None else self._list_metrics
+        check_estimators_proba(list_estimators=self._list_estimators, metrics=metrics)
+        if ci is not None:
+            ut.check_number_range(name="ci", val=ci, min_val=0.0, max_val=1.0,
+                                  just_int=False, exclusive_limits=True)
+        random_state = self._resolve_seed(random_state=random_state)
+        # Evaluate
+        df_curve = comp_learning_curve(X, labels, list_estimators=self._list_estimators,
+                                       list_model_names=self._list_model_names, metrics=metrics,
+                                       train_sizes=train_sizes, n_cv=n_cv, n_rounds=n_rounds,
+                                       ci=ci, random_state=random_state)
+        return df_curve

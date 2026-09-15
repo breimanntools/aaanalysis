@@ -1,6 +1,6 @@
 """
 This is a script for the backend of the ModelEvaluator class: repeated cross-validation scoring,
-bootstrap confidence intervals, and paired model comparison.
+bootstrap confidence intervals, paired model comparison, and learning curves.
 """
 import itertools
 from functools import partial
@@ -62,6 +62,33 @@ def _ordered_scores(df_scores, name, metric):
     mask = (df_scores[ut.COL_MODEL] == name) & (df_scores[ut.COL_METRIC] == metric)
     df = df_scores[mask].sort_values([ut.COL_ROUND, ut.COL_FOLD])
     return df[ut.COL_SCORE].to_numpy(dtype=float)
+
+
+def _stratified_subset(labels_train, class_orders, size):
+    """Positions of a stratified subset of ``size`` samples within one training fold.
+
+    Class counts follow the class proportions of the training fold (largest-remainder rounding)
+    with at least one sample per class, and each class contributes the first samples of its fixed
+    random order (``class_orders``). For binary labels the counts grow monotonically with ``size``,
+    so the subsets of one fold are nested. Positions are returned sorted, so the full training
+    fold keeps the exact sample order used by :func:`comp_fold_scores`.
+    """
+    classes = sorted(class_orders)
+    n_train = len(labels_train)
+    exact = np.array([size * len(class_orders[c]) / n_train for c in classes], dtype=float)
+    counts = np.floor(exact).astype(int)
+    remainder = size - int(counts.sum())
+    if remainder > 0:
+        # Stable tie-break on the class order, so the allocation is deterministic.
+        for i in np.argsort(-(exact - counts), kind="stable")[:remainder]:
+            counts[i] += 1
+    # Guarantee at least one sample per class (every estimator needs both classes to fit).
+    for i in range(len(classes)):
+        if counts[i] == 0:
+            counts[i] = 1
+            counts[int(np.argmax(counts))] -= 1
+    pos = np.concatenate([class_orders[c][:k] for c, k in zip(classes, counts)])
+    return np.sort(pos)
 
 
 def _paired_pvalue(diffs):
@@ -156,3 +183,60 @@ def compare_models(df_scores, list_model_names=None, metric="mcc", ci=0.95, ci_s
         p_value = _paired_pvalue(diffs)
         rows.append([name_a, name_b, metric, delta, delta_std, float(ci_low), float(ci_high), p_value])
     return pd.DataFrame(rows, columns=ut.COLS_COMPARE_MODELEVAL)
+
+
+@ut.catch_undefined_metric_warning()
+def comp_learning_curve(X, labels, list_estimators=None, list_model_names=None, metrics=None,
+                        train_sizes=None, n_cv=5, n_rounds=1, ci=None, random_state=None):
+    """Learning curve: cross-validated scores per (model, training size, metric).
+
+    Uses the same repeated stratified folds as :func:`comp_fold_scores` (``random_state + round``).
+    Within each training fold, every model is fitted on a stratified subset of ``train_size``
+    samples (``train_sizes`` are absolute counts, already resolved by the frontend) and scored on
+    the **full, untouched test fold**, so the test set never changes with the training size and
+    never enters training. The per-fold scores are aggregated like :func:`aggregate_scores` into
+    one row per (model, training size, metric).
+    """
+    X = np.asarray(X)
+    labels = np.asarray(labels)
+    needs_proba = any(METRIC_SCORE_FUNCS[m][1] for m in metrics)
+    dict_scores = {(name, size, metric): [] for name in list_model_names
+                   for size in train_sizes for metric in metrics}
+    for r in range(n_rounds):
+        seed = None if random_state is None else random_state + r
+        cv = StratifiedKFold(n_splits=n_cv, shuffle=True, random_state=seed)
+        rng = np.random.default_rng(seed)
+        for train_idx, test_idx in cv.split(X, labels):
+            y_train_fold = labels[train_idx]
+            class_orders = {c: rng.permutation(np.flatnonzero(y_train_fold == c))
+                            for c in np.unique(y_train_fold)}
+            X_test, y_test = X[test_idx], labels[test_idx]
+            for size in train_sizes:
+                sub_idx = train_idx[_stratified_subset(y_train_fold, class_orders, size)]
+                # Derived invariant: a training subset must never touch the held-out fold.
+                if np.intersect1d(sub_idx, test_idx).size != 0:
+                    raise RuntimeError("Learning-curve training subset overlaps the test fold.")
+                X_train, y_train = X[sub_idx], labels[sub_idx]
+                for name, estimator in zip(list_model_names, list_estimators):
+                    est = _seed_estimator(estimator, random_state)
+                    est.fit(X_train, y_train)
+                    pred_label = est.predict(X_test)
+                    pred_proba = est.predict_proba(X_test)[:, -1] if needs_proba else None
+                    scores = _score_predictions(y_test, pred_label, pred_proba, metrics)
+                    for metric in metrics:
+                        dict_scores[(name, size, metric)].append(scores[metric])
+    rows = []
+    for name in list_model_names:
+        for size in train_sizes:
+            for metric in metrics:
+                values = np.asarray(dict_scores[(name, size, metric)], dtype=float)
+                mean = float(np.mean(values))
+                std = float(np.std(values))
+                if ci is None:
+                    ci_low = ci_high = float("nan")
+                else:
+                    _, ci_low, ci_high = ut.bootstrap_ci_(values=values, n_rounds=1000, ci=ci,
+                                                          seed=random_state)
+                rows.append([name, int(size), metric, mean, std, float(ci_low), float(ci_high),
+                             int(len(values))])
+    return pd.DataFrame(rows, columns=ut.COLS_CURVE_MODELEVAL)
