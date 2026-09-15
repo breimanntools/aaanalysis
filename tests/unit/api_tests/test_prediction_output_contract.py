@@ -10,15 +10,21 @@ Every frame is guarded by two independent layers, because a schema-driven check 
 own would pass a *coordinated* code + schema edit:
 
 - literal expectations hard-coded in this file -- the column order, the dtype kind per
-  column, the required ``df_feat`` columns, and the raw ``PART-SPLIT-SCALE`` feature-id
-  grammar as a regex (not the production parser);
+  column, the required ``df_feat`` columns with their dtypes, and the raw
+  ``PART-SPLIT-SCALE`` feature-id grammar as a regex (not the production parser);
 - the live ``ut.DICT_DF_SCHEMAS`` record, asserted to agree with both the literal map
   and the produced frame.
 
 This addresses the per-sample and per-residue half of the documented boundary contract;
 the ``df_feat`` half is guarded by ``test_df_feat_contract.py`` (the committed
 ``load_features`` frame vs ``DICT_DF_FEAT``) and ``test_cpp_schema.py`` (canonical column
-order). What is added here is the literal grammar of a freshly computed ``CPP.run``.
+order). What is added here is the literal grammar and the literal dtypes of a freshly
+computed ``CPP.run``, exercised once per supported split type.
+
+``df_pred.score`` has no single numeric range: ``AAPred.predict(score_range=...)`` emits
+``[0, 1]`` on the default ``'proba'`` scale and ``[0, 100]`` on ``'percent'``. The schema
+therefore contracts one range per scale (``scale_ranges``), and both scales are checked
+by the same conformance helper -- neither is exempted from it.
 """
 import re
 import warnings
@@ -65,6 +71,14 @@ COLS_FEAT_REQUIRED = ["feature", "category", "subcategory", "scale_name",
                       "scale_description", "abs_auc", "abs_mean_dif", "mean_dif",
                       "std_test", "std_ref", "p_val_mann_whitney", "p_val_fdr_bh",
                       "positions"]
+# ... and their dtypes, likewise written out: a retype of any contracted df_feat field
+# fails here even when DICT_DF_SCHEMAS is edited to agree with the new dtype.
+DTYPES_FEAT_REQUIRED = {"feature": "str", "category": "str", "subcategory": "str",
+                        "scale_name": "str", "scale_description": "str",
+                        "abs_auc": "float", "abs_mean_dif": "float",
+                        "mean_dif": "float", "std_test": "float", "std_ref": "float",
+                        "p_val_mann_whitney": "float", "p_val_fdr_bh": "float",
+                        "positions": "str"}
 # Raw PART-SPLIT-SCALE grammar as a literal regex (NOT ut.split_feat_id): PART is upper
 # case, SPLIT is one of the three split types with its parenthesised arguments, and the
 # scale id carries no '-'.
@@ -88,8 +102,21 @@ def _kind(series):
     return str(series.dtype)
 
 
-def _assert_conforms(df, frame):
-    """Every column documented, with the documented dtype, nullability, range, values."""
+def _range_for(rec, scale):
+    """The numeric range a record contracts, on ``scale`` when it is scale-dependent."""
+    if "scale_ranges" in rec:
+        assert scale is not None, "a scale-dependent range needs an explicit scale"
+        assert scale in rec["scale_ranges"], f"scale '{scale}' is not documented"
+        return rec["scale_ranges"][scale]
+    return rec.get("range")
+
+
+def _assert_conforms(df, frame, scale=None):
+    """Every column documented, with the documented dtype, nullability, range, values.
+
+    ``scale`` picks the branch of a per-scale range record, so an alternative output
+    scale is checked by this same machinery instead of being exempted from it.
+    """
     schema = ut.DICT_DF_SCHEMAS[frame]["columns"]
     undocumented = [c for c in df.columns if c not in schema]
     assert not undocumented, f"{frame}: undocumented columns {undocumented}"
@@ -101,8 +128,9 @@ def _assert_conforms(df, frame):
             assert df[col].notna().all(), f"{frame}.{col} has missing values"
         if rec["unique"]:
             assert df[col].is_unique, f"{frame}.{col} not unique"
-        if "range" in rec and rec["dtype"] in {"int", "float"}:
-            lo, hi = rec["range"]
+        rng = _range_for(rec, scale)
+        if rng is not None and rec["dtype"] in {"int", "float"}:
+            lo, hi = rng
             vals = df[col].dropna().to_numpy(dtype=float)
             if lo is not None:
                 assert (vals >= lo - 1e-9).all(), f"{frame}.{col} below {lo}"
@@ -161,19 +189,32 @@ def rm_degenerate():
 
 @pytest.fixture(scope="module")
 def cpp_feat():
-    """A freshly computed df_feat from CPP.run on a tiny seeded fixture."""
+    """Freshly computed df_feat from CPP.run, one frame per supported split type.
+
+    One run per split type rather than a single mixed run: CPP.run returns only the
+    n_filter best features, so a mixed run could legitimately rank one split type out of
+    the output and silently stop exercising its id format.
+    """
     df_seq = aa.load_dataset(name="DOM_GSEC", n=10)
     labels = df_seq["label"].to_list()
     sf = aa.SequenceFeature()
     df_parts = sf.get_df_parts(df_seq=df_seq)
-    split_kws = sf.get_split_kws(n_split_min=1, n_split_max=2, split_types=["Segment"])
     df_scales = aa.load_scales().iloc[:, :15]
-    cpp = aa.CPP(df_parts=df_parts, df_scales=df_scales, split_kws=split_kws,
-                 verbose=False, random_state=0)
-    with warnings.catch_warnings():
-        warnings.simplefilter("ignore")
-        df_feat = cpp.run(labels=labels, n_filter=10, n_jobs=1)
-    return df_feat, df_scales
+    dict_df_feat = {}
+    for split_type in SPLIT_TYPES:
+        split_kws = sf.get_split_kws(split_types=[split_type], n_split_min=1,
+                                     n_split_max=2, steps_pattern=[3, 4], n_min=2,
+                                     n_max=3, len_max=10, steps_periodicpattern=[3, 4])
+        cpp = aa.CPP(df_parts=df_parts, df_scales=df_scales, split_kws=split_kws,
+                     verbose=False, random_state=0)
+        with warnings.catch_warnings():
+            # Narrow on purpose: only the two advisories a tiny fixture raises by
+            # construction (sparse candidate pool, empty Pattern bucket) are silenced,
+            # so an unexpected warning still surfaces.
+            warnings.filterwarnings("ignore", message="'n_filter'.*candidate features")
+            warnings.filterwarnings("ignore", message="'Pattern' split config")
+            dict_df_feat[split_type] = cpp.run(labels=labels, n_filter=10, n_jobs=1)
+    return dict_df_feat, df_scales
 
 
 # ------------------------------------------------------------------------ structure
@@ -217,7 +258,7 @@ class TestDfPredContract:
         assert list(df.columns) == COLS_PRED_SEQUENCE
         assert len(df) == len(df_seq)
         _assert_literal_dtypes(df, DTYPES_PRED_SEQUENCE, "df_pred")
-        _assert_conforms(df, "df_pred")
+        _assert_conforms(df, "df_pred", scale=ut.STR_SCORE_RANGE_PROBA)
         assert df["entry"].is_unique
 
     def test_domain_level(self, aap_fitted):
@@ -225,7 +266,7 @@ class TestDfPredContract:
         df = aap.predict(df_seq.head(3), level="domain", window=1)
         assert list(df.columns) == COLS_PRED_DOMAIN
         _assert_literal_dtypes(df, DTYPES_PRED_DOMAIN, "df_pred")
-        _assert_conforms(df, "df_pred")
+        _assert_conforms(df, "df_pred", scale=ut.STR_SCORE_RANGE_PROBA)
         assert (df.groupby("entry")["is_best"].sum() == 1).all()
 
     def test_window_level(self, aap_fitted):
@@ -234,7 +275,7 @@ class TestDfPredContract:
         assert list(df.columns) == COLS_PRED_WINDOW
         assert len(df) > 0
         _assert_literal_dtypes(df, DTYPES_PRED_WINDOW, "df_pred")
-        _assert_conforms(df, "df_pred")
+        _assert_conforms(df, "df_pred", scale=ut.STR_SCORE_RANGE_PROBA)
 
     def test_threshold_appends_predicted_label(self, aap_fitted):
         aap, df_seq = aap_fitted
@@ -242,30 +283,41 @@ class TestDfPredContract:
         assert list(df.columns) == COLS_PRED_SEQUENCE + ["predicted_label"]
         _assert_literal_dtypes(df, {**DTYPES_PRED_SEQUENCE, **DTYPES_PRED_LABEL},
                                "df_pred")
-        _assert_conforms(df, "df_pred")
+        _assert_conforms(df, "df_pred", scale=ut.STR_SCORE_RANGE_PROBA)
 
-    def test_default_score_range_is_proba(self, aap_fitted):
-        """The documented range is the default 'proba' scale, so it must hold there."""
-        aap, df_seq = aap_fitted
-        df = aap.predict(df_seq, level="sequence")
-        assert ut.DICT_DF_SCHEMAS["df_pred"]["columns"]["score"]["range"] == [0, 1]
-        assert df["score"].between(0, 1).all()
+    def test_score_range_is_documented_per_scale(self):
+        """Both score_range scales are contracted; neither is left undocumented."""
+        rec = ut.DICT_DF_SCHEMAS["df_pred"]["columns"]["score"]
+        assert "range" not in rec, "a single range would be false on one scale"
+        assert set(rec["scale_ranges"]) == set(ut.LIST_SCORE_RANGES)
+        assert rec["scale_ranges"][ut.STR_SCORE_RANGE_PROBA] == [0, 1]
+        assert rec["scale_ranges"][ut.STR_SCORE_RANGE_PERCENT] == [0, 100]
 
-    def test_percent_scale_is_100x_proba(self, aap_fitted):
-        """Dedicated percent check.
-
-        The schema documents the default 'proba' range [0, 1], so the generic
-        conformance helper is deliberately NOT used here: on the percent scale the
-        score is the same value times 100 and lives in [0, 100].
-        """
+    def test_percent_scale_conforms_to_its_documented_range(self, aap_fitted):
+        """The percent output is checked by the generic helper, not exempted from it."""
         aap, df_seq = aap_fitted
         df_proba = aap.predict(df_seq, level="sequence")
         df_pct = aap.predict(df_seq, level="sequence", score_range="percent")
         assert list(df_pct.columns) == COLS_PRED_SEQUENCE
         _assert_literal_dtypes(df_pct, DTYPES_PRED_SEQUENCE, "df_pred")
-        assert df_pct["score"].between(0, 100).all()
+        _assert_conforms(df_pct, "df_pred", scale=ut.STR_SCORE_RANGE_PERCENT)
         np.testing.assert_allclose(df_pct["score"].to_numpy(),
                                    df_proba["score"].to_numpy() * 100)
+
+    def test_percent_frame_fails_the_proba_contract(self, aap_fitted):
+        """The per-scale range is a real gate: the scales are not interchangeable."""
+        aap, df_seq = aap_fitted
+        df_pct = aap.predict(df_seq, level="sequence", score_range="percent")
+        assert df_pct["score"].max() > 1, "fixture too weak to tell the scales apart"
+        with pytest.raises(AssertionError, match="above 1"):
+            _assert_conforms(df_pct, "df_pred", scale=ut.STR_SCORE_RANGE_PROBA)
+
+    def test_scale_dependent_range_needs_a_scale(self, aap_fitted):
+        """Checking a scale-dependent frame without naming the scale is an error."""
+        aap, df_seq = aap_fitted
+        df = aap.predict(df_seq, level="sequence")
+        with pytest.raises(AssertionError, match="needs an explicit scale"):
+            _assert_conforms(df, "df_pred")
 
 
 # ------------------------------------------------- df_rel / df_eval_reliability
@@ -366,50 +418,101 @@ class TestCppFeatureIdContract:
 
     ``test_df_feat_contract.py`` already guards the committed ``load_features`` frame
     against ``ut.DICT_DF_FEAT`` and parses ids with ``ut.split_feat_id``; what is added
-    here is a *freshly computed* ``CPP.run`` checked against a hard-coded column list and
-    a raw regex, so a change to the production constants or parser cannot move it.
+    here is a *freshly computed* ``CPP.run`` -- for every supported split type -- checked
+    against a hard-coded column list, a hard-coded dtype map and a raw regex, so a change
+    to the production constants or parser cannot move the contract.
     """
 
-    def test_required_columns_present_in_literal_order(self, cpp_feat):
-        df_feat, _ = cpp_feat
+    def test_every_split_type_is_produced(self, cpp_feat):
+        """The fixture really exercises all three split types, not just Segment."""
+        dict_df_feat, _ = cpp_feat
+        assert set(dict_df_feat) == set(SPLIT_TYPES)
+        for split_type, df_feat in dict_df_feat.items():
+            assert len(df_feat) > 0, f"no features produced for {split_type}"
+
+    @pytest.mark.parametrize("split_type", SPLIT_TYPES)
+    def test_required_columns_present_in_literal_order(self, cpp_feat, split_type):
+        df_feat = cpp_feat[0][split_type]
         assert list(df_feat.columns)[:len(COLS_FEAT_REQUIRED)] == COLS_FEAT_REQUIRED
+
+    @pytest.mark.parametrize("split_type", SPLIT_TYPES)
+    def test_contracted_dtypes_are_literal(self, cpp_feat, split_type):
+        """Every contracted df_feat field has its dtype pinned, live and in the schema."""
+        df_feat = cpp_feat[0][split_type]
+        _assert_literal_dtypes(df_feat, DTYPES_FEAT_REQUIRED, "df_feat")
+
+    @pytest.mark.parametrize("split_type", SPLIT_TYPES)
+    def test_frame_conforms_to_the_schema(self, cpp_feat, split_type):
+        df_feat = cpp_feat[0][split_type]
+        _assert_conforms(df_feat, "df_feat")
 
     def test_production_constant_matches_literal(self, cpp_feat):
         """If LIST_COLS_FEAT is edited, this literal is the contract that must win."""
         assert list(ut.LIST_COLS_FEAT) == COLS_FEAT_REQUIRED
 
-    def test_feature_id_matches_raw_grammar(self, cpp_feat):
-        df_feat, _ = cpp_feat
-        assert len(df_feat) > 0
+    def test_schema_dtypes_match_literal_map(self):
+        """The df_feat schema alone cannot drift away from the literal dtype map."""
+        schema = ut.DICT_DF_SCHEMAS["df_feat"]["columns"]
+        assert {c: schema[c]["dtype"] for c in COLS_FEAT_REQUIRED} == DTYPES_FEAT_REQUIRED
+
+    @pytest.mark.parametrize("split_type", SPLIT_TYPES)
+    def test_feature_id_matches_raw_grammar(self, cpp_feat, split_type):
+        df_feat = cpp_feat[0][split_type]
         for feat_id in df_feat["feature"]:
             assert RE_FEAT_ID.match(feat_id), f"id breaks PART-SPLIT-SCALE: {feat_id}"
 
-    def test_feature_id_part_in_vocabulary(self, cpp_feat):
-        df_feat, _ = cpp_feat
+    @pytest.mark.parametrize("split_type", SPLIT_TYPES)
+    def test_feature_id_split_type_is_the_requested_one(self, cpp_feat, split_type):
+        """The grammar resolves each split type exactly, PeriodicPattern included."""
+        df_feat = cpp_feat[0][split_type]
+        observed = {RE_FEAT_ID.match(f).group("split").split("(")[0]
+                    for f in df_feat["feature"]}
+        assert observed == {split_type}
+
+    @pytest.mark.parametrize("split_type", SPLIT_TYPES)
+    def test_feature_id_part_in_vocabulary(self, cpp_feat, split_type):
+        df_feat = cpp_feat[0][split_type]
         for feat_id in df_feat["feature"]:
             part = RE_FEAT_ID.match(feat_id).group("part")
             assert part in PARTS_FIXTURE, f"unexpected part {part} in {feat_id}"
             assert part.lower() in ut.LIST_ALL_PARTS, f"{part} not a known part"
 
-    def test_feature_id_split_type_is_literal(self, cpp_feat):
-        df_feat, _ = cpp_feat
-        for feat_id in df_feat["feature"]:
-            split = RE_FEAT_ID.match(feat_id).group("split")
-            assert split.startswith(SPLIT_TYPES), f"unknown split in {feat_id}"
-
-    def test_feature_id_scale_is_in_df_scales(self, cpp_feat):
-        df_feat, df_scales = cpp_feat
+    @pytest.mark.parametrize("split_type", SPLIT_TYPES)
+    def test_feature_id_scale_is_in_df_scales(self, cpp_feat, split_type):
+        dict_df_feat, df_scales = cpp_feat
         valid = set(df_scales.columns)
-        for feat_id in df_feat["feature"]:
+        for feat_id in dict_df_feat[split_type]["feature"]:
             scale_id = RE_FEAT_ID.match(feat_id).group("scale")
             assert scale_id in valid, f"{scale_id} not a column of df_scales"
 
-    def test_feature_ids_unique(self, cpp_feat):
-        df_feat, _ = cpp_feat
-        assert df_feat["feature"].is_unique
+    @pytest.mark.parametrize("split_type", SPLIT_TYPES)
+    def test_feature_ids_unique(self, cpp_feat, split_type):
+        assert cpp_feat[0][split_type]["feature"].is_unique
+
+    @pytest.mark.parametrize("split_type", SPLIT_TYPES)
+    def test_positions_are_increasing_and_1_based(self, cpp_feat, split_type):
+        """The per-residue half of the contract: 'positions' is a 1-based ascending list."""
+        for positions in cpp_feat[0][split_type]["positions"]:
+            pos = [int(p) for p in positions.split(",")]
+            assert pos[0] >= 1, f"positions are 1-based: {positions}"
+            assert all(b > a for a, b in zip(pos, pos[1:])), positions
+
+    def test_segment_positions_are_contiguous(self, cpp_feat):
+        """A Segment is a continuous sub-sequence, so its positions have no gap."""
+        for positions in cpp_feat[0]["Segment"]["positions"]:
+            pos = [int(p) for p in positions.split(",")]
+            assert pos == list(range(pos[0], pos[-1] + 1)), positions
+
+    @pytest.mark.parametrize("split_type", ["Pattern", "PeriodicPattern"])
+    def test_pattern_positions_are_discontinuous(self, cpp_feat, split_type):
+        """Pattern / PeriodicPattern are discontinuous, so some step exceeds 1."""
+        for positions in cpp_feat[0][split_type]["positions"]:
+            pos = [int(p) for p in positions.split(",")]
+            assert max(b - a for a, b in zip(pos, pos[1:])) > 1, positions
 
     def test_broken_id_is_rejected_by_the_grammar(self):
         """The regex is a real gate: these malformed ids must not match."""
         for bad in ["TMD-Segment(1,2)", "tmd-Segment(1,2)-ARGP820103",
-                    "TMD-Chunk(1,2)-ARGP820103", "TMD-Segment(1,2)-ARG-P820103"]:
+                    "TMD-Chunk(1,2)-ARGP820103", "TMD-Segment(1,2)-ARG-P820103",
+                    "TMD-Pattern-ARGP820103", "TMD-PeriodicPattern(C,i+3/4,1)"]:
             assert RE_FEAT_ID.match(bad) is None, bad

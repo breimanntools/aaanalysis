@@ -49,20 +49,33 @@ from ._constants import (
     STR_CONF_NEG, STR_CONF_POS, STR_CONF_BOTH, STR_CONF_NONE,
     COL_BIN, COL_MEAN_SCORE, COL_EMPIRICAL_POS, COL_N_SAMPLES, STR_BIN_SUMMARY,
     COL_AD_STATUS, COL_AD_NEAREST_TRAIN, LIST_AD_STATUS, STR_BIN_BRIER, STR_BIN_ECE,
+    STR_SCORE_RANGE_PROBA, STR_SCORE_RANGE_PERCENT,
 )
 
+# I Helper Functions
 # Field-record keys (kept positionless / dict-based on purpose; documented above).
-FIELD_KEYS = ("dtype", "required", "nullable", "unique", "range",
+FIELD_KEYS = ("dtype", "required", "nullable", "unique", "range", "scale_ranges",
               "allowed_values", "example", "validation", "description")
 
 
 def _field(dtype, description, *, required=True, nullable=False, unique=False,
-           range=None, allowed_values=None, example=None, validation=None):
-    """Build one column's field record; optional keys are omitted when None."""
+           range=None, scale_ranges=None, allowed_values=None, example=None,
+           validation=None):
+    """Build one column's field record; optional keys are omitted when None.
+
+    ``range`` is the single numeric range a column always satisfies. ``scale_ranges``
+    replaces it for a column whose range depends on an output scale the caller picks
+    (``AAPred.predict(score_range=...)``): it maps each scale name to that scale's
+    range, so every scale is contracted rather than one of them being undocumented.
+    """
+    if range is not None and scale_ranges is not None:
+        raise ValueError("A column carries either 'range' or 'scale_ranges', not both.")
     rec = {"dtype": dtype, "required": required, "nullable": nullable,
            "unique": unique, "description": description}
     if range is not None:
         rec["range"] = range
+    if scale_ranges is not None:
+        rec["scale_ranges"] = scale_ranges
     if allowed_values is not None:
         rec["allowed_values"] = allowed_values
     if example is not None:
@@ -72,6 +85,7 @@ def _field(dtype, description, *, required=True, nullable=False, unique=False,
     return rec
 
 
+# II Main Functions
 DICT_DF_SCHEMAS = {
     # ---------------------------------------------------------------- inputs
     "df_seq": {
@@ -467,9 +481,10 @@ DICT_DF_SCHEMAS = {
             "'sequence' = entry, score, score_std (one row per protein); 'domain' = entry, "
             "offset, score, is_best (one row per protein and boundary shift); 'window' = "
             "entry, position, score, score_std (one row per protein and residue anchor). "
-            "'predicted_label' is appended when a threshold is given. The tabulated score "
-            "range is the default score_range='proba' scale; with score_range='percent' "
-            "score and score_std hold the same values multiplied by 100 ([0, 100])."),
+            "'predicted_label' is appended when a threshold is given. Both score columns "
+            "carry the scale chosen by score_range: 'proba' (the default, [0, 1]) or "
+            "'percent' (the same values multiplied by 100, [0, 100]); the score row below "
+            "contracts one range per scale."),
         "columns": {
             COL_ENTRY: _field("str", "Protein identifier from df_seq; unique only at "
                               "level='sequence'.", example="P05067"),
@@ -479,11 +494,15 @@ DICT_DF_SCHEMAS = {
                                     "scored window.", required=False, range=[1, None],
                                     example=31),
             COL_SCORE: _field("float", "Positive-class score averaged over the fitted "
-                              "models, on the default score_range='proba' scale "
-                              "(score_range='percent' scales it by 100).",
-                              range=[0, 1], example=0.83),
+                              "models. Its range depends on the score_range argument: "
+                              "[0, 1] on the default 'proba' scale and [0, 100] on "
+                              "'percent', which holds the same values times 100.",
+                              scale_ranges={STR_SCORE_RANGE_PROBA: [0, 1],
+                                            STR_SCORE_RANGE_PERCENT: [0, 100]},
+                              example=0.83),
             COL_SCORE_STD: _field("float", "Standard deviation of the score across the "
-                                  "fitted models (level='sequence' and 'window').",
+                                  "fitted models (level='sequence' and 'window'), on the "
+                                  "same scale as score.",
                                   required=False, range=[0, None], example=0.04),
             COL_IS_BEST: _field("bool", "level='domain': True for the highest-scoring offset "
                                 "of each protein.", required=False, example=True),
@@ -677,6 +696,10 @@ def render_schemas_rst():
                 lo, hi = rec["range"]
                 extra.append(f"range: [{lo if lo is not None else '-inf'}, "
                              f"{hi if hi is not None else 'inf'}]")
+            if "scale_ranges" in rec:
+                shown = "; ".join(f"{name}: [{lo}, {hi}]"
+                                  for name, (lo, hi) in rec["scale_ranges"].items())
+                extra.append(f"range per score_range: {shown}")
             if "example" in rec:
                 extra.append(f"e.g. {_format_value(rec['example'])}")
             extra_str = "; ".join(extra) if extra else ""

@@ -999,7 +999,7 @@ Matrix / array contract:
 ``df_pred``
 -----------
 
-AAPred.predict output in long format; the columns depend on 'level': 'sequence' = entry, score, score_std (one row per protein); 'domain' = entry, offset, score, is_best (one row per protein and boundary shift); 'window' = entry, position, score, score_std (one row per protein and residue anchor). 'predicted_label' is appended when a threshold is given. The tabulated score range is the default score_range='proba' scale; with score_range='percent' score and score_std hold the same values multiplied by 100 ([0, 100]).
+AAPred.predict output in long format; the columns depend on 'level': 'sequence' = entry, score, score_std (one row per protein); 'domain' = entry, offset, score, is_best (one row per protein and boundary shift); 'window' = entry, position, score, score_std (one row per protein and residue anchor). 'predicted_label' is appended when a threshold is given. Both score columns carry the scale chosen by score_range: 'proba' (the default, [0, 1]) or 'percent' (the same values multiplied by 100, [0, 100]); the score row below contracts one range per scale.
 
 .. list-table::
    :header-rows: 1
@@ -1038,14 +1038,14 @@ AAPred.predict output in long format; the columns depend on 'level': 'sequence' 
      - yes
      - no
      - no
-     - Positive-class score averaged over the fitted models, on the default score_range='proba' scale (score_range='percent' scales it by 100).
-     - range: [0, 1]; e.g. 0.83
+     - Positive-class score averaged over the fitted models. Its range depends on the score_range argument: [0, 1] on the default 'proba' scale and [0, 100] on 'percent', which holds the same values times 100.
+     - range per score_range: proba: [0, 1]; percent: [0, 100]; e.g. 0.83
    * - ``score_std``
      - float
      - no
      - no
      - no
-     - Standard deviation of the score across the fitted models (level='sequence' and 'window').
+     - Standard deviation of the score across the fitted models (level='sequence' and 'window'), on the same scale as score.
      - range: [0, inf]; e.g. 0.04
    * - ``is_best``
      - bool

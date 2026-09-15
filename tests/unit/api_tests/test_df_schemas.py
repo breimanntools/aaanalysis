@@ -71,6 +71,13 @@ class TestSchemaStructure:
                 assert isinstance(rec["description"], str) and rec["description"].endswith(".")
                 if "range" in rec:
                     assert len(rec["range"]) == 2
+                if "scale_ranges" in rec:
+                    # A scale-dependent column contracts one range per scale and
+                    # must not also carry a single unconditional range.
+                    assert "range" not in rec, (frame, col)
+                    assert rec["scale_ranges"], (frame, col)
+                    for scale, rng in rec["scale_ranges"].items():
+                        assert isinstance(scale, str) and len(rng) == 2
                 if "allowed_values" in rec:
                     assert isinstance(rec["allowed_values"], list) and rec["allowed_values"]
 
