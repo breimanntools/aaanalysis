@@ -36,11 +36,14 @@ notes — with cross-references and examples — live in
   prebuilt feature matrix `X`, so a candidate set is scored by building that matrix with
   `SequenceFeature.feature_matrix` first.
   order, and values (addresses #473).
-- Output contract for the prediction tier (addresses #26): `DICT_DF_SCHEMAS` now documents
-  `df_pred` (`AAPred.predict`, all three levels), `df_rel` (`ReliabilityModel.predict`) and
+- Output contract for the prediction tier, advancing the per-sample and per-residue half of
+  the documented boundary contract (addresses #26; the `df_feat` half is already covered by
+  `DICT_DF_FEAT` / the CPP output schema): `DICT_DF_SCHEMAS` now documents `df_pred`
+  (`AAPred.predict`, all three levels), `df_rel` (`ReliabilityModel.predict`) and
   `df_eval_reliability` (`ReliabilityModel.eval`), rendered on the Data Schemas page and guarded
-  by contract tests that fail on a renamed, dropped, retyped or undocumented column. The domain
-  level's `is_best` column is now routed through `COL_IS_BEST` (no output change).
+  by contract tests that pin the column names, order and dtypes as literals, so a renamed,
+  dropped, retyped or undocumented column fails even if the schema is edited to match. The
+  domain level's `is_best` column is now routed through `COL_IS_BEST` (no output change).
 
 ### Changed
 - Prediction/design-tier consistency pass (these classes are still experimental, so no

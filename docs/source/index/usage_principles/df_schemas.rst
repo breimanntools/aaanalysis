@@ -999,7 +999,7 @@ Matrix / array contract:
 ``df_pred``
 -----------
 
-AAPred.predict output in long format; the columns depend on 'level': 'sequence' = entry, score, score_std (one row per protein); 'domain' = entry, offset, score, is_best (one row per protein and boundary shift); 'window' = entry, position, score, score_std (one row per protein and residue anchor). 'predicted_label' is appended when a threshold is given. Scores are in [0, 1] with score_range='proba' (default) and in [0, 100] with 'percent'.
+AAPred.predict output in long format; the columns depend on 'level': 'sequence' = entry, score, score_std (one row per protein); 'domain' = entry, offset, score, is_best (one row per protein and boundary shift); 'window' = entry, position, score, score_std (one row per protein and residue anchor). 'predicted_label' is appended when a threshold is given. The tabulated score range is the default score_range='proba' scale; with score_range='percent' score and score_std hold the same values multiplied by 100 ([0, 100]).
 
 .. list-table::
    :header-rows: 1
@@ -1038,8 +1038,8 @@ AAPred.predict output in long format; the columns depend on 'level': 'sequence' 
      - yes
      - no
      - no
-     - Positive-class score averaged over the fitted models.
-     - range: [0, 100]; e.g. 0.83
+     - Positive-class score averaged over the fitted models, on the default score_range='proba' scale (score_range='percent' scales it by 100).
+     - range: [0, 1]; e.g. 0.83
    * - ``score_std``
      - float
      - no
@@ -1130,16 +1130,16 @@ ReliabilityModel.predict output; one row per sample, one column per reliability 
    * - ``ad_mahalanobis``
      - float
      - yes
+     - yes
      - no
-     - no
-     - Mahalanobis distance to the training center.
+     - Mahalanobis distance to the training center; NaN when the training reference is degenerate (n_features >= n_samples), where the covariance is rank-deficient and the distance is not identifiable.
      - range: [0, inf]; e.g. 2.4
    * - ``ad_leverage``
      - float
      - yes
+     - yes
      - no
-     - no
-     - Leverage (hat value) relative to the training feature space.
+     - Leverage (hat value) relative to the training feature space; NaN on the same degenerate training reference as ad_mahalanobis.
      - range: [0, inf]; e.g. 0.05
    * - ``score_calibrated``
      - float

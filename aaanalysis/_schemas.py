@@ -43,8 +43,6 @@ from ._constants import (
     COL_EVIDENCE, COL_SCORE, COL_BOND_ID,
     LIST_CAT, LIST_ALL_PARTS, LIST_CANONICAL_AA, COLS_SEQ_POS, COLS_SEQ_PARTS,
     COLS_SEQ_TMD,
-)
-from ._constants import (
     COL_SCORE_STD, COL_OFFSET, COL_RESIDUE_POS, COL_PRED_LABEL, COL_IS_BEST,
     COL_CI_LOW, COL_CI_HIGH, COL_OOD_SCORE, COL_IN_DOMAIN, COL_AD_KNN, COL_AD_MAHALANOBIS,
     COL_AD_LEVERAGE, COL_SCORE_CAL, COL_MARGIN, COL_ENTROPY, COL_CONFORMAL_SET, COL_RELIABLE,
@@ -469,8 +467,9 @@ DICT_DF_SCHEMAS = {
             "'sequence' = entry, score, score_std (one row per protein); 'domain' = entry, "
             "offset, score, is_best (one row per protein and boundary shift); 'window' = "
             "entry, position, score, score_std (one row per protein and residue anchor). "
-            "'predicted_label' is appended when a threshold is given. Scores are in [0, 1] "
-            "with score_range='proba' (default) and in [0, 100] with 'percent'."),
+            "'predicted_label' is appended when a threshold is given. The tabulated score "
+            "range is the default score_range='proba' scale; with score_range='percent' "
+            "score and score_std hold the same values multiplied by 100 ([0, 100])."),
         "columns": {
             COL_ENTRY: _field("str", "Protein identifier from df_seq; unique only at "
                               "level='sequence'.", example="P05067"),
@@ -480,7 +479,9 @@ DICT_DF_SCHEMAS = {
                                     "scored window.", required=False, range=[1, None],
                                     example=31),
             COL_SCORE: _field("float", "Positive-class score averaged over the fitted "
-                              "models.", range=[0, 100], example=0.83),
+                              "models, on the default score_range='proba' scale "
+                              "(score_range='percent' scales it by 100).",
+                              range=[0, 1], example=0.83),
             COL_SCORE_STD: _field("float", "Standard deviation of the score across the "
                                   "fitted models (level='sequence' and 'window').",
                                   required=False, range=[0, None], example=0.04),
@@ -516,10 +517,15 @@ DICT_DF_SCHEMAS = {
                                "the standardized feature space.", range=[0, None],
                                example=1.9),
             COL_AD_MAHALANOBIS: _field("float", "Mahalanobis distance to the training "
-                                       "center.", range=[0, None], example=2.4),
+                                       "center; NaN when the training reference is "
+                                       "degenerate (n_features >= n_samples), where the "
+                                       "covariance is rank-deficient and the distance is "
+                                       "not identifiable.", nullable=True,
+                                       range=[0, None], example=2.4),
             COL_AD_LEVERAGE: _field("float", "Leverage (hat value) relative to the "
-                                    "training feature space.", range=[0, None],
-                                    example=0.05),
+                                    "training feature space; NaN on the same degenerate "
+                                    "training reference as ad_mahalanobis.",
+                                    nullable=True, range=[0, None], example=0.05),
             COL_SCORE_CAL: _field("float", "Calibrated positive-class probability; NaN if "
                                   "the model was fitted without calibration.",
                                   nullable=True, range=[0, 1], example=0.74),
@@ -558,7 +564,8 @@ DICT_DF_SCHEMAS = {
                                    "in-domain fraction); NaN for an empty bin.",
                                    nullable=True, range=[0, 1], example=0.12),
             COL_EMPIRICAL_POS: _field("float", "Empirical positive rate in the bin (summary "
-                                      "row: conformal coverage); NaN for an empty bin and for the metric rows.",
+                                      "row: conformal coverage); NaN for an empty bin and "
+                                      "for the metric rows.",
                                       nullable=True, range=[0, 1], example=0.1),
             COL_N_SAMPLES: _field("int", "Number of samples in the bin (summary row: all "
                                   "evaluated samples).", range=[0, None], example=18),
