@@ -23,6 +23,15 @@ def _data(n_per_class=20, n_feat=4, seed=0):
     return X, labels
 
 
+def _noisy_data(n_per_class=9, n_feat=6, seed=0):
+    """Overlapping classes, so dropping a single training sample actually changes the scores."""
+    rng = np.random.RandomState(seed)
+    X = np.vstack([rng.normal(0.25, 1.0, size=(n_per_class, n_feat)),
+                   rng.normal(-0.25, 1.0, size=(n_per_class, n_feat))])
+    labels = np.array([1] * n_per_class + [0] * n_per_class)
+    return X, labels
+
+
 def _me(models="log_reg", random_state=0, **kwargs):
     return aa.ModelEvaluator(models=models, random_state=random_state, verbose=False, **kwargs)
 
@@ -319,10 +328,19 @@ class TestLearningCurveComplex:
         assert (width_wide >= width_narrow - 1e-12).all()
         pd.testing.assert_series_equal(df_wide[ut.COL_SCORE], df_narrow[ut.COL_SCORE])
 
-    def test_uneven_folds_use_smallest_training_fold(self):
-        X, labels = _data(n_per_class=21)  # 42 samples, n_cv=5 -> training folds of 33 or 34
-        df_curve = _me().learning_curve(X, labels, train_sizes=[0.5, 1.0], metrics=["mcc"])
+    def test_uneven_folds_resolve_fractions_per_fold(self):
+        # 42 samples, n_cv=5 -> training folds of 33, 33, 34, 34, 34. A fraction is resolved inside
+        # each fold, so 1.0 keeps every fold whole (33 or 34 samples) instead of truncating the
+        # larger folds to the smallest one; the curve point is labelled by its size in the
+        # smallest fold. Absolute counts stay capped by that smallest fold.
+        X, labels = _id_data(n_per_class=21)
+        _RecordingClassifier.log = []
+        me = aa.ModelEvaluator(models=[_RecordingClassifier()], verbose=False, random_state=0)
+        df_curve = me.learning_curve(X, labels, train_sizes=[0.5, 1.0], n_cv=5, metrics=["accuracy"])
         assert df_curve[ut.COL_TRAIN_SIZE].to_list() == [16, 33]
+        n_train = [len(train_ids) for train_ids, _, _ in _RecordingClassifier.log]
+        assert n_train[1::2] == [33, 33, 34, 34, 34]  # 1.0 -> each fold's complete training set
+        assert n_train[0::2] == [16, 16, 17, 17, 17]  # 0.5 -> half of each fold
         with pytest.raises(ValueError, match="smallest training fold"):
             _me().learning_curve(X, labels, train_sizes=[16, 34])
 
@@ -390,6 +408,20 @@ class TestLearningCurveGoldenValues:
         df_full = df_curve[df_curve[ut.COL_TRAIN_SIZE] == 32].drop(columns=ut.COL_TRAIN_SIZE)
         pd.testing.assert_frame_equal(df_full.reset_index(drop=True), df_eval, check_exact=True)
 
+    def test_full_size_reproduces_run_uneven_folds(self):
+        # Regression: 18 samples, n_cv=5 -> training folds of 14, 14, 14, 15, 15. Resolving the
+        # fraction 1.0 per fold keeps every fold's full training set, so the largest curve point
+        # still matches run row for row. Resolving it once against the smallest fold would train
+        # two folds on 14 of their 15 samples and silently break this equality.
+        X, labels = _noisy_data(n_per_class=9, seed=5)
+        me = _me(models=["rf", "log_reg"], random_state=3)
+        df_eval = me.run(X, labels, n_cv=5, n_rounds=2, metrics=["mcc", "accuracy"])
+        df_curve = me.learning_curve(X, labels, train_sizes=[0.5, 1.0], n_cv=5, n_rounds=2,
+                                     metrics=["mcc", "accuracy"])
+        assert sorted(df_curve[ut.COL_TRAIN_SIZE].unique()) == [7, 14]
+        df_full = df_curve[df_curve[ut.COL_TRAIN_SIZE] == 14].drop(columns=ut.COL_TRAIN_SIZE)
+        pd.testing.assert_frame_equal(df_full.reset_index(drop=True), df_eval, check_exact=True)
+
     def test_small_data_sizes_hand_computed(self):
         X, labels = _data(n_per_class=5)  # n_cv=5 -> 8 training samples
         # floor(0.2*8)=1 -> floored to 2, floor(0.4*8)=3, floor(0.6*8)=4, floor(0.8*8)=6, 1.0*8=8
@@ -437,9 +469,19 @@ class TestLearningCurveGoldenValues:
         assert df1.equals(df2)
         pd.testing.assert_frame_equal(df1, df2, check_exact=True)
 
-    def test_different_seeds_differ(self):
-        X, labels = _data()
-        kws = dict(train_sizes=[4, 8, 32], n_rounds=2, metrics=["mcc"])
-        df1 = _me(random_state=0).learning_curve(X, labels, **kws)
-        df2 = _me(random_state=1).learning_curve(X, labels, **kws)
-        assert not df1.equals(df2)
+    def test_seeded_splits_and_subsets(self):
+        # Reproducibility guarantees same-seed equality, not different-seed inequality of the
+        # aggregate scores, so record the folds and training subsets themselves.
+        X, labels = _id_data(n_per_class=20)
+
+        def _record(random_state):
+            _RecordingClassifier.log = []
+            me = aa.ModelEvaluator(models=[_RecordingClassifier()], verbose=False)
+            me.learning_curve(X, labels, train_sizes=[4, 8, 32], n_cv=5, metrics=["accuracy"],
+                              random_state=random_state)
+            return [(tuple(train_ids), tuple(ids_test))
+                    for train_ids, _, ids_test in _RecordingClassifier.log]
+
+        rec_seed0 = _record(0)
+        assert _record(0) == rec_seed0  # same seed -> identical folds and training subsets
+        assert _record(1) != rec_seed0  # a different seed reshuffles both

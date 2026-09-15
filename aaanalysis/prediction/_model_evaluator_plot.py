@@ -174,7 +174,7 @@ class ModelEvaluatorPlot:
     def learning_curve(df_curve: pd.DataFrame,
                        *, metric: Optional[str] = None,
                        figsize: Tuple[Union[int, float], Union[int, float]] = (6, 4),
-                       colors: Optional[List[str]] = None,
+                       colors: Optional[Union[str, List[str]]] = None,
                        show_ci: bool = True,
                        ) -> Tuple[Figure, Axes]:
         """
@@ -198,8 +198,9 @@ class ModelEvaluatorPlot:
             present, otherwise the first metric of ``df_curve``.
         figsize : tuple, default=(6, 4)
             Figure dimensions (width, height) in inches.
-        colors : list of str, optional
-            One color per model (in first-appearance order). Defaults to the package color list.
+        colors : str or list of str, optional
+            One color per model (in first-appearance order); a single color name counts as one
+            color, not as a sequence of characters. Defaults to the package color list.
         show_ci : bool, default=True
             If ``True``, draw the confidence band (``ci_low`` / ``ci_high``, or ``score_std`` where
             the CI is ``NaN``) around each curve.
