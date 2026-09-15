@@ -1,4 +1,4 @@
-"""This is a script to test the SequenceFeature().get_df_parts() method ."""
+"""This is a script to test the SequenceFeature().get_split_kws() method."""
 import pytest
 from hypothesis import given, settings
 import hypothesis.strategies as st
@@ -7,9 +7,6 @@ import aaanalysis as aa
 # Set default deadline from 200 to 400
 settings.register_profile("ci", deadline=None)
 settings.load_profile("ci")
-
-
-aa.options["verbose"] = False
 
 
 class TestGetSplitKws:
@@ -155,16 +152,21 @@ class TestGetSplitKws:
     def test_invalid_split_types(self):
         """Test invalid 'split_types' values."""
         sf = aa.SequenceFeature()
-        with pytest.raises(ValueError):
-            sf.get_split_kws(split_types="InvalidType")
-        with pytest.raises(ValueError):
-            sf.get_split_kws(split_types=["Segment", "InvalidType"])
+        for split_types in ["InvalidType", ["Segment", "InvalidType"], "segment", ["Pattern", ""]]:
+            with pytest.raises(ValueError, match="'split_types'"):
+                sf.get_split_kws(split_types=split_types)
+        for split_types in [1, 1.5, {"Segment": 1}]:
+            with pytest.raises(ValueError, match="'split_types'"):
+                sf.get_split_kws(split_types=split_types)
 
     def test_invalid_n_split_min(self):
         """Test invalid 'n_split_min' values."""
         sf = aa.SequenceFeature()
-        with pytest.raises(ValueError):
-            sf.get_split_kws(n_split_min=0)
+        for n_split_min in [0, -1, "1", None]:
+            with pytest.raises(ValueError, match="'n_split_min'"):
+                sf.get_split_kws(n_split_min=n_split_min)
+        with pytest.raises(ValueError, match="'n_split_min'"):
+            sf.get_split_kws(n_split_min=1.5)
 
     def test_invalid_n_split_max(self):
         """Test invalid 'n_split_max' values."""
@@ -172,39 +174,44 @@ class TestGetSplitKws:
         # Joint constraint: the message names the offending 'n_split_min'/'n_split_max'
         with pytest.raises(ValueError, match="n_split_min"):
             sf.get_split_kws(n_split_max=1, n_split_min=2)
-        with pytest.raises(ValueError):
-            sf.get_split_kws(n_split_max=0)
+        for n_split_max in [0, -1, "15", None]:
+            with pytest.raises(ValueError, match="'n_split_max'"):
+                sf.get_split_kws(n_split_max=n_split_max)
 
     def test_invalid_steps_pattern(self):
         """Test invalid 'steps_pattern' values."""
         sf = aa.SequenceFeature()
-        with pytest.raises(ValueError):
-            sf.get_split_kws(steps_pattern=-1)
-        with pytest.raises(ValueError):
-            sf.get_split_kws(steps_pattern=["a", "b", "c"])
-        with pytest.raises(ValueError):
+        for steps_pattern in [-1, ["a", "b", "c"], [-4, 10], [], [3, None]]:
+            with pytest.raises(ValueError, match="'steps_pattern'"):
+                sf.get_split_kws(steps_pattern=steps_pattern)
+        with pytest.raises(ValueError, match="steps_pattern"):
             sf.get_split_kws(steps_pattern=[0])
-        with pytest.raises(ValueError):
-            sf.get_split_kws(steps_pattern=[-4, 10])
-        with pytest.raises(ValueError):
-            sf.get_split_kws(steps_pattern=[])
-        with pytest.raises(ValueError):
-            sf.get_split_kws(steps_pattern=[3, None])
 
-    def test_invalid_n_min_max(self):
-        """Test invalid 'n_min' and 'n_max' values."""
+    def test_invalid_n_min(self):
+        """Test invalid 'n_min' values."""
         sf = aa.SequenceFeature()
+        for n_min in [0, -2, "2", None]:
+            with pytest.raises(ValueError, match="'n_min'"):
+                sf.get_split_kws(n_min=n_min)
         # Joint constraint: the message names the offending 'n_min'/'n_max'
-        with pytest.raises(ValueError, match="n_min"):
-            sf.get_split_kws(n_min=5, n_max=4)
-        with pytest.raises(ValueError):
-            sf.get_split_kws(n_min=0, n_max=3)
+        with pytest.raises(ValueError, match="'n_min' \\(5\\)"):
+            sf.get_split_kws(n_min=5)
+
+    def test_invalid_n_max(self):
+        """Test invalid 'n_max' values."""
+        sf = aa.SequenceFeature()
+        for n_max in [0, -4, "4", None]:
+            with pytest.raises(ValueError, match="'n_max'"):
+                sf.get_split_kws(n_max=n_max)
+        with pytest.raises(ValueError, match="'n_max' \\(1\\)"):
+            sf.get_split_kws(n_max=1)
 
     def test_invalid_len_max(self):
         """Test invalid 'len_max' values."""
         sf = aa.SequenceFeature()
-        with pytest.raises(ValueError):
-            sf.get_split_kws(len_max=0)
+        for len_max in [0, -15, "15", None]:
+            with pytest.raises(ValueError, match="'len_max'"):
+                sf.get_split_kws(len_max=len_max)
         # Joint constraint: the message names the offending 'len_max'
         with pytest.raises(ValueError, match="len_max"):
             sf.get_split_kws(len_max=3, steps_pattern=[4, 5])
@@ -212,20 +219,9 @@ class TestGetSplitKws:
     def test_invalid_steps_periodicpattern(self):
         """Test invalid 'steps_periodicpattern' values."""
         sf = aa.SequenceFeature()
-        with pytest.raises(ValueError):
-            sf.get_split_kws(steps_periodicpattern=-1)
-        with pytest.raises(ValueError):
-            sf.get_split_kws(steps_periodicpattern=["a", "b", "c"])
-        with pytest.raises(ValueError):
-            sf.get_split_kws(steps_periodicpattern=[0])
-        with pytest.raises(ValueError):
-            sf.get_split_kws(steps_periodicpattern=[-4, 10])
-        with pytest.raises(ValueError):
-            sf.get_split_kws(steps_periodicpattern=[3, 4, 5])
-        with pytest.raises(ValueError):
-            sf.get_split_kws(steps_periodicpattern=[])
-        with pytest.raises(ValueError):
-            sf.get_split_kws(steps_periodicpattern=[3, None])
+        for steps_periodicpattern in [-1, ["a", "b", "c"], [0], [-4, 10], [3, 4, 5], [], [3, None]]:
+            with pytest.raises(ValueError, match="'steps_periodicpattern'"):
+                sf.get_split_kws(steps_periodicpattern=steps_periodicpattern)
 
 
 class TestGetSplitKwsComplex:
@@ -308,28 +304,6 @@ class TestGetSplitKwsComplex:
                                       len_max=len_max, steps_periodicpattern=steps_periodicpattern)
             assert isinstance(result, dict)
 
-    # Negative complex cases
-    def test_invalid_combinations(self):
-        """Test invalid combinations of parameters."""
-        sf = aa.SequenceFeature()
-        # Example of an invalid combination
-        with pytest.raises(ValueError):
-            sf.get_split_kws(n_split_min=15, n_split_max=14)
-        with pytest.raises(ValueError):
-            sf.get_split_kws(steps_pattern=[1, 2], len_max=1)
-
-    def test_invalid_random_combinations(self):
-        """Test invalid random combinations of parameters."""
-        sf = aa.SequenceFeature()
-        with pytest.raises(ValueError):
-            sf.get_split_kws(n_split_min=10, n_split_max=5, steps_pattern=[5, 2, 3], len_max=1)
-        with pytest.raises(ValueError):
-            sf.get_split_kws(split_types=["Invalid", "Segment"], n_min=4, n_max=3)
-
-
-class TestGetSplitKwsStrategyComplex:
-    """Test 'strategy' combined with the remaining split parameters."""
-
     @settings(max_examples=5, deadline=None)
     @given(steps_pattern=st.lists(st.integers(min_value=1, max_value=5), min_size=1, max_size=4),
            n_min=st.integers(min_value=1, max_value=2),
@@ -391,6 +365,23 @@ class TestGetSplitKwsStrategyComplex:
             split_types=["Segment", "Pattern", "PeriodicPattern"], n_split_min=2, n_split_max=15)
 
     # Negative complex cases
+    def test_invalid_combinations(self):
+        """Test invalid combinations of parameters."""
+        sf = aa.SequenceFeature()
+        with pytest.raises(ValueError, match="'n_split_min' \\(15\\)"):
+            sf.get_split_kws(n_split_min=15, n_split_max=14)
+        with pytest.raises(ValueError, match="'len_max' \\(1\\)"):
+            sf.get_split_kws(steps_pattern=[1, 2], len_max=1)
+
+    def test_invalid_random_combinations(self):
+        """Test invalid random combinations of parameters."""
+        sf = aa.SequenceFeature()
+        # The first violated constraint (split types, then Segment, then Pattern) is reported
+        with pytest.raises(ValueError, match="'n_split_min' \\(10\\)"):
+            sf.get_split_kws(n_split_min=10, n_split_max=5, steps_pattern=[5, 2, 3], len_max=1)
+        with pytest.raises(ValueError, match="'split_types'"):
+            sf.get_split_kws(split_types=["Invalid", "Segment"], n_min=4, n_max=3)
+
     def test_invalid_strategy_with_all_split_args(self):
         """Any conflicting split arg raises, even when the others are at their defaults."""
         sf = aa.SequenceFeature()
@@ -419,14 +410,14 @@ class TestGetSplitKwsStrategyComplex:
             sf.get_split_kws(strategy="positional", n_min=5, n_max=4)
         with pytest.raises(ValueError, match="len_max"):
             sf.get_split_kws(strategy="positional", len_max=3, steps_pattern=[4, 5])
-        with pytest.raises(ValueError):
+        with pytest.raises(ValueError, match="'steps_periodicpattern'"):
             sf.get_split_kws(strategy="positional", steps_periodicpattern=[3, 4, 5])
 
     def test_invalid_strategy_with_invalid_split_range(self):
         """An out-of-range split arg next to 'strategy' still raises ValueError."""
         sf = aa.SequenceFeature()
         for kws in [dict(n_split_min=0), dict(n_split_max=0), dict(n_split_min=10, n_split_max=5)]:
-            with pytest.raises(ValueError):
+            with pytest.raises(ValueError, match="'n_split_m(in|ax)'"):
                 sf.get_split_kws(strategy="positional", **kws)
 
 

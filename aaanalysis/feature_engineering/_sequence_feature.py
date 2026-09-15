@@ -574,36 +574,35 @@ class SequenceFeature:
             - **Pattern**: non-periodic discontinuous sub-sequence
             - **PeriodicPattern**: periodic discontinuous sub-sequence.
 
-        A ``strategy`` preset names the CPP strategy directly instead of spelling it out
-        through ``split_types``, ``n_split_min``, and ``n_split_max``.
+        A ``strategy`` preset names the Comparative Physicochemical Profiling (CPP) strategy directly
+        instead of spelling it out through ``split_types``, ``n_split_min``, and ``n_split_max``.
 
         .. versionadded:: 0.1.0
 
-        .. versionchanged:: 1.2.0
-            Added the ``strategy`` parameter (``'compositional'`` or ``'positional'`` preset).
-
         Parameters
         ----------
-        split_types: list of str, default=[``Segment``, ``Pattern``, ``PeriodicPattern``]
-            Split types for which parameter dictionary should be generated.
-        n_split_min: int, default=1
+        split_types : str or list of str, optional
+            Split types (``Segment``, ``Pattern``, ``PeriodicPattern``) for which the parameter dictionary
+            should be generated. A single split type can be given as string. If ``None`` (default), all
+            three split types are used.
+        n_split_min : int, default=1
             Number to specify the greatest ``Segment``. Should be > 0.
-        n_split_max: int, default=15,
+        n_split_max : int, default=15
             Number to specify the smallest ``Segment``. Should be >= ``n_split_min``.
-        steps_pattern: list of int, default=[3, 4], optional
+        steps_pattern : list of int, optional
             Possible steps sizes for ``Pattern``. Should contain at least 1 non-negative integers
-            if ``Pattern`` split_type is used. If ``None``, default is used.
-        n_min: int, default=2
+            if ``Pattern`` split_type is used. If ``None`` (default), ``[3, 4]`` is used.
+        n_min : int, default=2
             Minimum number of steps for ``Pattern``. Should be <= ``n_max``.
-        n_max: int, default=4
+        n_max : int, default=4
             Maximum number of steps for ``Pattern``. Should be >= ``n_min``.
-        len_max: int, default=15
+        len_max : int, default=15
             Maximum length in amino acid position for ``Pattern`` by varying start position.
             Should be > min(``steps_pattern``).
-        steps_periodicpattern: list of int, default=[3, 4], optional
+        steps_periodicpattern : list of int, optional
             Size of odd and even steps for ``PeriodicPattern``. Should contain two non-negative integers if
-            ``PeriodicPattern`` split_type is used. If ``None``, default is used.
-        strategy: {'compositional', 'positional'}, optional
+            ``PeriodicPattern`` split_type is used. If ``None`` (default), ``[3, 4]`` is used.
+        strategy : {'compositional', 'positional'}, optional
             Preset for the CPP strategy, which sets ``split_types``, ``n_split_min``, and ``n_split_max``:
 
             - ``'compositional'``: a single whole-part ``Segment`` (position-agnostic average), identical to
@@ -613,9 +612,11 @@ class SequenceFeature:
               n_split_max=15)``. ``steps_pattern``, ``n_min``, ``n_max``, ``len_max``, and
               ``steps_periodicpattern`` still apply.
 
-            Together, both presets cover the default split set. If ``None``, the split set is defined by
-            ``split_types``, ``n_split_min``, and ``n_split_max``, which must stay at their defaults when
-            ``strategy`` is given.
+            Together, both presets cover the default split set. If ``None`` (default), the split set is
+            defined by ``split_types``, ``n_split_min``, and ``n_split_max``, which must stay at their
+            defaults when ``strategy`` is given.
+
+            .. versionadded:: 1.2.0
 
         Returns
         -------
@@ -625,6 +626,17 @@ class SequenceFeature:
             - Segment: {n_split_min:1, n_split_max=15}
             - Pattern: {steps=[3, 4], n_min=2, n_max=4, len_max=15}
             - PeriodicPattern: {steps=[3, 4]}
+
+        Raises
+        ------
+        ValueError
+            If ``strategy`` is not ``'compositional'``, ``'positional'``, or ``None``; if ``strategy`` is
+            given while ``split_types``, ``n_split_min``, or ``n_split_max`` is not at its default; if
+            ``split_types`` is not a string or list-like or contains an unknown split type; if
+            ``n_split_min``, ``n_split_max``, ``n_min``, ``n_max``, or ``len_max`` is not an integer >= 1;
+            if ``steps_pattern`` or ``steps_periodicpattern`` is not a list of positive integers of the
+            required length (>= 1 for ``steps_pattern``, exactly 2 for ``steps_periodicpattern``); or if
+            ``n_split_min`` > ``n_split_max``, ``n_min`` > ``n_max``, or ``len_max`` <= min(``steps_pattern``).
 
         Notes
         -----
