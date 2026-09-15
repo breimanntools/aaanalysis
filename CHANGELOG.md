@@ -34,6 +34,12 @@ notes — with cross-references and examples — live in
   - `AAPred` and `SeqOpt` now validate `df_scales`, and `AAPred.eval` validates `list_parts`, in
     their frontend checks: an invalid value raises a `ValueError` naming the parameter instead of
     failing later (or being silently ignored).
+### Added
+- `NumericalFeature.from_pssm` converts PSI-BLAST ASCII PSSM files and precomputed `(L, 20)`
+  arrays into a canonical-amino-acid-order `dict_num`. File columns are reordered; arrays must
+  already use that order. Values are normalized to `[0, 1]` by default (or kept raw with
+  `normalize=False`), and `return_scales=True` supplies matching 20-column `df_scales` and
+  `df_cat` for `get_parts` -> `CPP.run_num` (#79).
 
 ### Fixed
 - `ReliabilityModel.fit`: non-finite numbers (`NaN`, `inf`, `-inf`) are rejected for `ci`,
