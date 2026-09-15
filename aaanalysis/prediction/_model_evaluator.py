@@ -425,7 +425,7 @@ class ModelEvaluator(Tool):
                        *, train_sizes: Optional[ut.ArrayLike1D] = None,
                        n_cv: int = 5,
                        n_rounds: int = 1,
-                       metrics: Optional[List[str]] = None,
+                       metrics: Optional[Union[str, List[str]]] = None,
                        ci: Optional[float] = 0.95,
                        random_state: Optional[int] = None,
                        ) -> pd.DataFrame:
@@ -466,17 +466,17 @@ class ModelEvaluator(Tool):
             fold's complete training set; the curve point is labelled by its size in the smallest
             training fold, and fractions collapsing onto the same label are de-duplicated. An
             absolute count is used as given in every fold, so counts must be distinct and fit into
-            the smallest training fold. Defaults to ``[0.2, 0.4, 0.6, 0.8, 1.0]``, which gives five
-            sizes, each with a bootstrap CI (on very small data the resolved sizes can collapse to
-            fewer; at least two distinct sizes are required).
+            the smallest training fold. Defaults to ``[0.2, 0.4, 0.6, 0.8, 1.0]``; on sufficiently
+            large data these resolve to five sizes, each with a bootstrap CI. On small data they
+            can collapse to fewer sizes, and at least two distinct sizes are required.
         n_cv : int, default=5
             Number of stratified cross-validation folds per round (must not exceed the smallest
             class count).
         n_rounds : int, default=1
             Number of cross-validation repeats (multi-seed aggregation). The total number of fold
             scores per (model, training size, metric) is ``n_cv * n_rounds``.
-        metrics : list of str, optional
-            Performance metrics to compute. Defaults to ``list_metrics`` from the constructor.
+        metrics : str or list of str, optional
+            Performance metric(s) to compute. Defaults to ``list_metrics`` from the constructor.
         ci : float, optional
             Central confidence level in ``(0, 1)`` for the percentile bootstrap CI of the mean.
             If ``None``, the ``ci_low`` / ``ci_high`` columns are ``NaN``. Default is ``0.95``.

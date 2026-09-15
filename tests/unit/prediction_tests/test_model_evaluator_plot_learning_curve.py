@@ -147,6 +147,46 @@ class TestPlotLearningCurve:
         with pytest.raises(ValueError, match="at least one row"):
             aa.ModelEvaluatorPlot.learning_curve(df_curve=df_curve.iloc[0:0])
 
+    def test_invalid_df_curve_values(self, df_curve):
+        df_bad_model = df_curve.copy()
+        df_bad_model.loc[df_bad_model.index[0], ut.COL_MODEL] = ""
+        with pytest.raises(ValueError, match="non-empty string"):
+            aa.ModelEvaluatorPlot.learning_curve(df_curve=df_bad_model)
+        df_bad_numeric = df_curve.copy()
+        df_bad_numeric[ut.COL_SCORE] = df_bad_numeric[ut.COL_SCORE].astype(str)
+        with pytest.raises(ValueError, match="numeric curve values"):
+            aa.ModelEvaluatorPlot.learning_curve(df_curve=df_bad_numeric)
+        df_bad_train_size = df_curve.copy()
+        df_bad_train_size[ut.COL_TRAIN_SIZE] = df_bad_train_size[ut.COL_TRAIN_SIZE].astype(float)
+        df_bad_train_size.loc[df_bad_train_size.index[0], ut.COL_TRAIN_SIZE] = 1.5
+        with pytest.raises(ValueError, match="integer training sizes"):
+            aa.ModelEvaluatorPlot.learning_curve(df_curve=df_bad_train_size)
+        df_bad_score = df_curve.copy()
+        df_bad_score.loc[df_bad_score.index[0], ut.COL_SCORE] = np.nan
+        with pytest.raises(ValueError, match="finite training-size"):
+            aa.ModelEvaluatorPlot.learning_curve(df_curve=df_bad_score)
+        df_bad_std = df_curve.copy()
+        df_bad_std.loc[df_bad_std.index[0], ut.COL_SCORE_STD] = -0.1
+        with pytest.raises(ValueError, match="non-negative score standard deviations"):
+            aa.ModelEvaluatorPlot.learning_curve(df_curve=df_bad_std)
+        df_bad_ci = df_curve.copy()
+        df_bad_ci.loc[df_bad_ci.index[0], ut.COL_CI_LOW] = np.nan
+        with pytest.raises(ValueError, match="two finite CI bounds or two NaN"):
+            aa.ModelEvaluatorPlot.learning_curve(df_curve=df_bad_ci)
+        df_bad_count = df_curve.copy()
+        df_bad_count.loc[df_bad_count.index[0], ut.COL_N_SCORES] = 0
+        with pytest.raises(ValueError, match="positive integer score counts"):
+            aa.ModelEvaluatorPlot.learning_curve(df_curve=df_bad_count)
+
+    def test_invalid_df_curve_structure(self, df_curve):
+        df_duplicate = pd.concat([df_curve, df_curve.iloc[[0]]], ignore_index=True)
+        with pytest.raises(ValueError, match="one row per model"):
+            aa.ModelEvaluatorPlot.learning_curve(df_curve=df_duplicate)
+        first_size = df_curve[ut.COL_TRAIN_SIZE].iloc[0]
+        df_one_size = df_curve[df_curve[ut.COL_TRAIN_SIZE] == first_size]
+        with pytest.raises(ValueError, match="at least two training sizes"):
+            aa.ModelEvaluatorPlot.learning_curve(df_curve=df_one_size)
+
     def test_invalid_metric_unknown(self, df_curve):
         for metric in ["roc_auc", "not_a_metric", "recall"]:
             with pytest.raises(ValueError, match="should be one of"):
@@ -179,6 +219,12 @@ class TestPlotLearningCurve:
     def test_invalid_colors_values(self, df_curve):
         for colors in [["not_a_color", "tab:red"], [1, 2], ["tab:red", None]]:
             with pytest.raises(ValueError, match="valid color|should not contain 'None'"):
+                aa.ModelEvaluatorPlot.learning_curve(df_curve=df_curve, colors=colors)
+
+    def test_invalid_colors_type(self, df_curve):
+        for colors in [("tab:red", "tab:blue"), np.array(["tab:red", "tab:blue"]),
+                       pd.Series(["tab:red", "tab:blue"])]:
+            with pytest.raises(ValueError, match="string or a list"):
                 aa.ModelEvaluatorPlot.learning_curve(df_curve=df_curve, colors=colors)
 
     def test_invalid_show_ci_none(self, df_curve):

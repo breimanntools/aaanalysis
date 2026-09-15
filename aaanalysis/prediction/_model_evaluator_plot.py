@@ -3,6 +3,7 @@ This is a script for the frontend of the ModelEvaluatorPlot class for visualizin
 model evaluation and paired comparison results.
 """
 from typing import Optional, List, Tuple, Union
+import numpy as np
 import pandas as pd
 from matplotlib.axes import Axes
 from matplotlib.figure import Figure
@@ -12,6 +13,71 @@ from ._backend.model_evaluator.model_evaluator_plot import plot_scores, plot_com
 
 
 # I Helper Functions
+def check_df_curve(df_curve: pd.DataFrame) -> None:
+    """Check the learning-curve table schema and values before plotting."""
+    ut.check_df(name="df_curve", df=df_curve, cols_required=ut.COLS_CURVE_MODELEVAL,
+                accept_none=False)
+    if len(df_curve) == 0:
+        raise ValueError(
+            "'df_curve' (n_rows=0) should contain at least one row of learning-curve "
+            "data.")
+    str_cols = [ut.COL_MODEL, ut.COL_METRIC]
+    wrong_str_cols = [col for col in str_cols if not df_curve[col].map(
+        lambda val: isinstance(val, str) and len(val) > 0).all()]
+    if wrong_str_cols:
+        raise ValueError(f"'df_curve' (columns={wrong_str_cols}) should contain non-empty string "
+                         f"model and metric values.")
+    numeric_cols = [ut.COL_TRAIN_SIZE, ut.COL_SCORE, ut.COL_SCORE_STD, ut.COL_CI_LOW,
+                    ut.COL_CI_HIGH, ut.COL_N_SCORES]
+    wrong_numeric_cols = [
+        col for col in numeric_cols
+        if not pd.api.types.is_numeric_dtype(df_curve[col])
+        or pd.api.types.is_bool_dtype(df_curve[col])
+        or pd.api.types.is_complex_dtype(df_curve[col])
+    ]
+    if wrong_numeric_cols:
+        raise ValueError(f"'df_curve' (columns={wrong_numeric_cols}) should contain numeric curve "
+                         f"values.")
+    finite_cols = [ut.COL_TRAIN_SIZE, ut.COL_SCORE, ut.COL_SCORE_STD, ut.COL_N_SCORES]
+    values = df_curve[finite_cols].to_numpy(dtype=float)
+    if not np.isfinite(values).all():
+        raise ValueError(
+            f"'df_curve' (columns={finite_cols}) should contain finite training-size, score, "
+            f"score-std, and score-count values.")
+    train_sizes = df_curve[ut.COL_TRAIN_SIZE].to_numpy(dtype=float)
+    if (train_sizes < 2).any() or not np.equal(train_sizes, np.floor(train_sizes)).all():
+        raise ValueError(f"'df_curve' (train_size={train_sizes.tolist()}) should contain integer "
+                         f"training sizes of at least 2.")
+    score_std = df_curve[ut.COL_SCORE_STD].to_numpy(dtype=float)
+    if (score_std < 0).any():
+        raise ValueError(
+            f"'df_curve' (score_std={score_std.tolist()}) should contain non-negative score "
+            f"standard deviations.")
+    n_scores = df_curve[ut.COL_N_SCORES].to_numpy(dtype=float)
+    if (n_scores < 1).any() or not np.equal(n_scores, np.floor(n_scores)).all():
+        raise ValueError(
+            f"'df_curve' (n_scores={n_scores.tolist()}) should contain positive integer score "
+            f"counts.")
+    ci = df_curve[[ut.COL_CI_LOW, ut.COL_CI_HIGH]].to_numpy(dtype=float)
+    ci_is_nan = np.isnan(ci)
+    if not (np.isfinite(ci).all(axis=1) | ci_is_nan.all(axis=1)).all():
+        raise ValueError("'df_curve' (ci_low/ci_high) should contain two finite CI bounds or two "
+                         "NaN values.")
+    if (np.isfinite(ci).all(axis=1) & (ci[:, 0] > ci[:, 1])).any():
+        raise ValueError("'df_curve' (ci_low > ci_high) should contain CI bounds in ascending "
+                         "order.")
+    group_cols = [ut.COL_MODEL, ut.COL_TRAIN_SIZE, ut.COL_METRIC]
+    if df_curve.duplicated(subset=group_cols).any():
+        raise ValueError(f"'df_curve' (duplicate {group_cols} rows) should contain one row per "
+                         f"model, training size, and metric.")
+    n_sizes = (
+        df_curve.groupby([ut.COL_MODEL, ut.COL_METRIC], sort=False)[ut.COL_TRAIN_SIZE].nunique())
+    if (n_sizes < 2).any():
+        raise ValueError(
+            f"'df_curve' (training-size counts={n_sizes.to_dict()}) should contain at least two "
+            f"training sizes per model and metric.")
+
+
 def check_metric_curve(metric: Optional[str], df_curve: pd.DataFrame) -> str:
     """Resolve the metric to plot: ``mcc`` when present, else the first metric of ``df_curve``."""
     list_metrics = list(dict.fromkeys(df_curve[ut.COL_METRIC]))
@@ -192,7 +258,12 @@ class ModelEvaluatorPlot:
         df_curve : pd.DataFrame, shape (n_models * n_train_sizes * n_metrics, 8)
             Learning-curve table from :meth:`ModelEvaluator.learning_curve` with columns ``model``,
             ``train_size``, ``metric``, ``score``, ``score_std``, ``ci_low``, ``ci_high``, and
-            ``n_scores``.
+            ``n_scores``. Model and metric values must be non-empty strings; training sizes must
+            be integer-valued and at least 2, score counts positive integer-valued, and scores and
+            standard deviations finite (with non-negative standard deviations). Each (model,
+            training size, metric) tuple must occur once and each model/metric curve must have at
+            least two training sizes. Confidence bounds must be finite and ordered, or both
+            ``NaN`` when the curve was computed with ``ci=None``.
         metric : str, optional
             Metric to plot; must be one of the metrics in ``df_curve``. Defaults to ``"mcc"`` when
             present, otherwise the first metric of ``df_curve``.
@@ -216,8 +287,9 @@ class ModelEvaluatorPlot:
         ------
         ValueError
             If ``df_curve`` is not a DataFrame with the learning-curve columns or holds no rows,
-            ``metric`` is not one of its metrics, ``figsize`` or ``show_ci`` are invalid, or
-            ``colors`` holds fewer colors than there are models.
+            its values do not form a valid learning-curve table, ``metric`` is not one of its
+            metrics, ``figsize`` or ``show_ci`` are invalid, or ``colors`` holds fewer colors than
+            there are models.
 
         See Also
         --------
@@ -228,9 +300,12 @@ class ModelEvaluatorPlot:
         .. include:: examples/me_plot_learning_curve.rst
         """
         # Check input
-        ut.check_df(name="df_curve", df=df_curve, cols_required=ut.COLS_CURVE_MODELEVAL, accept_none=False)
+        check_df_curve(df_curve=df_curve)
         metric = check_metric_curve(metric=metric, df_curve=df_curve)
         ut.check_figsize(figsize=figsize, accept_none=False)
+        if colors is not None and not isinstance(colors, (str, list)):
+            raise ValueError(f"'colors' ({type(colors).__name__}) should be a string or a list of "
+                             f"color strings.")
         ut.check_list_colors(name="colors", val=colors, accept_none=True)
         ut.check_bool(name="show_ci", val=show_ci)
         # Plotting

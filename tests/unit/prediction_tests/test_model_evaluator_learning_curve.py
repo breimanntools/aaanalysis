@@ -150,6 +150,11 @@ class TestLearningCurve:
         df_curve = me.learning_curve(X, labels, train_sizes=[0.5, 1.0])
         assert set(df_curve[ut.COL_METRIC]) == {"f1", "recall"}
 
+    def test_metrics_single_string(self):
+        X, labels = _data()
+        df_curve = _me().learning_curve(X, labels, train_sizes=[0.5, 1.0], metrics="mcc")
+        assert df_curve[ut.COL_METRIC].to_list() == ["mcc", "mcc"]
+
     @settings(max_examples=4, deadline=None)
     @given(ci=some.floats(min_value=0.5, max_value=0.99))
     def test_ci(self, ci):
