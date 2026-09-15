@@ -62,6 +62,10 @@ STR_SEGMENT = "Segment"
 STR_PATTERN = "Pattern"
 STR_PERIODIC_PATTERN = "PeriodicPattern"
 LIST_SPLIT_TYPES = [STR_SEGMENT, STR_PATTERN, STR_PERIODIC_PATTERN]
+# CPP split strategies (presets resolving split_types and the Segment split range)
+STR_COMPOSITIONAL = "compositional"
+STR_POSITIONAL = "positional"
+LIST_SPLIT_STRATEGIES = [STR_COMPOSITIONAL, STR_POSITIONAL]
 SPLIT_DESCRIPTION = f"\n a) {STR_SEGMENT}(i-th,n_split)" \
                     f"\n b) {STR_PATTERN}(N/C,p1,p2,...,pn)" \
                     f"\n c) {STR_PERIODIC_PATTERN}(N/C,i+step1/step2,start)" \
