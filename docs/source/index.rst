@@ -76,6 +76,7 @@ classes grouped by capability, the prediction levels (residue / domain / protein
    index/introduction.rst
    getting_started.rst
    index/usage_principles.rst
+   index/ecosystem.rst
 
 .. toctree::
    :maxdepth: 1
