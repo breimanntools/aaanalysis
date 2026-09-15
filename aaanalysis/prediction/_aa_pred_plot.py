@@ -1,7 +1,7 @@
 """
 This is a script for the frontend of the AAPredPlot class for visualizing AAPred results.
 """
-from typing import Optional, List, Dict, Union, Tuple
+from typing import Optional, List, Dict, Union, Tuple, Literal
 import numpy as np
 import pandas as pd
 import seaborn as sns
@@ -15,6 +15,7 @@ from ._backend.aa_pred.aa_pred_plot_ranking import (plot_ranking_, ranking_fighe
                                                     _resolve_group_colors)
 from ._backend.aa_pred.aa_pred_plot_rank_scatter import plot_rank_scatter_
 from ._backend.aa_pred.aa_pred_plot_clustermap import plot_clustermap_
+from ._backend.aa_pred.aa_pred_plot_dendrogram import plot_dendrogram_
 from ._backend.aa_pred.aa_pred_plot_legend import place_legend_below_
 from ._backend.aa_pred.aa_pred_group import assign_band_index
 
@@ -26,7 +27,9 @@ LIST_SAMPLE_KINDS = ["window", "domain", "sequence"]
 LIST_GROUP_KINDS = ["hist", "ranking", "rank_scatter", "scatter", "cutoff"]
 # Sample-relation plot kinds (of the sample x feature matrix) dispatched by
 # :meth:`AAPredPlot.group_cluster`.
-LIST_CLUSTER_KINDS = ["clustermap"]
+LIST_CLUSTER_KINDS = ["clustermap", "dendrogram"]
+# Tree layouts of ``kind='dendrogram'`` in :meth:`AAPredPlot.group_cluster`.
+LIST_CLUSTER_LAYOUTS = ["rectangular", "circular"]
 # Evaluation plot kinds dispatched by :meth:`AAPredPlot.eval`.
 LIST_EVAL_KINDS = ["eval", "comparison", "heatmap"]
 # Per-kind figure-size defaults used when ``figsize=None`` (split by method).
@@ -37,6 +40,7 @@ _SUBCAT_ROW_CAP = 25
 _DICT_GROUP_FIGSIZE = {"hist": (6, 4.5), "ranking": None, "rank_scatter": None,
                         "scatter": (5.5, 5.5), "cutoff": (6, 4.5)}
 _DICT_CLUSTER_FIGSIZE = {"clustermap": (11, 11)}
+_DICT_DENDROGRAM_FIGSIZE = {"rectangular": (7, 9), "circular": (9, 10)}
 
 
 def _new_ax(ax=None, figsize=(6, 5)):
@@ -46,6 +50,43 @@ def _new_ax(ax=None, figsize=(6, 5)):
     else:
         fig = ax.figure
     return fig, ax
+
+
+def check_match_kind_layout(kind=None, layout=None):
+    """Reject a non-default ``layout`` for a ``group_cluster`` kind that has no tree layout."""
+    if kind != "dendrogram" and layout != LIST_CLUSTER_LAYOUTS[0]:
+        raise ValueError(f"'layout' ('{layout}') should only be set for kind='dendrogram' "
+                         f"(got kind='{kind}').")
+
+
+def _check_cluster_inputs(data=None, names=None, labels=None, labels_row=None, dict_color=None,
+                          dict_color_row=None, legend_title=None, legend_title_row=None,
+                          figsize=None, title=None):
+    """Shared input checks of every ``group_cluster`` kind. Returns (data, labels, labels_row)."""
+    data = ut.check_X(X=data, min_n_samples=2, min_n_features=1)
+    if names is not None:
+        ut.check_list_like(name="names", val=names)
+        if len(names) != data.shape[0]:
+            raise ValueError(f"'names' (n={len(names)}) should match n_samples ({data.shape[0]}).")
+    # Per-sample class labels color a sidebar / leaf strip (purely cosmetic), so any hashable
+    # values are allowed.
+
+    def _check_labels(name, val):
+        if val is None:
+            return None
+        val = ut.check_list_like(name=name, val=val, accept_none=False)
+        if len(val) != data.shape[0]:
+            raise ValueError(f"'{name}' (n={len(val)}) should match n_samples ({data.shape[0]}).")
+        return val
+    labels = _check_labels("labels", labels)
+    labels_row = _check_labels("labels_row", labels_row)
+    ut.check_dict_color(name="dict_color", val=dict_color, accept_none=True)
+    ut.check_dict_color(name="dict_color_row", val=dict_color_row, accept_none=True)
+    ut.check_str(name="legend_title", val=legend_title, accept_none=True)
+    ut.check_str(name="legend_title_row", val=legend_title_row, accept_none=True)
+    ut.check_figsize(figsize=figsize, accept_none=True)
+    ut.check_str(name="title", val=title, accept_none=True)
+    return data, labels, labels_row
 
 
 def check_match_scores_labels(scores=None, labels=None):
@@ -926,6 +967,7 @@ class AAPredPlot:
     @staticmethod
     def group_cluster(X: Union[pd.DataFrame, ut.ArrayLike2D],
                       *, kind: str = "clustermap",
+                      layout: Literal["rectangular", "circular"] = "rectangular",
                       labels: Optional[ut.ArrayLike1D] = None,
                       dict_color: Optional[Dict[Union[int, str], str]] = None,
                       legend_title: str = "Class",
@@ -950,19 +992,35 @@ class AAPredPlot:
         * ``'clustermap'`` — hierarchically clustered sample x sample correlation heatmap of the
           feature/SHAP vectors. ``labels`` colors the top (column) sidebar and ``labels_row`` the
           left (row) sidebar; a lone ``labels`` is mirrored onto both.
+        * ``'dendrogram'`` — the sample relation tree alone, drawn with the ``layout`` of choice
+          (``'rectangular'`` or a radial ``'circular'`` tree). It is built from exactly the same
+          linkage as the clustermap, so its topology and leaf order equal the clustermap's row
+          dendrogram. ``labels`` and ``labels_row`` color the leaves as one strip (rectangular)
+          or ring (circular) each, ``labels`` innermost, each with its titled legend.
 
         .. versionadded:: 1.1.0
+
+        .. versionchanged:: 1.2.0
+           Added ``kind='dendrogram'`` and the ``layout`` parameter.
 
         Parameters
         ----------
         X : pd.DataFrame or array-like
             Per-sample feature or importance matrix, shape ``(n_samples, n_features)`` (CPP feature
             values from :meth:`SequenceFeature.feature_matrix`, or :class:`ShapModel` SHAP values).
-        kind : str, default="clustermap"
-            Which relation figure to draw; currently ``clustermap``.
+        kind : {'clustermap', 'dendrogram'}, default='clustermap'
+            Which relation figure to draw.
+        layout : {'rectangular', 'circular'}, default='rectangular'
+            (``kind='dendrogram'``) Tree layout: ``'rectangular'`` draws the root on the left and
+            the leaves in rows on the right; ``'circular'`` draws a radial tree with the root at
+            the center and the leaves around the circle. A non-default ``layout`` with any other
+            ``kind`` raises a ``ValueError``.
+
+            .. versionadded:: 1.2.0
         labels : array-like, optional
             Per-sample class labels (length ``n_samples``) coloring the top (column) sidebar. When
-            ``labels_row`` is ``None``, the same annotation is mirrored onto the left sidebar.
+            ``labels_row`` is ``None``, the same annotation is mirrored onto the left sidebar. For
+            ``kind='dendrogram'`` they color the innermost leaf strip / ring.
         dict_color : dict, optional
             A ``label -> color`` mapping for ``labels``; the mapping order also sets the legend
             order. When ``None``, the house palette is used.
@@ -970,20 +1028,22 @@ class AAPredPlot:
             Legend title for the ``labels`` (top) annotation.
         labels_row : array-like, optional
             Per-sample class labels for a *distinct* left (row) sidebar (length ``n_samples``), e.g.
-            a prediction-confidence band alongside a class annotation on top.
+            a prediction-confidence band alongside a class annotation on top. For
+            ``kind='dendrogram'`` they color a second, outer leaf strip / ring.
         dict_color_row : dict, optional
             A ``label -> color`` mapping for ``labels_row``. When ``None``, the house palette is used.
         legend_title_row : str, optional
             Legend title for the ``labels_row`` (left) annotation.
         names : list of str, optional
-            Per-sample tick labels; defaults to positional indices.
+            Per-sample tick labels (leaf names for ``kind='dendrogram'``); defaults to positional
+            indices. Dense sample sets show only every k-th name.
         cmap : str, default="GnBu"
-            Colormap for the correlation heatmap.
+            (``kind='clustermap'``) Colormap for the correlation heatmap; ignored by the dendrogram.
         figsize : tuple, optional
-            Figure size; defaults to a per-kind default (the clustermap owns its figure, so no
-            ``ax`` is accepted).
+            Figure size; defaults to a per-kind (and per-``layout``) default. Both kinds own their
+            figure, so no ``ax`` is accepted.
         cbar_label : str, default="Pearson correlation (r)"
-            Label of the colorbar.
+            (``kind='clustermap'``) Label of the colorbar; ignored by the dendrogram.
         title : str, optional
             Figure title.
 
@@ -992,7 +1052,7 @@ class AAPredPlot:
         fig : matplotlib.figure.Figure
             The figure.
         ax : matplotlib.axes.Axes
-            The clustermap heatmap axes.
+            The clustermap heatmap axes, or the tree axes (a polar axes for ``layout='circular'``).
 
         See Also
         --------
@@ -1005,6 +1065,14 @@ class AAPredPlot:
         """
         if kind not in LIST_CLUSTER_KINDS:
             raise ValueError(f"'kind' ('{kind}') must be one of {LIST_CLUSTER_KINDS}.")
+        ut.check_str_options(name="layout", val=layout, list_str_options=LIST_CLUSTER_LAYOUTS)
+        check_match_kind_layout(kind=kind, layout=layout)
+        if kind == "dendrogram":
+            figsize = figsize if figsize is not None else _DICT_DENDROGRAM_FIGSIZE[layout]
+            return AAPredPlot._plot_dendrogram(
+                data=X, layout=layout, labels=labels, dict_color=dict_color,
+                legend_title=legend_title, labels_row=labels_row, dict_color_row=dict_color_row,
+                legend_title_row=legend_title_row, names=names, figsize=figsize, title=title)
         figsize = figsize if figsize is not None else _DICT_CLUSTER_FIGSIZE[kind]
         # kind == "clustermap"
         return AAPredPlot._plot_clustermap(
@@ -1484,37 +1552,34 @@ class AAPredPlot:
                          cbar_label="Pearson correlation (r)", title=None):
         """Cluster samples by explanation similarity (correlation of importance vectors)."""
         # Check input
-        data = ut.check_X(X=data, min_n_samples=2, min_n_features=1)
-        if names is not None:
-            ut.check_list_like(name="names", val=names)
-            if len(names) != data.shape[0]:
-                raise ValueError(f"'names' (n={len(names)}) should match n_samples ({data.shape[0]}).")
-        # Per-sample class labels color a sidebar (purely cosmetic), so any hashable values are
-        # allowed. `labels` colors the top strip, `labels_row` the left; a lone `labels` is
-        # mirrored onto both (the matrix is symmetric).
-
-        def _check_labels(name, val):
-            if val is None:
-                return None
-            val = ut.check_list_like(name=name, val=val, accept_none=False)
-            if len(val) != data.shape[0]:
-                raise ValueError(f"'{name}' (n={len(val)}) should match n_samples ({data.shape[0]}).")
-            return val
-        labels = _check_labels("labels", labels)
-        labels_row = _check_labels("labels_row", labels_row)
-        ut.check_dict_color(name="dict_color", val=dict_color, accept_none=True)
-        ut.check_dict_color(name="dict_color_row", val=dict_color_row, accept_none=True)
-        ut.check_str(name="legend_title", val=legend_title, accept_none=True)
-        ut.check_str(name="legend_title_row", val=legend_title_row, accept_none=True)
+        data, labels, labels_row = _check_cluster_inputs(
+            data=data, names=names, labels=labels, labels_row=labels_row, dict_color=dict_color,
+            dict_color_row=dict_color_row, legend_title=legend_title,
+            legend_title_row=legend_title_row, figsize=figsize, title=title)
         ut.check_str(name="cmap", val=cmap)
-        ut.check_figsize(figsize=figsize, accept_none=True)
         ut.check_str(name="cbar_label", val=cbar_label, accept_none=True)
-        ut.check_str(name="title", val=title, accept_none=True)
         # Plot
         fig, ax = plot_clustermap_(data=data, names=names, labels=labels, dict_color=dict_color,
                                    legend_title=legend_title, labels_row=labels_row,
                                    dict_color_row=dict_color_row, legend_title_row=legend_title_row,
                                    cmap=cmap, figsize=figsize, cbar_label=cbar_label, title=title)
+        return ut.FigAxResult(fig, ax)
+
+    @staticmethod
+    def _plot_dendrogram(data, layout="rectangular", labels=None, dict_color=None,
+                         legend_title="Class", labels_row=None, dict_color_row=None,
+                         legend_title_row=None, names=None, figsize=(7, 9), title=None):
+        """Sample relation tree (rectangular or circular) sharing the clustermap linkage."""
+        # Check input
+        data, labels, labels_row = _check_cluster_inputs(
+            data=data, names=names, labels=labels, labels_row=labels_row, dict_color=dict_color,
+            dict_color_row=dict_color_row, legend_title=legend_title,
+            legend_title_row=legend_title_row, figsize=figsize, title=title)
+        # Plot
+        fig, ax = plot_dendrogram_(data=data, names=names, labels=labels, dict_color=dict_color,
+                                   legend_title=legend_title, labels_row=labels_row,
+                                   dict_color_row=dict_color_row, legend_title_row=legend_title_row,
+                                   layout=layout, figsize=figsize, title=title)
         return ut.FigAxResult(fig, ax)
 
     @staticmethod
