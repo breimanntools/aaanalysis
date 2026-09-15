@@ -172,6 +172,8 @@ def aggregate_grouped(df_scores, group_cols=None, list_groups=None, ci=0.95, ci_
         if ci is None:
             ci_low = ci_high = float("nan")
         else:
+            # One bootstrap for the whole class: this is the shared helper that the public
+            # 'comp_bootstrap_ci' wraps, so run, eval and the learning curve report the same CI.
             _, ci_low, ci_high = ut.bootstrap_ci_(values=values, n_rounds=1000, ci=ci, seed=ci_seed)
         rows.append([*group, mean, std, float(ci_low), float(ci_high), int(len(values))])
     columns = list(group_cols) + [ut.COL_SCORE, ut.COL_SCORE_STD, ut.COL_CI_LOW, ut.COL_CI_HIGH,
@@ -211,15 +213,20 @@ def compare_models(df_scores, list_model_names=None, metric="mcc", ci=0.95, ci_s
 
 @ut.catch_undefined_metric_warning()
 def comp_learning_curve(X, labels, list_estimators=None, list_model_names=None, metrics=None,
-                        train_sizes=None, n_cv=5, n_rounds=1, ci=None, random_state=None):
+                        train_sizes=None, train_fracs=None, n_cv=5, n_rounds=1, ci=None,
+                        random_state=None):
     """Learning curve: cross-validated scores per (model, training size, metric).
 
     Uses the same repeated stratified folds as :func:`comp_fold_scores` (``random_state + round``).
-    Within each training fold, every model is fitted on a stratified subset of ``train_size``
-    samples (``train_sizes`` are absolute counts, already resolved by the frontend) and scored on
-    the **full, untouched test fold**, so the test set never changes with the training size and
-    never enters training. The per-fold scores are aggregated by the same :func:`aggregate_grouped`
-    helper as :func:`aggregate_scores`, into one row per (model, training size, metric).
+    Within each training fold, every model is fitted on a stratified subset of the training fold
+    and scored on the **full, untouched test fold**, so the test set never changes with the
+    training size and never enters training. ``train_sizes`` are the curve-point labels resolved by
+    the frontend. With ``train_fracs`` (one fraction per label) each fold resolves its own subset
+    size from its own training-fold size, so the fraction ``1.0`` is the fold's complete training
+    set and reproduces :func:`comp_fold_scores` exactly even for unequal folds; without them the
+    labels are absolute counts used as given. The per-fold scores are aggregated by the same
+    :func:`aggregate_grouped` helper as :func:`aggregate_scores`, into one row per (model, training
+    size, metric).
     """
     X = np.asarray(X)
     labels = np.asarray(labels)
@@ -231,10 +238,15 @@ def comp_learning_curve(X, labels, list_estimators=None, list_model_names=None, 
         rng = np.random.default_rng(seed)
         for fold, (train_idx, test_idx) in enumerate(cv.split(X, labels)):
             y_train_fold = labels[train_idx]
+            n_train_fold = len(train_idx)
             class_orders = {c: rng.permutation(np.flatnonzero(y_train_fold == c))
                             for c in np.unique(y_train_fold)}
             X_test, y_test = X[test_idx], labels[test_idx]
-            for size in train_sizes:
+            for i, size in enumerate(train_sizes):
+                if train_fracs is not None:
+                    # Resolve the fraction against THIS fold (floored at one sample per class), so
+                    # a larger fold never silently drops samples and 1.0 keeps its whole fold.
+                    size = min(n_train_fold, max(2, int(np.floor(train_fracs[i] * n_train_fold))))
                 sub_idx = train_idx[_stratified_subset(y_train_fold, class_orders, size)]
                 # Derived invariant: a training subset must never touch the held-out fold.
                 if np.intersect1d(sub_idx, test_idx).size != 0:
@@ -244,7 +256,9 @@ def comp_learning_curve(X, labels, list_estimators=None, list_model_names=None, 
                     scores = _fit_and_score(estimator, random_state, X_train, y_train, X_test,
                                             y_test, metrics, needs_proba)
                     for metric in metrics:
-                        rows.append([r, fold, name, int(size), metric, scores[metric]])
+                        # The row carries the curve-point label, not the fold-resolved size, so
+                        # the folds of one curve point aggregate together.
+                        rows.append([r, fold, name, int(train_sizes[i]), metric, scores[metric]])
     df_scores = pd.DataFrame(rows, columns=[ut.COL_ROUND, ut.COL_FOLD, ut.COL_MODEL,
                                             ut.COL_TRAIN_SIZE, ut.COL_METRIC, ut.COL_SCORE])
     list_groups = [(name, int(size), metric) for name in list_model_names

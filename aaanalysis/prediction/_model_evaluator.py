@@ -2,7 +2,7 @@
 This is a script for the frontend of the ModelEvaluator class for rigorous cross-validated
 evaluation and paired comparison of prediction models.
 """
-from typing import Optional, List, Union
+from typing import Optional, List, Tuple, Union
 import numpy as np
 import pandas as pd
 from sklearn.base import BaseEstimator, clone
@@ -123,14 +123,18 @@ def check_estimators_proba(list_estimators=None, metrics=None):
                          f"(e.g. 'SVC(probability=True)').")
 
 
-def check_train_sizes(train_sizes, labels, n_cv: int) -> List[int]:
-    """Check ``train_sizes`` and resolve it into sorted, unique absolute training-subset sizes.
+def check_train_sizes(train_sizes, labels, n_cv: int) -> Tuple[List[int], Optional[List[float]]]:
+    """Check ``train_sizes`` and resolve it into sorted training-subset sizes (and their fractions).
 
-    Sizes are either all fractions in ``(0, 1]`` or all integers >= 2, relative to (and capped by)
-    the smallest training fold of stratified ``n_cv``-fold cross-validation, so every size is
-    available in every fold. Fractions are resolved against that fold, rounded down, raised to at
-    least 2 samples (one per class), capped at the fold size, and de-duplicated, so a default grid
-    still works on small data; absolute counts are taken as given and must be distinct.
+    Sizes are either all fractions in ``(0, 1]`` or all integers >= 2. Absolute counts are used as
+    given in every fold, so they must be distinct and fit into the smallest training fold of
+    stratified ``n_cv``-fold cross-validation. Fractions are kept as fractions and resolved by the
+    backend **within each training fold** (rounded down, raised to at least 2 samples, one per
+    class), so ``1.0`` is every fold's complete training set even when the folds differ in size.
+    Each curve point is labelled by its size in the smallest training fold; fractions collapsing
+    onto the same label are de-duplicated (the smallest of them is kept), so a default grid still
+    works on small data. Returns ``(sizes, fracs)``, where ``fracs`` is ``None`` for absolute
+    counts and otherwise holds one fraction per label, in the same order.
     """
     train_sizes = ut.check_list_like(name="train_sizes", val=train_sizes, accept_none=False, min_len=2)
     is_number = [isinstance(s, (int, float, np.integer, np.floating)) and not isinstance(s, (bool, np.bool_))
@@ -150,14 +154,19 @@ def check_train_sizes(train_sizes, labels, n_cv: int) -> List[int]:
         wrong = [s for s in train_sizes if not 0 < float(s) <= 1]
         if len(wrong) != 0:
             raise ValueError(f"'train_sizes' ({train_sizes}) should be fractions in (0, 1], got {wrong}.")
-        # Floor at 2 samples (one per class) and cap at the fold, so a grid stays usable on small data.
-        sizes = sorted({min(n_train_min, max(2, int(np.floor(float(s) * n_train_min))))
-                        for s in train_sizes})
+        # Label each fraction by its size in the smallest training fold: floored at 2 samples (one
+        # per class) and capped at that fold, so a grid stays usable on small data. The fraction
+        # itself is carried through, because each fold resolves it against its own training set.
+        dict_size_frac = {}
+        for frac in sorted(float(s) for s in train_sizes):
+            size = min(n_train_min, max(2, int(np.floor(frac * n_train_min))))
+            dict_size_frac.setdefault(size, frac)
+        sizes = sorted(dict_size_frac)
         if len(sizes) < 2:
             raise ValueError(f"'train_sizes' ({train_sizes}) should be fractions resolving to at least "
                              f"2 distinct sizes, but resolve to {sizes} for the smallest training fold "
                              f"({n_train_min} samples for n_cv={n_cv}).")
-        return sizes
+        return sizes, [dict_size_frac[size] for size in sizes]
     sizes = [int(s) for s in train_sizes]
     too_small = [s for s in sizes if s < 2]
     too_large = [s for s in sizes if s > n_train_min]
@@ -170,7 +179,7 @@ def check_train_sizes(train_sizes, labels, n_cv: int) -> List[int]:
     if len(set(sizes)) != len(sizes):
         raise ValueError(f"'train_sizes' ({train_sizes}) should be distinct sample counts, got "
                          f"duplicates in {sizes}.")
-    return sorted(sizes)
+    return sorted(sizes), None
 
 
 def check_is_run(df_scores=None):
@@ -429,11 +438,13 @@ class ModelEvaluator(Tool):
         training). Within a fold, the subsets are nested (a larger subset contains the smaller
         ones). The per-fold scores are aggregated per (model, training size, metric) into a mean, a
         population std, a percentile bootstrap confidence interval of the mean, and the fold count,
-        by the same aggregation :meth:`run` uses. The size that matches the training fold therefore
+        by the same aggregation :meth:`run` uses. A fractional size is resolved **within each
+        training fold**, so the fraction ``1.0`` uses every fold's complete training set and
         reproduces the scores of :meth:`run` exactly **when both calls use the same resolved**
-        ``random_state`` (and the same ``n_cv``, ``n_rounds``, and ``metrics``); with
-        ``random_state=None`` the two calls shuffle the folds differently, so they then agree only
-        in distribution.
+        ``random_state`` (and the same ``n_cv``, ``n_rounds``, and ``metrics``) - also when the
+        training folds differ in size; with ``random_state=None`` the two calls shuffle the folds
+        differently, so they then agree only in distribution. An absolute size is used as given in
+        every fold, so it matches :meth:`run` only where it equals the training fold.
 
         A curve that is still rising at the largest size suggests that more data will help; a
         curve that has flattened suggests changing the representation or model instead. The
@@ -450,12 +461,14 @@ class ModelEvaluator(Tool):
             0 and 1 (1 is the positive class of ``precision``, ``recall``, ``f1``, ``roc_auc``).
         train_sizes : array-like, optional
             Training-subset sizes (at least two), either all fractions in ``(0, 1]`` or all
-            absolute sample counts (int >= 2), relative to the smallest training fold. Fractions
-            are rounded down to sample counts, raised to at least 2 samples (one per class), capped
-            at that fold, and de-duplicated; absolute counts must be distinct and fit into the
-            fold. Defaults to ``[0.2, 0.4, 0.6, 0.8, 1.0]``, which gives five sizes, each with a
-            bootstrap CI (on very small data the resolved sizes can collapse to fewer; at least two
-            distinct sizes are required).
+            absolute sample counts (int >= 2). A fraction is resolved within each training fold
+            (rounded down to samples, raised to at least 2, one per class), so ``1.0`` is every
+            fold's complete training set; the curve point is labelled by its size in the smallest
+            training fold, and fractions collapsing onto the same label are de-duplicated. An
+            absolute count is used as given in every fold, so counts must be distinct and fit into
+            the smallest training fold. Defaults to ``[0.2, 0.4, 0.6, 0.8, 1.0]``, which gives five
+            sizes, each with a bootstrap CI (on very small data the resolved sizes can collapse to
+            fewer; at least two distinct sizes are required).
         n_cv : int, default=5
             Number of stratified cross-validation folds per round (must not exceed the smallest
             class count).
@@ -469,16 +482,18 @@ class ModelEvaluator(Tool):
             If ``None``, the ``ci_low`` / ``ci_high`` columns are ``NaN``. Default is ``0.95``.
         random_state : int, optional
             Per-call seed overriding the constructor's ``random_state`` for the folds, the training
-            subsets, and the bootstrap CI. If a positive integer, results of stochastic processes
-            are consistent, enabling reproducibility. If ``None``, the constructor's
+            subsets, and the bootstrap CI. If a non-negative integer, results of stochastic
+            processes are consistent, enabling reproducibility. If ``None``, the constructor's
             ``random_state`` is used (and stochastic processes are truly random when that is
-            ``None`` as well).
+            ``None`` as well). ``aaanalysis.options["random_state"]`` overrides both unless it is
+            ``"off"``.
 
         Returns
         -------
         df_curve : pd.DataFrame, shape (n_models * n_train_sizes * n_metrics, 8)
             Long-format learning-curve table with columns ``model``, ``train_size`` (number of
-            training samples, ascending), ``metric``, ``score`` (mean over folds), ``score_std``
+            training samples, ascending; for a fraction this is the size in the smallest training
+            fold, while every fold uses that same fraction of its own training set), ``metric``, ``score`` (mean over folds), ``score_std``
             (population std over folds), ``ci_low`` / ``ci_high`` (bootstrap CI of the mean,
             ``NaN`` when ``ci`` is ``None``), and ``n_scores`` (fold count).
 
@@ -512,7 +527,7 @@ class ModelEvaluator(Tool):
         check_n_cv(n_cv=n_cv, labels=labels)
         if train_sizes is None:
             train_sizes = ut.LIST_TRAIN_SIZES_MODELEVAL
-        train_sizes = check_train_sizes(train_sizes=train_sizes, labels=labels, n_cv=n_cv)
+        train_sizes, train_fracs = check_train_sizes(train_sizes=train_sizes, labels=labels, n_cv=n_cv)
         ut.check_number_range(name="n_rounds", val=n_rounds, min_val=1, just_int=True)
         metrics = check_metrics(metrics=metrics) if metrics is not None else self._list_metrics
         check_estimators_proba(list_estimators=self._list_estimators, metrics=metrics)
@@ -523,6 +538,7 @@ class ModelEvaluator(Tool):
         # Evaluate
         df_curve = comp_learning_curve(X, labels, list_estimators=self._list_estimators,
                                        list_model_names=self._list_model_names, metrics=metrics,
-                                       train_sizes=train_sizes, n_cv=n_cv, n_rounds=n_rounds,
-                                       ci=ci, random_state=random_state)
+                                       train_sizes=train_sizes, train_fracs=train_fracs,
+                                       n_cv=n_cv, n_rounds=n_rounds, ci=ci,
+                                       random_state=random_state)
         return df_curve

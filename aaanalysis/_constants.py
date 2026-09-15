@@ -572,7 +572,7 @@ COLS_EVAL_MODELEVAL = [COL_MODEL, COL_METRIC, COL_SCORE, COL_SCORE_STD, COL_CI_L
 COLS_COMPARE_MODELEVAL = [COL_MODEL_A, COL_MODEL_B, COL_METRIC, COL_DELTA, COL_DELTA_STD,
                           COL_CI_LOW, COL_CI_HIGH, COL_P_VALUE]
 # ModelEvaluator.learning_curve: one row per (model, training size, metric)
-COL_TRAIN_SIZE = "train_size"   # number of training samples the models were fitted on (per fold)
+COL_TRAIN_SIZE = "train_size"   # training samples per fold (for a fraction: in the smallest fold)
 COLS_CURVE_MODELEVAL = [COL_MODEL, COL_TRAIN_SIZE, COL_METRIC, COL_SCORE, COL_SCORE_STD,
                         COL_CI_LOW, COL_CI_HIGH, COL_N_SCORES]
 LIST_TRAIN_SIZES_MODELEVAL = [0.2, 0.4, 0.6, 0.8, 1.0]  # default training fractions (>= 4 sizes)
