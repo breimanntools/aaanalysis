@@ -205,13 +205,19 @@ class TestCPPBootstrapComplex:
 
     def test_bootstrap_incompatible_with_n_batches(self):
         cpp, labels = _make_cpp(rounds=3)
-        with pytest.raises(ValueError, match="bootstrap"):
+        # The message must name the offending value and point at the way out (bootstrap=False).
+        with pytest.raises(ValueError, match=r"'n_batches' \(3\).*cannot be combined with bootstrap"):
             cpp.run(labels=labels, n_filter=15, n_batches=3, n_jobs=1)
 
     def test_bootstrap_incompatible_with_n_sample_batches(self):
         cpp, labels = _make_cpp(rounds=3)
-        with pytest.raises(ValueError, match="bootstrap"):
+        with pytest.raises(ValueError, match=r"'n_sample_batches' \(2\).*cannot be combined with bootstrap"):
             cpp.run(labels=labels, n_filter=15, n_sample_batches=2, n_jobs=1)
+
+    def test_bootstrap_batching_error_names_the_escape_hatch(self):
+        cpp, labels = _make_cpp(rounds=3)
+        with pytest.raises(ValueError, match=r"bootstrap=False"):
+            cpp.run(labels=labels, n_filter=15, n_batches=2, n_jobs=1)
 
 
 class TestCPPBootstrapGoldenValues:

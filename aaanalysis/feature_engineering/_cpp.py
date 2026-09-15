@@ -587,6 +587,10 @@ class CPP(Tool):
         -------
         df_feat : pd.DataFrame, shape (n_features, n_feature_info)
             Feature DataFrame with a unique identifier, scale information, statistics, and positions for each feature.
+            Returned on its own when ``return_stats=False`` (default).
+        stats : dict
+            Filter-funnel statistics of this run (same content as :attr:`CPP.last_filter_stats_`), returned only
+            when ``return_stats=True``, in which case the return value is the tuple ``(df_feat, stats)``.
 
         Notes
         -----
