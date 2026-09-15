@@ -148,6 +148,12 @@ notes — with cross-references and examples — live in
   composition, motif-matched lookalikes, similarity filters), each demonstrated
   method's public parameters covered by name across its calls, and demonstrated
   mistakes. This pass covers P2 and P3 only; the other protocols are unchanged.
+- `CPP.run`: corrected the `n_sample_batches` description, which promised peak memory
+  bounded by the batch size rather than by the sample count `n`. Measurements show it bounds
+  the dominant per-batch scale-value tensor, while the `(n_samples, n_pre_filter)` survivor
+  matrix and its test statistics stay resident, so peak memory still grows linearly with `n`
+  at a constant batch size, on a roughly 13x flatter slope than the single-pass run. Behaviour
+  is unchanged; only the documentation was wrong.
 
 ## [1.1.0] - 2026-09-10
 

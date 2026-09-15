@@ -577,8 +577,14 @@ class CPP(Tool):
             reduces memory consumption but slows down processing.
         n_sample_batches : int, None, default=None
             Number of sample-axis batches (>=2, up to the number of samples) for sample-batched processing. If ``None``,
-            sample-batching is disabled. Bounds peak memory by the batch size rather than the full sample count ``n``,
-            so it is the option for very large ``n``. Mutually exclusive with ``n_batches`` (which batches over scales).
+            sample-batching is disabled. It bounds the *dominant* memory term, the per-batch
+            ``O(batch_size x part_length x n_scales)`` scale-value tensor, by the batch size instead of by the full
+            sample count ``n``. It does **not** make peak memory independent of ``n``: the pre-filtered survivor
+            matrix of shape ``(n_samples, n_pre_filter)`` and the test statistics computed on it stay resident, so
+            at a constant batch size peak memory still grows linearly with ``n``, on a far flatter slope than the
+            single-pass run (roughly a tenth of it in internal measurements). That flatter slope, not a constant
+            bound, is what makes it the option for very large ``n``. Mutually exclusive with ``n_batches`` (which
+            batches over scales).
         return_stats : bool, default=False
             If ``True``, also return the filter-funnel statistics (``last_filter_stats_``)
             as a second element ``(df_feat, stats)``; if ``False``, return only ``df_feat``.
