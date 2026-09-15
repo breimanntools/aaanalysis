@@ -1609,10 +1609,12 @@ class AAPredPlot:
         return ut.FigAxResult(fig, ax)
 
     @staticmethod
-    def _plot_clustermap(data, labels=None, dict_color=None, legend_title="Class",
-                         labels_row=None, dict_color_row=None, legend_title_row=None,
+    def _plot_clustermap(data, labels=None, dict_color=None,
+                         legend_title: Optional[str] = "Class",
+                         labels_row=None, dict_color_row=None,
+                         legend_title_row: Optional[str] = None,
                          names=None, cmap="GnBu", figsize=(11, 11),
-                         cbar_label="Pearson correlation (r)", title=None):
+                         cbar_label: Optional[str] = "Pearson correlation (r)", title=None):
         """Cluster samples by explanation similarity (correlation of importance vectors)."""
         # Check input
         data, names, labels, labels_row = _check_cluster_inputs(
@@ -1628,8 +1630,9 @@ class AAPredPlot:
 
     @staticmethod
     def _plot_dendrogram(data, layout="rectangular", labels=None, dict_color=None,
-                         legend_title="Class", labels_row=None, dict_color_row=None,
-                         legend_title_row=None, names=None, figsize=(7, 9), title=None):
+                         legend_title: Optional[str] = "Class", labels_row=None,
+                         dict_color_row=None, legend_title_row: Optional[str] = None,
+                         names=None, figsize=(7, 9), title=None):
         """Sample relation tree (rectangular or circular) sharing the clustermap linkage."""
         # Check input
         data, names, labels, labels_row = _check_cluster_inputs(
