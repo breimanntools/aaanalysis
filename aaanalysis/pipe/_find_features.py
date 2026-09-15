@@ -427,7 +427,10 @@ def find_features(labels: ut.ArrayLike1D,
     within each stage the Pareto-optimal-then-simplest configuration across all ``metric`` wins,
     scored by the average cross-validated performance of one or more ``model`` s. The winner is then
     ranked by tree-based importance and drawn as the CPP feature map. At ``search="fast"`` no search
-    is run — the result is byte-identical to the explicit single-CPP path.
+    is run — the result is byte-identical to the explicit single-CPP path, and this is the only
+    parity that is anchored by a test. ``search="balanced"`` and ``search="exhaustive"`` select
+    among many configurations, so they have no single explicit chain to compare against and are not
+    parity-anchored; with a fixed ``random_state`` they are reproducible run to run.
 
     .. warning::
 

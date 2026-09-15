@@ -32,10 +32,13 @@ A typical workflow moves through up to four pipelines, each consuming what the p
 :func:`~aaanalysis.pipe.plot_eval` complements the spine by turning a
 :func:`~aaanalysis.pipe.find_features` sweep table into publication-ready evaluation figures.
 
-Every pipeline returns the same three-slot shape, ``(result, plot, df_eval)``: the primary result
-(a DataFrame or a dictionary of predictors), the figure handle or ``None`` when ``plot=False``, and
-a tidy evaluation table. Keeping one return shape means a script or a coding agent can chain the
-pipelines without special-casing each one.
+The four spine pipelines above return the same three-slot shape, ``(result, plot, df_eval)``: the
+primary result (a DataFrame or a dictionary of predictors), the figure handle or ``None`` when
+``plot=False``, and a tidy evaluation table. Keeping one return shape means a script or a coding
+agent can chain them without special-casing each one.
+:func:`~aaanalysis.pipe.plot_eval` is the exception: it is a pure plotting helper that consumes a
+sweep table rather than producing one, and it returns a plain ``list`` of matplotlib ``Figure``
+objects, one per evaluation panel.
 
 From sequences to a cross-validated score
 -----------------------------------------
