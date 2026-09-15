@@ -68,7 +68,9 @@ def check_finite(name: str, val: float):
     which reports the type.
     """
     if isinstance(val, (float, np.floating)) and not np.isfinite(val):
-        raise ValueError(f"'{name}' should be a finite float or an integer, but got {val}.")
+        raise ValueError(f"'{name}' ({val}) should be a finite float or an integer.")
+
+
 def check_ad_borderline(ad_borderline: float):
     """Check that ``ad_borderline`` is a finite, non-negative number (not a bool)."""
     if isinstance(ad_borderline, bool):
@@ -319,10 +321,8 @@ class ReliabilityModel(Wrapper):
         ValueError
             If ``labels`` are not binary, ``label_pos`` is absent from ``labels``, ``model`` is an
             empty list or lacks ``predict_proba``, a passed :class:`AAPred` is not fitted, or a
-            numeric parameter is out of range or not finite (``NaN`` / ``inf``).
-            numeric parameter (including ``ad_borderline < 0``) is out of range.
-            numeric parameter is out of range (``ad_borderline`` must be finite and
-            non-negative).
+            numeric parameter is out of range or not finite (``NaN`` / ``inf``), including a
+            negative ``ad_borderline``.
 
         Warnings
         --------
