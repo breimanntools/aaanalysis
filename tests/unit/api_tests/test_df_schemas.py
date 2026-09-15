@@ -78,7 +78,8 @@ class TestSchemaStructure:
 
     def test_expected_frames_present(self):
         for frame in ["df_seq", "df_parts", "df_scales", "df_cat", "df_subcat",
-                      "df_feat", "df_eval", "X", "prediction"]:
+                      "df_feat", "df_eval", "X", "prediction",
+                      "df_pred", "df_rel", "df_eval_reliability"]:
             assert frame in ut.DICT_DF_SCHEMAS
 
     def test_rich_df_feat_agrees_with_simple_dict(self):

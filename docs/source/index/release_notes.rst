@@ -44,6 +44,12 @@ Added
   :meth:`~aaanalysis.ReliabilityModel.predict` still takes a prebuilt feature matrix ``X``, so
   :meth:`~aaanalysis.SeqMut.mutate` or :meth:`~aaanalysis.SeqOpt.run` output is scored by
   building that matrix with :meth:`~aaanalysis.SequenceFeature.feature_matrix` first.
+  values.
+- The :ref:`Data Schemas <df_schemas>` page now documents the prediction outputs that downstream
+  tools read: ``df_pred`` from :meth:`~aaanalysis.AAPred.predict` (sequence, domain and window
+  levels), ``df_rel`` from :meth:`~aaanalysis.ReliabilityModel.predict`, and
+  ``df_eval_reliability`` from :meth:`~aaanalysis.ReliabilityModel.eval`. Contract tests fail
+  when one of these columns is renamed, dropped, retyped or left undocumented.
 
 Changed
 ~~~~~~~

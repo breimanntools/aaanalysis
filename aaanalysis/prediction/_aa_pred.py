@@ -1056,7 +1056,7 @@ class AAPred(Wrapper):
                 rows.append([entry, offset, float(score)])
         df_domain = pd.DataFrame(rows, columns=[ut.COL_ENTRY, ut.COL_OFFSET, ut.COL_SCORE])
         idx_best = df_domain.groupby(ut.COL_ENTRY)[ut.COL_SCORE].idxmax()
-        df_domain["is_best"] = df_domain.index.isin(idx_best)
+        df_domain[ut.COL_IS_BEST] = df_domain.index.isin(idx_best)
         return df_domain
 
     def _predict_window(self,
