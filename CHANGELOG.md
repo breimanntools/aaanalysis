@@ -33,7 +33,10 @@ notes — with cross-references and examples — live in
   sample); `fit` gains `ad_borderline=0.1` (band width above the boundary) and exposes the
   fitted `ad_threshold_` (raw training k-NN distance threshold, `ood_score == ad_knn /
   ad_threshold_`) and `ad_method_` (`"knn"`). All existing `predict` columns keep their names,
-  order, and values (addresses #473).
+  order, and values (partially addresses #473). **Not included:** the mutation-candidate entry
+  point that would score `SeqMut` / `SeqOpt` output in one call. `predict` still takes a
+  prebuilt feature matrix `X`, so a candidate set is scored by building that matrix with
+  `SequenceFeature.feature_matrix` first.
 
 ### Changed
 - Prediction/design-tier consistency pass (these classes are still experimental, so no

@@ -72,10 +72,11 @@ def check_finite(name: str, val: float):
 def check_ad_borderline(ad_borderline: float):
     """Check that ``ad_borderline`` is a finite, non-negative number (not a bool)."""
     if isinstance(ad_borderline, bool):
-        raise ValueError("'ad_borderline' should be a float or an integer, but got bool.")
+        raise ValueError(f"'ad_borderline' ({ad_borderline}) should be a finite number >= 0 "
+                         f"(a float or an integer), but got bool.")
     ut.check_number_range(name="ad_borderline", val=ad_borderline, min_val=0, just_int=False)
     if not np.isfinite(ad_borderline):
-        raise ValueError(f"'ad_borderline' should be a finite number >= 0, but got {ad_borderline}.")
+        raise ValueError(f"'ad_borderline' ({ad_borderline}) should be a finite number >= 0.")
 
 
 def check_ci(ci: float):
@@ -288,7 +289,8 @@ class ReliabilityModel(Wrapper):
         ad_borderline : float, default=0.1
             Width of the ``borderline`` band just outside the domain boundary, relative to it:
             a sample with ``1 < ood_score <= 1 + ad_borderline`` gets ``ad_status='borderline'``,
-            above that ``'outside'``. ``0`` disables the band. Must be ``>= 0``.
+            above that ``'outside'``. ``0`` disables the band. Must be a **finite non-negative**
+            number (a negative value, ``inf``, ``NaN``, or a bool raises).
 
             .. versionadded:: 1.2.0
         ci : float, default=0.90
@@ -328,6 +330,8 @@ class ReliabilityModel(Wrapper):
             empty list or lacks ``predict_proba``, a passed :class:`AAPred` is not fitted, or a
             numeric parameter is out of range or not finite (``NaN`` / ``inf``).
             numeric parameter (including ``ad_borderline < 0``) is out of range.
+            numeric parameter is out of range (``ad_borderline`` must be finite and
+            non-negative).
 
         Warnings
         --------
@@ -458,7 +462,10 @@ class ReliabilityModel(Wrapper):
 
         .. versionchanged:: 1.2.0
            The applicability-domain column ``ad_knn_dist`` is named ``ad_knn``, matching its
-           ``ad_mahalanobis`` / ``ad_leverage`` siblings.
+           ``ad_mahalanobis`` / ``ad_leverage`` siblings, and two columns are appended at the
+           end of the table: ``ad_status`` (the banded domain verdict) and ``ad_nearest_train``
+           (the closest training row). Every previously returned column keeps its name,
+           position, and values.
 
         Parameters
         ----------
