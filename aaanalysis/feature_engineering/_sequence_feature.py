@@ -602,7 +602,7 @@ class SequenceFeature:
         steps_periodicpattern : list of int, optional
             Size of odd and even steps for ``PeriodicPattern``. Should contain two non-negative integers if
             ``PeriodicPattern`` split_type is used. If ``None`` (default), ``[3, 4]`` is used.
-        strategy : {'compositional', 'positional'}, optional
+        strategy : {'compositional', 'positional'} or None, default=None
             Preset for the CPP strategy, which sets ``split_types``, ``n_split_min``, and ``n_split_max``:
 
             - ``'compositional'``: a single whole-part ``Segment`` (position-agnostic average), identical to
