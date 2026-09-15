@@ -72,6 +72,20 @@ notes — with cross-references and examples — live in
 ### Documentation
 - New tutorial `tutorial3e_cpp_embeddings_structure`: embeddings and AlphaFold
   structures into `CPP.run_num`, fusion, and `CPPStructurePlot` painting.
+- New usage-principles page *Golden Pipelines*: the `aaanalysis.pipe` spine, the
+  `(result, plot, df_eval)` return shape (and `plot_eval` returning a list of figures),
+  the parity anchors, and the experimental-API note.
+- `aaanalysis.pipe.find_features`: the docstring now states that only `search="fast"` has a
+  parity-anchored `df_feat`; `"balanced"` / `"exhaustive"` are reproducible but have no explicit
+  chain.
+
+### Tests
+- `aaanalysis.pipe` contract suite: `predict_samples` defaults pinned byte-identical to the
+  explicit `feature_matrix` -> `cross_validate` chain, comparing the full learned state of every
+  fitted predictor (nested ensembles included), not only its predictions.
+- The documented golden path is executed and its statement budget is parsed from the code block on
+  the *Golden Pipelines* page, so page and test cannot drift apart.
+- Example notebooks of `aaanalysis.pipe` are held to zero parameter-coverage gaps.
 
 ## [1.1.0] - 2026-09-10
 
