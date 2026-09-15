@@ -338,10 +338,10 @@ class TestFit:
     def test_invalid_ad_borderline_leaves_instance_unfitted(self):
         Xtr, ytr, _ = _data()
         rm = aa.ReliabilityModel()
-        with pytest.raises(ValueError):
+        with pytest.raises(ValueError, match="'ad_borderline'"):
             rm.fit(Xtr, ytr, ad_borderline=-1)
         assert rm.ad_threshold_ is None
-        with pytest.raises(RuntimeError):
+        with pytest.raises(RuntimeError, match="Call 'fit' before 'predict'"):
             rm.predict(Xtr)
 
     # ci
@@ -961,11 +961,11 @@ class TestPredictComplex:
 
     def test_feature_mismatch_still_raises(self, rm_ad):
         rm, _, Xnew = rm_ad
-        with pytest.raises(ValueError):
+        with pytest.raises(ValueError, match=r"'X' has 3 features"):
             rm.predict(Xnew[:, :3])
 
     def test_predict_before_fit_raises(self):
-        with pytest.raises(RuntimeError):
+        with pytest.raises(RuntimeError, match="Call 'fit' before 'predict'"):
             aa.ReliabilityModel().predict(np.zeros((2, 3)))
 
     def test_predict_none_raises(self, rm_ad):
@@ -977,7 +977,7 @@ class TestPredictComplex:
         rm, _, Xnew = rm_ad
         X_nan = Xnew.copy()
         X_nan[0, 0] = np.nan
-        with pytest.raises(ValueError):
+        with pytest.raises(ValueError, match="'X'"):
             rm.predict(X_nan)
 
     def test_predict_with_inf_raises(self, rm_ad):
