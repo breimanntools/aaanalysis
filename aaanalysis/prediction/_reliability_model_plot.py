@@ -120,6 +120,10 @@ class ReliabilityModelPlot:
         ``ax`` with distinct ``label`` / ``color``; the perfect-calibration diagonal is drawn only
         once.
 
+        .. versionchanged:: 1.2.0
+           Metric rows are excluded from the plotted points and annotate their curve's legend
+           entry; repeated calls on one ``ax`` retain a single perfect-calibration diagonal.
+
         Parameters
         ----------
         df_eval : pd.DataFrame
@@ -130,7 +134,8 @@ class ReliabilityModelPlot:
         color : str, default="tab:blue"
             Line/marker color of the model curve.
         label : str, default="model"
-            Legend label of the curve; the Brier score and ECE are appended when present.
+            Legend label of the curve. The Brier score and ECE are appended when present, so
+            distinct labels identify raw and calibrated curves drawn on the same ``ax``.
 
             .. versionadded:: 1.2.0
         title : str, optional

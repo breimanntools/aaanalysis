@@ -25,9 +25,9 @@ Added
 - :meth:`~aaanalysis.ReliabilityModelPlot.reliability_diagram` gains ``label``, annotates the
   Brier score and ECE in the curve's legend entry when the table carries them, and draws the
   diagonal only once, so the raw and the calibrated curve can share one ``ax``.
-- :meth:`~aaanalysis.ReliabilityModel.fit` now warns when ``calibrate=True`` cannot be honoured,
-  because a class holds fewer members than the internal cross-validation needs or the model
-  cannot be cloned. ``score_calibrated`` is ``NaN`` in that case, and
+- :meth:`~aaanalysis.ReliabilityModel.fit` now warns when ``calibrate=True`` cannot be honoured
+  (for example, because a class holds fewer members than the internal cross-validation needs or
+  the model cannot be cloned). ``score_calibrated`` is ``NaN`` in that case, and
   ``eval(use_calibrated=True)`` raises a ``ValueError`` naming that reason instead of reporting a
   ``calibrate=False`` that was never passed.
 

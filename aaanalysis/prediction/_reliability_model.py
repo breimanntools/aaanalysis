@@ -1,7 +1,7 @@
 """
 This is a script for the frontend of the ReliabilityModel class for prediction-reliability measures.
 """
-from typing import Optional, List, Union
+from typing import Literal, Optional, List, Union
 import warnings
 import numpy as np
 import pandas as pd
@@ -221,7 +221,7 @@ class ReliabilityModel(Wrapper):
             ci: float = 0.90,
             n_bootstrap: int = 20,
             calibrate: bool = True,
-            calibration_method: str = "isotonic",
+            calibration_method: Literal["isotonic", "sigmoid"] = "isotonic",
             conformal_alpha: float = 0.1,
             ) -> "ReliabilityModel":
         """
@@ -231,13 +231,17 @@ class ReliabilityModel(Wrapper):
         the ensemble / bootstrap source of uncertainty, an optional probability calibrator, and
         the split-conformal calibration.
 
+        .. versionchanged:: 1.2.0
+           When calibration was requested but cannot be fitted, emit a ``UserWarning`` and record
+           why calibrated evaluation is unavailable.
+
         Parameters
         ----------
         X : array-like, shape (n_samples, n_features)
             Training feature matrix the model was fitted on (the applicability-domain reference).
         labels : array-like, shape (n_samples,)
             Binary training labels (exactly two classes).
-        model : estimator, list of estimators, AAPred, or None
+        model : estimator, list of estimators, AAPred, or None, default=None
             A fitted scikit-learn classifier (``predict_proba``), a **list** of fitted estimators
             (ensemble; uncertainty = their disagreement), a fitted :class:`AAPred`, or ``None`` to
             fit a default :class:`~sklearn.ensemble.RandomForestClassifier`.
@@ -260,10 +264,15 @@ class ReliabilityModel(Wrapper):
             ensemble); ``score`` is then the bagged mean over the resamples (see Notes). ``0``
             disables the bootstrap and reports the model's own probability (``score_std`` = 0).
         calibrate : bool, default=True
-            Fit a probability calibrator (needed for meaningful ``margin`` / ``entropy``).
-        calibration_method : str, default="isotonic"
-            ``"isotonic"`` or ``"sigmoid"`` (Platt), passed to
+            If ``True``, fit a probability calibrator for ``score_calibrated``, ``margin``, and
+            ``entropy``. If fitting fails, emit a ``UserWarning`` and leave
+            ``score_calibrated`` as ``NaN``; if ``False``, do not fit a calibrator.
+        calibration_method : {'isotonic', 'sigmoid'}, default='isotonic'
+            Probability-calibration method passed to
             :class:`~sklearn.calibration.CalibratedClassifierCV`.
+
+            - ``'isotonic'``: fit a non-parametric monotonic calibration curve.
+            - ``'sigmoid'``: fit Platt's sigmoid calibration.
         conformal_alpha : float, default=0.1
             Miscoverage level of the split-conformal set (``1 - alpha`` coverage).
 
@@ -287,7 +296,7 @@ class ReliabilityModel(Wrapper):
             ``score_calibrated`` is then ``NaN`` and :meth:`eval` with ``use_calibrated=True``
             raises, naming that reason.
 
-            .. versionadded:: 1.2.0
+            .. versionchanged:: 1.2.0
 
         Examples
         --------

@@ -23,8 +23,8 @@ notes — with cross-references and examples — live in
   annotates Brier / ECE in the legend when present and supports raw-vs-calibrated overlays on
   one `ax` (addresses #480).
 - `ReliabilityModel.fit(calibrate=True)` now warns (`UserWarning`) when no calibrator can be
-  fitted (too few samples in a class for the internal cross-validation, or a model that cannot
-  be cloned), instead of leaving the failure silent.
+  fitted (for example, too few samples in a class for internal cross-validation or a model that
+  cannot be cloned), instead of leaving the failure silent.
 
 ### Changed
 - Prediction/design-tier consistency pass (these classes are still experimental, so no
