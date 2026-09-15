@@ -1,7 +1,7 @@
 """
 This is a script for the frontend of the AAPredPlot class for visualizing AAPred results.
 """
-from typing import Optional, List, Dict, Union, Tuple, Literal
+from typing import Optional, List, Dict, Union, Tuple, Literal, Hashable
 import numpy as np
 import pandas as pd
 import seaborn as sns
@@ -50,17 +50,19 @@ def _new_ax(ax=None, figsize=(6, 5)):
 def check_match_kind_layout(kind=None, layout=None):
     """Reject a non-default ``layout`` for a ``group_cluster`` kind that has no tree layout."""
     if kind != "dendrogram" and layout != ut.LIST_CLUSTER_LAYOUTS[0]:
-        raise ValueError(f"'layout' ('{layout}') should only be set for kind='dendrogram' "
-                         f"(got kind='{kind}').")
+        str_error = (f"'layout' ({layout!r}) should be 'rectangular' when 'kind' "
+                     f"is 'clustermap'.")
+        raise ValueError(str_error)
 
 
 def _check_cluster_inputs(data=None, names=None, labels=None, labels_row=None, dict_color=None,
                           dict_color_row=None, legend_title=None, legend_title_row=None,
                           figsize=None, title=None):
-    """Shared input checks of every ``group_cluster`` kind. Returns (data, labels, labels_row)."""
+    """Shared input checks of every ``group_cluster`` kind."""
     data = ut.check_X(X=data, min_n_samples=2, min_n_features=1)
     if names is not None:
-        ut.check_list_like(name="names", val=names)
+        names = ut.check_list_like(name="names", val=names,
+                                   check_all_str_or_convertible=True)
         if len(names) != data.shape[0]:
             raise ValueError(f"'names' (n={len(names)}) should match n_samples ({data.shape[0]}).")
     # Per-sample class labels color a sidebar / leaf strip (purely cosmetic), so any hashable
@@ -72,16 +74,34 @@ def _check_cluster_inputs(data=None, names=None, labels=None, labels_row=None, d
         val = ut.check_list_like(name=name, val=val, accept_none=False)
         if len(val) != data.shape[0]:
             raise ValueError(f"'{name}' (n={len(val)}) should match n_samples ({data.shape[0]}).")
+        for label in val:
+            try:
+                hash(label)
+            except TypeError:
+                str_error = f"'{name}' ({label!r}) should contain only hashable values."
+                raise ValueError(str_error) from None
         return val
+
+    def _check_label_colors(name, val, colors):
+        if val is None or colors is None:
+            return
+        missing = list(dict.fromkeys(label for label in val if label not in colors))
+        if missing:
+            str_error = (f"'{name}' ({colors}) should contain colors for "
+                         f"labels {missing}.")
+            raise ValueError(str_error)
+
     labels = _check_labels("labels", labels)
     labels_row = _check_labels("labels_row", labels_row)
     ut.check_dict_color(name="dict_color", val=dict_color, accept_none=True)
     ut.check_dict_color(name="dict_color_row", val=dict_color_row, accept_none=True)
+    _check_label_colors(name="dict_color", val=labels, colors=dict_color)
+    _check_label_colors(name="dict_color_row", val=labels_row, colors=dict_color_row)
     ut.check_str(name="legend_title", val=legend_title, accept_none=True)
     ut.check_str(name="legend_title_row", val=legend_title_row, accept_none=True)
     ut.check_figsize(figsize=figsize, accept_none=True)
     ut.check_str(name="title", val=title, accept_none=True)
-    return data, labels, labels_row
+    return data, names, labels, labels_row
 
 
 def check_match_scores_labels(scores=None, labels=None):
@@ -964,15 +984,15 @@ class AAPredPlot:
                       *, kind: Literal["clustermap", "dendrogram"] = "clustermap",
                       layout: Literal["rectangular", "circular"] = "rectangular",
                       labels: Optional[ut.ArrayLike1D] = None,
-                      dict_color: Optional[Dict[Union[int, str], str]] = None,
-                      legend_title: str = "Class",
+                      dict_color: Optional[Dict[Hashable, str]] = None,
+                      legend_title: Optional[str] = "Class",
                       labels_row: Optional[ut.ArrayLike1D] = None,
-                      dict_color_row: Optional[Dict[Union[int, str], str]] = None,
+                      dict_color_row: Optional[Dict[Hashable, str]] = None,
                       legend_title_row: Optional[str] = None,
-                      names: Optional[List[str]] = None,
+                      names: Optional[ut.ArrayLike1D] = None,
                       cmap: str = "GnBu",
                       figsize: Optional[Tuple[Union[int, float], Union[int, float]]] = None,
-                      cbar_label: str = "Pearson correlation (r)",
+                      cbar_label: Optional[str] = "Pearson correlation (r)",
                       title: Optional[str] = None,
                       ) -> Tuple[Figure, Axes]:
         """
@@ -1019,29 +1039,37 @@ class AAPredPlot:
             Per-sample class labels (length ``n_samples``) coloring the top (column) sidebar. When
             ``labels_row`` is ``None``, the same annotation is mirrored onto the left sidebar. For
             ``kind='dendrogram'`` they color the innermost leaf strip / ring.
+            Labels must be hashable.
         dict_color : dict, optional
             A ``label -> color`` mapping for ``labels``; the mapping order also sets the legend
             order. When ``None``, the house palette is used.
-        legend_title : str, default="Class"
-            Legend title for the ``labels`` (top) annotation.
+        legend_title : str, optional
+            Legend title for the ``labels`` (top) annotation. Defaults to
+            ``'Class'``; if ``None``, uses ``'Class'``.
         labels_row : array-like, optional
             Per-sample class labels for a *distinct* left (row) sidebar (length ``n_samples``), e.g.
             a prediction-confidence band alongside a class annotation on top. For
             ``kind='dendrogram'`` they color a second, outer leaf strip / ring.
+            Labels must be hashable.
         dict_color_row : dict, optional
             A ``label -> color`` mapping for ``labels_row``. When ``None``, the house palette is used.
         legend_title_row : str, optional
-            Legend title for the ``labels_row`` (left) annotation.
-        names : list of str, optional
+            Legend title for the ``labels_row`` (left) annotation. If ``None``, uses
+            ``'Class'``.
+        names : array-like, optional
             Per-sample tick labels (leaf names for ``kind='dendrogram'``); defaults to positional
-            indices. Dense sample sets show only every k-th name.
+            indices. Items must be strings or string-convertible; dense sample sets
+            show only every k-th name.
         cmap : str, default="GnBu"
-            (``kind='clustermap'``) Colormap for the correlation heatmap; ignored by the dendrogram.
+            (``kind='clustermap'``) Colormap for the correlation heatmap; validated
+            but ignored by the dendrogram.
         figsize : tuple, optional
             Figure size; defaults to a per-kind (and per-``layout``) default. Both kinds own their
             figure, so no ``ax`` is accepted.
-        cbar_label : str, default="Pearson correlation (r)"
-            (``kind='clustermap'``) Label of the colorbar; ignored by the dendrogram.
+        cbar_label : str, optional
+            (``kind='clustermap'``) Label of the colorbar. Defaults to
+            ``'Pearson correlation (r)'``; ``None`` leaves the colorbar unlabeled. It is
+            validated but ignored by the dendrogram.
         title : str, optional
             Figure title.
 
@@ -1063,22 +1091,24 @@ class AAPredPlot:
             contains missing values.
         ValueError
             If ``labels``, ``labels_row``, or ``names`` are not list-like of length ``n_samples``,
-            if ``dict_color`` / ``dict_color_row`` are not dictionaries of valid colors or miss a
-            color for a label, if ``legend_title``, ``legend_title_row``, ``cbar_label``, or
-            ``title`` are not strings, if ``cmap`` is not a valid matplotlib colormap name, or if
+            if a label is not hashable, if ``dict_color`` / ``dict_color_row`` are not
+            dictionaries of valid colors or miss a color for a label, if
+            ``legend_title``, ``legend_title_row``, ``cbar_label``, or ``title`` are not
+            strings, if ``cmap`` is not a valid matplotlib colormap name, or if
             ``figsize`` is not a tuple of two positive numbers.
 
         See Also
         --------
         * :meth:`AAPredPlot.predict_group` for across-samples views of the prediction scores.
-        * :meth:`ShapModel` and :meth:`SequenceFeature.feature_matrix` for the input matrix.
+        * :class:`ShapModel` and :meth:`SequenceFeature.feature_matrix` for the input
+          matrix.
 
         Notes
         -----
         * Samples are related by the **Pearson correlation** between their feature/importance
-          vectors. A sample whose vector has zero variance (e.g. an all-zero SHAP row) correlates
-          with nothing, which yields ``NaN``; such entries are set to 0 (uncorrelated) with a
-          self-correlation of 1, so the clustering stays well-defined.
+          vectors. A sample whose vector has zero variance (e.g. an all-zero SHAP row)
+          is treated as uncorrelated (0) with other samples and has self-correlation 1,
+          so the clustering stays well-defined without numerical warnings.
         * Both kinds share one **hierarchical linkage**, computed with ``scipy`` (average linkage
           on the Euclidean distances between the rows of that correlation matrix) and handed to
           ``seaborn.clustermap`` via ``row_linkage`` / ``col_linkage``. The dendrogram therefore
@@ -1093,8 +1123,9 @@ class AAPredPlot:
         --------
         .. include:: examples/aap_plot_group_cluster.rst
         """
-        if kind not in ut.LIST_CLUSTER_KINDS:
-            raise ValueError(f"'kind' ('{kind}') must be one of {ut.LIST_CLUSTER_KINDS}.")
+        # Validate
+        ut.check_str_options(name="kind", val=kind,
+                             list_str_options=ut.LIST_CLUSTER_KINDS)
         ut.check_str_options(name="layout", val=layout, list_str_options=ut.LIST_CLUSTER_LAYOUTS)
         ut.check_cmap(name="cmap", val=cmap)
         ut.check_str(name="cbar_label", val=cbar_label, accept_none=True)
@@ -1584,7 +1615,7 @@ class AAPredPlot:
                          cbar_label="Pearson correlation (r)", title=None):
         """Cluster samples by explanation similarity (correlation of importance vectors)."""
         # Check input
-        data, labels, labels_row = _check_cluster_inputs(
+        data, names, labels, labels_row = _check_cluster_inputs(
             data=data, names=names, labels=labels, labels_row=labels_row, dict_color=dict_color,
             dict_color_row=dict_color_row, legend_title=legend_title,
             legend_title_row=legend_title_row, figsize=figsize, title=title)
@@ -1601,7 +1632,7 @@ class AAPredPlot:
                          legend_title_row=None, names=None, figsize=(7, 9), title=None):
         """Sample relation tree (rectangular or circular) sharing the clustermap linkage."""
         # Check input
-        data, labels, labels_row = _check_cluster_inputs(
+        data, names, labels, labels_row = _check_cluster_inputs(
             data=data, names=names, labels=labels, labels_row=labels_row, dict_color=dict_color,
             dict_color_row=dict_color_row, legend_title=legend_title,
             legend_title_row=legend_title_row, figsize=figsize, title=title)
