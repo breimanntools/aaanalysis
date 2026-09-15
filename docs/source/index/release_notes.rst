@@ -11,6 +11,26 @@ v1.2.0 (Unreleased)
 
 In development.
 
+Added
+~~~~~
+
+- Calibration quality is now measurable. :meth:`~aaanalysis.ReliabilityModel.eval` gains two
+  keyword-only parameters: ``use_calibrated=True`` bins the calibrated probability
+  (``score_calibrated``) instead of the raw ``score``, and ``add_metrics=True`` appends the Brier
+  score (``bin='brier'``) and the expected calibration error (``bin='ece'``, equal-width bins
+  weighted by bin size), each stored in ``mean_score``. Comparing the raw and the calibrated
+  table on held-out data shows whether ``calibrate=True`` helped. With both left at their
+  defaults the returned table is unchanged; ``use_calibrated=True`` on a model fitted with
+  ``calibrate=False`` raises a ``ValueError``.
+- :meth:`~aaanalysis.ReliabilityModelPlot.reliability_diagram` gains ``label``, annotates the
+  Brier score and ECE in the curve's legend entry when the table carries them, and draws the
+  diagonal only once, so the raw and the calibrated curve can share one ``ax``.
+- :meth:`~aaanalysis.ReliabilityModel.fit` now warns when ``calibrate=True`` cannot be honoured
+  (for example, because a class holds fewer members than the internal cross-validation needs or
+  the model cannot be cloned). ``score_calibrated`` is ``NaN`` in that case, and
+  ``eval(use_calibrated=True)`` raises a ``ValueError`` naming that reason instead of reporting a
+  ``calibrate=False`` that was never passed.
+
 Changed
 ~~~~~~~
 
@@ -46,6 +66,13 @@ Fixed
   silently (``nan < 0`` and ``nan > 1`` are each ``False``), so ``fit(ci=float("nan"))`` was
   accepted and :meth:`~aaanalysis.ReliabilityModel.predict` then returned ``NaN`` ``ci_low`` /
   ``ci_high`` columns.
+- :meth:`~aaanalysis.ReliabilityModel.eval`: passing ``X`` without ``labels`` now raises, where
+  the given features were silently ignored before. Passing ``labels`` without ``X`` scores the
+  training features against that labelling; it must match them in length and may only use labels
+  observed during :meth:`~aaanalysis.ReliabilityModel.fit`.
+- :meth:`~aaanalysis.ReliabilityModelPlot.reliability_diagram` validates ``figsize``, ``color``,
+  ``title``, and ``ax`` in its frontend, so an invalid value raises a ``ValueError`` naming the
+  parameter instead of a matplotlib traceback.
 - :meth:`~aaanalysis.StructurePreprocessor.encode_pae` (and the ``encode`` router) now reads the
   PAE JSON exactly as the AlphaFold Database serves it, a one-element list wrapping the
   ``predicted_aligned_error`` dict, so files downloaded by

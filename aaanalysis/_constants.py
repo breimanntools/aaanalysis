@@ -533,6 +533,11 @@ COL_MEAN_SCORE = "mean_score"        # mean predicted score in the bin (summary 
 COL_EMPIRICAL_POS = "empirical_pos"  # empirical positive rate in the bin (summary row: conformal coverage)
 COL_N_SAMPLES = "n_samples"          # number of samples in the bin (summary row: all evaluated samples)
 STR_BIN_SUMMARY = "summary"
+# Optional calibration-metric rows (eval(add_metrics=True)): the scalar sits in mean_score,
+# empirical_pos is NaN, and n_samples holds all evaluated samples
+STR_BIN_BRIER = "brier"              # Brier score (mean squared error of the scored column)
+STR_BIN_ECE = "ece"                  # expected calibration error over the n_bins equal-width bins
+LIST_BIN_METRICS = [STR_BIN_BRIER, STR_BIN_ECE]
 COLS_EVAL_RELIABILITY = [COL_BIN, COL_MEAN_SCORE, COL_EMPIRICAL_POS, COL_N_SAMPLES]
 
 # ModelEvaluator (repeated cross-validation + bootstrap CIs + paired comparison). Reuses
