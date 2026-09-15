@@ -35,6 +35,12 @@ notes — with cross-references and examples — live in
   point that would score `SeqMut` / `SeqOpt` output in one call. `predict` still takes a
   prebuilt feature matrix `X`, so a candidate set is scored by building that matrix with
   `SequenceFeature.feature_matrix` first.
+  order, and values (addresses #473).
+- Output contract for the prediction tier (addresses #26): `DICT_DF_SCHEMAS` now documents
+  `df_pred` (`AAPred.predict`, all three levels), `df_rel` (`ReliabilityModel.predict`) and
+  `df_eval_reliability` (`ReliabilityModel.eval`), rendered on the Data Schemas page and guarded
+  by contract tests that fail on a renamed, dropped, retyped or undocumented column. The domain
+  level's `is_best` column is now routed through `COL_IS_BEST` (no output change).
 
 ### Changed
 - Prediction/design-tier consistency pass (these classes are still experimental, so no

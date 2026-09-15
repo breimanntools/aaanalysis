@@ -473,6 +473,7 @@ COL_GROUP = "group"             # per-sample/per-protein group label used for co
 COL_OFFSET = "offset"           # AAPred.predict(level='domain') — boundary shift applied to tmd_start/tmd_stop
 COL_RESIDUE_POS = "position"    # AAPred.predict(level='window') — 1-based anchor position scored
 COL_PRED_LABEL = "predicted_label"  # AAPred.predict — class label when a threshold is given
+COL_IS_BEST = "is_best"         # AAPred.predict(level='domain') — True for the highest-scoring offset per protein
 STR_PRINCIPLE_CV = "cv"                  # k-fold cross-validation, scored per fold then averaged (mean, std)
 STR_PRINCIPLE_CV_POOLED = "cv_pooled"    # custom-splitter cross-validation, each metric scored once on the
                                          # pooled out-of-fold predictions (std is NaN: a single estimate)
