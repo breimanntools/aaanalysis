@@ -113,10 +113,11 @@ class ReliabilityModelPlot:
 
         Points on the diagonal are perfectly calibrated; points below it mean the score
         overstates the true positive rate (over-confident), above it under-confident. When
-        ``df_eval`` carries the Brier score and ECE rows (``ReliabilityModel.eval(add_metrics=True)``),
-        both values are annotated in the curve's legend entry. To compare the raw and the
-        calibrated curve, draw both frames onto the same ``ax`` with distinct ``label`` / ``color``;
-        the perfect-calibration diagonal is drawn only once.
+        ``df_eval`` carries the Brier score and ECE rows
+        (``ReliabilityModel.eval(add_metrics=True)``), both values are annotated in the curve's
+        legend entry. To compare the raw and the calibrated curve, draw both frames onto the same
+        ``ax`` with distinct ``label`` / ``color``; the perfect-calibration diagonal is drawn only
+        once.
 
         Parameters
         ----------
@@ -143,12 +144,24 @@ class ReliabilityModelPlot:
         ax : matplotlib.axes.Axes
             The axes drawn on.
 
+        Raises
+        ------
+        ValueError
+            If ``df_eval`` is not a DataFrame or lacks the ``bin`` / ``mean_score`` /
+            ``empirical_pos`` columns, or if ``figsize`` is not a tuple of two positive numbers,
+            ``color`` is not a matplotlib color, ``label`` or ``title`` is not a string, or ``ax``
+            is not a matplotlib ``Axes``.
+
         Examples
         --------
         .. include:: examples/rm_plot_reliability_diagram.rst
         """
         _check_df_cols(df_eval, "df_eval", [ut.COL_BIN, ut.COL_MEAN_SCORE, ut.COL_EMPIRICAL_POS])
+        ut.check_figsize(figsize=figsize, accept_none=False)
+        ut.check_color(name="color", val=color, accept_none=False)
         ut.check_str(name="label", val=label)
+        ut.check_str(name="title", val=title, accept_none=True)
+        ut.check_ax(ax=ax, accept_none=True)
         fig, ax = plot_reliability_diagram_(df_eval, figsize=figsize, color=color, label=label,
                                             title=title, ax=ax)
         return ut.FigAxResult(fig, ax)

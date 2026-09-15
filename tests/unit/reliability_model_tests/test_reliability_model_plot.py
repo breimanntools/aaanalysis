@@ -9,6 +9,7 @@ import hypothesis.strategies as some
 from sklearn.datasets import make_classification
 from matplotlib.figure import Figure
 from matplotlib.axes import Axes
+from matplotlib.colors import to_rgba
 
 import aaanalysis as aa
 
@@ -27,6 +28,12 @@ def _df_rel():
 def _df_eval():
     rm, _, _, Xt, yt = _fitted()
     return rm.eval(X=Xt, labels=yt)
+
+
+@pytest.fixture(scope="module")
+def df_eval():
+    """One fitted eval table, reused by the per-parameter reliability_diagram tests."""
+    return _df_eval()
 
 
 def _is_fig_ax(res):
@@ -67,12 +74,60 @@ class TestReliabilityDiagram:
         assert _is_fig_ax(aa.ReliabilityModelPlot().reliability_diagram(df_eval=_df_eval()))
         plt.close("all")
 
-    def test_params(self):
-        fig, ax = plt.subplots()
-        res = aa.ReliabilityModelPlot().reliability_diagram(
-            df_eval=_df_eval(), figsize=(4, 4), color="tab:red", title="cal", ax=ax)
-        assert res[1] is ax
+    # figsize / color / title / ax: positive, asserting the visual effect
+    @settings(max_examples=5, deadline=None)
+    @given(w=some.floats(min_value=3, max_value=8), h=some.floats(min_value=3, max_value=8))
+    def test_figsize_applied(self, df_eval, w, h):
+        fig, ax = aa.ReliabilityModelPlot().reliability_diagram(df_eval=df_eval, figsize=(w, h))
+        assert tuple(fig.get_size_inches()) == pytest.approx((w, h))
         plt.close("all")
+
+    @pytest.mark.parametrize("color", ["tab:red", "green", "#1b9e77"])
+    def test_color_applied(self, df_eval, color):
+        fig, ax = aa.ReliabilityModelPlot().reliability_diagram(df_eval=df_eval, color=color)
+        assert to_rgba(ax.get_lines()[-1].get_color()) == to_rgba(color)   # [0] is the diagonal
+        plt.close("all")
+
+    @settings(max_examples=5, deadline=None)
+    @given(title=some.text(alphabet="abcdefgh ", min_size=1, max_size=12))
+    def test_title_applied(self, df_eval, title):
+        fig, ax = aa.ReliabilityModelPlot().reliability_diagram(df_eval=df_eval, title=title)
+        assert ax.get_title() == title
+        plt.close("all")
+
+    def test_ax_reused(self, df_eval):
+        fig, ax = plt.subplots()
+        n_figs = len(plt.get_fignums())
+        res = aa.ReliabilityModelPlot().reliability_diagram(
+            df_eval=df_eval, figsize=(4, 4), color="tab:red", title="cal", ax=ax)
+        assert res[1] is ax and res[0] is fig
+        assert len(plt.get_fignums()) == n_figs            # drew onto the passed ax, no new figure
+        plt.close("all")
+
+    # figsize / color / title / ax: negative
+    @pytest.mark.parametrize("figsize", [(0, 5), (5,), "big", (None, 5), 5])
+    def test_figsize_invalid(self, df_eval, figsize):
+        with pytest.raises(ValueError, match="figsize"):
+            aa.ReliabilityModelPlot().reliability_diagram(df_eval=df_eval, figsize=figsize)
+
+    @pytest.mark.parametrize("color", ["not-a-color", 5, None, ["tab:blue"]])
+    def test_color_invalid(self, df_eval, color):
+        with pytest.raises(ValueError, match="color"):
+            aa.ReliabilityModelPlot().reliability_diagram(df_eval=df_eval, color=color)
+
+    @pytest.mark.parametrize("title", [5, ["cal"], 1.5, True])
+    def test_title_invalid(self, df_eval, title):
+        with pytest.raises(ValueError, match="title"):
+            aa.ReliabilityModelPlot().reliability_diagram(df_eval=df_eval, title=title)
+
+    @pytest.mark.parametrize("ax", ["ax", 5, [1, 2]])
+    def test_ax_invalid(self, df_eval, ax):
+        with pytest.raises(ValueError, match="ax"):
+            aa.ReliabilityModelPlot().reliability_diagram(df_eval=df_eval, ax=ax)
+
+    def test_figure_as_ax_invalid(self, df_eval):
+        with pytest.raises(ValueError, match="ax"):
+            aa.ReliabilityModelPlot().reliability_diagram(df_eval=df_eval, ax=plt.figure())
 
     def test_bad_df_raises(self):
         with pytest.raises(ValueError):
@@ -98,7 +153,8 @@ class TestReliabilityDiagram:
     def test_metrics_annotated_in_legend(self):
         rm, _, _, Xt, yt = _fitted()
         df_eval = rm.eval(X=Xt, labels=yt, add_metrics=True, use_calibrated=True)
-        fig, ax = aa.ReliabilityModelPlot().reliability_diagram(df_eval=df_eval, label="calibrated")
+        fig, ax = aa.ReliabilityModelPlot().reliability_diagram(df_eval=df_eval,
+                                                                label="calibrated")
         brier = float(df_eval.loc[df_eval["bin"] == "brier", "mean_score"].iloc[0])
         ece = float(df_eval.loc[df_eval["bin"] == "ece", "mean_score"].iloc[0])
         texts = [t.get_text() for t in ax.get_legend().get_texts()]

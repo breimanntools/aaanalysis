@@ -25,6 +25,11 @@ Added
 - :meth:`~aaanalysis.ReliabilityModelPlot.reliability_diagram` gains ``label``, annotates the
   Brier score and ECE in the curve's legend entry when the table carries them, and draws the
   diagonal only once, so the raw and the calibrated curve can share one ``ax``.
+- :meth:`~aaanalysis.ReliabilityModel.fit` now warns when ``calibrate=True`` cannot be honoured,
+  because a class holds fewer members than the internal cross-validation needs or the model
+  cannot be cloned. ``score_calibrated`` is ``NaN`` in that case, and
+  ``eval(use_calibrated=True)`` raises a ``ValueError`` naming that reason instead of reporting a
+  ``calibrate=False`` that was never passed.
 
 Changed
 ~~~~~~~
@@ -61,6 +66,12 @@ Fixed
   silently (``nan < 0`` and ``nan > 1`` are each ``False``), so ``fit(ci=float("nan"))`` was
   accepted and :meth:`~aaanalysis.ReliabilityModel.predict` then returned ``NaN`` ``ci_low`` /
   ``ci_high`` columns.
+- :meth:`~aaanalysis.ReliabilityModel.eval`: passing only one of ``X`` / ``labels`` now raises,
+  where the given value was silently ignored before; both fall back to the training data only
+  when both are ``None``.
+- :meth:`~aaanalysis.ReliabilityModelPlot.reliability_diagram` validates ``figsize``, ``color``,
+  ``title``, and ``ax`` in its frontend, so an invalid value raises a ``ValueError`` naming the
+  parameter instead of a matplotlib traceback.
 - :meth:`~aaanalysis.StructurePreprocessor.encode_pae` (and the ``encode`` router) now reads the
   PAE JSON exactly as the AlphaFold Database serves it, a one-element list wrapping the
   ``predicted_aligned_error`` dict, so files downloaded by
