@@ -83,7 +83,7 @@ def check_match_strategy_split_args(strategy=None, split_types=None, n_split_min
     return None
 
 
-def check_split_args(split_types=None, n_split_min=1, n_split_max=15, steps_pattern=None,
+def check_split_args(split_types, n_split_min=1, n_split_max=15, steps_pattern=None,
                      n_min=2, n_max=4, len_max=15, steps_periodicpattern=None) -> None:
     """Check split-type-specific ranges after strategy resolution."""
     if ut.STR_SEGMENT in split_types and n_split_min > n_split_max:
@@ -691,7 +691,7 @@ class SequenceFeature:
         ut.check_str_options(name="strategy", val=strategy, accept_none=True,
                              list_str_options=ut.LIST_SPLIT_STRATEGIES)
         split_types_raw = split_types
-        split_types = check_split_types(split_types=split_types)
+        list_split_types = check_split_types(split_types=split_types)
         args_int = dict(n_split_min=n_split_min, n_split_max=n_split_max, n_min=n_min, n_max=n_max, len_max=len_max)
         for name in args_int:
             ut.check_number_range(name=name, val=args_int[name], just_int=True, min_val=1)
@@ -705,10 +705,10 @@ class SequenceFeature:
         check_match_strategy_split_args(strategy=strategy, split_types=split_types_raw,
                                         n_split_min=n_split_min, n_split_max=n_split_max)
         if strategy == ut.STR_COMPOSITIONAL:
-            split_types, n_split_min, n_split_max = [ut.STR_SEGMENT], 1, 1
+            list_split_types, n_split_min, n_split_max = [ut.STR_SEGMENT], 1, 1
         elif strategy == ut.STR_POSITIONAL:
-            split_types, n_split_min, n_split_max = list(ut.LIST_SPLIT_TYPES), 2, 15
-        check_split_args(split_types=split_types, n_split_min=n_split_min, n_split_max=n_split_max,
+            list_split_types, n_split_min, n_split_max = list(ut.LIST_SPLIT_TYPES), 2, 15
+        check_split_args(split_types=list_split_types, n_split_min=n_split_min, n_split_max=n_split_max,
                          steps_pattern=steps_pattern, n_min=n_min, n_max=n_max, len_max=len_max,
                          steps_periodicpattern=steps_periodicpattern)
         # Create kws for splits
@@ -719,7 +719,7 @@ class SequenceFeature:
                                    n_max=n_max,
                                    len_max=len_max,
                                    steps_periodicpattern=steps_periodicpattern,
-                                   split_types=split_types)
+                                   split_types=list_split_types)
         # Post check
         check_split_kws(split_kws=split_kws)
         return split_kws
