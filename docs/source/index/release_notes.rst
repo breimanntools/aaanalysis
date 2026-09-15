@@ -218,6 +218,12 @@ Documentation
   balanced, non-empty sample batches. It bounds the per-batch scale-value tensor, but not total
   peak memory: the ``(n_samples, n_survivors)`` survivor matrix and its test statistics remain
   resident. The ``n_batches`` documentation now also states its per-batch FDR-correction semantics.
+- :meth:`~aaanalysis.CPP.run` and :meth:`~aaanalysis.CPP.run_num`: ``n_sample_batches`` now
+  creates exactly the requested number of balanced, non-empty sample batches. It bounds the
+  dominant per-batch working set, but not total peak memory: the pre-filtered candidate matrix and
+  its test statistics remain resident. The documentation now distinguishes this from
+  ``n_batches``: :meth:`~aaanalysis.CPP.run` applies FDR correction per selected-feature batch,
+  while :meth:`~aaanalysis.CPP.run_num` batches only pass-1 statistics.
 
 Version 1.1
 --------------------------------

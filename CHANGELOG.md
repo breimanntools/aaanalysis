@@ -158,6 +158,11 @@ notes — with cross-references and examples — live in
   number of balanced, non-empty sample batches and documents that it bounds the per-batch
   scale-value tensor, not total peak memory: the `(n_samples, n_survivors)` matrix and its test
   statistics remain resident. The `n_batches` documentation now notes its per-batch FDR semantics.
+- `CPP.run` and `CPP.run_num`: `n_sample_batches` now creates exactly the requested number of
+  balanced, non-empty sample batches. It bounds the dominant per-batch working set, but not total
+  peak memory: the pre-filtered candidate matrix and its test statistics remain resident. The
+  documentation now distinguishes this from `n_batches`: `CPP.run` applies FDR correction per
+  selected-feature batch, while `CPP.run_num` batches only pass-1 statistics.
 
 ## [1.1.0] - 2026-09-10
 
