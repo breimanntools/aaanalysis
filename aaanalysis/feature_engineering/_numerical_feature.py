@@ -583,21 +583,24 @@ class NumericalFeature:
 
         Parameters
         ----------
-        pssm : str, os.PathLike, or dict
+        pssm : str, os.PathLike, or dict[str, str | os.PathLike | array-like], shape (L, 20)
             PSSM source. Either a directory of per-protein PSI-BLAST ASCII ``.pssm`` files (the
             extension is matched case-insensitively, e.g. ``.PSSM``; the file stem is used as
             ``entry``), a path to a single ``.pssm`` file (``entry`` = file stem), or a dict
             mapping each ``entry`` to a PSSM file path or a precomputed ``(L, 20)`` array. Arrays
             must already be in canonical amino acid column order (``ACDEFGHIKLMNPQRSTVWY``) and
             hold raw values of the kind given by ``values``.
-        df_seq : pd.DataFrame, shape (n_samples, n_seq_info), optional
+        df_seq : pd.DataFrame, shape (n_samples, n_seq_info), default=None
             DataFrame containing an ``entry`` column with protein identifiers and a ``sequence``
             column with full protein sequences. If given, every entry must have a PSSM whose row
-            count equals its sequence length and (for files) whose residue column matches the
-            sequence.
+            count equals its sequence length and, for files, whose residue column matches the
+            sequence. If ``None``, do not check PSSM entries, row counts, or residues against
+            sequences.
         values : {'log_odds', 'frequencies'}, default='log_odds'
-            PSSM block to use: the log-odds substitution scores or, when present, the weighted
-            observed percentages.
+            PSSM block to return:
+
+            - ``'log_odds'``: log-odds substitution scores, available in every supported file.
+            - ``'frequencies'``: weighted observed percentages, requiring that block in each file.
         normalize : bool, default=True
             If ``True``, map values onto ``[0, 1]``: log-odds via the logistic sigmoid
             ``1 / (1 + exp(-x))`` (numerically stable for large ``|x|``) and percentages via
@@ -606,13 +609,14 @@ class NumericalFeature:
         return_scales : bool, default=False
             If ``True``, also return the matching 20-column ``df_scales`` and ``df_cat`` naming
             the PSSM dimensions (``PSSM_A``, ..., ``PSSM_Y``), so the return becomes the 3-tuple
-            ``(dict_num, df_scales, df_cat)``.
+            ``(dict_num, df_scales, df_cat)``. If ``False``, return ``dict_num`` only.
 
         Returns
         -------
         dict_num : dict[str, np.ndarray]
-            Mapping ``entry -> (L, 20)`` float array with columns in ``ut.LIST_CANONICAL_AA``
-            order. Pass to :meth:`NumericalFeature.get_parts`.
+            Returned by itself if ``return_scales=False``; otherwise the first element of the
+            returned tuple. Maps each ``entry`` to an ``(L, 20)`` float array with columns in
+            ``ut.LIST_CANONICAL_AA`` order. Pass to :meth:`NumericalFeature.get_parts`.
         df_scales : pd.DataFrame, shape (20, 20)
             Returned only if ``return_scales=True``. Columns name the 20 PSSM dimensions in
             ``dict_num`` column order; rows are the canonical amino acids (identity values, which
@@ -624,13 +628,18 @@ class NumericalFeature:
         Raises
         ------
         ValueError
-            If a directory holds no ``.pssm`` file, a file cannot be parsed, has a malformed
-            numeric field, has non-consecutive matrix positions or inconsistent frequency blocks,
-            or lacks the requested block, an array is not ``(L, 20)``, any value is NaN or
-            infinite, a percentage (``values='frequencies'``) lies outside
-            ``[0, 100]``, or (with ``df_seq``) an entry is missing, its PSSM row count differs
-            from its sequence length, or its residues differ from its sequence. All mismatching
-            entries are listed in one message.
+            If ``pssm``, ``df_seq``, ``values``, ``normalize``, or ``return_scales`` has an
+            invalid type or value; a path is not an existing supported ``.pssm`` source; a
+            directory holds no ``.pssm`` file; or a dict has invalid entries or arrays. Also if a
+            file cannot be parsed as a PSI-BLAST ASCII PSSM, has an invalid header or numeric
+            field, non-consecutive matrix positions, inconsistent frequency blocks, or lacks the
+            requested block; an array is not numeric ``(L, 20)``; any value is NaN or infinite; a
+            percentage (``values='frequencies'``) lies outside ``[0, 100]``; or, with ``df_seq``,
+            an entry is missing, its PSSM row count differs from its sequence length, or its
+            residues differ from its sequence. All sequence mismatches are listed in one message.
+        OSError
+            If a PSSM directory cannot be listed or a PSSM file cannot be read after its source
+            path has been validated.
 
         Notes
         -----
