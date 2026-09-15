@@ -11,9 +11,41 @@ v1.2.0 (Unreleased)
 
 In development.
 
+Changed
+~~~~~~~
+
+- Consistency pass on the prediction and design tier. These classes are still marked
+  experimental, so the changes land without a deprecation cycle:
+
+  - :meth:`~aaanalysis.ReliabilityModel.fit`: ``ci`` is now a fraction in ``(0, 1)`` with default
+    ``0.90`` (it was a percent, ``90.0``), the same unit as :meth:`~aaanalysis.ModelEvaluator.run`
+    and :func:`~aaanalysis.comp_bootstrap_ci`. Passing a percent raises a ``ValueError`` that says
+    so.
+  - :meth:`~aaanalysis.ReliabilityModel.predict`: the ``ad_knn_dist`` column is renamed to
+    ``ad_knn``, following the ``ad_<method>`` pattern of ``ad_mahalanobis`` and ``ad_leverage``.
+  - :meth:`~aaanalysis.ReliabilityModel.eval`: the ``n`` column is renamed to ``n_samples``. The
+    shape of the table, including its summary row, is unchanged.
+  - :class:`~aaanalysis.SeqOpt`: the default ``mode`` is now ``"importance"``, which needs no
+    fitted model, reference set, or ``[pro]`` extra, so ``aa.SeqOpt()`` constructs in a base
+    install. ``mode="impact"`` remains the recommended SHAP-guided search.
+  - :meth:`~aaanalysis.AAPred.eval`: ``"mcc"`` (Matthews correlation coefficient) is accepted, so
+    ``AAPred`` and :class:`~aaanalysis.ModelEvaluator` share one metric vocabulary.
+  - The :class:`~aaanalysis.ReliabilityModel` docstring now states that its ``score_std`` is the
+    spread of a sample's score across ensemble members, whereas the ``score_std`` of
+    :meth:`~aaanalysis.AAPred.eval` and :meth:`~aaanalysis.ModelEvaluator.run` is the spread of a
+    metric across cross-validation folds.
+  - :class:`~aaanalysis.AAPred` and :class:`~aaanalysis.SeqOpt` validate ``df_scales``, and
+    :meth:`~aaanalysis.AAPred.eval` validates ``list_parts``, so an invalid value raises a
+    ``ValueError`` naming the parameter instead of failing later or being ignored.
+
 Fixed
 ~~~~~
 
+- :meth:`~aaanalysis.ReliabilityModel.fit` rejects non-finite numbers (``NaN``, ``inf``, ``-inf``)
+  for ``ci``, ``ad_percentile`` and ``conformal_alpha``. A ``NaN`` passed both range comparisons
+  silently (``nan < 0`` and ``nan > 1`` are each ``False``), so ``fit(ci=float("nan"))`` was
+  accepted and :meth:`~aaanalysis.ReliabilityModel.predict` then returned ``NaN`` ``ci_low`` /
+  ``ci_high`` columns.
 - :meth:`~aaanalysis.StructurePreprocessor.encode_pae` (and the ``encode`` router) now reads the
   PAE JSON exactly as the AlphaFold Database serves it, a one-element list wrapping the
   ``predicted_aligned_error`` dict, so files downloaded by

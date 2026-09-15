@@ -15,7 +15,31 @@ notes — with cross-references and examples — live in
 
 ## [Unreleased]
 
+### Changed
+- Prediction/design-tier consistency pass (these classes are still experimental, so no
+  deprecation cycle; addresses #510):
+  - `ReliabilityModel.fit(ci=...)` is now a fraction in (0, 1), default `0.90` (was a percent,
+    `90.0`), matching `ModelEvaluator.run(ci=0.95)` and `comp_bootstrap_ci`. A percent value
+    raises a `ValueError` with a hint.
+  - `ReliabilityModel.predict` column `ad_knn_dist` renamed to `ad_knn` (matches
+    `ad_mahalanobis` / `ad_leverage`).
+  - `ReliabilityModel.eval` column `n` renamed to `n_samples`; its columns are registered as
+    `COLS_EVAL_RELIABILITY` (summary-row shape unchanged).
+  - `SeqOpt` default `mode` is now `"importance"` (core-only), so bare `SeqOpt()` constructs in
+    a base install; `"impact"` stays the documented headline mode.
+  - `AAPred.eval` (and `list_metrics`) accepts `"mcc"`, the same metric vocabulary as
+    `ModelEvaluator`.
+  - Documented that `score_std` in `ReliabilityModel` is the spread across ensemble members,
+    whereas in `AAPred` / `ModelEvaluator` it is the spread across CV folds.
+  - `AAPred` and `SeqOpt` now validate `df_scales`, and `AAPred.eval` validates `list_parts`, in
+    their frontend checks: an invalid value raises a `ValueError` naming the parameter instead of
+    failing later (or being silently ignored).
+
 ### Fixed
+- `ReliabilityModel.fit`: non-finite numbers (`NaN`, `inf`, `-inf`) are rejected for `ci`,
+  `ad_percentile` and `conformal_alpha`. `NaN` passed both range comparisons silently
+  (`nan < 0` and `nan > 1` are each `False`), so `fit(ci=float("nan"))` was accepted and
+  `predict` then returned `NaN` `ci_low` / `ci_high` columns.
 - `StructurePreprocessor.encode_pae` / `encode`: read the AlphaFold DB PAE JSON layout
   (a one-element list wrapping the `predicted_aligned_error` dict), so files from
   `fetch_alphafold` load without a manual unwrap.

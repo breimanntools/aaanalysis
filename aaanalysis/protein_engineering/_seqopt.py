@@ -4,7 +4,7 @@ optimization over sequence variants of one wild-type, reusing a model-bound SeqM
 fitness engine. SeqOpt is a core class; only its SHAP-guided ``mode="impact"`` (per-generation
 ShapModel refit) needs the optional ``aaanalysis[pro]`` dependency, imported lazily.
 """
-from typing import Optional, List, Any, Callable, Tuple, Dict
+from typing import Optional, List, Any, Callable, Tuple, Dict, Literal
 import numpy as np
 import pandas as pd
 
@@ -179,7 +179,7 @@ class SeqOpt(Tool):
 
     """
     def __init__(self,
-                 *, mode: str = "impact",
+                 *, mode: Literal["importance", "impact"] = "importance",
                  model: Optional[Any] = None,
                  target_class: Optional[Any] = None,
                  df_seq_ref: Optional[pd.DataFrame] = None,
@@ -191,13 +191,21 @@ class SeqOpt(Tool):
         """
         Parameters
         ----------
-        mode : str, default='impact'
-            Residue-guidance mode. ``'impact'`` refits :class:`ShapModel` every generation under
-            fuzzy labeling (the new variant's prediction score as a soft label vs. the balanced
-            reference) and mutates the strongest-``feat_impact`` residues — this is the only
-            SeqOpt feature that needs ``aaanalysis[pro]`` (SHAP), imported lazily. ``'importance'``
-            uses the static ``feat_importance`` ranking from ``df_feat`` (no SHAP, no refit) and
-            walks positions highest-first (no pro dependency).
+        mode : {'importance', 'impact'}, default='importance'
+            Residue-guidance mode:
+
+            - ``'importance'``: uses the static ``feat_importance`` ranking from ``df_feat`` (no
+              SHAP, no refit) and walks positions highest-first. It needs no pro dependency, and is
+              the default so that a bare ``SeqOpt()`` constructs in a base install.
+            - ``'impact'``: the headline mode, refits :class:`ShapModel` every generation under
+              fuzzy labeling (the new variant's prediction score as a soft label vs. the balanced
+              reference) and mutates the strongest-``feat_impact`` residues. It is the only SeqOpt
+              feature that needs ``aaanalysis[pro]`` (SHAP), imported lazily, and requires
+              ``model``, ``df_seq_ref`` and ``labels``.
+
+            .. versionchanged:: 1.2.0
+               The default is ``'importance'`` (was ``'impact'``), so ``SeqOpt()`` constructs in a
+               base install; ``'impact'`` stays the documented headline mode.
         model : object, optional
             A fitted classifier exposing ``predict_proba`` used as the fitness engine (the
             ``delta_pred`` objective) and, in ``mode='impact'``, as the model whose attribution
@@ -217,19 +225,30 @@ class SeqOpt(Tool):
         verbose : bool, default=False
             If ``True``, verbose outputs are enabled.
 
+        Raises
+        ------
+        ValueError
+            If ``mode``, ``df_scales``, or ``random_state`` is invalid; if the model arguments are
+            invalid; or if ``mode='impact'`` lacks ``model``, ``df_seq_ref``, or ``labels``.
+        ImportError
+            If ``mode='impact'`` is selected without the optional ``aaanalysis[pro]`` dependency.
+
         See Also
         --------
         * :class:`SeqMut` whose ``combine`` scores the variants (the fitness engine).
         * :class:`ShapModel` whose fuzzy-labeled SHAP values drive ``mode='impact'`` guidance.
         """
+        # Validate
         self._verbose = ut.check_verbose(verbose)
         self._mode = check_mode(mode)
+        ut.check_df(name="df_scales", df=df_scales, accept_none=True)
+        if random_state is not None:
+            ut.check_number_range(name="random_state", val=random_state, min_val=0, just_int=True)
+        # Resolve the scale set
+        self._random_state = random_state
         if df_scales is None:
             df_scales = ut.load_default_scales()
         self.df_scales = df_scales
-        if random_state is not None:
-            ut.check_number_range(name="random_state", val=random_state, min_val=0, just_int=True)
-        self._random_state = random_state
         self._sf = SequenceFeature(verbose=False)
         # Fitness engine (model-bound SeqMut); validation of model/target_class is reused there.
         self._seqmut = SeqMut(verbose=False, df_scales=df_scales, model=model,

@@ -58,6 +58,29 @@ def check_model(model=None, members=None):
         raise ValueError("'model' must implement 'predict_proba' (or pass a list / AAPred / None).")
 
 
+def check_finite(name: str, val: float):
+    """Check that a numeric value is finite.
+
+    ``NaN`` and ``+/-inf`` are floats that pass *every* range comparison silently (``nan < 0``
+    and ``nan > 1`` are both ``False``), so they slip through a plain range check and only
+    surface much later as ``NaN`` outputs. Non-numeric values are left to the range check,
+    which reports the type.
+    """
+    if isinstance(val, (float, np.floating)) and not np.isfinite(val):
+        raise ValueError(f"'{name}' ({val}) should be a finite float or an integer.")
+
+
+def check_ci(ci: float):
+    """Check that ``ci`` is a fraction in (0, 1), with a hint when a percent is passed."""
+    check_finite(name="ci", val=ci)
+    ut.check_number_range(name="ci", val=ci, min_val=0, just_int=False)
+    if 1 < ci <= 100:
+        raise ValueError(f"'ci' ({ci}) should be a fraction in (0, 1), e.g. 0.90 for a 90% "
+                         f"interval, not a percent.")
+    ut.check_number_range(name="ci", val=ci, min_val=0.0, max_val=1.0, just_int=False,
+                          exclusive_limits=True)
+
+
 # II Main Class
 class ReliabilityModel(Wrapper):
     """
@@ -123,6 +146,10 @@ class ReliabilityModel(Wrapper):
     * **``score`` is the member mean** — the ensemble average, or the bootstrap ("bagged") average
       for a single model — so it is always the centre of ``[ci_low, ci_high]``. Set ``n_bootstrap=0``
       to report a single model's own probability instead (then ``score_std`` is 0).
+    * **``score_std`` is a per-sample spread across members.** Here it is the standard deviation of
+      one sample's probability across the ensemble members (or bootstrap resamples). The
+      same-named column in :meth:`AAPred.eval` and :meth:`ModelEvaluator.run` means something
+      different: the standard deviation of a metric across cross-validation folds.
     * **``reliable`` is conformal-based** (``in_domain`` and a confident conformal singleton),
       whereas ``margin`` / ``entropy`` are a separate calibrated-sharpness readout — they can
       disagree on a borderline case.
@@ -163,7 +190,7 @@ class ReliabilityModel(Wrapper):
         self._members = None
         self._calibrator = None
         self._conf_state = None
-        self._ci = 90.0
+        self._ci = 0.90
 
     def fit(self,
             X: ut.ArrayLike2D,
@@ -172,7 +199,7 @@ class ReliabilityModel(Wrapper):
             label_pos: int = 1,
             k: int = 5,
             ad_percentile: float = 95.0,
-            ci: float = 90.0,
+            ci: float = 0.90,
             n_bootstrap: int = 20,
             calibrate: bool = True,
             calibration_method: str = "isotonic",
@@ -201,8 +228,14 @@ class ReliabilityModel(Wrapper):
             Number of nearest training neighbors for the applicability-domain distance.
         ad_percentile : float, default=95.0
             Training kNN-distance percentile used as the ``in_domain`` boundary.
-        ci : float, default=90.0
-            Central width (percent) of the reported score confidence interval.
+        ci : float, default=0.90
+            Central width of the reported score confidence interval, as a fraction in ``(0, 1)``
+            (e.g. ``0.90`` for a 90% interval), matching :meth:`ModelEvaluator.run`.
+
+            .. versionchanged:: 1.2.0
+               Now a fraction in ``(0, 1)`` (default ``0.90``) instead of a percent (``90.0``),
+               matching :meth:`ModelEvaluator.run` and ``comp_bootstrap_ci``. A percent value
+               raises a ``ValueError`` with a hint; the interval itself is unchanged.
         n_bootstrap : int, default=20
             Bootstrap resamples for uncertainty when ``model`` is a single estimator (not an
             ensemble); ``score`` is then the bagged mean over the resamples (see Notes). ``0``
@@ -225,7 +258,7 @@ class ReliabilityModel(Wrapper):
         ValueError
             If ``labels`` are not binary, ``label_pos`` is absent from ``labels``, ``model`` is an
             empty list or lacks ``predict_proba``, a passed :class:`AAPred` is not fitted, or a
-            numeric parameter is out of range.
+            numeric parameter is out of range or not finite (``NaN`` / ``inf``).
 
         Examples
         --------
@@ -237,14 +270,16 @@ class ReliabilityModel(Wrapper):
         ut.check_match_X_labels(X=X, labels=labels)
         ut.check_number_range(name="label_pos", val=label_pos, min_val=0, just_int=True)
         ut.check_number_range(name="k", val=k, min_val=1, just_int=True)
+        check_finite(name="ad_percentile", val=ad_percentile)
         ut.check_number_range(name="ad_percentile", val=ad_percentile, min_val=1, max_val=100,
                               just_int=False)
-        ut.check_number_range(name="ci", val=ci, min_val=1, max_val=99, just_int=False)
+        check_ci(ci=ci)
         ut.check_number_range(name="n_bootstrap", val=n_bootstrap, min_val=0, just_int=True)
         ut.check_bool(name="calibrate", val=calibrate)
         ut.check_str(name="calibration_method", val=calibration_method)
         if calibration_method not in ("isotonic", "sigmoid"):
             raise ValueError("'calibration_method' must be 'isotonic' or 'sigmoid'.")
+        check_finite(name="conformal_alpha", val=conformal_alpha)
         ut.check_number_range(name="conformal_alpha", val=conformal_alpha, min_val=0, max_val=1,
                               just_int=False, accept_none=False)
         labels = np.asarray(labels)
@@ -319,6 +354,10 @@ class ReliabilityModel(Wrapper):
         ``margin`` / ``entropy`` (calibrated ambiguity), ``conformal_set`` (validity), and
         ``reliable`` (the headline flag).
 
+        .. versionchanged:: 1.2.0
+           The applicability-domain column ``ad_knn_dist`` is named ``ad_knn``, matching its
+           ``ad_mahalanobis`` / ``ad_leverage`` siblings.
+
         Parameters
         ----------
         X : array-like, shape (n_samples, n_features)
@@ -328,7 +367,7 @@ class ReliabilityModel(Wrapper):
         -------
         df_rel : pd.DataFrame
             One row per sample with columns: ``score``, ``score_std``, ``ci_low``, ``ci_high``,
-            ``ood_score``, ``in_domain``, ``ad_knn_dist``, ``ad_mahalanobis``, ``ad_leverage``,
+            ``ood_score``, ``in_domain``, ``ad_knn``, ``ad_mahalanobis``, ``ad_leverage``,
             ``score_calibrated``, ``margin``, ``entropy``, ``conformal_set``, ``reliable``.
 
         Raises
@@ -390,27 +429,36 @@ class ReliabilityModel(Wrapper):
         with the fraction in the applicability domain and the empirical coverage of the conformal
         sets (which should track ``1 - conformal_alpha``).
 
+        .. versionchanged:: 1.2.0
+           The per-bin sample-count column ``n`` is named ``n_samples``.
+
         Parameters
         ----------
         X : array-like, optional
-            Evaluation features; the training ``X`` is used if ``None`` (a held-out labeled set
-            gives an honest estimate — calibration and conformal were fit on the training data).
+            Evaluation features. The training ``X`` is used if ``None``. A held-out labeled set
+            gives an honest estimate because calibration and conformal were fit on the training
+            data.
         labels : array-like, optional
-            Evaluation labels; the training labels are used if ``None``.
+            Evaluation labels, using only class labels observed during :meth:`fit`. The training
+            labels are used if ``None``, independently of whether ``X`` is supplied.
         n_bins : int, default=5
             Number of equal-width score bins for the calibration curve.
 
         Returns
         -------
         df_eval : pd.DataFrame
-            Per-bin rows (``bin``, ``mean_score``, ``empirical_pos``, ``n``) plus a summary row
-            with the in-domain fraction (``mean_score``) and the empirical conformal coverage
-            (``empirical_pos``).
+            Per-bin rows (``bin``, ``mean_score``, ``empirical_pos``, ``n_samples``) plus a
+            summary row (``bin='summary'``) with the in-domain fraction (``mean_score``), the
+            empirical conformal coverage (``empirical_pos``), and the number of evaluated samples
+            (``n_samples``).
 
         Raises
         ------
         RuntimeError
             If called before :meth:`fit`.
+        ValueError
+            If ``X`` and ``labels`` have different lengths, ``X`` has a different feature count
+            than the training data, or ``labels`` contains a class not observed during :meth:`fit`.
 
         Examples
         --------
@@ -419,10 +467,17 @@ class ReliabilityModel(Wrapper):
         if self._ad_state is None:
             raise RuntimeError("Call 'fit' before 'eval'.")
         if X is None:
-            X, labels = self._X_train, self._y_train
+            X = self._X_train
+        if labels is None:
+            labels = self._y_train
         X = ut.check_X(X=X)
         labels = ut.check_labels(labels=labels)
         ut.check_match_X_labels(X=X, labels=labels)
+        train_classes = set(np.unique(self._y_train).tolist())
+        unknown_labels = sorted(set(np.unique(labels).tolist()) - train_classes)
+        if unknown_labels:
+            raise ValueError(f"'labels' ({unknown_labels}) should contain only labels observed "
+                             f"during 'fit' ({sorted(train_classes)}).")
         ut.check_number_range(name="n_bins", val=n_bins, min_val=2, just_int=True)
         y = (np.asarray(labels) == self.label_pos_).astype(int)
         df = self.predict(X)
@@ -431,13 +486,13 @@ class ReliabilityModel(Wrapper):
         rows = []
         for b in range(n_bins):
             m = (s >= edges[b]) & (s <= edges[b + 1] if b == n_bins - 1 else s < edges[b + 1])
-            rows.append({"bin": f"{edges[b]:.2f}-{edges[b+1]:.2f}",
-                         "mean_score": float(np.mean(s[m])) if m.any() else np.nan,
-                         "empirical_pos": float(np.mean(y[m])) if m.any() else np.nan,
-                         "n": int(m.sum())})
+            rows.append([f"{edges[b]:.2f}-{edges[b+1]:.2f}",
+                         float(np.mean(s[m])) if m.any() else np.nan,
+                         float(np.mean(y[m])) if m.any() else np.nan,
+                         int(m.sum())])
         sets = df[ut.COL_CONFORMAL_SET].to_numpy()
         covered = (np.isin(sets, [ut.STR_CONF_POS, ut.STR_CONF_BOTH]) & (y == 1)) | \
                   (np.isin(sets, [ut.STR_CONF_NEG, ut.STR_CONF_BOTH]) & (y == 0))
-        rows.append({"bin": "summary", "mean_score": float(np.mean(df[ut.COL_IN_DOMAIN])),
-                     "empirical_pos": float(np.mean(covered)), "n": len(X)})
-        return pd.DataFrame(rows)
+        rows.append([ut.STR_BIN_SUMMARY, float(np.mean(df[ut.COL_IN_DOMAIN])),
+                     float(np.mean(covered)), len(X)])
+        return pd.DataFrame(rows, columns=ut.COLS_EVAL_RELIABILITY)

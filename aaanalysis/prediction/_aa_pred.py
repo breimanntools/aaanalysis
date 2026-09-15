@@ -281,8 +281,12 @@ class AAPred(Wrapper):
             Keyword arguments for each model in ``list_model_classes`` (same length).
         list_metrics : list of str, default=["accuracy", "balanced_accuracy", "f1", "roc_auc"]
             Default performance metrics used by :meth:`eval` when ``metrics`` is not given.
-            Each should be one of ``accuracy``, ``balanced_accuracy``, ``precision``,
-            ``recall``, ``f1``, ``roc_auc``.
+            Each should be one of ``accuracy``, ``balanced_accuracy``, ``precision``, ``recall``,
+            ``f1``, ``roc_auc``, and ``mcc`` (Matthews correlation coefficient).
+
+            .. versionchanged:: 1.2.0
+               ``mcc`` (Matthews correlation coefficient) is accepted, giving ``AAPred`` the same
+               metric vocabulary as :class:`ModelEvaluator`.
         df_feat : pd.DataFrame, shape (n_features, n_feature_info), optional
             CPP feature DataFrame (with a ``feature`` column) bound to the model. When given, the
             feature matrix ``X`` is computed internally from a ``df_seq`` by the sequence-level
@@ -301,9 +305,17 @@ class AAPred(Wrapper):
         --------
         .. include:: examples/aap.rst
         """
-        # Global parameters
+        # Validate
         verbose = ut.check_verbose(verbose)
         random_state = ut.check_random_state(random_state=random_state)
+        if models is not None and (list_model_classes is not None or list_model_kwargs is not None):
+            raise ValueError("Pass either 'models' or 'list_model_classes'/'list_model_kwargs', not both.")
+        if list_metrics is None:
+            list_metrics = ["accuracy", "balanced_accuracy", "f1", "roc_auc"]
+        list_metrics = check_metrics(metrics=list_metrics)
+        if df_feat is not None:
+            df_feat = ut.check_df_feat(df_feat=df_feat)
+        ut.check_df(name="df_scales", df=df_scales, accept_none=True)
         # Resolve models into configured estimator INSTANCES (``_list_estimators``), which
         # fit/eval clone before use. `models` (registry name strings and/or configured
         # sklearn estimator instances/classes) is the primary API; storing the instance and
@@ -311,8 +323,6 @@ class AAPred(Wrapper):
         # meta-ensembles (voting/stacking) and **kwargs estimators (xgboost) work and keeps
         # a passed instance's own configuration + random_state intact.
         if models is not None:
-            if list_model_classes is not None or list_model_kwargs is not None:
-                raise ValueError("Pass either 'models' or 'list_model_classes'/'list_model_kwargs', not both.")
             if not isinstance(models, list):
                 models = [models]
             if len(models) == 0:
@@ -352,13 +362,6 @@ class AAPred(Wrapper):
         # Every model must support hard-label prediction; predict_proba is validated per operation
         # (probability metrics in eval, and the predict / predict_oof scoring paths) instead.
         check_estimators_predict(list_estimators=list_estimators)
-        # Metric parameters
-        if list_metrics is None:
-            list_metrics = ["accuracy", "balanced_accuracy", "f1", "roc_auc"]
-        list_metrics = check_metrics(metrics=list_metrics)
-        # Featurizer parameters
-        if df_feat is not None:
-            df_feat = ut.check_df_feat(df_feat=df_feat)
         # Internal attributes
         self._verbose = verbose
         self._random_state = random_state
@@ -497,7 +500,12 @@ class AAPred(Wrapper):
         labels_holdout : array-like, shape (n_holdout,), optional
             Class labels for ``X_holdout``. Required if ``X_holdout`` is given.
         metrics : list of str, optional
-            Performance metrics to compute. Defaults to ``list_metrics`` from the constructor.
+            Performance metrics to compute, each one of ``accuracy``, ``balanced_accuracy``,
+            ``precision``, ``recall``, ``f1``, ``roc_auc``, and ``mcc`` (Matthews correlation
+            coefficient). Defaults to ``list_metrics`` from the constructor.
+
+            .. versionchanged:: 1.2.0
+               ``mcc`` (Matthews correlation coefficient) is accepted.
         n_cv : int, default=5
             Number of stratified cross-validation folds (must not exceed the smallest class
             count). Ignored when ``cv`` is given.
@@ -540,6 +548,14 @@ class AAPred(Wrapper):
             for each baseline's cross-validation rows); with ``baseline=None`` the table is
             unchanged (5 columns).
 
+        Raises
+        ------
+        ValueError
+            If feature or label inputs are invalid or misaligned, a metric, splitter, ``n_cv``,
+            ``list_parts``, or baseline selection is invalid, a probability metric is requested
+            from an estimator without ``predict_proba``, or a held-out input is incomplete or has
+            a different feature count.
+
         Examples
         --------
         .. include:: examples/aap_eval.rst
@@ -559,7 +575,9 @@ class AAPred(Wrapper):
             check_cv(cv=cv)
         else:
             check_n_cv(n_cv=n_cv, labels=labels)
-        list_models = None
+        # 'list_parts' is used only in baseline mode, but is validated unconditionally so a typo
+        # surfaces here instead of being silently ignored.
+        list_parts = ut.check_list_parts(list_parts=list_parts, return_default=False, accept_none=True)
         if X_holdout is not None:
             X_holdout = ut.check_X(X=X_holdout, min_n_samples=1)
             labels_holdout = ut.check_labels(labels=labels_holdout)
@@ -567,17 +585,21 @@ class AAPred(Wrapper):
             if X_holdout.shape[1] != X.shape[1]:
                 raise ValueError(f"'X_holdout' n_features ({X_holdout.shape[1]}) should match "
                                  f"'X' n_features ({X.shape[1]}).")
-            list_models = fit_models(X=X, labels=labels, list_estimators=self._list_estimators)
         elif labels_holdout is not None:
             raise ValueError("'labels_holdout' was given without 'X_holdout'.")
-        # Resolve the optional baseline-featurizer comparison (built internally from df_seq)
         list_kinds = check_baseline(baseline=baseline)
-        dict_X_baseline = None
         if list_kinds is not None:
             ut.check_df_seq(df_seq=df_seq)
             if len(df_seq) != len(labels):
                 raise ValueError(f"'df_seq' n_samples ({len(df_seq)}) should match "
                                  f"'labels' n_samples ({len(labels)}).")
+        # Fit the deployment models scored on the holdout set
+        list_models = None
+        if X_holdout is not None:
+            list_models = fit_models(X=X, labels=labels, list_estimators=self._list_estimators)
+        # Build the optional baseline-featurizer comparison (built internally from df_seq)
+        dict_X_baseline = None
+        if list_kinds is not None:
             dict_X_baseline = build_baseline_matrices(df_seq=df_seq, list_kinds=list_kinds,
                                                       df_scales=self._df_scales, list_parts=list_parts)
         # Evaluate

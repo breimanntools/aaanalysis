@@ -190,7 +190,7 @@ class TestSeqOptRun:
                        region="tmd")
 
     def test_bad_algorithm_raises(self, seqo, wt, df_feat):
-        with pytest.raises(ValueError):
+        with pytest.raises(ValueError, match="'algorithm'"):
             seqo.run(df_seq=wt, df_feat=df_feat, objectives=OBJ, algorithm="cmaes",
                        region="tmd")
 
@@ -219,8 +219,70 @@ class TestSeqOptInit:
             SeqOpt(mode="impact", model=model, df_seq_ref=None, labels=None)
 
     def test_bad_mode_raises(self):
-        with pytest.raises(ValueError):
+        with pytest.raises(ValueError, match="'mode'"):
             SeqOpt(mode="random")
+
+    def test_bare_construction_in_base_install(self, monkeypatch):
+        # The default mode is the core-only 'importance', so SeqOpt() needs no model, reference
+        # set, or pro extra (discovery paths like aa.SeqOpt? must not raise).
+        import sys
+        monkeypatch.setitem(sys.modules, "aaanalysis.explainable_ai_pro", None)
+        so = SeqOpt()
+        assert so._mode == "importance"
+        assert aa.SeqOpt()._mode == "importance"
+
+    def test_default_mode_is_importance(self):
+        import inspect
+        assert inspect.signature(SeqOpt.__init__).parameters["mode"].default == "importance"
+
+    @pytest.mark.parametrize("mode", ["importance", "impact"])
+    def test_accepted_modes_construct(self, mode, model, wt):
+        # Both documented options are accepted by the constructor itself (not merely listed in
+        # the constant that validation reads), 'impact' with its required prerequisites.
+        if mode == "impact":
+            pytest.importorskip("shap")
+            ref = pd.DataFrame({ut.COL_ENTRY: [f"R{i}" for i in range(4)],
+                                ut.COL_SEQ: [wt[ut.COL_SEQ].iloc[0]] * 4,
+                                ut.COL_TMD_START: [11] * 4, ut.COL_TMD_STOP: [20] * 4})
+            so = SeqOpt(mode="impact", model=model, df_seq_ref=ref, labels=[1, 0, 1, 0])
+        else:
+            so = SeqOpt(mode="importance")
+        assert so._mode == mode
+
+    @settings(max_examples=5, deadline=None)
+    @given(random_state=some.integers(min_value=0, max_value=100))
+    def test_random_state_valid(self, random_state):
+        assert SeqOpt(random_state=random_state)._random_state == random_state
+
+    def test_random_state_none_accepted(self):
+        assert SeqOpt(random_state=None)._random_state is None
+
+    @pytest.mark.parametrize("random_state", [-1, 2.5, "seed"])
+    def test_random_state_invalid_raises(self, random_state):
+        with pytest.raises(ValueError, match="'random_state'"):
+            SeqOpt(random_state=random_state)
+
+    @pytest.mark.parametrize("verbose", [True, False])
+    def test_verbose_valid(self, verbose):
+        assert SeqOpt(verbose=verbose)._verbose is verbose
+
+    @pytest.mark.parametrize("verbose", ["yes", 2, None])
+    def test_verbose_invalid_raises(self, verbose):
+        with pytest.raises(ValueError, match="'verbose'"):
+            SeqOpt(verbose=verbose)
+
+    def test_target_class_without_model_raises(self):
+        with pytest.raises(ValueError, match="'target_class'"):
+            SeqOpt(target_class=1)
+
+    def test_target_class_not_in_model_classes_raises(self, model):
+        with pytest.raises(ValueError, match="'target_class'"):
+            SeqOpt(model=model, target_class="not_a_class")
+
+    @pytest.mark.parametrize("df_scales", ["not_a_dataframe", 5, [1, 2, 3]])
+    def test_df_scales_invalid_raises(self, df_scales):
+        with pytest.raises(ValueError, match="'df_scales'"):
+            SeqOpt(df_scales=df_scales)
 
     def test_df_scales_accepted(self, model):
         so = SeqOpt(mode="importance", model=model, df_scales=ut.load_default_scales(),
@@ -292,7 +354,7 @@ class TestSeqOptEval:
         assert de.iloc[0][ut.COL_HYPERVOLUME] >= 0
 
     def test_missing_columns_raises(self, seqo):
-        with pytest.raises(ValueError):
+        with pytest.raises(ValueError, match="df_pareto"):
             seqo.eval(df_pareto=pd.DataFrame({"x": [1]}))
 
 
@@ -322,11 +384,11 @@ class TestSeqOptPlot:
     def test_bad_objective_column_raises(self, seqo, wt, df_feat):
         df = seqo.run(df_seq=wt, df_feat=df_feat, objectives=OBJ, pop_size=6, n_gen=2,
                         n_mut_max=2, region="tmd")
-        with pytest.raises(ValueError):
+        with pytest.raises(ValueError, match="'x'"):
             SeqOptPlot().pareto_front(df_pareto=df, x="nope", y="parsimony")
 
     def test_empty_trajectory_raises(self):
-        with pytest.raises(ValueError):
+        with pytest.raises(ValueError, match="trajectory"):
             SeqOptPlot().hypervolume(trajectory=[])
 
 
@@ -394,7 +456,7 @@ class TestSeqOptVisualization:
 
     def test_parallel_coordinates_one_objective_raises(self, seqo, wt, df_feat):
         df = self._run3(seqo, wt, df_feat)
-        with pytest.raises(ValueError):
+        with pytest.raises(ValueError, match="at least two"):
             SeqOptPlot().parallel_coordinates(df_pareto=df, objectives=["activity"])
 
     def test_callable_sequence_objective(self, seqo, wt, df_feat):
@@ -464,5 +526,5 @@ class TestSeqOptCapabilities:
         assert ut.COL_CONVERGENCE in de.columns and de.iloc[0][ut.COL_CONVERGENCE] >= 0
 
     def test_bad_variation_raises(self, seqo, wt, df_feat):
-        with pytest.raises(ValueError):
+        with pytest.raises(ValueError, match="'variation'"):
             seqo.run(variation="xor", **self._base(wt, df_feat))
