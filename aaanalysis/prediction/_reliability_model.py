@@ -141,9 +141,10 @@ class ReliabilityModel(Wrapper):
          - do **not** trust, at any score
 
     The headline flag ``reliable`` = **familiar and decisive** (``in_domain`` and a confident
-    conformal singleton). It wraps an already-fitted binary predictor (an :class:`AAPred`, a
-    :class:`~aaanalysis.TreeModel`, or any scikit-learn classifier) plus its training data and adds
-    nothing but reliability — the prediction itself stays with the model.
+    conformal singleton, or ``margin >= 0.5`` when no conformal reference is available). It wraps
+    an already-fitted binary predictor (an :class:`AAPred`, a :class:`~aaanalysis.TreeModel`, or
+    any scikit-learn classifier) plus its training data and adds nothing but reliability — the
+    prediction itself stays with the model.
 
     In uncertainty-quantification terms, questions 1-2 are **epistemic** uncertainty (the model's
     reducible lack of knowledge) and question 3 is **aleatoric** uncertainty (irreducible ambiguity
@@ -171,11 +172,13 @@ class ReliabilityModel(Wrapper):
       one sample's probability across the ensemble members (or bootstrap resamples). The
       same-named column in :meth:`AAPred.eval` and :meth:`ModelEvaluator.run` means something
       different: the standard deviation of a metric across cross-validation folds.
-    * **``reliable`` is conformal-based** (``in_domain`` and a confident conformal singleton),
-      whereas ``margin`` / ``entropy`` are a separate calibrated-sharpness readout — they can
-      disagree on a borderline case.
-    * **Calibration** affects ``score_calibrated`` / ``margin`` / ``entropy`` only; ``score`` stays
-      the reported model score. Raw scoring is the **default** everywhere: :meth:`eval` bins
+    * **``reliable`` is conformal-based** (``in_domain`` and a confident conformal singleton)
+      when a conformal reference is available; otherwise it uses ``in_domain`` and
+      ``margin >= 0.5``. ``margin`` / ``entropy`` can therefore disagree with it on a borderline
+      case.
+    * **Calibration** affects ``score_calibrated`` / ``margin`` / ``entropy`` only; when no
+      calibrator is available, the latter two use ``score``. ``score`` stays the reported model
+      score. Raw scoring is the **default** everywhere: :meth:`eval` bins
       ``score`` and :meth:`ReliabilityModelPlot.reliability_diagram` draws that curve, whereas
       ``eval(use_calibrated=True)`` returns the calibrated table, from which the same method draws
       the calibrated curve (both can share one ``ax``). If ``calibrate=True`` but no calibrator can
@@ -448,7 +451,7 @@ class ReliabilityModel(Wrapper):
         and deterministic. Each column maps to one axis of the mental model: ``score_std`` /
         ``ci_*`` (stability), ``ood_score`` / ``in_domain`` / ``ad_*`` (applicability domain,
         banded by ``ad_status``),
-        ``margin`` / ``entropy`` (calibrated ambiguity), ``conformal_set`` (validity), and
+        ``margin`` / ``entropy`` (score ambiguity), ``conformal_set`` (validity), and
         ``reliable`` (the headline flag).
 
         .. versionchanged:: 1.2.0

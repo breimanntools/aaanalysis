@@ -69,7 +69,7 @@ def _field(dtype, description, *, required=True, nullable=False, unique=False,
     range, so every scale is contracted rather than one of them being undocumented.
     """
     if range is not None and scale_ranges is not None:
-        raise ValueError("A column carries either 'range' or 'scale_ranges', not both.")
+        raise ValueError("'range' (not None) should be None when 'scale_ranges' is set.")
     rec = {"dtype": dtype, "required": required, "nullable": nullable,
            "unique": unique, "description": description}
     if range is not None:
@@ -515,7 +515,7 @@ DICT_DF_SCHEMAS = {
         "description": (
             "ReliabilityModel.predict output; one row per sample, one column per "
             "reliability axis: stability (score_std, ci_*), applicability domain "
-            "(ood_score, in_domain, ad_*), calibrated ambiguity (margin, entropy), "
+            "(ood_score, in_domain, ad_*), score ambiguity (margin, entropy), "
             "validity (conformal_set) and the headline flag (reliable)."),
         "columns": {
             COL_SCORE: _field("float", "Positive-class probability averaged over the "
@@ -545,19 +545,23 @@ DICT_DF_SCHEMAS = {
                                     "training feature space; NaN on the same degenerate "
                                     "training reference as ad_mahalanobis.",
                                     nullable=True, range=[0, None], example=0.05),
-            COL_SCORE_CAL: _field("float", "Calibrated positive-class probability; NaN if "
-                                  "the model was fitted without calibration.",
+            COL_SCORE_CAL: _field("float", "Calibrated positive-class probability; NaN when "
+                                  "no calibrator is available (calibration was disabled or "
+                                  "could not be fitted).",
                                   nullable=True, range=[0, 1], example=0.74),
-            COL_MARGIN: _field("float", "Calibrated sharpness |p - 0.5| * 2 (1 = decisive, "
-                               "0 = coin-flip).", range=[0, 1], example=0.48),
-            COL_ENTROPY: _field("float", "Binary entropy of the calibrated score (0 = "
-                                "decisive, 1 = coin-flip).", range=[0, 1], example=0.83),
+            COL_MARGIN: _field("float", "Sharpness |p - 0.5| * 2 (1 = decisive, 0 = "
+                               "coin-flip), from the calibrated score when available and "
+                               "otherwise the ensemble score.", range=[0, 1], example=0.48),
+            COL_ENTROPY: _field("float", "Binary entropy of the calibrated score when "
+                                "available, otherwise the ensemble score (0 = decisive, "
+                                "1 = coin-flip).", range=[0, 1], example=0.83),
             COL_CONFORMAL_SET: _field("str", "Split-conformal prediction set.",
                                       allowed_values=[STR_CONF_NEG, STR_CONF_POS,
                                                       STR_CONF_BOTH, STR_CONF_NONE],
                                       example=STR_CONF_POS),
             COL_RELIABLE: _field("bool", "Headline flag: in the applicability domain and a "
-                                 "confident conformal singleton.", example=True),
+                                 "conformal singleton, or margin >= 0.5 when no conformal "
+                                 "reference is available.", example=True),
             COL_AD_STATUS: _field("str", "Banded applicability-domain verdict derived from "
                                   "ood_score and the fitted ad_borderline band; 'unknown' "
                                   "when the training reference is degenerate.",

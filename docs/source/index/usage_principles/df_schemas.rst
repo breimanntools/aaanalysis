@@ -1065,7 +1065,7 @@ AAPred.predict output in long format; the columns depend on 'level': 'sequence' 
 ``df_rel``
 ----------
 
-ReliabilityModel.predict output; one row per sample, one column per reliability axis: stability (score_std, ci_*), applicability domain (ood_score, in_domain, ad_*), calibrated ambiguity (margin, entropy), validity (conformal_set) and the headline flag (reliable).
+ReliabilityModel.predict output; one row per sample, one column per reliability axis: stability (score_std, ci_*), applicability domain (ood_score, in_domain, ad_*), score ambiguity (margin, entropy), validity (conformal_set) and the headline flag (reliable).
 
 .. list-table::
    :header-rows: 1
@@ -1146,21 +1146,21 @@ ReliabilityModel.predict output; one row per sample, one column per reliability 
      - yes
      - yes
      - no
-     - Calibrated positive-class probability; NaN if the model was fitted without calibration.
+     - Calibrated positive-class probability; NaN when no calibrator is available (calibration was disabled or could not be fitted).
      - range: [0, 1]; e.g. 0.74
    * - ``margin``
      - float
      - yes
      - no
      - no
-     - Calibrated sharpness |p - 0.5| * 2 (1 = decisive, 0 = coin-flip).
+     - Sharpness |p - 0.5| * 2 (1 = decisive, 0 = coin-flip), from the calibrated score when available and otherwise the ensemble score.
      - range: [0, 1]; e.g. 0.48
    * - ``entropy``
      - float
      - yes
      - no
      - no
-     - Binary entropy of the calibrated score (0 = decisive, 1 = coin-flip).
+     - Binary entropy of the calibrated score when available, otherwise the ensemble score (0 = decisive, 1 = coin-flip).
      - range: [0, 1]; e.g. 0.83
    * - ``conformal_set``
      - str
@@ -1174,7 +1174,7 @@ ReliabilityModel.predict output; one row per sample, one column per reliability 
      - yes
      - no
      - no
-     - Headline flag: in the applicability domain and a confident conformal singleton.
+     - Headline flag: in the applicability domain and a conformal singleton, or margin >= 0.5 when no conformal reference is available.
      - e.g. True
    * - ``ad_status``
      - str
