@@ -1021,57 +1021,69 @@ class AAPredPlot:
         Parameters
         ----------
         X : pd.DataFrame or array-like
-            Per-sample feature or importance matrix, shape ``(n_samples, n_features)`` (CPP feature
-            values from :meth:`SequenceFeature.feature_matrix`, or :class:`ShapModel` SHAP values).
+            Finite numeric per-sample feature or importance matrix, shape ``(n_samples, n_features)``
+            with at least two samples and one feature. Its rows determine the sample relations;
+            use CPP feature values from :meth:`SequenceFeature.feature_matrix` or SHAP values from
+            :class:`ShapModel`.
         kind : {'clustermap', 'dendrogram'}, default='clustermap'
             Which relation figure to draw.
+
+            - ``'clustermap'``: draw the clustered sample x sample Pearson-correlation heatmap.
+            - ``'dendrogram'``: draw only the corresponding sample-relation tree.
 
             .. versionchanged:: 1.2.0
                Added the ``'dendrogram'`` option.
         layout : {'rectangular', 'circular'}, default='rectangular'
-            (``kind='dendrogram'``) Tree layout: ``'rectangular'`` draws the root on the left and
-            the leaves in rows on the right; ``'circular'`` draws a radial tree with the root at
-            the center and the leaves around the circle. A non-default ``layout`` with any other
-            ``kind`` raises a ``ValueError``.
+            Tree layout when ``kind='dendrogram'``. It has no visual effect for the default
+            clustermap layout; a non-default value with ``kind='clustermap'`` raises a
+            ``ValueError``.
+
+            - ``'rectangular'``: draw the root on the left and leaves in rows on the right.
+            - ``'circular'``: draw a radial tree with the root at the center and leaves around it.
 
             .. versionadded:: 1.2.0
-        labels : array-like, optional
+        labels : array-like, optional, default=None
             Per-sample class labels (length ``n_samples``) coloring the top (column) sidebar. When
             ``labels_row`` is ``None``, the same annotation is mirrored onto the left sidebar. For
-            ``kind='dendrogram'`` they color the innermost leaf strip / ring.
-            Labels must be hashable.
-        dict_color : dict, optional
+            ``kind='dendrogram'``, they color the innermost leaf strip or ring. If ``None``, no
+            top or innermost annotation is drawn. Labels must be hashable and cannot be ``None``.
+        dict_color : dict, optional, default=None
             A ``label -> color`` mapping for ``labels``; the mapping order also sets the legend
-            order. When ``None``, the house palette is used.
-        legend_title : str, optional
-            Legend title for the ``labels`` (top) annotation. Defaults to
-            ``'Class'``; if ``None``, uses ``'Class'``.
-        labels_row : array-like, optional
+            order. It must contain a valid matplotlib color for every label. If ``None``, colors
+            are assigned from the house palette in first-occurrence order.
+        legend_title : str or None, default='Class'
+            Title for the ``labels`` annotation legend. If ``None``, the legend title is
+            ``'Class'``; an empty string also uses ``'Class'``.
+        labels_row : array-like, optional, default=None
             Per-sample class labels for a *distinct* left (row) sidebar (length ``n_samples``), e.g.
             a prediction-confidence band alongside a class annotation on top. For
-            ``kind='dendrogram'`` they color a second, outer leaf strip / ring.
-            Labels must be hashable.
-        dict_color_row : dict, optional
-            A ``label -> color`` mapping for ``labels_row``. When ``None``, the house palette is used.
-        legend_title_row : str, optional
-            Legend title for the ``labels_row`` (left) annotation. If ``None``, uses
-            ``'Class'``.
-        names : array-like, optional
-            Per-sample tick labels (leaf names for ``kind='dendrogram'``); defaults to positional
-            indices. Items must be strings or string-convertible; dense sample sets
-            show only every k-th name.
-        cmap : str, default="GnBu"
+            ``kind='dendrogram'`` they color a second, outer leaf strip or ring. If ``None``, the
+            clustermap mirrors ``labels`` on its left sidebar and the dendrogram draws no outer
+            annotation. Labels must be hashable and cannot be ``None``.
+        dict_color_row : dict, optional, default=None
+            A ``label -> color`` mapping for ``labels_row``. It must contain a valid matplotlib
+            color for every row label. If ``None``, colors are assigned from the house palette in
+            first-occurrence order.
+        legend_title_row : str or None, default=None
+            Title for the ``labels_row`` annotation legend. If ``None``, the legend title is
+            ``'Class'``; an empty string also uses ``'Class'``.
+        names : array-like, optional, default=None
+            Per-sample tick labels (leaf names for ``kind='dendrogram'``). If ``None``, positional
+            indices are used; otherwise items must be strings or string-convertible. Dense sample
+            sets show only every k-th name.
+        cmap : str, default='GnBu'
             (``kind='clustermap'``) Colormap for the correlation heatmap; validated
             but ignored by the dendrogram.
-        figsize : tuple, optional
-            Figure size; defaults to a per-kind (and per-``layout``) default. Both kinds own their
-            figure, so no ``ax`` is accepted.
-        cbar_label : str, optional
+        figsize : tuple of float, optional, default=None
+            Figure width and height in inches, each at least one. If ``None``, uses ``(11, 11)``
+            for ``kind='clustermap'``, ``(7, 9)`` for a rectangular dendrogram, or ``(9, 10)`` for
+            a circular dendrogram. Both kinds own their figure, so no ``ax`` is accepted.
+        cbar_label : str or None, default='Pearson correlation (r)'
             (``kind='clustermap'``) Label of the colorbar. Defaults to
             ``'Pearson correlation (r)'``; ``None`` leaves the colorbar unlabeled. It is
             validated but ignored by the dendrogram.
-        title : str, optional
-            Figure title.
+        title : str, optional, default=None
+            Figure title. If ``None``, no figure title is added.
 
         Returns
         -------
@@ -1087,15 +1099,15 @@ class AAPredPlot:
             of ``'rectangular'`` or ``'circular'``, or if a non-default ``layout`` is combined with
             ``kind='clustermap'``.
         ValueError
-            If ``X`` is not a numeric 2D matrix with at least two samples and one feature, or
-            contains missing values.
+            If ``X`` is not a finite numeric 2D matrix with at least two samples and one feature.
         ValueError
             If ``labels``, ``labels_row``, or ``names`` are not list-like of length ``n_samples``,
-            if a label is not hashable, if ``dict_color`` / ``dict_color_row`` are not
-            dictionaries of valid colors or miss a color for a label, if
+            if a label is ``None`` or not hashable, if ``names`` contains an item that is not
+            string-convertible, if ``dict_color`` / ``dict_color_row`` are not dictionaries of
+            valid colors or miss a color for a label, if
             ``legend_title``, ``legend_title_row``, ``cbar_label``, or ``title`` are not
             strings, if ``cmap`` is not a valid matplotlib colormap name, or if
-            ``figsize`` is not a tuple of two positive numbers.
+            ``figsize`` is not a tuple of two numbers each at least one.
 
         See Also
         --------
