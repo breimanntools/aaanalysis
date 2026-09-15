@@ -37,6 +37,21 @@ Changed
   - :class:`~aaanalysis.AAPred` and :class:`~aaanalysis.SeqOpt` validate ``df_scales``, and
     :meth:`~aaanalysis.AAPred.eval` validates ``list_parts``, so an invalid value raises a
     ``ValueError`` naming the parameter instead of failing later or being ignored.
+Added
+~~~~~
+
+- :meth:`~aaanalysis.ModelEvaluator.learning_curve` answers "is this task sampling-limited?": it
+  repeats the stratified cross-validation of :meth:`~aaanalysis.ModelEvaluator.run` on stratified,
+  nested subsets of increasing size of every training fold, scores each model on the full,
+  unchanged test fold, and returns one row per (model, training size, metric) with the mean, std,
+  and a bootstrap confidence interval. The default grid has five fraction candidates (which
+  resolve to five distinct sizes on sufficiently large data), each with a bootstrap CI. A
+  fractional size is resolved within each training fold, so the fraction ``1.0`` uses every
+  fold's complete training set and reproduces :meth:`~aaanalysis.ModelEvaluator.run` exactly when
+  both calls use the same ``random_state``, ``n_cv``, ``n_rounds``, and metrics (also for unequal
+  training folds). :meth:`~aaanalysis.ModelEvaluatorPlot.learning_curve` draws the metric versus
+  training size per model with the CI band. A still-rising curve suggests collecting more data; a
+  flat one suggests changing the representation or model.
 
 Fixed
 ~~~~~
