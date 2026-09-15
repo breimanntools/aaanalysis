@@ -102,6 +102,12 @@ Added
   training folds). :meth:`~aaanalysis.ModelEvaluatorPlot.learning_curve` draws the metric versus
   training size per model with the CI band. A still-rising curve suggests collecting more data; a
   flat one suggests changing the representation or model.
+- :meth:`~aaanalysis.AAPredPlot.group_cluster`: ``kind='dendrogram'`` draws the sample relation
+  tree without the heatmap, with ``layout='rectangular'`` or a radial ``layout='circular'`` tree.
+  The leaves are colored by the existing ``labels`` / ``labels_row`` annotations (one strip or
+  ring each, with titled legends). The tree comes from the same linkage as
+  ``kind='clustermap'`` (now computed once and handed to seaborn), so both kinds show the same
+  topology and leaf order; the clustermap figure itself is unchanged.
 
 Fixed
 ~~~~~
