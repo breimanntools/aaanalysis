@@ -64,6 +64,11 @@ notes — with cross-references and examples — live in
   already use that order. Values are normalized to `[0, 1]` by default (or kept raw with
   `normalize=False`), and `return_scales=True` supplies matching 20-column `df_scales` and
   `df_cat` for `get_parts` -> `CPP.run_num` (#79).
+- `SequenceFeature.get_split_kws(strategy=...)`: `"compositional"` / `"positional"` CPP
+  strategy presets, equal to the explicit `split_types` / `n_split_min` / `n_split_max`
+  calls (`Segment(1,1)`; `Segment(2..15)` + `Pattern` + `PeriodicPattern`). Default
+  `None` keeps the output unchanged; combining a preset with non-default split args
+  raises `ValueError` (#87).
 
 ### Fixed
 - `ReliabilityModel.fit`: non-finite numbers (`NaN`, `inf`, `-inf`) are rejected for `ci`,

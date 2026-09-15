@@ -68,6 +68,21 @@ def check_split_types(split_types=None):
     return split_types
 
 
+def check_match_strategy_split_args(strategy=None, split_types=None, n_split_min=1, n_split_max=15):
+    """Check that a split strategy is not combined with explicit split types or Segment split range"""
+    if strategy is None:
+        return None
+    dict_conflicts = {"split_types": (split_types, None, split_types is not None),
+                      "n_split_min": (n_split_min, 1, n_split_min != 1),
+                      "n_split_max": (n_split_max, 15, n_split_max != 15)}
+    for name, (val, default, is_conflict) in dict_conflicts.items():
+        if is_conflict:
+            raise ValueError(f"'{name}' ({val}) should be left at its default ({default}) when 'strategy' "
+                             f"('{strategy}') is given, since the strategy sets 'split_types', 'n_split_min', "
+                             f"and 'n_split_max'.")
+    return None
+
+
 def check_steps(steps=None, steps_name="steps_pattern", len_min=2, fixed_len=False):
     """Sort steps and warn if empty list"""
     if steps is None:
@@ -550,6 +565,7 @@ class SequenceFeature:
                       n_max: int = 4,
                       len_max: int = 15,
                       steps_periodicpattern: Optional[List[int]] = None,
+                      strategy: Optional[Literal["compositional", "positional"]] = None,
                       ) -> dict:
         """
         Create dictionary with kwargs for three split types:
@@ -558,7 +574,13 @@ class SequenceFeature:
             - **Pattern**: non-periodic discontinuous sub-sequence
             - **PeriodicPattern**: periodic discontinuous sub-sequence.
 
+        A ``strategy`` preset names the CPP strategy directly instead of spelling it out
+        through ``split_types``, ``n_split_min``, and ``n_split_max``.
+
         .. versionadded:: 0.1.0
+
+        .. versionchanged:: 1.2.0
+            Added the ``strategy`` parameter (``'compositional'`` or ``'positional'`` preset).
 
         Parameters
         ----------
@@ -581,6 +603,19 @@ class SequenceFeature:
         steps_periodicpattern: list of int, default=[3, 4], optional
             Size of odd and even steps for ``PeriodicPattern``. Should contain two non-negative integers if
             ``PeriodicPattern`` split_type is used. If ``None``, default is used.
+        strategy: {'compositional', 'positional'}, optional
+            Preset for the CPP strategy, which sets ``split_types``, ``n_split_min``, and ``n_split_max``:
+
+            - ``'compositional'``: a single whole-part ``Segment`` (position-agnostic average), identical to
+              ``get_split_kws(split_types="Segment", n_split_min=1, n_split_max=1)``.
+            - ``'positional'``: sub-segments plus both discontinuous split types, identical to
+              ``get_split_kws(split_types=["Segment", "Pattern", "PeriodicPattern"], n_split_min=2,
+              n_split_max=15)``. ``steps_pattern``, ``n_min``, ``n_max``, ``len_max``, and
+              ``steps_periodicpattern`` still apply.
+
+            Together, both presets cover the default split set. If ``None``, the split set is defined by
+            ``split_types``, ``n_split_min``, and ``n_split_max``, which must stay at their defaults when
+            ``strategy`` is given.
 
         Returns
         -------
@@ -609,11 +644,18 @@ class SequenceFeature:
         ``UserWarning`` naming the offending parameters so it can be fixed by raising
         ``len_max`` or lowering ``steps_pattern``/``n_min``.
 
+        The ``strategy`` presets are convenience only: the returned dictionary is equal to the
+        one from the equivalent explicit call and is consumed downstream in the same way.
+
         Examples
         --------
         .. include:: examples/sf_get_split_kws.rst
         """
         # Check input
+        ut.check_str_options(name="strategy", val=strategy, accept_none=True,
+                             list_str_options=ut.LIST_SPLIT_STRATEGIES)
+        check_match_strategy_split_args(strategy=strategy, split_types=split_types,
+                                        n_split_min=n_split_min, n_split_max=n_split_max)
         split_types = check_split_types(split_types=split_types)
         args_int = dict(n_split_min=n_split_min, n_split_max=n_split_max, n_min=n_min, n_max=n_max, len_max=len_max)
         for name in args_int:
@@ -633,7 +675,8 @@ class SequenceFeature:
                                    n_max=n_max,
                                    len_max=len_max,
                                    steps_periodicpattern=steps_periodicpattern,
-                                   split_types=split_types)
+                                   split_types=split_types,
+                                   strategy=strategy)
         # Post check
         check_split_kws(split_kws=split_kws)
         return split_kws
