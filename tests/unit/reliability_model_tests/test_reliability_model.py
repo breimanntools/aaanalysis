@@ -1,4 +1,5 @@
 """Unit tests for ReliabilityModel (prediction-reliability measures)."""
+import warnings
 import numpy as np
 import pandas as pd
 import pytest
@@ -394,87 +395,7 @@ class TestDistinctions:
 
 
 # IV eval
-class TestEval:
-    def test_eval_default(self):
-        Xtr, ytr, _ = _data()
-        ev = aa.ReliabilityModel(random_state=0).fit(Xtr, ytr, n_bootstrap=5).eval()
-        assert isinstance(ev, pd.DataFrame)
-        assert list(ev.columns) == ["bin", "mean_score", "empirical_pos", "n_samples"]
-        assert (ev["bin"] == "summary").any()
-
-    def test_eval_columns_match_constant_bundle(self):
-        Xtr, ytr, _ = _data()
-        ev = aa.ReliabilityModel(random_state=0).fit(Xtr, ytr, n_bootstrap=3).eval()
-        assert list(ev.columns) == ut.COLS_EVAL_RELIABILITY
-        assert "n" not in ev.columns
-
-    def test_eval_custom_bins(self):
-        Xtr, ytr, _ = _data()
-        ev = aa.ReliabilityModel(random_state=0).fit(Xtr, ytr, n_bootstrap=5).eval(n_bins=3)
-        assert len(ev) == 3 + 1                              # bins + summary
-
-    def test_eval_uses_labels_with_default_training_features(self):
-        Xtr, ytr, _ = _data()
-        rm = aa.ReliabilityModel(random_state=0).fit(Xtr, ytr, n_bootstrap=3)
-        # These valid but deliberately unbalanced labels must not be overwritten with ytr merely
-        # because X defaults to the training feature matrix.
-        labels_eval = np.array([1] * (len(ytr) - 10) + [0] * 10)
-        ev = rm.eval(labels=labels_eval, n_bins=3)
-        bins = ev[ev["bin"] != "summary"]
-        bins = bins[bins["n_samples"] > 0]
-        weighted_rate = np.average(bins["empirical_pos"], weights=bins["n_samples"])
-        assert weighted_rate == pytest.approx(labels_eval.mean())
-
-    def test_eval_unknown_labels_raise(self):
-        Xtr, ytr, _ = _data()
-        rm = aa.ReliabilityModel(random_state=0).fit(Xtr, ytr, n_bootstrap=3)
-        with pytest.raises(ValueError, match="labels observed"):
-            rm.eval(labels=np.array([2] * (len(ytr) - 1) + [0]))
-
-    def test_eval_before_fit_raises(self):
-        with pytest.raises(RuntimeError, match="fit.*eval"):
-            aa.ReliabilityModel().eval()
-
-    @pytest.mark.parametrize("nb", [1, 0, -2])
-    def test_eval_n_bins_invalid(self, nb):
-        Xtr, ytr, _ = _data()
-        rm = aa.ReliabilityModel(random_state=0).fit(Xtr, ytr, n_bootstrap=3)
-        with pytest.raises(ValueError, match="n_bins"):
-            rm.eval(n_bins=nb)
-
-
-class TestReliabilityModelGoldenValues:
-    """Hand-checkable numbers for the renamed / re-unit-ed outputs."""
-
-    def test_ci_fraction_gives_wald_z_interval(self):
-        # ci=0.90 -> z = norm.ppf(0.95); unclipped rows satisfy ci_high - score == z * score_std.
-        Xtr, ytr, Xte = _data()
-        df = aa.ReliabilityModel(random_state=0).fit(Xtr, ytr, n_bootstrap=10, ci=0.90).predict(Xte)
-        z = norm.ppf(0.95)
-        inner = (df["ci_high"] < 1.0) & (df["ci_low"] > 0.0)
-        assert inner.any()
-        d = df[inner]
-        np.testing.assert_allclose(d["ci_high"] - d["score"], z * d["score_std"], atol=1e-12)
-        np.testing.assert_allclose(d["score"] - d["ci_low"], z * d["score_std"], atol=1e-12)
-
-    def test_eval_n_samples_counts(self):
-        Xtr, ytr, _ = _data()
-        ev = aa.ReliabilityModel(random_state=0).fit(Xtr, ytr, n_bootstrap=3).eval(n_bins=4)
-        bins = ev[ev["bin"] != "summary"]
-        summary = ev[ev["bin"] == "summary"].iloc[0]
-        assert summary["n_samples"] == len(Xtr) == 90
-        assert int(bins["n_samples"].sum()) == 90
-        assert list(bins["bin"]) == ["0.00-0.25", "0.25-0.50", "0.50-0.75", "0.75-1.00"]
-
-    def test_ad_knn_column_name(self):
-        Xtr, ytr, Xte = _data()
-        df = aa.ReliabilityModel(random_state=0).fit(Xtr, ytr, n_bootstrap=3).predict(Xte)
-        assert ut.COL_AD_KNN == "ad_knn" and "ad_knn" in df.columns
-        assert "ad_knn_dist" not in df.columns
-        assert (df["ad_knn"] >= 0).all()
-
-
-# V eval: calibrated scoring + Brier / ECE rows
+# Fixtures / references for eval: raw and calibrated scoring
 def _miscal_data(seed=0):
     """Redundant features make Gaussian naive Bayes strongly over-confident (mis-calibrated)."""
     X, y = make_classification(n_samples=600, n_features=20, n_informative=3, n_redundant=15,
@@ -520,8 +441,94 @@ def _legacy_eval(rm, X, labels, n_bins=5):
     return pd.DataFrame(rows, columns=["bin", "mean_score", "empirical_pos", "n_samples"])
 
 
-class TestEvalCalibration:
-    """Per-parameter tests for ``use_calibrated`` and ``add_metrics``."""
+def _failed_calibration_data():
+    """Binary data whose positive class has ONE member, so the internal cv=2 calibration fails."""
+    X, y = make_classification(n_samples=40, n_features=5, n_informative=3, random_state=0)
+    y = np.zeros(len(y), dtype=int)
+    y[0] = 1
+    return X, y
+
+
+class TestEval:
+    def test_eval_default(self):
+        Xtr, ytr, _ = _data()
+        ev = aa.ReliabilityModel(random_state=0).fit(Xtr, ytr, n_bootstrap=5).eval()
+        assert isinstance(ev, pd.DataFrame)
+        assert list(ev.columns) == ["bin", "mean_score", "empirical_pos", "n_samples"]
+        assert (ev["bin"] == "summary").any()
+
+    def test_eval_columns_match_constant_bundle(self):
+        Xtr, ytr, _ = _data()
+        ev = aa.ReliabilityModel(random_state=0).fit(Xtr, ytr, n_bootstrap=3).eval()
+        assert list(ev.columns) == ut.COLS_EVAL_RELIABILITY
+        assert "n" not in ev.columns
+
+    def test_eval_custom_bins(self):
+        Xtr, ytr, _ = _data()
+        ev = aa.ReliabilityModel(random_state=0).fit(Xtr, ytr, n_bootstrap=5).eval(n_bins=3)
+        assert len(ev) == 3 + 1                              # bins + summary
+
+    def test_eval_before_fit_raises(self):
+        with pytest.raises(RuntimeError):
+            aa.ReliabilityModel().eval()
+
+    @pytest.mark.parametrize("nb", [1, 0, -2])
+    def test_eval_n_bins_invalid(self, nb):
+        Xtr, ytr, _ = _data()
+        rm = aa.ReliabilityModel(random_state=0).fit(Xtr, ytr, n_bootstrap=3)
+        with pytest.raises(ValueError):
+            rm.eval(n_bins=nb)
+
+    # X / labels: positive
+    @settings(max_examples=5, deadline=None)
+    @given(n=some.integers(min_value=20, max_value=40))
+    def test_eval_X_subset(self, n):
+        Xtr, ytr, _ = _data()
+        rm = aa.ReliabilityModel(random_state=0).fit(Xtr, ytr, n_bootstrap=3)
+        ev = rm.eval(X=Xtr[:n], labels=ytr[:n])
+        assert ev["n_samples"].iloc[-1] == n
+        assert int(ev["n_samples"].iloc[:-1].sum()) == n
+
+    def test_eval_labels_drive_the_empirical_rate(self):
+        Xtr, ytr, _ = _data()
+        rm = aa.ReliabilityModel(random_state=0).fit(Xtr, ytr, n_bootstrap=3)
+        ev = rm.eval(X=Xtr, labels=ytr)
+        ev_flipped = rm.eval(X=Xtr, labels=1 - np.asarray(ytr))
+        assert not ev["empirical_pos"].equals(ev_flipped["empirical_pos"])
+        assert ev["mean_score"].equals(ev_flipped["mean_score"])      # scoring is label-free
+
+    # X / labels: negative
+    @pytest.mark.parametrize("X", ["abc", 5, [[1, 2], [3]]])
+    def test_eval_X_invalid(self, X):
+        Xtr, ytr, _ = _data()
+        rm = aa.ReliabilityModel(random_state=0).fit(Xtr, ytr, n_bootstrap=3)
+        with pytest.raises(ValueError, match="'X'"):
+            rm.eval(X=X, labels=ytr)
+
+    def test_eval_X_without_labels_raises(self):
+        Xtr, ytr, _ = _data()
+        rm = aa.ReliabilityModel(random_state=0).fit(Xtr, ytr, n_bootstrap=3)
+        with pytest.raises(ValueError, match=r"'labels' \(None\) should be the evaluation"):
+            rm.eval(X=Xtr)
+
+    def test_eval_labels_without_X_raises(self):
+        Xtr, ytr, _ = _data()
+        rm = aa.ReliabilityModel(random_state=0).fit(Xtr, ytr, n_bootstrap=3)
+        with pytest.raises(ValueError, match=r"'X' \(None\) should be the evaluation"):
+            rm.eval(labels=ytr)
+
+    @pytest.mark.parametrize("labels", [[1] * 90, ["a", "b"] * 45, 5])
+    def test_eval_labels_invalid(self, labels):
+        Xtr, ytr, _ = _data()
+        rm = aa.ReliabilityModel(random_state=0).fit(Xtr, ytr, n_bootstrap=3)
+        with pytest.raises(ValueError, match="labels"):
+            rm.eval(X=Xtr, labels=labels)
+
+    def test_eval_labels_length_mismatch_raises(self):
+        Xtr, ytr, _ = _data()
+        rm = aa.ReliabilityModel(random_state=0).fit(Xtr, ytr, n_bootstrap=3)
+        with pytest.raises(ValueError, match="n_samples does not match"):
+            rm.eval(X=Xtr, labels=ytr[:-5])
 
     # use_calibrated: positive
     def test_use_calibrated_false_equals_default(self, rm_miscal):
@@ -581,7 +588,7 @@ class TestEvalCalibration:
 
     def test_use_calibrated_without_calibrator_on_training_data_raises(self, rm_uncal):
         rm, _, _ = rm_uncal
-        with pytest.raises(ValueError, match="calibrate=True"):
+        with pytest.raises(ValueError, match=r"fitted with 'calibrate=False'"):
             rm.eval(use_calibrated=True)
 
     def test_use_calibrated_before_fit_raises(self):
@@ -644,7 +651,7 @@ class TestEvalCalibration:
             aa.ReliabilityModel().eval(add_metrics=True)
 
 
-class TestEvalCalibrationComplex:
+class TestEvalComplex:
     """Acceptance criteria and cross-parameter interactions for calibrated evaluation."""
 
     @pytest.mark.parametrize("method", ["isotonic", "sigmoid"])
@@ -714,8 +721,50 @@ class TestEvalCalibrationComplex:
         with pytest.raises(ValueError):
             rm.eval(X=Xte, labels=yte, use_calibrated="True", add_metrics="True")
 
+    # Unavailable calibrator: the fit-time signal and the eval-time message
+    def test_failed_calibration_warns_at_fit(self):
+        X, y = _failed_calibration_data()
+        with pytest.warns(UserWarning, match=r"'calibrate' \(True\) could not be applied"):
+            rm = aa.ReliabilityModel(random_state=0).fit(X, y, n_bootstrap=0)
+        assert rm._calibrator is None
+        assert rm._calibrate_requested is True
+        assert "2-fold" in rm._calibration_error
 
-class TestEvalCalibrationGoldenValues:
+    def test_failed_calibration_leaves_score_calibrated_nan(self):
+        X, y = _failed_calibration_data()
+        with pytest.warns(UserWarning):
+            rm = aa.ReliabilityModel(random_state=0).fit(X, y, n_bootstrap=0)
+        assert rm.predict(X)["score_calibrated"].isna().all()
+
+    def test_failed_calibration_eval_names_the_real_reason(self):
+        X, y = _failed_calibration_data()
+        with pytest.warns(UserWarning):
+            rm = aa.ReliabilityModel(random_state=0).fit(X, y, n_bootstrap=0)
+        with pytest.raises(ValueError, match="the calibrator could not be fitted") as e:
+            rm.eval(use_calibrated=True)
+        msg = str(e.value)
+        assert msg.startswith("'use_calibrated' (True) should be False for this model")
+        assert "'calibrate=False'" not in msg          # never blame a flag the user did not pass
+
+    def test_calibrate_false_eval_names_that_flag(self, rm_uncal):
+        rm, Xte, yte = rm_uncal
+        with pytest.raises(ValueError, match=r"fitted with 'calibrate=False'") as e:
+            rm.eval(X=Xte, labels=yte, use_calibrated=True)
+        assert "could not be fitted" not in str(e.value)
+
+    def test_successful_calibration_is_silent(self):
+        Xtr, ytr, _ = _data()
+        with warnings.catch_warnings():
+            warnings.simplefilter("error", UserWarning)
+            rm = aa.ReliabilityModel(random_state=0).fit(Xtr, ytr, n_bootstrap=3)
+        assert rm._calibrator is not None and rm._calibration_error is None
+
+    def test_calibrate_false_records_no_error(self, rm_uncal):
+        rm, _, _ = rm_uncal
+        assert rm._calibrate_requested is False and rm._calibration_error is None
+
+
+class TestEvalGoldenValues:
     """Hand-computed Brier / ECE values and the sklearn reference."""
 
     @pytest.mark.parametrize("use_cal", [False, True])
@@ -761,3 +810,34 @@ class TestEvalCalibrationGoldenValues:
         rows = comp_calibration_bins(s, y, n_bins=10)
         assert sum(r[3] for r in rows) == 2
         assert comp_ece(rows, n_samples=2) == pytest.approx(0.05, abs=1e-12)
+
+
+class TestReliabilityModelGoldenValues:
+    """Hand-checkable numbers for the renamed / re-unit-ed outputs."""
+
+    def test_ci_fraction_gives_wald_z_interval(self):
+        # ci=0.90 -> z = norm.ppf(0.95); unclipped rows satisfy ci_high - score == z * score_std.
+        Xtr, ytr, Xte = _data()
+        df = aa.ReliabilityModel(random_state=0).fit(Xtr, ytr, n_bootstrap=10, ci=0.90).predict(Xte)
+        z = norm.ppf(0.95)
+        inner = (df["ci_high"] < 1.0) & (df["ci_low"] > 0.0)
+        assert inner.any()
+        d = df[inner]
+        np.testing.assert_allclose(d["ci_high"] - d["score"], z * d["score_std"], atol=1e-12)
+        np.testing.assert_allclose(d["score"] - d["ci_low"], z * d["score_std"], atol=1e-12)
+
+    def test_eval_n_samples_counts(self):
+        Xtr, ytr, _ = _data()
+        ev = aa.ReliabilityModel(random_state=0).fit(Xtr, ytr, n_bootstrap=3).eval(n_bins=4)
+        bins = ev[ev["bin"] != "summary"]
+        summary = ev[ev["bin"] == "summary"].iloc[0]
+        assert summary["n_samples"] == len(Xtr) == 90
+        assert int(bins["n_samples"].sum()) == 90
+        assert list(bins["bin"]) == ["0.00-0.25", "0.25-0.50", "0.50-0.75", "0.75-1.00"]
+
+    def test_ad_knn_column_name(self):
+        Xtr, ytr, Xte = _data()
+        df = aa.ReliabilityModel(random_state=0).fit(Xtr, ytr, n_bootstrap=3).predict(Xte)
+        assert ut.COL_AD_KNN == "ad_knn" and "ad_knn" in df.columns
+        assert "ad_knn_dist" not in df.columns
+        assert (df["ad_knn"] >= 0).all()

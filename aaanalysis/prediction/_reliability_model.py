@@ -2,6 +2,7 @@
 This is a script for the frontend of the ReliabilityModel class for prediction-reliability measures.
 """
 from typing import Optional, List, Union
+import warnings
 import numpy as np
 import pandas as pd
 from sklearn.base import clone
@@ -81,6 +82,16 @@ def check_ci(ci: float):
                           exclusive_limits=True)
 
 
+def _reason_no_calibrator(calibrate_requested=False, calibration_error=None):
+    """Plain-language reason why a fitted model carries no probability calibrator."""
+    if not calibrate_requested:
+        return "it was fitted with 'calibrate=False'"
+    if calibration_error is not None:
+        return (f"it was fitted with 'calibrate=True', but the calibrator could not be fitted "
+                f"({calibration_error})")
+    return "no calibrator was fitted"
+
+
 # II Main Class
 class ReliabilityModel(Wrapper):
     """
@@ -153,9 +164,15 @@ class ReliabilityModel(Wrapper):
     * **``reliable`` is conformal-based** (``in_domain`` and a confident conformal singleton),
       whereas ``margin`` / ``entropy`` are a separate calibrated-sharpness readout — they can
       disagree on a borderline case.
-    * **Calibration** affects ``score_calibrated`` / ``margin`` / ``entropy`` only; ``score`` (and
-      :meth:`ReliabilityModelPlot.reliability_diagram`) stay on the reported model score. For a
-      passed ensemble, the calibrator and conformal reference are built from its first member.
+    * **Calibration** affects ``score_calibrated`` / ``margin`` / ``entropy`` only; ``score`` stays
+      the reported model score. Raw scoring is the **default** everywhere: :meth:`eval` bins
+      ``score`` and :meth:`ReliabilityModelPlot.reliability_diagram` draws that curve, whereas
+      ``eval(use_calibrated=True)`` returns the calibrated table, from which the same method draws
+      the calibrated curve (both can share one ``ax``). If ``calibrate=True`` but no calibrator can
+      be fitted (e.g. a class with a single member, or a model that cannot be cloned), :meth:`fit`
+      warns, ``score_calibrated`` is ``NaN``, and ``eval(use_calibrated=True)`` raises naming that
+      reason. For a passed ensemble, the calibrator and conformal reference are built from its
+      first member.
     * **Reproducibility.** The bootstrap, calibration split, and conformal split are stochastic —
       set ``random_state`` for identical output across fits.
     * All fitted-state attributes carry a trailing underscore and are set by :meth:`fit`.
@@ -189,6 +206,8 @@ class ReliabilityModel(Wrapper):
         self._ad_state = None
         self._members = None
         self._calibrator = None
+        self._calibrate_requested = False
+        self._calibration_error: Optional[str] = None
         self._conf_state = None
         self._ci = 0.90
 
@@ -260,6 +279,16 @@ class ReliabilityModel(Wrapper):
             empty list or lacks ``predict_proba``, a passed :class:`AAPred` is not fitted, or a
             numeric parameter is out of range or not finite (``NaN`` / ``inf``).
 
+        Warnings
+        --------
+        UserWarning
+            If ``calibrate=True`` but no calibrator can be fitted, because a class holds fewer
+            members than the internal cross-validation needs or the model cannot be cloned.
+            ``score_calibrated`` is then ``NaN`` and :meth:`eval` with ``use_calibrated=True``
+            raises, naming that reason.
+
+            .. versionadded:: 1.2.0
+
         Examples
         --------
         .. include:: examples/rm_fit.rst
@@ -318,16 +347,31 @@ class ReliabilityModel(Wrapper):
             self._members = boot or [base]                    # score = bagged mean; spread = bootstrap
         cloneable_base = base if (base is not None and _can_clone(base)) else None
 
-        # Calibration (fit a calibrated clone on the training data)
+        # Calibration (fit a calibrated clone on the training data). A failure is recorded and
+        # reported instead of swallowed, so 'eval(use_calibrated=True)' can name the real reason
+        # rather than blame a 'calibrate=False' that was never passed.
         self._calibrator = None
-        if calibrate and cloneable_base is not None:
-            n_min = int(np.min(np.bincount((labels == label_pos).astype(int))))
-            cv = max(2, min(3, n_min))
-            try:
-                self._calibrator = CalibratedClassifierCV(
-                    clone(cloneable_base), method=calibration_method, cv=cv).fit(X, labels)
-            except (ValueError, TypeError):
-                self._calibrator = None
+        self._calibrate_requested = calibrate
+        self._calibration_error = None
+        if calibrate:
+            if cloneable_base is None:
+                self._calibration_error = ("the model cannot be cloned, and the calibrator is "
+                                           "fitted on a clone")
+            else:
+                n_min = int(np.min(np.bincount((labels == label_pos).astype(int))))
+                cv = max(2, min(3, n_min))
+                try:
+                    self._calibrator = CalibratedClassifierCV(
+                        clone(cloneable_base), method=calibration_method, cv=cv).fit(X, labels)
+                except (ValueError, TypeError) as e:
+                    self._calibration_error = (f"{cv}-fold cross-validated calibration failed "
+                                               f"({type(e).__name__}: {e})")
+            if self._calibration_error is not None:
+                warnings.warn(f"'calibrate' (True) could not be applied: "
+                              f"{self._calibration_error}. 'score_calibrated' is NaN and "
+                              f"'eval(use_calibrated=True)' raises. Provide more samples per "
+                              f"class (or a cloneable model), or fit with 'calibrate=False'.",
+                              UserWarning)
 
         # Split-conformal reference (fit once)
         self._conf_state = (fit_conformal(
@@ -335,9 +379,12 @@ class ReliabilityModel(Wrapper):
             label_pos=label_pos, random_state=self._random_state)
             if cloneable_base is not None else None)
         if self._verbose:
+            str_cal = (f"calibrated={self._calibrator is not None}"
+                       if self._calibration_error is None else
+                       f"calibrated=False (unavailable: {self._calibration_error})")
             ut.print_out(f"ReliabilityModel fitted (in-domain kNN threshold="
                          f"{self._ad_state['thr']:.3f}; uncertainty from {len(self._members)} "
-                         f"member(s); calibrated={self._calibrator is not None}; "
+                         f"member(s); {str_cal}; "
                          f"conformal={self._conf_state is not None}).")
         return self
 
@@ -438,19 +485,20 @@ class ReliabilityModel(Wrapper):
 
         Parameters
         ----------
-        X : array-like, optional
-            Evaluation features. The training ``X`` is used if ``None``. A held-out labeled set
-            gives an honest estimate because calibration and conformal were fit on the training
-            data.
-        labels : array-like, optional
-            Evaluation labels, using only class labels observed during :meth:`fit`. The training
-            labels are used if ``None``, independently of whether ``X`` is supplied.
+        X : array-like, shape (n_samples, n_features), optional
+            Evaluation features; the training ``X`` and ``labels`` are used when ``X`` **and**
+            ``labels`` are both ``None`` (a held-out labeled set gives an honest estimate —
+            calibration and conformal were fit on the training data).
+        labels : array-like, shape (n_samples,), optional
+            Evaluation labels, matching ``X`` in length; the training labels are used when ``X``
+            **and** ``labels`` are both ``None``. Passing only one of the two raises.
         n_bins : int, default=5
             Number of equal-width score bins for the calibration curve (and the ECE).
         use_calibrated : bool, default=False
             If ``True``, score the calibrated column (``score_calibrated``) instead of the raw
             ``score``: the bins, Brier score, and ECE then describe the calibrated probability.
-            Requires a model fitted with ``calibrate=True``.
+            Requires an available calibrator, i.e. a model fitted with ``calibrate=True`` whose
+            calibration did not fail (:meth:`fit` warns when it does).
 
             .. versionadded:: 1.2.0
         add_metrics : bool, default=False
@@ -476,8 +524,11 @@ class ReliabilityModel(Wrapper):
         RuntimeError
             If called before :meth:`fit`.
         ValueError
-            If ``use_calibrated=True`` but the model has no probability calibrator (fitted with
-            ``calibrate=False``).
+            If only one of ``X`` / ``labels`` is given, ``X`` or ``labels`` is invalid or their
+            lengths differ, ``n_bins`` is not an integer >= 2, ``use_calibrated`` or
+            ``add_metrics`` is not a bool, or ``use_calibrated=True`` while no probability
+            calibrator is available: either the model was fitted with ``calibrate=False``, or its
+            calibration failed (the message names which).
 
         Notes
         -----
@@ -492,10 +543,16 @@ class ReliabilityModel(Wrapper):
         """
         if self._ad_state is None:
             raise RuntimeError("Call 'fit' before 'eval'.")
-        if X is None:
-            X = self._X_train
-        if labels is None:
-            labels = self._y_train
+        if X is None and labels is None:
+            X, labels = self._X_train, self._y_train
+        elif X is None:
+            raise ValueError("'X' (None) should be the evaluation features matching 'labels'; "
+                             "only leaving BOTH 'X' and 'labels' as None evaluates on the "
+                             "training data.")
+        elif labels is None:
+            raise ValueError("'labels' (None) should be the evaluation labels matching 'X'; "
+                             "only leaving BOTH 'X' and 'labels' as None evaluates on the "
+                             "training data.")
         X = ut.check_X(X=X)
         labels = ut.check_labels(labels=labels)
         ut.check_match_X_labels(X=X, labels=labels)
@@ -508,8 +565,10 @@ class ReliabilityModel(Wrapper):
         ut.check_bool(name="use_calibrated", val=use_calibrated)
         ut.check_bool(name="add_metrics", val=add_metrics)
         if use_calibrated and self._calibrator is None:
-            raise ValueError("'use_calibrated' (True) should only be set for a model fitted with "
-                             "'calibrate=True' (this model has no probability calibrator).")
+            reason = _reason_no_calibrator(calibrate_requested=self._calibrate_requested,
+                                           calibration_error=self._calibration_error)
+            raise ValueError(f"'use_calibrated' ({use_calibrated}) should be False for this "
+                             f"model: it has no probability calibrator because {reason}.")
         y = (np.asarray(labels) == self.label_pos_).astype(int)
         df = self.predict(X)
         s = df[ut.COL_SCORE_CAL if use_calibrated else ut.COL_SCORE].to_numpy()
@@ -521,5 +580,6 @@ class ReliabilityModel(Wrapper):
                      float(np.mean(covered)), len(X)])
         if add_metrics:
             rows.append([ut.STR_BIN_BRIER, comp_brier(s, y), np.nan, len(X)])
-            rows.append([ut.STR_BIN_ECE, comp_ece(rows[:n_bins], n_samples=len(X)), np.nan, len(X)])
+            ece = comp_ece(rows[:n_bins], n_samples=len(X))
+            rows.append([ut.STR_BIN_ECE, ece, np.nan, len(X)])
         return pd.DataFrame(rows, columns=ut.COLS_EVAL_RELIABILITY)
