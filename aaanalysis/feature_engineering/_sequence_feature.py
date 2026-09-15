@@ -601,29 +601,40 @@ class SequenceFeature:
 
         .. versionadded:: 0.1.0
 
+        .. versionchanged:: 1.2.0
+            Added the ``strategy`` presets for compositional and positional CPP features.
+
         Parameters
         ----------
-        split_types : str or sequence of str, optional
-            Split types (``Segment``, ``Pattern``, ``PeriodicPattern``) for which the parameter dictionary
-            should be generated. A single split type can be given as string. If ``None`` (default), all
-            three split types are used.
+        split_types : {'Segment', 'Pattern', 'PeriodicPattern'} or list-like of str, default=None
+            Split types for which to create parameter dictionaries. A string selects one type; a non-empty list,
+            tuple, one-dimensional NumPy array, or pandas Series selects the supplied types. If ``None``, all
+            three split types are selected. Must remain ``None`` when ``strategy`` is not ``None``.
         n_split_min : int, default=1
-            Minimum number of segments used to split a part. Must be >= 1.
+            Minimum number of segments for the ``Segment`` entry. Must be >= 1 and no greater than
+            ``n_split_max`` when ``Segment`` is selected. Must remain 1 when ``strategy`` is not ``None``.
         n_split_max : int, default=15
-            Maximum number of segments used to split a part. Must be >= ``n_split_min``.
-        steps_pattern : sequence of int, optional
-            Possible positive step sizes for ``Pattern``. Must contain at least one positive integer
-            if ``Pattern`` split_type is used. If ``None`` (default), ``[3, 4]`` is used.
+            Maximum number of segments for the ``Segment`` entry. Must be >= 1 and no less than
+            ``n_split_min`` when ``Segment`` is selected. Must remain 15 when ``strategy`` is not ``None``.
+        steps_pattern : list-like of int, default=None
+            Step sizes for the ``Pattern`` entry. A supplied list, tuple, one-dimensional NumPy array, or
+            pandas Series must contain at least one non-negative integer and is sorted before use. If ``None``,
+            ``[3, 4]`` is used when ``Pattern`` is selected. For a selected ``Pattern``, all steps must be
+            positive and ``len_max`` must exceed the smallest step.
         n_min : int, default=2
-            Minimum number of steps for ``Pattern``. Should be <= ``n_max``.
+            Minimum number of steps for the ``Pattern`` entry. Must be >= 1 and no greater than ``n_max`` when
+            ``Pattern`` is selected.
         n_max : int, default=4
-            Maximum number of steps for ``Pattern``. Should be >= ``n_min``.
+            Maximum number of steps for the ``Pattern`` entry. Must be >= 1 and no less than ``n_min`` when
+            ``Pattern`` is selected.
         len_max : int, default=15
-            Maximum length in amino acid position for ``Pattern`` by varying start position.
-            Should be > min(``steps_pattern``).
-        steps_periodicpattern : sequence of int, optional
-            Size of odd and even steps for ``PeriodicPattern``. Must contain two positive integers if
-            ``PeriodicPattern`` split_type is used. If ``None`` (default), ``[3, 4]`` is used.
+            Maximum residue position reached by a ``Pattern`` entry as its start position varies. Must be >= 1
+            and exceed the smallest ``steps_pattern`` value when ``Pattern`` is selected.
+        steps_periodicpattern : list-like of int, default=None
+            Alternating step sizes for the ``PeriodicPattern`` entry. A supplied list, tuple, one-dimensional
+            NumPy array, or pandas Series must contain exactly two non-negative integers and is sorted before
+            use. If ``None``, ``[3, 4]`` is used when ``PeriodicPattern`` is selected. For a selected
+            ``PeriodicPattern``, both steps must be positive.
         strategy : {'compositional', 'positional'} or None, default=None
             Preset for the CPP strategy, which sets ``split_types``, ``n_split_min``, and ``n_split_max``:
 
@@ -634,11 +645,9 @@ class SequenceFeature:
               n_split_max=15)``. ``steps_pattern``, ``n_min``, ``n_max``, ``len_max``, and
               ``steps_periodicpattern`` still apply.
 
-            Together, both presets cover the default split set. If ``None`` (default), the split set is
-            defined by ``split_types``, ``n_split_min``, and ``n_split_max``, which must stay at their
-            defaults when ``strategy`` is given.
-
-            .. versionadded:: 1.2.0
+            Together, both presets cover the default split set. If ``None``, the split set is defined by
+            ``split_types``, ``n_split_min``, and ``n_split_max``. Otherwise, those three parameters must
+            remain at their defaults.
 
         Returns
         -------
@@ -646,7 +655,7 @@ class SequenceFeature:
             Nested dictionary for the selected split types. The ``Segment`` entry contains
             ``n_split_min`` and ``n_split_max``; the ``Pattern`` entry contains ``steps``,
             ``n_min``, ``n_max``, and ``len_max``; and the ``PeriodicPattern`` entry contains
-            ``steps``. Defaults return all three entries. ``strategy='compositional'`` returns
+            ``steps``. Calling without arguments returns all three entries. ``strategy='compositional'`` returns
             only ``{'Segment': {'n_split_min': 1, 'n_split_max': 1}}``.
 
         Raises
@@ -654,11 +663,13 @@ class SequenceFeature:
         ValueError
             If ``strategy`` is not ``'compositional'``, ``'positional'``, or ``None``; if ``strategy`` is
             given while ``split_types``, ``n_split_min``, or ``n_split_max`` is not at its default; if
-            ``split_types`` is not a string or sequence or contains an unknown split type; if
+            ``split_types`` is empty, neither a string nor an accepted one-dimensional list-like object, or
+            contains an unknown split type; if
             ``n_split_min``, ``n_split_max``, ``n_min``, ``n_max``, or ``len_max`` is not an integer >= 1;
-            if a selected ``Pattern`` or ``PeriodicPattern`` split type receives a sequence that does not
-            contain positive integers of the required length (>= 1 for ``steps_pattern``, exactly 2 for
-            ``steps_periodicpattern``); or if the bounds of a selected split type are inconsistent
+            if a supplied step collection is not an accepted one-dimensional list-like object of non-negative
+            integers, has fewer than one ``steps_pattern`` value, or does not have exactly two
+            ``steps_periodicpattern`` values; if a selected ``Pattern`` or ``PeriodicPattern`` has a zero step;
+            or if the bounds of a selected split type are inconsistent
             (``n_split_min`` > ``n_split_max``, ``n_min`` > ``n_max``, or
             ``len_max`` <= min(``steps_pattern``)).
 
