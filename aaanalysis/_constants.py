@@ -32,6 +32,9 @@ FILE_DF_CAT = "df_cat"
 FONT_AA = "DejaVu Sans Mono"
 STR_AA_GAP = "-"
 LIST_CANONICAL_AA = list("ACDEFGHIKLMNPQRSTVWY")
+# PSI-BLAST PSSM column order (differs from LIST_CANONICAL_AA; permute before use)
+LIST_PSSM_AA_ORDER = list("ARNDCQEGHILKMFPSTWYV")
+STR_PSSM_SCALE_PREFIX = "PSSM_"
 DTYPE = np.float64
 
 # Part names
