@@ -20,8 +20,6 @@ import pytest
 import aaanalysis as aa
 import aaanalysis.utils as ut
 
-aa.options["verbose"] = False
-
 
 def _kind(series):
     if pdt.is_bool_dtype(series):
@@ -73,12 +71,20 @@ class TestSchemaStructure:
                 assert isinstance(rec["description"], str) and rec["description"].endswith(".")
                 if "range" in rec:
                     assert len(rec["range"]) == 2
+                if "scale_ranges" in rec:
+                    # A scale-dependent column contracts one range per scale and
+                    # must not also carry a single unconditional range.
+                    assert "range" not in rec, (frame, col)
+                    assert rec["scale_ranges"], (frame, col)
+                    for scale, rng in rec["scale_ranges"].items():
+                        assert isinstance(scale, str) and len(rng) == 2
                 if "allowed_values" in rec:
                     assert isinstance(rec["allowed_values"], list) and rec["allowed_values"]
 
     def test_expected_frames_present(self):
         for frame in ["df_seq", "df_parts", "df_scales", "df_cat", "df_subcat",
-                      "df_feat", "df_eval", "X", "prediction"]:
+                      "df_feat", "df_eval", "X", "prediction",
+                      "df_pred", "df_rel", "df_eval_reliability"]:
             assert frame in ut.DICT_DF_SCHEMAS
 
     def test_rich_df_feat_agrees_with_simple_dict(self):

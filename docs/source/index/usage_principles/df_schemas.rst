@@ -996,6 +996,246 @@ Matrix / array contract:
 - **columns**: amino acid (one-letter)
 - **values**: per-position composition / probability / information value (dtype: float)
 
+``df_pred``
+-----------
+
+AAPred.predict output in long format; the columns depend on 'level': 'sequence' = entry, score, score_std (one row per protein); 'domain' = entry, offset, score, is_best (one row per protein and boundary shift); 'window' = entry, position, score, score_std (one row per protein and residue anchor). 'predicted_label' is appended when a threshold is given. Both score columns carry the scale chosen by score_range: 'proba' (the default, [0, 1]) or 'percent' (the same values multiplied by 100, [0, 100]); the score row below contracts one range per scale.
+
+.. list-table::
+   :header-rows: 1
+   :widths: 18 8 8 8 8 34 18
+
+   * - Column
+     - Type
+     - Required
+     - Nullable
+     - Unique
+     - Description
+     - Allowed / range / example
+   * - ``entry``
+     - str
+     - yes
+     - no
+     - no
+     - Protein identifier from df_seq; unique only at level='sequence'.
+     - e.g. P05067
+   * - ``offset``
+     - int
+     - no
+     - no
+     - no
+     - level='domain': boundary shift applied to tmd_start and tmd_stop, in residues.
+     - e.g. -2
+   * - ``position``
+     - int
+     - no
+     - no
+     - no
+     - level='window': 1-based anchor position of the scored window.
+     - range: [1, inf]; e.g. 31
+   * - ``score``
+     - float
+     - yes
+     - no
+     - no
+     - Positive-class score averaged over the fitted models. Its range depends on the score_range argument: [0, 1] on the default 'proba' scale and [0, 100] on 'percent', which holds the same values times 100.
+     - range per score_range: proba: [0, 1]; percent: [0, 100]; e.g. 0.83
+   * - ``score_std``
+     - float
+     - no
+     - no
+     - no
+     - Standard deviation of the score across the fitted models (level='sequence' and 'window'), on the same scale as score.
+     - range: [0, inf]; e.g. 0.04
+   * - ``is_best``
+     - bool
+     - no
+     - no
+     - no
+     - level='domain': True for the highest-scoring offset of each protein.
+     - e.g. True
+   * - ``predicted_label``
+     - int
+     - no
+     - no
+     - no
+     - Class label from the score when a threshold is given (score >= threshold is the positive label).
+     - e.g. 1
+
+``df_rel``
+----------
+
+ReliabilityModel.predict output; one row per sample, one column per reliability axis: stability (score_std, ci_*), applicability domain (ood_score, in_domain, ad_*), score ambiguity (margin, entropy), validity (conformal_set) and the headline flag (reliable).
+
+.. list-table::
+   :header-rows: 1
+   :widths: 18 8 8 8 8 34 18
+
+   * - Column
+     - Type
+     - Required
+     - Nullable
+     - Unique
+     - Description
+     - Allowed / range / example
+   * - ``score``
+     - float
+     - yes
+     - no
+     - no
+     - Positive-class probability averaged over the ensemble members.
+     - range: [0, 1]; e.g. 0.78
+   * - ``score_std``
+     - float
+     - yes
+     - no
+     - no
+     - Standard deviation of the score across the ensemble members.
+     - range: [0, inf]; e.g. 0.06
+   * - ``ci_low``
+     - float
+     - yes
+     - no
+     - no
+     - Lower bound of the score's confidence interval.
+     - range: [0, 1]; e.g. 0.66
+   * - ``ci_high``
+     - float
+     - yes
+     - no
+     - no
+     - Upper bound of the score's confidence interval.
+     - range: [0, 1]; e.g. 0.88
+   * - ``ood_score``
+     - float
+     - yes
+     - yes
+     - no
+     - k-NN distance relative to the training threshold (1.0 = threshold); NaN when the training reference is degenerate.
+     - range: [0, inf]; e.g. 0.72
+   * - ``in_domain``
+     - bool
+     - yes
+     - no
+     - no
+     - True if the sample lies inside the training applicability domain (ood_score <= 1).
+     - e.g. True
+   * - ``ad_knn``
+     - float
+     - yes
+     - no
+     - no
+     - Mean distance to the k nearest training samples in the standardized feature space.
+     - range: [0, inf]; e.g. 1.9
+   * - ``ad_mahalanobis``
+     - float
+     - yes
+     - yes
+     - no
+     - Mahalanobis distance to the training center; NaN when the training reference is degenerate (n_features >= n_samples), where the covariance is rank-deficient and the distance is not identifiable.
+     - range: [0, inf]; e.g. 2.4
+   * - ``ad_leverage``
+     - float
+     - yes
+     - yes
+     - no
+     - Leverage (hat value) relative to the training feature space; NaN on the same degenerate training reference as ad_mahalanobis.
+     - range: [0, inf]; e.g. 0.05
+   * - ``score_calibrated``
+     - float
+     - yes
+     - yes
+     - no
+     - Calibrated positive-class probability; NaN when no calibrator is available (calibration was disabled or could not be fitted).
+     - range: [0, 1]; e.g. 0.74
+   * - ``margin``
+     - float
+     - yes
+     - no
+     - no
+     - Sharpness |p - 0.5| * 2 (1 = decisive, 0 = coin-flip), from the calibrated score when available and otherwise the ensemble score.
+     - range: [0, 1]; e.g. 0.48
+   * - ``entropy``
+     - float
+     - yes
+     - no
+     - no
+     - Binary entropy of the calibrated score when available, otherwise the ensemble score (0 = decisive, 1 = coin-flip).
+     - range: [0, 1]; e.g. 0.83
+   * - ``conformal_set``
+     - str
+     - yes
+     - no
+     - no
+     - Split-conformal prediction set.
+     - allowed: neg, pos, both, none; e.g. pos
+   * - ``reliable``
+     - bool
+     - yes
+     - no
+     - no
+     - Headline flag: in the applicability domain and a conformal singleton, or margin >= 0.5 when no conformal reference is available.
+     - e.g. True
+   * - ``ad_status``
+     - str
+     - yes
+     - no
+     - no
+     - Banded applicability-domain verdict derived from ood_score and the fitted ad_borderline band; 'unknown' when the training reference is degenerate.
+     - allowed: inside, borderline, outside, unknown; e.g. inside
+   * - ``ad_nearest_train``
+     - int
+     - yes
+     - no
+     - no
+     - 0-based row index of the closest training sample in the X passed to fit.
+     - range: [0, inf]; e.g. 12
+
+``df_eval_reliability``
+-----------------------
+
+ReliabilityModel.eval output: one row per equal-width score bin (the calibration curve) plus a summary row (bin='summary') holding the in-domain fraction in mean_score, the empirical conformal coverage in empirical_pos, and the number of evaluated samples in n_samples. With add_metrics=True, rows bin='brier' and bin='ece' follow, holding the Brier score and the expected calibration error in mean_score (empirical_pos is NaN).
+
+.. list-table::
+   :header-rows: 1
+   :widths: 18 8 8 8 8 34 18
+
+   * - Column
+     - Type
+     - Required
+     - Nullable
+     - Unique
+     - Description
+     - Allowed / range / example
+   * - ``bin``
+     - str
+     - yes
+     - no
+     - yes
+     - Score-bin label, 'summary' for the summary row, or 'brier' / 'ece' for the optional calibration-metric rows.
+     - e.g. 0.00-0.20
+   * - ``mean_score``
+     - float
+     - yes
+     - yes
+     - no
+     - Mean predicted score in the bin (summary row: in-domain fraction); NaN for an empty bin.
+     - range: [0, 1]; e.g. 0.12
+   * - ``empirical_pos``
+     - float
+     - yes
+     - yes
+     - no
+     - Empirical positive rate in the bin (summary row: conformal coverage); NaN for an empty bin and for the metric rows.
+     - range: [0, 1]; e.g. 0.1
+   * - ``n_samples``
+     - int
+     - yes
+     - no
+     - no
+     - Number of samples in the bin (summary row: all evaluated samples).
+     - range: [0, inf]; e.g. 18
+
 ``X``
 -----
 
