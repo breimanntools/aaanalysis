@@ -66,9 +66,10 @@ Fixed
   silently (``nan < 0`` and ``nan > 1`` are each ``False``), so ``fit(ci=float("nan"))`` was
   accepted and :meth:`~aaanalysis.ReliabilityModel.predict` then returned ``NaN`` ``ci_low`` /
   ``ci_high`` columns.
-- :meth:`~aaanalysis.ReliabilityModel.eval`: passing only one of ``X`` / ``labels`` now raises,
-  where the given value was silently ignored before; both fall back to the training data only
-  when both are ``None``.
+- :meth:`~aaanalysis.ReliabilityModel.eval`: passing ``X`` without ``labels`` now raises, where
+  the given features were silently ignored before. Passing ``labels`` without ``X`` scores the
+  training features against that labelling; it must match them in length and may only use labels
+  observed during :meth:`~aaanalysis.ReliabilityModel.fit`.
 - :meth:`~aaanalysis.ReliabilityModelPlot.reliability_diagram` validates ``figsize``, ``color``,
   ``title``, and ``ax`` in its frontend, so an invalid value raises a ``ValueError`` naming the
   parameter instead of a matplotlib traceback.

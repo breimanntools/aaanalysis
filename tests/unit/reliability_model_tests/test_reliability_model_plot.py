@@ -276,6 +276,24 @@ class TestReliabilityDiagramComplex:
                                                           label="cal")
 
 
+class TestReliabilityDiagramGoldenValues:
+    """Hand-computed calibration points and metric annotation."""
+
+    def test_curve_points_and_metric_label(self):
+        df_eval = pd.DataFrame({
+            "bin": ["0.00-0.50", "0.50-1.00", "summary", "brier", "ece"],
+            "mean_score": [0.25, 0.75, 0.5, 0.125, 0.25],
+            "empirical_pos": [0.5, 1.0, 0.75, float("nan"), float("nan")],
+            "n_samples": [2, 2, 4, 4, 4],
+        })
+        fig, ax = aa.ReliabilityModelPlot().reliability_diagram(df_eval=df_eval, label="hand")
+        curve = ax.get_lines()[-1]
+        assert curve.get_xdata().tolist() == [0.25, 0.75]
+        assert curve.get_ydata().tolist() == [0.5, 1.0]
+        assert curve.get_label() == "hand (Brier 0.125, ECE 0.250)"
+        plt.close(fig)
+
+
 class TestOodHist:
     def test_returns_fig_ax(self):
         assert _is_fig_ax(aa.ReliabilityModelPlot().ood_hist(df_rel=_df_rel()))
