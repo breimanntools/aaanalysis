@@ -25,6 +25,13 @@ notes — with cross-references and examples — live in
 - `ReliabilityModel.fit(calibrate=True)` now warns (`UserWarning`) when no calibrator can be
   fitted (too few samples in a class for the internal cross-validation, or a model that cannot
   be cloned), instead of leaving the failure silent.
+- `ReliabilityModel` applicability domain is banded and inspectable: `predict` appends
+  `ad_status` (`inside` / `borderline` / `outside` / `unknown`, never null; `in_domain` equals
+  `ad_status == "inside"`) and `ad_nearest_train` (0-based row index of the closest training
+  sample); `fit` gains `ad_borderline=0.1` (band width above the boundary) and exposes the
+  fitted `ad_threshold_` (raw training k-NN distance threshold, `ood_score == ad_knn /
+  ad_threshold_`) and `ad_method_` (`"knn"`). All existing `predict` columns keep their names,
+  order, and values (addresses #473).
 
 ### Changed
 - Prediction/design-tier consistency pass (these classes are still experimental, so no
