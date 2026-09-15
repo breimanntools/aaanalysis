@@ -11,6 +11,21 @@ v1.2.0 (Unreleased)
 
 In development.
 
+Added
+~~~~~
+
+- Calibration quality is now measurable. :meth:`~aaanalysis.ReliabilityModel.eval` gains two
+  keyword-only parameters: ``use_calibrated=True`` bins the calibrated probability
+  (``score_calibrated``) instead of the raw ``score``, and ``add_metrics=True`` appends the Brier
+  score (``bin='brier'``) and the expected calibration error (``bin='ece'``, equal-width bins
+  weighted by bin size), each stored in ``mean_score``. Comparing the raw and the calibrated
+  table on held-out data shows whether ``calibrate=True`` helped. With both left at their
+  defaults the returned table is unchanged; ``use_calibrated=True`` on a model fitted with
+  ``calibrate=False`` raises a ``ValueError``.
+- :meth:`~aaanalysis.ReliabilityModelPlot.reliability_diagram` gains ``label``, annotates the
+  Brier score and ECE in the curve's legend entry when the table carries them, and draws the
+  diagonal only once, so the raw and the calibrated curve can share one ``ax``.
+
 Changed
 ~~~~~~~
 

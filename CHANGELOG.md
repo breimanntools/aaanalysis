@@ -15,6 +15,14 @@ notes — with cross-references and examples — live in
 
 ## [Unreleased]
 
+### Added
+- `ReliabilityModel.eval(use_calibrated=..., add_metrics=...)`: score the calibrated column
+  (`score_calibrated`) instead of the raw `score`, and append Brier-score / expected
+  calibration error (ECE) rows (`bin='brier'` / `bin='ece'`, value in `mean_score`); defaults
+  keep the previous output byte-identical. `ReliabilityModelPlot.reliability_diagram(label=...)`
+  annotates Brier / ECE in the legend when present and supports raw-vs-calibrated overlays on
+  one `ax` (addresses #480).
+
 ### Changed
 - Prediction/design-tier consistency pass (these classes are still experimental, so no
   deprecation cycle; addresses #510):
