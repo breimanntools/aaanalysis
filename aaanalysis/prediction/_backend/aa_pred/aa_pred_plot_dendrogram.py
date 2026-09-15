@@ -181,8 +181,9 @@ def _plot_circular(fig, gs, leaves, icoord, dcoord, names, tracks):
 
 
 # II Main Functions
-def plot_dendrogram_(data=None, names=None, labels=None, dict_color=None, legend_title="Class",
-                     labels_row=None, dict_color_row=None, legend_title_row=None,
+def plot_dendrogram_(data=None, names=None, labels=None, dict_color=None,
+                     legend_title: str | None = "Class",
+                     labels_row=None, dict_color_row=None, legend_title_row: str | None = None,
                      layout="rectangular", figsize=(7, 9), title=None):
     """Rectangular or circular sample dendrogram with colored leaves. Returns (fig, ax_tree)."""
     n = np.asarray(data).shape[0]
