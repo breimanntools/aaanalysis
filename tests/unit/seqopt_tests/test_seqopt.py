@@ -235,9 +235,54 @@ class TestSeqOptInit:
         import inspect
         assert inspect.signature(SeqOpt.__init__).parameters["mode"].default == "importance"
 
-    @pytest.mark.parametrize("mode", ["impact", "importance"])
-    def test_mode_options_still_valid(self, mode):
-        assert mode in ut.LIST_SEQOPT_MODES
+    @pytest.mark.parametrize("mode", ["importance", "impact"])
+    def test_accepted_modes_construct(self, mode, model, wt):
+        # Both documented options are accepted by the constructor itself (not merely listed in
+        # the constant that validation reads), 'impact' with its required prerequisites.
+        if mode == "impact":
+            pytest.importorskip("shap")
+            ref = pd.DataFrame({ut.COL_ENTRY: [f"R{i}" for i in range(4)],
+                                ut.COL_SEQ: [wt[ut.COL_SEQ].iloc[0]] * 4,
+                                ut.COL_TMD_START: [11] * 4, ut.COL_TMD_STOP: [20] * 4})
+            so = SeqOpt(mode="impact", model=model, df_seq_ref=ref, labels=[1, 0, 1, 0])
+        else:
+            so = SeqOpt(mode="importance")
+        assert so._mode == mode
+
+    @settings(max_examples=5, deadline=None)
+    @given(random_state=some.integers(min_value=0, max_value=100))
+    def test_random_state_valid(self, random_state):
+        assert SeqOpt(random_state=random_state)._random_state == random_state
+
+    def test_random_state_none_accepted(self):
+        assert SeqOpt(random_state=None)._random_state is None
+
+    @pytest.mark.parametrize("random_state", [-1, 2.5, "seed"])
+    def test_random_state_invalid_raises(self, random_state):
+        with pytest.raises(ValueError, match="'random_state'"):
+            SeqOpt(random_state=random_state)
+
+    @pytest.mark.parametrize("verbose", [True, False])
+    def test_verbose_valid(self, verbose):
+        assert SeqOpt(verbose=verbose)._verbose is verbose
+
+    @pytest.mark.parametrize("verbose", ["yes", 2, None])
+    def test_verbose_invalid_raises(self, verbose):
+        with pytest.raises(ValueError, match="'verbose'"):
+            SeqOpt(verbose=verbose)
+
+    def test_target_class_without_model_raises(self):
+        with pytest.raises(ValueError, match="'target_class'"):
+            SeqOpt(target_class=1)
+
+    def test_target_class_not_in_model_classes_raises(self, model):
+        with pytest.raises(ValueError, match="'target_class'"):
+            SeqOpt(model=model, target_class="not_a_class")
+
+    @pytest.mark.parametrize("df_scales", ["not_a_dataframe", 5, [1, 2, 3]])
+    def test_df_scales_invalid_raises(self, df_scales):
+        with pytest.raises(ValueError, match="'df_scales'"):
+            SeqOpt(df_scales=df_scales)
 
     def test_df_scales_accepted(self, model):
         so = SeqOpt(mode="importance", model=model, df_scales=ut.load_default_scales(),

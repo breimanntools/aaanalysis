@@ -485,6 +485,9 @@ LIST_METRICS_PRED = ["accuracy", "balanced_accuracy", "precision", "recall", "f1
 # metrics (accuracy/balanced_accuracy/precision/recall/f1/mcc) only need predict, so an estimator
 # without predict_proba (e.g. LinearSVC, SVC(probability=False)) can still be evaluated on them.
 LIST_METRICS_PRED_PROBA = ["roc_auc"]
+# Metric name -> scikit-learn scorer name, for the per-fold and holdout principles that score via
+# cross_val_score / get_scorer. Only names that differ from the scorer string are listed.
+DICT_METRIC_SCORER = {"mcc": "matthews_corrcoef"}
 COLS_EVAL_PRED = [COL_MODEL, COL_METRIC, COL_PRINCIPLE, COL_SCORE, COL_SCORE_STD]
 
 # Score-to-group band assignment (AAPred.score_to_group): the numeric range a set of band

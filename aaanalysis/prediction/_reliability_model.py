@@ -218,6 +218,11 @@ class ReliabilityModel(Wrapper):
         ci : float, default=0.90
             Central width of the reported score confidence interval, as a fraction in ``(0, 1)``
             (e.g. ``0.90`` for a 90% interval), matching :meth:`ModelEvaluator.run`.
+
+            .. versionchanged:: 1.2.0
+               Now a fraction in ``(0, 1)`` (default ``0.90``) instead of a percent (``90.0``),
+               matching :meth:`ModelEvaluator.run` and ``comp_bootstrap_ci``. A percent value
+               raises a ``ValueError`` with a hint; the interval itself is unchanged.
         n_bootstrap : int, default=20
             Bootstrap resamples for uncertainty when ``model`` is a single estimator (not an
             ensemble); ``score`` is then the bagged mean over the resamples (see Notes). ``0``
@@ -334,6 +339,10 @@ class ReliabilityModel(Wrapper):
         ``margin`` / ``entropy`` (calibrated ambiguity), ``conformal_set`` (validity), and
         ``reliable`` (the headline flag).
 
+        .. versionchanged:: 1.2.0
+           The applicability-domain column ``ad_knn_dist`` is named ``ad_knn``, matching its
+           ``ad_mahalanobis`` / ``ad_leverage`` siblings.
+
         Parameters
         ----------
         X : array-like, shape (n_samples, n_features)
@@ -404,6 +413,9 @@ class ReliabilityModel(Wrapper):
         predicted-vs-empirical positive rate (how well calibrated the score is) plus a summary row
         with the fraction in the applicability domain and the empirical coverage of the conformal
         sets (which should track ``1 - conformal_alpha``).
+
+        .. versionchanged:: 1.2.0
+           The per-bin sample-count column ``n`` is named ``n_samples``.
 
         Parameters
         ----------

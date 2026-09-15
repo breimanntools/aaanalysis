@@ -281,8 +281,12 @@ class AAPred(Wrapper):
             Keyword arguments for each model in ``list_model_classes`` (same length).
         list_metrics : list of str, default=["accuracy", "balanced_accuracy", "f1", "roc_auc"]
             Default performance metrics used by :meth:`eval` when ``metrics`` is not given.
-            Each should be one of ``accuracy``, ``balanced_accuracy``, ``precision``,
-            ``recall``, ``f1``, ``roc_auc``, ``mcc``.
+            Each should be one of ``accuracy``, ``balanced_accuracy``, ``precision``, ``recall``,
+            ``f1``, ``roc_auc``, and ``mcc`` (Matthews correlation coefficient).
+
+            .. versionchanged:: 1.2.0
+               ``mcc`` (Matthews correlation coefficient) is accepted, giving ``AAPred`` the same
+               metric vocabulary as :class:`ModelEvaluator`.
         df_feat : pd.DataFrame, shape (n_features, n_feature_info), optional
             CPP feature DataFrame (with a ``feature`` column) bound to the model. When given, the
             feature matrix ``X`` is computed internally from a ``df_seq`` by the sequence-level
@@ -359,6 +363,7 @@ class AAPred(Wrapper):
         # Featurizer parameters
         if df_feat is not None:
             df_feat = ut.check_df_feat(df_feat=df_feat)
+        ut.check_df(name="df_scales", df=df_scales, accept_none=True)
         # Internal attributes
         self._verbose = verbose
         self._random_state = random_state
@@ -497,7 +502,12 @@ class AAPred(Wrapper):
         labels_holdout : array-like, shape (n_holdout,), optional
             Class labels for ``X_holdout``. Required if ``X_holdout`` is given.
         metrics : list of str, optional
-            Performance metrics to compute. Defaults to ``list_metrics`` from the constructor.
+            Performance metrics to compute, each one of ``accuracy``, ``balanced_accuracy``,
+            ``precision``, ``recall``, ``f1``, ``roc_auc``, and ``mcc`` (Matthews correlation
+            coefficient). Defaults to ``list_metrics`` from the constructor.
+
+            .. versionchanged:: 1.2.0
+               ``mcc`` (Matthews correlation coefficient) is accepted.
         n_cv : int, default=5
             Number of stratified cross-validation folds (must not exceed the smallest class
             count). Ignored when ``cv`` is given.
@@ -559,6 +569,9 @@ class AAPred(Wrapper):
             check_cv(cv=cv)
         else:
             check_n_cv(n_cv=n_cv, labels=labels)
+        # 'list_parts' is used only in baseline mode, but is validated unconditionally so a typo
+        # surfaces here instead of being silently ignored.
+        list_parts = ut.check_list_parts(list_parts=list_parts, return_default=False, accept_none=True)
         list_models = None
         if X_holdout is not None:
             X_holdout = ut.check_X(X=X_holdout, min_n_samples=1)

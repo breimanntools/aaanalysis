@@ -7,10 +7,10 @@ import hypothesis.strategies as some
 from sklearn.svm import SVC
 from sklearn.ensemble import RandomForestClassifier
 from sklearn.base import clone
-from sklearn.model_selection import LeaveOneOut, StratifiedKFold, cross_val_predict
+from sklearn.model_selection import (LeaveOneOut, StratifiedKFold, cross_val_predict,
+                                     cross_val_score)
 from sklearn.metrics import (accuracy_score, balanced_accuracy_score, f1_score, roc_auc_score,
                              matthews_corrcoef)
-from sklearn.model_selection import cross_val_score
 
 import aaanalysis.utils as ut
 
@@ -74,6 +74,19 @@ class TestAAPredInit:
         from sklearn.preprocessing import StandardScaler
         with pytest.raises(ValueError, match="predict"):
             aa.AAPred(models=[StandardScaler()])
+
+    def test_df_scales_invalid_raises(self):
+        with pytest.raises(ValueError, match="'df_scales'"):
+            aa.AAPred(df_scales="not_a_dataframe")
+
+    def test_verbose_invalid_raises(self):
+        with pytest.raises(ValueError, match="'verbose'"):
+            aa.AAPred(verbose="yes")
+
+    @pytest.mark.parametrize("random_state", [-1, 2.5, "seed"])
+    def test_random_state_invalid_raises(self, random_state):
+        with pytest.raises(ValueError, match="'random_state'"):
+            aa.AAPred(random_state=random_state)
 
     def test_mismatched_kwargs_length_raises(self):
         with pytest.raises(ValueError):
@@ -243,9 +256,7 @@ class TestAAPredEval:
         pd.testing.assert_frame_equal(d1, d2)
 
 
-class TestAAPredEvalMCC:
-    """'mcc' is shared vocabulary with ModelEvaluator: validated AND scored by every principle."""
-
+    # 'mcc' is shared vocabulary with ModelEvaluator: validated AND scored by every principle.
     def test_mcc_in_metric_lists(self):
         assert "mcc" in ut.LIST_METRICS_PRED
         assert ut.LIST_METRICS_MODELEVAL.count("mcc") == 1
@@ -261,19 +272,47 @@ class TestAAPredEvalMCC:
         assert set(df_eval["metric"]) == {"mcc"}
         assert df_eval["score"].between(-1, 1).all()
 
+    @pytest.mark.parametrize("metric", ["MCC", "matthews_corrcoef", "mcc_score"])
+    def test_eval_mcc_misspelled_raises(self, metric):
+        X, labels = _data()
+        with pytest.raises(ValueError, match="should each be one of"):
+            aa.AAPred(random_state=0).eval(X, labels, metrics=[metric])
+
+    @pytest.mark.parametrize("X", [None, np.arange(10), "not_a_matrix"])
+    def test_eval_X_invalid_raises(self, X):
+        _, labels = _data()
+        with pytest.raises(ValueError):
+            aa.AAPred(random_state=0).eval(X, labels)
+
+    @pytest.mark.parametrize("X_holdout", [np.arange(10), "not_a_matrix"])
+    def test_eval_X_holdout_invalid_raises(self, X_holdout):
+        X, labels = _data()
+        with pytest.raises(ValueError):
+            aa.AAPred(random_state=0).eval(X, labels, X_holdout=X_holdout,
+                                           labels_holdout=[1, 0] * 5)
+
+    def test_eval_X_holdout_feature_mismatch_raises(self):
+        X, labels = _data()
+        X_holdout, labels_holdout = _data(n_per_class=5, n_feat=3, seed=2)
+        with pytest.raises(ValueError, match="n_features"):
+            aa.AAPred(random_state=0).eval(X, labels, X_holdout=X_holdout,
+                                           labels_holdout=labels_holdout)
+
+    @pytest.mark.parametrize("list_parts", ["bad_part", ["tmd", "not_a_part"], []])
+    def test_eval_list_parts_invalid_raises(self, list_parts):
+        X, labels = _data()
+        with pytest.raises(ValueError, match="part"):
+            aa.AAPred(random_state=0).eval(X, labels, list_parts=list_parts)
+
+
+class TestAAPredEvalComplex:
+    """eval parameter interactions: the mcc vocabulary across principles, golden vs. sklearn."""
+
     def test_eval_mcc_with_other_metrics(self):
         X, labels = _data()
         df_eval = aa.AAPred(models=["rf"], random_state=0).eval(X, labels,
                                                                 metrics=["accuracy", "mcc", "roc_auc"])
         assert list(df_eval["metric"]) == ["accuracy", "mcc", "roc_auc"]
-
-    def test_eval_mcc_holdout(self):
-        X, labels = _data()
-        X_holdout, labels_holdout = _data(n_per_class=8, seed=1)
-        df_eval = aa.AAPred(models=["rf"], random_state=0).eval(
-            X, labels, metrics=["mcc"], X_holdout=X_holdout, labels_holdout=labels_holdout)
-        assert set(df_eval["principle"]) == {"cv", "holdout"}
-        assert df_eval["score"].between(-1, 1).all()
 
     def test_eval_mcc_cv_pooled(self):
         X, labels = _data()
@@ -299,11 +338,20 @@ class TestAAPredEvalMCC:
         got = aap.eval(X, labels, cv=cv, metrics=["mcc"])["score"].iloc[0]
         assert abs(got - ref) < 1e-9
 
-    @pytest.mark.parametrize("metric", ["MCC", "matthews_corrcoef", "mcc_score"])
-    def test_eval_mcc_misspelled_raises(self, metric):
+    def test_eval_mcc_holdout_golden_matches_sklearn(self):
+        # The holdout row must be matthews_corrcoef on the model's own held-out predictions:
+        # a scorer accidentally mapped to accuracy would pass a bare [-1, 1] range check.
         X, labels = _data()
-        with pytest.raises(ValueError, match="should each be one of"):
-            aa.AAPred(random_state=0).eval(X, labels, metrics=[metric])
+        X_holdout, labels_holdout = _data(n_per_class=8, seed=1)
+        aap = aa.AAPred(models=["svm"], random_state=0)
+        est = aap._list_estimators[0]
+        ref = matthews_corrcoef(labels_holdout, clone(est).fit(X, labels).predict(X_holdout))
+        df_eval = aap.eval(X, labels, metrics=["mcc"], X_holdout=X_holdout,
+                           labels_holdout=labels_holdout)
+        got = df_eval[df_eval["principle"] == "holdout"]["score"].iloc[0]
+        assert abs(got - ref) < 1e-9
+        assert ref != pytest.approx(accuracy_score(labels_holdout,
+                                                   clone(est).fit(X, labels).predict(X_holdout)))
 
 
 class TestAAPredEvalCV:

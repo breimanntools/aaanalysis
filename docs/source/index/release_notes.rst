@@ -34,6 +34,9 @@ Changed
     spread of a sample's score across ensemble members, whereas the ``score_std`` of
     :meth:`~aaanalysis.AAPred.eval` and :meth:`~aaanalysis.ModelEvaluator.run` is the spread of a
     metric across cross-validation folds.
+  - :class:`~aaanalysis.AAPred` and :class:`~aaanalysis.SeqOpt` validate ``df_scales``, and
+    :meth:`~aaanalysis.AAPred.eval` validates ``list_parts``, so an invalid value raises a
+    ``ValueError`` naming the parameter instead of failing later or being ignored.
 
 Fixed
 ~~~~~

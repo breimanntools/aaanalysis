@@ -26,15 +26,11 @@ METRIC_SCORE_FUNCS = {
     "mcc": (matthews_corrcoef, False),
 }
 
-# Metric name -> scikit-learn scorer name, for the per-fold and holdout principles that score via
-# ``cross_val_score`` / ``get_scorer``. Only names that differ from the scorer string are listed.
-DICT_METRIC_SCORER = {"mcc": "matthews_corrcoef"}
-
 
 # I Helper Functions
 def _scorer_name(metric):
     """Return the scikit-learn scorer string for a package metric name."""
-    return DICT_METRIC_SCORER.get(metric, metric)
+    return ut.DICT_METRIC_SCORER.get(metric, metric)
 
 
 def _score_cv(estimator, X, labels, metric, n_cv, random_state):

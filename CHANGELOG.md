@@ -31,6 +31,9 @@ notes — with cross-references and examples — live in
     `ModelEvaluator`.
   - Documented that `score_std` in `ReliabilityModel` is the spread across ensemble members,
     whereas in `AAPred` / `ModelEvaluator` it is the spread across CV folds.
+  - `AAPred` and `SeqOpt` now validate `df_scales`, and `AAPred.eval` validates `list_parts`, in
+    their frontend checks: an invalid value raises a `ValueError` naming the parameter instead of
+    failing later (or being silently ignored).
 
 ### Fixed
 - `StructurePreprocessor.encode_pae` / `encode`: read the AlphaFold DB PAE JSON layout
