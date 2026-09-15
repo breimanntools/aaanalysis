@@ -314,6 +314,29 @@ class TestCPPRunChunkedBatchSize:
                                            n_sample_batches=n_sample_batches)
         assert sum(sizes) == 2 * n
 
+    @settings(max_examples=5, deadline=None)
+    @given(n_sample_batches=some.integers(min_value=2, max_value=24))
+    def test_sample_axis_uses_the_requested_number_of_nonempty_batches(
+            self, small, n_sample_batches):
+        with pytest.MonkeyPatch.context() as patch:
+            sizes = self._assigned_batch_sizes(
+                small["cpp"], small["labels"], patch,
+                n_sample_batches=n_sample_batches,
+            )
+        assert len(sizes) == 2 * n_sample_batches
+        assert min(sizes) > 0
+        assert max(sizes) - min(sizes) <= 1
+
+    def test_sample_axis_keeps_a_remainder_batch_nonempty(self, monkeypatch):
+        # Regression: ceil-sized ranges turned 5 samples / 4 requested batches
+        # into only 3 non-empty batches. Each pass must now use 2, 1, 1, 1.
+        df_parts, labels, df_scales = _build_inputs(n_samples=5, n_scales=8)
+        cpp = aa.CPP(df_parts=df_parts, df_scales=df_scales, verbose=False, random_state=SEED)
+        sizes = self._assigned_batch_sizes(
+            cpp, labels, monkeypatch, n_sample_batches=4,
+        )
+        assert sizes == [2, 1, 1, 1] * 2
+
     def test_unbatched_run_assigns_every_sample_at_once(self, small, monkeypatch):
         # The contrast that gives the assertions above their meaning.
         sizes = self._assigned_batch_sizes(small["cpp"], small["labels"], monkeypatch)
@@ -329,6 +352,41 @@ class TestCPPRunChunkedBatchSize:
         # is why n_sample_batches exists and why the two are documented differently.
         sizes = self._assigned_batch_sizes(small["cpp"], small["labels"], monkeypatch, n_batches=2)
         assert set(sizes) == {small["n_samples"]}
+
+    @settings(max_examples=5, deadline=None)
+    @given(n_batches=some.integers(min_value=2, max_value=8))
+    def test_scale_axis_uses_the_requested_number_of_batches(
+            self, small, n_batches):
+        with pytest.MonkeyPatch.context() as patch:
+            sizes = self._assigned_batch_sizes(
+                small["cpp"], small["labels"], patch, n_batches=n_batches,
+            )
+        assert len(sizes) == n_batches
+        assert set(sizes) == {small["n_samples"]}
+
+    @pytest.mark.parametrize("n_batches", [0, 1, 9, 1.5, "two", True])
+    def test_invalid_n_batches_raise_value_error(self, small, n_batches):
+        with pytest.raises(ValueError, match=r"'n_batches'"):
+            small["cpp"].run(
+                labels=small["labels"], n_filter=N_FILTER, n_jobs=1,
+                n_batches=n_batches,
+            )
+
+    @pytest.mark.parametrize("n_sample_batches", [0, 1, 25, 1.5, "two", True])
+    def test_invalid_n_sample_batches_raise_value_error(self, small, n_sample_batches):
+        with pytest.raises(ValueError, match=r"'n_sample_batches'"):
+            small["cpp"].run(
+                labels=small["labels"], n_filter=N_FILTER, n_jobs=1,
+                n_sample_batches=n_sample_batches,
+            )
+
+    def test_batching_modes_cannot_be_combined(self, small):
+        with pytest.raises(ValueError, match=(
+                r"'n_sample_batches' \(2\) should be None when 'n_batches' \(2\) is set")):
+            small["cpp"].run(
+                labels=small["labels"], n_filter=N_FILTER, n_jobs=1,
+                n_batches=2, n_sample_batches=2,
+            )
 
 
 # ---------------------------------------------------------------------------
