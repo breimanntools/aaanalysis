@@ -7,7 +7,9 @@ gate makes the rule enforceable instead of aspirational — the AAPred notebooks
 without full parameter coverage precisely because nothing checked it.
 
 Approach (deliberately name-based, mirroring ``test_param_coverage.py``):
-1. For every symbol in ``aaanalysis.__all__``, enumerate its public methods/functions.
+1. For every symbol in ``aaanalysis.__all__`` and in ``aaanalysis.pipe.__all__`` (the ``ap``
+   golden pipelines, deliberately kept out of the top-level ``__all__``), enumerate its public
+   methods/functions. Pipe symbols are keyed with an ``ap.`` prefix.
 2. For each that carries an ``.. include:: examples/<name>.rst`` docstring directive,
    locate ``examples/**/<name>.ipynb`` and read its **code** cells.
 3. Every public parameter of that method must appear by **name** in the notebook code
@@ -27,11 +29,13 @@ from pathlib import Path
 import pytest
 
 import aaanalysis as aa
+import aaanalysis.pipe as ap
 
 _REPO_ROOT = Path(__file__).resolve().parents[3]
 _EXAMPLES_ROOT = _REPO_ROOT / "examples"
 _SKIP_PARAMS = {"self", "cls"}
 _VAR_KINDS = {inspect.Parameter.VAR_POSITIONAL, inspect.Parameter.VAR_KEYWORD}
+_PIPE_PREFIX = "ap."
 _INCLUDE_RE = re.compile(r"\.\.\s+include::\s+examples/([\w\-]+)\.rst")
 
 # Ambient params that are structurally hard to demo by name and add no teaching value.
@@ -135,10 +139,19 @@ def _public_params(fn):
 def iter_documented_methods():
     """Yield ``(symbol, method_name, fn, notebook_path, [params])`` for methods that
     have an example notebook via their docstring include."""
-    for symbol in aa.__all__:
-        obj = getattr(aa, symbol)
+    namespaces = [("", aa, aa.__all__), (_PIPE_PREFIX, ap, ap.__all__)]
+    for prefix, module, names in namespaces:
+        yield from _iter_namespace(prefix, module, names)
+
+
+def _iter_namespace(prefix, module, names):
+    for name in names:
+        obj = getattr(module, name)
+        symbol = f"{prefix}{name}"
         if not (inspect.isclass(obj) or inspect.isfunction(obj)):
             continue
+        # pipe.__all__ always lists explain_features, which is a missing-feature stub on base
+        # installs (no [pro] extra); a stub has no notebook-facing signature to check.
         if is_missing_feature_stub(obj):
             continue
         targets = _iter_methods(obj) if inspect.isclass(obj) else [(None, obj)]
@@ -160,6 +173,23 @@ class TestNotebookParamCoverageMachinery:
     def test_every_documented_notebook_exists(self):
         missing = [f"{s}.{m}" for s, m, _fn, nb, _p in iter_documented_methods() if nb is None]
         assert not missing, f"docstring includes with no example notebook: {missing}"
+
+    def test_pipe_functions_are_enumerated(self):
+        """Every non-stub ``ap`` pipeline is gated, while ``pipe`` stays out of the top-level API."""
+        assert "pipe" not in aa.__all__
+        expected = {f"{_PIPE_PREFIX}{n}" for n in ap.__all__
+                    if not is_missing_feature_stub(getattr(ap, n))}
+        found = {s for s, _m, _fn, _nb, _p in iter_documented_methods() if s.startswith(_PIPE_PREFIX)}
+        assert expected, "aaanalysis.pipe.__all__ exposes no enumerable pipeline"
+        assert found == expected, f"pipe pipelines without a gated example notebook: {sorted(expected - found)}"
+
+    def test_missing_feature_stub_is_skipped(self):
+        """A pro-gated stub (e.g. explain_features on a base install) must not break enumeration."""
+        from aaanalysis import missing_feature_stub
+        stub = missing_feature_stub("explain_features", ImportError("x", name="shap"), mode="pro")
+        assert is_missing_feature_stub(stub)
+        assert list(_iter_namespace(_PIPE_PREFIX, type("M", (), {"explain_features": stub}),
+                                    ["explain_features"])) == []
 
     def test_allowlist_entries_are_real(self):
         valid = {(s, m, p) for s, m, _fn, _nb, params in iter_documented_methods() for p in params}
@@ -193,3 +223,11 @@ class TestNotebookParamCoverage:
         """The prediction (AAPred/AAPredPlot) notebooks are held to zero gaps."""
         pred = sorted(k for k in _current_gaps() if k.startswith(("AAPred::", "AAPredPlot::")))
         assert not pred, "Prediction notebooks must demonstrate every param:\n" + "\n".join(f"  {k}" for k in pred)
+
+    def test_pipe_notebooks_fully_covered(self):
+        """The ``ap`` golden-pipeline notebooks are held to zero gaps (no baseline, no allowlist)."""
+        assert not [k for k in ALLOWLIST if k[0].startswith(_PIPE_PREFIX)], \
+            "aaanalysis.pipe params may not be allowlisted"
+        pipe_gaps = sorted(k for k in _current_gaps() if k.startswith(_PIPE_PREFIX))
+        assert not pipe_gaps, ("aaanalysis.pipe notebooks must demonstrate every param:\n"
+                               + "\n".join(f"  {k}" for k in pipe_gaps))

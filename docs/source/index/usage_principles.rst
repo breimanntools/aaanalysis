@@ -70,4 +70,5 @@ concepts of AAanalysis are provided by the following sections:
    usage_principles/feature_identification
    usage_principles/pu_learning
    usage_principles/xai
+   usage_principles/golden_pipelines
    usage_principles/error_contracts
