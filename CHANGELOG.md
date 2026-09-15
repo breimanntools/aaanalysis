@@ -37,7 +37,9 @@ notes — with cross-references and examples — live in
 ### Added
 - `ModelEvaluator.learning_curve` / `ModelEvaluatorPlot.learning_curve`: cross-validated
   metric-vs-training-size curve with bootstrap CIs (stratified, nested subsets of each training
-  fold; test folds untouched) to tell a sampling-limited task from a saturated one (#93).
+  fold; test folds untouched) to tell a sampling-limited task from a saturated one. The default
+  grid gives five sizes, each with a bootstrap CI, and the training-fold size reproduces
+  `ModelEvaluator.run` when both calls use the same resolved `random_state` (#93).
 
 ### Fixed
 - `ReliabilityModel.fit`: non-finite numbers (`NaN`, `inf`, `-inf`) are rejected for `ci`,
