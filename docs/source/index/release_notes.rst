@@ -72,14 +72,17 @@ Documentation
   ``(result, plot, df_eval)`` return shape (with :func:`~aaanalysis.pipe.plot_eval` as the
   documented exception, returning a list of matplotlib figures), and the parity anchors that keep
   the convenience layer honest against the explicit primitive path.
-- :func:`~aaanalysis.pipe.find_features` documents its parity scope explicitly: only
-  ``search="fast"`` is anchored byte-identical to an explicit chain, while ``"balanced"`` and
-  ``"exhaustive"`` search many configurations and are reproducible for a fixed ``random_state``
-  without being parity-anchored.
+- :func:`~aaanalysis.pipe.find_features` documents its parity scope explicitly: only its
+  ``search="fast"`` ``df_feat`` is anchored byte-identical to an explicit chain, while
+  ``"balanced"`` and ``"exhaustive"`` search many configurations and are reproducible for a fixed
+  ``random_state`` without being parity-anchored.
 - The parity of :func:`~aaanalysis.pipe.predict_samples` with the explicit
   :meth:`~aaanalysis.SequenceFeature.feature_matrix` / ``cross_validate`` chain is now pinned over
   the complete learned state of every fitted predictor, and the example notebooks of
   :mod:`aaanalysis.pipe` are held to zero parameter-coverage gaps.
+- The documented load → find-features → prediction path is executed in the standard unit suite,
+  with its at-most-ten-statement budget read from the same code block displayed on the
+  :ref:`Golden Pipelines <golden_pipelines>` page.
 
 Version 1.1
 --------------------------------

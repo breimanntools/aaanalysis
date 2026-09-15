@@ -5,9 +5,12 @@ Golden Pipelines
 
 The golden pipelines in :mod:`aaanalysis.pipe` are a second, opt-in way to use AAanalysis: stateless
 one-call wrappers that chain the existing classes into a complete step, so a first result does not
-require wiring every primitive by hand. They add no algorithm of their own. Each one is a thin
-facade over a path you could write explicitly, and that promise is kept honest by tests: where a
-pipeline has an explicit equivalent, its defaults are pinned to reproduce that path byte for byte.
+require wiring every primitive by hand. They keep their orchestration at the public layer, so the
+primitive path remains inspectable. Where a pipeline has a direct explicit equivalent, its defaults
+are pinned by tests to reproduce that path byte for byte.
+
+.. versionadded:: 1.2.0
+
 Import the module under its conventional alias:
 
 .. code-block:: python
@@ -58,9 +61,9 @@ statements:
                                                 plot=False, random_state=0)
     score = df_eval["balanced_accuracy_mean"].max()
 
-This snippet is part of the test suite: it is executed on every run, and its length is checked
-against a budget of at most ten statements, so the ergonomics of the pipeline layer cannot erode
-unnoticed.
+This snippet is part of the standard unit-test suite: it is executed on every run, and its length
+is checked against a budget of at most ten statements, so the ergonomics of the pipeline layer
+cannot erode unnoticed.
 
 Parity with the explicit path
 -----------------------------
