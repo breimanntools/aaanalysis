@@ -83,6 +83,28 @@ def check_match_strategy_split_args(strategy=None, split_types=None, n_split_min
     return None
 
 
+def check_split_args(split_types=None, n_split_min=1, n_split_max=15, steps_pattern=None,
+                     n_min=2, n_max=4, len_max=15, steps_periodicpattern=None) -> None:
+    """Check split-type-specific ranges after strategy resolution."""
+    if ut.STR_SEGMENT in split_types and n_split_min > n_split_max:
+        raise ValueError(f"'n_split_min' ({n_split_min}) should be <= 'n_split_max' ({n_split_max}).")
+    if ut.STR_PATTERN in split_types:
+        if n_min > n_max:
+            raise ValueError(f"'n_min' ({n_min}) should be <= 'n_max' ({n_max}).")
+        steps_pattern = [3, 4] if steps_pattern is None else steps_pattern
+        for i, step in enumerate(steps_pattern):
+            if step < 1:
+                raise ValueError(f"'steps_pattern[{i}]' ({step}) should be a positive integer.")
+        if len_max <= steps_pattern[0]:
+            raise ValueError(f"'len_max' ({len_max}) should be greater than the smallest "
+                             f"'steps_pattern' value ({steps_pattern[0]}).")
+    if ut.STR_PERIODIC_PATTERN in split_types:
+        steps_periodicpattern = [3, 4] if steps_periodicpattern is None else steps_periodicpattern
+        for i, step in enumerate(steps_periodicpattern):
+            if step < 1:
+                raise ValueError(f"'steps_periodicpattern[{i}]' ({step}) should be a positive integer.")
+
+
 def check_steps(steps=None, steps_name="steps_pattern", len_min=2, fixed_len=False):
     """Sort steps and warn if empty list"""
     if steps is None:
@@ -557,14 +579,14 @@ class SequenceFeature:
 
     @staticmethod
     def get_split_kws(split_types: Optional[Union[Literal["Segment", "Pattern", "PeriodicPattern"],
-                                                   List[Literal["Segment", "Pattern", "PeriodicPattern"]]]] = None,
+                                                   Sequence[Literal["Segment", "Pattern", "PeriodicPattern"]]]] = None,
                       n_split_min: int = 1,
                       n_split_max: int = 15,
-                      steps_pattern: Optional[List[int]] = None,
+                      steps_pattern: Optional[Sequence[int]] = None,
                       n_min: int = 2,
                       n_max: int = 4,
                       len_max: int = 15,
-                      steps_periodicpattern: Optional[List[int]] = None,
+                      steps_periodicpattern: Optional[Sequence[int]] = None,
                       strategy: Optional[Literal["compositional", "positional"]] = None,
                       ) -> dict:
         """
@@ -581,16 +603,16 @@ class SequenceFeature:
 
         Parameters
         ----------
-        split_types : str or list of str, optional
+        split_types : str or sequence of str, optional
             Split types (``Segment``, ``Pattern``, ``PeriodicPattern``) for which the parameter dictionary
             should be generated. A single split type can be given as string. If ``None`` (default), all
             three split types are used.
         n_split_min : int, default=1
-            Number to specify the greatest ``Segment``. Should be > 0.
+            Minimum number of segments used to split a part. Must be >= 1.
         n_split_max : int, default=15
-            Number to specify the smallest ``Segment``. Should be >= ``n_split_min``.
-        steps_pattern : list of int, optional
-            Possible steps sizes for ``Pattern``. Should contain at least 1 non-negative integers
+            Maximum number of segments used to split a part. Must be >= ``n_split_min``.
+        steps_pattern : sequence of int, optional
+            Possible positive step sizes for ``Pattern``. Must contain at least one positive integer
             if ``Pattern`` split_type is used. If ``None`` (default), ``[3, 4]`` is used.
         n_min : int, default=2
             Minimum number of steps for ``Pattern``. Should be <= ``n_max``.
@@ -599,8 +621,8 @@ class SequenceFeature:
         len_max : int, default=15
             Maximum length in amino acid position for ``Pattern`` by varying start position.
             Should be > min(``steps_pattern``).
-        steps_periodicpattern : list of int, optional
-            Size of odd and even steps for ``PeriodicPattern``. Should contain two non-negative integers if
+        steps_periodicpattern : sequence of int, optional
+            Size of odd and even steps for ``PeriodicPattern``. Must contain two positive integers if
             ``PeriodicPattern`` split_type is used. If ``None`` (default), ``[3, 4]`` is used.
         strategy : {'compositional', 'positional'} or None, default=None
             Preset for the CPP strategy, which sets ``split_types``, ``n_split_min``, and ``n_split_max``:
@@ -621,22 +643,24 @@ class SequenceFeature:
         Returns
         -------
         split_kws : dict
-            Nested dictionary with parameters for chosen split_types:
-
-            - Segment: {n_split_min:1, n_split_max=15}
-            - Pattern: {steps=[3, 4], n_min=2, n_max=4, len_max=15}
-            - PeriodicPattern: {steps=[3, 4]}
+            Nested dictionary for the selected split types. The ``Segment`` entry contains
+            ``n_split_min`` and ``n_split_max``; the ``Pattern`` entry contains ``steps``,
+            ``n_min``, ``n_max``, and ``len_max``; and the ``PeriodicPattern`` entry contains
+            ``steps``. Defaults return all three entries. ``strategy='compositional'`` returns
+            only ``{'Segment': {'n_split_min': 1, 'n_split_max': 1}}``.
 
         Raises
         ------
         ValueError
             If ``strategy`` is not ``'compositional'``, ``'positional'``, or ``None``; if ``strategy`` is
             given while ``split_types``, ``n_split_min``, or ``n_split_max`` is not at its default; if
-            ``split_types`` is not a string or list-like or contains an unknown split type; if
+            ``split_types`` is not a string or sequence or contains an unknown split type; if
             ``n_split_min``, ``n_split_max``, ``n_min``, ``n_max``, or ``len_max`` is not an integer >= 1;
-            if ``steps_pattern`` or ``steps_periodicpattern`` is not a list of positive integers of the
-            required length (>= 1 for ``steps_pattern``, exactly 2 for ``steps_periodicpattern``); or if
-            ``n_split_min`` > ``n_split_max``, ``n_min`` > ``n_max``, or ``len_max`` <= min(``steps_pattern``).
+            if a selected ``Pattern`` or ``PeriodicPattern`` split type receives a sequence that does not
+            contain positive integers of the required length (>= 1 for ``steps_pattern``, exactly 2 for
+            ``steps_periodicpattern``); or if the bounds of a selected split type are inconsistent
+            (``n_split_min`` > ``n_split_max``, ``n_min`` > ``n_max``, or
+            ``len_max`` <= min(``steps_pattern``)).
 
         Notes
         -----
@@ -666,12 +690,11 @@ class SequenceFeature:
         # Check input
         ut.check_str_options(name="strategy", val=strategy, accept_none=True,
                              list_str_options=ut.LIST_SPLIT_STRATEGIES)
-        check_match_strategy_split_args(strategy=strategy, split_types=split_types,
-                                        n_split_min=n_split_min, n_split_max=n_split_max)
+        split_types_raw = split_types
         split_types = check_split_types(split_types=split_types)
         args_int = dict(n_split_min=n_split_min, n_split_max=n_split_max, n_min=n_min, n_max=n_max, len_max=len_max)
         for name in args_int:
-            ut.check_number_range(name=name, val=args_int[name], just_int=False, min_val=1)
+            ut.check_number_range(name=name, val=args_int[name], just_int=True, min_val=1)
         steps_pattern = ut.check_list_like(name="steps_pattern", val=steps_pattern,
                                            accept_none=True, check_all_non_neg_int=True)
         steps_periodicpattern = ut.check_list_like(name="steps_periodicpattern", val=steps_periodicpattern,
@@ -679,6 +702,15 @@ class SequenceFeature:
         steps_pattern = check_steps(steps=steps_pattern, steps_name="steps_pattern", len_min=1, fixed_len=False)
         steps_periodicpattern = check_steps(steps=steps_periodicpattern, steps_name="steps_periodicpattern",
                                             len_min=2, fixed_len=True)
+        check_match_strategy_split_args(strategy=strategy, split_types=split_types_raw,
+                                        n_split_min=n_split_min, n_split_max=n_split_max)
+        if strategy == ut.STR_COMPOSITIONAL:
+            split_types, n_split_min, n_split_max = [ut.STR_SEGMENT], 1, 1
+        elif strategy == ut.STR_POSITIONAL:
+            split_types, n_split_min, n_split_max = list(ut.LIST_SPLIT_TYPES), 2, 15
+        check_split_args(split_types=split_types, n_split_min=n_split_min, n_split_max=n_split_max,
+                         steps_pattern=steps_pattern, n_min=n_min, n_max=n_max, len_max=len_max,
+                         steps_periodicpattern=steps_periodicpattern)
         # Create kws for splits
         split_kws = get_split_kws_(n_split_min=n_split_min,
                                    n_split_max=n_split_max,
@@ -687,8 +719,7 @@ class SequenceFeature:
                                    n_max=n_max,
                                    len_max=len_max,
                                    steps_periodicpattern=steps_periodicpattern,
-                                   split_types=split_types,
-                                   strategy=strategy)
+                                   split_types=split_types)
         # Post check
         check_split_kws(split_kws=split_kws)
         return split_kws

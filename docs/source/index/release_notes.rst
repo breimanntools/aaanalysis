@@ -45,7 +45,8 @@ Added
   ``split_types="Segment", n_split_min=1, n_split_max=1``) and ``strategy="positional"`` returns
   sub-segments plus ``Pattern`` and ``PeriodicPattern`` (equal to ``n_split_min=2, n_split_max=15``
   over all three split types). Both presets together cover the default split set; the default
-  ``strategy=None`` leaves the output unchanged.
+  ``strategy=None`` leaves the output unchanged. A preset cannot be combined with non-default
+  ``split_types``, ``n_split_min``, or ``n_split_max`` values.
 
 Fixed
 ~~~~~
