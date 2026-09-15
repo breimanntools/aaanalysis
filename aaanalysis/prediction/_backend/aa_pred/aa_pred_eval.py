@@ -6,14 +6,15 @@ import pandas as pd
 from sklearn.base import clone
 from sklearn.model_selection import StratifiedKFold, cross_val_score, cross_val_predict
 from sklearn.metrics import (get_scorer, accuracy_score, balanced_accuracy_score,
-                             precision_score, recall_score, f1_score, roc_auc_score)
+                             precision_score, recall_score, f1_score, roc_auc_score,
+                             matthews_corrcoef)
 
 import aaanalysis.utils as ut
 
 
 # Metric name -> (score function, needs_proba). The pooled principle scores each metric once on
 # the held-out predictions, so it applies the bare metric function (not a per-estimator scorer):
-# five metrics score hard class labels, roc_auc scores the positive-class probability. The names
+# six metrics score hard class labels, roc_auc scores the positive-class probability. The names
 # match ``ut.LIST_METRICS_PRED``, already validated by the frontend before reaching the backend.
 METRIC_SCORE_FUNCS = {
     "accuracy": (accuracy_score, False),
@@ -22,14 +23,24 @@ METRIC_SCORE_FUNCS = {
     "recall": (recall_score, False),
     "f1": (f1_score, False),
     "roc_auc": (roc_auc_score, True),
+    "mcc": (matthews_corrcoef, False),
 }
+
+# Metric name -> scikit-learn scorer name, for the per-fold and holdout principles that score via
+# ``cross_val_score`` / ``get_scorer``. Only names that differ from the scorer string are listed.
+DICT_METRIC_SCORER = {"mcc": "matthews_corrcoef"}
 
 
 # I Helper Functions
+def _scorer_name(metric):
+    """Return the scikit-learn scorer string for a package metric name."""
+    return DICT_METRIC_SCORER.get(metric, metric)
+
+
 def _score_cv(estimator, X, labels, metric, n_cv, random_state):
     """Cross-validated score (mean, std) for one estimator x metric."""
     cv = StratifiedKFold(n_splits=n_cv, shuffle=True, random_state=random_state)
-    scores = cross_val_score(clone(estimator), X, labels, cv=cv, scoring=metric)
+    scores = cross_val_score(clone(estimator), X, labels, cv=cv, scoring=_scorer_name(metric))
     return float(np.mean(scores)), float(np.std(scores))
 
 
@@ -60,7 +71,7 @@ def _score_cv_pooled(estimator, X, labels, metrics, cv):
 
 def _score_holdout(fitted_model, X_holdout, labels_holdout, metric):
     """Held-out score for one already-fitted model x metric (std is NaN: single estimate)."""
-    scorer = get_scorer(metric)
+    scorer = get_scorer(_scorer_name(metric))
     return float(scorer(fitted_model, X_holdout, labels_holdout)), float("nan")
 
 

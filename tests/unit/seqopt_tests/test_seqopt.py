@@ -222,6 +222,23 @@ class TestSeqOptInit:
         with pytest.raises(ValueError):
             SeqOpt(mode="random")
 
+    def test_bare_construction_in_base_install(self, monkeypatch):
+        # The default mode is the core-only 'importance', so SeqOpt() needs no model, reference
+        # set, or pro extra (discovery paths like aa.SeqOpt? must not raise).
+        import sys
+        monkeypatch.setitem(sys.modules, "aaanalysis.explainable_ai_pro", None)
+        so = SeqOpt()
+        assert so._mode == "importance"
+        assert aa.SeqOpt()._mode == "importance"
+
+    def test_default_mode_is_importance(self):
+        import inspect
+        assert inspect.signature(SeqOpt.__init__).parameters["mode"].default == "importance"
+
+    @pytest.mark.parametrize("mode", ["impact", "importance"])
+    def test_mode_options_still_valid(self, mode):
+        assert mode in ut.LIST_SEQOPT_MODES
+
     def test_df_scales_accepted(self, model):
         so = SeqOpt(mode="importance", model=model, df_scales=ut.load_default_scales(),
                     target_class=1)

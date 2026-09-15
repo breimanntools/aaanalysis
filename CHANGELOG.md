@@ -15,6 +15,23 @@ notes — with cross-references and examples — live in
 
 ## [Unreleased]
 
+### Changed
+- Prediction/design-tier consistency pass (these classes are still experimental, so no
+  deprecation cycle; addresses #510):
+  - `ReliabilityModel.fit(ci=...)` is now a fraction in (0, 1), default `0.90` (was a percent,
+    `90.0`), matching `ModelEvaluator.run(ci=0.95)` and `comp_bootstrap_ci`. A percent value
+    raises a `ValueError` with a hint.
+  - `ReliabilityModel.predict` column `ad_knn_dist` renamed to `ad_knn` (matches
+    `ad_mahalanobis` / `ad_leverage`).
+  - `ReliabilityModel.eval` column `n` renamed to `n_samples`; its columns are registered as
+    `COLS_EVAL_RELIABILITY` (summary-row shape unchanged).
+  - `SeqOpt` default `mode` is now `"importance"` (core-only), so bare `SeqOpt()` constructs in
+    a base install; `"impact"` stays the documented headline mode.
+  - `AAPred.eval` (and `list_metrics`) accepts `"mcc"`, the same metric vocabulary as
+    `ModelEvaluator`.
+  - Documented that `score_std` in `ReliabilityModel` is the spread across ensemble members,
+    whereas in `AAPred` / `ModelEvaluator` it is the spread across CV folds.
+
 ### Fixed
 - `StructurePreprocessor.encode_pae` / `encode`: read the AlphaFold DB PAE JSON layout
   (a one-element list wrapping the `predicted_aligned_error` dict), so files from

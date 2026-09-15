@@ -467,7 +467,8 @@ COLS_EVAL_DPULEARN = [COL_N_REL_NEG] + COLS_EVAL_DPULEARN_SIMILARITY + COLS_EVAL
 COL_MODEL = "model"             # model class short name (e.g. 'RandomForestClassifier')
 COL_METRIC = "metric"           # performance metric name (e.g. 'balanced_accuracy')
 COL_PRINCIPLE = "principle"     # evaluation principle: 'cv' | 'cv_pooled' | 'holdout'
-COL_SCORE_STD = "score_std"     # std of the score (across CV folds; NaN for a single holdout/pooled estimate)
+COL_SCORE_STD = "score_std"     # std of the score: across CV folds in AAPred/ModelEvaluator (NaN for a single
+                                # holdout/pooled estimate); across ensemble members in ReliabilityModel
 COL_GROUP = "group"             # per-sample/per-protein group label used for coloring
 COL_OFFSET = "offset"           # AAPred.predict(level='domain') — boundary shift applied to tmd_start/tmd_stop
 COL_RESIDUE_POS = "position"    # AAPred.predict(level='window') — 1-based anchor position scored
@@ -477,9 +478,11 @@ STR_PRINCIPLE_CV_POOLED = "cv_pooled"    # custom-splitter cross-validation, eac
                                          # pooled out-of-fold predictions (std is NaN: a single estimate)
 STR_PRINCIPLE_HOLDOUT = "holdout"
 LIST_PRINCIPLES = [STR_PRINCIPLE_CV, STR_PRINCIPLE_CV_POOLED, STR_PRINCIPLE_HOLDOUT]
-LIST_METRICS_PRED = ["accuracy", "balanced_accuracy", "precision", "recall", "f1", "roc_auc"]
+# mcc (Matthews correlation coefficient) is label-value agnostic (like accuracy / balanced_accuracy);
+# precision/recall/f1 follow sklearn's binary pos_label=1 convention. Shared with ModelEvaluator.
+LIST_METRICS_PRED = ["accuracy", "balanced_accuracy", "precision", "recall", "f1", "roc_auc", "mcc"]
 # Probability metrics — need class probabilities (predict_proba), not just hard labels. Hard-label
-# metrics (accuracy/balanced_accuracy/precision/recall/f1) only need predict, so an estimator
+# metrics (accuracy/balanced_accuracy/precision/recall/f1/mcc) only need predict, so an estimator
 # without predict_proba (e.g. LinearSVC, SVC(probability=False)) can still be evaluated on them.
 LIST_METRICS_PRED_PROBA = ["roc_auc"]
 COLS_EVAL_PRED = [COL_MODEL, COL_METRIC, COL_PRINCIPLE, COL_SCORE, COL_SCORE_STD]
@@ -507,7 +510,7 @@ COL_CI_LOW = "ci_low"                # lower confidence-interval bound of the sc
 COL_CI_HIGH = "ci_high"              # upper confidence-interval bound of the score
 COL_OOD_SCORE = "ood_score"          # applicability-domain distance, relative to the training threshold (1.0 = threshold)
 COL_IN_DOMAIN = "in_domain"          # bool: inside the training applicability domain (ood_score <= 1)
-COL_AD_KNN = "ad_knn_dist"           # mean distance to k nearest training samples (standardized space)
+COL_AD_KNN = "ad_knn"                # mean distance to k nearest training samples (standardized space)
 COL_AD_MAHALANOBIS = "ad_mahalanobis"    # Mahalanobis distance to the training center
 COL_AD_LEVERAGE = "ad_leverage"      # leverage (hat value) relative to the training feature space
 COL_SCORE_CAL = "score_calibrated"   # calibrated positive-class probability (NaN if not calibrated)
@@ -520,6 +523,14 @@ STR_CONF_BOTH, STR_CONF_NONE = "both", "none"
 COLS_RELIABILITY = [COL_SCORE, COL_SCORE_STD, COL_CI_LOW, COL_CI_HIGH, COL_OOD_SCORE, COL_IN_DOMAIN,
                     COL_AD_KNN, COL_AD_MAHALANOBIS, COL_AD_LEVERAGE, COL_SCORE_CAL, COL_MARGIN,
                     COL_ENTROPY, COL_CONFORMAL_SET, COL_RELIABLE]
+# ReliabilityModel.eval — per-bin calibration rows plus one summary row (bin == STR_BIN_SUMMARY,
+# where mean_score holds the in-domain fraction and empirical_pos the empirical conformal coverage)
+COL_BIN = "bin"                      # score-bin label ('0.00-0.20', ...) or STR_BIN_SUMMARY
+COL_MEAN_SCORE = "mean_score"        # mean predicted score in the bin (summary row: in-domain fraction)
+COL_EMPIRICAL_POS = "empirical_pos"  # empirical positive rate in the bin (summary row: conformal coverage)
+COL_N_SAMPLES = "n_samples"          # number of samples in the bin (summary row: all evaluated samples)
+STR_BIN_SUMMARY = "summary"
+COLS_EVAL_RELIABILITY = [COL_BIN, COL_MEAN_SCORE, COL_EMPIRICAL_POS, COL_N_SAMPLES]
 
 # ModelEvaluator (repeated cross-validation + bootstrap CIs + paired comparison). Reuses
 # COL_MODEL / COL_METRIC / COL_SCORE / COL_SCORE_STD (AAPred block) and COL_CI_LOW / COL_CI_HIGH
@@ -532,10 +543,9 @@ COL_MODEL_B = "model_b"         # second model of a paired comparison
 COL_DELTA = "delta"             # signed per-fold mean difference (score_a - score_b)
 COL_DELTA_STD = "delta_std"     # std of the per-fold paired differences
 COL_P_VALUE = "p_value"         # two-sided Wilcoxon signed-rank p-value of the paired differences
-# Metrics: LIST_METRICS_PRED plus mcc (Matthews correlation coefficient), the headline model-quality
-# metric for evaluation and paired comparison. 'mcc' is label-value agnostic (like accuracy /
-# balanced_accuracy); precision/recall/f1 follow sklearn's binary pos_label=1 convention.
-LIST_METRICS_MODELEVAL = LIST_METRICS_PRED + ["mcc"]
+# Metrics: the same vocabulary as AAPred (LIST_METRICS_PRED, which includes mcc, the headline
+# model-quality metric for evaluation and paired comparison).
+LIST_METRICS_MODELEVAL = LIST_METRICS_PRED
 COLS_SCORES_MODELEVAL = [COL_ROUND, COL_FOLD, COL_MODEL, COL_METRIC, COL_SCORE]
 COLS_EVAL_MODELEVAL = [COL_MODEL, COL_METRIC, COL_SCORE, COL_SCORE_STD, COL_CI_LOW, COL_CI_HIGH, COL_N_SCORES]
 COLS_COMPARE_MODELEVAL = [COL_MODEL_A, COL_MODEL_B, COL_METRIC, COL_DELTA, COL_DELTA_STD,

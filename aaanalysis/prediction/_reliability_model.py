@@ -58,6 +58,16 @@ def check_model(model=None, members=None):
         raise ValueError("'model' must implement 'predict_proba' (or pass a list / AAPred / None).")
 
 
+def check_ci(ci: float):
+    """Check that ``ci`` is a fraction in (0, 1), with a hint when a percent is passed."""
+    ut.check_number_range(name="ci", val=ci, min_val=0, just_int=False)
+    if 1 < ci <= 100:
+        raise ValueError(f"'ci' ({ci}) should be a fraction in (0, 1), e.g. 0.90 for a 90% "
+                         f"interval, not a percent.")
+    ut.check_number_range(name="ci", val=ci, min_val=0.0, max_val=1.0, just_int=False,
+                          exclusive_limits=True)
+
+
 # II Main Class
 class ReliabilityModel(Wrapper):
     """
@@ -123,6 +133,10 @@ class ReliabilityModel(Wrapper):
     * **``score`` is the member mean** — the ensemble average, or the bootstrap ("bagged") average
       for a single model — so it is always the centre of ``[ci_low, ci_high]``. Set ``n_bootstrap=0``
       to report a single model's own probability instead (then ``score_std`` is 0).
+    * **``score_std`` is a per-sample spread across members.** Here it is the standard deviation of
+      one sample's probability across the ensemble members (or bootstrap resamples). The
+      same-named column in :meth:`AAPred.eval` and :meth:`ModelEvaluator.run` means something
+      different: the standard deviation of a metric across cross-validation folds.
     * **``reliable`` is conformal-based** (``in_domain`` and a confident conformal singleton),
       whereas ``margin`` / ``entropy`` are a separate calibrated-sharpness readout — they can
       disagree on a borderline case.
@@ -163,7 +177,7 @@ class ReliabilityModel(Wrapper):
         self._members = None
         self._calibrator = None
         self._conf_state = None
-        self._ci = 90.0
+        self._ci = 0.90
 
     def fit(self,
             X: ut.ArrayLike2D,
@@ -172,7 +186,7 @@ class ReliabilityModel(Wrapper):
             label_pos: int = 1,
             k: int = 5,
             ad_percentile: float = 95.0,
-            ci: float = 90.0,
+            ci: float = 0.90,
             n_bootstrap: int = 20,
             calibrate: bool = True,
             calibration_method: str = "isotonic",
@@ -201,8 +215,9 @@ class ReliabilityModel(Wrapper):
             Number of nearest training neighbors for the applicability-domain distance.
         ad_percentile : float, default=95.0
             Training kNN-distance percentile used as the ``in_domain`` boundary.
-        ci : float, default=90.0
-            Central width (percent) of the reported score confidence interval.
+        ci : float, default=0.90
+            Central width of the reported score confidence interval, as a fraction in ``(0, 1)``
+            (e.g. ``0.90`` for a 90% interval), matching :meth:`ModelEvaluator.run`.
         n_bootstrap : int, default=20
             Bootstrap resamples for uncertainty when ``model`` is a single estimator (not an
             ensemble); ``score`` is then the bagged mean over the resamples (see Notes). ``0``
@@ -239,7 +254,7 @@ class ReliabilityModel(Wrapper):
         ut.check_number_range(name="k", val=k, min_val=1, just_int=True)
         ut.check_number_range(name="ad_percentile", val=ad_percentile, min_val=1, max_val=100,
                               just_int=False)
-        ut.check_number_range(name="ci", val=ci, min_val=1, max_val=99, just_int=False)
+        check_ci(ci=ci)
         ut.check_number_range(name="n_bootstrap", val=n_bootstrap, min_val=0, just_int=True)
         ut.check_bool(name="calibrate", val=calibrate)
         ut.check_str(name="calibration_method", val=calibration_method)
@@ -328,7 +343,7 @@ class ReliabilityModel(Wrapper):
         -------
         df_rel : pd.DataFrame
             One row per sample with columns: ``score``, ``score_std``, ``ci_low``, ``ci_high``,
-            ``ood_score``, ``in_domain``, ``ad_knn_dist``, ``ad_mahalanobis``, ``ad_leverage``,
+            ``ood_score``, ``in_domain``, ``ad_knn``, ``ad_mahalanobis``, ``ad_leverage``,
             ``score_calibrated``, ``margin``, ``entropy``, ``conformal_set``, ``reliable``.
 
         Raises
@@ -403,9 +418,10 @@ class ReliabilityModel(Wrapper):
         Returns
         -------
         df_eval : pd.DataFrame
-            Per-bin rows (``bin``, ``mean_score``, ``empirical_pos``, ``n``) plus a summary row
-            with the in-domain fraction (``mean_score``) and the empirical conformal coverage
-            (``empirical_pos``).
+            Per-bin rows (``bin``, ``mean_score``, ``empirical_pos``, ``n_samples``) plus a
+            summary row (``bin='summary'``) with the in-domain fraction (``mean_score``), the
+            empirical conformal coverage (``empirical_pos``), and the number of evaluated samples
+            (``n_samples``).
 
         Raises
         ------
@@ -431,13 +447,13 @@ class ReliabilityModel(Wrapper):
         rows = []
         for b in range(n_bins):
             m = (s >= edges[b]) & (s <= edges[b + 1] if b == n_bins - 1 else s < edges[b + 1])
-            rows.append({"bin": f"{edges[b]:.2f}-{edges[b+1]:.2f}",
-                         "mean_score": float(np.mean(s[m])) if m.any() else np.nan,
-                         "empirical_pos": float(np.mean(y[m])) if m.any() else np.nan,
-                         "n": int(m.sum())})
+            rows.append([f"{edges[b]:.2f}-{edges[b+1]:.2f}",
+                         float(np.mean(s[m])) if m.any() else np.nan,
+                         float(np.mean(y[m])) if m.any() else np.nan,
+                         int(m.sum())])
         sets = df[ut.COL_CONFORMAL_SET].to_numpy()
         covered = (np.isin(sets, [ut.STR_CONF_POS, ut.STR_CONF_BOTH]) & (y == 1)) | \
                   (np.isin(sets, [ut.STR_CONF_NEG, ut.STR_CONF_BOTH]) & (y == 0))
-        rows.append({"bin": "summary", "mean_score": float(np.mean(df[ut.COL_IN_DOMAIN])),
-                     "empirical_pos": float(np.mean(covered)), "n": len(X)})
-        return pd.DataFrame(rows)
+        rows.append([ut.STR_BIN_SUMMARY, float(np.mean(df[ut.COL_IN_DOMAIN])),
+                     float(np.mean(covered)), len(X)])
+        return pd.DataFrame(rows, columns=ut.COLS_EVAL_RELIABILITY)

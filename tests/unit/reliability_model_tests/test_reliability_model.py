@@ -2,11 +2,18 @@
 import numpy as np
 import pandas as pd
 import pytest
+from hypothesis import given, settings
+import hypothesis.strategies as some
+from scipy.stats import norm
 from sklearn.ensemble import RandomForestClassifier
 from sklearn.datasets import make_classification
 from sklearn.linear_model import LogisticRegression
 
 import aaanalysis as aa
+import aaanalysis.utils as ut
+
+settings.register_profile("ci", deadline=None)
+settings.load_profile("ci")
 
 
 def _data(n=120, n_features=8, seed=0):
@@ -124,16 +131,43 @@ class TestFit:
         with pytest.raises(ValueError):
             aa.ReliabilityModel().fit(Xtr, ytr, ad_percentile=p)
 
-    @pytest.mark.parametrize("ci", [50, 90, 99])
+    @settings(max_examples=5, deadline=None)
+    @given(ci=some.floats(min_value=0.01, max_value=0.99))
     def test_ci_valid(self, ci):
         Xtr, ytr, _ = _data()
         assert aa.ReliabilityModel().fit(Xtr, ytr, ci=ci, n_bootstrap=3) is not None
 
-    @pytest.mark.parametrize("ci", [0, 100, 120])
+    @pytest.mark.parametrize("ci", [0, 0.0, 1, 1.0, -0.1, 120, "0.9", None])
     def test_ci_invalid(self, ci):
         Xtr, ytr, _ = _data()
         with pytest.raises(ValueError):
             aa.ReliabilityModel().fit(Xtr, ytr, ci=ci)
+
+    @pytest.mark.parametrize("ci", [50, 90, 90.0, 99])
+    def test_ci_percent_rejected_with_hint(self, ci):
+        # 'ci' is a fraction (like ModelEvaluator.run / comp_bootstrap_ci); a percent gets a hint.
+        Xtr, ytr, _ = _data()
+        with pytest.raises(ValueError, match="should be a fraction"):
+            aa.ReliabilityModel().fit(Xtr, ytr, ci=ci)
+
+    def test_ci_default_is_fraction(self):
+        import inspect
+        assert inspect.signature(aa.ReliabilityModel.fit).parameters["ci"].default == 0.90
+
+    def test_ci_default_equals_explicit(self):
+        Xtr, ytr, Xte = _data()
+        d_default = aa.ReliabilityModel(random_state=0).fit(Xtr, ytr, n_bootstrap=5).predict(Xte)
+        d_explicit = aa.ReliabilityModel(random_state=0).fit(Xtr, ytr, n_bootstrap=5,
+                                                             ci=0.90).predict(Xte)
+        pd.testing.assert_frame_equal(d_default, d_explicit)
+
+    def test_ci_wider_interval_for_larger_ci(self):
+        Xtr, ytr, Xte = _data()
+        narrow = aa.ReliabilityModel(random_state=0).fit(Xtr, ytr, n_bootstrap=5, ci=0.5).predict(Xte)
+        wide = aa.ReliabilityModel(random_state=0).fit(Xtr, ytr, n_bootstrap=5, ci=0.99).predict(Xte)
+        w_narrow = narrow["ci_high"] - narrow["ci_low"]
+        w_wide = wide["ci_high"] - wide["ci_low"]
+        assert (w_wide >= w_narrow - 1e-12).all() and (w_wide > w_narrow).any()
 
     @pytest.mark.parametrize("nb", [-1, 2.5])
     def test_n_bootstrap_invalid(self, nb):
@@ -172,7 +206,7 @@ class TestPredict:
         df = aa.ReliabilityModel(random_state=0).fit(Xtr, ytr, n_bootstrap=5).predict(Xte)
         assert isinstance(df, pd.DataFrame) and len(df) == len(Xte)
         for c in ["score", "score_std", "ci_low", "ci_high", "ood_score", "in_domain",
-                  "ad_knn_dist", "ad_mahalanobis", "ad_leverage", "score_calibrated",
+                  "ad_knn", "ad_mahalanobis", "ad_leverage", "score_calibrated",
                   "margin", "entropy", "conformal_set", "reliable"]:
             assert c in df.columns
         assert df["in_domain"].dtype == bool and df["reliable"].dtype == bool
@@ -313,8 +347,14 @@ class TestEval:
         Xtr, ytr, _ = _data()
         ev = aa.ReliabilityModel(random_state=0).fit(Xtr, ytr, n_bootstrap=5).eval()
         assert isinstance(ev, pd.DataFrame)
-        assert {"bin", "mean_score", "empirical_pos", "n"}.issubset(ev.columns)
+        assert list(ev.columns) == ["bin", "mean_score", "empirical_pos", "n_samples"]
         assert (ev["bin"] == "summary").any()
+
+    def test_eval_columns_match_constant_bundle(self):
+        Xtr, ytr, _ = _data()
+        ev = aa.ReliabilityModel(random_state=0).fit(Xtr, ytr, n_bootstrap=3).eval()
+        assert list(ev.columns) == ut.COLS_EVAL_RELIABILITY
+        assert "n" not in ev.columns
 
     def test_eval_custom_bins(self):
         Xtr, ytr, _ = _data()
@@ -331,3 +371,34 @@ class TestEval:
         rm = aa.ReliabilityModel(random_state=0).fit(Xtr, ytr, n_bootstrap=3)
         with pytest.raises(ValueError):
             rm.eval(n_bins=nb)
+
+
+class TestReliabilityModelGoldenValues:
+    """Hand-checkable numbers for the renamed / re-unit-ed outputs."""
+
+    def test_ci_fraction_gives_wald_z_interval(self):
+        # ci=0.90 -> z = norm.ppf(0.95); unclipped rows satisfy ci_high - score == z * score_std.
+        Xtr, ytr, Xte = _data()
+        df = aa.ReliabilityModel(random_state=0).fit(Xtr, ytr, n_bootstrap=10, ci=0.90).predict(Xte)
+        z = norm.ppf(0.95)
+        inner = (df["ci_high"] < 1.0) & (df["ci_low"] > 0.0)
+        assert inner.any()
+        d = df[inner]
+        np.testing.assert_allclose(d["ci_high"] - d["score"], z * d["score_std"], atol=1e-12)
+        np.testing.assert_allclose(d["score"] - d["ci_low"], z * d["score_std"], atol=1e-12)
+
+    def test_eval_n_samples_counts(self):
+        Xtr, ytr, _ = _data()
+        ev = aa.ReliabilityModel(random_state=0).fit(Xtr, ytr, n_bootstrap=3).eval(n_bins=4)
+        bins = ev[ev["bin"] != "summary"]
+        summary = ev[ev["bin"] == "summary"].iloc[0]
+        assert summary["n_samples"] == len(Xtr) == 90
+        assert int(bins["n_samples"].sum()) == 90
+        assert list(bins["bin"]) == ["0.00-0.25", "0.25-0.50", "0.50-0.75", "0.75-1.00"]
+
+    def test_ad_knn_column_name(self):
+        Xtr, ytr, Xte = _data()
+        df = aa.ReliabilityModel(random_state=0).fit(Xtr, ytr, n_bootstrap=3).predict(Xte)
+        assert ut.COL_AD_KNN == "ad_knn" and "ad_knn" in df.columns
+        assert "ad_knn_dist" not in df.columns
+        assert (df["ad_knn"] >= 0).all()

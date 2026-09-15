@@ -179,7 +179,7 @@ class SeqOpt(Tool):
 
     """
     def __init__(self,
-                 *, mode: str = "impact",
+                 *, mode: str = "importance",
                  model: Optional[Any] = None,
                  target_class: Optional[Any] = None,
                  df_seq_ref: Optional[pd.DataFrame] = None,
@@ -191,13 +191,15 @@ class SeqOpt(Tool):
         """
         Parameters
         ----------
-        mode : str, default='impact'
-            Residue-guidance mode. ``'impact'`` refits :class:`ShapModel` every generation under
+        mode : str, default='importance'
+            Residue-guidance mode. ``'impact'`` (the headline mode) refits :class:`ShapModel` every generation under
             fuzzy labeling (the new variant's prediction score as a soft label vs. the balanced
             reference) and mutates the strongest-``feat_impact`` residues — this is the only
             SeqOpt feature that needs ``aaanalysis[pro]`` (SHAP), imported lazily. ``'importance'``
             uses the static ``feat_importance`` ranking from ``df_feat`` (no SHAP, no refit) and
-            walks positions highest-first (no pro dependency).
+            walks positions highest-first (no pro dependency). It is the default so that
+            ``SeqOpt()`` constructs in a base install; pass ``mode='impact'`` (with ``model``,
+            ``df_seq_ref`` and ``labels``) for SHAP-guided search.
         model : object, optional
             A fitted classifier exposing ``predict_proba`` used as the fitness engine (the
             ``delta_pred`` objective) and, in ``mode='impact'``, as the model whose attribution

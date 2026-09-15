@@ -57,9 +57,10 @@ def plot_ranking_(df_rel, names=None, figsize=None, top_n=None, title=None, ax=N
 def plot_reliability_diagram_(df_eval, figsize=(5, 5), color="tab:blue", title=None, ax=None):
     """Calibration curve: mean predicted score vs. empirical positive rate, per bin."""
     fig, ax = _fig_ax(ax, figsize)
-    d = df_eval[df_eval["bin"] != "summary"].dropna(subset=["mean_score", "empirical_pos"])
+    d = df_eval[df_eval[ut.COL_BIN] != ut.STR_BIN_SUMMARY].dropna(
+        subset=[ut.COL_MEAN_SCORE, ut.COL_EMPIRICAL_POS])
     ax.plot([0, 1], [0, 1], ls="--", color="0.6", lw=1.2, label="perfect calibration")
-    ax.plot(d["mean_score"], d["empirical_pos"], "o-", color=color, label="model")
+    ax.plot(d[ut.COL_MEAN_SCORE], d[ut.COL_EMPIRICAL_POS], "o-", color=color, label="model")
     ax.set_xlim(0, 1), ax.set_ylim(0, 1), ax.set_aspect("equal")
     ax.set_xlabel("Mean predicted score"), ax.set_ylabel("Empirical positive rate")
     ax.legend(frameon=False, loc="upper left")

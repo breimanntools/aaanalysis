@@ -8,7 +8,11 @@ from sklearn.svm import SVC
 from sklearn.ensemble import RandomForestClassifier
 from sklearn.base import clone
 from sklearn.model_selection import LeaveOneOut, StratifiedKFold, cross_val_predict
-from sklearn.metrics import (accuracy_score, balanced_accuracy_score, f1_score, roc_auc_score)
+from sklearn.metrics import (accuracy_score, balanced_accuracy_score, f1_score, roc_auc_score,
+                             matthews_corrcoef)
+from sklearn.model_selection import cross_val_score
+
+import aaanalysis.utils as ut
 
 import aaanalysis as aa
 
@@ -237,6 +241,69 @@ class TestAAPredEval:
         d1 = aa.AAPred(random_state=7).eval(X, labels, metrics=["accuracy"])
         d2 = aa.AAPred(random_state=7).eval(X, labels, metrics=["accuracy"])
         pd.testing.assert_frame_equal(d1, d2)
+
+
+class TestAAPredEvalMCC:
+    """'mcc' is shared vocabulary with ModelEvaluator: validated AND scored by every principle."""
+
+    def test_mcc_in_metric_lists(self):
+        assert "mcc" in ut.LIST_METRICS_PRED
+        assert ut.LIST_METRICS_MODELEVAL.count("mcc") == 1
+        assert len(set(ut.LIST_METRICS_MODELEVAL)) == len(ut.LIST_METRICS_MODELEVAL)
+
+    def test_list_metrics_mcc_accepted(self):
+        aap = aa.AAPred(list_metrics=["mcc"])
+        assert aap._list_metrics == ["mcc"]
+
+    def test_eval_mcc_cv(self):
+        X, labels = _data()
+        df_eval = aa.AAPred(random_state=0).eval(X, labels, metrics=["mcc"])
+        assert set(df_eval["metric"]) == {"mcc"}
+        assert df_eval["score"].between(-1, 1).all()
+
+    def test_eval_mcc_with_other_metrics(self):
+        X, labels = _data()
+        df_eval = aa.AAPred(models=["rf"], random_state=0).eval(X, labels,
+                                                                metrics=["accuracy", "mcc", "roc_auc"])
+        assert list(df_eval["metric"]) == ["accuracy", "mcc", "roc_auc"]
+
+    def test_eval_mcc_holdout(self):
+        X, labels = _data()
+        X_holdout, labels_holdout = _data(n_per_class=8, seed=1)
+        df_eval = aa.AAPred(models=["rf"], random_state=0).eval(
+            X, labels, metrics=["mcc"], X_holdout=X_holdout, labels_holdout=labels_holdout)
+        assert set(df_eval["principle"]) == {"cv", "holdout"}
+        assert df_eval["score"].between(-1, 1).all()
+
+    def test_eval_mcc_cv_pooled(self):
+        X, labels = _data()
+        cv = StratifiedKFold(n_splits=3, shuffle=True, random_state=0)
+        df_eval = aa.AAPred(models=["rf"], random_state=0).eval(X, labels, cv=cv, metrics=["mcc"])
+        assert set(df_eval["principle"]) == {"cv_pooled"}
+
+    def test_eval_mcc_cv_golden_matches_sklearn(self):
+        X, labels = _data()
+        aap = aa.AAPred(models=["svm"], random_state=0)
+        est = aap._list_estimators[0]
+        cv = StratifiedKFold(n_splits=5, shuffle=True, random_state=0)
+        ref = np.mean(cross_val_score(clone(est), X, labels, cv=cv, scoring="matthews_corrcoef"))
+        got = aap.eval(X, labels, metrics=["mcc"])["score"].iloc[0]
+        assert abs(got - ref) < 1e-9
+
+    def test_eval_mcc_cv_pooled_golden_matches_sklearn(self):
+        X, labels = _data()
+        cv = StratifiedKFold(n_splits=5, shuffle=True, random_state=0)
+        aap = aa.AAPred(models=["svm"], random_state=0)
+        est = aap._list_estimators[0]
+        ref = matthews_corrcoef(labels, cross_val_predict(clone(est), X, labels, cv=cv))
+        got = aap.eval(X, labels, cv=cv, metrics=["mcc"])["score"].iloc[0]
+        assert abs(got - ref) < 1e-9
+
+    @pytest.mark.parametrize("metric", ["MCC", "matthews_corrcoef", "mcc_score"])
+    def test_eval_mcc_misspelled_raises(self, metric):
+        X, labels = _data()
+        with pytest.raises(ValueError, match="should each be one of"):
+            aa.AAPred(random_state=0).eval(X, labels, metrics=[metric])
 
 
 class TestAAPredEvalCV:

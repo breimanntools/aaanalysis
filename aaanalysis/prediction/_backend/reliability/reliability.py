@@ -41,8 +41,10 @@ def fit_bootstrap_models(estimator, X_train, y_train, n_bootstrap=20, random_sta
     return models
 
 
-def comp_uncertainty(proba_arr, ci=90.0):
-    """Std and a ``mean +/- z*std`` (Wald) ``ci``% interval of per-member probabilities, per sample.
+def comp_uncertainty(proba_arr, ci=0.90):
+    """Std and a ``mean +/- z*std`` (Wald) interval of per-member probabilities, per sample.
+
+    ``ci`` is the central coverage as a fraction in ``(0, 1)`` (``0.90`` = 90% interval).
 
     The interval is centred on the mean (the reported ``score``) and clipped to ``[0, 1]``, so the
     score is always inside it — unlike an empirical-percentile band, which need not contain the mean
@@ -51,7 +53,7 @@ def comp_uncertainty(proba_arr, ci=90.0):
     P = np.asarray(proba_arr, dtype=float)
     mean = P.mean(axis=0)
     std = P.std(axis=0) if P.shape[0] > 1 else np.zeros(P.shape[1])
-    z = float(norm.ppf(0.5 + ci / 200.0))
+    z = float(norm.ppf(0.5 + ci / 2.0))
     return std, np.clip(mean - z * std, 0.0, 1.0), np.clip(mean + z * std, 0.0, 1.0)
 
 

@@ -282,7 +282,7 @@ class AAPred(Wrapper):
         list_metrics : list of str, default=["accuracy", "balanced_accuracy", "f1", "roc_auc"]
             Default performance metrics used by :meth:`eval` when ``metrics`` is not given.
             Each should be one of ``accuracy``, ``balanced_accuracy``, ``precision``,
-            ``recall``, ``f1``, ``roc_auc``.
+            ``recall``, ``f1``, ``roc_auc``, ``mcc``.
         df_feat : pd.DataFrame, shape (n_features, n_feature_info), optional
             CPP feature DataFrame (with a ``feature`` column) bound to the model. When given, the
             feature matrix ``X`` is computed internally from a ``df_seq`` by the sequence-level

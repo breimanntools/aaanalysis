@@ -137,7 +137,7 @@ class ReliabilityModelPlot:
         --------
         .. include:: examples/rm_plot_reliability_diagram.rst
         """
-        _check_df_cols(df_eval, "df_eval", ["bin", "mean_score", "empirical_pos"])
+        _check_df_cols(df_eval, "df_eval", [ut.COL_BIN, ut.COL_MEAN_SCORE, ut.COL_EMPIRICAL_POS])
         fig, ax = plot_reliability_diagram_(df_eval, figsize=figsize, color=color, title=title, ax=ax)
         return ut.FigAxResult(fig, ax)
 
