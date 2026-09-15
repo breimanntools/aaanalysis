@@ -79,6 +79,12 @@ class TestFit:
         rm = aa.ReliabilityModel(random_state=0).fit(Xtr, ytr, model=_Pred())
         assert isinstance(rm.model_, list)
 
+    @pytest.mark.parametrize("label_pos", [0, 1])
+    def test_label_pos_valid(self, label_pos):
+        Xtr, ytr, _ = _data()
+        rm = aa.ReliabilityModel(random_state=0).fit(Xtr, ytr, label_pos=label_pos, n_bootstrap=3)
+        assert rm.label_pos_ == label_pos
+
     def test_label_pos_absent_raises(self):
         Xtr, ytr, _ = _data()
         with pytest.raises(ValueError, match="'label_pos'"):
@@ -91,7 +97,7 @@ class TestFit:
 
     def test_empty_model_list_raises(self):
         Xtr, ytr, _ = _data()
-        with pytest.raises(ValueError, match="empty list"):
+        with pytest.raises(ValueError, match="'model'"):
             aa.ReliabilityModel().fit(Xtr, ytr, model=[])
 
     def test_non_binary_labels_raises(self):
@@ -103,7 +109,7 @@ class TestFit:
     def test_model_without_predict_proba_raises(self):
         from sklearn.svm import SVC
         Xtr, ytr, _ = _data()
-        with pytest.raises(ValueError, match="predict_proba"):  # SVC() has no predict_proba by default
+        with pytest.raises(ValueError, match="'model'"):                      # SVC() has no predict_proba by default
             aa.ReliabilityModel().fit(Xtr, ytr, model=SVC().fit(Xtr, ytr))
 
     def test_unfitted_aapred_rejected(self):
@@ -230,7 +236,7 @@ class TestFit:
 
     def test_calibration_method_invalid(self):
         Xtr, ytr, _ = _data()
-        with pytest.raises(ValueError, match="'calibration_method'"):
+        with pytest.raises(ValueError, match="calibration_method"):
             aa.ReliabilityModel().fit(Xtr, ytr, calibration_method="bogus")
 
     @pytest.mark.parametrize("m", ["isotonic", "sigmoid"])
@@ -245,11 +251,140 @@ class TestFit:
         df = rm.predict(Xte)
         assert df["score_calibrated"].notna().any() if calibrate else df["score_calibrated"].isna().all()
 
+    @pytest.mark.parametrize("val", [None, "yes", 1, 0, [True]])
+    def test_calibrate_invalid(self, val):
+        Xtr, ytr, _ = _data()
+        with pytest.raises(ValueError, match="'calibrate'"):
+            aa.ReliabilityModel().fit(Xtr, ytr, calibrate=val)
+
     @pytest.mark.parametrize("a", [-0.1, 1.5])
     def test_conformal_alpha_invalid(self, a):
         Xtr, ytr, _ = _data()
         with pytest.raises(ValueError, match="'conformal_alpha'"):
             aa.ReliabilityModel().fit(Xtr, ytr, conformal_alpha=a)
+
+
+class TestFitComplex:
+    """Calibration, ensemble, and interval parameters of fit crossed with each other."""
+
+    # Calibration outcome at fit time (the eval-time message is TestEvalComplex's job)
+    def test_failed_calibration_warns_at_fit(self):
+        X, y = _failed_calibration_data()
+        with pytest.warns(UserWarning, match=r"'calibrate' \(True\) could not be applied"):
+            rm = aa.ReliabilityModel(random_state=0).fit(X, y, n_bootstrap=0)
+        assert rm._calibrator is None
+        assert rm._calibrate_requested is True
+        assert "2-fold" in rm._calibration_error
+
+    def test_failed_calibration_leaves_score_calibrated_nan(self):
+        X, y = _failed_calibration_data()
+        with pytest.warns(UserWarning):
+            rm = aa.ReliabilityModel(random_state=0).fit(X, y, n_bootstrap=0)
+        assert rm.predict(X)["score_calibrated"].isna().all()
+
+    def test_successful_calibration_is_silent(self):
+        Xtr, ytr, _ = _data()
+        with warnings.catch_warnings():
+            warnings.simplefilter("error", UserWarning)
+            rm = aa.ReliabilityModel(random_state=0).fit(Xtr, ytr, n_bootstrap=3)
+        assert rm._calibrator is not None and rm._calibration_error is None
+
+    def test_calibrate_false_records_no_error(self, rm_uncal):
+        rm, _, _ = rm_uncal
+        assert rm._calibrate_requested is False and rm._calibration_error is None
+
+    # Positive interactions
+    @pytest.mark.parametrize("method", ["isotonic", "sigmoid"])
+    def test_ensemble_is_calibrated_with_either_method(self, method):
+        Xtr, ytr, Xte = _data()
+        models = [LogisticRegression(max_iter=500).fit(Xtr, ytr),
+                  RandomForestClassifier(n_estimators=20, random_state=0).fit(Xtr, ytr)]
+        rm = aa.ReliabilityModel(random_state=0).fit(Xtr, ytr, model=models, calibrate=True,
+                                                     calibration_method=method)
+        assert rm._calibrator is not None and rm._calibration_error is None
+        assert rm.predict(Xte)["score_calibrated"].notna().all()
+
+    def test_calibration_method_is_inert_when_calibrate_is_false(self):
+        Xtr, ytr, Xte = _data()
+        kw = dict(n_bootstrap=3, calibrate=False)
+        iso = aa.ReliabilityModel(random_state=0).fit(Xtr, ytr, calibration_method="isotonic", **kw)
+        sig = aa.ReliabilityModel(random_state=0).fit(Xtr, ytr, calibration_method="sigmoid", **kw)
+        assert iso._calibrator is None and sig._calibrator is None
+        pd.testing.assert_frame_equal(iso.predict(Xte), sig.predict(Xte))
+
+    @pytest.mark.parametrize("label_pos", [0, 1])
+    def test_label_pos_crossed_with_calibration_scores_that_class(self, label_pos):
+        Xtr, ytr, Xte = _data()
+        rm = aa.ReliabilityModel(random_state=0).fit(Xtr, ytr, label_pos=label_pos,
+                                                     n_bootstrap=3, calibrate=True)
+        df = rm.predict(Xte)
+        assert rm.label_pos_ == label_pos
+        assert df["score_calibrated"].between(0, 1).all()
+
+    @settings(max_examples=3, deadline=None)
+    @given(nb=some.integers(min_value=2, max_value=6))
+    def test_bootstrap_and_calibration_combine(self, nb):
+        Xtr, ytr, Xte = _data()
+        rm = aa.ReliabilityModel(random_state=0).fit(Xtr, ytr, n_bootstrap=nb, calibrate=True,
+                                                     ci=0.8)
+        df = rm.predict(Xte)
+        assert rm._calibrator is not None
+        assert (df["score_std"] >= 0).all() and (df["ci_high"] >= df["ci_low"]).all()
+
+    def test_ci_widens_while_calibrated_score_is_unchanged(self):
+        Xtr, ytr, Xte = _data()
+        kw = dict(n_bootstrap=5, calibrate=True)
+        narrow = aa.ReliabilityModel(random_state=0).fit(Xtr, ytr, ci=0.5, **kw).predict(Xte)
+        wide = aa.ReliabilityModel(random_state=0).fit(Xtr, ytr, ci=0.99, **kw).predict(Xte)
+        w_narrow = narrow["ci_high"] - narrow["ci_low"]
+        w_wide = wide["ci_high"] - wide["ci_low"]
+        assert (w_wide >= w_narrow - 1e-12).all()
+        np.testing.assert_allclose(narrow["score_calibrated"], wide["score_calibrated"], atol=1e-12)
+
+    # Negative interactions
+    def test_invalid_calibration_method_with_valid_calibrate_raises(self):
+        Xtr, ytr, _ = _data()
+        with pytest.raises(ValueError, match="calibration_method"):
+            aa.ReliabilityModel().fit(Xtr, ytr, calibrate=True, calibration_method="platt")
+
+    @pytest.mark.parametrize("val", [None, "yes", 1, [True]])
+    def test_non_bool_calibrate_with_valid_method_raises(self, val):
+        Xtr, ytr, _ = _data()
+        with pytest.raises(ValueError, match="'calibrate'"):
+            aa.ReliabilityModel().fit(Xtr, ytr, calibrate=val, calibration_method="sigmoid")
+
+    def test_empty_ensemble_with_calibration_raises(self):
+        Xtr, ytr, _ = _data()
+        with pytest.raises(ValueError, match="'model'"):
+            aa.ReliabilityModel().fit(Xtr, ytr, model=[], calibrate=True,
+                                      calibration_method="sigmoid")
+
+    def test_member_without_predict_proba_with_calibration_raises(self):
+        from sklearn.svm import SVC
+        Xtr, ytr, _ = _data()
+        with pytest.raises(ValueError, match="predict_proba"):
+            aa.ReliabilityModel().fit(Xtr, ytr, model=[SVC().fit(Xtr, ytr)], calibrate=True)
+
+    def test_unfitted_aapred_with_calibration_raises(self):
+        Xtr, ytr, _ = _data()
+
+        class _Pred:
+            list_models_ = None                              # unfitted AAPred
+        with pytest.raises(ValueError, match="not fitted"):
+            aa.ReliabilityModel().fit(Xtr, ytr, model=_Pred(), calibrate=True, n_bootstrap=0)
+
+    def test_label_pos_absent_with_calibration_raises(self):
+        Xtr, ytr, _ = _data()
+        with pytest.raises(ValueError, match="'label_pos'"):
+            aa.ReliabilityModel().fit(Xtr, ytr, label_pos=2, calibrate=True,
+                                      calibration_method="sigmoid")
+
+    @pytest.mark.parametrize("a", [-0.1, 1.5])
+    def test_conformal_alpha_out_of_range_with_calibration_raises(self, a):
+        Xtr, ytr, _ = _data()
+        with pytest.raises(ValueError, match="'conformal_alpha'"):
+            aa.ReliabilityModel().fit(Xtr, ytr, conformal_alpha=a, calibrate=True,
+                                      calibration_method="isotonic")
 
 
 # III predict
@@ -266,13 +401,13 @@ class TestPredict:
 
     def test_before_fit_raises(self):
         _, _, Xte = _data()
-        with pytest.raises(RuntimeError, match="fit.*predict"):
+        with pytest.raises(RuntimeError, match="Call 'fit' before 'predict'"):
             aa.ReliabilityModel().predict(Xte)
 
     def test_feature_mismatch_raises(self):
         Xtr, ytr, Xte = _data()
         rm = aa.ReliabilityModel(random_state=0).fit(Xtr, ytr, n_bootstrap=3)
-        with pytest.raises(ValueError, match="features"):
+        with pytest.raises(ValueError, match="features but the model was fit on"):
             rm.predict(Xte[:, :4])
 
     def test_ood_point_flagged(self):
@@ -469,14 +604,14 @@ class TestEval:
         assert len(ev) == 3 + 1                              # bins + summary
 
     def test_eval_before_fit_raises(self):
-        with pytest.raises(RuntimeError):
+        with pytest.raises(RuntimeError, match="Call 'fit' before 'eval'"):
             aa.ReliabilityModel().eval()
 
     @pytest.mark.parametrize("nb", [1, 0, -2])
     def test_eval_n_bins_invalid(self, nb):
         Xtr, ytr, _ = _data()
         rm = aa.ReliabilityModel(random_state=0).fit(Xtr, ytr, n_bootstrap=3)
-        with pytest.raises(ValueError):
+        with pytest.raises(ValueError, match="'n_bins'"):
             rm.eval(n_bins=nb)
 
     # X / labels: positive
@@ -592,7 +727,7 @@ class TestEval:
             rm.eval(use_calibrated=True)
 
     def test_use_calibrated_before_fit_raises(self):
-        with pytest.raises(RuntimeError):
+        with pytest.raises(RuntimeError, match="Call 'fit' before 'eval'"):
             aa.ReliabilityModel().eval(use_calibrated=True)
 
     # add_metrics: positive
@@ -647,7 +782,7 @@ class TestEval:
             rm.eval(X=Xte, labels=yte, add_metrics=val)
 
     def test_add_metrics_before_fit_raises(self):
-        with pytest.raises(RuntimeError):
+        with pytest.raises(RuntimeError, match="Call 'fit' before 'eval'"):
             aa.ReliabilityModel().eval(add_metrics=True)
 
 
@@ -703,39 +838,25 @@ class TestEvalComplex:
     @pytest.mark.parametrize("nb", [1, 0, -1])
     def test_invalid_n_bins_with_metrics_raises(self, rm_miscal, nb):
         rm, Xte, yte = rm_miscal
-        with pytest.raises(ValueError):
+        with pytest.raises(ValueError, match="'n_bins'"):
             rm.eval(X=Xte, labels=yte, n_bins=nb, add_metrics=True, use_calibrated=True)
 
     def test_labels_mismatch_with_calibrated_raises(self, rm_miscal):
         rm, Xte, yte = rm_miscal
-        with pytest.raises(ValueError):
+        with pytest.raises(ValueError, match="n_samples does not match"):
             rm.eval(X=Xte, labels=yte[:-5], use_calibrated=True, add_metrics=True)
 
     def test_feature_mismatch_with_calibrated_raises(self, rm_miscal):
         rm, Xte, yte = rm_miscal
-        with pytest.raises(ValueError):
+        with pytest.raises(ValueError, match="features but the model was fit on"):
             rm.eval(X=Xte[:, :5], labels=yte, use_calibrated=True)
 
     def test_bad_flag_combination_types_raise(self, rm_miscal):
         rm, Xte, yte = rm_miscal
-        with pytest.raises(ValueError):
+        with pytest.raises(ValueError, match="'use_calibrated'"):
             rm.eval(X=Xte, labels=yte, use_calibrated="True", add_metrics="True")
 
-    # Unavailable calibrator: the fit-time signal and the eval-time message
-    def test_failed_calibration_warns_at_fit(self):
-        X, y = _failed_calibration_data()
-        with pytest.warns(UserWarning, match=r"'calibrate' \(True\) could not be applied"):
-            rm = aa.ReliabilityModel(random_state=0).fit(X, y, n_bootstrap=0)
-        assert rm._calibrator is None
-        assert rm._calibrate_requested is True
-        assert "2-fold" in rm._calibration_error
-
-    def test_failed_calibration_leaves_score_calibrated_nan(self):
-        X, y = _failed_calibration_data()
-        with pytest.warns(UserWarning):
-            rm = aa.ReliabilityModel(random_state=0).fit(X, y, n_bootstrap=0)
-        assert rm.predict(X)["score_calibrated"].isna().all()
-
+    # Unavailable calibrator: the eval-time message names the real reason
     def test_failed_calibration_eval_names_the_real_reason(self):
         X, y = _failed_calibration_data()
         with pytest.warns(UserWarning):
@@ -751,17 +872,6 @@ class TestEvalComplex:
         with pytest.raises(ValueError, match=r"fitted with 'calibrate=False'") as e:
             rm.eval(X=Xte, labels=yte, use_calibrated=True)
         assert "could not be fitted" not in str(e.value)
-
-    def test_successful_calibration_is_silent(self):
-        Xtr, ytr, _ = _data()
-        with warnings.catch_warnings():
-            warnings.simplefilter("error", UserWarning)
-            rm = aa.ReliabilityModel(random_state=0).fit(Xtr, ytr, n_bootstrap=3)
-        assert rm._calibrator is not None and rm._calibration_error is None
-
-    def test_calibrate_false_records_no_error(self, rm_uncal):
-        rm, _, _ = rm_uncal
-        assert rm._calibrate_requested is False and rm._calibration_error is None
 
 
 class TestEvalGoldenValues:
