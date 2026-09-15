@@ -6,7 +6,7 @@ from hypothesis import given, settings
 import hypothesis.strategies as some
 from sklearn.svm import SVC
 from sklearn.ensemble import RandomForestClassifier
-from sklearn.base import clone
+from sklearn.base import BaseEstimator, ClassifierMixin, clone
 from sklearn.model_selection import (LeaveOneOut, StratifiedKFold, cross_val_predict,
                                      cross_val_score)
 from sklearn.metrics import (accuracy_score, balanced_accuracy_score, f1_score, roc_auc_score,
@@ -26,6 +26,43 @@ def _data(n_per_class=15, n_feat=6, seed=0):
     X_neg = rng.normal(-0.5, 1.0, size=(n_per_class, n_feat))
     X = np.vstack([X_pos, X_neg])
     labels = np.array([1] * n_per_class + [0] * n_per_class)
+    return X, labels
+
+
+class _SignClassifier(ClassifierMixin, BaseEstimator):
+    """Deterministic rule classifier: predicts 1 where the first feature is positive.
+
+    It ignores the training data, so its predictions on any matrix are known up front. That is
+    what makes a hand-computed confusion matrix (and the metrics derived from it) an exact,
+    oracle-free expectation for :meth:`AAPred.eval`.
+    """
+
+    def fit(self, X, y):
+        self.classes_ = np.unique(np.asarray(y))
+        self.n_features_in_ = np.asarray(X).shape[1]
+        return self
+
+    def predict(self, X):
+        return (np.asarray(X)[:, 0] > 0).astype(int)
+
+    def predict_proba(self, X):
+        p = (np.asarray(X)[:, 0] > 0).astype(float)
+        return np.column_stack([1.0 - p, p])
+
+
+def _rule_data():
+    """A fixed matrix whose _SignClassifier predictions are 1,1,1,1,0,0,0,0 and labels giving
+    TP=3, FP=1, TN=3, FN=1."""
+    X = np.array([[1.0, 0.0]] * 4 + [[-1.0, 0.0]] * 4)
+    labels = np.array([1, 1, 1, 0, 0, 0, 0, 1])
+    return X, labels
+
+
+def _rule_train(seed=0):
+    """Separable training data of the same width as ``_rule_data`` (the holdout set)."""
+    rng = np.random.RandomState(seed)
+    X = np.vstack([rng.normal(1.0, 0.1, (10, 2)), rng.normal(-1.0, 0.1, (10, 2))])
+    labels = np.array([1] * 10 + [0] * 10)
     return X, labels
 
 
@@ -306,8 +343,9 @@ class TestAAPredEval:
 
 
 class TestAAPredEvalComplex:
-    """eval parameter interactions: the mcc vocabulary across principles, golden vs. sklearn."""
+    """eval parameter interactions: the mcc vocabulary crossed with cv, holdout and baseline."""
 
+    # Positive interactions
     def test_eval_mcc_with_other_metrics(self):
         X, labels = _data()
         df_eval = aa.AAPred(models=["rf"], random_state=0).eval(X, labels,
@@ -320,7 +358,16 @@ class TestAAPredEvalComplex:
         df_eval = aa.AAPred(models=["rf"], random_state=0).eval(X, labels, cv=cv, metrics=["mcc"])
         assert set(df_eval["principle"]) == {"cv_pooled"}
 
-    def test_eval_mcc_cv_golden_matches_sklearn(self):
+    def test_eval_n_cv_ignored_when_cv_given(self):
+        # A splitter defines its own folds, so n_cv must not change the pooled result.
+        X, labels = _data()
+        cv = StratifiedKFold(n_splits=3, shuffle=True, random_state=0)
+        aap = aa.AAPred(models=["svm"], random_state=0)
+        d1 = aap.eval(X, labels, cv=cv, metrics=["mcc"])
+        d2 = aap.eval(X, labels, cv=cv, n_cv=2, metrics=["mcc"])
+        pd.testing.assert_frame_equal(d1, d2)
+
+    def test_eval_mcc_cv_matches_sklearn_cross_val_score(self):
         X, labels = _data()
         aap = aa.AAPred(models=["svm"], random_state=0)
         est = aap._list_estimators[0]
@@ -329,7 +376,7 @@ class TestAAPredEvalComplex:
         got = aap.eval(X, labels, metrics=["mcc"])["score"].iloc[0]
         assert abs(got - ref) < 1e-9
 
-    def test_eval_mcc_cv_pooled_golden_matches_sklearn(self):
+    def test_eval_mcc_cv_pooled_matches_sklearn_cross_val_predict(self):
         X, labels = _data()
         cv = StratifiedKFold(n_splits=5, shuffle=True, random_state=0)
         aap = aa.AAPred(models=["svm"], random_state=0)
@@ -338,7 +385,7 @@ class TestAAPredEvalComplex:
         got = aap.eval(X, labels, cv=cv, metrics=["mcc"])["score"].iloc[0]
         assert abs(got - ref) < 1e-9
 
-    def test_eval_mcc_holdout_golden_matches_sklearn(self):
+    def test_eval_mcc_holdout_matches_sklearn(self):
         # The holdout row must be matthews_corrcoef on the model's own held-out predictions:
         # a scorer accidentally mapped to accuracy would pass a bare [-1, 1] range check.
         X, labels = _data()
@@ -352,6 +399,126 @@ class TestAAPredEvalComplex:
         assert abs(got - ref) < 1e-9
         assert ref != pytest.approx(accuracy_score(labels_holdout,
                                                    clone(est).fit(X, labels).predict(X_holdout)))
+
+    # Negative interactions
+    def test_eval_mcc_with_invalid_metric_raises(self):
+        X, labels = _data()
+        with pytest.raises(ValueError, match="should each be one of"):
+            aa.AAPred(random_state=0).eval(X, labels, metrics=["mcc", "not_a_metric"])
+
+    def test_eval_mcc_holdout_label_length_mismatch_raises(self):
+        X, labels = _data()
+        X_holdout, labels_holdout = _data(n_per_class=8, seed=1)
+        short = list(labels_holdout[:4]) + list(labels_holdout[-1:])
+        with pytest.raises(ValueError):
+            aa.AAPred(random_state=0).eval(X, labels, metrics=["mcc"], X_holdout=X_holdout,
+                                           labels_holdout=short)
+
+    def test_eval_cv_with_holdout_feature_mismatch_raises(self):
+        X, labels = _data()
+        X_holdout, labels_holdout = _data(n_per_class=8, n_feat=3, seed=1)
+        cv = StratifiedKFold(n_splits=3, shuffle=True, random_state=0)
+        with pytest.raises(ValueError, match="n_features"):
+            aa.AAPred(random_state=0).eval(X, labels, cv=cv, metrics=["mcc"],
+                                           X_holdout=X_holdout, labels_holdout=labels_holdout)
+
+    def test_eval_cv_proba_metric_without_predict_proba_raises(self):
+        X, labels = _data()
+        cv = StratifiedKFold(n_splits=3, shuffle=True, random_state=0)
+        with pytest.raises(ValueError, match="predict_proba"):
+            aa.AAPred(models=[SVC(kernel="linear")], random_state=0).eval(
+                X, labels, cv=cv, metrics=["roc_auc"])
+
+    def test_eval_holdout_without_labels_holdout_raises(self):
+        X, labels = _data()
+        X_holdout, _ = _data(n_per_class=8, seed=1)
+        with pytest.raises(ValueError):
+            aa.AAPred(random_state=0).eval(X, labels, metrics=["mcc"], X_holdout=X_holdout)
+
+    def test_eval_baseline_with_invalid_list_parts_raises(self, baseline_data):
+        df_seq, labels, X = baseline_data
+        with pytest.raises(ValueError, match="part"):
+            aa.AAPred(random_state=0).eval(X, labels, metrics=["mcc"], baseline="aac",
+                                           df_seq=df_seq, list_parts=["not_a_part"])
+
+    def test_eval_baseline_with_cv_and_missing_df_seq_raises(self):
+        X, labels = _data()
+        cv = StratifiedKFold(n_splits=3, shuffle=True, random_state=0)
+        with pytest.raises(ValueError, match="df_seq"):
+            aa.AAPred(random_state=0).eval(X, labels, metrics=["mcc"], baseline=True, cv=cv)
+
+
+class TestAAPredEvalGoldenValues:
+    """Hand-computed metrics from one fixed 2x2 confusion matrix (no sklearn oracle).
+
+    ``_SignClassifier`` predicts 1 where the first feature is positive, independent of what it
+    was trained on, so the predictions are ``1,1,1,1,0,0,0,0``. Against the labels
+    ``1,1,1,0,0,0,0,1`` that is TP=3, FP=1, TN=3, FN=1, and every metric follows by hand::
+
+        mcc               = (3*3 - 1*1) / sqrt(4 * 4 * 4 * 4) = 8 / 16 = 0.5
+        accuracy          = (3 + 3) / 8                                = 0.75
+        precision         = 3 / (3 + 1)                                = 0.75
+        recall            = 3 / (3 + 1)                                = 0.75
+        f1                = 2*3 / (2*3 + 1 + 1) = 6 / 8                = 0.75
+        balanced_accuracy = (3/4 + 3/4) / 2                            = 0.75
+        roc_auc           = (9 wins + 6 ties * 0.5) / 16 pairs         = 0.75
+    """
+
+    def test_holdout_mcc_is_one_half(self):
+        X, labels = _rule_train()
+        X_holdout, labels_holdout = _rule_data()
+        df_eval = aa.AAPred(models=[_SignClassifier()], random_state=0).eval(
+            X, labels, metrics=["mcc"], X_holdout=X_holdout, labels_holdout=labels_holdout)
+        got = df_eval[df_eval["principle"] == "holdout"]["score"].iloc[0]
+        assert got == pytest.approx(0.5, abs=1e-12)
+
+    @pytest.mark.parametrize("metric", ["accuracy", "balanced_accuracy", "precision", "recall",
+                                        "f1", "roc_auc"])
+    def test_holdout_label_metrics_are_three_quarters(self, metric):
+        X, labels = _rule_train()
+        X_holdout, labels_holdout = _rule_data()
+        df_eval = aa.AAPred(models=[_SignClassifier()], random_state=0).eval(
+            X, labels, metrics=[metric], X_holdout=X_holdout, labels_holdout=labels_holdout)
+        got = df_eval[df_eval["principle"] == "holdout"]["score"].iloc[0]
+        assert got == pytest.approx(0.75, abs=1e-12)
+
+    def test_holdout_mcc_differs_from_accuracy(self):
+        # 0.5 vs 0.75 on the same table: a scorer mapped to the wrong metric cannot pass both.
+        X, labels = _rule_train()
+        X_holdout, labels_holdout = _rule_data()
+        df_eval = aa.AAPred(models=[_SignClassifier()], random_state=0).eval(
+            X, labels, metrics=["mcc", "accuracy"], X_holdout=X_holdout,
+            labels_holdout=labels_holdout)
+        hold = df_eval[df_eval["principle"] == "holdout"].set_index("metric")["score"]
+        assert hold["mcc"] == pytest.approx(0.5, abs=1e-12)
+        assert hold["accuracy"] == pytest.approx(0.75, abs=1e-12)
+
+    def test_cv_pooled_mcc_is_one_half(self):
+        # Pooled out-of-fold predictions of a rule classifier do not depend on the split, so the
+        # same hand-computed table applies to the cv_pooled row.
+        X, labels = _rule_data()
+        cv = StratifiedKFold(n_splits=2, shuffle=True, random_state=0)
+        df_eval = aa.AAPred(models=[_SignClassifier()], random_state=0).eval(
+            X, labels, cv=cv, metrics=["mcc"])
+        assert df_eval["score"].iloc[0] == pytest.approx(0.5, abs=1e-12)
+
+    def test_perfect_holdout_mcc_is_one(self):
+        X, labels = _rule_train()
+        X_holdout, _ = _rule_data()
+        labels_holdout = np.array([1, 1, 1, 1, 0, 0, 0, 0])   # == the predictions
+        df_eval = aa.AAPred(models=[_SignClassifier()], random_state=0).eval(
+            X, labels, metrics=["mcc"], X_holdout=X_holdout, labels_holdout=labels_holdout)
+        got = df_eval[df_eval["principle"] == "holdout"]["score"].iloc[0]
+        assert got == pytest.approx(1.0, abs=1e-12)
+
+    def test_inverted_holdout_mcc_is_minus_one(self):
+        X, labels = _rule_train()
+        X_holdout, _ = _rule_data()
+        labels_holdout = np.array([0, 0, 0, 0, 1, 1, 1, 1])   # the exact complement
+        df_eval = aa.AAPred(models=[_SignClassifier()], random_state=0).eval(
+            X, labels, metrics=["mcc"], X_holdout=X_holdout, labels_holdout=labels_holdout)
+        got = df_eval[df_eval["principle"] == "holdout"]["score"].iloc[0]
+        assert got == pytest.approx(-1.0, abs=1e-12)
 
 
 class TestAAPredEvalCV:

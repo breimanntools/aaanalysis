@@ -36,6 +36,10 @@ notes — with cross-references and examples — live in
     failing later (or being silently ignored).
 
 ### Fixed
+- `ReliabilityModel.fit`: non-finite numbers (`NaN`, `inf`, `-inf`) are rejected for `ci`,
+  `ad_percentile` and `conformal_alpha`. `NaN` passed both range comparisons silently
+  (`nan < 0` and `nan > 1` are each `False`), so `fit(ci=float("nan"))` was accepted and
+  `predict` then returned `NaN` `ci_low` / `ci_high` columns.
 - `StructurePreprocessor.encode_pae` / `encode`: read the AlphaFold DB PAE JSON layout
   (a one-element list wrapping the `predicted_aligned_error` dict), so files from
   `fetch_alphafold` load without a manual unwrap.

@@ -230,15 +230,17 @@ class SeqOpt(Tool):
         * :class:`SeqMut` whose ``combine`` scores the variants (the fitness engine).
         * :class:`ShapModel` whose fuzzy-labeled SHAP values drive ``mode='impact'`` guidance.
         """
+        # Validate
         self._verbose = ut.check_verbose(verbose)
         self._mode = check_mode(mode)
         ut.check_df(name="df_scales", df=df_scales, accept_none=True)
+        if random_state is not None:
+            ut.check_number_range(name="random_state", val=random_state, min_val=0, just_int=True)
+        # Resolve the scale set
+        self._random_state = random_state
         if df_scales is None:
             df_scales = ut.load_default_scales()
         self.df_scales = df_scales
-        if random_state is not None:
-            ut.check_number_range(name="random_state", val=random_state, min_val=0, just_int=True)
-        self._random_state = random_state
         self._sf = SequenceFeature(verbose=False)
         # Fitness engine (model-bound SeqMut); validation of model/target_class is reused there.
         self._seqmut = SeqMut(verbose=False, df_scales=df_scales, model=model,

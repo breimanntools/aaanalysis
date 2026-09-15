@@ -305,9 +305,17 @@ class AAPred(Wrapper):
         --------
         .. include:: examples/aap.rst
         """
-        # Global parameters
+        # Validate
         verbose = ut.check_verbose(verbose)
         random_state = ut.check_random_state(random_state=random_state)
+        if models is not None and (list_model_classes is not None or list_model_kwargs is not None):
+            raise ValueError("Pass either 'models' or 'list_model_classes'/'list_model_kwargs', not both.")
+        if list_metrics is None:
+            list_metrics = ["accuracy", "balanced_accuracy", "f1", "roc_auc"]
+        list_metrics = check_metrics(metrics=list_metrics)
+        if df_feat is not None:
+            df_feat = ut.check_df_feat(df_feat=df_feat)
+        ut.check_df(name="df_scales", df=df_scales, accept_none=True)
         # Resolve models into configured estimator INSTANCES (``_list_estimators``), which
         # fit/eval clone before use. `models` (registry name strings and/or configured
         # sklearn estimator instances/classes) is the primary API; storing the instance and
@@ -315,8 +323,6 @@ class AAPred(Wrapper):
         # meta-ensembles (voting/stacking) and **kwargs estimators (xgboost) work and keeps
         # a passed instance's own configuration + random_state intact.
         if models is not None:
-            if list_model_classes is not None or list_model_kwargs is not None:
-                raise ValueError("Pass either 'models' or 'list_model_classes'/'list_model_kwargs', not both.")
             if not isinstance(models, list):
                 models = [models]
             if len(models) == 0:
@@ -356,14 +362,6 @@ class AAPred(Wrapper):
         # Every model must support hard-label prediction; predict_proba is validated per operation
         # (probability metrics in eval, and the predict / predict_oof scoring paths) instead.
         check_estimators_predict(list_estimators=list_estimators)
-        # Metric parameters
-        if list_metrics is None:
-            list_metrics = ["accuracy", "balanced_accuracy", "f1", "roc_auc"]
-        list_metrics = check_metrics(metrics=list_metrics)
-        # Featurizer parameters
-        if df_feat is not None:
-            df_feat = ut.check_df_feat(df_feat=df_feat)
-        ut.check_df(name="df_scales", df=df_scales, accept_none=True)
         # Internal attributes
         self._verbose = verbose
         self._random_state = random_state
@@ -572,7 +570,6 @@ class AAPred(Wrapper):
         # 'list_parts' is used only in baseline mode, but is validated unconditionally so a typo
         # surfaces here instead of being silently ignored.
         list_parts = ut.check_list_parts(list_parts=list_parts, return_default=False, accept_none=True)
-        list_models = None
         if X_holdout is not None:
             X_holdout = ut.check_X(X=X_holdout, min_n_samples=1)
             labels_holdout = ut.check_labels(labels=labels_holdout)
@@ -580,17 +577,21 @@ class AAPred(Wrapper):
             if X_holdout.shape[1] != X.shape[1]:
                 raise ValueError(f"'X_holdout' n_features ({X_holdout.shape[1]}) should match "
                                  f"'X' n_features ({X.shape[1]}).")
-            list_models = fit_models(X=X, labels=labels, list_estimators=self._list_estimators)
         elif labels_holdout is not None:
             raise ValueError("'labels_holdout' was given without 'X_holdout'.")
-        # Resolve the optional baseline-featurizer comparison (built internally from df_seq)
         list_kinds = check_baseline(baseline=baseline)
-        dict_X_baseline = None
         if list_kinds is not None:
             ut.check_df_seq(df_seq=df_seq)
             if len(df_seq) != len(labels):
                 raise ValueError(f"'df_seq' n_samples ({len(df_seq)}) should match "
                                  f"'labels' n_samples ({len(labels)}).")
+        # Fit the deployment models scored on the holdout set
+        list_models = None
+        if X_holdout is not None:
+            list_models = fit_models(X=X, labels=labels, list_estimators=self._list_estimators)
+        # Build the optional baseline-featurizer comparison (built internally from df_seq)
+        dict_X_baseline = None
+        if list_kinds is not None:
             dict_X_baseline = build_baseline_matrices(df_seq=df_seq, list_kinds=list_kinds,
                                                       df_scales=self._df_scales, list_parts=list_parts)
         # Evaluate

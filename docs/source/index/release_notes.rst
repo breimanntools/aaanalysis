@@ -41,6 +41,11 @@ Changed
 Fixed
 ~~~~~
 
+- :meth:`~aaanalysis.ReliabilityModel.fit` rejects non-finite numbers (``NaN``, ``inf``, ``-inf``)
+  for ``ci``, ``ad_percentile`` and ``conformal_alpha``. A ``NaN`` passed both range comparisons
+  silently (``nan < 0`` and ``nan > 1`` are each ``False``), so ``fit(ci=float("nan"))`` was
+  accepted and :meth:`~aaanalysis.ReliabilityModel.predict` then returned ``NaN`` ``ci_low`` /
+  ``ci_high`` columns.
 - :meth:`~aaanalysis.StructurePreprocessor.encode_pae` (and the ``encode`` router) now reads the
   PAE JSON exactly as the AlphaFold Database serves it, a one-element list wrapping the
   ``predicted_aligned_error`` dict, so files downloaded by

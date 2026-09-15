@@ -169,6 +169,54 @@ class TestFit:
         w_wide = wide["ci_high"] - wide["ci_low"]
         assert (w_wide >= w_narrow - 1e-12).all() and (w_wide > w_narrow).any()
 
+    @pytest.mark.parametrize("ci", [float("nan"), np.nan, np.float64("nan"), float("inf"),
+                                    float("-inf"), np.float64("inf")])
+    def test_ci_non_finite_raises(self, ci):
+        # A non-finite value passes every range comparison ('nan < 0' and 'nan > 1' are each
+        # False), so it would otherwise reach norm.ppf and yield NaN 'ci_low' / 'ci_high'.
+        Xtr, ytr, _ = _data()
+        with pytest.raises(ValueError, match="finite"):
+            aa.ReliabilityModel().fit(Xtr, ytr, ci=ci, n_bootstrap=3)
+
+    @pytest.mark.parametrize("ci", [0.01, 0.5, 0.99])
+    def test_ci_bounds_are_finite(self, ci):
+        Xtr, ytr, Xte = _data()
+        df = aa.ReliabilityModel(random_state=0).fit(Xtr, ytr, n_bootstrap=5, ci=ci).predict(Xte)
+        assert np.isfinite(df[["ci_low", "ci_high", "score", "score_std"]].to_numpy()).all()
+
+    @pytest.mark.parametrize("p", [float("nan"), np.float64("nan"), float("inf"), float("-inf")])
+    def test_ad_percentile_non_finite_raises(self, p):
+        Xtr, ytr, _ = _data()
+        with pytest.raises(ValueError, match="finite"):
+            aa.ReliabilityModel().fit(Xtr, ytr, ad_percentile=p)
+
+    @pytest.mark.parametrize("a", [float("nan"), np.float64("nan"), float("inf"), float("-inf")])
+    def test_conformal_alpha_non_finite_raises(self, a):
+        Xtr, ytr, _ = _data()
+        with pytest.raises(ValueError, match="finite"):
+            aa.ReliabilityModel().fit(Xtr, ytr, conformal_alpha=a)
+
+    @settings(max_examples=5, deadline=None)
+    @given(conformal_alpha=some.floats(min_value=0.01, max_value=0.5))
+    def test_conformal_alpha_valid(self, conformal_alpha):
+        Xtr, ytr, _ = _data()
+        rm = aa.ReliabilityModel(random_state=0).fit(Xtr, ytr, n_bootstrap=3,
+                                                     conformal_alpha=conformal_alpha)
+        assert rm is not None
+
+    @pytest.mark.parametrize("val", [float("nan"), float("inf")])
+    def test_k_non_finite_raises(self, val):
+        # Integer parameters reject a non-finite float by type, before any range comparison.
+        Xtr, ytr, _ = _data()
+        with pytest.raises(ValueError, match="should be an integer"):
+            aa.ReliabilityModel().fit(Xtr, ytr, k=val)
+
+    @pytest.mark.parametrize("val", [float("nan"), float("inf")])
+    def test_n_bootstrap_non_finite_raises(self, val):
+        Xtr, ytr, _ = _data()
+        with pytest.raises(ValueError, match="should be an integer"):
+            aa.ReliabilityModel().fit(Xtr, ytr, n_bootstrap=val)
+
     @pytest.mark.parametrize("nb", [-1, 2.5])
     def test_n_bootstrap_invalid(self, nb):
         Xtr, ytr, _ = _data()

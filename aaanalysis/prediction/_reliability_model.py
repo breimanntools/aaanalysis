@@ -58,8 +58,21 @@ def check_model(model=None, members=None):
         raise ValueError("'model' must implement 'predict_proba' (or pass a list / AAPred / None).")
 
 
+def check_finite(name: str, val: float):
+    """Check that a numeric value is finite.
+
+    ``NaN`` and ``+/-inf`` are floats that pass *every* range comparison silently (``nan < 0``
+    and ``nan > 1`` are both ``False``), so they slip through a plain range check and only
+    surface much later as ``NaN`` outputs. Non-numeric values are left to the range check,
+    which reports the type.
+    """
+    if isinstance(val, (float, np.floating)) and not np.isfinite(val):
+        raise ValueError(f"'{name}' should be a finite float or an integer, but got {val}.")
+
+
 def check_ci(ci: float):
     """Check that ``ci`` is a fraction in (0, 1), with a hint when a percent is passed."""
+    check_finite(name="ci", val=ci)
     ut.check_number_range(name="ci", val=ci, min_val=0, just_int=False)
     if 1 < ci <= 100:
         raise ValueError(f"'ci' ({ci}) should be a fraction in (0, 1), e.g. 0.90 for a 90% "
@@ -245,7 +258,7 @@ class ReliabilityModel(Wrapper):
         ValueError
             If ``labels`` are not binary, ``label_pos`` is absent from ``labels``, ``model`` is an
             empty list or lacks ``predict_proba``, a passed :class:`AAPred` is not fitted, or a
-            numeric parameter is out of range.
+            numeric parameter is out of range or not finite (``NaN`` / ``inf``).
 
         Examples
         --------
@@ -257,6 +270,7 @@ class ReliabilityModel(Wrapper):
         ut.check_match_X_labels(X=X, labels=labels)
         ut.check_number_range(name="label_pos", val=label_pos, min_val=0, just_int=True)
         ut.check_number_range(name="k", val=k, min_val=1, just_int=True)
+        check_finite(name="ad_percentile", val=ad_percentile)
         ut.check_number_range(name="ad_percentile", val=ad_percentile, min_val=1, max_val=100,
                               just_int=False)
         check_ci(ci=ci)
@@ -265,6 +279,7 @@ class ReliabilityModel(Wrapper):
         ut.check_str(name="calibration_method", val=calibration_method)
         if calibration_method not in ("isotonic", "sigmoid"):
             raise ValueError("'calibration_method' must be 'isotonic' or 'sigmoid'.")
+        check_finite(name="conformal_alpha", val=conformal_alpha)
         ut.check_number_range(name="conformal_alpha", val=conformal_alpha, min_val=0, max_val=1,
                               just_int=False, accept_none=False)
         labels = np.asarray(labels)
