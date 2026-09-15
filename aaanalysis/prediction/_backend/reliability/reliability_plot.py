@@ -77,7 +77,8 @@ def plot_reliability_diagram_(df_eval, figsize=(5, 5), color="tab:blue", label="
     if _LABEL_PERFECT not in [line.get_label() for line in ax.get_lines()]:
         ax.plot([0, 1], [0, 1], ls="--", color="0.6", lw=1.2, label=_LABEL_PERFECT)
     brier, ece = _metric_value(df_eval, ut.STR_BIN_BRIER), _metric_value(df_eval, ut.STR_BIN_ECE)
-    metrics = [f"{name} {val:.3f}" for name, val in [("Brier", brier), ("ECE", ece)] if val is not None]
+    metrics = [f"{name} {val:.3f}" for name, val in [("Brier", brier), ("ECE", ece)]
+               if val is not None]
     if metrics:
         label = f"{label} ({', '.join(metrics)})"
     ax.plot(d[ut.COL_MEAN_SCORE], d[ut.COL_EMPIRICAL_POS], "o-", color=color, label=label)

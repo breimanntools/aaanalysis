@@ -22,6 +22,9 @@ notes — with cross-references and examples — live in
   keep the previous output byte-identical. `ReliabilityModelPlot.reliability_diagram(label=...)`
   annotates Brier / ECE in the legend when present and supports raw-vs-calibrated overlays on
   one `ax` (addresses #480).
+- `ReliabilityModel.fit(calibrate=True)` now warns (`UserWarning`) when no calibrator can be
+  fitted (too few samples in a class for the internal cross-validation, or a model that cannot
+  be cloned), instead of leaving the failure silent.
 
 ### Changed
 - Prediction/design-tier consistency pass (these classes are still experimental, so no
@@ -48,6 +51,11 @@ notes — with cross-references and examples — live in
   `ad_percentile` and `conformal_alpha`. `NaN` passed both range comparisons silently
   (`nan < 0` and `nan > 1` are each `False`), so `fit(ci=float("nan"))` was accepted and
   `predict` then returned `NaN` `ci_low` / `ci_high` columns.
+- `ReliabilityModel.eval(use_calibrated=True)` no longer claims the model was fitted with
+  `calibrate=False` when calibration was requested but failed; the error names the real reason.
+- `ReliabilityModel.eval`: passing only one of `X` / `labels` raises instead of silently
+  ignoring the given one (both default to the training data only when both are `None`).
+- `ReliabilityModelPlot.reliability_diagram` validates `figsize`, `color`, `title`, and `ax`.
 - `StructurePreprocessor.encode_pae` / `encode`: read the AlphaFold DB PAE JSON layout
   (a one-element list wrapping the `predicted_aligned_error` dict), so files from
   `fetch_alphafold` load without a manual unwrap.
