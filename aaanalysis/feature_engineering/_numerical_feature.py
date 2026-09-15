@@ -105,24 +105,31 @@ def check_dict_num_parts(dict_num_parts=None) -> Tuple[int, int]:
 def check_pssm(pssm) -> Dict[str, Union[str, np.ndarray]]:
     """Validate the ``pssm`` source and return it as ``{entry: file path or (L, 20) array}``.
 
-    A directory is expanded to its ``*.pssm`` files (entry = file stem, sorted). Arrays are
-    checked for a 2-D ``(L, 20)`` finite shape; paths for existence.
+    A directory is expanded to its ``.pssm`` files (extension matched case-insensitively,
+    entry = file stem, sorted); a single ``.pssm`` file becomes ``{stem: path}``. Arrays are
+    checked for a 2-D ``(L, 20)`` numeric shape; paths for existence. Finiteness and value
+    ranges are checked centrally for files and arrays when the values are loaded.
     """
     if isinstance(pssm, (str, os.PathLike)):
+        if os.path.isfile(pssm):
+            if not str(pssm).lower().endswith(".pssm"):
+                raise ValueError(f"'pssm' ('{pssm}') should be a PSI-BLAST ASCII '.pssm' file.")
+            return {os.path.splitext(os.path.basename(pssm))[0]: pssm}
         if not os.path.isdir(pssm):
-            raise ValueError(f"'pssm' ('{pssm}') should be an existing directory of PSI-BLAST "
-                             f"'.pssm' files or a dict mapping entries to files or (L, 20) arrays.")
-        files = sorted(f for f in os.listdir(pssm) if f.endswith(".pssm"))
+            raise ValueError(f"'pssm' ('{pssm}') should be an existing '.pssm' file, a directory of "
+                             f"PSI-BLAST '.pssm' files, or a dict mapping entries to files or (L, 20) arrays.")
+        files = sorted(f for f in os.listdir(pssm)
+                       if f.lower().endswith(".pssm") and os.path.isfile(os.path.join(pssm, f)))
         if len(files) == 0:
-            raise ValueError(f"'pssm' directory ('{pssm}') contains no '.pssm' files.")
+            raise ValueError(f"'pssm' ('{pssm}') should be a directory containing at least one '.pssm' file.")
         return {os.path.splitext(f)[0]: os.path.join(pssm, f) for f in files}
     ut.check_dict(name="pssm", val=pssm, accept_none=False)
     if len(pssm) == 0:
-        raise ValueError("'pssm' should not be an empty dict.")
+        raise ValueError("'pssm' (empty dict) should be a dict with at least one entry.")
     dict_source = {}
     for entry, src in pssm.items():
         if not isinstance(entry, str):
-            raise ValueError(f"Keys of 'pssm' should be entry names (str); got {entry!r}.")
+            raise ValueError(f"'pssm' keys ({entry!r}) should be entry names (str).")
         if isinstance(src, (str, os.PathLike)):
             if not os.path.isfile(src):
                 raise ValueError(f"'pssm[{entry!r}]' ('{src}') should be an existing PSSM file.")
@@ -134,12 +141,11 @@ def check_pssm(pssm) -> Dict[str, Union[str, np.ndarray]]:
         try:
             arr = np.asarray(src, dtype=np.float64)
         except (TypeError, ValueError) as error:
-            raise ValueError(f"'pssm[{entry!r}]' should contain only numbers.") from error
+            raise ValueError(f"'pssm[{entry!r}]' ({type(src).__name__} with non-numeric items) "
+                             f"should contain only numbers.") from error
         if arr.ndim != 2 or arr.shape[1] != 20 or arr.shape[0] == 0:
-            raise ValueError(f"'pssm[{entry!r}]' should be a 2-D (L, 20) array with L >= 1; "
-                             f"got shape {arr.shape}.")
-        if not np.isfinite(arr).all():
-            raise ValueError(f"'pssm[{entry!r}]' should not contain NaN or infinite values.")
+            raise ValueError(f"'pssm[{entry!r}]' (shape {arr.shape}) should be a 2-D (L, 20) array "
+                             f"with L >= 1.")
         dict_source[entry] = arr
     return dict_source
 
@@ -153,7 +159,8 @@ def check_match_df_seq_dict_num_pssm(df_seq: pd.DataFrame,
     Collects all mismatching entries into one ``ValueError``.
     """
     if ut.COL_SEQ not in df_seq.columns:
-        raise ValueError(f"'df_seq' should contain a '{ut.COL_SEQ}' column to match PSSMs against.")
+        raise ValueError(f"'df_seq' (columns {list(df_seq.columns)}) should contain a '{ut.COL_SEQ}' "
+                         f"column to match PSSMs against.")
     missing, wrong_len, wrong_res = [], [], []
     for entry, seq in zip(df_seq[ut.COL_ENTRY], df_seq[ut.COL_SEQ]):
         if entry not in dict_num:
@@ -176,7 +183,8 @@ def check_match_df_seq_dict_num_pssm(df_seq: pd.DataFrame,
     if wrong_res:
         errors.append(f"PSSM residue column differs from sequence: {wrong_res}")
     if errors:
-        raise ValueError("'pssm' does not match 'df_seq': " + "; ".join(errors))
+        raise ValueError(f"'pssm' ({'; '.join(errors)}) should match 'df_seq': one PSSM per entry "
+                         f"whose row count equals the sequence length and whose residues match it.")
 
 
 # II Main Functions
@@ -570,10 +578,11 @@ class NumericalFeature:
         ----------
         pssm : str, os.PathLike, or dict
             PSSM source. Either a directory of per-protein PSI-BLAST ASCII ``.pssm`` files (the
-            file stem is used as ``entry``) or a dict mapping each ``entry`` to a PSSM file path
-            or a precomputed ``(L, 20)`` array. Arrays must already be in canonical amino acid
-            column order (``ACDEFGHIKLMNPQRSTVWY``) and hold raw values of the kind given by
-            ``values``.
+            extension is matched case-insensitively, e.g. ``.PSSM``; the file stem is used as
+            ``entry``), a path to a single ``.pssm`` file (``entry`` = file stem), or a dict
+            mapping each ``entry`` to a PSSM file path or a precomputed ``(L, 20)`` array. Arrays
+            must already be in canonical amino acid column order (``ACDEFGHIKLMNPQRSTVWY``) and
+            hold raw values of the kind given by ``values``.
         df_seq : pd.DataFrame, shape (n_samples, n_seq_info), optional
             DataFrame containing an ``entry`` column with unique protein identifiers and a
             ``sequence`` column with full protein sequences. If given, every entry must have a
@@ -584,8 +593,8 @@ class NumericalFeature:
             percentages (PSI-BLAST ASCII files carry both).
         normalize : bool, default=True
             If ``True``, map values onto ``[0, 1]``: log-odds via the logistic sigmoid
-            ``1 / (1 + exp(-x))`` and percentages via division by 100. Keep ``True`` for
-            :meth:`CPP.run_num`.
+            ``1 / (1 + exp(-x))`` (numerically stable for large ``|x|``) and percentages via
+            division by 100. Keep ``True`` for :meth:`CPP.run_num`.
         return_scales : bool, default=False
             If ``True``, also return the matching 20-column ``df_scales`` and ``df_cat`` naming
             the PSSM dimensions (``PSSM_A``, ..., ``PSSM_Y``), so the return becomes the 3-tuple
@@ -607,10 +616,12 @@ class NumericalFeature:
         Raises
         ------
         ValueError
-            If a directory holds no ``.pssm`` file, a file cannot be parsed or lacks the
-            requested block, an array is not ``(L, 20)``, or (with ``df_seq``) an entry is
-            missing, its PSSM row count differs from its sequence length, or its residues differ
-            from its sequence. All mismatching entries are listed in one message.
+            If a directory holds no ``.pssm`` file, a file cannot be parsed, has a malformed
+            numeric field, or lacks the requested block, an array is not ``(L, 20)``, any value
+            is NaN or infinite, a percentage (``values='frequencies'``) lies outside
+            ``[0, 100]``, or (with ``df_seq``) an entry is missing, its PSSM row count differs
+            from its sequence length, or its residues differ from its sequence. All mismatching
+            entries are listed in one message.
 
         Notes
         -----
@@ -623,6 +634,9 @@ class NumericalFeature:
           ``NumericalFeature.get_parts(df_seq, dict_num)`` and
           ``CPP(df_parts=df_parts, df_scales=df_scales, df_cat=df_cat).run_num(dict_num_parts=...)``.
         * Residue identity is compared case-insensitively and ignores ``X`` on either side.
+        * **Supported formats.** Only PSI-BLAST ASCII PSSM files (``psiblast -out_ascii_pssm``)
+          and precomputed arrays are supported. The binary checkpoint ``.mtx`` format
+          (``makemat``) is not parsed; convert it to ASCII PSSMs or arrays first.
         * Generating PSSMs (running PSI-BLAST) is not part of this method.
 
         See Also

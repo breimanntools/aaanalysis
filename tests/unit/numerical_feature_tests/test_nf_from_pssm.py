@@ -73,6 +73,24 @@ class TestFromPssm:
             assert arr.shape == (len(DICT_SEQ[entry]), 20)
             assert arr.dtype == np.float64
 
+    def test_pssm_directory_uppercase_extension(self, tmp_path):
+        write_pssm(tmp_path / "U1.PSSM", "ACD", seed=1)
+        write_pssm(tmp_path / "U2.pssm", "ACDK", seed=2)
+        dict_num = aa.NumericalFeature.from_pssm(pssm=str(tmp_path))
+        assert list(dict_num) == ["U1", "U2"]
+        assert dict_num["U1"].shape == (3, 20)
+
+    @settings(max_examples=5, deadline=None)
+    @given(entry=some.sampled_from(list(DICT_SEQ)))
+    def test_pssm_single_file(self, entry):
+        dict_num = aa.NumericalFeature.from_pssm(pssm=str(DATA_DIR / f"{entry}.pssm"))
+        assert list(dict_num) == [entry]
+        assert dict_num[entry].shape == (len(DICT_SEQ[entry]), 20)
+
+    def test_pssm_single_file_pathlib(self):
+        dict_num = aa.NumericalFeature.from_pssm(pssm=DATA_DIR / "P1.pssm", df_seq=_df_seq(["P1"]))
+        assert list(dict_num) == ["P1"]
+
     def test_pssm_pathlib_directory(self):
         dict_num = aa.NumericalFeature.from_pssm(pssm=DATA_DIR)
         assert set(dict_num) == set(DICT_SEQ)
@@ -148,20 +166,20 @@ class TestFromPssm:
     # Negative tests: pssm
     def test_invalid_pssm_type(self):
         for pssm in [None, 1, 2.5, [], ["P1.pssm"], pd.DataFrame()]:
-            with pytest.raises(ValueError):
+            with pytest.raises(ValueError, match="'pssm'"):
                 aa.NumericalFeature.from_pssm(pssm)
 
     def test_invalid_pssm_missing_directory(self):
-        with pytest.raises(ValueError, match="existing directory"):
+        with pytest.raises(ValueError, match="should be an existing '.pssm' file, a directory"):
             aa.NumericalFeature.from_pssm(pssm=str(DATA_DIR / "does_not_exist"))
 
     def test_invalid_pssm_empty_directory(self):
         with tempfile.TemporaryDirectory() as tmp:
-            with pytest.raises(ValueError, match="no '.pssm' files"):
+            with pytest.raises(ValueError, match="at least one '.pssm' file"):
                 aa.NumericalFeature.from_pssm(pssm=tmp)
 
     def test_invalid_pssm_empty_dict(self):
-        with pytest.raises(ValueError, match="empty"):
+        with pytest.raises(ValueError, match="empty dict"):
             aa.NumericalFeature.from_pssm(pssm={})
 
     def test_invalid_pssm_missing_file(self):
@@ -180,10 +198,10 @@ class TestFromPssm:
                 aa.NumericalFeature.from_pssm(pssm={"X1": arr})
 
     def test_invalid_pssm_array_not_finite(self):
-        for bad in [np.nan, np.inf]:
+        for bad in [np.nan, np.inf, -np.inf]:
             arr = np.zeros((3, 20))
             arr[1, 4] = bad
-            with pytest.raises(ValueError, match="NaN or infinite"):
+            with pytest.raises(ValueError, match=r"'pssm\['X1'\]'.*row 2, column 'F'.*NaN or infinite"):
                 aa.NumericalFeature.from_pssm(pssm={"X1": arr})
 
     def test_invalid_pssm_array_non_numeric(self):
@@ -204,15 +222,55 @@ class TestFromPssm:
         with pytest.raises(ValueError, match="could not be parsed"):
             aa.NumericalFeature.from_pssm(pssm=str(tmp_path))
 
+    def test_invalid_pssm_single_file_wrong_extension(self, tmp_path):
+        path = tmp_path / "P1.txt"
+        write_pssm(path, "ACD")
+        with pytest.raises(ValueError, match="should be a PSI-BLAST ASCII '.pssm' file"):
+            aa.NumericalFeature.from_pssm(pssm=str(path))
+
+    def test_invalid_pssm_file_not_finite(self, tmp_path):
+        for bad in ["nan", "inf", "-inf"]:
+            write_pssm(tmp_path / "B1.pssm", "ACD")
+            lines = (tmp_path / "B1.pssm").read_text().splitlines()
+            lines[3] = lines[3].replace(lines[3].split()[2], bad, 1)
+            (tmp_path / "B1.pssm").write_text("\n".join(lines))
+            with pytest.raises(ValueError, match=r"'pssm\['B1'\]'.*row 1.*NaN or infinite"):
+                aa.NumericalFeature.from_pssm(pssm=str(tmp_path / "B1.pssm"))
+
+    def test_invalid_pssm_file_malformed_number(self, tmp_path):
+        write_pssm(tmp_path / "B2.pssm", "ACD")
+        lines = (tmp_path / "B2.pssm").read_text().splitlines()
+        lines[4] = lines[4].replace(lines[4].split()[2], "n/a", 1)
+        (tmp_path / "B2.pssm").write_text("\n".join(lines))
+        with pytest.raises(ValueError, match=r"'pssm\['B2'\]' \(field 'n/a' on line 5 of file .*should be a number"):
+            aa.NumericalFeature.from_pssm(pssm=str(tmp_path / "B2.pssm"))
+
+    def test_invalid_pssm_frequencies_out_of_range(self, tmp_path):
+        for bad, i_col in [(101, 3), (-1, 3)]:
+            arr = np.full((2, 20), 50.0)
+            arr[1, i_col] = bad
+            with pytest.raises(ValueError, match=r"weighted observed percentage in \[0, 100\]"):
+                aa.NumericalFeature.from_pssm(pssm={"X1": arr}, values="frequencies")
+
+    def test_invalid_pssm_file_frequencies_out_of_range(self, tmp_path):
+        write_pssm(tmp_path / "B3.pssm", "ACD")
+        lines = (tmp_path / "B3.pssm").read_text().splitlines()
+        tokens = lines[3].split()
+        tokens[2 + 20] = "150"
+        lines[3] = "    1 A  " + " ".join(tokens[2:])
+        (tmp_path / "B3.pssm").write_text("\n".join(lines))
+        with pytest.raises(ValueError, match=r"'pssm\['B3'\]' \(150.0 at row 1.*\[0, 100\]"):
+            aa.NumericalFeature.from_pssm(pssm=str(tmp_path / "B3.pssm"), values="frequencies")
+
     def test_invalid_pssm_header(self, tmp_path):
         write_pssm(tmp_path / "bad.pssm", "ACD", header="AANDCQEGHILKMFPSTWYV")
-        with pytest.raises(ValueError, match="invalid column header"):
+        with pytest.raises(ValueError, match="column header .* should list"):
             aa.NumericalFeature.from_pssm(pssm=str(tmp_path))
 
     # Negative tests: df_seq
     def test_invalid_df_seq_type(self):
         for df_seq in [1, "df_seq", [], pd.DataFrame({"sequence": ["ACDKW"]})]:
-            with pytest.raises(ValueError):
+            with pytest.raises(ValueError, match="df_seq"):
                 aa.NumericalFeature.from_pssm(pssm=str(DATA_DIR), df_seq=df_seq)
 
     def test_invalid_df_seq_length_mismatch(self):
@@ -238,7 +296,7 @@ class TestFromPssm:
     # Negative tests: values / normalize / return_scales
     def test_invalid_values(self):
         for values in INVALID_VALUES:
-            with pytest.raises(ValueError):
+            with pytest.raises(ValueError, match="'values'"):
                 aa.NumericalFeature.from_pssm(pssm=str(DATA_DIR), values=values)
 
     def test_invalid_values_frequencies_block_missing(self, tmp_path):
@@ -248,12 +306,12 @@ class TestFromPssm:
 
     def test_invalid_normalize(self):
         for normalize in INVALID_BOOLS:
-            with pytest.raises(ValueError):
+            with pytest.raises(ValueError, match="'normalize'"):
                 aa.NumericalFeature.from_pssm(pssm=str(DATA_DIR), normalize=normalize)
 
     def test_invalid_return_scales(self):
         for return_scales in INVALID_BOOLS:
-            with pytest.raises(ValueError):
+            with pytest.raises(ValueError, match="'return_scales'"):
                 aa.NumericalFeature.from_pssm(pssm=str(DATA_DIR), return_scales=return_scales)
 
     def test_keyword_only_options(self):
@@ -338,17 +396,17 @@ class TestFromPssmComplex:
 
     def test_mixed_dict_with_bad_array(self):
         pssm = {"P1": str(DATA_DIR / "P1.pssm"), "X1": np.zeros((3, 21))}
-        with pytest.raises(ValueError, match="X1"):
+        with pytest.raises(ValueError, match=r"'pssm\['X1'\]' \(shape \(3, 21\)\)"):
             aa.NumericalFeature.from_pssm(pssm, return_scales=True)
 
     def test_mismatch_raises_even_with_return_scales(self):
-        with pytest.raises(ValueError, match="does not match 'df_seq'"):
+        with pytest.raises(ValueError, match="should match 'df_seq'"):
             aa.NumericalFeature.from_pssm(pssm=str(DATA_DIR), df_seq=_df_seq(dict_seq={"P3": "RSTNQ"}),
                                           return_scales=True, values="frequencies")
 
     def test_frequencies_missing_with_df_seq(self, tmp_path):
         write_pssm(tmp_path / "P1.pssm", "ACDKW", with_freq=False)
-        with pytest.raises(ValueError, match="values='log_odds'"):
+        with pytest.raises(ValueError, match=r"'values' \('frequencies'\) should be 'log_odds'"):
             aa.NumericalFeature.from_pssm(pssm=str(tmp_path), df_seq=_df_seq(["P1"]), values="frequencies",
                                           normalize=False)
 
@@ -358,7 +416,7 @@ class TestFromPssmComplex:
                                           normalize=False)
 
     def test_invalid_values_with_valid_df_seq(self):
-        with pytest.raises(ValueError):
+        with pytest.raises(ValueError, match="'values'"):
             aa.NumericalFeature.from_pssm(pssm=str(DATA_DIR), df_seq=_df_seq(), values="scores")
 
 
@@ -401,6 +459,17 @@ class TestFromPssmGoldenValues:
         assert dict_cat["PSSM_K"] == "Positive"
         assert dict_cat["PSSM_Y"] == "Aromatic"
         assert df_cat.set_index("scale_id").loc["PSSM_W", "scale_name"] == "PSSM W"
+
+    def test_extreme_log_odds_normalize_stable(self, recwarn):
+        arr = np.array([[-1e6, -800.0, -50.0, 0.0, 50.0, 800.0, 1e6] + [0.0] * 13])
+        with np.errstate(over="raise", under="raise"):
+            dict_num = aa.NumericalFeature.from_pssm(pssm={"X1": arr}, normalize=True)
+        row = dict_num["X1"][0]
+        assert not [w for w in recwarn.list if issubclass(w.category, RuntimeWarning)]
+        assert np.isfinite(row).all()
+        assert (row >= 0).all() and (row <= 1).all()
+        np.testing.assert_allclose(row[:7], [0.0, 0.0, 1 / (1 + np.exp(50)), 0.5,
+                                             1 / (1 + np.exp(-50)), 1.0, 1.0], atol=1e-12)
 
     def test_array_input_not_permuted(self):
         arr = np.tile(np.arange(20, dtype=float), (2, 1))
