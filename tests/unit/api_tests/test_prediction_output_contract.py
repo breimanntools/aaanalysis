@@ -1,11 +1,28 @@
 """This is a script to test the output contract of the prediction tier.
 
-``AAPred.predict`` (``df_pred``, all three levels), ``ReliabilityModel.predict`` (``df_rel``)
-and ``ReliabilityModel.eval`` (``df_eval_reliability``) are consumed by downstream tools, so
-their columns are pinned in ``ut.DICT_DF_SCHEMAS``. These tests generate each frame on a tiny
-seeded fixture and fail when a column is renamed, dropped, reordered, retyped or undocumented.
-Addresses #26.
+``AAPred.predict`` (``df_pred``, all three levels), ``ReliabilityModel.predict``
+(``df_rel``) and ``ReliabilityModel.eval`` (``df_eval_reliability``) are consumed by
+downstream tools, so their columns are pinned in ``ut.DICT_DF_SCHEMAS``. These tests
+build each frame on a tiny seeded fixture and fail when a column is renamed, dropped,
+reordered, retyped or undocumented.
+
+Every frame is guarded by two independent layers, because a schema-driven check on its
+own would pass a *coordinated* code + schema edit:
+
+- literal expectations hard-coded in this file -- the column order, the dtype kind per
+  column, the required ``df_feat`` columns, and the raw ``PART-SPLIT-SCALE`` feature-id
+  grammar as a regex (not the production parser);
+- the live ``ut.DICT_DF_SCHEMAS`` record, asserted to agree with both the literal map
+  and the produced frame.
+
+This addresses the per-sample and per-residue half of the documented boundary contract;
+the ``df_feat`` half is guarded by ``test_df_feat_contract.py`` (the committed
+``load_features`` frame vs ``DICT_DF_FEAT``) and ``test_cpp_schema.py`` (canonical column
+order). What is added here is the literal grammar of a freshly computed ``CPP.run``.
 """
+import re
+import warnings
+
 import numpy as np
 import pandas.api.types as pdt
 import pytest
@@ -15,8 +32,6 @@ from sklearn.ensemble import RandomForestClassifier
 import aaanalysis as aa
 import aaanalysis.utils as ut
 
-aa.options["verbose"] = False
-
 # Frozen literal column orders: a rename in the constants layer breaks these on purpose.
 COLS_PRED_SEQUENCE = ["entry", "score", "score_std"]
 COLS_PRED_DOMAIN = ["entry", "offset", "score", "is_best"]
@@ -25,6 +40,40 @@ COLS_REL = ["score", "score_std", "ci_low", "ci_high", "ood_score", "in_domain",
             "ad_mahalanobis", "ad_leverage", "score_calibrated", "margin", "entropy",
             "conformal_set", "reliable", "ad_status", "ad_nearest_train"]
 COLS_EVAL_REL = ["bin", "mean_score", "empirical_pos", "n_samples"]
+
+# Frozen literal dtype maps -- the half that does NOT read the schema, so a coordinated
+# code + schema retype still fails here. The coarse kind ('int' / 'float') is pinned on
+# purpose: the exact numpy width (int64 vs int32) legitimately differs across platforms.
+DTYPES_PRED_SEQUENCE = {"entry": "str", "score": "float", "score_std": "float"}
+DTYPES_PRED_DOMAIN = {"entry": "str", "offset": "int", "score": "float",
+                      "is_best": "bool"}
+DTYPES_PRED_WINDOW = {"entry": "str", "position": "int", "score": "float",
+                      "score_std": "float"}
+DTYPES_PRED_LABEL = {"predicted_label": "int"}
+DTYPES_REL = {"score": "float", "score_std": "float", "ci_low": "float",
+              "ci_high": "float", "ood_score": "float", "in_domain": "bool",
+              "ad_knn": "float", "ad_mahalanobis": "float", "ad_leverage": "float",
+              "score_calibrated": "float", "margin": "float", "entropy": "float",
+              "conformal_set": "str", "reliable": "bool", "ad_status": "str",
+              "ad_nearest_train": "int"}
+DTYPES_EVAL_REL = {"bin": "str", "mean_score": "float", "empirical_pos": "float",
+                   "n_samples": "int"}
+
+# The df_feat columns downstream tools consume, written out rather than imported from
+# ut.LIST_COLS_FEAT, so editing that constant cannot silently move the contract.
+COLS_FEAT_REQUIRED = ["feature", "category", "subcategory", "scale_name",
+                      "scale_description", "abs_auc", "abs_mean_dif", "mean_dif",
+                      "std_test", "std_ref", "p_val_mann_whitney", "p_val_fdr_bh",
+                      "positions"]
+# Raw PART-SPLIT-SCALE grammar as a literal regex (NOT ut.split_feat_id): PART is upper
+# case, SPLIT is one of the three split types with its parenthesised arguments, and the
+# scale id carries no '-'.
+RE_FEAT_ID = re.compile(r"^(?P<part>[A-Z][A-Z0-9_]*)"
+                        r"-(?P<split>(?:Segment|PeriodicPattern|Pattern)\([^()]*\))"
+                        r"-(?P<scale>[A-Za-z0-9_]+)$")
+SPLIT_TYPES = ("Segment", "Pattern", "PeriodicPattern")
+# Parts reachable from the default df_parts of the fixture below.
+PARTS_FIXTURE = {"TMD", "JMD_N_TMD_N", "TMD_C_JMD_C"}
 
 
 def _kind(series):
@@ -40,13 +89,14 @@ def _kind(series):
 
 
 def _assert_conforms(df, frame):
-    """Every column documented, with the documented dtype, nullability, range and values."""
+    """Every column documented, with the documented dtype, nullability, range, values."""
     schema = ut.DICT_DF_SCHEMAS[frame]["columns"]
     undocumented = [c for c in df.columns if c not in schema]
     assert not undocumented, f"{frame}: undocumented columns {undocumented}"
     for col in df.columns:
         rec = schema[col]
-        assert _kind(df[col]) == rec["dtype"], f"{frame}.{col}: dtype {_kind(df[col])} != {rec['dtype']}"
+        assert _kind(df[col]) == rec["dtype"], (
+            f"{frame}.{col}: dtype {_kind(df[col])} != {rec['dtype']}")
         if not rec["nullable"]:
             assert df[col].notna().all(), f"{frame}.{col} has missing values"
         if rec["unique"]:
@@ -59,10 +109,22 @@ def _assert_conforms(df, frame):
             if hi is not None:
                 assert (vals <= hi + 1e-9).all(), f"{frame}.{col} above {hi}"
         if "allowed_values" in rec:
-            assert set(df[col]).issubset(rec["allowed_values"]), f"{frame}.{col} unexpected values"
+            assert set(df[col]).issubset(rec["allowed_values"]), (
+                f"{frame}.{col} unexpected values")
     for col, rec in schema.items():
         if rec["required"]:
             assert col in df.columns, f"{frame}: required column '{col}' missing"
+
+
+def _assert_literal_dtypes(df, expected, frame):
+    """The live frame AND the schema must both match the hard-coded literal dtype map."""
+    schema = ut.DICT_DF_SCHEMAS[frame]["columns"]
+    for col, kind in expected.items():
+        assert col in df.columns, f"{frame}: column '{col}' missing"
+        assert _kind(df[col]) == kind, (
+            f"{frame}.{col}: live dtype {_kind(df[col])} != literal {kind}")
+        assert schema[col]["dtype"] == kind, (
+            f"{frame}.{col}: schema dtype {schema[col]['dtype']} != literal {kind}")
 
 
 # --------------------------------------------------------------------------- fixtures
@@ -80,10 +142,38 @@ def aap_fitted():
 
 @pytest.fixture(scope="module")
 def rm_fitted():
-    X, y = make_classification(n_samples=120, n_features=8, n_informative=5, n_redundant=1,
-                               random_state=0)
+    X, y = make_classification(n_samples=120, n_features=8, n_informative=5,
+                               n_redundant=1, random_state=0)
     rm = aa.ReliabilityModel(random_state=0).fit(X[:90], y[:90])
     return rm, X[90:], y[90:]
+
+
+@pytest.fixture(scope="module")
+def rm_degenerate():
+    """A degenerate training reference: with n_features >= n_samples the covariance is
+    rank-deficient, so ad_mahalanobis / ad_leverage are not identifiable and come back
+    NaN. The frame must still satisfy the documented schema."""
+    X, y = make_classification(n_samples=8, n_features=10, n_informative=4,
+                               n_redundant=0, n_clusters_per_class=1, random_state=0)
+    rm = aa.ReliabilityModel(random_state=0).fit(X, y)
+    return rm, X[:4]
+
+
+@pytest.fixture(scope="module")
+def cpp_feat():
+    """A freshly computed df_feat from CPP.run on a tiny seeded fixture."""
+    df_seq = aa.load_dataset(name="DOM_GSEC", n=10)
+    labels = df_seq["label"].to_list()
+    sf = aa.SequenceFeature()
+    df_parts = sf.get_df_parts(df_seq=df_seq)
+    split_kws = sf.get_split_kws(n_split_min=1, n_split_max=2, split_types=["Segment"])
+    df_scales = aa.load_scales().iloc[:, :15]
+    cpp = aa.CPP(df_parts=df_parts, df_scales=df_scales, split_kws=split_kws,
+                 verbose=False, random_state=0)
+    with warnings.catch_warnings():
+        warnings.simplefilter("ignore")
+        df_feat = cpp.run(labels=labels, n_filter=10, n_jobs=1)
+    return df_feat, df_scales
 
 
 # ------------------------------------------------------------------------ structure
@@ -97,13 +187,26 @@ class TestPredictionSchemaRegistered:
         assert list(ut.DICT_DF_SCHEMAS["df_rel"]["columns"]) == list(ut.COLS_RELIABILITY)
 
     def test_df_eval_reliability_schema_matches_constant_bundle(self):
-        assert list(ut.DICT_DF_SCHEMAS["df_eval_reliability"]["columns"]) == list(ut.COLS_EVAL_RELIABILITY)
+        assert (list(ut.DICT_DF_SCHEMAS["df_eval_reliability"]["columns"])
+                == list(ut.COLS_EVAL_RELIABILITY))
 
     def test_frozen_names_match_constants(self):
         assert COLS_REL == list(ut.COLS_RELIABILITY)
         assert COLS_EVAL_REL == list(ut.COLS_EVAL_RELIABILITY)
         pred_cols = set(ut.DICT_DF_SCHEMAS["df_pred"]["columns"])
-        assert set(COLS_PRED_SEQUENCE + COLS_PRED_DOMAIN + COLS_PRED_WINDOW + ["predicted_label"]) == pred_cols
+        frozen = COLS_PRED_SEQUENCE + COLS_PRED_DOMAIN + COLS_PRED_WINDOW
+        assert set(frozen + ["predicted_label"]) == pred_cols
+
+    def test_schema_dtypes_match_literal_maps(self):
+        """The schema alone cannot drift: it must equal the literal maps in this file."""
+        for frame, literal in [("df_rel", DTYPES_REL),
+                               ("df_eval_reliability", DTYPES_EVAL_REL)]:
+            schema = ut.DICT_DF_SCHEMAS[frame]["columns"]
+            assert {c: r["dtype"] for c, r in schema.items()} == literal, frame
+        pred = ut.DICT_DF_SCHEMAS["df_pred"]["columns"]
+        merged = {**DTYPES_PRED_SEQUENCE, **DTYPES_PRED_DOMAIN, **DTYPES_PRED_WINDOW,
+                  **DTYPES_PRED_LABEL}
+        assert {c: r["dtype"] for c, r in pred.items()} == merged
 
 
 # -------------------------------------------------------------------------- df_pred
@@ -113,6 +216,7 @@ class TestDfPredContract:
         df = aap.predict(df_seq, level="sequence")
         assert list(df.columns) == COLS_PRED_SEQUENCE
         assert len(df) == len(df_seq)
+        _assert_literal_dtypes(df, DTYPES_PRED_SEQUENCE, "df_pred")
         _assert_conforms(df, "df_pred")
         assert df["entry"].is_unique
 
@@ -120,6 +224,7 @@ class TestDfPredContract:
         aap, df_seq = aap_fitted
         df = aap.predict(df_seq.head(3), level="domain", window=1)
         assert list(df.columns) == COLS_PRED_DOMAIN
+        _assert_literal_dtypes(df, DTYPES_PRED_DOMAIN, "df_pred")
         _assert_conforms(df, "df_pred")
         assert (df.groupby("entry")["is_best"].sum() == 1).all()
 
@@ -128,27 +233,49 @@ class TestDfPredContract:
         df = aap.predict(df_seq.head(2), level="window", tmd_len=20, step=10)
         assert list(df.columns) == COLS_PRED_WINDOW
         assert len(df) > 0
+        _assert_literal_dtypes(df, DTYPES_PRED_WINDOW, "df_pred")
         _assert_conforms(df, "df_pred")
 
     def test_threshold_appends_predicted_label(self, aap_fitted):
         aap, df_seq = aap_fitted
         df = aap.predict(df_seq, level="sequence", threshold=0.5)
         assert list(df.columns) == COLS_PRED_SEQUENCE + ["predicted_label"]
+        _assert_literal_dtypes(df, {**DTYPES_PRED_SEQUENCE, **DTYPES_PRED_LABEL},
+                               "df_pred")
         _assert_conforms(df, "df_pred")
 
-    def test_percent_range_within_schema(self, aap_fitted):
+    def test_default_score_range_is_proba(self, aap_fitted):
+        """The documented range is the default 'proba' scale, so it must hold there."""
         aap, df_seq = aap_fitted
-        df = aap.predict(df_seq, level="sequence", score_range="percent")
-        _assert_conforms(df, "df_pred")
+        df = aap.predict(df_seq, level="sequence")
+        assert ut.DICT_DF_SCHEMAS["df_pred"]["columns"]["score"]["range"] == [0, 1]
+        assert df["score"].between(0, 1).all()
+
+    def test_percent_scale_is_100x_proba(self, aap_fitted):
+        """Dedicated percent check.
+
+        The schema documents the default 'proba' range [0, 1], so the generic
+        conformance helper is deliberately NOT used here: on the percent scale the
+        score is the same value times 100 and lives in [0, 100].
+        """
+        aap, df_seq = aap_fitted
+        df_proba = aap.predict(df_seq, level="sequence")
+        df_pct = aap.predict(df_seq, level="sequence", score_range="percent")
+        assert list(df_pct.columns) == COLS_PRED_SEQUENCE
+        _assert_literal_dtypes(df_pct, DTYPES_PRED_SEQUENCE, "df_pred")
+        assert df_pct["score"].between(0, 100).all()
+        np.testing.assert_allclose(df_pct["score"].to_numpy(),
+                                   df_proba["score"].to_numpy() * 100)
 
 
-# --------------------------------------------------------------- df_rel / df_eval_reliability
+# ------------------------------------------------- df_rel / df_eval_reliability
 class TestReliabilityOutputContract:
     def test_df_rel(self, rm_fitted):
         rm, X_test, _ = rm_fitted
         df = rm.predict(X_test)
         assert list(df.columns) == COLS_REL
         assert len(df) == len(X_test)
+        _assert_literal_dtypes(df, DTYPES_REL, "df_rel")
         _assert_conforms(df, "df_rel")
 
     def test_df_rel_ood_sample_conforms(self, rm_fitted):
@@ -163,15 +290,19 @@ class TestReliabilityOutputContract:
         df = rm.eval(X=X_test, labels=y_test, n_bins=4)
         assert list(df.columns) == COLS_EVAL_REL
         assert len(df) == 5 and df["bin"].iloc[-1] == ut.STR_BIN_SUMMARY
+        _assert_literal_dtypes(df, DTYPES_EVAL_REL, "df_eval_reliability")
         _assert_conforms(df, "df_eval_reliability")
         assert int(df["n_samples"].iloc[-1]) == len(X_test)
         assert int(df["n_samples"].iloc[:-1].sum()) == len(X_test)
 
     def test_df_eval_reliability_with_calibration_metrics(self, rm_fitted):
         rm, X_test, y_test = rm_fitted
-        df = rm.eval(X=X_test, labels=y_test, n_bins=4, use_calibrated=True, add_metrics=True)
+        df = rm.eval(X=X_test, labels=y_test, n_bins=4, use_calibrated=True,
+                     add_metrics=True)
         assert list(df.columns) == COLS_EVAL_REL
-        assert df["bin"].iloc[-3:].to_list() == [ut.STR_BIN_SUMMARY, ut.STR_BIN_BRIER, ut.STR_BIN_ECE]
+        assert df["bin"].iloc[-3:].to_list() == [ut.STR_BIN_SUMMARY, ut.STR_BIN_BRIER,
+                                                 ut.STR_BIN_ECE]
+        _assert_literal_dtypes(df, DTYPES_EVAL_REL, "df_eval_reliability")
         _assert_conforms(df, "df_eval_reliability")
 
     def test_df_rel_ad_status_matches_in_domain(self, rm_fitted):
@@ -190,3 +321,95 @@ class TestReliabilityOutputContract:
         df = rm.predict(X_test).drop(columns=["reliable"])
         with pytest.raises(AssertionError, match="required column"):
             _assert_conforms(df, "df_rel")
+
+    def test_retyped_column_is_detected(self, rm_fitted):
+        """A coordinated code+schema retype is caught by the literal map."""
+        rm, X_test, _ = rm_fitted
+        df = rm.predict(X_test)
+        df["ad_nearest_train"] = df["ad_nearest_train"].astype(float)
+        with pytest.raises(AssertionError, match="literal"):
+            _assert_literal_dtypes(df, DTYPES_REL, "df_rel")
+
+
+# ------------------------------------------------------- degenerate applicability domain
+class TestReliabilityDegenerateDomain:
+    def test_ad_distances_are_nan(self, rm_degenerate):
+        rm, X_new = rm_degenerate
+        df = rm.predict(X_new)
+        assert df["ad_mahalanobis"].isna().all()
+        assert df["ad_leverage"].isna().all()
+
+    def test_schema_documents_them_as_nullable(self):
+        cols = ut.DICT_DF_SCHEMAS["df_rel"]["columns"]
+        for col in ["ad_mahalanobis", "ad_leverage"]:
+            assert cols[col]["nullable"], f"{col} must be documented nullable"
+            assert "degenerate" in cols[col]["description"]
+
+    def test_degenerate_frame_still_conforms(self, rm_degenerate):
+        """The documented contract must hold on the degenerate reference too."""
+        rm, X_new = rm_degenerate
+        df = rm.predict(X_new)
+        assert list(df.columns) == COLS_REL
+        _assert_literal_dtypes(df, DTYPES_REL, "df_rel")
+        _assert_conforms(df, "df_rel")
+
+    def test_other_columns_stay_populated(self, rm_degenerate):
+        rm, X_new = rm_degenerate
+        df = rm.predict(X_new)
+        populated = [c for c in COLS_REL if c not in ("ad_mahalanobis", "ad_leverage")]
+        assert df[populated].notna().all().all()
+
+
+# ------------------------------------------------------------- CPP df_feat grammar
+class TestCppFeatureIdContract:
+    """The CPP output downstream tools consume, pinned by literals.
+
+    ``test_df_feat_contract.py`` already guards the committed ``load_features`` frame
+    against ``ut.DICT_DF_FEAT`` and parses ids with ``ut.split_feat_id``; what is added
+    here is a *freshly computed* ``CPP.run`` checked against a hard-coded column list and
+    a raw regex, so a change to the production constants or parser cannot move it.
+    """
+
+    def test_required_columns_present_in_literal_order(self, cpp_feat):
+        df_feat, _ = cpp_feat
+        assert list(df_feat.columns)[:len(COLS_FEAT_REQUIRED)] == COLS_FEAT_REQUIRED
+
+    def test_production_constant_matches_literal(self, cpp_feat):
+        """If LIST_COLS_FEAT is edited, this literal is the contract that must win."""
+        assert list(ut.LIST_COLS_FEAT) == COLS_FEAT_REQUIRED
+
+    def test_feature_id_matches_raw_grammar(self, cpp_feat):
+        df_feat, _ = cpp_feat
+        assert len(df_feat) > 0
+        for feat_id in df_feat["feature"]:
+            assert RE_FEAT_ID.match(feat_id), f"id breaks PART-SPLIT-SCALE: {feat_id}"
+
+    def test_feature_id_part_in_vocabulary(self, cpp_feat):
+        df_feat, _ = cpp_feat
+        for feat_id in df_feat["feature"]:
+            part = RE_FEAT_ID.match(feat_id).group("part")
+            assert part in PARTS_FIXTURE, f"unexpected part {part} in {feat_id}"
+            assert part.lower() in ut.LIST_ALL_PARTS, f"{part} not a known part"
+
+    def test_feature_id_split_type_is_literal(self, cpp_feat):
+        df_feat, _ = cpp_feat
+        for feat_id in df_feat["feature"]:
+            split = RE_FEAT_ID.match(feat_id).group("split")
+            assert split.startswith(SPLIT_TYPES), f"unknown split in {feat_id}"
+
+    def test_feature_id_scale_is_in_df_scales(self, cpp_feat):
+        df_feat, df_scales = cpp_feat
+        valid = set(df_scales.columns)
+        for feat_id in df_feat["feature"]:
+            scale_id = RE_FEAT_ID.match(feat_id).group("scale")
+            assert scale_id in valid, f"{scale_id} not a column of df_scales"
+
+    def test_feature_ids_unique(self, cpp_feat):
+        df_feat, _ = cpp_feat
+        assert df_feat["feature"].is_unique
+
+    def test_broken_id_is_rejected_by_the_grammar(self):
+        """The regex is a real gate: these malformed ids must not match."""
+        for bad in ["TMD-Segment(1,2)", "tmd-Segment(1,2)-ARGP820103",
+                    "TMD-Chunk(1,2)-ARGP820103", "TMD-Segment(1,2)-ARG-P820103"]:
+            assert RE_FEAT_ID.match(bad) is None, bad

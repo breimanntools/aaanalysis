@@ -46,10 +46,12 @@ Added
   building that matrix with :meth:`~aaanalysis.SequenceFeature.feature_matrix` first.
   values.
 - The :ref:`Data Schemas <df_schemas>` page now documents the prediction outputs that downstream
-  tools read: ``df_pred`` from :meth:`~aaanalysis.AAPred.predict` (sequence, domain and window
-  levels), ``df_rel`` from :meth:`~aaanalysis.ReliabilityModel.predict`, and
-  ``df_eval_reliability`` from :meth:`~aaanalysis.ReliabilityModel.eval`. Contract tests fail
-  when one of these columns is renamed, dropped, retyped or left undocumented.
+  tools read, advancing the per-sample and per-residue half of the documented output contract:
+  ``df_pred`` from :meth:`~aaanalysis.AAPred.predict` (sequence, domain and window levels),
+  ``df_rel`` from :meth:`~aaanalysis.ReliabilityModel.predict`, and ``df_eval_reliability`` from
+  :meth:`~aaanalysis.ReliabilityModel.eval`. Contract tests pin the column names, order and
+  dtypes as literals, so one of these columns being renamed, dropped, retyped or left
+  undocumented fails the suite.
 
 Changed
 ~~~~~~~

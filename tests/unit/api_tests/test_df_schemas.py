@@ -20,8 +20,6 @@ import pytest
 import aaanalysis as aa
 import aaanalysis.utils as ut
 
-aa.options["verbose"] = False
-
 
 def _kind(series):
     if pdt.is_bool_dtype(series):
