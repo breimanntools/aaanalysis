@@ -42,7 +42,10 @@ def sample_linkage_(corr_df=None, axis=0):
 
     Mirrors how ``seaborn.clustermap`` clusters a matrix without ``fastcluster`` (average
     linkage on the Euclidean distance between correlation profiles; columns are clustered on
-    the transpose), so the tree is identical to the one the clustermap computed on its own.
+    the transpose), so the tree equals the one the clustermap computed on its own. With
+    ``fastcluster`` installed, seaborn used its implementation instead, which can break exact
+    ties between equidistant merges differently (same clusters, possibly another arrangement
+    of tied branches).
     """
     values = corr_df.values if axis == 0 else corr_df.T.values
     return hierarchy.linkage(values, method=_LINKAGE_METHOD, metric=_LINKAGE_METRIC)

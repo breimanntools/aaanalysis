@@ -575,6 +575,11 @@ LABEL_FEAT_RANKING = "Feature ranking"
 LABEL_SCALE_CAT = "Scale category"
 LABEL_MEAN_DIF = "Mean difference"
 
+# AAPredPlot.group_cluster — sample-relation plot kinds (of the sample x feature matrix)
+# and the tree layouts of kind='dendrogram'.
+LIST_CLUSTER_KINDS = ["clustermap", "dendrogram"]
+LIST_CLUSTER_LAYOUTS = ["rectangular", "circular"]
+
 # Standard colors
 COLOR_SHAP_POS = '#FF0D57'  # (255, 13, 87)
 COLOR_SHAP_NEG = '#1E88E5'  # (30, 136, 229)
@@ -586,6 +591,7 @@ COLOR_LINK_HIGHLIGHT = '#00E5FF'  # (0, 229, 255) bright cyan, distinct from the
 COLOR_FEAT_POS = '#9D2B39'  # (157, 43, 57) Mean difference
 COLOR_FEAT_NEG = '#326599'  # (50, 101, 133) Mean difference
 COLOR_FEAT_IMP = '#7F7F7F'  # (127, 127, 127) feature importance
+COLOR_TREE = 'black'        # neutral line colour of hierarchical trees (dendrogram links)
 COLOR_TMD = '#00FA9A'       # (0, 250, 154)
 COLOR_JMD = '#0000FF'       # (0, 0, 255)
 COLOR_POS = "#389d2b"    # (56, 157, 43)
