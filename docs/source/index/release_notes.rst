@@ -115,6 +115,13 @@ Documentation
 - The documented load → find-features → prediction path is executed in the standard unit suite,
   with its at-most-ten-statement budget read from the same code block displayed on the
   :ref:`Golden Pipelines <golden_pipelines>` page.
+- :meth:`~aaanalysis.CPP.run`: the ``n_sample_batches`` description promised that peak memory is
+  bounded by the batch size rather than by the full sample count ``n``. Peak-RSS measurements at a
+  constant batch size over 100, 200 and 400 samples show that it bounds the dominant term, the
+  per-batch scale-value tensor, while the ``(n_samples, n_pre_filter)`` pre-filter survivor matrix
+  and the test statistics computed on it stay resident: peak memory still grows linearly with
+  ``n``, on a roughly 13x flatter slope than the single-pass run. The parameter documentation now
+  states what is bounded and what is not; the behaviour of ``run`` is unchanged.
 
 Version 1.1
 --------------------------------

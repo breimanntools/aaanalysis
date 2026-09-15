@@ -86,6 +86,12 @@ notes — with cross-references and examples — live in
 - The documented golden path is executed and its statement budget is parsed from the code block on
   the *Golden Pipelines* page, so page and test cannot drift apart.
 - Example notebooks of `aaanalysis.pipe` are held to zero parameter-coverage gaps.
+- `CPP.run`: corrected the `n_sample_batches` description, which promised peak memory
+  bounded by the batch size rather than by the sample count `n`. Measurements show it bounds
+  the dominant per-batch scale-value tensor, while the `(n_samples, n_pre_filter)` survivor
+  matrix and its test statistics stay resident, so peak memory still grows linearly with `n`
+  at a constant batch size, on a roughly 13x flatter slope than the single-pass run. Behaviour
+  is unchanged; only the documentation was wrong.
 
 ## [1.1.0] - 2026-09-10
 
