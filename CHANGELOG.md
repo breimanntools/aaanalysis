@@ -38,8 +38,9 @@ notes — with cross-references and examples — live in
 - `ModelEvaluator.learning_curve` / `ModelEvaluatorPlot.learning_curve`: cross-validated
   metric-vs-training-size curve with bootstrap CIs (stratified, nested subsets of each training
   fold; test folds untouched) to tell a sampling-limited task from a saturated one. The default
-  grid gives five sizes, each with a bootstrap CI. A fractional size is resolved within each
-  training fold, so `1.0` is every fold's complete training set and reproduces
+  grid has five fraction candidates (which resolve to five distinct sizes on sufficiently large
+  data), each with a bootstrap CI. A fractional size is resolved within each training fold, so
+  `1.0` is every fold's complete training set and reproduces
   `ModelEvaluator.run` when both calls use the same resolved `random_state`, also when the
   training folds differ in size (#93).
 

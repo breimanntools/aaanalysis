@@ -44,8 +44,9 @@ Added
   repeats the stratified cross-validation of :meth:`~aaanalysis.ModelEvaluator.run` on stratified,
   nested subsets of increasing size of every training fold, scores each model on the full,
   unchanged test fold, and returns one row per (model, training size, metric) with the mean, std,
-  and a bootstrap confidence interval. The default grid gives five sizes, each with a bootstrap
-  CI. A fractional size is resolved within each training fold, so the fraction ``1.0`` uses every
+  and a bootstrap confidence interval. The default grid has five fraction candidates (which
+  resolve to five distinct sizes on sufficiently large data), each with a bootstrap CI. A
+  fractional size is resolved within each training fold, so the fraction ``1.0`` uses every
   fold's complete training set and reproduces :meth:`~aaanalysis.ModelEvaluator.run` exactly when
   both calls use the same resolved ``random_state`` (also for unequal training folds), and an
   identical ``random_state`` gives an identical curve. :meth:`~aaanalysis.ModelEvaluatorPlot.learning_curve` draws the metric versus
