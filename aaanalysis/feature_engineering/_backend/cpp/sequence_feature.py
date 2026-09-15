@@ -24,15 +24,8 @@ _DICT_AA_CLASS = {aa: cls for cls, aas in
 # II Main Functions
 # Parts and splits
 def get_split_kws_(n_split_min=1, n_split_max=15, steps_pattern=None, n_min=2, n_max=4, len_max=15,
-                   steps_periodicpattern=None, split_types=None, strategy=None):
+                   steps_periodicpattern=None, split_types=None):
     """Get split kws for CPP class"""
-    # A strategy preset fixes the split types and the Segment split range
-    if strategy == ut.STR_COMPOSITIONAL:
-        # One whole-part average per part (position-agnostic)
-        split_types, n_split_min, n_split_max = [ut.STR_SEGMENT], 1, 1
-    elif strategy == ut.STR_POSITIONAL:
-        # Sub-segments (whole-part Segment excluded) plus both discontinuous pattern types
-        split_types, n_split_min, n_split_max = list(ut.LIST_SPLIT_TYPES), 2, 15
     if split_types is None:
         split_types = ut.LIST_SPLIT_TYPES
     if steps_pattern is None:

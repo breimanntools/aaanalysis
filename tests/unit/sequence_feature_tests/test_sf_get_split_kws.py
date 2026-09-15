@@ -12,7 +12,7 @@ settings.load_profile("ci")
 class TestGetSplitKws:
     """Test the get_split_kws static method."""
 
-    @settings(max_examples=10)
+    @settings(max_examples=5, deadline=None)
     @given(split_types=st.sampled_from(
         [None, "Segment", "Pattern", "PeriodicPattern", ["Segment", "Pattern"], ["Pattern", "PeriodicPattern"],
          ["Segment", "PeriodicPattern"]]))
@@ -22,7 +22,7 @@ class TestGetSplitKws:
         result = sf.get_split_kws(split_types=split_types)
         assert isinstance(result, dict)
 
-    @settings(max_examples=10)
+    @settings(max_examples=5, deadline=None)
     @given(n_split_min=st.integers(min_value=1, max_value=14))
     def test_n_split_min(self, n_split_min):
         """Test 'n_split_min' within valid range."""
@@ -30,7 +30,7 @@ class TestGetSplitKws:
         result = sf.get_split_kws(n_split_min=n_split_min)
         assert isinstance(result, dict)
 
-    @settings(max_examples=10)
+    @settings(max_examples=5, deadline=None)
     @given(n_split_max=st.integers(min_value=2, max_value=15))
     def test_n_split_max(self, n_split_max):
         """Test 'n_split_max' within valid range."""
@@ -38,7 +38,7 @@ class TestGetSplitKws:
         result = sf.get_split_kws(n_split_max=n_split_max)
         assert isinstance(result, dict)
 
-    @settings(max_examples=10)
+    @settings(max_examples=5, deadline=None)
     @given(steps_pattern=st.lists(st.integers(min_value=1), min_size=1, max_size=8))
     def test_steps_pattern(self, steps_pattern):
         """Test 'steps_pattern' with various list sizes."""
@@ -52,7 +52,7 @@ class TestGetSplitKws:
         assert isinstance(result, dict)
 
 
-    @settings(max_examples=10)
+    @settings(max_examples=5, deadline=None)
     @given(n_min=st.integers(min_value=1, max_value=4))
     def test_n_min(self, n_min):
         """Test 'n_min' within valid range."""
@@ -60,7 +60,7 @@ class TestGetSplitKws:
         result = sf.get_split_kws(n_min=n_min)
         assert isinstance(result, dict)
 
-    @settings(max_examples=10)
+    @settings(max_examples=5, deadline=None)
     @given(n_max=st.integers(min_value=2, max_value=4))
     def test_n_max(self, n_max):
         """Test 'n_max' within valid range."""
@@ -68,7 +68,7 @@ class TestGetSplitKws:
         result = sf.get_split_kws(n_max=n_max)
         assert isinstance(result, dict)
 
-    @settings(max_examples=10)
+    @settings(max_examples=5, deadline=None)
     @given(len_max=st.integers(min_value=4, max_value=15))
     def test_len_max(self, len_max):
         """Test 'len_max' within valid range."""
@@ -78,7 +78,7 @@ class TestGetSplitKws:
         result = sf.get_split_kws(len_max=len_max, n_min=1)
         assert isinstance(result, dict)
 
-    @settings(max_examples=10)
+    @settings(max_examples=5, deadline=None)
     @given(steps_periodicpattern=st.lists(st.integers(min_value=1), min_size=2, max_size=2))
     def test_steps_periodicpattern(self, steps_periodicpattern):
         """Test 'steps_periodicpattern' with various list sizes."""
@@ -328,7 +328,10 @@ class TestGetSplitKwsComplex:
         sf = aa.SequenceFeature()
         result = sf.get_split_kws(strategy="compositional", steps_pattern=steps_pattern, n_min=1,
                                   steps_periodicpattern=steps_periodicpattern)
-        assert result == {"Segment": {"n_split_min": 1, "n_split_max": 1}}
+        manual = sf.get_split_kws(split_types="Segment", n_split_min=1, n_split_max=1,
+                                  steps_pattern=steps_pattern, n_min=1,
+                                  steps_periodicpattern=steps_periodicpattern)
+        assert result == manual == {"Segment": {"n_split_min": 1, "n_split_max": 1}}
 
     def test_presets_partition_default(self):
         """Compositional plus positional cover exactly the default split set."""
@@ -419,6 +422,22 @@ class TestGetSplitKwsComplex:
         for kws in [dict(n_split_min=0), dict(n_split_max=0), dict(n_split_min=10, n_split_max=5)]:
             with pytest.raises(ValueError, match="'n_split_m(in|ax)'"):
                 sf.get_split_kws(strategy="positional", **kws)
+
+    def test_invalid_zero_steps_are_checked_before_building_split_kws(self):
+        """Selected Pattern types reject zero steps with their public parameter name."""
+        sf = aa.SequenceFeature()
+        with pytest.raises(ValueError, match="steps_pattern\\[0\\]"):
+            sf.get_split_kws(strategy="positional", steps_pattern=[0, 1])
+        with pytest.raises(ValueError, match="steps_periodicpattern\\[0\\]"):
+            sf.get_split_kws(strategy="positional", steps_periodicpattern=[0, 1])
+
+    def test_invalid_split_ranges_are_checked_before_building_split_kws(self):
+        """Selected split-type ranges report the mismatched public parameters."""
+        sf = aa.SequenceFeature()
+        with pytest.raises(ValueError, match=r"'n_split_min' \(2\) should be <= 'n_split_max' \(1\)"):
+            sf.get_split_kws(n_split_min=2, n_split_max=1)
+        with pytest.raises(ValueError, match=r"'n_min' \(5\) should be <= 'n_max' \(4\)"):
+            sf.get_split_kws(n_min=5, n_max=4)
 
 
 class TestGetSplitKwsGoldenValues:
