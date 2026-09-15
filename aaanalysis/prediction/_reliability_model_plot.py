@@ -1,7 +1,7 @@
 """
 This is a script for the frontend of the ReliabilityModelPlot class for reliability visualizations.
 """
-from typing import Optional, Tuple
+from typing import Optional, Tuple, Union
 import pandas as pd
 from matplotlib.figure import Figure
 from matplotlib.axes import Axes
@@ -104,7 +104,7 @@ class ReliabilityModelPlot:
     @staticmethod
     def reliability_diagram(df_eval: pd.DataFrame,
                             *, figsize: Tuple[float, float] = (5, 5),
-                            color: str = "tab:blue",
+                            color: Union[str, Tuple[float, float, float]] = "tab:blue",
                             label: str = "model",
                             title: Optional[str] = None,
                             ax: Optional[Axes] = None,
@@ -120,23 +120,30 @@ class ReliabilityModelPlot:
         ``ax`` with distinct ``label`` / ``color``; the perfect-calibration diagonal is drawn only
         once.
 
+        .. versionchanged:: 1.2.0
+           Supports a custom curve label, displays Brier score and expected calibration error when
+           supplied, and permits several curves on one axes.
+
         Parameters
         ----------
         df_eval : pd.DataFrame
             Output of :meth:`ReliabilityModel.eval` (per-bin ``mean_score`` / ``empirical_pos``);
             either the raw-score or the calibrated-score table (``use_calibrated=True``).
-        figsize : tuple, default=(5, 5)
-            Figure size (used only when ``ax`` is ``None``).
-        color : str, default="tab:blue"
-            Line/marker color of the model curve.
+        figsize : tuple of float, default=(5, 5)
+            Figure width and height, each at least 1 (used only when ``ax`` is ``None``).
+        color : str or tuple of float, default="tab:blue"
+            Matplotlib line/marker color of the model curve. A named or hexadecimal color string,
+            or an RGB tuple with three components from 0 to 255, is accepted.
         label : str, default="model"
-            Legend label of the curve; the Brier score and ECE are appended when present.
+            Legend label of the curve. The Brier score and expected calibration error are appended
+            when present; use distinct labels to distinguish curves drawn on the same ``ax``.
 
             .. versionadded:: 1.2.0
         title : str, optional
-            Axes title.
+            Axes title. If ``None``, do not set a title.
         ax : matplotlib.axes.Axes, optional
-            Axes to draw on; a new figure is created if ``None``.
+            Axes to draw on. If ``None``, a new figure and axes are created; otherwise ``figsize``
+            does not resize the supplied axes' figure.
 
         Returns
         -------
@@ -149,9 +156,9 @@ class ReliabilityModelPlot:
         ------
         ValueError
             If ``df_eval`` is not a DataFrame or lacks the ``bin`` / ``mean_score`` /
-            ``empirical_pos`` columns, or if ``figsize`` is not a tuple of two positive numbers,
-            ``color`` is not a matplotlib color, ``label`` or ``title`` is not a string, or ``ax``
-            is not a matplotlib ``Axes``.
+            ``empirical_pos`` columns; ``figsize`` is not a tuple of two positive numbers;
+            ``color`` is not a matplotlib color; ``label`` or non-``None`` ``title`` is not a
+            string; or ``ax`` is not a matplotlib ``Axes``.
 
         Examples
         --------

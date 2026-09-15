@@ -29,9 +29,10 @@ notes — with cross-references and examples — live in
   `ad_status` (`inside` / `borderline` / `outside` / `unknown`, never null; `in_domain` equals
   `ad_status == "inside"`) and `ad_nearest_train` (0-based row index of the closest training
   sample); `fit` gains `ad_borderline=0.1` (band width above the boundary) and exposes the
-  fitted `ad_threshold_` (raw training k-NN distance threshold, `ood_score == ad_knn /
-  ad_threshold_`) and `ad_method_` (`"knn"`). All existing `predict` columns keep their names,
-  order, and values (partially addresses #473). **Not included:** the mutation-candidate entry
+  fitted `ad_threshold_` (raw training k-NN distance threshold; when it is positive,
+  `ood_score == ad_knn / ad_threshold_`) and `ad_method_` (`"knn"`). Apart from the
+  `ad_knn_dist` → `ad_knn` rename, existing `predict` columns keep their order and values
+  (partially addresses #473). **Not included:** the mutation-candidate entry
   point that would score `SeqMut` / `SeqOpt` output in one call. `predict` still takes a
   prebuilt feature matrix `X`, so a candidate set is scored by building that matrix with
   `SequenceFeature.feature_matrix` first.
