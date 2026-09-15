@@ -279,7 +279,8 @@ class TestRunNumSampleBatched:
 
     def test_mutually_exclusive_with_n_batches(self):
         cpp, parts, labels = self._cpp_parts_labels()
-        with pytest.raises(ValueError, match="mutually exclusive"):
+        with pytest.raises(
+                ValueError, match=r"'n_sample_batches' \(2\) should be None when 'n_batches' \(2\) is set"):
             cpp.run_num(dict_num_parts=parts, labels=labels, n_jobs=1,
                         n_batches=2, n_sample_batches=2)
 

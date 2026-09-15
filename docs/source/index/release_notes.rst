@@ -214,6 +214,10 @@ Documentation
   and the test statistics computed on it stay resident: peak memory still grows linearly with
   ``n``, on a roughly 13x flatter slope than the single-pass run. The parameter documentation now
   states what is bounded and what is not; the behaviour of ``run`` is unchanged.
+- :meth:`~aaanalysis.CPP.run`: ``n_sample_batches`` now creates exactly the requested number of
+  balanced, non-empty sample batches. It bounds the per-batch scale-value tensor, but not total
+  peak memory: the ``(n_samples, n_survivors)`` survivor matrix and its test statistics remain
+  resident. The ``n_batches`` documentation now also states its per-batch FDR-correction semantics.
 
 Version 1.1
 --------------------------------

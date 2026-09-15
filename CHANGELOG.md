@@ -154,6 +154,10 @@ notes — with cross-references and examples — live in
   matrix and its test statistics stay resident, so peak memory still grows linearly with `n`
   at a constant batch size, on a roughly 13x flatter slope than the single-pass run. Behaviour
   is unchanged; only the documentation was wrong.
+- `CPP.run`: clarified the chunking contract. `n_sample_batches` now creates exactly the requested
+  number of balanced, non-empty sample batches and documents that it bounds the per-batch
+  scale-value tensor, not total peak memory: the `(n_samples, n_survivors)` matrix and its test
+  statistics remain resident. The `n_batches` documentation now notes its per-batch FDR semantics.
 
 ## [1.1.0] - 2026-09-10
 
