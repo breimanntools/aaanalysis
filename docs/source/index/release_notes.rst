@@ -94,8 +94,9 @@ Added
   repeats the stratified cross-validation of :meth:`~aaanalysis.ModelEvaluator.run` on stratified,
   nested subsets of increasing size of every training fold, scores each model on the full,
   unchanged test fold, and returns one row per (model, training size, metric) with the mean, std,
-  and a bootstrap confidence interval. At the full training-fold size it reproduces
-  :meth:`~aaanalysis.ModelEvaluator.run` exactly, and an identical ``random_state`` gives an
+  and a bootstrap confidence interval. The default grid gives five sizes, each with a bootstrap
+  CI. At the training-fold size it reproduces :meth:`~aaanalysis.ModelEvaluator.run` exactly when
+  both calls use the same resolved ``random_state``, and an identical ``random_state`` gives an
   identical curve. :meth:`~aaanalysis.ModelEvaluatorPlot.learning_curve` draws the metric versus
   training size per model with the CI band. A still-rising curve suggests collecting more data; a
   flat one suggests changing the representation or model.

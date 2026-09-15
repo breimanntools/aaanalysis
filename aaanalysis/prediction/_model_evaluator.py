@@ -128,13 +128,15 @@ def check_train_sizes(train_sizes, labels, n_cv: int) -> List[int]:
 
     Sizes are either all fractions in ``(0, 1]`` or all integers >= 2, relative to (and capped by)
     the smallest training fold of stratified ``n_cv``-fold cross-validation, so every size is
-    available in every fold.
+    available in every fold. Fractions are resolved against that fold, rounded down, raised to at
+    least 2 samples (one per class), capped at the fold size, and de-duplicated, so a default grid
+    still works on small data; absolute counts are taken as given and must be distinct.
     """
     train_sizes = ut.check_list_like(name="train_sizes", val=train_sizes, accept_none=False, min_len=2)
     is_number = [isinstance(s, (int, float, np.integer, np.floating)) and not isinstance(s, (bool, np.bool_))
                  for s in train_sizes]
     if not all(is_number):
-        raise ValueError(f"'train_sizes' ({train_sizes}) should contain only numbers.")
+        raise ValueError(f"'train_sizes' ({train_sizes}) should be numbers (fractions or sample counts).")
     all_int = all(isinstance(s, (int, np.integer)) for s in train_sizes)
     all_float = all(isinstance(s, (float, np.floating)) for s in train_sizes)
     if not (all_int or all_float):
@@ -145,25 +147,29 @@ def check_train_sizes(train_sizes, labels, n_cv: int) -> List[int]:
     cv = StratifiedKFold(n_splits=n_cv)
     n_train_min = min(len(train_idx) for train_idx, _ in cv.split(np.zeros((len(labels), 1)), labels))
     if all_float:
-        for s in train_sizes:
-            ut.check_number_range(name="train_sizes", val=float(s), min_val=0.0, max_val=1.0,
-                                  just_int=False, exclusive_limits=False)
-            if s <= 0:
-                raise ValueError(f"'train_sizes' fractions ({train_sizes}) should be in (0, 1].")
-        sizes = [int(np.floor(float(s) * n_train_min)) for s in train_sizes]
-    else:
-        sizes = [int(s) for s in train_sizes]
+        wrong = [s for s in train_sizes if not 0 < float(s) <= 1]
+        if len(wrong) != 0:
+            raise ValueError(f"'train_sizes' ({train_sizes}) should be fractions in (0, 1], got {wrong}.")
+        # Floor at 2 samples (one per class) and cap at the fold, so a grid stays usable on small data.
+        sizes = sorted({min(n_train_min, max(2, int(np.floor(float(s) * n_train_min))))
+                        for s in train_sizes})
+        if len(sizes) < 2:
+            raise ValueError(f"'train_sizes' ({train_sizes}) should be fractions resolving to at least "
+                             f"2 distinct sizes, but resolve to {sizes} for the smallest training fold "
+                             f"({n_train_min} samples for n_cv={n_cv}).")
+        return sizes
+    sizes = [int(s) for s in train_sizes]
     too_small = [s for s in sizes if s < 2]
     too_large = [s for s in sizes if s > n_train_min]
-    if too_small:
-        raise ValueError(f"'train_sizes' ({train_sizes}) resolve to training subsets with fewer than "
-                         f"2 samples ({sizes}); at least one sample per class is needed.")
-    if too_large:
-        raise ValueError(f"'train_sizes' ({train_sizes}) should not exceed the smallest training "
-                         f"fold size ({n_train_min} samples for n_cv={n_cv}).")
+    if len(too_small) != 0:
+        raise ValueError(f"'train_sizes' ({train_sizes}) should be sample counts of at least 2 "
+                         f"(one per class), got {too_small}.")
+    if len(too_large) != 0:
+        raise ValueError(f"'train_sizes' ({train_sizes}) should be at most the smallest training "
+                         f"fold size ({n_train_min} samples for n_cv={n_cv}), got {too_large}.")
     if len(set(sizes)) != len(sizes):
-        raise ValueError(f"'train_sizes' ({train_sizes}) resolve to duplicate training subset sizes "
-                         f"({sizes} of at most {n_train_min} samples); pass distinct sizes.")
+        raise ValueError(f"'train_sizes' ({train_sizes}) should be distinct sample counts, got "
+                         f"duplicates in {sizes}.")
     return sorted(sizes)
 
 
@@ -421,9 +427,13 @@ class ModelEvaluator(Tool):
         fold fits every model on a stratified subset of each size in ``train_sizes`` and scores it
         on the **full, unchanged test fold** (the test fold is never subsampled and never used for
         training). Within a fold, the subsets are nested (a larger subset contains the smaller
-        ones), and the largest possible size reproduces the scores of :meth:`run`. The per-fold
-        scores are aggregated per (model, training size, metric) into a mean, a population std, a
-        percentile bootstrap confidence interval of the mean, and the fold count.
+        ones). The per-fold scores are aggregated per (model, training size, metric) into a mean, a
+        population std, a percentile bootstrap confidence interval of the mean, and the fold count,
+        by the same aggregation :meth:`run` uses. The size that matches the training fold therefore
+        reproduces the scores of :meth:`run` exactly **when both calls use the same resolved**
+        ``random_state`` (and the same ``n_cv``, ``n_rounds``, and ``metrics``); with
+        ``random_state=None`` the two calls shuffle the folds differently, so they then agree only
+        in distribution.
 
         A curve that is still rising at the largest size suggests that more data will help; a
         curve that has flattened suggests changing the representation or model instead. The
@@ -436,11 +446,16 @@ class ModelEvaluator(Tool):
         X : array-like, shape (n_samples, n_features)
             Feature matrix.
         labels : array-like, shape (n_samples,)
-            Binary class labels for the samples in ``X``.
+            Binary class labels for the samples in ``X``, which should be exactly the two classes
+            0 and 1 (1 is the positive class of ``precision``, ``recall``, ``f1``, ``roc_auc``).
         train_sizes : array-like, optional
-            Training-subset sizes (at least two, distinct), either all fractions in ``(0, 1]`` or
-            all absolute sample counts (int >= 2), relative to the smallest training fold. Fractions
-            are rounded down to sample counts. Defaults to ``[0.2, 0.4, 0.6, 0.8, 1.0]``.
+            Training-subset sizes (at least two), either all fractions in ``(0, 1]`` or all
+            absolute sample counts (int >= 2), relative to the smallest training fold. Fractions
+            are rounded down to sample counts, raised to at least 2 samples (one per class), capped
+            at that fold, and de-duplicated; absolute counts must be distinct and fit into the
+            fold. Defaults to ``[0.2, 0.4, 0.6, 0.8, 1.0]``, which gives five sizes, each with a
+            bootstrap CI (on very small data the resolved sizes can collapse to fewer; at least two
+            distinct sizes are required).
         n_cv : int, default=5
             Number of stratified cross-validation folds per round (must not exceed the smallest
             class count).
@@ -454,7 +469,10 @@ class ModelEvaluator(Tool):
             If ``None``, the ``ci_low`` / ``ci_high`` columns are ``NaN``. Default is ``0.95``.
         random_state : int, optional
             Per-call seed overriding the constructor's ``random_state`` for the folds, the training
-            subsets, and the bootstrap CI.
+            subsets, and the bootstrap CI. If a positive integer, results of stochastic processes
+            are consistent, enabling reproducibility. If ``None``, the constructor's
+            ``random_state`` is used (and stochastic processes are truly random when that is
+            ``None`` as well).
 
         Returns
         -------
@@ -463,6 +481,15 @@ class ModelEvaluator(Tool):
             training samples, ascending), ``metric``, ``score`` (mean over folds), ``score_std``
             (population std over folds), ``ci_low`` / ``ci_high`` (bootstrap CI of the mean,
             ``NaN`` when ``ci`` is ``None``), and ``n_scores`` (fold count).
+
+        Raises
+        ------
+        ValueError
+            If ``X`` or ``labels`` are invalid or mismatched, ``labels`` are not exactly the two
+            classes 0 and 1, ``n_cv`` exceeds the smallest class count, ``train_sizes`` mix
+            fractions and counts, resolve to fewer than two distinct sizes, or exceed the smallest
+            training fold, a metric is unknown, a probability metric is requested for a model
+            without ``predict_proba``, or a numeric parameter is out of range.
 
         Notes
         -----

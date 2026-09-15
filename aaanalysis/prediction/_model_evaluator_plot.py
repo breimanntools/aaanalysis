@@ -16,7 +16,8 @@ def check_metric_curve(metric: Optional[str], df_curve: pd.DataFrame) -> str:
     """Resolve the metric to plot: ``mcc`` when present, else the first metric of ``df_curve``."""
     list_metrics = list(dict.fromkeys(df_curve[ut.COL_METRIC]))
     if len(list_metrics) == 0:
-        raise ValueError("'df_curve' should contain at least one row.")
+        raise ValueError(f"'df_curve' (n_rows={len(df_curve)}) should be a learning-curve table "
+                         f"with at least one row.")
     if metric is None:
         return "mcc" if "mcc" in list_metrics else list_metrics[0]
     ut.check_str_options(name="metric", val=metric, list_str_options=list_metrics)
@@ -210,6 +211,13 @@ class ModelEvaluatorPlot:
         ax : Axes
             Axes object of the learning-curve line plot.
 
+        Raises
+        ------
+        ValueError
+            If ``df_curve`` is not a DataFrame with the learning-curve columns or holds no rows,
+            ``metric`` is not one of its metrics, ``figsize`` or ``show_ci`` are invalid, or
+            ``colors`` holds fewer colors than there are models.
+
         See Also
         --------
         * :meth:`ModelEvaluator.learning_curve`: the respective computation method.
@@ -226,9 +234,12 @@ class ModelEvaluatorPlot:
         ut.check_bool(name="show_ci", val=show_ci)
         # Plotting
         n_models = df_curve[ut.COL_MODEL].nunique()
+        if isinstance(colors, str):
+            # A single color name is one color, not a sequence of single-character colors.
+            colors = [colors]
         if colors is not None and len(colors) < n_models:
-            raise ValueError(f"'colors' (n={len(colors)}) should provide at least one color per "
-                             f"model (n_models={n_models}).")
+            raise ValueError(f"'colors' (n={len(colors)}) should be at least one color per model "
+                             f"(n_models={n_models}).")
         list_colors = colors if colors is not None else ut.plot_get_clist_(n_colors=n_models)
         fig, ax = plot_learning_curve(df_curve=df_curve, metric=metric, colors=list_colors,
                                       figsize=figsize, show_ci=show_ci)
