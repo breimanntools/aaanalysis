@@ -8,9 +8,13 @@ from scipy.stats import norm
 from sklearn.ensemble import RandomForestClassifier
 from sklearn.datasets import make_classification
 from sklearn.linear_model import LogisticRegression
+from sklearn.metrics import brier_score_loss
+from sklearn.naive_bayes import GaussianNB
 
 import aaanalysis as aa
 import aaanalysis.utils as ut
+from aaanalysis.prediction._backend.reliability.reliability import (
+    comp_calibration_bins, comp_brier, comp_ece)
 
 settings.register_profile("ci", deadline=None)
 settings.load_profile("ci")
@@ -468,3 +472,292 @@ class TestReliabilityModelGoldenValues:
         assert ut.COL_AD_KNN == "ad_knn" and "ad_knn" in df.columns
         assert "ad_knn_dist" not in df.columns
         assert (df["ad_knn"] >= 0).all()
+
+
+# V eval: calibrated scoring + Brier / ECE rows
+def _miscal_data(seed=0):
+    """Redundant features make Gaussian naive Bayes strongly over-confident (mis-calibrated)."""
+    X, y = make_classification(n_samples=600, n_features=20, n_informative=3, n_redundant=15,
+                               class_sep=0.8, random_state=seed)
+    return X[:400], y[:400], X[400:], y[400:]
+
+
+@pytest.fixture(scope="module")
+def rm_miscal():
+    Xtr, ytr, Xte, yte = _miscal_data()
+    rm = aa.ReliabilityModel(random_state=0).fit(Xtr, ytr, model=GaussianNB(), n_bootstrap=0)
+    return rm, Xte, yte
+
+
+@pytest.fixture(scope="module")
+def rm_uncal():
+    Xtr, ytr, Xte, yte = _miscal_data()
+    rm = aa.ReliabilityModel(random_state=0).fit(Xtr, ytr, model=GaussianNB(), n_bootstrap=0,
+                                                calibrate=False)
+    return rm, Xte, yte
+
+
+def _metric(df_eval, name):
+    return float(df_eval.loc[df_eval["bin"] == name, "mean_score"].iloc[0])
+
+
+def _legacy_eval(rm, X, labels, n_bins=5):
+    """Verbatim reference of the pre-1.2.0 eval body (raw score, no metric rows)."""
+    y = (np.asarray(labels) == rm.label_pos_).astype(int)
+    df = rm.predict(X)
+    s = df["score"].to_numpy()
+    edges = np.linspace(0, 1, n_bins + 1)
+    rows = []
+    for b in range(n_bins):
+        m = (s >= edges[b]) & (s <= edges[b + 1] if b == n_bins - 1 else s < edges[b + 1])
+        rows.append([f"{edges[b]:.2f}-{edges[b+1]:.2f}",
+                     float(np.mean(s[m])) if m.any() else np.nan,
+                     float(np.mean(y[m])) if m.any() else np.nan,
+                     int(m.sum())])
+    sets = df["conformal_set"].to_numpy()
+    covered = (np.isin(sets, ["pos", "both"]) & (y == 1)) | (np.isin(sets, ["neg", "both"]) & (y == 0))
+    rows.append(["summary", float(np.mean(df["in_domain"])), float(np.mean(covered)), len(X)])
+    return pd.DataFrame(rows, columns=["bin", "mean_score", "empirical_pos", "n_samples"])
+
+
+class TestEvalCalibration:
+    """Per-parameter tests for ``use_calibrated`` and ``add_metrics``."""
+
+    # use_calibrated: positive
+    def test_use_calibrated_false_equals_default(self, rm_miscal):
+        rm, Xte, yte = rm_miscal
+        pd.testing.assert_frame_equal(rm.eval(X=Xte, labels=yte),
+                                      rm.eval(X=Xte, labels=yte, use_calibrated=False))
+
+    def test_use_calibrated_bins_calibrated_column(self, rm_miscal):
+        rm, Xte, yte = rm_miscal
+        ev = rm.eval(X=Xte, labels=yte, use_calibrated=True, n_bins=4)
+        s_cal = rm.predict(Xte)["score_calibrated"].to_numpy()
+        last = ev.iloc[3]                                    # closed [0.75, 1.00] bin
+        m = s_cal >= 0.75
+        assert last["n_samples"] == int(m.sum())
+        if m.any():
+            assert last["mean_score"] == pytest.approx(float(np.mean(s_cal[m])), abs=1e-12)
+
+    @settings(max_examples=5, deadline=None)
+    @given(n_bins=some.integers(min_value=2, max_value=12))
+    def test_use_calibrated_shape(self, rm_miscal, n_bins):
+        rm, Xte, yte = rm_miscal
+        ev = rm.eval(X=Xte, labels=yte, n_bins=n_bins, use_calibrated=True)
+        assert len(ev) == n_bins + 1
+        assert int(ev["n_samples"].iloc[:n_bins].sum()) == len(Xte)
+
+    def test_use_calibrated_keeps_summary_row(self, rm_miscal):
+        rm, Xte, yte = rm_miscal
+        raw = rm.eval(X=Xte, labels=yte).iloc[-1]
+        cal = rm.eval(X=Xte, labels=yte, use_calibrated=True).iloc[-1]
+        assert raw.equals(cal)
+
+    def test_use_calibrated_changes_curve(self, rm_miscal):
+        rm, Xte, yte = rm_miscal
+        raw = rm.eval(X=Xte, labels=yte)
+        cal = rm.eval(X=Xte, labels=yte, use_calibrated=True)
+        assert not raw.equals(cal)
+
+    @pytest.mark.parametrize("method", ["isotonic", "sigmoid"])
+    def test_use_calibrated_both_methods(self, method):
+        Xtr, ytr, Xte, yte = _miscal_data()
+        rm = aa.ReliabilityModel(random_state=0).fit(Xtr, ytr, model=GaussianNB(), n_bootstrap=0,
+                                                    calibration_method=method)
+        ev = rm.eval(X=Xte, labels=yte, use_calibrated=True, add_metrics=True)
+        assert 0.0 <= _metric(ev, "brier") <= 1.0 and 0.0 <= _metric(ev, "ece") <= 1.0
+
+    # use_calibrated: negative
+    @pytest.mark.parametrize("val", [None, "yes", 1, 0, [True]])
+    def test_use_calibrated_invalid_type(self, rm_miscal, val):
+        rm, Xte, yte = rm_miscal
+        with pytest.raises(ValueError, match="use_calibrated"):
+            rm.eval(X=Xte, labels=yte, use_calibrated=val)
+
+    def test_use_calibrated_without_calibrator_raises(self, rm_uncal):
+        rm, Xte, yte = rm_uncal
+        with pytest.raises(ValueError, match=r"'use_calibrated' \(True\) should"):
+            rm.eval(X=Xte, labels=yte, use_calibrated=True)
+
+    def test_use_calibrated_without_calibrator_on_training_data_raises(self, rm_uncal):
+        rm, _, _ = rm_uncal
+        with pytest.raises(ValueError, match="calibrate=True"):
+            rm.eval(use_calibrated=True)
+
+    def test_use_calibrated_before_fit_raises(self):
+        with pytest.raises(RuntimeError):
+            aa.ReliabilityModel().eval(use_calibrated=True)
+
+    # add_metrics: positive
+    def test_add_metrics_false_has_no_metric_rows(self, rm_miscal):
+        rm, Xte, yte = rm_miscal
+        ev = rm.eval(X=Xte, labels=yte, add_metrics=False)
+        assert not ev["bin"].isin(ut.LIST_BIN_METRICS).any()
+
+    @settings(max_examples=5, deadline=None)
+    @given(n_bins=some.integers(min_value=2, max_value=12))
+    def test_add_metrics_rows(self, rm_miscal, n_bins):
+        rm, Xte, yte = rm_miscal
+        ev = rm.eval(X=Xte, labels=yte, n_bins=n_bins, add_metrics=True)
+        assert len(ev) == n_bins + 3
+        assert list(ev["bin"].iloc[-3:]) == [ut.STR_BIN_SUMMARY, ut.STR_BIN_BRIER, ut.STR_BIN_ECE]
+        tail = ev.iloc[-2:]
+        assert tail["empirical_pos"].isna().all()
+        assert (tail["n_samples"] == len(Xte)).all()
+        assert list(ev.columns) == ut.COLS_EVAL_RELIABILITY
+
+    @settings(max_examples=5, deadline=None)
+    @given(n_bins=some.integers(min_value=2, max_value=12))
+    def test_add_metrics_ranges(self, rm_miscal, n_bins):
+        rm, Xte, yte = rm_miscal
+        for use_cal in (False, True):
+            ev = rm.eval(X=Xte, labels=yte, n_bins=n_bins, add_metrics=True, use_calibrated=use_cal)
+            assert 0.0 <= _metric(ev, "brier") <= 1.0
+            assert 0.0 <= _metric(ev, "ece") <= 1.0
+
+    def test_add_metrics_prefix_equals_default(self, rm_miscal):
+        rm, Xte, yte = rm_miscal
+        base = rm.eval(X=Xte, labels=yte)
+        ext = rm.eval(X=Xte, labels=yte, add_metrics=True)
+        pd.testing.assert_frame_equal(ext.iloc[:len(base)], base, check_exact=True)
+
+    def test_add_metrics_without_calibrator(self, rm_uncal):
+        rm, Xte, yte = rm_uncal
+        ev = rm.eval(X=Xte, labels=yte, add_metrics=True)
+        assert _metric(ev, "brier") > 0
+
+    def test_add_metrics_deterministic(self, rm_miscal):
+        rm, Xte, yte = rm_miscal
+        a = rm.eval(X=Xte, labels=yte, add_metrics=True, use_calibrated=True)
+        b = rm.eval(X=Xte, labels=yte, add_metrics=True, use_calibrated=True)
+        pd.testing.assert_frame_equal(a, b, check_exact=True)
+
+    # add_metrics: negative
+    @pytest.mark.parametrize("val", [None, "no", 1, 0.0, {}])
+    def test_add_metrics_invalid_type(self, rm_miscal, val):
+        rm, Xte, yte = rm_miscal
+        with pytest.raises(ValueError, match="add_metrics"):
+            rm.eval(X=Xte, labels=yte, add_metrics=val)
+
+    def test_add_metrics_before_fit_raises(self):
+        with pytest.raises(RuntimeError):
+            aa.ReliabilityModel().eval(add_metrics=True)
+
+
+class TestEvalCalibrationComplex:
+    """Acceptance criteria and cross-parameter interactions for calibrated evaluation."""
+
+    @pytest.mark.parametrize("method", ["isotonic", "sigmoid"])
+    @pytest.mark.parametrize("seed", [0, 1, 2])
+    def test_calibration_strictly_lowers_brier_and_ece(self, method, seed):
+        Xtr, ytr, Xte, yte = _miscal_data(seed=seed)
+        rm = aa.ReliabilityModel(random_state=0).fit(Xtr, ytr, model=GaussianNB(), n_bootstrap=0,
+                                                    calibration_method=method)
+        raw = rm.eval(X=Xte, labels=yte, add_metrics=True)
+        cal = rm.eval(X=Xte, labels=yte, add_metrics=True, use_calibrated=True)
+        assert _metric(cal, "brier") < _metric(raw, "brier")
+        assert _metric(cal, "ece") < _metric(raw, "ece")
+
+    @pytest.mark.parametrize("n_bins", [2, 4, 5, 10])
+    def test_default_output_byte_identical_to_legacy(self, n_bins):
+        Xtr, ytr, Xte = _data()
+        rm = aa.ReliabilityModel(random_state=0).fit(Xtr, ytr, n_bootstrap=5)
+        yte = make_classification(n_samples=120, n_features=8, n_informative=5, n_redundant=1,
+                                  random_state=0)[1][90:]
+        for X, labels in [(Xte, yte), (Xtr, ytr)]:
+            new = rm.eval(X=X, labels=labels, n_bins=n_bins)
+            ref = _legacy_eval(rm, X, labels, n_bins=n_bins)
+            pd.testing.assert_frame_equal(new, ref, check_exact=True)
+            assert new.to_csv(float_format="%.17g") == ref.to_csv(float_format="%.17g")
+            assert [type(v) for v in new.iloc[0]] == [type(v) for v in ref.iloc[0]]
+
+    def test_default_on_training_data_byte_identical(self):
+        Xtr, ytr, _ = _data()
+        rm = aa.ReliabilityModel(random_state=0).fit(Xtr, ytr, n_bootstrap=3)
+        pd.testing.assert_frame_equal(rm.eval(), _legacy_eval(rm, Xtr, ytr), check_exact=True)
+
+    def test_calibrated_metrics_with_custom_bins(self, rm_miscal):
+        rm, Xte, yte = rm_miscal
+        e5 = rm.eval(X=Xte, labels=yte, n_bins=5, add_metrics=True, use_calibrated=True)
+        e10 = rm.eval(X=Xte, labels=yte, n_bins=10, add_metrics=True, use_calibrated=True)
+        assert _metric(e5, "brier") == _metric(e10, "brier")         # Brier is bin-free
+        assert len(e10) == 13 and len(e5) == 8
+
+    def test_use_calibrated_on_training_data(self, rm_miscal):
+        rm, _, _ = rm_miscal
+        ev = rm.eval(use_calibrated=True, add_metrics=True)
+        assert ev["n_samples"].iloc[-1] == 400
+
+    def test_uncalibrated_raises_even_with_metrics(self, rm_uncal):
+        rm, Xte, yte = rm_uncal
+        with pytest.raises(ValueError, match="use_calibrated"):
+            rm.eval(X=Xte, labels=yte, use_calibrated=True, add_metrics=True, n_bins=3)
+
+    @pytest.mark.parametrize("nb", [1, 0, -1])
+    def test_invalid_n_bins_with_metrics_raises(self, rm_miscal, nb):
+        rm, Xte, yte = rm_miscal
+        with pytest.raises(ValueError):
+            rm.eval(X=Xte, labels=yte, n_bins=nb, add_metrics=True, use_calibrated=True)
+
+    def test_labels_mismatch_with_calibrated_raises(self, rm_miscal):
+        rm, Xte, yte = rm_miscal
+        with pytest.raises(ValueError):
+            rm.eval(X=Xte, labels=yte[:-5], use_calibrated=True, add_metrics=True)
+
+    def test_feature_mismatch_with_calibrated_raises(self, rm_miscal):
+        rm, Xte, yte = rm_miscal
+        with pytest.raises(ValueError):
+            rm.eval(X=Xte[:, :5], labels=yte, use_calibrated=True)
+
+    def test_bad_flag_combination_types_raise(self, rm_miscal):
+        rm, Xte, yte = rm_miscal
+        with pytest.raises(ValueError):
+            rm.eval(X=Xte, labels=yte, use_calibrated="True", add_metrics="True")
+
+
+class TestEvalCalibrationGoldenValues:
+    """Hand-computed Brier / ECE values and the sklearn reference."""
+
+    @pytest.mark.parametrize("use_cal", [False, True])
+    def test_brier_matches_sklearn(self, rm_miscal, use_cal):
+        rm, Xte, yte = rm_miscal
+        col = "score_calibrated" if use_cal else "score"
+        s = rm.predict(Xte)[col].to_numpy()
+        ev = rm.eval(X=Xte, labels=yte, add_metrics=True, use_calibrated=use_cal)
+        assert abs(_metric(ev, "brier") - brier_score_loss(yte, s)) <= 1e-12
+
+    def test_brier_matches_sklearn_default_model(self):
+        Xtr, ytr, _ = _data()
+        rm = aa.ReliabilityModel(random_state=0).fit(Xtr, ytr, n_bootstrap=5)
+        ev = rm.eval(add_metrics=True, use_calibrated=True)
+        s = rm.predict(Xtr)["score_calibrated"].to_numpy()
+        assert abs(_metric(ev, "brier") - brier_score_loss(ytr, s)) <= 1e-12
+
+    def test_ece_recomputed_from_bins(self, rm_miscal):
+        rm, Xte, yte = rm_miscal
+        ev = rm.eval(X=Xte, labels=yte, n_bins=5, add_metrics=True, use_calibrated=True)
+        bins = ev.iloc[:5]
+        bins = bins[bins["n_samples"] > 0]
+        expected = float((bins["n_samples"] / len(Xte)
+                          * (bins["mean_score"] - bins["empirical_pos"]).abs()).sum())
+        assert _metric(ev, "ece") == pytest.approx(expected, abs=1e-12)
+
+    def test_hand_computed_brier_and_ece(self):
+        s = np.array([0.1, 0.2, 0.9, 0.8])
+        y = np.array([0, 1, 1, 1])
+        rows = comp_calibration_bins(s, y, n_bins=2)
+        # bin [0, .5): mean .15 vs rate .5 -> .35 * 2/4; bin [.5, 1]: mean .85 vs rate 1 -> .15 * 2/4
+        assert comp_ece(rows, n_samples=4) == pytest.approx(0.25, abs=1e-12)
+        assert comp_brier(s, y) == pytest.approx((0.01 + 0.64 + 0.01 + 0.04) / 4, abs=1e-12)
+
+    def test_perfectly_calibrated_bins_give_zero_ece(self):
+        s = np.array([0.25, 0.25, 0.25, 0.25, 0.75, 0.75, 0.75, 0.75])
+        y = np.array([1, 0, 0, 0, 1, 1, 1, 0])
+        assert comp_ece(comp_calibration_bins(s, y, n_bins=2), n_samples=8) == pytest.approx(0.0, abs=1e-12)
+
+    def test_empty_bins_ignored_in_ece(self):
+        s = np.array([0.95, 0.95])
+        y = np.array([1, 1])
+        rows = comp_calibration_bins(s, y, n_bins=10)
+        assert sum(r[3] for r in rows) == 2
+        assert comp_ece(rows, n_samples=2) == pytest.approx(0.05, abs=1e-12)

@@ -4,6 +4,8 @@ matplotlib.use("Agg")
 import matplotlib.pyplot as plt
 import pandas as pd
 import pytest
+from hypothesis import given, settings
+import hypothesis.strategies as some
 from sklearn.datasets import make_classification
 from matplotlib.figure import Figure
 from matplotlib.axes import Axes
@@ -79,6 +81,56 @@ class TestReliabilityDiagram:
     def test_non_dataframe_raises(self):
         with pytest.raises(ValueError):
             aa.ReliabilityModelPlot().reliability_diagram(df_eval=[1, 2, 3])
+
+    @settings(max_examples=5, deadline=None)
+    @given(label=some.text(alphabet="abcdefgh ", min_size=1, max_size=12))
+    def test_label_valid(self, label):
+        fig, ax = aa.ReliabilityModelPlot().reliability_diagram(df_eval=_df_eval(), label=label)
+        labels = [line.get_label() for line in ax.get_lines()]
+        assert label in labels
+        plt.close("all")
+
+    @pytest.mark.parametrize("label", [None, 1, ["model"]])
+    def test_label_invalid(self, label):
+        with pytest.raises(ValueError):
+            aa.ReliabilityModelPlot().reliability_diagram(df_eval=_df_eval(), label=label)
+
+    def test_metrics_annotated_in_legend(self):
+        rm, _, _, Xt, yt = _fitted()
+        df_eval = rm.eval(X=Xt, labels=yt, add_metrics=True, use_calibrated=True)
+        fig, ax = aa.ReliabilityModelPlot().reliability_diagram(df_eval=df_eval, label="calibrated")
+        brier = float(df_eval.loc[df_eval["bin"] == "brier", "mean_score"].iloc[0])
+        ece = float(df_eval.loc[df_eval["bin"] == "ece", "mean_score"].iloc[0])
+        texts = [t.get_text() for t in ax.get_legend().get_texts()]
+        assert f"calibrated (Brier {brier:.3f}, ECE {ece:.3f})" in texts
+        plt.close("all")
+
+    def test_no_annotation_without_metric_rows(self):
+        fig, ax = aa.ReliabilityModelPlot().reliability_diagram(df_eval=_df_eval())
+        texts = [t.get_text() for t in ax.get_legend().get_texts()]
+        assert texts == ["perfect calibration", "model"]
+        plt.close("all")
+
+    def test_metric_rows_not_plotted_as_points(self):
+        rm, _, _, Xt, yt = _fitted()
+        df_eval = rm.eval(X=Xt, labels=yt, add_metrics=True)
+        fig, ax = aa.ReliabilityModelPlot().reliability_diagram(df_eval=df_eval)
+        n_bins = int((df_eval["n_samples"].iloc[:5] > 0).sum())
+        assert len(ax.get_lines()[-1].get_xdata()) == n_bins
+        plt.close("all")
+
+    def test_overlay_raw_and_calibrated_single_diagonal(self):
+        rm, _, _, Xt, yt = _fitted()
+        raw = rm.eval(X=Xt, labels=yt, add_metrics=True)
+        cal = rm.eval(X=Xt, labels=yt, add_metrics=True, use_calibrated=True)
+        rm_plot = aa.ReliabilityModelPlot()
+        fig, ax = rm_plot.reliability_diagram(df_eval=raw, label="raw", color="tab:red")
+        fig2, ax2 = rm_plot.reliability_diagram(df_eval=cal, label="calibrated", ax=ax)
+        assert ax2 is ax and fig2 is fig
+        labels = [line.get_label() for line in ax.get_lines()]
+        assert labels.count("perfect calibration") == 1
+        assert len(labels) == 3
+        plt.close("all")
 
 
 class TestOodHist:

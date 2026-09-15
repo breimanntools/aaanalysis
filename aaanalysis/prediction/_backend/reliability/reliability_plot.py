@@ -54,16 +54,40 @@ def plot_ranking_(df_rel, names=None, figsize=None, top_n=None, title=None, ax=N
     return fig, ax
 
 
-def plot_reliability_diagram_(df_eval, figsize=(5, 5), color="tab:blue", title=None, ax=None):
-    """Calibration curve: mean predicted score vs. empirical positive rate, per bin."""
+_LABEL_PERFECT = "perfect calibration"
+
+
+def _metric_value(df_eval, bin_name):
+    """Scalar of a calibration-metric row (value in ``mean_score``), or ``None`` if absent."""
+    rows = df_eval[df_eval[ut.COL_BIN] == bin_name]
+    return None if rows.empty else float(rows[ut.COL_MEAN_SCORE].iloc[0])
+
+
+def plot_reliability_diagram_(df_eval, figsize=(5, 5), color="tab:blue", label="model",
+                              title=None, ax=None):
+    """Calibration curve: mean predicted score vs. empirical positive rate, per bin.
+
+    The Brier / ECE rows (when present) are shown in the curve's legend entry, so several curves
+    drawn on the same axes (e.g. raw and calibrated) each carry their own metrics.
+    """
     fig, ax = _fig_ax(ax, figsize)
-    d = df_eval[df_eval[ut.COL_BIN] != ut.STR_BIN_SUMMARY].dropna(
+    non_bins = [ut.STR_BIN_SUMMARY] + ut.LIST_BIN_METRICS
+    d = df_eval[~df_eval[ut.COL_BIN].isin(non_bins)].dropna(
         subset=[ut.COL_MEAN_SCORE, ut.COL_EMPIRICAL_POS])
-    ax.plot([0, 1], [0, 1], ls="--", color="0.6", lw=1.2, label="perfect calibration")
-    ax.plot(d[ut.COL_MEAN_SCORE], d[ut.COL_EMPIRICAL_POS], "o-", color=color, label="model")
+    if _LABEL_PERFECT not in [line.get_label() for line in ax.get_lines()]:
+        ax.plot([0, 1], [0, 1], ls="--", color="0.6", lw=1.2, label=_LABEL_PERFECT)
+    brier, ece = _metric_value(df_eval, ut.STR_BIN_BRIER), _metric_value(df_eval, ut.STR_BIN_ECE)
+    metrics = [f"{name} {val:.3f}" for name, val in [("Brier", brier), ("ECE", ece)] if val is not None]
+    if metrics:
+        label = f"{label} ({', '.join(metrics)})"
+    ax.plot(d[ut.COL_MEAN_SCORE], d[ut.COL_EMPIRICAL_POS], "o-", color=color, label=label)
     ax.set_xlim(0, 1), ax.set_ylim(0, 1), ax.set_aspect("equal")
     ax.set_xlabel("Mean predicted score"), ax.set_ylabel("Empirical positive rate")
-    ax.legend(frameon=False, loc="upper left")
+    if any("Brier" in line.get_label() or "ECE" in line.get_label() for line in ax.get_lines()):
+        # Metric-annotated labels are long: place the legend below the axes, clear of the curves
+        ax.legend(frameon=False, loc="upper center", bbox_to_anchor=(0.5, -0.16), fontsize="small")
+    else:
+        ax.legend(frameon=False, loc="upper left")
     if title:
         ax.set_title(title)
     sns.despine(ax=ax)
