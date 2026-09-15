@@ -14,7 +14,7 @@ from aaanalysis.template_classes import Wrapper
 
 from ._backend.reliability.reliability import (
     positive_proba, proba_members, fit_bootstrap_models, comp_uncertainty,
-    fit_applicability_domain, apply_applicability_domain, comp_sharpness,
+    fit_applicability_domain, apply_applicability_domain, comp_ad_status, comp_sharpness,
     fit_conformal, apply_conformal, comp_calibration_bins, comp_brier, comp_ece)
 
 
@@ -69,6 +69,16 @@ def check_finite(name: str, val: float):
     """
     if isinstance(val, (float, np.floating)) and not np.isfinite(val):
         raise ValueError(f"'{name}' ({val}) should be a finite float or an integer.")
+
+
+def check_ad_borderline(ad_borderline: float):
+    """Check that ``ad_borderline`` is a finite, non-negative number (not a bool)."""
+    if isinstance(ad_borderline, bool):
+        raise ValueError(f"'ad_borderline' ({ad_borderline}) should be a finite number >= 0 "
+                         f"(a float or an integer), but got bool.")
+    ut.check_number_range(name="ad_borderline", val=ad_borderline, min_val=0, just_int=False)
+    if not np.isfinite(ad_borderline):
+        raise ValueError(f"'ad_borderline' ({ad_borderline}) should be a finite number >= 0.")
 
 
 def check_ci(ci: float):
@@ -175,7 +185,29 @@ class ReliabilityModel(Wrapper):
       first member.
     * **Reproducibility.** The bootstrap, calibration split, and conformal split are stochastic —
       set ``random_state`` for identical output across fits.
+    * **Banded domain verdict.** ``ad_status`` refines the bool ``in_domain`` into ``inside``
+      (``ood_score <= 1``), ``borderline`` (``1 < ood_score <= 1 + ad_borderline``), ``outside``
+      (above the band), and ``unknown`` (the training reference has no usable spread, so
+      ``ood_score`` is ``NaN``). ``in_domain`` always equals ``ad_status == "inside"``.
     * All fitted-state attributes carry a trailing underscore and are set by :meth:`fit`.
+
+    Attributes
+    ----------
+    model_ : estimator or list of estimators
+        The assessed model (the fitted single estimator or the list of ensemble members).
+    label_pos_ : int
+        Positive-class label whose probability is scored.
+    ad_threshold_ : float
+        Applicability-domain boundary: the ``ad_percentile``-th percentile of the training
+        samples' mean distance to their ``k`` nearest other training samples (standardized
+        feature space). ``ood_score`` is ``ad_knn / ad_threshold_``, so ``ood_score == 1`` is the
+        boundary. A non-positive value marks a degenerate reference (``ad_status='unknown'``).
+
+        .. versionadded:: 1.2.0
+    ad_method_ : str
+        Decision rule behind ``ood_score`` / ``in_domain`` / ``ad_status``; always ``"knn"``.
+
+        .. versionadded:: 1.2.0
 
     See Also
     --------
@@ -202,6 +234,8 @@ class ReliabilityModel(Wrapper):
         # Fitted attributes
         self.model_: Optional[object] = None
         self.label_pos_: Optional[int] = None
+        self.ad_threshold_: Optional[float] = None
+        self.ad_method_: Optional[str] = None
         # Internal fitted state
         self._ad_state = None
         self._members = None
@@ -210,6 +244,7 @@ class ReliabilityModel(Wrapper):
         self._calibration_error: Optional[str] = None
         self._conf_state = None
         self._ci = 0.90
+        self._ad_borderline = 0.1
 
     def fit(self,
             X: ut.ArrayLike2D,
@@ -218,6 +253,7 @@ class ReliabilityModel(Wrapper):
             label_pos: int = 1,
             k: int = 5,
             ad_percentile: float = 95.0,
+            ad_borderline: float = 0.1,
             ci: float = 0.90,
             n_bootstrap: int = 20,
             calibrate: bool = True,
@@ -246,7 +282,15 @@ class ReliabilityModel(Wrapper):
         k : int, default=5
             Number of nearest training neighbors for the applicability-domain distance.
         ad_percentile : float, default=95.0
-            Training kNN-distance percentile used as the ``in_domain`` boundary.
+            Training kNN-distance percentile used as the ``in_domain`` boundary (stored as
+            ``ad_threshold_``).
+        ad_borderline : float, default=0.1
+            Width of the ``borderline`` band just outside the domain boundary, relative to it:
+            a sample with ``1 < ood_score <= 1 + ad_borderline`` gets ``ad_status='borderline'``,
+            above that ``'outside'``. ``0`` disables the band. Must be a **finite non-negative**
+            number (a negative value, ``inf``, ``NaN``, or a bool raises).
+
+            .. versionadded:: 1.2.0
         ci : float, default=0.90
             Central width of the reported score confidence interval, as a fraction in ``(0, 1)``
             (e.g. ``0.90`` for a 90% interval), matching :meth:`ModelEvaluator.run`.
@@ -277,7 +321,8 @@ class ReliabilityModel(Wrapper):
         ValueError
             If ``labels`` are not binary, ``label_pos`` is absent from ``labels``, ``model`` is an
             empty list or lacks ``predict_proba``, a passed :class:`AAPred` is not fitted, or a
-            numeric parameter is out of range or not finite (``NaN`` / ``inf``).
+            numeric parameter is out of range or not finite (``NaN`` / ``inf``), including a
+            negative ``ad_borderline``.
 
         Warnings
         --------
@@ -302,6 +347,7 @@ class ReliabilityModel(Wrapper):
         check_finite(name="ad_percentile", val=ad_percentile)
         ut.check_number_range(name="ad_percentile", val=ad_percentile, min_val=1, max_val=100,
                               just_int=False)
+        check_ad_borderline(ad_borderline=ad_borderline)
         check_ci(ci=ci)
         ut.check_number_range(name="n_bootstrap", val=n_bootstrap, min_val=0, just_int=True)
         ut.check_bool(name="calibrate", val=calibrate)
@@ -327,6 +373,9 @@ class ReliabilityModel(Wrapper):
 
         # Applicability-domain reference (fit once)
         self._ad_state = fit_applicability_domain(np.asarray(X), k=k, percentile=ad_percentile)
+        self._ad_borderline = float(ad_borderline)
+        self.ad_threshold_ = float(self._ad_state["thr"])
+        self.ad_method_ = ut.STR_AD_METHOD_KNN
 
         # Resolve the member models. ``score`` is their mean and the interval is their spread, so
         # both come from the SAME set — the score is always the centre of its own interval.
@@ -397,13 +446,17 @@ class ReliabilityModel(Wrapper):
         Applies the references learned by :meth:`fit` (applicability domain, ensemble / bootstrap,
         calibrator, conformal calibration) — no model is refitted here, so repeated calls are cheap
         and deterministic. Each column maps to one axis of the mental model: ``score_std`` /
-        ``ci_*`` (stability), ``ood_score`` / ``in_domain`` / ``ad_*`` (applicability domain),
+        ``ci_*`` (stability), ``ood_score`` / ``in_domain`` / ``ad_*`` (applicability domain,
+        banded by ``ad_status``),
         ``margin`` / ``entropy`` (calibrated ambiguity), ``conformal_set`` (validity), and
         ``reliable`` (the headline flag).
 
         .. versionchanged:: 1.2.0
            The applicability-domain column ``ad_knn_dist`` is named ``ad_knn``, matching its
-           ``ad_mahalanobis`` / ``ad_leverage`` siblings.
+           ``ad_mahalanobis`` / ``ad_leverage`` siblings, and two columns are appended at the
+           end of the table: ``ad_status`` (the banded domain verdict) and ``ad_nearest_train``
+           (the closest training row). Every previously returned column keeps its name,
+           position, and values.
 
         Parameters
         ----------
@@ -415,7 +468,18 @@ class ReliabilityModel(Wrapper):
         df_rel : pd.DataFrame
             One row per sample with columns: ``score``, ``score_std``, ``ci_low``, ``ci_high``,
             ``ood_score``, ``in_domain``, ``ad_knn``, ``ad_mahalanobis``, ``ad_leverage``,
-            ``score_calibrated``, ``margin``, ``entropy``, ``conformal_set``, ``reliable``.
+            ``score_calibrated``, ``margin``, ``entropy``, ``conformal_set``, ``reliable``,
+            ``ad_status``, ``ad_nearest_train``.
+
+            * ``ad_status`` (str, never null): ``'inside'`` (``ood_score <= 1``),
+              ``'borderline'`` (``1 < ood_score <= 1 + ad_borderline``), ``'outside'`` (above the
+              band), or ``'unknown'`` (degenerate training reference, ``ood_score`` is ``NaN``).
+              ``in_domain`` equals ``ad_status == 'inside'`` on every row.
+            * ``ad_nearest_train`` (int): 0-based row index, into the ``X`` passed to :meth:`fit`,
+              of the closest training sample.
+
+            .. versionadded:: 1.2.0
+               The ``ad_status`` and ``ad_nearest_train`` columns (appended at the end).
 
         Raises
         ------
@@ -461,7 +525,10 @@ class ReliabilityModel(Wrapper):
             ut.COL_AD_KNN: ad["knn"], ut.COL_AD_MAHALANOBIS: ad["maha"],
             ut.COL_AD_LEVERAGE: ad["leverage"], ut.COL_SCORE_CAL: score_cal,
             ut.COL_MARGIN: margin, ut.COL_ENTROPY: entropy, ut.COL_CONFORMAL_SET: conf,
-            ut.COL_RELIABLE: reliable})
+            ut.COL_RELIABLE: reliable,
+            ut.COL_AD_STATUS: comp_ad_status(ad["ood_score"], ad["in_domain"],
+                                             borderline=self._ad_borderline),
+            ut.COL_AD_NEAREST_TRAIN: ad["nearest"]})
 
     def eval(self,
              *, X: Optional[ut.ArrayLike2D] = None,

@@ -521,11 +521,17 @@ COL_MARGIN = "margin"                # |p - 0.5| * 2 on the calibrated score —
 COL_ENTROPY = "entropy"              # binary entropy of the calibrated score (0 = decisive, 1 = coin-flip)
 COL_CONFORMAL_SET = "conformal_set"  # split-conformal prediction set: 'neg' | 'pos' | 'both' (ambiguous) | 'none' (abstain)
 COL_RELIABLE = "reliable"            # bool headline: in_domain AND a confident conformal singleton
+COL_AD_STATUS = "ad_status"          # banded applicability-domain verdict: 'inside' | 'borderline' | 'outside' | 'unknown'
+COL_AD_NEAREST_TRAIN = "ad_nearest_train"  # 0-based row index of the closest training sample in the fit X
 STR_CONF_NEG, STR_CONF_POS = "neg", "pos"
 STR_CONF_BOTH, STR_CONF_NONE = "both", "none"
+STR_AD_INSIDE, STR_AD_BORDERLINE = "inside", "borderline"    # ood_score <= 1 | 1 < ood_score <= 1 + ad_borderline
+STR_AD_OUTSIDE, STR_AD_UNKNOWN = "outside", "unknown"        # above the band | no usable reference (ood_score NaN)
+LIST_AD_STATUS = [STR_AD_INSIDE, STR_AD_BORDERLINE, STR_AD_OUTSIDE, STR_AD_UNKNOWN]
+STR_AD_METHOD_KNN = "knn"            # applicability-domain decision rule (ReliabilityModel.ad_method_)
 COLS_RELIABILITY = [COL_SCORE, COL_SCORE_STD, COL_CI_LOW, COL_CI_HIGH, COL_OOD_SCORE, COL_IN_DOMAIN,
                     COL_AD_KNN, COL_AD_MAHALANOBIS, COL_AD_LEVERAGE, COL_SCORE_CAL, COL_MARGIN,
-                    COL_ENTROPY, COL_CONFORMAL_SET, COL_RELIABLE]
+                    COL_ENTROPY, COL_CONFORMAL_SET, COL_RELIABLE, COL_AD_STATUS, COL_AD_NEAREST_TRAIN]
 # ReliabilityModel.eval — per-bin calibration rows plus one summary row (bin == STR_BIN_SUMMARY,
 # where mean_score holds the in-domain fraction and empirical_pos the empirical conformal coverage)
 COL_BIN = "bin"                      # score-bin label ('0.00-0.20', ...) or STR_BIN_SUMMARY
