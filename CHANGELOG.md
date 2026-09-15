@@ -41,8 +41,8 @@ notes — with cross-references and examples — live in
   grid has five fraction candidates (which resolve to five distinct sizes on sufficiently large
   data), each with a bootstrap CI. A fractional size is resolved within each training fold, so
   `1.0` is every fold's complete training set and reproduces
-  `ModelEvaluator.run` when both calls use the same resolved `random_state`, also when the
-  training folds differ in size (#93).
+  `ModelEvaluator.run` when both calls use the same `random_state`, `n_cv`, `n_rounds`, and
+  metrics, also when the training folds differ in size (#93).
 
 ### Fixed
 - `ReliabilityModel.fit`: non-finite numbers (`NaN`, `inf`, `-inf`) are rejected for `ci`,
