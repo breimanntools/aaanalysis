@@ -34,6 +34,14 @@ notes — with cross-references and examples — live in
   - `AAPred` and `SeqOpt` now validate `df_scales`, and `AAPred.eval` validates `list_parts`, in
     their frontend checks: an invalid value raises a `ValueError` naming the parameter instead of
     failing later (or being silently ignored).
+### Added
+- `AAPredPlot.group_cluster`: `kind="dendrogram"` with `layout="rectangular"|"circular"` draws
+  the sample relation tree alone, leaves colored by `labels` / `labels_row` (one strip or ring
+  each, titled legends). It reuses the clustermap's linkage (now computed explicitly with SciPy
+  and passed to seaborn), so both kinds show the same topology; the clustermap figure is
+  unchanged when `fastcluster` is not installed (with `fastcluster`, seaborn used to compute the
+  linkage itself, so exact ties between equidistant merges may be broken differently).
+  (Addresses #391)
 
 ### Fixed
 - `ReliabilityModel.fit`: non-finite numbers (`NaN`, `inf`, `-inf`) are rejected for `ci`,
