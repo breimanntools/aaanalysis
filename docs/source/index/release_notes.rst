@@ -30,6 +30,16 @@ Added
   cannot be cloned. ``score_calibrated`` is ``NaN`` in that case, and
   ``eval(use_calibrated=True)`` raises a ``ValueError`` naming that reason instead of reporting a
   ``calibrate=False`` that was never passed.
+- The applicability domain of :class:`~aaanalysis.ReliabilityModel` is now banded and
+  inspectable. :meth:`~aaanalysis.ReliabilityModel.predict` appends two columns at the end of its
+  table: ``ad_status`` (``inside`` if ``ood_score <= 1``, ``borderline`` up to
+  ``1 + ad_borderline``, ``outside`` above, and ``unknown`` when the training reference has no
+  usable spread) and ``ad_nearest_train``, the row index of the closest training sample.
+  ``in_domain`` stays the bool shorthand for ``ad_status == "inside"``.
+  :meth:`~aaanalysis.ReliabilityModel.fit` gains ``ad_borderline`` (default ``0.1``) and exposes
+  the fitted boundary as ``ad_threshold_`` (so ``ood_score == ad_knn / ad_threshold_``) and the
+  decision rule as ``ad_method_`` (``"knn"``). Existing columns keep their names, order, and
+  values.
 
 Changed
 ~~~~~~~
