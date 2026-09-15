@@ -107,6 +107,9 @@ class ModelEvaluatorPlot:
 
     .. versionadded:: 1.1.0
 
+    .. versionchanged:: 1.2.0
+        Added :meth:`learning_curve` for learning-curve tables.
+
     See Also
     --------
     * :class:`ModelEvaluator` for the logic class whose results this visualizes.
@@ -264,17 +267,18 @@ class ModelEvaluatorPlot:
             training size, metric) tuple must occur once and each model/metric curve must have at
             least two training sizes. Confidence bounds must be finite and ordered, or both
             ``NaN`` when the curve was computed with ``ci=None``.
-        metric : str, optional
+        metric : str or None, default=None
             Metric to plot; must be one of the metrics in ``df_curve``. Defaults to ``"mcc"`` when
             present, otherwise the first metric of ``df_curve``.
-        figsize : tuple, default=(6, 4)
-            Figure dimensions (width, height) in inches.
-        colors : str or list of str, optional
+        figsize : tuple of int or float, default=(6, 4)
+            Positive figure dimensions ``(width, height)`` in inches; changes the rendered figure
+            size.
+        colors : str, list of str, or None, default=None
             One color per model (in first-appearance order); a single color name counts as one
-            color, not as a sequence of characters. Defaults to the package color list.
+            color, not as a sequence of characters. If ``None``, uses the package color list.
         show_ci : bool, default=True
             If ``True``, draw the confidence band (``ci_low`` / ``ci_high``, or ``score_std`` where
-            the CI is ``NaN``) around each curve.
+            the CI is ``NaN``) around each curve. If ``False``, draws only the score lines.
 
         Returns
         -------
@@ -288,8 +292,8 @@ class ModelEvaluatorPlot:
         ValueError
             If ``df_curve`` is not a DataFrame with the learning-curve columns or holds no rows,
             its values do not form a valid learning-curve table, ``metric`` is not one of its
-            metrics, ``figsize`` or ``show_ci`` are invalid, or ``colors`` holds fewer colors than
-            there are models.
+            metrics, ``figsize`` is not a positive numeric pair, ``show_ci`` is not boolean, or
+            ``colors`` is not a valid color string/list with at least one color per model.
 
         See Also
         --------

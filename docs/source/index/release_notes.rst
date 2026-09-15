@@ -98,8 +98,8 @@ Added
   resolve to five distinct sizes on sufficiently large data), each with a bootstrap CI. A
   fractional size is resolved within each training fold, so the fraction ``1.0`` uses every
   fold's complete training set and reproduces :meth:`~aaanalysis.ModelEvaluator.run` exactly when
-  both calls use the same resolved ``random_state`` (also for unequal training folds), and an
-  identical ``random_state`` gives an identical curve. :meth:`~aaanalysis.ModelEvaluatorPlot.learning_curve` draws the metric versus
+  both calls use the same ``random_state``, ``n_cv``, ``n_rounds``, and metrics (also for unequal
+  training folds). :meth:`~aaanalysis.ModelEvaluatorPlot.learning_curve` draws the metric versus
   training size per model with the CI band. A still-rising curve suggests collecting more data; a
   flat one suggests changing the representation or model.
 

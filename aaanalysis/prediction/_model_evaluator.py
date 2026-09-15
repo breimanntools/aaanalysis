@@ -217,6 +217,9 @@ class ModelEvaluator(Tool):
 
     .. versionadded:: 1.1.0
 
+    .. versionchanged:: 1.2.0
+        Added :meth:`learning_curve` for cross-validated performance across training sizes.
+
     Notes
     -----
     * All computed-state attributes carry a trailing underscore and are set by :meth:`run`.
@@ -239,23 +242,24 @@ class ModelEvaluator(Tool):
         """
         Parameters
         ----------
-        models : str, estimator, or list, optional
+        models : str, estimator, list, or None, default=None
             Models to evaluate, given as registry name strings (e.g. ``"svm"``, ``"rf"``; see
             ``aaanalysis.utils.LIST_PRED_MODELS``) and/or configured scikit-learn estimator
-            instances, in any mix. Defaults to a single ``"rf"`` (:class:`RandomForestClassifier`).
+            instances, in any mix. If ``None``, evaluates a single ``"rf"``
+            (:class:`RandomForestClassifier`).
             Pass two or more to enable :meth:`eval` (paired comparison). Each model must implement
             ``predict``; ``predict_proba`` is required only for probability metrics (e.g.
             ``roc_auc``).
-        list_metrics : list of str, default=["accuracy", "balanced_accuracy", "mcc"]
-            Default metrics used by :meth:`run` when its ``metrics`` argument is not given. Each
-            should be one of ``accuracy``, ``balanced_accuracy``, ``precision``, ``recall``,
-            ``f1``, ``roc_auc``, ``mcc`` (Matthews correlation coefficient).
+        list_metrics : list of {'accuracy', 'balanced_accuracy', 'precision', 'recall', 'f1', 'roc_auc', 'mcc'} or None, default=None
+            Default metrics used by :meth:`run` and :meth:`learning_curve` when their ``metrics``
+            argument is ``None``. If ``None``, uses ``["accuracy", "balanced_accuracy", "mcc"]``.
         verbose : bool, default=True
-            If ``True``, verbose outputs are enabled.
-        random_state : int, optional
-            The seed used by the random number generator. If a positive integer, results of
-            stochastic processes (fold shuffling, bootstrap resampling) are consistent, enabling
-            reproducibility. If ``None``, stochastic processes will be truly random.
+            If ``True``, enables progress output; if ``False``, suppresses it.
+        random_state : int or None, default=None
+            Seed used for fold shuffling, bootstrap resampling, and supported estimators. If a
+            non-negative integer, these stochastic operations are reproducible; if ``None``, they
+            are random. ``aaanalysis.options["random_state"]`` overrides this value unless it is
+            ``"off"``.
 
         Examples
         --------
@@ -454,36 +458,40 @@ class ModelEvaluator(Tool):
 
         Parameters
         ----------
-        X : array-like, shape (n_samples, n_features)
-            Feature matrix.
-        labels : array-like, shape (n_samples,)
-            Binary class labels for the samples in ``X``, which should be exactly the two classes
-            0 and 1 (1 is the positive class of ``precision``, ``recall``, ``f1``, ``roc_auc``).
-        train_sizes : array-like, optional
+        X : array-like of float, shape (n_samples, n_features)
+            Finite feature matrix with at least three samples and two features; rows are the
+            samples evaluated by every training-size curve.
+        labels : array-like of int, shape (n_samples,)
+            Binary class labels aligned with ``X``. Values must be exactly 0 and 1; 1 is the
+            positive class for ``precision``, ``recall``, ``f1``, and ``roc_auc``.
+        train_sizes : array-like of float or int, optional
             Training-subset sizes (at least two), either all fractions in ``(0, 1]`` or all
-            absolute sample counts (int >= 2). A fraction is resolved within each training fold
+            distinct absolute sample counts (int >= 2). A fraction is resolved within each training fold
             (rounded down to samples, raised to at least 2, one per class), so ``1.0`` is every
             fold's complete training set; the curve point is labelled by its size in the smallest
             training fold, and fractions collapsing onto the same label are de-duplicated. An
             absolute count is used as given in every fold, so counts must be distinct and fit into
-            the smallest training fold. Defaults to ``[0.2, 0.4, 0.6, 0.8, 1.0]``; on sufficiently
+            the smallest training fold. If ``None``, uses ``[0.2, 0.4, 0.6, 0.8, 1.0]``; on sufficiently
             large data these resolve to five sizes, each with a bootstrap CI. On small data they
             can collapse to fewer sizes, and at least two distinct sizes are required.
         n_cv : int, default=5
-            Number of stratified cross-validation folds per round (must not exceed the smallest
-            class count).
+            Number of stratified cross-validation folds per round. Must be at least 2 and not
+            exceed the smallest class count; increasing it changes the train/test split size and
+            the number of scores aggregated.
         n_rounds : int, default=1
-            Number of cross-validation repeats (multi-seed aggregation). The total number of fold
-            scores per (model, training size, metric) is ``n_cv * n_rounds``.
-        metrics : str or list of str, optional
-            Performance metric(s) to compute. Defaults to ``list_metrics`` from the constructor.
-        ci : float, optional
+            Number of cross-validation repeats. Increasing it changes the shuffled splits and
+            yields ``n_cv * n_rounds`` fold scores per (model, training size, metric).
+        metrics : {'accuracy', 'balanced_accuracy', 'precision', 'recall', 'f1', 'roc_auc', 'mcc'} or list of str, optional
+            Performance metric(s) to compute. If ``None``, uses ``list_metrics`` from the
+            constructor; ``roc_auc`` requires every model to implement ``predict_proba``.
+        ci : float or None, default=0.95
             Central confidence level in ``(0, 1)`` for the percentile bootstrap CI of the mean.
-            If ``None``, the ``ci_low`` / ``ci_high`` columns are ``NaN``. Default is ``0.95``.
-        random_state : int, optional
+            If ``None``, skips bootstrap CIs and sets the ``ci_low`` / ``ci_high`` columns to
+            ``NaN``.
+        random_state : int or None, default=None
             Per-call seed overriding the constructor's ``random_state`` for the folds, the training
-            subsets, and the bootstrap CI. If a non-negative integer, results of stochastic
-            processes are consistent, enabling reproducibility. If ``None``, the constructor's
+            subsets, and the bootstrap CI. A non-negative integer makes those operations and
+            estimators that support ``random_state`` reproducible. If ``None``, the constructor's
             ``random_state`` is used (and stochastic processes are truly random when that is
             ``None`` as well). ``aaanalysis.options["random_state"]`` overrides both unless it is
             ``"off"``.
@@ -505,6 +513,8 @@ class ModelEvaluator(Tool):
             fractions and counts, resolve to fewer than two distinct sizes, or exceed the smallest
             training fold, a metric is unknown, a probability metric is requested for a model
             without ``predict_proba``, or a numeric parameter is out of range.
+        RuntimeError
+            If an internally constructed training subset overlaps its held-out test fold.
 
         Notes
         -----
