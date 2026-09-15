@@ -122,7 +122,14 @@ def check_pssm(pssm) -> Dict[str, Union[str, np.ndarray]]:
                        if f.lower().endswith(".pssm") and os.path.isfile(os.path.join(pssm, f)))
         if len(files) == 0:
             raise ValueError(f"'pssm' ('{pssm}') should be a directory containing at least one '.pssm' file.")
-        return {os.path.splitext(f)[0]: os.path.join(pssm, f) for f in files}
+        stems = [os.path.splitext(f)[0] for f in files]
+        duplicate_stems = sorted({stem for stem in stems if stems.count(stem) > 1})
+        if duplicate_stems:
+            raise ValueError(
+                f"'pssm' (duplicate file stems {duplicate_stems}) should contain exactly one "
+                "'.pssm' file per entry."
+            )
+        return {stem: os.path.join(pssm, f) for stem, f in zip(stems, files)}
     ut.check_dict(name="pssm", val=pssm, accept_none=False)
     if len(pssm) == 0:
         raise ValueError("'pssm' (empty dict) should be a dict with at least one entry.")
@@ -569,8 +576,8 @@ class NumericalFeature:
         amino acid), which is exactly the ``(L, D)`` per-residue tensor that
         :meth:`NumericalFeature.get_parts` and :meth:`CPP.run_num` consume (here ``D=20``).
         This method parses PSI-BLAST ASCII PSSM files (``psiblast -out_ascii_pssm``) or takes
-        precomputed arrays, reorders the 20 columns into canonical amino acid order, and maps
-        the values onto ``[0, 1]``.
+        precomputed arrays, reorders the 20 columns into canonical amino acid order, and, by
+        default, maps the values onto ``[0, 1]``.
 
         .. versionadded:: 1.2.0
 
@@ -584,17 +591,18 @@ class NumericalFeature:
             must already be in canonical amino acid column order (``ACDEFGHIKLMNPQRSTVWY``) and
             hold raw values of the kind given by ``values``.
         df_seq : pd.DataFrame, shape (n_samples, n_seq_info), optional
-            DataFrame containing an ``entry`` column with unique protein identifiers and a
-            ``sequence`` column with full protein sequences. If given, every entry must have a
-            PSSM whose row count equals its sequence length and (for files) whose residue column
-            matches the sequence.
+            DataFrame containing an ``entry`` column with protein identifiers and a ``sequence``
+            column with full protein sequences. If given, every entry must have a PSSM whose row
+            count equals its sequence length and (for files) whose residue column matches the
+            sequence.
         values : {'log_odds', 'frequencies'}, default='log_odds'
-            PSSM block to use: the log-odds substitution scores or the weighted observed
-            percentages (PSI-BLAST ASCII files carry both).
+            PSSM block to use: the log-odds substitution scores or, when present, the weighted
+            observed percentages.
         normalize : bool, default=True
             If ``True``, map values onto ``[0, 1]``: log-odds via the logistic sigmoid
             ``1 / (1 + exp(-x))`` (numerically stable for large ``|x|``) and percentages via
-            division by 100. Keep ``True`` for :meth:`CPP.run_num`.
+            division by 100. If ``False``, return the selected raw values without normalizing
+            them.
         return_scales : bool, default=False
             If ``True``, also return the matching 20-column ``df_scales`` and ``df_cat`` naming
             the PSSM dimensions (``PSSM_A``, ..., ``PSSM_Y``), so the return becomes the 3-tuple
@@ -617,8 +625,9 @@ class NumericalFeature:
         ------
         ValueError
             If a directory holds no ``.pssm`` file, a file cannot be parsed, has a malformed
-            numeric field, or lacks the requested block, an array is not ``(L, 20)``, any value
-            is NaN or infinite, a percentage (``values='frequencies'``) lies outside
+            numeric field, has non-consecutive matrix positions or inconsistent frequency blocks,
+            or lacks the requested block, an array is not ``(L, 20)``, any value is NaN or
+            infinite, a percentage (``values='frequencies'``) lies outside
             ``[0, 100]``, or (with ``df_seq``) an entry is missing, its PSSM row count differs
             from its sequence length, or its residues differ from its sequence. All mismatching
             entries are listed in one message.

@@ -36,8 +36,9 @@ notes — with cross-references and examples — live in
     failing later (or being silently ignored).
 ### Added
 - `NumericalFeature.from_pssm`: PSI-BLAST ASCII PSSM files (or `(L, 20)` arrays) to a
-  `[0, 1]` `dict_num` in canonical amino acid column order, with the matching 20-column
-  `df_scales` / `df_cat` (`return_scales=True`) for `get_parts` -> `CPP.run_num` (#79).
+  canonical-amino-acid-order `dict_num`, normalized to `[0, 1]` by default (or raw with
+  `normalize=False`), with matching 20-column `df_scales` / `df_cat`
+  (`return_scales=True`) for `get_parts` -> `CPP.run_num` (#79).
 
 ### Fixed
 - `ReliabilityModel.fit`: non-finite numbers (`NaN`, `inf`, `-inf`) are rejected for `ci`,

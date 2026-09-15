@@ -222,6 +222,14 @@ class TestFromPssm:
         with pytest.raises(ValueError, match="could not be parsed"):
             aa.NumericalFeature.from_pssm(pssm=str(tmp_path))
 
+    def test_invalid_pssm_duplicate_file_stems(self, tmp_path, monkeypatch):
+        path = tmp_path / "P1.pssm"
+        write_pssm(path, "ACD")
+        monkeypatch.setattr("aaanalysis.feature_engineering._numerical_feature.os.listdir",
+                            lambda _path: [path.name, path.name])
+        with pytest.raises(ValueError, match="duplicate file stems"):
+            aa.NumericalFeature.from_pssm(pssm=str(tmp_path))
+
     def test_invalid_pssm_single_file_wrong_extension(self, tmp_path):
         path = tmp_path / "P1.txt"
         write_pssm(path, "ACD")
@@ -266,6 +274,44 @@ class TestFromPssm:
         write_pssm(tmp_path / "bad.pssm", "ACD", header="AANDCQEGHILKMFPSTWYV")
         with pytest.raises(ValueError, match="column header .* should list"):
             aa.NumericalFeature.from_pssm(pssm=str(tmp_path))
+
+    def test_invalid_pssm_non_consecutive_position(self, tmp_path):
+        path = tmp_path / "bad_position.pssm"
+        write_pssm(path, "ACD")
+        lines = path.read_text().splitlines()
+        lines[3] = lines[3].replace("    1 A", "    2 A", 1)
+        path.write_text("\n".join(lines))
+        with pytest.raises(ValueError, match="should be 1, the next matrix row position"):
+            aa.NumericalFeature.from_pssm(pssm=str(path))
+
+    def test_invalid_pssm_inconsistent_frequency_blocks(self, tmp_path):
+        path = tmp_path / "bad_frequency.pssm"
+        write_pssm(path, "ACD")
+        lines = path.read_text().splitlines()
+        tokens = lines[4].split()
+        lines[4] = "    2 C  " + " ".join(tokens[2:22])
+        path.write_text("\n".join(lines))
+        with pytest.raises(ValueError, match="percentage block consistently"):
+            aa.NumericalFeature.from_pssm(pssm=str(path))
+
+    def test_invalid_pssm_short_matrix_row(self, tmp_path):
+        path = tmp_path / "short_row.pssm"
+        write_pssm(path, "ACD")
+        lines = path.read_text().splitlines()
+        tokens = lines[4].split()
+        lines[4] = "    2 C  " + " ".join(tokens[2:21])
+        path.write_text("\n".join(lines))
+        with pytest.raises(ValueError, match="position, residue, and 20 log-odds values"):
+            aa.NumericalFeature.from_pssm(pssm=str(path))
+
+    def test_invalid_pssm_non_data_matrix_row(self, tmp_path):
+        path = tmp_path / "non_data_row.pssm"
+        write_pssm(path, "ACD")
+        lines = path.read_text().splitlines()
+        lines[4] = "two C " + " ".join(lines[4].split()[2:])
+        path.write_text("\n".join(lines))
+        with pytest.raises(ValueError, match="matrix row or the PSI-BLAST 'K Lambda' footer"):
+            aa.NumericalFeature.from_pssm(pssm=str(path))
 
     # Negative tests: df_seq
     def test_invalid_df_seq_type(self):
@@ -315,7 +361,7 @@ class TestFromPssm:
                 aa.NumericalFeature.from_pssm(pssm=str(DATA_DIR), return_scales=return_scales)
 
     def test_keyword_only_options(self):
-        with pytest.raises(TypeError):
+        with pytest.raises(TypeError, match="takes 1 positional argument"):
             aa.NumericalFeature.from_pssm(str(DATA_DIR), None)  # noqa
 
 
@@ -383,7 +429,7 @@ class TestFromPssmComplex:
     # Negative tests
     def test_all_mismatches_reported_together(self):
         df_seq = _df_seq(dict_seq={"P1": "ACDKY", "P2": "MKL", "P7": "AC"})
-        with pytest.raises(ValueError) as exc:
+        with pytest.raises(ValueError, match="should match 'df_seq'") as exc:
             aa.NumericalFeature.from_pssm(pssm=str(DATA_DIR), df_seq=df_seq)
         msg = str(exc.value)
         assert "P7" in msg and "P2 (PSSM rows=8, len(sequence)=3)" in msg and "['P1']" in msg

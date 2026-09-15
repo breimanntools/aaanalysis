@@ -41,13 +41,14 @@ Added
 ~~~~~
 
 - :meth:`~aaanalysis.NumericalFeature.from_pssm` makes position-specific scoring matrices (PSSMs) a
-  CPP value source. It parses PSI-BLAST ASCII ``.pssm`` files (a folder or an ``entry`` to file
-  dict) or takes precomputed ``(L, 20)`` arrays, reorders the PSI-BLAST columns
-  (``ARNDCQEGHILKMFPSTWYV``) into the canonical amino acid order, maps log-odds (sigmoid) or
-  percentages (divided by 100) onto ``[0, 1]``, and optionally checks each matrix against the
-  sequences in ``df_seq``. With ``return_scales=True`` it also returns the matching 20-column
-  ``df_scales`` and ``df_cat``, so a PSSM runs through
-  :meth:`~aaanalysis.NumericalFeature.get_parts` and :meth:`~aaanalysis.CPP.run_num` unchanged.
+  CPP value source. It parses PSI-BLAST ASCII ``.pssm`` files (a folder, single file, or an
+  ``entry`` to file/array dict) or takes precomputed ``(L, 20)`` arrays, reorders the PSI-BLAST
+  columns (``ARNDCQEGHILKMFPSTWYV``) into the canonical amino acid order, and by default maps
+  log-odds (sigmoid) or percentages (divided by 100) onto ``[0, 1]``. It can instead return raw
+  selected values and optionally checks each matrix against the sequences in ``df_seq``. With
+  ``return_scales=True`` it also returns the matching 20-column ``df_scales`` and ``df_cat``,
+  so a PSSM runs through :meth:`~aaanalysis.NumericalFeature.get_parts` and
+  :meth:`~aaanalysis.CPP.run_num` unchanged.
 
 Fixed
 ~~~~~

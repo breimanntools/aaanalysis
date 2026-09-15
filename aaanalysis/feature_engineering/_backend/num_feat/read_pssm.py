@@ -83,7 +83,7 @@ def read_pssm_file_(file=None, entry=None):
     """
     with open(file, "r") as f:
         lines = f.read().splitlines()
-    perm = None
+    perm, has_frequencies = None, None
     residues, rows_lo, rows_freq = [], [], []
     for i_line, line in enumerate(lines, start=1):
         tokens = line.split()
@@ -92,20 +92,47 @@ def read_pssm_file_(file=None, entry=None):
                 perm = _get_permutation(header=tokens, file=file, entry=entry)
             continue
         if _is_data_line(tokens):
+            position = int(tokens[0])
+            expected_position = len(rows_lo) + 1
+            if position != expected_position:
+                raise ValueError(
+                    f"'pssm[{entry!r}]' (position {position} on line {i_line} of file '{file}') "
+                    f"should be {expected_position}, the next matrix row position."
+                )
+            has_frequency_block = len(tokens) >= 2 + 2 * N_AA
+            if has_frequencies is None:
+                has_frequencies = has_frequency_block
+            elif has_frequency_block != has_frequencies:
+                raise ValueError(
+                    f"'pssm[{entry!r}]' (line {i_line} of file '{file}') should contain the "
+                    "weighted observed percentage block consistently for every matrix row."
+                )
             residues.append(tokens[1].upper())
             args = dict(file=file, entry=entry, i_line=i_line)
             rows_lo.append(_parse_numbers(tokens=tokens[2:2 + N_AA], **args))
-            if len(tokens) >= 2 + 2 * N_AA:
+            if has_frequency_block:
                 rows_freq.append(_parse_numbers(tokens=tokens[2 + N_AA:2 + 2 * N_AA], **args))
+        elif tokens and tokens[0].isdigit():
+            raise ValueError(
+                f"'pssm[{entry!r}]' (line {i_line} of file '{file}') should be a matrix row "
+                "with a position, residue, and 20 log-odds values."
+            )
+        elif not tokens:
+            continue
         elif residues:
-            break  # First non-data line after the matrix ends it (K / Lambda footer follows)
+            if tokens[0] == "K" and tokens[-1] == "Lambda":
+                break
+            raise ValueError(
+                f"'pssm[{entry!r}]' (line {i_line} of file '{file}') should be a matrix row or "
+                "the PSI-BLAST 'K Lambda' footer."
+            )
     if perm is None or not residues:
         raise ValueError(f"'pssm[{entry!r}]' (file '{file}') should be a PSI-BLAST ASCII PSSM "
                          f"('psiblast -out_ascii_pssm'); it could not be parsed: no column header "
                          f"or no matrix rows found.")
     log_odds = np.asarray(rows_lo, dtype=np.float64)[:, perm]
     frequencies = None
-    if len(rows_freq) == len(rows_lo):
+    if has_frequencies:
         frequencies = np.asarray(rows_freq, dtype=np.float64)[:, perm]
     return "".join(residues), log_odds, frequencies
 
