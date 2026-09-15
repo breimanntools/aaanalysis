@@ -115,6 +115,12 @@ Documentation
 - The documented load → find-features → prediction path is executed in the standard unit suite,
   with its at-most-ten-statement budget read from the same code block displayed on the
   :ref:`Golden Pipelines <golden_pipelines>` page.
+- :meth:`~aaanalysis.CPP.run` and :meth:`~aaanalysis.CPP.run_num`: ``n_sample_batches`` now
+  creates exactly the requested number of balanced, non-empty sample batches. It bounds the
+  dominant per-batch working set, but not total peak memory: the pre-filtered candidate matrix and
+  its test statistics remain resident. The documentation now distinguishes this from
+  ``n_batches``: :meth:`~aaanalysis.CPP.run` applies FDR correction per selected-feature batch,
+  while :meth:`~aaanalysis.CPP.run_num` batches only pass-1 statistics.
 
 Version 1.1
 --------------------------------

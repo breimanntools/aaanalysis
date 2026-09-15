@@ -86,6 +86,11 @@ notes — with cross-references and examples — live in
 - The documented golden path is executed and its statement budget is parsed from the code block on
   the *Golden Pipelines* page, so page and test cannot drift apart.
 - Example notebooks of `aaanalysis.pipe` are held to zero parameter-coverage gaps.
+- `CPP.run` and `CPP.run_num`: `n_sample_batches` now creates exactly the requested number of
+  balanced, non-empty sample batches. It bounds the dominant per-batch working set, but not total
+  peak memory: the pre-filtered candidate matrix and its test statistics remain resident. The
+  documentation now distinguishes this from `n_batches`: `CPP.run` applies FDR correction per
+  selected-feature batch, while `CPP.run_num` batches only pass-1 statistics.
 
 ## [1.1.0] - 2026-09-10
 

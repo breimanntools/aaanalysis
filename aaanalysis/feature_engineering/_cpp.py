@@ -76,12 +76,17 @@ def _finalize_run_output(df_feat=None, return_stats=False):
 def _check_bootstrap_batching(n_batches=None, n_sample_batches=None):
     """Bootstrap stability selection runs each round single-pass; the memory-batching
     modes (``n_batches`` / ``n_sample_batches``) are not combinable with it."""
-    if n_batches is not None or n_sample_batches is not None:
+    if n_batches is not None:
         raise ValueError(
-            f"'n_batches' ({n_batches}) / 'n_sample_batches' ({n_sample_batches}) cannot be "
-            f"combined with bootstrap stability selection (CPP(bootstrap=True)); each bootstrap "
-            f"round runs single-pass. Set n_batches=None and n_sample_batches=None, or "
-            f"construct CPP with bootstrap=False."
+            f"'n_batches' ({n_batches}) should be None when CPP(bootstrap=True); each "
+            f"bootstrap round runs single-pass. Set n_batches=None or construct CPP with "
+            f"bootstrap=False."
+        )
+    if n_sample_batches is not None:
+        raise ValueError(
+            f"'n_sample_batches' ({n_sample_batches}) should be None when "
+            f"CPP(bootstrap=True); each bootstrap round runs single-pass. Set "
+            f"n_sample_batches=None or construct CPP with bootstrap=False."
         )
 
 
@@ -492,7 +497,7 @@ class CPP(Tool):
         n_batches: Optional[int] = None,
         n_sample_batches: Optional[int] = None,
         return_stats: bool = False,
-        redundancy: str = "legacy",
+        redundancy: Literal["legacy", "exact"] = "legacy",
     ) -> Union[pd.DataFrame, Tuple[pd.DataFrame, dict]]:
         """
         Perform Comparative Physicochemical Profiling (CPP) algorithm: creation and two-step filtering of
@@ -506,8 +511,10 @@ class CPP(Tool):
         .. versionchanged:: 1.1.0
             Added the ``return_stats`` parameter, returning the filter-funnel statistics alongside ``df_feat``.
 
-        .. versionchanged:: 1.1.0
-            Added the ``n_sample_batches`` parameter for sample-axis batching (memory bounded by batch size, not n).
+        .. versionchanged:: 1.2.0
+            ``n_sample_batches`` now creates exactly the requested number of balanced, non-empty
+            sample batches. ``n_batches`` and ``n_sample_batches`` document their distinct
+            output and memory trade-offs.
 
         .. versionchanged:: 1.1.0
             When the constructor enables bootstrap stability annotation (``CPP(bootstrap=True)``), ``df_feat`` gains a
@@ -518,15 +525,16 @@ class CPP(Tool):
         ----------
         labels : array-like, shape (n_samples,)
             Class labels for samples in sequence DataFrame (typically, test=1, reference=0).
-        label_test : int, default=1,
-            Class label of test group in ``labels``.
-        label_ref : int, default=0,
-            Class label of reference group in ``labels``.
+        label_test : int, default=1
+            Class label in ``labels`` that defines the test group used for feature statistics.
+        label_ref : int, default=0
+            Class label in ``labels`` that defines the reference group used for feature statistics.
         n_filter : int, default=100
             Number of features to be filtered/selected by CPP algorithm. With bootstrap stability selection
             (``CPP(bootstrap=True)``) this still caps the final redundancy-filtered output computed on the full dataset.
-        n_pre_filter : int, optional
-            Number of feature to be pre-filtered by CPP algorithm. If ``None``, a percentage of all features is used.
+        n_pre_filter : int or None, default=None
+            Number of candidate features retained before redundancy filtering. If ``None``,
+            ``pct_pre_filter`` determines this number from all candidate features.
         pct_pre_filter : int, default=5
             Percentage of all features that should remain after the pre-filtering step.
         max_std_test : float, default=0.2
@@ -571,22 +579,50 @@ class CPP(Tool):
             p-value, which is slower but reproducible bit-for-bit. This choice changes only the reported
             'p_val_mann_whitney' and 'p_val_fdr_bh' columns: feature ranking and selection are driven by
             'abs_auc' and 'abs_mean_dif', so the selected features are identical in either mode.
-        n_batches : int, None, default=None
-            Number of batches (>=2) used for batch processing. If ``None``, single-processing is used, which is faster
-            but more memory-intensive. Increasing ``n_batches`` (up to the maximum number of scales in ``df_scales``)
-            reduces memory consumption but slows down processing.
-        n_sample_batches : int, None, default=None
-            Number of sample-axis batches (>=2, up to the number of samples) for sample-batched processing. If ``None``,
-            sample-batching is disabled. Bounds peak memory by the batch size rather than the full sample count ``n``,
-            so it is the option for very large ``n``. Mutually exclusive with ``n_batches`` (which batches over scales).
+        n_batches : int or None, default=None
+            Number of scale-axis batches (2 to ``len(df_scales.columns)``). If ``None``,
+            single-pass processing is used. A value reduces the per-batch scale-value tensor
+            and usually lowers peak memory at the cost of additional work. The FDR correction
+            is applied separately to each selected-feature batch, so only ``p_val_fdr_bh`` can
+            differ from the single-pass output; ranking and selected features are unchanged.
+
+            .. versionchanged:: 1.2.0
+                Clarified the per-feature-batch FDR-correction semantics.
+        n_sample_batches : int or None, default=None
+            Number of non-empty, contiguous sample-axis batches (2 to ``n_samples``). If
+            ``None``, sample batching is disabled. A value divides samples into exactly this
+            many batches, whose sizes differ by at most one. It bounds the dominant per-batch
+            ``O(batch_size x part_length x n_scales)`` scale-value tensor by ``batch_size``.
+            It does **not** make peak memory independent of ``n``: the survivor matrix of
+            shape ``(n_samples, n_survivors)`` and its test statistics stay resident, so peak
+            memory still grows with ``n``. Floating-point accumulation across batches can
+            change statistics at rounding precision and resolve pathological ties differently.
+            Mutually exclusive with ``n_batches`` (which batches over scales).
+
+            .. versionchanged:: 1.2.0
+                Creates exactly the requested number of balanced, non-empty batches.
         return_stats : bool, default=False
             If ``True``, also return the filter-funnel statistics (``last_filter_stats_``)
             as a second element ``(df_feat, stats)``; if ``False``, return only ``df_feat``.
+
+            .. versionadded:: 1.1.0
 
         Returns
         -------
         df_feat : pd.DataFrame, shape (n_features, n_feature_info)
             Feature DataFrame with a unique identifier, scale information, statistics, and positions for each feature.
+            Returned on its own when ``return_stats=False`` (default).
+        stats : dict[str, int]
+            Filter-funnel counts (same content as :attr:`CPP.last_filter_stats_`):
+            ``n_candidates``, ``n_after_prefilter``, ``n_after_redundancy``, and
+            ``n_final``. Returned only when ``return_stats=True``, in which case
+            the return value is ``(df_feat, stats)``.
+
+        Raises
+        ------
+        ValueError
+            If an argument fails validation, both batching modes are requested, or batching is
+            requested while the constructor has ``bootstrap=True``.
 
         Notes
         -----
@@ -739,8 +775,8 @@ class CPP(Tool):
         )
         if n_batches is not None and n_sample_batches is not None:
             raise ValueError(
-                f"'n_batches' ({n_batches}) and 'n_sample_batches' ({n_sample_batches}) "
-                f"should not be set together; choose scale-batching or sample-batching, not both."
+                f"'n_sample_batches' ({n_sample_batches}) should be None when 'n_batches' "
+                f"({n_batches}) is set; choose scale-batching or sample-batching, not both."
             )
         _warn_gaps_encountered(df_parts=self.df_parts, accept_gaps=self._accept_gaps)
         # Route through the unified CPP pipeline + Cython kernel
@@ -840,7 +876,7 @@ class CPP(Tool):
         n_batches: Optional[int] = None,
         n_sample_batches: Optional[int] = None,
         return_stats: bool = False,
-        redundancy: str = "legacy",
+        redundancy: Literal["legacy", "exact"] = "legacy",
     ) -> Union[pd.DataFrame, Tuple[pd.DataFrame, dict]]:
         """
         Numerical-mode Comparative Physicochemical Profiling (CPP): same algorithm as
@@ -877,8 +913,9 @@ class CPP(Tool):
             Class label of reference group in ``labels``.
         n_filter : int, default=100
             Number of features to be filtered/selected by CPP algorithm.
-        n_pre_filter : int, optional
-            Number of features to be pre-filtered. If ``None``, a percentage of all features is used.
+        n_pre_filter : int or None, default=None
+            Number of candidate features retained before redundancy filtering. If ``None``,
+            ``pct_pre_filter`` determines this number from all candidate features.
         pct_pre_filter : int, default=5
             Percentage of all features that should remain after the pre-filtering step.
         max_std_test : float, default=0.2
@@ -915,23 +952,28 @@ class CPP(Tool):
             p-value, which is slower but reproducible bit-for-bit. This choice changes only the reported
             'p_val_mann_whitney' and 'p_val_fdr_bh' columns: feature ranking and selection are driven by
             'abs_auc' and 'abs_mean_dif', so the selected features are identical in either mode.
-        n_batches : int, None, default=None
+        n_batches : int or None, default=None
             Number of batches (2 to ``len(df_scales.columns)``) over the D axis of
             ``dict_num_parts``. If ``None``, single-pass; a value bounds the **pass-1
             stat** working set to one D-chunk (pass-2 recompute still runs globally, so
             this trims pass-1 memory but does not bound overall peak RSS — use
             ``n_sample_batches`` for that). Output is bit-exact with the single-pass
             result. Mutually exclusive with ``n_sample_batches``.
-        n_sample_batches : int, None, default=None
-            Number of batches (2 to ``n_samples``) over the **sample** axis. If ``None``,
-            single-pass. A value processes ``ceil(n_samples / n_sample_batches)`` samples
-            per batch, bounding the per-batch working set (stat intermediates + pass-2
-            recompute) to ``O(batch_size)`` — the lever that actually lowers peak RSS for
-            large ``n`` (the resident input tensor itself is unchanged). Pass-1 ``std_test``
-            uses accumulator-style variance, so the result may differ from the single-pass
-            run by ULP-level rounding (after the ``round(3)`` on the stat columns), which
-            can reorder tie-broken features; hence opt-in, not the default. Mutually
-            exclusive with ``n_batches``.
+
+            .. versionchanged:: 1.2.0
+                Clarified that only the pass-1 working set is batched.
+        n_sample_batches : int or None, default=None
+            Number of non-empty, contiguous batches (2 to ``n_samples``) over the **sample**
+            axis. If ``None``, single-pass. A value creates exactly this many batches whose
+            sizes differ by at most one, bounding the per-batch working set (stat
+            intermediates + pass-2 recompute) to ``O(batch_size)``. The resident input tensor
+            is unchanged. Pass-1 ``std_test`` uses accumulator-style variance, so the result
+            may differ from the single-pass run by ULP-level rounding (after the ``round(3)``
+            on the stat columns), which can reorder tie-broken features; hence opt-in, not the
+            default. Mutually exclusive with ``n_batches``.
+
+            .. versionchanged:: 1.2.0
+                Creates exactly the requested number of balanced, non-empty batches.
         return_stats : bool, default=False
             If ``True``, also return the filter-funnel statistics (``last_filter_stats_``) as a second
             element ``(df_feat, stats)``; if ``False``, return only ``df_feat``.
@@ -940,13 +982,21 @@ class CPP(Tool):
         -------
         df_feat : pd.DataFrame, shape (n_features, n_feature_info)
             Same schema as :meth:`run`.
+            Returned on its own when ``return_stats=False`` (default).
+        stats : dict[str, int]
+            Filter-funnel counts (same content as :attr:`CPP.last_filter_stats_`):
+            ``n_candidates``, ``n_after_prefilter``, ``n_after_redundancy``, and
+            ``n_final``. Returned only when ``return_stats=True``, in which case
+            the return value is ``(df_feat, stats)``.
 
         Raises
         ------
         ValueError
             If ``dict_num_parts`` is ``None`` (use :meth:`run` for seq-mode), or if
             its shape / part names / D don't align with the constructor's
-            ``self.df_parts`` and ``self.df_scales``.
+            ``self.df_parts`` and ``self.df_scales``; if any other argument fails
+            validation; if both batching modes are requested; or if batching is
+            requested while the constructor has ``bootstrap=True``.
 
         Notes
         -----
@@ -964,10 +1014,8 @@ class CPP(Tool):
           magnitude above the same-data :meth:`run` (which streams an AA→scale lookup and
           never builds that tensor) and grows with ``D``; runtime is otherwise comparable to
           :meth:`run`. For large ``n``, pass ``n_sample_batches`` to bound the per-batch
-          working set and lower peak RSS roughly in proportion to the batch count (e.g.
-          ``n_sample_batches=10`` cut working memory ~6× in internal benchmarks), at the
-          cost of ULP-level non-determinism in tie-broken features. ``n_batches`` only
-          trims the pass-1 stat working set, not overall peak.
+          working set, at the cost of ULP-level differences in tie-broken features.
+          ``n_batches`` only trims the pass-1 stat working set, not overall peak.
         * **Raw PLM embeddings are not directly usable — normalize them first.**
           Per-residue values are expected in ``[0, 1]`` (the ``StructurePreprocessor`` /
           ``AnnotationPreprocessor`` normalization convention), since the default
@@ -1087,11 +1135,8 @@ class CPP(Tool):
         )
         if n_batches is not None and n_sample_batches is not None:
             raise ValueError(
-                f"'n_batches' ({n_batches}) and 'n_sample_batches' "
-                f"({n_sample_batches}) are mutually exclusive; 'n_batches' bounds "
-                f"the pass-1 stat working set over the scale axis while "
-                f"'n_sample_batches' bounds peak memory over the sample axis. "
-                f"Set at most one."
+                f"'n_sample_batches' ({n_sample_batches}) should be None when 'n_batches' "
+                f"({n_batches}) is set; choose scale-batching or sample-batching, not both."
             )
 
         # Re-derive per-(entry, part) real lengths from df_parts non-gap chars.
