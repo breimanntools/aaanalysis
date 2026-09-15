@@ -14,7 +14,7 @@ from aaanalysis.template_classes import Wrapper
 from ._backend.reliability.reliability import (
     positive_proba, proba_members, fit_bootstrap_models, comp_uncertainty,
     fit_applicability_domain, apply_applicability_domain, comp_sharpness,
-    fit_conformal, apply_conformal)
+    fit_conformal, apply_conformal, comp_calibration_bins, comp_brier, comp_ece)
 
 
 # I Helper Functions
@@ -420,6 +420,8 @@ class ReliabilityModel(Wrapper):
              *, X: Optional[ut.ArrayLike2D] = None,
              labels: Optional[ut.ArrayLike1D] = None,
              n_bins: int = 5,
+             use_calibrated: bool = False,
+             add_metrics: bool = False,
              ) -> pd.DataFrame:
         """
         Reliability diagnostics: calibration curve, empirical conformal coverage, in-domain rate.
@@ -427,7 +429,9 @@ class ReliabilityModel(Wrapper):
         Aggregates :meth:`predict` over a labeled evaluation set into a compact table — per-bin
         predicted-vs-empirical positive rate (how well calibrated the score is) plus a summary row
         with the fraction in the applicability domain and the empirical coverage of the conformal
-        sets (which should track ``1 - conformal_alpha``).
+        sets (which should track ``1 - conformal_alpha``). Optionally, the calibrated score is
+        binned instead of the raw one, and the Brier score and expected calibration error (ECE)
+        [Guo17]_ are added as scalar rows, so two calibrations can be compared by number.
 
         .. versionchanged:: 1.2.0
            The per-bin sample-count column ``n`` is named ``n_samples``.
@@ -442,7 +446,20 @@ class ReliabilityModel(Wrapper):
             Evaluation labels, using only class labels observed during :meth:`fit`. The training
             labels are used if ``None``, independently of whether ``X`` is supplied.
         n_bins : int, default=5
-            Number of equal-width score bins for the calibration curve.
+            Number of equal-width score bins for the calibration curve (and the ECE).
+        use_calibrated : bool, default=False
+            If ``True``, score the calibrated column (``score_calibrated``) instead of the raw
+            ``score``: the bins, Brier score, and ECE then describe the calibrated probability.
+            Requires a model fitted with ``calibrate=True``.
+
+            .. versionadded:: 1.2.0
+        add_metrics : bool, default=False
+            If ``True``, append two scalar rows for the scored column: the Brier score
+            (``bin='brier'``, mean squared difference between score and label) and the ECE
+            (``bin='ece'``, the ``n_samples``-weighted mean of ``|mean_score - empirical_pos|``
+            over the ``n_bins`` bins). Lower is better for both.
+
+            .. versionadded:: 1.2.0
 
         Returns
         -------
@@ -450,15 +467,24 @@ class ReliabilityModel(Wrapper):
             Per-bin rows (``bin``, ``mean_score``, ``empirical_pos``, ``n_samples``) plus a
             summary row (``bin='summary'``) with the in-domain fraction (``mean_score``), the
             empirical conformal coverage (``empirical_pos``), and the number of evaluated samples
-            (``n_samples``).
+            (``n_samples``). With ``add_metrics=True``, a ``'brier'`` and an ``'ece'`` row follow,
+            each holding its value in ``mean_score`` (``empirical_pos`` is ``NaN``, ``n_samples``
+            is the number of evaluated samples).
 
         Raises
         ------
         RuntimeError
             If called before :meth:`fit`.
         ValueError
-            If ``X`` and ``labels`` have different lengths, ``X`` has a different feature count
-            than the training data, or ``labels`` contains a class not observed during :meth:`fit`.
+            If ``use_calibrated=True`` but the model has no probability calibrator (fitted with
+            ``calibrate=False``).
+
+        Notes
+        -----
+        * With both parameters left at their defaults, the output is the raw-score table of
+          earlier versions, unchanged.
+        * Scoring the calibrated column on the training data flatters the calibrator (it was fit
+          there); pass a held-out ``X`` / ``labels`` to judge whether calibration helps.
 
         Examples
         --------
@@ -479,20 +505,21 @@ class ReliabilityModel(Wrapper):
             raise ValueError(f"'labels' ({unknown_labels}) should contain only labels observed "
                              f"during 'fit' ({sorted(train_classes)}).")
         ut.check_number_range(name="n_bins", val=n_bins, min_val=2, just_int=True)
+        ut.check_bool(name="use_calibrated", val=use_calibrated)
+        ut.check_bool(name="add_metrics", val=add_metrics)
+        if use_calibrated and self._calibrator is None:
+            raise ValueError("'use_calibrated' (True) should only be set for a model fitted with "
+                             "'calibrate=True' (this model has no probability calibrator).")
         y = (np.asarray(labels) == self.label_pos_).astype(int)
         df = self.predict(X)
-        s = df[ut.COL_SCORE].to_numpy()
-        edges = np.linspace(0, 1, n_bins + 1)
-        rows = []
-        for b in range(n_bins):
-            m = (s >= edges[b]) & (s <= edges[b + 1] if b == n_bins - 1 else s < edges[b + 1])
-            rows.append([f"{edges[b]:.2f}-{edges[b+1]:.2f}",
-                         float(np.mean(s[m])) if m.any() else np.nan,
-                         float(np.mean(y[m])) if m.any() else np.nan,
-                         int(m.sum())])
+        s = df[ut.COL_SCORE_CAL if use_calibrated else ut.COL_SCORE].to_numpy()
+        rows = comp_calibration_bins(s, y, n_bins=n_bins)
         sets = df[ut.COL_CONFORMAL_SET].to_numpy()
         covered = (np.isin(sets, [ut.STR_CONF_POS, ut.STR_CONF_BOTH]) & (y == 1)) | \
                   (np.isin(sets, [ut.STR_CONF_NEG, ut.STR_CONF_BOTH]) & (y == 0))
         rows.append([ut.STR_BIN_SUMMARY, float(np.mean(df[ut.COL_IN_DOMAIN])),
                      float(np.mean(covered)), len(X)])
+        if add_metrics:
+            rows.append([ut.STR_BIN_BRIER, comp_brier(s, y), np.nan, len(X)])
+            rows.append([ut.STR_BIN_ECE, comp_ece(rows[:n_bins], n_samples=len(X)), np.nan, len(X)])
         return pd.DataFrame(rows, columns=ut.COLS_EVAL_RELIABILITY)
