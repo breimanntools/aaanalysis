@@ -12,6 +12,7 @@ import aaanalysis.utils as ut
 _C_RELIABLE, _C_UNDECIDED, _C_OOD = "tab:green", "tab:orange", "tab:red"
 
 
+# I Helper Functions
 def _fig_ax(ax, figsize):
     if ax is None:
         fig, ax = plt.subplots(figsize=figsize)
@@ -26,6 +27,13 @@ def _trust_color(row):
     return _C_UNDECIDED if bool(row[ut.COL_IN_DOMAIN]) else _C_OOD
 
 
+def _metric_value(df_eval, bin_name):
+    """Scalar of a calibration-metric row (value in ``mean_score``), or ``None`` if absent."""
+    rows = df_eval[df_eval[ut.COL_BIN] == bin_name]
+    return None if rows.empty else float(rows[ut.COL_MEAN_SCORE].iloc[0])
+
+
+# II Main Functions
 def plot_ranking_(df_rel, names=None, figsize=None, top_n=None, title=None, ax=None):
     """Per-sample horizontal bars: score with its uncertainty interval, colored by trust status."""
     d = df_rel.copy()
@@ -55,12 +63,6 @@ def plot_ranking_(df_rel, names=None, figsize=None, top_n=None, title=None, ax=N
 
 
 _LABEL_PERFECT = "perfect calibration"
-
-
-def _metric_value(df_eval, bin_name):
-    """Scalar of a calibration-metric row (value in ``mean_score``), or ``None`` if absent."""
-    rows = df_eval[df_eval[ut.COL_BIN] == bin_name]
-    return None if rows.empty else float(rows[ut.COL_MEAN_SCORE].iloc[0])
 
 
 def plot_reliability_diagram_(df_eval, figsize=(5, 5), color="tab:blue", label="model",

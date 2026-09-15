@@ -12,6 +12,7 @@ from ._backend.reliability.reliability_plot import (
     plot_reliability_diagram_, plot_ood_hist_, plot_trust_map_, plot_ranking_)
 
 
+# I Helper Functions
 def _check_df_cols(df, name, cols):
     """The plotted frame must be a DataFrame carrying the required columns."""
     if not isinstance(df, pd.DataFrame):
@@ -20,7 +21,7 @@ def _check_df_cols(df, name, cols):
     if missing:
         raise ValueError(f"'{name}' is missing required columns: {missing}.")
 
-
+# II Main Functions
 class ReliabilityModelPlot:
     """
     Visualize :class:`ReliabilityModel` outputs — calibration and the two trust axes.

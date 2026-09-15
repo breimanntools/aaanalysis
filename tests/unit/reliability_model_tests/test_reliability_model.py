@@ -646,11 +646,19 @@ class TestEval:
         with pytest.raises(ValueError, match=r"'labels' \(None\) should be the evaluation"):
             rm.eval(X=Xtr)
 
-    def test_eval_labels_without_X_raises(self):
+    def test_eval_labels_without_X_uses_training_features(self):
+        # Labels given without features are scored against the training matrix; they are not
+        # replaced by the training labels (see test_eval_uses_labels_with_default_training_features).
         Xtr, ytr, _ = _data()
         rm = aa.ReliabilityModel(random_state=0).fit(Xtr, ytr, n_bootstrap=3)
-        with pytest.raises(ValueError, match=r"'X' \(None\) should be the evaluation"):
-            rm.eval(labels=ytr)
+        ev = rm.eval(labels=ytr, n_bins=3)
+        assert int(ev[ev["bin"] == "summary"]["n_samples"].iloc[0]) == len(Xtr)
+
+    def test_eval_labels_without_X_length_mismatch_raises(self):
+        Xtr, ytr, _ = _data()
+        rm = aa.ReliabilityModel(random_state=0).fit(Xtr, ytr, n_bootstrap=3)
+        with pytest.raises(ValueError, match="n_samples does not match"):
+            rm.eval(labels=ytr[:-5])
 
     @pytest.mark.parametrize("labels", [[1] * 90, ["a", "b"] * 45, 5])
     def test_eval_labels_invalid(self, labels):
@@ -784,6 +792,24 @@ class TestEval:
     def test_add_metrics_before_fit_raises(self):
         with pytest.raises(RuntimeError, match="Call 'fit' before 'eval'"):
             aa.ReliabilityModel().eval(add_metrics=True)
+
+    def test_eval_uses_labels_with_default_training_features(self):
+        Xtr, ytr, _ = _data()
+        rm = aa.ReliabilityModel(random_state=0).fit(Xtr, ytr, n_bootstrap=3)
+        # These valid but deliberately unbalanced labels must not be overwritten with ytr merely
+        # because X defaults to the training feature matrix.
+        labels_eval = np.array([1] * (len(ytr) - 10) + [0] * 10)
+        ev = rm.eval(labels=labels_eval, n_bins=3)
+        bins = ev[ev["bin"] != "summary"]
+        bins = bins[bins["n_samples"] > 0]
+        weighted_rate = np.average(bins["empirical_pos"], weights=bins["n_samples"])
+        assert weighted_rate == pytest.approx(labels_eval.mean())
+
+    def test_eval_unknown_labels_raise(self):
+        Xtr, ytr, _ = _data()
+        rm = aa.ReliabilityModel(random_state=0).fit(Xtr, ytr, n_bootstrap=3)
+        with pytest.raises(ValueError, match="labels observed"):
+            rm.eval(labels=np.array([2] * (len(ytr) - 1) + [0]))
 
 
 class TestEvalComplex:

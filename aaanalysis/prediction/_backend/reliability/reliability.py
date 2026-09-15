@@ -14,6 +14,18 @@ from sklearn.neighbors import NearestNeighbors
 from sklearn.model_selection import train_test_split
 
 
+# I Helper Functions
+def _set_seed(estimator, seed):
+    """Set ``random_state`` on an estimator when it supports it (reproducibility)."""
+    try:
+        if "random_state" in estimator.get_params(deep=False):
+            estimator.set_params(random_state=seed)
+    except (ValueError, AttributeError):
+        pass
+    return estimator
+
+
+# II Main Functions
 # --- uncertainty (epistemic stability) ------------------------------------------------------
 def positive_proba(model, X, label_pos=1):
     """Positive-class probability column of a fitted classifier."""
@@ -165,13 +177,3 @@ def apply_conformal(state, X_new):
     inc_pos, inc_neg = (1 - p) <= state["q"], p <= state["q"]
     return np.where(inc_pos & inc_neg, "both",
                     np.where(inc_pos, "pos", np.where(inc_neg, "neg", "none"))).astype(object)
-
-
-def _set_seed(estimator, seed):
-    """Set ``random_state`` on an estimator when it supports it (reproducibility)."""
-    try:
-        if "random_state" in estimator.get_params(deep=False):
-            estimator.set_params(random_state=seed)
-    except (ValueError, AttributeError):
-        pass
-    return estimator
