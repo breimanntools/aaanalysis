@@ -87,6 +87,12 @@ notes — with cross-references and examples — live in
   domain level's `is_best` column is now routed through `COL_IS_BEST` (no output change).
 
 ### Changed
+- `CPP.run(n_batches=...)` (scale-axis batching) now returns output identical to the
+  single-pass run. The Benjamini-Hochberg FDR correction used to be applied separately to
+  each feature batch, so the reported `p_val_fdr_bh` depended on how the scale axis happened
+  to be partitioned; it is now computed once over the pooled p-values of all batches, which
+  is what the single-pass path does. Selected features, ranking and every other column are
+  unchanged, as are the default (unbatched) path and `n_sample_batches` (addresses #485).
 - Prediction/design-tier consistency pass (these classes are still experimental, so no
   deprecation cycle; addresses #510):
   - `ReliabilityModel.fit(ci=...)` is now a fraction in (0, 1), default `0.90` (was a percent,

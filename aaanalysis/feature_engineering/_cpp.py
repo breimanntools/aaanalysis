@@ -661,12 +661,15 @@ class CPP(Tool):
         n_batches : int or None, default=None
             Number of scale-axis batches (2 to ``len(df_scales.columns)``). If ``None``,
             single-pass processing is used. A value reduces the per-batch scale-value tensor
-            and usually lowers peak memory at the cost of additional work. The FDR correction
-            is applied separately to each selected-feature batch, so only ``p_val_fdr_bh`` can
-            differ from the single-pass output; ranking and selected features are unchanged.
+            and usually lowers peak memory at the cost of additional work. Output is
+            byte-identical to the single-pass result, ``p_val_fdr_bh`` included: the
+            Benjamini-Hochberg correction is computed once over the pooled p-values of all
+            batches, not per batch.
 
             .. versionchanged:: 1.2.0
-                Clarified the per-feature-batch FDR-correction semantics.
+                The Benjamini-Hochberg correction is now pooled across batches, so batched
+                output matches single-pass output exactly. Before, it was applied per
+                feature batch and ``p_val_fdr_bh`` could differ from the single-pass value.
         n_sample_batches : int or None, default=None
             Number of non-empty, contiguous sample-axis batches (2 to ``n_samples``). If
             ``None``, sample batching is disabled. A value divides samples into exactly this
