@@ -69,6 +69,14 @@ notes — with cross-references and examples — live in
   calls (`Segment(1,1)`; `Segment(2..15)` + `Pattern` + `PeriodicPattern`).
   `strategy=None` keeps the output unchanged; combining a preset with non-default
   `split_types`, `n_split_min`, or `n_split_max` raises `ValueError` (#87).
+- `ModelEvaluator.learning_curve` / `ModelEvaluatorPlot.learning_curve`: cross-validated
+  metric-vs-training-size curve with bootstrap CIs (stratified, nested subsets of each training
+  fold; test folds untouched) to tell a sampling-limited task from a saturated one. The default
+  grid has five fraction candidates (which resolve to five distinct sizes on sufficiently large
+  data), each with a bootstrap CI. A fractional size is resolved within each training fold, so
+  `1.0` is every fold's complete training set and reproduces
+  `ModelEvaluator.run` when both calls use the same `random_state`, `n_cv`, `n_rounds`, and
+  metrics, also when the training folds differ in size (#93).
 
 ### Fixed
 - `ReliabilityModel.fit`: non-finite numbers (`NaN`, `inf`, `-inf`) are rejected for `ci`,
