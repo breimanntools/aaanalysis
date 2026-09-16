@@ -79,7 +79,7 @@ def _linkify_api(rst):
         for n in fun:
             rst = re.sub(w + r'(?:aa\.)?' + re.escape(n) + w,
                          ':func:`~aaanalysis.' + n + '`', rst)
-    return _refit_grid_tables(rst)
+    return _refit_section_underlines(_refit_grid_tables(rst))
 
 
 # nbconvert draws pandoc-style grid tables with fixed-width borders sized to the
@@ -89,6 +89,34 @@ def _linkify_api(rst):
 # its border so docutils reports "Malformed table". These helpers re-measure every
 # column from the (possibly widened) cell text and redraw the borders + rows to fit,
 # keeping the links and a table that still parses.
+
+# nbconvert sizes a section underline to the *markdown* heading text. ``_linkify_api``
+# then rewrites a code literal (``CPP.run``) into a longer cross-reference role
+# (:meth:`~aaanalysis.CPP.run`) in place, leaving the underline shorter than the title
+# it belongs to, which docutils reports as "Title underline too short". This re-measures
+# every underline from the (possibly widened) title above it, the same way the grid
+# tables below are re-measured.
+_SECTION_UNDERLINE = re.compile(r'^(\s*)([=\-~^"\':.*+#_<>])\2{2,}\s*$')
+
+
+def _refit_section_underlines(rst):
+    """Extend every section underline that its own linkified title has outgrown."""
+    lines = rst.split('\n')
+    for i in range(1, len(lines)):
+        match = _SECTION_UNDERLINE.match(lines[i])
+        if match is None:
+            continue
+        title = lines[i - 1].strip()
+        # A transition rule has no title above it, and a grid-table border starts with
+        # '+' and is redrawn by the table refit instead.
+        if not title or title.startswith('+'):
+            continue
+        indent, char = match.group(1), match.group(2)
+        if len(lines[i].strip()) < len(title):
+            lines[i] = indent + char * len(title)
+    return '\n'.join(lines)
+
+
 _GRID_BORDER = re.compile(r'^\s*\+[-=]+(?:\+[-=]+)*\+\s*$')
 _GRID_ROW = re.compile(r'^\s*\|.*\|\s*$')
 
