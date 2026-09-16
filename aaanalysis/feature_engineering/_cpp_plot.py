@@ -264,6 +264,23 @@ def check_col_dif(col_dif=None, shap_plot=False) -> None:
             raise ValueError(f"If 'shap_plot=True', 'col_dif' ('{col_dif}') must follow '{ut.COL_MEAN_DIF}_'name''")
 
 
+def check_cols_ci(df_feat: pd.DataFrame, col_dif: str, show_ci: bool = False):
+    """Resolve the bootstrap interval columns of ``col_dif``, or ``None`` when intervals are off"""
+    if not show_ci:
+        return None
+    if col_dif != ut.COL_MEAN_DIF:
+        raise ValueError(f"If 'show_ci=True', 'col_dif' ('{col_dif}') must be the group-level "
+                         f"'{ut.COL_MEAN_DIF}'. Bootstrap intervals are computed per feature over "
+                         f"resampling rounds and therefore exist only at group level.")
+    col_low, col_high = ut.DICT_COLS_FEAT_CI[ut.COL_MEAN_DIF]
+    cols_missing = [x for x in (col_low, col_high) if x not in list(df_feat)]
+    if len(cols_missing) > 0:
+        raise ValueError(f"If 'show_ci=True', 'df_feat' must contain the interval columns "
+                         f"{cols_missing}, which are added by CPP(bootstrap=True, "
+                         f"bootstrap_kws={{'ci': 0.95}}).run().")
+    return col_low, col_high
+
+
 def check_col_imp(col_imp=None, shap_plot=False):
     """Check if col_imp is string and set default"""
     ut.check_str(name="col_imp", val=col_imp, accept_none=True)
@@ -800,6 +817,8 @@ class CPPPlot:
                 xlim_rank: Optional[Tuple[Union[int, float], Union[int, float]]] = (0, 4),
                 rank_info_xy: Optional[Tuple[Optional[Union[int, float]], Optional[Union[int, float]]]] = None,
                 sample: Optional[str] = None,
+                show_ci: bool = False,
+                ci_color: str = "black",
                 ) -> Tuple[Figure, Axes]:
         """
         Plot CPP/-SHAP feature ranking based on feature importance or sample-specific feature impact.
@@ -882,6 +901,21 @@ class CPPPlot:
             Convenience shortcut for sample-level CPP-SHAP ranking. When given (a protein entry name),
             ``col_imp`` is resolved to ``feat_impact_<sample>`` and ``shap_plot`` is set to ``True``
             automatically, removing the manual ``col_imp=f"feat_impact_<name>"`` string-templating.
+        show_ci : bool, default=False
+            If ``True``, the bootstrap confidence interval of ``col_dif`` is drawn as horizontal
+            whiskers on the bars of the mean difference subplot. This requires the group-level
+            ``col_dif='mean_dif'`` and the ``'mean_dif_ci_low'`` / ``'mean_dif_ci_high'`` columns,
+            which :meth:`CPP.run` appends when the object is created with
+            ``CPP(bootstrap=True, bootstrap_kws={'ci': 0.95})``; a ``ValueError`` is raised if
+            either is missing. A feature with ``NaN`` bounds (selected in fewer than two rounds)
+            is drawn without whiskers. If ``False`` (default), the figure is unchanged.
+
+            .. versionadded:: 1.2.0
+
+        ci_color : str, default='black'
+            Color of the confidence interval whiskers (only used if ``show_ci=True``).
+
+            .. versionadded:: 1.2.0
 
         Returns
         -------
@@ -939,6 +973,9 @@ class CPPPlot:
         ut.check_lim(name="xlim_rank", val=xlim_rank)
         ut.check_tuple(name="rank_info_xy", val=rank_info_xy, n=2,
                        accept_none=True, check_number=True)
+        ut.check_bool(name="show_ci", val=show_ci, accept_none=False)
+        ut.check_color(name="ci_color", val=ci_color, accept_none=False)
+        cols_ci = check_cols_ci(df_feat=df_feat, col_dif=col_dif, show_ci=show_ci)
 
         # DEV: No match check for features and tmd (check_match_features_seq_parts) necessary
         # Auto-sizing applies only when the caller OMITS figsize (figsize is None, the
@@ -967,7 +1004,8 @@ class CPPPlot:
                                  fontsize_annotations=fontsize_annotations,
                                  tmd_jmd_space=tmd_jmd_space,
                                  xlim_dif=xlim_dif, xlim_rank=xlim_rank,
-                                 rank_info_xy=rank_info_xy)
+                                 rank_info_xy=rank_info_xy,
+                                 cols_ci=cols_ci, ci_color=ci_color)
 
         # Adjust plot
         with warnings.catch_warnings():

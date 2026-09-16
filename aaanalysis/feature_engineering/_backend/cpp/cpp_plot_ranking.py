@@ -1,6 +1,7 @@
 """
 This is a script for the backend of the CPPPlot.ranking() method.
 """
+import numpy as np
 import seaborn as sns
 import matplotlib.pyplot as plt
 import matplotlib as mpl
@@ -11,11 +12,17 @@ from .utils_feature import get_positions_
 
 # I Helper Functions
 # Adjust df_feat
-def _adjust_df_feat(df_feat=None, col_dif=None):
-    """Adjusts feature values in `df_feat` based on percentage scaling and sets the limits for difference columns."""
+def _adjust_df_feat(df_feat=None, col_dif=None, cols_ci=None):
+    """Adjusts feature values in `df_feat` based on percentage scaling and sets the limits for difference columns.
+
+    ``cols_ci`` (the lower/upper interval columns of ``col_dif``, if shown) is scaled by the same
+    factor, so the interval stays on the axis of the bars it annotates."""
     df_feat = df_feat.copy()
     if max(df_feat[col_dif]) - min(df_feat[col_dif]) <= 2:
         df_feat[col_dif] *= 100
+        if cols_ci is not None:
+            for col in cols_ci:
+                df_feat[col] *= 100
     return df_feat
 
 
@@ -117,7 +124,29 @@ def _add_annotation_extreme_val(sub_fig=None, max_neg_val=-2, min_pos_val=2, tex
             sub_fig.annotate(f"{int(val)}%", (x, p.get_y() + p.get_height()/2), ha=ha, **args)
 
 
-def plot_feature_mean_dif(ax=None, df=None, col_dif=None, n=20, xlim=(-22, 22), fontsize_annotation=8):
+def _add_ci_whiskers(ax=None, df=None, col_dif=None, cols_ci=None, color="black",
+                     linewidth=1.0, capsize=3.0):
+    """Draws horizontal confidence-interval whiskers onto the mean difference bars of `ax`.
+
+    Bar ``i`` sits at ``y=i``, matching the row order of `df`. A feature whose interval bounds are
+    not finite (selected in fewer than two bootstrap rounds) is skipped, so it keeps a bare bar.
+    A percentile interval need not bracket the point estimate computed on the full data, and
+    matplotlib requires non-negative error lengths, so each arm is clipped at zero."""
+    col_low, col_high = cols_ci
+    vals = df[col_dif].to_numpy(dtype=float)
+    low = df[col_low].to_numpy(dtype=float)
+    high = df[col_high].to_numpy(dtype=float)
+    y = np.arange(len(df), dtype=float)
+    mask = np.isfinite(vals) & np.isfinite(low) & np.isfinite(high)
+    if not mask.any():
+        return
+    err = np.vstack([np.clip(vals - low, 0, None), np.clip(high - vals, 0, None)])
+    ax.errorbar(vals[mask], y[mask], xerr=err[:, mask], fmt="none", ecolor=color,
+                elinewidth=linewidth, capsize=capsize, zorder=5)
+
+
+def plot_feature_mean_dif(ax=None, df=None, col_dif=None, n=20, xlim=(-22, 22), fontsize_annotation=8,
+                          cols_ci=None, ci_color="black"):
     """Plots the mean difference of features in `df` on the axis `ax`, with custom range `xlim` and annotation font size."""
     plt.sca(ax)
     colors = [ut.get_color_dif(mean_dif=x) for x in df[col_dif]]
@@ -127,6 +156,9 @@ def plot_feature_mean_dif(ax=None, df=None, col_dif=None, n=20, xlim=(-22, 22), 
     sns.despine(top=True, right=True, left=False, bottom=False)
     _add_annotation_extreme_val(sub_fig=sub_fig, text_size=fontsize_annotation,
                                 max_neg_val=xlim[0], min_pos_val=xlim[1])
+    # Add bootstrap confidence intervals (only when the interval columns were resolved)
+    if cols_ci is not None:
+        _add_ci_whiskers(ax=ax, df=df, col_dif=col_dif, cols_ci=cols_ci, color=ci_color)
     # Add values for importance
     plt.axvline(x=0, color='gray', linestyle='-')
     plt.yticks(range(0, n), list(df[ut.COL_SUBCAT]))
@@ -230,13 +262,15 @@ def plot_ranking(df_feat=None,
                  tmd_jmd_space=2,
                  xlim_dif=(-17.5, 17.5),
                  xlim_rank=(0, 4),
-                 rank_info_xy=None):
+                 rank_info_xy=None,
+                 cols_ci=None,
+                 ci_color="black"):
     """Plot ranking of feature DataFrame"""
     # Adjust df_feat
     if rank:
         df_feat = df_feat.sort_values(by=col_imp, key=lambda x: abs(x), ascending=False)
     df_feat = df_feat.head(n_top).copy().reset_index(drop=True)
-    df_feat = _adjust_df_feat(df_feat=df_feat, col_dif=col_dif)
+    df_feat = _adjust_df_feat(df_feat=df_feat, col_dif=col_dif, cols_ci=cols_ci)
     df_feat[ut.COL_POSITION] = get_positions_(features=df_feat[ut.COL_FEATURE],
                                               tmd_len=tmd_len, jmd_n_len=jmd_n_len, jmd_c_len=jmd_c_len)
     # Plotting (three subplots)
@@ -250,7 +284,8 @@ def plot_ranking(df_feat=None,
     # 2. Barplot mean difference
     plot_feature_mean_dif(ax=axes[1], df=df_feat,
                           n=n_top, col_dif=col_dif, xlim=xlim_dif,
-                          fontsize_annotation=fontsize_annotations)
+                          fontsize_annotation=fontsize_annotations,
+                          cols_ci=cols_ci, ci_color=ci_color)
     sns.despine(ax=axes[1], top=True, right=True, left=True, bottom=False)
     axes[1].set_title(f"Mean difference\nof feature value",
                       size=fontsize_titles, weight="bold")

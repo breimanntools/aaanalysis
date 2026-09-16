@@ -12,6 +12,8 @@ from hypothesis import given, settings, assume
 import hypothesis.strategies as st
 import aaanalysis as aa
 import random
+from matplotlib.colors import to_rgba
+from matplotlib.container import ErrorbarContainer
 
 # Set default deadline from 200 to 400
 settings.register_profile("ci", deadline=None)
@@ -23,6 +25,29 @@ def create_df_feat(num_features=50):
     """Creates a dummy DataFrame to mimic df_feat input."""
     df_feat = aa.load_features()
     return df_feat.head(num_features)
+
+
+def create_df_feat_ci(num_features=20, n_nan=0):
+    """Creates a df_feat with the bootstrap interval columns of 'mean_dif'.
+
+    Mimics the output of CPP(bootstrap=True, bootstrap_kws={'ci': 0.95}).run(). The first ``n_nan``
+    features get NaN bounds, as a feature selected in fewer than two rounds does."""
+    df_feat = create_df_feat(num_features=num_features).copy().reset_index(drop=True)
+    mean_dif = df_feat["mean_dif"].to_numpy(dtype=float)
+    df_feat["mean_dif_ci_low"] = mean_dif - 0.02
+    df_feat["mean_dif_ci_high"] = mean_dif + 0.03
+    if n_nan > 0:
+        df_feat.loc[df_feat.index[:n_nan], ["mean_dif_ci_low", "mean_dif_ci_high"]] = np.nan
+    return df_feat
+
+
+def get_ci_segments(ax=None):
+    """Returns the drawn confidence-interval whiskers of ``ax`` as [[x_low, y], [x_high, y]] lists."""
+    segments = []
+    for container in ax.containers:
+        if isinstance(container, ErrorbarContainer):
+            segments += [s.tolist() for s in container[2][0].get_segments()]
+    return segments
 
 
 # Test Class for Normal Cases
@@ -279,6 +304,29 @@ class TestRanking:
             assert isinstance(axes[0], plt.Axes)
             plt.close()
 
+    def test_show_ci(self):
+        cpp_plot = aa.CPPPlot()
+        df_feat = create_df_feat_ci()
+        for show_ci in [True, False]:
+            fig, axes = cpp_plot.ranking(df_feat=df_feat, show_ci=show_ci)
+            assert isinstance(fig, plt.Figure)
+            assert isinstance(axes, np.ndarray)
+            assert len(axes) == 3
+            n_whiskers = len(get_ci_segments(ax=axes[1]))
+            assert n_whiskers == (15 if show_ci else 0)
+            plt.close()
+
+    def test_ci_color(self):
+        df_feat = create_df_feat_ci()
+        for ci_color in ["black", "red", "tab:blue"]:
+            cpp_plot = aa.CPPPlot()
+            fig, axes = cpp_plot.ranking(df_feat=df_feat, show_ci=True, ci_color=ci_color)
+            assert isinstance(fig, plt.Figure)
+            assert len(get_ci_segments(ax=axes[1])) > 0
+            colors = [c for c in axes[1].containers if isinstance(c, ErrorbarContainer)][0][2][0].get_colors()
+            assert tuple(colors[0]) == to_rgba(ci_color)
+            plt.close()
+
     # Negative Test
     def test_invalid_df_feat(self):
         cpp_plot = aa.CPPPlot()
@@ -460,6 +508,42 @@ class TestRanking:
         with pytest.raises(ValueError):
             cpp_plot.ranking(df_feat=df_feat, fontsize_annotations=fontsize)
 
+    def test_invalid_show_ci(self):
+        cpp_plot = aa.CPPPlot()
+        df_feat = create_df_feat_ci()
+        for show_ci in ["yes", None, 1.5, []]:
+            with pytest.raises(ValueError):
+                cpp_plot.ranking(df_feat=df_feat, show_ci=show_ci)
+            plt.close()
+
+    def test_invalid_show_ci_missing_cols(self):
+        cpp_plot = aa.CPPPlot()
+        df_feat = create_df_feat_ci()
+        # Both interval columns missing, and each one on its own
+        for cols_drop in [["mean_dif_ci_low", "mean_dif_ci_high"], ["mean_dif_ci_low"], ["mean_dif_ci_high"]]:
+            with pytest.raises(ValueError):
+                cpp_plot.ranking(df_feat=df_feat.drop(columns=cols_drop), show_ci=True)
+            plt.close()
+
+    def test_invalid_show_ci_col_dif(self):
+        # Intervals exist only for the group-level 'mean_dif', not for a sample-specific column
+        cpp_plot = aa.CPPPlot()
+        df_feat = create_df_feat_ci()
+        df_feat["mean_dif_Protein4"] = df_feat["mean_dif"]
+        df_feat["feat_impact_Protein4"] = df_feat["feat_importance"]
+        with pytest.raises(ValueError):
+            cpp_plot.ranking(df_feat=df_feat, col_dif="mean_dif_Protein4",
+                             col_imp="feat_impact_Protein4", shap_plot=True, show_ci=True)
+        plt.close()
+
+    def test_invalid_ci_color(self):
+        cpp_plot = aa.CPPPlot()
+        df_feat = create_df_feat_ci()
+        for ci_color in ["not_a_color", 123, None, []]:
+            with pytest.raises(ValueError):
+                cpp_plot.ranking(df_feat=df_feat, show_ci=True, ci_color=ci_color)
+            plt.close()
+
 
 # Test Class for Complex Cases
 class TestRankingComplex:
@@ -502,4 +586,80 @@ class TestRankingComplex:
         assert isinstance(axes, np.ndarray)
         assert len(axes) == 3
         assert isinstance(axes[0], plt.Axes)
+
+    def test_complex_valid_show_ci(self):
+        # Intervals combined with other parameters, and with NaN bounds for the first 3 features
+        # (rank=False keeps the row order, so those three are among the 12 shown)
+        cpp_plot = aa.CPPPlot()
+        df_feat = create_df_feat_ci(num_features=20, n_nan=3)
+        fig, axes = cpp_plot.ranking(df_feat=df_feat, n_top=12, rank=False, show_ci=True,
+                                     ci_color="tab:gray", figsize=(10, 8), tmd_len=25,
+                                     name_test="TestDataset", name_ref="RefDataset",
+                                     xlim_dif=(-20, 20), xlim_rank=(1, 10),
+                                     fontsize_annotations=10)
+        assert isinstance(fig, plt.Figure)
+        assert isinstance(axes, np.ndarray)
+        assert len(axes) == 3
+        # 12 bars are shown, 3 of the features have NaN bounds and get no whisker
+        assert len(get_ci_segments(ax=axes[1])) == 9
+        plt.close()
+
+    def test_show_ci_all_nan_bounds(self):
+        # Every feature selected in fewer than two rounds: bars are drawn, no whisker is
+        cpp_plot = aa.CPPPlot()
+        df_feat = create_df_feat_ci(num_features=10, n_nan=10)
+        fig, axes = cpp_plot.ranking(df_feat=df_feat, n_top=10, show_ci=True)
+        assert isinstance(fig, plt.Figure)
+        assert len(get_ci_segments(ax=axes[1])) == 0
+        plt.close()
+
+
+# Test Class for Golden Values
+class TestRankingGoldenValues:
+    """Test class for the ranking method, focusing on hand-computed whisker geometry."""
+
+    @staticmethod
+    def create_df_golden(ci_low=None, ci_high=None):
+        """Three features with hand-picked mean differences and interval bounds."""
+        df_feat = create_df_feat(num_features=3).copy().reset_index(drop=True)
+        df_feat["mean_dif"] = [0.10, -0.08, 0.05]
+        df_feat["feat_importance"] = [3.0, 2.0, 1.0]
+        df_feat["mean_dif_ci_low"] = [0.06, -0.12, np.nan] if ci_low is None else ci_low
+        df_feat["mean_dif_ci_high"] = [0.13, -0.03, np.nan] if ci_high is None else ci_high
+        return df_feat
+
+    def test_whisker_endpoints(self):
+        # The subplot shows mean differences in percent (x100), so the bounds 0.06/0.13 of the
+        # first feature give a whisker from 6 to 13 at y=0, and -0.12/-0.03 give -12 to -3 at y=1.
+        cpp_plot = aa.CPPPlot()
+        fig, axes = cpp_plot.ranking(df_feat=self.create_df_golden(), n_top=3, rank=False, show_ci=True)
+        segments = get_ci_segments(ax=axes[1])
+        np.testing.assert_allclose(segments, [[[6.0, 0.0], [13.0, 0.0]], [[-12.0, 1.0], [-3.0, 1.0]]])
+        plt.close()
+
+    def test_nan_bounds_get_no_whisker(self):
+        # The third feature (NaN bounds) is not drawn: 3 bars, 2 whiskers, none at y=2
+        cpp_plot = aa.CPPPlot()
+        fig, axes = cpp_plot.ranking(df_feat=self.create_df_golden(), n_top=3, rank=False, show_ci=True)
+        segments = get_ci_segments(ax=axes[1])
+        assert len(segments) == 2
+        assert [s[0][1] for s in segments] == [0.0, 1.0]
+        plt.close()
+
+    def test_interval_not_bracketing_point_estimate(self):
+        # ci_low (0.11) above mean_dif (0.10): a percentile interval need not contain the
+        # full-data estimate, so the left arm is clipped at zero and the whisker runs 10 to 13.
+        df_feat = self.create_df_golden(ci_low=[0.11, -0.12, np.nan], ci_high=[0.13, -0.03, np.nan])
+        cpp_plot = aa.CPPPlot()
+        fig, axes = cpp_plot.ranking(df_feat=df_feat, n_top=3, rank=False, show_ci=True)
+        segments = get_ci_segments(ax=axes[1])
+        np.testing.assert_allclose(segments, [[[10.0, 0.0], [13.0, 0.0]], [[-12.0, 1.0], [-3.0, 1.0]]])
+        plt.close()
+
+    def test_no_whiskers_without_show_ci(self):
+        # Interval columns present but the option off: nothing is drawn
+        cpp_plot = aa.CPPPlot()
+        fig, axes = cpp_plot.ranking(df_feat=self.create_df_golden(), n_top=3, rank=False)
+        assert len(get_ci_segments(ax=axes[1])) == 0
+        plt.close()
         plt.close()

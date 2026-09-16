@@ -16,6 +16,7 @@ notes — with cross-references and examples — live in
 ## [Unreleased]
 
 ### Added
+- `CPPPlot.ranking(show_ci=True)`: draws the bootstrap confidence interval of `mean_dif` as whiskers on the mean difference bars, with `ci_color` setting their color. Off by default, so existing figures are unchanged; a feature with `NaN` bounds keeps a bare bar (#16).
 - `DesignConstraints`: one validated, JSON-round-trippable container for the design limits
   `AAMut`, `SeqMut` and `SeqOpt` all express -- immutable positions, a mutable span, permitted /
   forbidden substitutions (globally or per position), a mutation budget, sequence-identity bounds

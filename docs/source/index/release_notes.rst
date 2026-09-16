@@ -41,6 +41,9 @@ Added
   per feature, adding ``abs_auc_ci_low`` / ``_high`` and ``mean_dif_ci_low`` / ``_high`` to
   ``df_feat`` at no extra runs. The interval is conditional on selection, so it is read together
   with ``selection_frequency``. Leaving ``ci`` unset keeps the output unchanged.
+- :meth:`~aaanalysis.CPPPlot.ranking` renders those intervals: ``show_ci=True`` draws them as
+  whiskers on the mean difference bars, in ``ci_color``. Off by default, so existing figures are
+  unchanged, and a feature with ``NaN`` bounds keeps a bare bar.
 - :meth:`~aaanalysis.ReliabilityModel.eval` gains ``use_calibrated`` and ``add_metrics``, which
   score the calibrated column and append Brier score and expected calibration error, so comparing
   the raw and calibrated tables shows whether calibration helped. Defaults leave the table
