@@ -514,6 +514,16 @@ LIST_METRICS_PRED_PROBA = ["roc_auc"]
 DICT_METRIC_SCORER = {"mcc": "matthews_corrcoef"}
 COLS_EVAL_PRED = [COL_MODEL, COL_METRIC, COL_PRINCIPLE, COL_SCORE, COL_SCORE_STD]
 
+# AAPred.eval_selective (selective prediction): performance as a function of the fraction of
+# samples retained, ranked by a per-sample confidence signal. A pure measurement - the caller
+# (or a downstream policy) picks a refusal threshold from the curve; nothing abstains here.
+COL_COVERAGE = "coverage"          # fraction of samples retained at this level (0 < coverage <= 1)
+COL_N_RETAINED = "n_retained"      # samples retained at this level: ceil(coverage * n_samples), >= 1
+COL_SCORE_AURC = "score_aurc"      # area under that metric's coverage-performance curve, divided by
+                                   # the coverage span, so a flat curve at 0.8 has an area of 0.8
+COLS_EVAL_SELECTIVE = [COL_METRIC, COL_COVERAGE, COL_N_RETAINED, COL_SCORE, COL_SCORE_AURC]
+LIST_COVERAGES = [0.2, 0.4, 0.6, 0.8, 1.0]   # default coverage grid of AAPred.eval_selective
+
 # Score-to-group band assignment (AAPred.score_to_group): the numeric range a set of band
 # thresholds must lie within, so probabilities and percentages can't be silently mixed.
 STR_SCORE_RANGE_PERCENT = "percent"      # scores/thresholds on a 0-100 percent scale

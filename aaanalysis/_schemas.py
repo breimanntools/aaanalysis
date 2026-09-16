@@ -50,6 +50,7 @@ from ._constants import (
     COL_BIN, COL_MEAN_SCORE, COL_EMPIRICAL_POS, COL_N_SAMPLES, STR_BIN_SUMMARY,
     COL_AD_STATUS, COL_AD_NEAREST_TRAIN, LIST_AD_STATUS, STR_BIN_BRIER, STR_BIN_ECE,
     STR_SCORE_RANGE_PROBA, STR_SCORE_RANGE_PERCENT,
+    COL_METRIC, COL_COVERAGE, COL_N_RETAINED, COL_SCORE_AURC, LIST_METRICS_PRED,
 )
 
 # I Helper Functions
@@ -592,6 +593,36 @@ DICT_DF_SCHEMAS = {
                                       nullable=True, range=[0, 1], example=0.1),
             COL_N_SAMPLES: _field("int", "Number of samples in the bin (summary row: all "
                                   "evaluated samples).", range=[0, None], example=18),
+        },
+    },
+    "df_eval_selective": {
+        "description": (
+            "AAPred.eval_selective output: the selective-prediction (risk-coverage) "
+            "measurement in long format, one row per (metric, coverage level). Samples are "
+            "ranked by a per-sample confidence signal and each level retains the leading "
+            "ceil(target * n_samples) of them, so the reported coverage is the fraction "
+            "actually retained (it can exceed the requested target after rounding up) and "
+            "the coverage=1.0 row is the ordinary out-of-fold score of that metric. "
+            "score_aurc repeats, on each of a metric's rows, the area under that metric's "
+            "own coverage-performance curve."),
+        "columns": {
+            COL_METRIC: _field("str", "Performance metric scored on the retained subset.",
+                               allowed_values=list(LIST_METRICS_PRED),
+                               example="balanced_accuracy"),
+            COL_COVERAGE: _field("float", "Fraction of samples actually retained at this "
+                                 "level (n_retained / n_samples), which can exceed the "
+                                 "requested target after rounding up.",
+                                 range=[0, 1], example=0.6),
+            COL_N_RETAINED: _field("int", "Samples retained at this level: "
+                                   "ceil(target * n_samples), at least 1.",
+                                   range=[1, None], example=18),
+            COL_SCORE: _field("float", "Metric value on the retained subset; NaN where the "
+                              "metric is undefined there (balanced_accuracy and roc_auc need "
+                              "both classes present).", nullable=True, example=0.91),
+            COL_SCORE_AURC: _field("float", "Area under this metric's coverage-performance "
+                                   "curve divided by the actual coverage span (a flat curve "
+                                   "at 0.8 has an area of 0.8); NaN for a single-level grid "
+                                   "or a curve with a NaN point.", nullable=True, example=0.88),
         },
     },
     # ------------------------------------------------ non-DataFrame contracts

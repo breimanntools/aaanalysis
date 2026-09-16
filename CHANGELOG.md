@@ -32,6 +32,14 @@ notes — with cross-references and examples — live in
   shorthand and an object that sets the same limit differently raises a `ValueError`. Output is
   unchanged when no object is passed, and `SeqOpt.run(constraints=[...])` keeps accepting its
   published list of `genome -> bool` callables. The class is part of the public API (`aa.DesignConstraints`, registered abbreviation `dc`), listed in the API reference under *Protein Engineering*, and each of its four methods ships an example notebook (#475).
+- `AAPred.eval_selective(...)`: selective-prediction (risk-coverage) measurement. Ranks the
+  samples by a per-sample confidence signal (`confidence=...`, or the out-of-fold score margin
+  by default) and scores every metric again on the most-confident `coverage` fraction of them,
+  over a grid (`coverages=[0.2, 0.4, 0.6, 0.8, 1.0]` by default). Returns the long-format
+  `df_eval_selective` (`metric`, `coverage`, `n_retained`, `score`, `score_aurc`), where the
+  `coverage=1.0` row is the ordinary out-of-fold score and `score_aurc` is the area under that
+  metric's coverage-performance curve. Classification only, and a measurement only: nothing
+  abstains and `AAPred.eval` is unchanged (addresses #474).
 - `ReliabilityModel.eval(use_calibrated=..., add_metrics=...)`: score the calibrated column
   (`score_calibrated`) instead of the raw `score`, and append Brier-score / expected
   calibration error (ECE) rows (`bin='brier'` / `bin='ece'`, value in `mean_score`); defaults
