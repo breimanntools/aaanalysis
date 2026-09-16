@@ -1,6 +1,6 @@
 .. _overview:
 
-.. image:: _artwork/logos/model_AAanalysis.png
+.. image:: /_artwork/logos/model_AAanalysis.png
    :alt: AAanalysis Model Overview
    :align: center
    :class: aa-model
