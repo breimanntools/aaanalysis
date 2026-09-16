@@ -408,7 +408,8 @@ class ReliabilityModel(Wrapper):
         # Applicability-domain reference (fit once)
         self._ad_state = fit_applicability_domain(np.asarray(X), k=k, percentile=ad_percentile)
         self._ad_borderline = float(ad_borderline)
-        self.ad_threshold_ = float(self._ad_state["thr"])
+        # fit_applicability_domain stores a float under "thr"; the dict's value type widens.
+        self.ad_threshold_ = float(self._ad_state["thr"])  # pyright: ignore[reportArgumentType]
         self.ad_method_ = ut.STR_AD_METHOD_KNN
 
         # Resolve the member models. ``score`` is their mean and the interval is their spread, so

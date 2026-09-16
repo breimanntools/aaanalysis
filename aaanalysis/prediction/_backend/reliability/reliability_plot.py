@@ -65,8 +65,9 @@ def plot_ranking_(df_rel, names=None, figsize=None, top_n=None, title=None, ax=N
 _LABEL_PERFECT = "perfect calibration"
 
 
-def plot_reliability_diagram_(df_eval, figsize=(5, 5), color="tab:blue", label="model",
-                              title=None, ax=None):
+def plot_reliability_diagram_(df_eval, figsize=(5, 5),
+                              color: str | tuple[float, float, float] = "tab:blue",
+                              label="model", title=None, ax=None):
     """Calibration curve: mean predicted score vs. empirical positive rate, per bin.
 
     The Brier / ECE rows (when present) are shown in the curve's legend entry, so several curves
