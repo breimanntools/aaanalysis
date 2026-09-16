@@ -7,6 +7,8 @@ Some AAanalysis tools are still under active development and are marked beta. Fo
 
 Each tool below repeats this warning in its own documentation. The list is generated from the code: a symbol appears here exactly when its docstring carries the ``**Experimental.**`` warning, and a drift test keeps this page in sync, so it cannot go stale.
 
+An entry written ``ap.<name>`` is a golden pipeline reached through ``import aaanalysis.pipe as ap``; every other entry is a class reached through ``import aaanalysis as aa``.
+
 .. list-table::
    :header-rows: 1
    :widths: 26 56 18
@@ -40,4 +42,13 @@ Each tool below repeats this warning in its own documentation. The list is gener
      - 1.1.0
    * - :class:`~aaanalysis.CPPStructurePlot`
      - CPP feature impact painted onto a 3D protein structure.
+     - 1.1.0
+   * - :func:`ap.find_features <aaanalysis.pipe.find_features>`
+     - Staged CPP AutoML search for a discriminating feature set.
+     - 1.1.0
+   * - :func:`ap.predict_samples <aaanalysis.pipe.predict_samples>`
+     - Training and comparison of predictors across feature sets and models in one call.
+     - 1.1.0
+   * - :func:`ap.explain_features <aaanalysis.pipe.explain_features>`
+     - Per-sample SHAP impact and the SHAP-coloured feature map.
      - 1.1.0
