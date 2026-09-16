@@ -62,6 +62,17 @@ Added
   threshold from the curve stays with the caller. It covers classification;
   :meth:`~aaanalysis.AAPred.eval` is untouched.
 
+- CPP features can now carry an uncertainty estimate. :class:`~aaanalysis.CPP` accepts a
+  confidence level in its bootstrap configuration
+  (``CPP(bootstrap=True, bootstrap_kws=dict(ci=0.95))``), and the statistics that each
+  resampling round already computes are retained and summarised into a central percentile
+  interval per feature. ``df_feat`` then gains ``abs_auc_ci_low`` / ``abs_auc_ci_high`` and
+  ``mean_dif_ci_low`` / ``mean_dif_ci_high`` after ``selection_frequency``, for
+  :meth:`~aaanalysis.CPP.run`, :meth:`~aaanalysis.CPP.run_num` and
+  :meth:`~aaanalysis.CPP.run_composit` alike, without any additional runs. The interval is
+  conditional on selection: a feature contributes a value only in the rounds in which it was
+  selected, so it is read together with ``selection_frequency``, and a feature selected in
+  fewer than two rounds gets ``NaN`` bounds. Leaving ``ci`` unset keeps the output unchanged.
 - Calibration quality is now measurable. :meth:`~aaanalysis.ReliabilityModel.eval` gains two
   keyword-only parameters: ``use_calibrated=True`` bins the calibrated probability
   (``score_calibrated``) instead of the raw ``score``, and ``add_metrics=True`` appends the Brier

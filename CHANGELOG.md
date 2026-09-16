@@ -40,6 +40,14 @@ notes — with cross-references and examples — live in
   `coverage=1.0` row is the ordinary out-of-fold score and `score_aurc` is the area under that
   metric's coverage-performance curve. Classification only, and a measurement only: nothing
   abstains and `AAPred.eval` is unchanged (addresses #474).
+- `CPP(bootstrap=True, bootstrap_kws={'ci': <level>})`: opt-in per-feature confidence intervals.
+  The statistics the bootstrap rounds already compute are now retained and summarised into a
+  central percentile interval per feature, so `df_feat` gains `abs_auc_ci_low` / `abs_auc_ci_high`
+  and `mean_dif_ci_low` / `mean_dif_ci_high` after `selection_frequency`, at no extra runs. The
+  interval is conditional on selection (a feature contributes only in the rounds in which it was
+  selected; fewer than two rounds gives `NaN` bounds), so it is read together with
+  `selection_frequency`. Without `ci` (the default) the output is byte-identical
+  (addresses #16).
 - `ReliabilityModel.eval(use_calibrated=..., add_metrics=...)`: score the calibrated column
   (`score_calibrated`) instead of the raw `score`, and append Brier-score / expected
   calibration error (ECE) rows (`bin='brier'` / `bin='ece'`, value in `mean_score`); defaults
