@@ -113,6 +113,8 @@ def explain_features(df_feat: pd.DataFrame,
         development; its API (signatures, defaults, return objects) may change between minor releases
         without the usual deprecation cycle. Pin a version if you depend on the current behaviour.
 
+    .. versionadded:: 1.1.0
+
     Parameters
     ----------
     df_feat : pd.DataFrame, shape (n_features, n_feature_info)

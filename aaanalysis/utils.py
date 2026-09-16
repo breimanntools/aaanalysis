@@ -119,6 +119,9 @@ from ._constants import *  # noqa: F401,F403
 # Data dictionary / interface contract for the key DataFrames (df_seq, df_parts,
 # df_scales, df_cat, df_feat, ...), re-exported so it is reachable as ut.DICT_DF_SCHEMAS.
 from ._schemas import DICT_DF_SCHEMAS, render_schemas_rst  # noqa: F401
+# Beta-feature (experimental API) overview, discovered from the ``**Experimental.**``
+# docstring marker and rendered to the docs; reachable as ut.render_beta_rst.
+from ._beta import DICT_BETA_PURPOSE, get_beta_symbols, render_beta_rst  # noqa: F401
 
 # I Helper functions
 def _retrieve_string_starting_at_end(seq, start=None, end=None):

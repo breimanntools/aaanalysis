@@ -10,6 +10,10 @@ v1.2.0 (Unreleased)
 
 In development.
 
+Tools that are still under active development are marked beta: their API may change
+between minor releases without the usual deprecation cycle. The
+:ref:`Beta Features <beta_features>` page lists every beta tool in one place.
+
 Added
 ~~~~~
 

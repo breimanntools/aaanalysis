@@ -442,6 +442,8 @@ def find_features(labels: ut.ArrayLike1D,
         ``selection_scope="fold"`` for the honest nested regime. Pin a version if you depend on the
         current behaviour.
 
+    .. versionadded:: 1.1.0
+
     Parameters
     ----------
     labels : array-like, shape (n_samples,)
