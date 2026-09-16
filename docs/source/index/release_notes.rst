@@ -1,7 +1,6 @@
 .. _release_notes:
 
 Release Notes
-=============
 
 Version 1.2
 --------------------------------
@@ -49,6 +48,19 @@ Added
   :meth:`~aaanalysis.DesignConstraints.as_predicate`,
   :meth:`~aaanalysis.DesignConstraints.to_dict`,
   :meth:`~aaanalysis.DesignConstraints.from_dict`) ships an example notebook.
+- The risk-coverage trade-off is now measurable.
+  :meth:`~aaanalysis.AAPred.eval_selective` ranks the samples by a per-sample confidence signal
+  and scores every metric again on the most-confident fraction of them, at each level of a
+  coverage grid, so "at 60% coverage the balanced accuracy is 0.93" can be read off a table
+  instead of guessed. The confidence source is the caller's choice (``confidence=...`` takes the
+  score margin, an uncertainty measure, or a negated applicability-domain distance); the default
+  ranks by the out-of-fold score margin. The returned ``df_eval_selective`` carries ``metric``,
+  ``coverage``, ``n_retained``, ``score`` and ``score_aurc`` (the area under that metric's
+  coverage-performance curve, divided by the coverage span, so a flat curve at ``0.8`` has an
+  area of ``0.8``). The ``coverage=1.0`` row reproduces the ordinary out-of-fold score.
+  This is a measurement, not an abstaining predictor: nothing is refused, and choosing a refusal
+  threshold from the curve stays with the caller. It covers classification;
+  :meth:`~aaanalysis.AAPred.eval` is untouched.
 
 - Calibration quality is now measurable. :meth:`~aaanalysis.ReliabilityModel.eval` gains two
   keyword-only parameters: ``use_calibrated=True`` bins the calibrated probability

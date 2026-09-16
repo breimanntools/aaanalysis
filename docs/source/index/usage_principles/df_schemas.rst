@@ -1236,6 +1236,58 @@ ReliabilityModel.eval output: one row per equal-width score bin (the calibration
      - Number of samples in the bin (summary row: all evaluated samples).
      - range: [0, inf]; e.g. 18
 
+``df_eval_selective``
+---------------------
+
+AAPred.eval_selective output: the selective-prediction (risk-coverage) measurement in long format, one row per (metric, coverage level). Samples are ranked by a per-sample confidence signal and each level retains the leading ceil(coverage * n_samples) of them, so the coverage=1.0 row is the ordinary out-of-fold score of that metric. score_aurc repeats, on each of a metric's rows, the area under that metric's own coverage-performance curve.
+
+.. list-table::
+   :header-rows: 1
+   :widths: 18 8 8 8 8 34 18
+
+   * - Column
+     - Type
+     - Required
+     - Nullable
+     - Unique
+     - Description
+     - Allowed / range / example
+   * - ``metric``
+     - str
+     - yes
+     - no
+     - no
+     - Performance metric scored on the retained subset.
+     - allowed: accuracy, balanced_accuracy, precision, recall, f1, roc_auc, ...; e.g. balanced_accuracy
+   * - ``coverage``
+     - float
+     - yes
+     - no
+     - no
+     - Fraction of samples retained at this level.
+     - range: [0, 1]; e.g. 0.6
+   * - ``n_retained``
+     - int
+     - yes
+     - no
+     - no
+     - Samples retained at this level: ceil(coverage * n_samples), at least 1.
+     - range: [1, inf]; e.g. 18
+   * - ``score``
+     - float
+     - yes
+     - yes
+     - no
+     - Metric value on the retained subset; NaN where the metric is undefined there (balanced_accuracy and roc_auc need both classes present).
+     - e.g. 0.91
+   * - ``score_aurc``
+     - float
+     - yes
+     - yes
+     - no
+     - Area under this metric's coverage-performance curve divided by the coverage span (a flat curve at 0.8 has an area of 0.8); NaN for a single-level grid or a curve with a NaN point.
+     - e.g. 0.88
+
 ``X``
 -----
 

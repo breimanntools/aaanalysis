@@ -13,6 +13,7 @@ from aaanalysis.template_classes import Wrapper
 
 from ._backend.aa_pred.aa_pred_fit import fit_models, predict_proba_models, predict_proba_oof
 from ._backend.aa_pred.aa_pred_eval import eval_models
+from ._backend.aa_pred.aa_pred_selective import eval_selective_scores
 from ._backend.aa_pred.aa_pred_group import assign_band_index
 
 
@@ -45,6 +46,30 @@ def check_n_cv(n_cv: int, labels: ut.ArrayLike1D):
     min_class_count = int(min(counts))
     if n_cv > min_class_count:
         raise ValueError(f"'n_cv' ({n_cv}) should not be greater than the smallest class count ({min_class_count}).")
+
+
+def check_coverages(coverages=None):
+    """Check the coverage grid: finite levels in ``(0, 1]``, strictly increasing.
+
+    ``None`` selects the default grid (``ut.LIST_COVERAGES``). A level of ``0`` is rejected
+    because a coverage level always retains at least one sample, and the levels must increase so
+    the curve (and the area under it) is read left to right.
+    """
+    if coverages is None:
+        return list(ut.LIST_COVERAGES)
+    coverages = ut.check_list_like(name="coverages", val=coverages, accept_str=False, min_len=1)
+    for i, coverage in enumerate(coverages):
+        ut.check_number_range(name=f"coverages[{i}]", val=coverage, min_val=0, max_val=1,
+                              just_int=False)
+        if not np.isfinite(float(coverage)):
+            raise ValueError(f"'coverages[{i}]' ({coverage}) should be a finite number in (0, 1].")
+        if float(coverage) == 0:
+            raise ValueError(f"'coverages[{i}]' ({coverage}) should be greater than 0; every "
+                             f"coverage level retains at least one sample.")
+    list_coverages = [float(coverage) for coverage in coverages]
+    if any(list_coverages[i] >= list_coverages[i + 1] for i in range(len(list_coverages) - 1)):
+        raise ValueError(f"'coverages' ({coverages}) should be sorted in strictly increasing order.")
+    return list_coverages
 
 
 def check_cv(cv=None):
@@ -610,6 +635,124 @@ class AAPred(Wrapper):
                               X_holdout=X_holdout, labels_holdout=labels_holdout,
                               dict_X_baseline=dict_X_baseline, cv=cv)
         return df_eval
+
+    def eval_selective(self,
+                       X: ut.ArrayLike2D,
+                       labels: ut.ArrayLike1D,
+                       *, confidence: Optional[ut.ArrayLike1D] = None,
+                       metrics: Optional[List[str]] = None,
+                       coverages: Optional[List[Union[int, float]]] = None,
+                       n_cv: int = 5,
+                       label_pos: int = 1,
+                       ) -> pd.DataFrame:
+        """
+        Measure the risk-coverage trade-off: performance as a function of the samples retained.
+
+        When a classifier may decline to score its least-confident samples, its accuracy on the
+        ones it does score rises. This method quantifies that trade-off instead of leaving it to
+        a guess: samples are ranked by a per-sample confidence signal, and every metric is scored
+        again on the most-confident ``coverage`` fraction of them, for each level of a coverage
+        grid. Reading "at 60% coverage the balanced accuracy is 0.93" off the returned table is
+        the evidence base for choosing a refusal threshold.
+
+        This is a **measurement only**. Nothing abstains and no threshold is applied: acting on
+        the curve (refusing, escalating) is decision logic that belongs to the caller. The
+        ordinary :meth:`eval` output is untouched by this method.
+
+        Scores come from the same cross-validated out-of-fold path as :meth:`predict_oof`, so
+        every sample is scored by models fit on the folds that exclude it and no prior
+        :meth:`fit` is needed. The ``coverage = 1.0`` row therefore retains every sample and is
+        the ordinary out-of-fold score of that metric.
+
+        .. versionadded:: 1.2.0
+
+        Parameters
+        ----------
+        X : array-like, shape (n_samples, n_features)
+            Feature matrix cross-validated to produce the out-of-fold scores. Rows are samples,
+            columns are features.
+        labels : array-like, shape (n_samples,)
+            Class labels for samples in ``X``; exactly two classes (typically ``1`` for the
+            positive class and ``0`` for the negative one).
+        confidence : array-like, shape (n_samples,), optional
+            Per-sample confidence used to rank the samples, **higher meaning more confident**,
+            row-aligned with ``X``. Any signal can be passed: the score margin, an uncertainty
+            measure, or the applicability-domain distance of
+            :meth:`ReliabilityModel.predict` (negate a distance so that larger means more
+            confident). ``None`` (default) ranks by the out-of-fold score margin
+            ``|score - 0.5| * 2``, which is ``1`` for a decisive score and ``0`` for a coin
+            flip. Values must be finite; equally confident samples keep their input order.
+        metrics : list of str, optional
+            Performance metrics scored at each coverage level, each one of
+            ``'accuracy'``, ``'balanced_accuracy'``, ``'precision'``, ``'recall'``, ``'f1'``,
+            ``'roc_auc'`` and ``'mcc'``. Defaults to ``list_metrics`` from the constructor.
+        coverages : list of int or float, optional
+            Coverage grid: the fractions of samples retained, each in ``(0, 1]`` and in strictly
+            increasing order. Defaults to ``[0.2, 0.4, 0.6, 0.8, 1.0]``. Level ``c`` retains the
+            leading ``ceil(c * n_samples)`` samples of the confidence ranking, so a level is
+            never empty and ``1.0`` retains all of them.
+        n_cv : int, default=5
+            Number of stratified cross-validation folds behind the out-of-fold scores (must not
+            exceed the smallest class count).
+        label_pos : int, default=1
+            Label of the positive class whose out-of-fold probability is scored and thresholded
+            at ``0.5`` for the hard-label metrics.
+
+        Returns
+        -------
+        df_eval_selective : pd.DataFrame, shape (n_metrics * n_coverages, 5)
+            Long-format risk-coverage table with columns ``metric``, ``coverage``,
+            ``n_retained`` (samples kept at that level), ``score`` (the metric on that retained
+            subset) and ``score_aurc`` (the area under that metric's coverage-performance curve
+            divided by the coverage span, repeated on each of the metric's rows, so a flat curve
+            at ``0.8`` has an area of ``0.8``). ``score`` is ``NaN`` where a metric is undefined
+            on the retained subset (``balanced_accuracy`` and ``roc_auc`` need both classes
+            present), and ``score_aurc`` is ``NaN`` for a single-level grid or a curve with a
+            ``NaN`` point.
+
+        See Also
+        --------
+        * :meth:`AAPred.eval` for the aggregate cross-validated metrics at full coverage.
+        * :meth:`AAPred.predict_oof` for the per-sample out-of-fold scores this ranking uses.
+
+        Examples
+        --------
+        .. include:: examples/aap_eval_selective.rst
+        """
+        # Check input
+        X = ut.check_X(X=X)
+        labels = ut.check_labels(labels=labels)
+        ut.check_match_X_labels(X=X, labels=labels)
+        classes = check_binary_labels(labels=labels)
+        metrics = check_metrics(metrics=metrics) if metrics is not None else self._list_metrics
+        coverages = check_coverages(coverages=coverages)
+        ut.check_number_val(name="label_pos", val=label_pos, just_int=True)
+        if label_pos not in classes:
+            raise ValueError(f"'label_pos' ({label_pos}) should be one of the labels: {classes}")
+        check_n_cv(n_cv=n_cv, labels=labels)
+        # Ranking and scoring both run on positive-class probabilities, so predict_proba is
+        # unconditionally required here (unlike eval, where hard-label metrics suffice).
+        check_estimators_proba(list_estimators=self._list_estimators, context="eval_selective")
+        if confidence is not None:
+            confidence = ut.check_array_like(name="confidence", val=confidence, dtype="float",
+                                             expected_dim=1)
+            if len(confidence) != len(labels):
+                raise ValueError(f"'confidence' n_samples ({len(confidence)}) should match "
+                                 f"'labels' n_samples ({len(labels)}).")
+        # Out-of-fold scoring: clone the constructor's estimators and cross-validate (no prior fit)
+        pred, _ = predict_proba_oof(X=X, labels=labels,
+                                    list_estimators=self._list_estimators,
+                                    n_cv=n_cv, random_state=self._random_state,
+                                    label_pos=label_pos)
+        if confidence is None:
+            # Score margin: 1 for a decisive score at either end, 0 for a coin flip at 0.5.
+            confidence = np.abs(pred - 0.5) * 2
+        label_neg = [c for c in classes if c != label_pos][0]
+        df_eval_selective = eval_selective_scores(labels=labels, scores=pred,
+                                                  confidence=confidence, metrics=metrics,
+                                                  coverages=coverages, label_pos=label_pos,
+                                                  label_neg=label_neg)
+        return df_eval_selective
 
     def predict_oof(self,
                     X: ut.ArrayLike2D,
