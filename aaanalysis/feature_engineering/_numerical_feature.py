@@ -2,6 +2,7 @@
 This is a script for the frontend of the NumericalFeature class, a supportive class for the CPP feature engineering,
 including scale and feature filtering methods.
 """
+import os
 import time
 import pandas as pd
 import numpy as np
@@ -14,6 +15,7 @@ from ._backend.check_feature import (check_df_scales, expand_pos_anchors_,
 from ._backend.feature_filter import filter_correlation_
 from ._backend.num_feat.extend_alphabet import extend_alphabet_
 from ._backend.num_feat.feature_matrix import get_feature_matrix_num_
+from ._backend.num_feat.read_pssm import load_pssm_, get_pssm_scales_
 from ._backend.cpp._filters._assign import assign_dict_num_to_parts
 from ._cpp import _derive_dict_part_lens
 
@@ -98,6 +100,98 @@ def check_dict_num_parts(dict_num_parts=None) -> Tuple[int, int]:
     if d_seen and 0 in d_seen:
         raise ValueError("'dict_num_parts[*]' has D=0; should be >= 1.")
     return n_seen.pop(), d_seen.pop()
+
+
+def check_pssm(pssm) -> Dict[str, Union[str, np.ndarray]]:
+    """Validate the ``pssm`` source and return it as ``{entry: file path or (L, 20) array}``.
+
+    A directory is expanded to its ``.pssm`` files (extension matched case-insensitively,
+    entry = file stem, sorted); a single ``.pssm`` file becomes ``{stem: path}``. Arrays are
+    checked for a 2-D ``(L, 20)`` numeric shape; paths for existence. Finiteness and value
+    ranges are checked centrally for files and arrays when the values are loaded.
+    """
+    if isinstance(pssm, (str, os.PathLike)):
+        if os.path.isfile(pssm):
+            if not str(pssm).lower().endswith(".pssm"):
+                raise ValueError(f"'pssm' ('{pssm}') should be a PSI-BLAST ASCII '.pssm' file.")
+            return {os.path.splitext(os.path.basename(pssm))[0]: pssm}
+        if not os.path.isdir(pssm):
+            raise ValueError(f"'pssm' ('{pssm}') should be an existing '.pssm' file, a directory of "
+                             f"PSI-BLAST '.pssm' files, or a dict mapping entries to files or (L, 20) arrays.")
+        files = sorted(f for f in os.listdir(pssm)
+                       if f.lower().endswith(".pssm") and os.path.isfile(os.path.join(pssm, f)))
+        if len(files) == 0:
+            raise ValueError(f"'pssm' ('{pssm}') should be a directory containing at least one '.pssm' file.")
+        stems = [os.path.splitext(f)[0] for f in files]
+        duplicate_stems = sorted({stem for stem in stems if stems.count(stem) > 1})
+        if duplicate_stems:
+            raise ValueError(
+                f"'pssm' (duplicate file stems {duplicate_stems}) should contain exactly one "
+                "'.pssm' file per entry."
+            )
+        return {stem: os.path.join(pssm, f) for stem, f in zip(stems, files)}
+    ut.check_dict(name="pssm", val=pssm, accept_none=False)
+    if len(pssm) == 0:
+        raise ValueError("'pssm' (empty dict) should be a dict with at least one entry.")
+    dict_source = {}
+    for entry, src in pssm.items():
+        if not isinstance(entry, str):
+            raise ValueError(f"'pssm' keys ({entry!r}) should be entry names (str).")
+        if isinstance(src, (str, os.PathLike)):
+            if not os.path.isfile(src):
+                raise ValueError(f"'pssm[{entry!r}]' ('{src}') should be an existing PSSM file.")
+            dict_source[entry] = src
+            continue
+        if not isinstance(src, (np.ndarray, list, tuple)):
+            raise ValueError(f"'pssm[{entry!r}]' ({type(src).__name__}) should be a file path "
+                             f"or an (L, 20) array.")
+        try:
+            arr = np.asarray(src, dtype=np.float64)
+        except (TypeError, ValueError) as error:
+            raise ValueError(f"'pssm[{entry!r}]' ({type(src).__name__} with non-numeric items) "
+                             f"should contain only numbers.") from error
+        if arr.ndim != 2 or arr.shape[1] != 20 or arr.shape[0] == 0:
+            raise ValueError(f"'pssm[{entry!r}]' (shape {arr.shape}) should be a 2-D (L, 20) array "
+                             f"with L >= 1.")
+        dict_source[entry] = arr
+    return dict_source
+
+
+def check_match_df_seq_dict_num_pssm(df_seq: pd.DataFrame,
+                                     dict_num: Dict[str, np.ndarray],
+                                     dict_residues: Dict[str, Optional[str]]) -> None:
+    """Check that every ``df_seq`` entry has a PSSM of matching length and residues.
+
+    Residue identity is only checked for file-based PSSMs; ``X`` on either side is ignored.
+    Collects all mismatching entries into one ``ValueError``.
+    """
+    if ut.COL_SEQ not in df_seq.columns:
+        raise ValueError(f"'df_seq' (columns {list(df_seq.columns)}) should contain a '{ut.COL_SEQ}' "
+                         f"column to match PSSMs against.")
+    missing, wrong_len, wrong_res = [], [], []
+    for entry, seq in zip(df_seq[ut.COL_ENTRY], df_seq[ut.COL_SEQ]):
+        if entry not in dict_num:
+            missing.append(entry)
+            continue
+        n_rows = dict_num[entry].shape[0]
+        if n_rows != len(seq):
+            wrong_len.append(f"{entry} (PSSM rows={n_rows}, len(sequence)={len(seq)})")
+            continue
+        residues = dict_residues.get(entry)
+        if residues is not None:
+            seq_upper = seq.upper()
+            if any(r != s and "X" not in (r, s) for r, s in zip(residues, seq_upper)):
+                wrong_res.append(entry)
+    errors = []
+    if missing:
+        errors.append(f"entries missing in 'pssm': {missing}")
+    if wrong_len:
+        errors.append(f"row count differs from sequence length: {wrong_len}")
+    if wrong_res:
+        errors.append(f"PSSM residue column differs from sequence: {wrong_res}")
+    if errors:
+        raise ValueError(f"'pssm' ({'; '.join(errors)}) should match 'df_seq': one PSSM per entry "
+                         f"whose row count equals the sequence length and whose residues match it.")
 
 
 # II Main Functions
@@ -465,6 +559,129 @@ class NumericalFeature:
                 "part/split so it covers real residues."
             )
         return X
+
+    @staticmethod
+    def from_pssm(pssm: Union[str, os.PathLike, Dict[str, Union[str, os.PathLike, ut.ArrayLike2D]]],
+                  *,
+                  df_seq: Optional[pd.DataFrame] = None,
+                  values: Literal["log_odds", "frequencies"] = "log_odds",
+                  normalize: bool = True,
+                  return_scales: bool = False,
+                  ) -> Union[Dict[str, np.ndarray],
+                             Tuple[Dict[str, np.ndarray], pd.DataFrame, pd.DataFrame]]:
+        """
+        Convert position-specific scoring matrices (PSSMs) into a per-residue ``dict_num``.
+
+        A PSSM holds, per protein, one row per residue with 20 evolutionary scores (one per
+        amino acid), which is exactly the ``(L, D)`` per-residue tensor that
+        :meth:`NumericalFeature.get_parts` and :meth:`CPP.run_num` consume (here ``D=20``).
+        This method parses PSI-BLAST ASCII PSSM files (``psiblast -out_ascii_pssm``) or takes
+        precomputed arrays, reorders the 20 columns into canonical amino acid order, and, by
+        default, maps the values onto ``[0, 1]``.
+
+        .. versionadded:: 1.2.0
+
+        Parameters
+        ----------
+        pssm : str, os.PathLike, or dict[str, str | os.PathLike | array-like], shape (L, 20)
+            PSSM source. Either a directory of per-protein PSI-BLAST ASCII ``.pssm`` files (the
+            extension is matched case-insensitively, e.g. ``.PSSM``; the file stem is used as
+            ``entry``), a path to a single ``.pssm`` file (``entry`` = file stem), or a dict
+            mapping each ``entry`` to a PSSM file path or a precomputed ``(L, 20)`` array. Arrays
+            must already be in canonical amino acid column order (``ACDEFGHIKLMNPQRSTVWY``) and
+            hold raw values of the kind given by ``values``.
+        df_seq : pd.DataFrame, shape (n_samples, n_seq_info), default=None
+            DataFrame containing an ``entry`` column with protein identifiers and a ``sequence``
+            column with full protein sequences. If given, every entry must have a PSSM whose row
+            count equals its sequence length and, for files, whose residue column matches the
+            sequence. If ``None``, do not check PSSM entries, row counts, or residues against
+            sequences.
+        values : {'log_odds', 'frequencies'}, default='log_odds'
+            PSSM block to return:
+
+            - ``'log_odds'``: log-odds substitution scores, available in every supported file.
+            - ``'frequencies'``: weighted observed percentages, requiring that block in each file.
+        normalize : bool, default=True
+            If ``True``, map values onto ``[0, 1]``: log-odds via the logistic sigmoid
+            ``1 / (1 + exp(-x))`` (numerically stable for large ``|x|``) and percentages via
+            division by 100. If ``False``, return the selected raw values without normalizing
+            them.
+        return_scales : bool, default=False
+            If ``True``, also return the matching 20-column ``df_scales`` and ``df_cat`` naming
+            the PSSM dimensions (``PSSM_A``, ..., ``PSSM_Y``), so the return becomes the 3-tuple
+            ``(dict_num, df_scales, df_cat)``. If ``False``, return ``dict_num`` only.
+
+        Returns
+        -------
+        dict_num : dict[str, np.ndarray]
+            Returned by itself if ``return_scales=False``; otherwise the first element of the
+            returned tuple. Maps each ``entry`` to an ``(L, 20)`` float array with columns in
+            ``ut.LIST_CANONICAL_AA`` order. Pass to :meth:`NumericalFeature.get_parts`.
+        df_scales : pd.DataFrame, shape (20, 20)
+            Returned only if ``return_scales=True``. Columns name the 20 PSSM dimensions in
+            ``dict_num`` column order; rows are the canonical amino acids (identity values, which
+            are unused in numerical mode). Pass to ``CPP(df_scales=...)``.
+        df_cat : pd.DataFrame, shape (20, n_scales_info)
+            Returned only if ``return_scales=True``. Scale categories grouping each PSSM column
+            by the physicochemical class of its amino acid. Pass to ``CPP(df_cat=...)``.
+
+        Raises
+        ------
+        ValueError
+            If ``pssm``, ``df_seq``, ``values``, ``normalize``, or ``return_scales`` has an
+            invalid type or value; a path is not an existing supported ``.pssm`` source; a
+            directory holds no ``.pssm`` file; or a dict has invalid entries or arrays. Also if a
+            file cannot be parsed as a PSI-BLAST ASCII PSSM, has an invalid header or numeric
+            field, non-consecutive matrix positions, inconsistent frequency blocks, or lacks the
+            requested block; an array is not numeric ``(L, 20)``; any value is NaN or infinite; a
+            percentage (``values='frequencies'``) lies outside ``[0, 100]``; or, with ``df_seq``,
+            an entry is missing, its PSSM row count differs from its sequence length, or its
+            residues differ from its sequence. All sequence mismatches are listed in one message.
+        OSError
+            If a PSSM directory cannot be listed or a PSSM file cannot be read after its source
+            path has been validated.
+
+        Notes
+        -----
+        * **Column order.** PSI-BLAST writes its columns as ``ARNDCQEGHILKMFPSTWYV``. File
+          columns are permuted by the header found in the file into ``ACDEFGHIKLMNPQRSTVWY``, the
+          order used throughout AAanalysis. Precomputed arrays are not permuted.
+        * **Matching scales.** In numerical mode, ``df_scales`` only names the ``D`` dimensions
+          (column ``i`` names ``dict_num`` column ``i``). Use ``return_scales=True`` to obtain it
+          with a matching ``df_cat``, then run
+          ``NumericalFeature.get_parts(df_seq, dict_num)`` and
+          ``CPP(df_parts=df_parts, df_scales=df_scales, df_cat=df_cat).run_num(dict_num_parts=...)``.
+        * Residue identity is compared case-insensitively and ignores ``X`` on either side.
+        * **Supported formats.** Only PSI-BLAST ASCII PSSM files (``psiblast -out_ascii_pssm``)
+          and precomputed arrays are supported. The binary checkpoint ``.mtx`` format
+          (``makemat``) is not parsed; convert it to ASCII PSSMs or arrays first.
+        * Generating PSSMs (running PSI-BLAST) is not part of this method.
+
+        See Also
+        --------
+        * :meth:`NumericalFeature.get_parts`: slices ``dict_num`` into sequence parts.
+        * :meth:`CPP.run_num`: numerical-mode CPP on the sliced PSSM tensors.
+        * :meth:`SequenceFeature.aa_composition`: the same one-hot 20-column scale set for composition.
+
+        Examples
+        --------
+        .. include:: examples/nf_from_pssm.rst
+        """
+        # Check input
+        dict_source = check_pssm(pssm=pssm)
+        ut.check_df_seq(df_seq=df_seq, accept_none=True)
+        ut.check_str_options(name="values", val=values, accept_none=False,
+                             list_str_options=["log_odds", "frequencies"])
+        ut.check_bool(name="normalize", val=normalize)
+        ut.check_bool(name="return_scales", val=return_scales)
+        # Load PSSMs
+        dict_num, dict_residues = load_pssm_(dict_source=dict_source, values=values, normalize=normalize)
+        if df_seq is not None:
+            check_match_df_seq_dict_num_pssm(df_seq=df_seq, dict_num=dict_num, dict_residues=dict_residues)
+        if return_scales:
+            df_scales, df_cat = get_pssm_scales_(values=values)
+            return dict_num, df_scales, df_cat
+        return dict_num
 
     @staticmethod
     def extend_alphabet(df_scales: pd.DataFrame,
