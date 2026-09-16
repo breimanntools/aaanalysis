@@ -187,6 +187,14 @@ notes — with cross-references and examples — live in
 - `aaanalysis.pipe.find_features`: the docstring now states that only `search="fast"` has a
   parity-anchored `df_feat`; `"balanced"` / `"exhaustive"` are reproducible but have no explicit
   chain.
+- Protocols P6 (compositional vs positional), P9 (interpretability) and P10 (validation)
+  audited against the protocol quality rubric, with the audit recorded in
+  `docs/guides/protocol_rubric_audit.md`. Each gained the one concept-contrast figure its
+  prose asserted but never showed (feature position spans; group importance beside per-sample
+  impact; feature stability against its shuffled-label null), full public-parameter coverage by
+  name, and `display_df(..., show_shape=True)` throughout. P6 no longer claims that
+  `get_split_kws` has no `strategy` switch, which stopped being true when the compositional /
+  positional presets shipped. Three stale protocol cross-references corrected.
 
 ### Tests
 - `aaanalysis.pipe` contract suite: `predict_samples` defaults pinned byte-identical to the
