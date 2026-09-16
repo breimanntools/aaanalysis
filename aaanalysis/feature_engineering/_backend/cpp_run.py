@@ -623,11 +623,18 @@ def cpp_run_sample_batched(df_parts=None, split_kws=None, df_scales=None, df_cat
     count_test = np.zeros(n_feat_total, dtype=np.int64)
     count_ref = np.zeros(n_feat_total, dtype=np.int64)
 
-    batch_size = int(np.ceil(n_samples / n_sample_batches))
-    batch_ranges = [
-        (i * batch_size, min((i + 1) * batch_size, n_samples))
-        for i in range(n_sample_batches)
-    ]
+    # Split into exactly the requested number of non-empty, contiguous batches.
+    # A ceil-based fixed width can leave trailing empty batches (e.g., 5 samples
+    # and 4 batches yielded only 3 non-empty ranges), contradicting the public
+    # ``n_sample_batches`` contract. The first ``n_remainder`` ranges receive
+    # one extra row, so sizes differ by at most one.
+    batch_size, n_remainder = divmod(n_samples, n_sample_batches)
+    batch_ranges = []
+    b_start = 0
+    for batch_idx in range(n_sample_batches):
+        b_end = b_start + batch_size + (batch_idx < n_remainder)
+        batch_ranges.append((b_start, b_end))
+        b_start = b_end
 
     for batch_idx, (b_start, b_end) in enumerate(batch_ranges):
         if b_start >= b_end:

@@ -148,6 +148,21 @@ notes — with cross-references and examples — live in
   composition, motif-matched lookalikes, similarity filters), each demonstrated
   method's public parameters covered by name across its calls, and demonstrated
   mistakes. This pass covers P2 and P3 only; the other protocols are unchanged.
+- `CPP.run`: corrected the `n_sample_batches` description, which promised peak memory
+  bounded by the batch size rather than by the sample count `n`. Measurements show it bounds
+  the dominant per-batch scale-value tensor, while the `(n_samples, n_pre_filter)` survivor
+  matrix and its test statistics stay resident, so peak memory still grows linearly with `n`
+  at a constant batch size, on a roughly 13x flatter slope than the single-pass run. Behaviour
+  is unchanged; only the documentation was wrong.
+- `CPP.run`: clarified the chunking contract. `n_sample_batches` now creates exactly the requested
+  number of balanced, non-empty sample batches and documents that it bounds the per-batch
+  scale-value tensor, not total peak memory: the `(n_samples, n_survivors)` matrix and its test
+  statistics remain resident. The `n_batches` documentation now notes its per-batch FDR semantics.
+- `CPP.run` and `CPP.run_num`: `n_sample_batches` now creates exactly the requested number of
+  balanced, non-empty sample batches. It bounds the dominant per-batch working set, but not total
+  peak memory: the pre-filtered candidate matrix and its test statistics remain resident. The
+  documentation now distinguishes this from `n_batches`: `CPP.run` applies FDR correction per
+  selected-feature batch, while `CPP.run_num` batches only pass-1 statistics.
 
 ## [1.1.0] - 2026-09-10
 
