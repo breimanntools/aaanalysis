@@ -134,6 +134,15 @@ Documentation
   fast search is parity-anchored.
 - Protocols *P2: Exploratory sequence analysis* and *P3: Sampling* brought to the protocol quality
   rubric: each opens with a mental model and shows every concept it names as a contrast figure.
+- Protocols *P6: Compositional vs positional*, *P9: Interpretability* and *P10: Validation* audited
+  against the same rubric, with the audit recorded under ``docs/guides/``. Each now shows the concept
+  its prose had only asserted: how wide along the sequence each compositional and positional feature
+  looks, group-level :meth:`~aaanalysis.TreeModel.add_feat_importance` beside per-sample
+  :meth:`~aaanalysis.ShapModel.add_feat_impact`, and per-feature effect-size stability against a
+  shuffled-label null. Every demonstrated :class:`~aaanalysis.CPP`, :class:`~aaanalysis.ShapModel`,
+  :class:`~aaanalysis.ModelEvaluator` and :class:`~aaanalysis.AAPredPlot` call passes its public
+  parameters by name, and *P6* documents the ``strategy`` presets of
+  :meth:`~aaanalysis.SequenceFeature.get_split_kws` instead of stating that no such switch exists.
 - :meth:`~aaanalysis.CPP.run`: the ``n_sample_batches`` documentation no longer claims that peak
   memory is bounded by the batch size. Measurements show it bounds the dominant per-batch tensor
   while the survivor matrix stays resident, so peak memory still grows with the sample count, on a
