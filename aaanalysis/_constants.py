@@ -253,6 +253,16 @@ COL_AA_TEST = "amino_acids_test"
 COL_AA_REF = "amino_acids_ref"
 COL_FEAT_DES = "feature_description"  # optional, additive: one readable sentence per feature id
 COL_SELECTION_FREQUENCY = "selection_frequency"  # optional: bootstrap stability score [0-1], present only when bootstrap=True
+# Optional: per-feature bootstrap confidence intervals, present only when
+# CPP(bootstrap=True, bootstrap_kws={'ci': <level>}) summarises the per-round statistics.
+COL_ABS_AUC_CI_LOW = "abs_auc_ci_low"
+COL_ABS_AUC_CI_HIGH = "abs_auc_ci_high"
+COL_MEAN_DIF_CI_LOW = "mean_dif_ci_low"
+COL_MEAN_DIF_CI_HIGH = "mean_dif_ci_high"
+# Per-round statistic -> (lower, upper) interval column. The order also defines the order in
+# which the interval columns are appended to df_feat.
+DICT_COLS_FEAT_CI = {COL_ABS_AUC: (COL_ABS_AUC_CI_LOW, COL_ABS_AUC_CI_HIGH),
+                     COL_MEAN_DIF: (COL_MEAN_DIF_CI_LOW, COL_MEAN_DIF_CI_HIGH)}
 
 # Columns for df_feat after processing with explainable AI methods
 COL_FEAT_IMPORT = "feat_importance"
@@ -364,7 +374,9 @@ RESAMPLE_REFERENCE = "reference"
 RESAMPLE_TEST = "test"
 LIST_RESAMPLE = [RESAMPLE_BOTH, RESAMPLE_REFERENCE, RESAMPLE_TEST]
 # Tuned defaults for CPP(bootstrap=True)'s ``bootstrap_kws`` config dict.
-DICT_BOOTSTRAP_DEFAULTS = {"rounds": 20, "resample": RESAMPLE_REFERENCE, "frac": 0.8}
+# ``ci`` is the opt-in confidence level (None = off) for the per-feature intervals summarised
+# from the per-round statistics.
+DICT_BOOTSTRAP_DEFAULTS = {"rounds": 20, "resample": RESAMPLE_REFERENCE, "frac": 0.8, "ci": None}
 
 # CPP.simplify — interpretability-guided scale swapping
 STRATEGY_GREEDY = "greedy"            # per-feature swap, RF+CV non-regression gate
@@ -437,6 +449,10 @@ DICT_DF_FEAT = {
     COL_AA_REF:          ("str",   False, False, "Amino acids at the feature positions in the reference group (diagnostic)."),
     COL_FEAT_DES:        ("str",   False, True,  "Optional readable one-sentence feature description."),
     COL_SELECTION_FREQUENCY: ("float", False, False, "Bootstrap selection frequency in [0, 1] (fraction of resampling rounds a feature was selected); present only when CPP(bootstrap=True)."),
+    COL_ABS_AUC_CI_LOW:  ("float", False, True,  "Lower bound of the bootstrap confidence interval of 'abs_auc'; present only when CPP(bootstrap=True, bootstrap_kws={'ci': <level>}), NaN for a feature selected in fewer than two rounds."),
+    COL_ABS_AUC_CI_HIGH: ("float", False, True,  "Upper bound of the bootstrap confidence interval of 'abs_auc'; present only when CPP(bootstrap=True, bootstrap_kws={'ci': <level>}), NaN for a feature selected in fewer than two rounds."),
+    COL_MEAN_DIF_CI_LOW: ("float", False, True,  "Lower bound of the bootstrap confidence interval of 'mean_dif'; present only when CPP(bootstrap=True, bootstrap_kws={'ci': <level>}), NaN for a feature selected in fewer than two rounds."),
+    COL_MEAN_DIF_CI_HIGH:("float", False, True,  "Upper bound of the bootstrap confidence interval of 'mean_dif'; present only when CPP(bootstrap=True, bootstrap_kws={'ci': <level>}), NaN for a feature selected in fewer than two rounds."),
     COL_FEAT_IMPORT:     ("float", False, False, "Feature importance from TreeModel.fit (post-fit)."),
     COL_FEAT_IMPORT_STD: ("float", False, False, "Standard deviation of the feature importance across CV rounds (post-fit)."),
     COL_FEAT_IMPACT:     ("float", False, False, "SHAP-based signed feature impact from ShapModel (post-fit, pro)."),

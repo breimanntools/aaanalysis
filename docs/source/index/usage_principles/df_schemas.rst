@@ -393,6 +393,34 @@ CPP feature table (the primary downstream contract; see also the simple DICT_DF_
      - no
      - Bootstrap selection frequency (fraction of resampling rounds a feature was selected); present only when CPP(bootstrap=True).
      - range: [0, 1]; e.g. 0.9
+   * - ``abs_auc_ci_low``
+     - float
+     - no
+     - yes
+     - no
+     - Lower bound of the bootstrap confidence interval of 'abs_auc'; present only when CPP(bootstrap=True) runs with a confidence level (bootstrap_kws={'ci': <level>}).
+     - range: [-0.5, 0.5]; e.g. 0.18
+   * - ``abs_auc_ci_high``
+     - float
+     - no
+     - yes
+     - no
+     - Upper bound of the bootstrap confidence interval of 'abs_auc'; present only when CPP(bootstrap=True) runs with a confidence level (bootstrap_kws={'ci': <level>}).
+     - range: [-0.5, 0.5]; e.g. 0.31
+   * - ``mean_dif_ci_low``
+     - float
+     - no
+     - yes
+     - no
+     - Lower bound of the bootstrap confidence interval of 'mean_dif'; present only when CPP(bootstrap=True) runs with a confidence level (bootstrap_kws={'ci': <level>}).
+     - range: [-1, 1]; e.g. 0.06
+   * - ``mean_dif_ci_high``
+     - float
+     - no
+     - yes
+     - no
+     - Upper bound of the bootstrap confidence interval of 'mean_dif'; present only when CPP(bootstrap=True) runs with a confidence level (bootstrap_kws={'ci': <level>}).
+     - range: [-1, 1]; e.g. 0.14
    * - ``feat_importance``
      - float
      - no

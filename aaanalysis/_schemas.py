@@ -32,6 +32,7 @@ from ._constants import (
     COL_FEATURE, COL_ABS_AUC, COL_ABS_MEAN_DIF, COL_MEAN_DIF, COL_STD_TEST,
     COL_STD_REF, COL_PVAL_MW, COL_PVAL_TTEST, COL_PVAL_FDR, COL_POSITION,
     COL_AA_TEST, COL_AA_REF, COL_FEAT_DES, COL_SELECTION_FREQUENCY,
+    COL_ABS_AUC_CI_LOW, COL_ABS_AUC_CI_HIGH, COL_MEAN_DIF_CI_LOW, COL_MEAN_DIF_CI_HIGH,
     COL_FEAT_IMPORT, COL_FEAT_IMPORT_STD, COL_FEAT_IMPACT, COL_FEAT_IMPACT_STD,
     COL_FROM_AA, COL_TO_AA, COL_MUTATION, COL_DELTA, COL_ABS_DELTA,
     COL_POS, COL_REGION, COL_DELTA_CPP, COL_SHIFT_SCORE,
@@ -252,6 +253,26 @@ DICT_DF_SCHEMAS = {
                 "float", "Bootstrap selection frequency (fraction of resampling rounds a "
                 "feature was selected); present only when CPP(bootstrap=True).",
                 required=False, range=[0, 1], example=0.9),
+            COL_ABS_AUC_CI_LOW: _field(
+                "float", "Lower bound of the bootstrap confidence interval of 'abs_auc'; "
+                "present only when CPP(bootstrap=True) runs with a confidence level "
+                "(bootstrap_kws={'ci': <level>}).", required=False, nullable=True,
+                range=[-0.5, 0.5], example=0.18),
+            COL_ABS_AUC_CI_HIGH: _field(
+                "float", "Upper bound of the bootstrap confidence interval of 'abs_auc'; "
+                "present only when CPP(bootstrap=True) runs with a confidence level "
+                "(bootstrap_kws={'ci': <level>}).", required=False, nullable=True,
+                range=[-0.5, 0.5], example=0.31),
+            COL_MEAN_DIF_CI_LOW: _field(
+                "float", "Lower bound of the bootstrap confidence interval of 'mean_dif'; "
+                "present only when CPP(bootstrap=True) runs with a confidence level "
+                "(bootstrap_kws={'ci': <level>}).", required=False, nullable=True,
+                range=[-1, 1], example=0.06),
+            COL_MEAN_DIF_CI_HIGH: _field(
+                "float", "Upper bound of the bootstrap confidence interval of 'mean_dif'; "
+                "present only when CPP(bootstrap=True) runs with a confidence level "
+                "(bootstrap_kws={'ci': <level>}).", required=False, nullable=True,
+                range=[-1, 1], example=0.14),
             COL_FEAT_IMPORT: _field("float", "Feature importance from TreeModel.fit "
                                     "(post-fit).", required=False, range=[0, None],
                                     example=0.97),

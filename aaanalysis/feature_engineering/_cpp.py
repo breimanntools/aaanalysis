@@ -93,9 +93,9 @@ def _check_bootstrap_batching(n_batches=None, n_sample_batches=None):
 def _resolve_bootstrap_kws(bootstrap_kws=None):
     """Validate ``bootstrap_kws`` and merge with the tuned defaults.
 
-    Returns ``(rounds, resample, frac)``. ``None`` yields all defaults; a dict may set any subset of
-    ``{'rounds', 'resample', 'frac'}`` (unset keys keep their default). Unknown keys or out-of-range
-    values raise ``ValueError``.
+    Returns ``(rounds, resample, frac, ci)``. ``None`` yields all defaults; a dict may set any
+    subset of ``{'rounds', 'resample', 'frac', 'ci'}`` (unset keys keep their default). Unknown keys
+    or out-of-range values raise ``ValueError``.
     """
     if bootstrap_kws is None:
         bootstrap_kws = {}
@@ -118,7 +118,56 @@ def _resolve_bootstrap_kws(bootstrap_kws=None):
                           just_int=False)
     if cfg["frac"] == 0:
         raise ValueError(f"'bootstrap_kws['frac']' ({cfg['frac']}) should be > 0 and <= 1.")
-    return cfg["rounds"], cfg["resample"], cfg["frac"]
+    ut.check_number_range(name="bootstrap_kws['ci']", val=cfg["ci"], min_val=0, max_val=1,
+                          exclusive_limits=True, accept_none=True, just_int=False)
+    return cfg["rounds"], cfg["resample"], cfg["frac"], cfg["ci"]
+
+
+def _collect_round_stats(df_round: pd.DataFrame,
+                         per_feat_stats: Dict[str, Dict[str, List[float]]]) -> None:
+    """Retain the per-round CPP statistics of one bootstrap round, keyed by feature.
+
+    ``per_feat_stats`` maps a feature id to ``{statistic column: [value per round in which the
+    feature was selected]}``. Only the statistics that have an interval column
+    (``ut.DICT_COLS_FEAT_CI``) are kept, and only those the round's ``df_feat`` carries.
+    """
+    cols = [c for c in ut.DICT_COLS_FEAT_CI if c in df_round.columns]
+    feats = df_round[ut.COL_FEATURE].tolist()
+    for col in cols:
+        for feat, val in zip(feats, df_round[col].tolist()):
+            per_feat_stats.setdefault(feat, {}).setdefault(col, []).append(float(val))
+
+
+def _add_bootstrap_ci_cols(df_feat: pd.DataFrame,
+                           per_feat_stats: Dict[str, Dict[str, List[float]]],
+                           ci: float) -> pd.DataFrame:
+    """Summarize the retained per-round statistics into per-feature percentile intervals.
+
+    For each statistic with an interval column, the central ``ci`` percentile interval of the
+    values collected over the resampling rounds is appended as ``<statistic>_ci_low`` /
+    ``<statistic>_ci_high``, rounded like the other statistic columns. The interval covers the
+    rounds in which the feature was selected, so a feature observed in fewer than two rounds has
+    no spread to summarize and gets ``NaN`` bounds. ``df_feat`` is modified in place and returned.
+    """
+    alpha = (1.0 - ci) / 2.0
+    q_low, q_high = 100.0 * alpha, 100.0 * (1.0 - alpha)
+    feats = df_feat[ut.COL_FEATURE].tolist()
+    for col, (col_low, col_high) in ut.DICT_COLS_FEAT_CI.items():
+        if col not in df_feat.columns:
+            continue
+        lows, highs = [], []
+        for feat in feats:
+            vals = per_feat_stats.get(feat, {}).get(col, [])
+            if len(vals) < 2:
+                lows.append(np.nan)
+                highs.append(np.nan)
+                continue
+            low, high = np.percentile(np.asarray(vals, dtype=float), [q_low, q_high])
+            lows.append(round(float(low), 3))
+            highs.append(round(float(high), 3))
+        df_feat[col_low] = lows
+        df_feat[col_high] = highs
+    return df_feat
 
 
 def check_match_list_df_feat_list_df_parts(list_df_feat=None, list_df_parts=None) -> None:
@@ -310,6 +359,8 @@ class CPP(Tool):
             selected, then the **ordinary full-data selection is returned with a ``selection_frequency`` column**
             (0 to 1) added. The selected features are exactly those of a normal run (``n_filter`` is the selection
             criterion) — bootstrapping annotates their stability, it does not change which features are selected.
+            Set ``bootstrap_kws['ci']`` to additionally report a per-feature confidence interval for the
+            ``abs_auc`` and ``mean_dif`` statistics.
         bootstrap_kws : dict, optional
             Bootstrap configuration (only used when ``bootstrap=True``). A dict with any subset of these keys; unset
             keys keep their tuned default, and ``None`` uses all defaults:
@@ -323,6 +374,12 @@ class CPP(Tool):
             * ``'frac'`` (float, default ``0.8``): per-group resample size as a fraction of the group's samples
               (``0<frac<=1``), drawn with replacement each round. ``0.8`` is the conventional sub-sample size; with
               ``n_filter`` as the final cut the exact fraction only modestly affects the result.
+            * ``'ci'`` (float or None, default ``None``): confidence level (``0<ci<1``, e.g. ``0.95``) of the
+              **per-feature confidence intervals**. ``None`` leaves them off and the output unchanged. A level
+              summarizes the statistics computed in the resampling rounds into a central percentile interval per
+              feature, appending ``abs_auc_ci_low`` / ``abs_auc_ci_high`` and ``mean_dif_ci_low`` /
+              ``mean_dif_ci_high`` after ``selection_frequency``. A higher level widens the interval; more
+              ``rounds`` make it more precise.
 
         Notes
         -----
@@ -336,6 +393,13 @@ class CPP(Tool):
           sample-specific — a **trust / interpretability** aid, not a change to the list or to predictive accuracy.
           To keep any downstream cross-validation leakage-safe, run CPP (bootstrapped or not) **inside** each training
           fold, never on the full dataset before splitting.
+        * **Per-feature confidence intervals (``bootstrap_kws['ci']``) reuse the same rounds.** Each round already
+          computes the CPP statistics on its resample; with a confidence level set, those values are retained and
+          summarized into a central percentile interval per feature, so the intervals cost no extra runs. They are
+          **conditional on selection**: a feature contributes a value only in the rounds in which it was selected,
+          so an interval is read together with ``selection_frequency`` (a narrow interval from 2 of 20 rounds says
+          little), and a feature selected in fewer than two rounds gets ``NaN`` bounds. The intervals describe the
+          resampling spread of the statistic, not a posterior or a calibrated significance test.
         * **Choosing the settings.** ``bootstrap=True`` uses the tuned defaults in ``bootstrap_kws``
           (``rounds=20``, ``frac=0.8``, ``resample='reference'``); pass a dict to override any of them.
           ``rounds`` controls how precisely ``selection_frequency`` is estimated (~20 is a practical sweet spot, ~50
@@ -390,7 +454,7 @@ class CPP(Tool):
         check_df_cat(df_cat=df_cat)
         ut.check_bool(name="accept_gaps", val=accept_gaps)
         ut.check_bool(name="bootstrap", val=bootstrap)
-        n_bootstrap, resample, bootstrap_frac = _resolve_bootstrap_kws(bootstrap_kws)
+        n_bootstrap, resample, bootstrap_frac, bootstrap_ci = _resolve_bootstrap_kws(bootstrap_kws)
         df_parts = check_match_df_parts_df_scales(
             df_parts=df_parts, df_scales=df_scales, accept_gaps=accept_gaps
         )
@@ -420,6 +484,7 @@ class CPP(Tool):
         self._n_bootstrap = n_bootstrap
         self._resample = resample
         self._bootstrap_frac = bootstrap_frac
+        self._bootstrap_ci = bootstrap_ci
         # Feature components: Scales + Part + Split
         self.df_cat = df_cat.copy()
         self.df_scales = df_scales.copy()
@@ -454,24 +519,33 @@ class CPP(Tool):
         on the bootstrap resample given by row indices ``idx`` and returns its ``df_feat``;
         ``run_on(None)`` runs it on the full data. The final selection is exactly the ordinary
         full-data run (``n_filter`` is the selection criterion); ``selection_frequency`` (fraction of
-        rounds each feature was selected) is reported alongside it.
+        rounds each feature was selected) is reported alongside it. When ``bootstrap_kws['ci']`` sets
+        a confidence level, the statistics computed in each round are retained as well and summarized
+        into per-feature confidence intervals.
         """
         labels_arr = np.asarray(labels)
         idx_test = np.where(labels_arr == label_test)[0]
         idx_ref = np.where(labels_arr == label_ref)[0]
         rng = np.random.default_rng(self._random_state)
+        ci = self._bootstrap_ci
         counts: Dict[str, int] = {}
+        per_feat_stats: Dict[str, Dict[str, List[float]]] = {}
         for _ in range(self._n_bootstrap):
             idx = _resample_row_indices(idx_test=idx_test, idx_ref=idx_ref,
                                         resample=self._resample,
                                         bootstrap_frac=self._bootstrap_frac, rng=rng)
-            for feat in run_on(idx)[ut.COL_FEATURE]:
+            df_round = run_on(idx)
+            for feat in df_round[ut.COL_FEATURE]:
                 counts[feat] = counts.get(feat, 0) + 1
+            if ci is not None:
+                _collect_round_stats(df_round=df_round, per_feat_stats=per_feat_stats)
         df_feat = run_on(None)  # ordinary full-data selection; n_filter is the criterion
         freq = {f: c / self._n_bootstrap for f, c in counts.items()}
         df_feat[ut.COL_SELECTION_FREQUENCY] = [
             round(freq.get(f, 0.0), 3) for f in df_feat[ut.COL_FEATURE]
         ]
+        if ci is not None:
+            _add_bootstrap_ci_cols(df_feat=df_feat, per_feat_stats=per_feat_stats, ci=ci)
         return df_feat
 
     # Main method
@@ -520,6 +594,11 @@ class CPP(Tool):
             When the constructor enables bootstrap stability annotation (``CPP(bootstrap=True)``), ``df_feat`` gains a
             ``selection_frequency`` column (the selected features are unchanged; see the ``bootstrap`` /
             ``bootstrap_kws`` constructor parameters and the Notes below).
+
+        .. versionchanged:: 1.2.0
+            ``CPP(bootstrap=True, bootstrap_kws={'ci': <level>})`` additionally appends the per-feature
+            confidence-interval columns ``abs_auc_ci_low`` / ``abs_auc_ci_high`` and ``mean_dif_ci_low`` /
+            ``mean_dif_ci_high``. Without a level the output is unchanged.
 
         Parameters
         ----------
@@ -640,7 +719,10 @@ class CPP(Tool):
           selected features are exactly those of the non-bootstrap run (``n_filter`` is the selection
           criterion); ``selection_frequency`` flags which are reproducible under resampling. The run is
           otherwise unchanged (``bootstrap=False``, the default, is byte-identical). Not combinable
-          with ``n_batches`` / ``n_sample_batches``.
+          with ``n_batches`` / ``n_sample_batches``. Setting ``bootstrap_kws['ci']`` (e.g. ``0.95``)
+          additionally summarizes the statistics of those same rounds into a per-feature percentile
+          interval of ``abs_auc`` and ``mean_dif`` (``NaN`` bounds for a feature selected in fewer
+          than two rounds); the interval columns are appended after ``selection_frequency``.
         * **Binary by design.** ``run`` compares one test group against one reference group. For
           multi-class or regression tasks, build binary label contrasts with the
           ``SequenceFeature.get_labels_*`` helpers and loop ``run`` over them (see the
@@ -896,6 +978,10 @@ class CPP(Tool):
             Honors bootstrap stability annotation (``CPP(bootstrap=True)``) exactly like :meth:`run`, resampling
             along the sample axis of ``dict_num_parts`` and adding a ``selection_frequency`` column to ``df_feat``
             (the selected features are unchanged).
+
+        .. versionchanged:: 1.2.0
+            Honors ``bootstrap_kws['ci']`` exactly like :meth:`run`, appending the per-feature
+            confidence-interval columns of ``abs_auc`` and ``mean_dif`` to ``df_feat``.
 
         Parameters
         ----------
@@ -1312,6 +1398,9 @@ class CPP(Tool):
             Composition features with CPP statistics, ranked by ``abs_auc``. For ``"aac"`` the features
             are positional (``<PART>-Segment(1,1)-<AA>``, drawn by the feature map); for ``"dpc"`` /
             ``"kmer"`` the ``feature`` column holds the k-mer string and there is no ``positions`` column.
+            With bootstrap stability annotation (``CPP(bootstrap=True)``) a ``selection_frequency``
+            column is added, plus the per-feature confidence-interval columns of ``abs_auc`` and
+            ``mean_dif`` when ``bootstrap_kws['ci']`` sets a confidence level.
 
         See Also
         --------
