@@ -528,9 +528,11 @@ class CPPStructurePlot:
             df_feat=df_feat, shap_plot=shap_plot, col_val=col_val, col_imp=col_imp,
             tmd_len=tmd_len, start=start, tmd_seq=tmd_seq, jmd_n_seq=jmd_n_seq,
             jmd_c_seq=jmd_c_seq,
-            # Embedded at a fixed size (axes fractions mapped to pixels) -> pin figsize
-            # so auto_font never resizes it; a caller-supplied figsize still wins.
-            figsize=feature_map_kws.pop("figsize", (8, 8)), **feature_map_kws)
+            # No pinned figsize: feature_map sizes itself to its content, and this path saves
+            # with bbox_inches="tight" and maps nothing to pixels. Forcing a square figure here
+            # squeezed the grid and pushed the composed furniture (cumulative-importance panel,
+            # legends) off the canvas. A caller-supplied figsize still wins.
+            **feature_map_kws)
         try:
             buffer = io.BytesIO()
             fig_fm.savefig(buffer, format="png", dpi=dpi, bbox_inches="tight")
@@ -752,9 +754,10 @@ class CPPStructurePlot:
             df_feat=df_feat, shap_plot=shap_plot, col_val=col_val, col_imp=col_imp,
             tmd_len=tmd_len, start=start, tmd_seq=tmd_seq, jmd_n_seq=jmd_n_seq,
             jmd_c_seq=jmd_c_seq,
-            # Embedded at a fixed size (axes fractions mapped to pixels) -> pin figsize
-            # so auto_font never resizes it; a caller-supplied figsize still wins.
-            figsize=feature_map_kws.pop("figsize", (8, 8)), **feature_map_kws)
+            # No pinned figsize: the column geometry below is measured from the drawn figure,
+            # so it follows whatever size feature_map chose (a deterministic function of the
+            # same inputs). Forcing a square figure clipped the composed furniture.
+            **feature_map_kws)
         try:
             fig_fm.canvas.draw()
             # The heatmap axes span all n_pos columns; pick the tallest such axes (not the
@@ -1014,11 +1017,12 @@ class CPPStructurePlot:
                 cpp_plot = CPPPlot(df_scales=self._df_scales, df_cat=self._df_cat,
                                    jmd_n_len=self._jmd_n_len, jmd_c_len=self._jmd_c_len,
                                    accept_gaps=True, verbose=False)
-                # Pin a fixed figsize: this figure is embedded at a fixed size and its
-                # axes fractions are mapped to pixels, so it must not auto-size (auto_font).
+                # No pinned figsize: the heatmap axes are located from the drawn figure
+                # below, so the mapping follows whatever size feature_map chose. A square
+                # figure clipped the cumulative-importance panel and the legends.
                 fig, ax = cpp_plot.feature_map(df_feat=df_feat, shap_plot=shap_plot,
                                                col_val=col_val, col_imp=col_imp,
-                                               tmd_len=tmd_len, start=start, figsize=(8, 8))
+                                               tmd_len=tmd_len, start=start)
                 fig.canvas.draw()
                 cands = [a for a in fig.get_axes()
                          if abs((a.get_xlim()[1] - a.get_xlim()[0]) - n_pos) < 1e-6]
