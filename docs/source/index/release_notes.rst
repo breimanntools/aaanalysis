@@ -83,6 +83,13 @@ Added
   against the sequences in ``df_seq``. With ``return_scales=True`` it also returns the matching
   20-column ``df_scales`` and ``df_cat``, so a PSSM runs through
   :meth:`~aaanalysis.NumericalFeature.get_parts` and :meth:`~aaanalysis.CPP.run_num` unchanged.
+- :meth:`~aaanalysis.SequenceFeature.get_split_kws` gained a ``strategy`` preset for the CPP
+  strategy: ``strategy="compositional"`` returns the single whole-part ``Segment`` split (equal to
+  ``split_types="Segment", n_split_min=1, n_split_max=1``) and ``strategy="positional"`` returns
+  sub-segments plus ``Pattern`` and ``PeriodicPattern`` (equal to ``n_split_min=2, n_split_max=15``
+  over all three split types). Both presets together cover the default split set; the default
+  ``strategy=None`` leaves the output unchanged. A preset cannot be combined with non-default
+  ``split_types``, ``n_split_min``, or ``n_split_max`` values.
 
 Fixed
 ~~~~~
