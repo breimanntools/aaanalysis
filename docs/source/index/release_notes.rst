@@ -1,6 +1,7 @@
 .. _release_notes:
 
 Release Notes
+=============
 
 Version 1.2
 --------------------------------
@@ -16,297 +17,124 @@ between minor releases without the usual deprecation cycle. The
 
 Added
 ~~~~~
-
-- Design limits are now one shared, validated object. :class:`~aaanalysis.DesignConstraints`
-  collects everything a design campaign has to say about which variants are admissible: the
-  positions that must keep their wild-type residue (``immutable_positions``), the span a
-  substitution may fall in (``mutable_positions``), the target residues that are allowed or
-  banned, globally or per position (``permitted_substitutions`` / ``forbidden_substitutions``),
-  the mutation budget (``n_mut_max``), how close a variant must stay to its parent
-  (``min_identity`` / ``max_identity``), and the motifs it must avoid or keep
-  (``forbidden_motifs`` / ``required_motifs``). Every position is a **1-based position in the
-  parent sequence**, the convention the ``region`` parameter and the ``pos`` column already use.
-- The primary contract is :meth:`~aaanalysis.DesignConstraints.check`, which returns
-  ``(ok, reasons)`` for a candidate sequence and names each violated limit in a fixed field
-  order, so a rejected candidate explains itself instead of disappearing.
-  :meth:`~aaanalysis.DesignConstraints.as_predicate` adapts the same limits to the
-  ``genome -> bool`` callable :meth:`~aaanalysis.SeqOpt.run` already consumes, and
-  :meth:`~aaanalysis.DesignConstraints.to_dict` / :meth:`~aaanalysis.DesignConstraints.from_dict`
+- :class:`~aaanalysis.DesignConstraints`: one validated container for the design limits that
+  :class:`~aaanalysis.AAMut`, :class:`~aaanalysis.SeqMut` and :class:`~aaanalysis.SeqOpt` all
+  express — immutable and mutable positions, permitted and forbidden substitutions, a mutation
+  budget, identity bounds to the parent, and required or forbidden motifs. Positions are 1-based
+  over the parent sequence.
+- :meth:`~aaanalysis.DesignConstraints.check` returns ``(ok, reasons)`` so a rejected candidate
+  explains itself, :meth:`~aaanalysis.DesignConstraints.as_predicate` adapts the same limits to the
+  feasibility callable :meth:`~aaanalysis.SeqOpt.run` consumes, and ``to_dict`` / ``from_dict``
   round-trip a constraint set through JSON.
-- :class:`~aaanalysis.AAMut`, :class:`~aaanalysis.SeqMut` and :class:`~aaanalysis.SeqOpt` accept
-  the same object as ``constraints``: :meth:`~aaanalysis.AAMut.run` applies its residue-level
-  substitution rules, :meth:`~aaanalysis.SeqMut.scan` and :meth:`~aaanalysis.SeqMut.suggest` drop
-  the excluded mutations from the scan, :meth:`~aaanalysis.SeqMut.combine` appends an
-  ``is_feasible`` column and a ``reasons`` column rather than dropping variants, and
-  :meth:`~aaanalysis.SeqOpt.run` restricts its search space and penalizes the sequence-level
-  limits through its existing feasibility path. The ``region``, ``to_aa`` and ``n_mut_max``
-  parameters keep their meaning and are now shorthand that builds a
-  :class:`~aaanalysis.DesignConstraints` internally, so no limit is expressed by two independent
-  mechanisms; combining a shorthand with an object that sets the same limit to a different value
-  raises a ``ValueError``. Results are unchanged when no object is passed, and
-  ``SeqOpt.run(constraints=[...])`` still accepts its published list of feasibility callables.
-- :class:`~aaanalysis.DesignConstraints` is part of the public API: it is re-exported at the top
-  level (``aa.DesignConstraints``), listed in the :ref:`API reference <protein_engineering_api>`
-  under *Protein Engineering*, registered with the canonical abbreviation ``dc``, and each of its
-  four methods (:meth:`~aaanalysis.DesignConstraints.check`,
-  :meth:`~aaanalysis.DesignConstraints.as_predicate`,
-  :meth:`~aaanalysis.DesignConstraints.to_dict`,
-  :meth:`~aaanalysis.DesignConstraints.from_dict`) ships an example notebook.
-- The risk-coverage trade-off is now measurable.
-  :meth:`~aaanalysis.AAPred.eval_selective` ranks the samples by a per-sample confidence signal
-  and scores every metric again on the most-confident fraction of them, at each level of a
-  coverage grid, so "at 60% coverage the balanced accuracy is 0.93" can be read off a table
-  instead of guessed. The confidence source is the caller's choice (``confidence=...`` takes the
-  score margin, an uncertainty measure, or a negated applicability-domain distance); the default
-  ranks by the out-of-fold score margin. The returned ``df_eval_selective`` carries ``metric``,
-  ``coverage``, ``n_retained``, ``score`` and ``score_aurc`` (the area under that metric's
-  coverage-performance curve, divided by the coverage span, so a flat curve at ``0.8`` has an
-  area of ``0.8``). The ``coverage=1.0`` row reproduces the ordinary out-of-fold score.
-  This is a measurement, not an abstaining predictor: nothing is refused, and choosing a refusal
-  threshold from the curve stays with the caller. It covers classification;
-  :meth:`~aaanalysis.AAPred.eval` is untouched.
-
-- CPP features can now carry an uncertainty estimate. :class:`~aaanalysis.CPP` accepts a
-  confidence level in its bootstrap configuration
-  (``CPP(bootstrap=True, bootstrap_kws=dict(ci=0.95))``), and the statistics that each
-  resampling round already computes are retained and summarised into a central percentile
-  interval per feature. ``df_feat`` then gains ``abs_auc_ci_low`` / ``abs_auc_ci_high`` and
-  ``mean_dif_ci_low`` / ``mean_dif_ci_high`` after ``selection_frequency``, for
-  :meth:`~aaanalysis.CPP.run`, :meth:`~aaanalysis.CPP.run_num` and
-  :meth:`~aaanalysis.CPP.run_composit` alike, without any additional runs. The interval is
-  conditional on selection: a feature contributes a value only in the rounds in which it was
-  selected, so it is read together with ``selection_frequency``, and a feature selected in
-  fewer than two rounds gets ``NaN`` bounds. Leaving ``ci`` unset keeps the output unchanged.
-- Calibration quality is now measurable. :meth:`~aaanalysis.ReliabilityModel.eval` gains two
-  keyword-only parameters: ``use_calibrated=True`` bins the calibrated probability
-  (``score_calibrated``) instead of the raw ``score``, and ``add_metrics=True`` appends the Brier
-  score (``bin='brier'``) and the expected calibration error (``bin='ece'``, equal-width bins
-  weighted by bin size), each stored in ``mean_score``. Comparing the raw and the calibrated
-  table on held-out data shows whether ``calibrate=True`` helped. With both left at their
-  defaults the returned table is unchanged; ``use_calibrated=True`` on a model fitted with
-  ``calibrate=False`` raises a ``ValueError``.
-- :meth:`~aaanalysis.ReliabilityModelPlot.reliability_diagram` gains ``label``, annotates the
-  Brier score and ECE in the curve's legend entry when the table carries them, and draws the
-  diagonal only once, so the raw and the calibrated curve can share one ``ax``.
-- :meth:`~aaanalysis.ReliabilityModel.fit` now warns when ``calibrate=True`` cannot be honoured
-  (for example, because a class holds fewer members than the internal cross-validation needs or
-  the model cannot be cloned). ``score_calibrated`` is ``NaN`` in that case, and
-  ``eval(use_calibrated=True)`` raises a ``ValueError`` naming that reason instead of reporting a
-  ``calibrate=False`` that was never passed.
-- The applicability domain of :class:`~aaanalysis.ReliabilityModel` is now banded and
-  inspectable. :meth:`~aaanalysis.ReliabilityModel.predict` appends two columns at the end of its
-  table: ``ad_status`` (``inside`` if ``ood_score <= 1``, ``borderline`` up to
-  ``1 + ad_borderline``, ``outside`` above, and ``unknown`` when the training reference has no
-  usable spread) and ``ad_nearest_train``, the 0-based row index of the closest training sample.
-  ``in_domain`` stays the bool shorthand for ``ad_status == "inside"``.
-  :meth:`~aaanalysis.ReliabilityModel.fit` gains ``ad_borderline`` (default ``0.1``) and exposes
-  the fitted boundary as ``ad_threshold_`` (when it is positive,
-  ``ood_score == ad_knn / ad_threshold_``) and the decision rule as ``ad_method_`` (``"knn"``).
-  Apart from the ``ad_knn_dist`` → ``ad_knn`` rename, existing columns keep their order and
-  values.
-- A mutation-candidate set is now scored in one call.
-  :meth:`~aaanalysis.ReliabilityModel.predict_candidates` takes the candidate table that
-  :meth:`~aaanalysis.SeqMut.mutate`, :meth:`~aaanalysis.SeqMut.combine` and
-  :meth:`~aaanalysis.SeqOpt.run` emit (an ``entry`` column plus the candidate sequence in
-  ``sequence_mut``; ``col_seq`` selects a different column, e.g. ``sequence`` to score
-  wild-types), rebuilds its feature matrix with
-  :meth:`~aaanalysis.SequenceFeature.feature_matrix` from the wild-type TMD coordinates in
-  ``df_seq``, and delegates to :meth:`~aaanalysis.ReliabilityModel.predict`. The returned table
-  carries the ``df_rel`` columns, is row-aligned with the candidates (it keeps their index, so
-  ``df_cand.join(df_rel)`` attaches it), and matches a manual
-  :meth:`~aaanalysis.SequenceFeature.feature_matrix` + ``predict`` round-trip exactly. Designed
-  candidates are pushed away from the training data by construction, so ``ood_score`` /
-  ``ad_status`` / ``ad_nearest_train`` are what say which of them the model can still be
-  trusted on.
-- The :ref:`Data Schemas <df_schemas>` page now documents the prediction outputs that downstream
-  tools read, advancing the per-sample and per-residue half of the documented output contract:
-  ``df_pred`` from :meth:`~aaanalysis.AAPred.predict` (sequence, domain and window levels),
-  ``df_rel`` from :meth:`~aaanalysis.ReliabilityModel.predict`, and ``df_eval_reliability`` from
-  :meth:`~aaanalysis.ReliabilityModel.eval`. Contract tests pin the column names, order and
-  dtypes as literals, so one of these columns being renamed, dropped, retyped or left
-  undocumented fails the suite. The ``score`` column carries one documented range per
-  scale, ``[0, 1]`` for ``score_range='proba'`` and ``[0, 100]`` for ``'percent'``, so both
-  outputs of :meth:`~aaanalysis.AAPred.predict` are checked against the same contract.
+- All three design classes accept the object as ``constraints``. The ``region``, ``to_aa`` and
+  ``n_mut_max`` parameters keep their meaning and are now shorthand that builds one internally, so
+  a limit has a single definition; combining a shorthand with an object that sets the same limit
+  differently raises. Results are unchanged when no object is passed.
+- :meth:`~aaanalysis.AAPred.eval_selective`: the risk-coverage trade-off as a table. Samples are
+  ranked by a per-sample confidence signal and every metric is scored again on the most-confident
+  fraction, at each level of a coverage grid, so a refusal threshold can be chosen from evidence.
+  The confidence source is the caller's (``confidence=``); the default is the out-of-fold score
+  margin. The ``coverage=1.0`` row is the ordinary out-of-fold score. Classification only, and a
+  measurement only: nothing abstains and :meth:`~aaanalysis.AAPred.eval` is untouched.
+- **CPP feature intervals**: ``CPP(bootstrap=True, bootstrap_kws=dict(ci=0.95))`` retains the
+  statistics each resampling round already computes and summarises them into a percentile interval
+  per feature, adding ``abs_auc_ci_low`` / ``_high`` and ``mean_dif_ci_low`` / ``_high`` to
+  ``df_feat`` at no extra runs. The interval is conditional on selection, so it is read together
+  with ``selection_frequency``. Leaving ``ci`` unset keeps the output unchanged.
+- :meth:`~aaanalysis.ReliabilityModel.eval` gains ``use_calibrated`` and ``add_metrics``, which
+  score the calibrated column and append Brier score and expected calibration error, so comparing
+  the raw and calibrated tables shows whether calibration helped. Defaults leave the table
+  unchanged. :meth:`~aaanalysis.ReliabilityModelPlot.reliability_diagram` gains ``label``,
+  annotates both metrics in the legend, and lets a raw and a calibrated curve share one axis.
+- :meth:`~aaanalysis.ReliabilityModel.fit` now warns when ``calibrate=True`` cannot be honoured,
+  for example too few members in a class, instead of failing silently.
+- **Banded applicability domain**: :meth:`~aaanalysis.ReliabilityModel.predict` appends
+  ``ad_status`` (``inside`` / ``borderline`` / ``outside`` / ``unknown``) and ``ad_nearest_train``,
+  and :meth:`~aaanalysis.ReliabilityModel.fit` gains ``ad_borderline`` and exposes the fitted
+  ``ad_threshold_`` and ``ad_method_``. Apart from the ``ad_knn_dist`` to ``ad_knn`` rename,
+  existing columns are unchanged.
+- :meth:`~aaanalysis.ReliabilityModel.predict_candidates`: scores a designed candidate set in one
+  call. It takes the table the design methods emit, rebuilds the feature matrix from the wild-type
+  coordinates in ``df_seq``, and delegates to :meth:`~aaanalysis.ReliabilityModel.predict`. The
+  result is row-aligned with the candidates, so the two join directly.
+- :meth:`~aaanalysis.NumericalFeature.from_pssm`: position-specific scoring matrices as a CPP value
+  source. It reads PSI-BLAST ASCII files and precomputed arrays, reorders file columns into
+  canonical amino acid order, and with ``return_scales=True`` also returns the matching
+  ``df_scales`` and ``df_cat``, so a matrix runs through :meth:`~aaanalysis.CPP.run_num` unchanged.
+- :meth:`~aaanalysis.SequenceFeature.get_split_kws` gains a ``strategy`` preset:
+  ``"compositional"`` returns the whole-part segment split and ``"positional"`` the sub-segments
+  plus patterns. Together they cover the default split set; ``strategy=None`` is unchanged, and a
+  preset cannot be combined with non-default split arguments.
+- :meth:`~aaanalysis.ModelEvaluator.learning_curve` answers whether a task is sampling-limited: it
+  repeats the cross-validation on nested subsets of each training fold, scores on the untouched
+  test fold, and returns one row per model, size and metric with a bootstrap interval. At the full
+  fraction it reproduces :meth:`~aaanalysis.ModelEvaluator.run` exactly for the same settings.
+  :meth:`~aaanalysis.ModelEvaluatorPlot.learning_curve` draws it with the band.
+- :meth:`~aaanalysis.AAPredPlot.group_cluster` gains ``kind='dendrogram'`` with a rectangular or
+  circular ``layout``, coloured by the existing annotations. It shares the clustermap's linkage, so
+  both kinds show the same topology.
+- The :ref:`Data Schemas <df_schemas>` page now documents the prediction outputs downstream tools
+  read: ``df_pred``, ``df_rel`` and ``df_eval_reliability``. Contract tests pin their column names,
+  order and dtypes, so renaming, dropping, retyping or undocumenting one fails the suite.
 
 Changed
 ~~~~~~~
-
-- Consistency pass on the prediction and design tier. These classes are still marked
-  experimental, so the changes land without a deprecation cycle:
-
-  - :meth:`~aaanalysis.ReliabilityModel.fit`: ``ci`` is now a fraction in ``(0, 1)`` with default
-    ``0.90`` (it was a percent, ``90.0``), the same unit as :meth:`~aaanalysis.ModelEvaluator.run`
-    and :func:`~aaanalysis.comp_bootstrap_ci`. Passing a percent raises a ``ValueError`` that says
-    so.
-  - :meth:`~aaanalysis.ReliabilityModel.predict`: the ``ad_knn_dist`` column is renamed to
-    ``ad_knn``, following the ``ad_<method>`` pattern of ``ad_mahalanobis`` and ``ad_leverage``.
-  - :meth:`~aaanalysis.ReliabilityModel.eval`: the ``n`` column is renamed to ``n_samples``. The
-    shape of the table, including its summary row, is unchanged.
-  - :class:`~aaanalysis.SeqOpt`: the default ``mode`` is now ``"importance"``, which needs no
-    fitted model, reference set, or ``[pro]`` extra, so ``aa.SeqOpt()`` constructs in a base
-    install. ``mode="impact"`` remains the recommended SHAP-guided search.
-  - :meth:`~aaanalysis.AAPred.eval`: ``"mcc"`` (Matthews correlation coefficient) is accepted, so
-    ``AAPred`` and :class:`~aaanalysis.ModelEvaluator` share one metric vocabulary.
-  - The :class:`~aaanalysis.ReliabilityModel` docstring now states that its ``score_std`` is the
-    spread of a sample's score across ensemble members, whereas the ``score_std`` of
-    :meth:`~aaanalysis.AAPred.eval` and :meth:`~aaanalysis.ModelEvaluator.run` is the spread of a
-    metric across cross-validation folds.
-  - :class:`~aaanalysis.AAPred` and :class:`~aaanalysis.SeqOpt` validate ``df_scales``, and
-    :meth:`~aaanalysis.AAPred.eval` validates ``list_parts``, so an invalid value raises a
-    ``ValueError`` naming the parameter instead of failing later or being ignored.
-Added
-~~~~~
-
-- :meth:`~aaanalysis.NumericalFeature.from_pssm` makes position-specific scoring matrices (PSSMs) a
-  CPP value source. It reads PSI-BLAST ASCII ``.pssm`` files (a folder, single file, or an
-  ``entry`` to file/array dict) and precomputed ``(L, 20)`` arrays. File columns are reordered
-  from PSI-BLAST order (``ARNDCQEGHILKMFPSTWYV``) into canonical amino acid order; arrays must
-  already use that order. By default it maps log-odds with a sigmoid or percentages by dividing
-  by 100, and can instead return the selected raw values. It can optionally check each matrix
-  against the sequences in ``df_seq``. With ``return_scales=True`` it also returns the matching
-  20-column ``df_scales`` and ``df_cat``, so a PSSM runs through
-  :meth:`~aaanalysis.NumericalFeature.get_parts` and :meth:`~aaanalysis.CPP.run_num` unchanged.
-- :meth:`~aaanalysis.SequenceFeature.get_split_kws` gained a ``strategy`` preset for the CPP
-  strategy: ``strategy="compositional"`` returns the single whole-part ``Segment`` split (equal to
-  ``split_types="Segment", n_split_min=1, n_split_max=1``) and ``strategy="positional"`` returns
-  sub-segments plus ``Pattern`` and ``PeriodicPattern`` (equal to ``n_split_min=2, n_split_max=15``
-  over all three split types). Both presets together cover the default split set; the default
-  ``strategy=None`` leaves the output unchanged. A preset cannot be combined with non-default
-  ``split_types``, ``n_split_min``, or ``n_split_max`` values.
-- :meth:`~aaanalysis.ModelEvaluator.learning_curve` answers "is this task sampling-limited?": it
-  repeats the stratified cross-validation of :meth:`~aaanalysis.ModelEvaluator.run` on stratified,
-  nested subsets of increasing size of every training fold, scores each model on the full,
-  unchanged test fold, and returns one row per (model, training size, metric) with the mean, std,
-  and a bootstrap confidence interval. The default grid has five fraction candidates (which
-  resolve to five distinct sizes on sufficiently large data), each with a bootstrap CI. A
-  fractional size is resolved within each training fold, so the fraction ``1.0`` uses every
-  fold's complete training set and reproduces :meth:`~aaanalysis.ModelEvaluator.run` exactly when
-  both calls use the same ``random_state``, ``n_cv``, ``n_rounds``, and metrics (also for unequal
-  training folds). :meth:`~aaanalysis.ModelEvaluatorPlot.learning_curve` draws the metric versus
-  training size per model with the CI band. A still-rising curve suggests collecting more data; a
-  flat one suggests changing the representation or model.
-- :meth:`~aaanalysis.AAPredPlot.group_cluster`: ``kind='dendrogram'`` draws the sample relation
-  tree without the heatmap, with ``layout='rectangular'`` or a radial ``layout='circular'`` tree.
-  The leaves are colored by the existing ``labels`` / ``labels_row`` annotations (one strip or
-  ring each, with titled legends). The tree comes from the same linkage as
-  ``kind='clustermap'`` (now computed once with ``scipy`` and handed to seaborn), so both kinds
-  show the same topology and leaf order. The clustermap figure itself is unchanged when the
-  optional ``fastcluster`` package is not installed; with ``fastcluster``, seaborn used to
-  compute the linkage internally, so exact ties between equidistant merges may now be broken
-  differently.
+- **Consistency pass on the prediction and design tier.** These classes are marked beta, so the
+  changes land without a deprecation cycle: :meth:`~aaanalysis.ReliabilityModel.fit` takes ``ci``
+  as a fraction in ``(0, 1)`` rather than a percent, and a percent now raises; ``ad_knn_dist`` is
+  renamed ``ad_knn`` and the ``n`` column of
+  :meth:`~aaanalysis.ReliabilityModel.eval` is renamed ``n_samples``;
+  :class:`~aaanalysis.SeqOpt` defaults to ``mode="importance"``, so it constructs in a base
+  install; :meth:`~aaanalysis.AAPred.eval` accepts ``"mcc"``, giving
+  :class:`~aaanalysis.AAPred` and :class:`~aaanalysis.ModelEvaluator` one metric vocabulary; and
+  both classes now validate ``df_scales`` and ``list_parts`` instead of ignoring an invalid value.
+- :meth:`~aaanalysis.CPP.run`: ``n_sample_batches`` creates exactly the requested number of
+  balanced, non-empty batches, and the multiple-testing correction is now pooled across scale
+  batches, so a batched run matches the single-pass result.
 
 Fixed
 ~~~~~
-
-- :meth:`~aaanalysis.ReliabilityModel.fit` rejects non-finite numbers (``NaN``, ``inf``, ``-inf``)
-  for ``ci``, ``ad_percentile`` and ``conformal_alpha``. A ``NaN`` passed both range comparisons
-  silently (``nan < 0`` and ``nan > 1`` are each ``False``), so ``fit(ci=float("nan"))`` was
-  accepted and :meth:`~aaanalysis.ReliabilityModel.predict` then returned ``NaN`` ``ci_low`` /
-  ``ci_high`` columns.
-- :meth:`~aaanalysis.ReliabilityModel.eval`: passing ``X`` without ``labels`` now raises, where
-  the given features were silently ignored before. Passing ``labels`` without ``X`` scores the
-  training features against that labelling; it must match them in length and may only use labels
-  observed during :meth:`~aaanalysis.ReliabilityModel.fit`.
-- :meth:`~aaanalysis.ReliabilityModelPlot.reliability_diagram` validates ``figsize``, ``color``,
-  ``title``, and ``ax`` in its frontend, so an invalid value raises a ``ValueError`` naming the
-  parameter instead of a matplotlib traceback.
-- :meth:`~aaanalysis.StructurePreprocessor.encode_pae` (and the ``encode`` router) now reads the
-  PAE JSON exactly as the AlphaFold Database serves it, a one-element list wrapping the
-  ``predicted_aligned_error`` dict, so files downloaded by
-  :meth:`~aaanalysis.StructurePreprocessor.fetch_alphafold` load without a manual unwrap.
-- :meth:`~aaanalysis.CPPPlot.ranking`: the ``Σ`` total and the SHAP positive/negative key no longer
-  overprint the percentage labels of the shortest bars; the anchor now skips the label width.
-- :class:`~aaanalysis.SeqOptPlot`: ``convergence`` uses a two-line y-label that fits its third
-  panel, ``mutation_map`` defaults to a taller figure (``figsize=(8, 6)``) so the 20 amino-acid rows
-  stay readable, and ``parallel_coordinates`` colors the lines by the first objective (with a
-  colorbar) when a single front is drawn, where rank coloring made every line the same color.
-- Tutorials: corrected typos and wrong names (e.g. ``load_dataest``, ``plot_setting``,
-  ``ShapExplainer``, ``Part-Slit``, a broken link to the ShapModel tutorial), repaired four
-  notebooks that failed ``nbformat`` validation, and re-executed every tutorial so the stored
-  figures match the current plotting code.
-- :meth:`~aaanalysis.StructurePreprocessor.get_domains`: the AFragmenter adapter now reads the
-  ``ClusteringResult`` that current AFragmenter releases return (0-based ``cluster_intervals``),
-  so ``tool='afragmenter'`` yields real chopping strings instead of silently empty ones.
-- :class:`~aaanalysis.AALogoPlot`: with ``target_p1_site`` the P-site labels of long windows are
-  drawn upright at a size that fits one position, and only under the bottom panel of
-  ``multi_logo``; the TMD / JMD part labels shrink on very short parts instead of overprinting
-  the boundary position numbers (shared by every TMD-JMD plot).
-- :meth:`~aaanalysis.CPPPlot.eval`: the pos / neg mean-difference and cluster-count annotations
-  are capped to the bar height, so they no longer overprint each other in small figures.
-- :meth:`~aaanalysis.SeqOptPlot.pareto_front`: a single front is drawn in one solid color
-  instead of the pale end of the rank colormap.
-- :meth:`~aaanalysis.AAPredPlot.eval` (and every comparison bar chart): long condition names such
-  as ``balanced_accuracy`` are rotated automatically so they and the legend stay readable.
-- :func:`~aaanalysis.pipe.plot_eval`: the axis-impact panel wraps long axis names instead of
-  rotating them into each other.
-- :meth:`~aaanalysis.CPPPlot.feature_map` / :meth:`~aaanalysis.CPPPlot.heatmap`: an explicit
-  ``cbar_xywh`` with a ``y`` value is now honored (the automatic bottom-row layout used to move the
-  colorbar back under the grid), and a vertical ``cbar_kws`` orientation puts the ticks on the
-  right of the bar.
-- Quiet by default: :meth:`~aaanalysis.StructurePreprocessor.get_dssp` / ``encode_dssp`` no
-  longer re-emit mkdssp's harmless "does not seem to be an mmCIF file" probe as a warning;
-  :meth:`~aaanalysis.EmbeddingPreprocessor.fetch_embeddings` keeps the Hub client's status
-  text and the weight-loading progress bar out of stderr; the ``build_scales`` "pseudo-scales are
-  dataset-dependent" note of the three preprocessors is a verbose-gated message instead of a
-  ``UserWarning``; :class:`~aaanalysis.ShapModel` runs ``shap.KernelExplainer`` silently.
-- Example notebooks: every table is shown with ``display_df``; the ``fetch_alphafold``,
-  ``get_dssp``, ``encode_dssp``, ``get_domains``, ``encode_domains`` and ``fetch_uniprot``
-  examples are real, executed walkthroughs on AlphaFold models and UniProt records instead of
-  commented-out stubs; the ``compare_sets_negatives`` example draws the negative-set overlap
-  with matplotlib because ``upsetplot`` 0.9 does not run on pandas 3; three notebooks were
-  repaired to pass ``nbformat`` validation and spelling mistakes were corrected.
+- :meth:`~aaanalysis.ReliabilityModel.fit` rejects non-finite values for ``ci``,
+  ``ad_percentile`` and ``conformal_alpha``. A ``NaN`` passed both range comparisons silently and
+  produced ``NaN`` interval columns.
+- :meth:`~aaanalysis.ReliabilityModel.eval`: passing ``X`` without ``labels`` now raises, where the
+  features were silently ignored. Passing ``labels`` alone scores the training features against
+  that labelling.
+- :meth:`~aaanalysis.ReliabilityModelPlot.reliability_diagram` validates its arguments in the
+  frontend, so an invalid value names the parameter instead of raising from matplotlib.
+- :meth:`~aaanalysis.StructurePreprocessor.encode_pae` reads the PAE JSON exactly as the AlphaFold
+  Database serves it, so downloaded files load without a manual unwrap, and
+  :meth:`~aaanalysis.StructurePreprocessor.get_domains` reads the ``ClusteringResult`` that current
+  AFragmenter releases return.
+- **Plot legibility**: the total and key of :meth:`~aaanalysis.CPPPlot.ranking` no longer overprint
+  short bars; :meth:`~aaanalysis.CPPPlot.eval` caps its annotations to the bar height;
+  :class:`~aaanalysis.SeqOptPlot` fixes the convergence y-label, a taller mutation map and
+  single-front colouring; long condition names rotate or wrap in the comparison charts; an explicit
+  ``cbar_xywh`` is honoured by :meth:`~aaanalysis.CPPPlot.feature_map` and
+  :meth:`~aaanalysis.CPPPlot.heatmap`; and :class:`~aaanalysis.AALogoPlot` keeps P-site and part
+  labels from overprinting.
+- **Quiet by default**: the structure and embedding preprocessors no longer echo third-party probe
+  messages, progress bars or dataset-dependency notes to stderr, and
+  :class:`~aaanalysis.ShapModel` runs its explainer silently.
+- **Notebooks**: every table is shown with ``display_df``, the structure and UniProt examples are
+  real executed walkthroughs instead of commented-out stubs, and several notebooks were repaired to
+  pass ``nbformat`` validation.
 
 Documentation
 ~~~~~~~~~~~~~
-
-- New tutorial *CPP with protein language model embeddings and AlphaFold structures*
-  (``tutorial3e``): the recommended embedding and AlphaFold paths into
-  :meth:`~aaanalysis.CPP.run_num`, source fusion, and painting the signature onto the 3D model
-  with :class:`~aaanalysis.CPPStructurePlot`.
+- New tutorial *CPP with protein language model embeddings and AlphaFold structures*: the
+  recommended embedding and structure paths into :meth:`~aaanalysis.CPP.run_num`, and painting the
+  signature onto the 3D model.
 - New usage-principles page :ref:`Golden Pipelines <golden_pipelines>`: what the
-  :mod:`aaanalysis.pipe` layer is for, the four-pipeline spine, the shared
-  ``(result, plot, df_eval)`` return shape (with :func:`~aaanalysis.pipe.plot_eval` as the
-  documented exception, returning a list of matplotlib figures), and the parity anchors that keep
-  the convenience layer honest against the explicit primitive path.
-- :func:`~aaanalysis.pipe.find_features` documents its parity scope explicitly: only its
-  ``search="fast"`` ``df_feat`` is anchored byte-identical to an explicit chain, while
-  ``"balanced"`` and ``"exhaustive"`` search many configurations and are reproducible for a fixed
-  ``random_state`` without being parity-anchored.
-- The parity of :func:`~aaanalysis.pipe.predict_samples` with the explicit
-  :meth:`~aaanalysis.SequenceFeature.feature_matrix` / ``cross_validate`` chain is now pinned over
-  the complete learned state of every fitted predictor, and the example notebooks of
-  :mod:`aaanalysis.pipe` are held to zero parameter-coverage gaps.
-- The documented load → find-features → prediction path is executed in the standard unit suite,
-  with its at-most-ten-statement budget read from the same code block displayed on the
-  :ref:`Golden Pipelines <golden_pipelines>` page.
-- Protocols *P2: Exploratory sequence analysis* and *P3: Sampling* brought to the
-  protocol quality rubric: each opens with a key mental model and shows every concept it
-  names as a contrast figure (probability versus information logo, real versus shuffled
-  baseline, substrate versus non-substrate logos; distance band, reference composition,
-  motif-matched lookalikes versus the pool they are drawn from, anti-leakage and
-  redundancy filters). The public parameters of each demonstrated
-  :class:`~aaanalysis.AALogo`, :class:`~aaanalysis.AALogoPlot`,
-  :class:`~aaanalysis.SequenceFeature` and :class:`~aaanalysis.AAWindowSampler` method
-  are covered by name across its calls, including
-  :meth:`~aaanalysis.AAWindowSampler.sample_motif_matched`, and the common mistakes are
-  demonstrated in code. The remaining protocols are unchanged by this pass.
-- :meth:`~aaanalysis.CPP.run`: the ``n_sample_batches`` description promised that peak memory is
-  bounded by the batch size rather than by the full sample count ``n``. Peak-RSS measurements at a
-  constant batch size over 100, 200 and 400 samples show that it bounds the dominant term, the
-  per-batch scale-value tensor, while the ``(n_samples, n_pre_filter)`` pre-filter survivor matrix
-  and the test statistics computed on it stay resident: peak memory still grows linearly with
-  ``n``, on a roughly 13x flatter slope than the single-pass run. The parameter documentation now
-  states what is bounded and what is not; the behaviour of ``run`` is unchanged.
-- :meth:`~aaanalysis.CPP.run`: ``n_sample_batches`` now creates exactly the requested number of
-  balanced, non-empty sample batches. It bounds the per-batch scale-value tensor, but not total
-  peak memory: the ``(n_samples, n_survivors)`` survivor matrix and its test statistics remain
-  resident. The ``n_batches`` documentation now also states its per-batch FDR-correction semantics.
-- :meth:`~aaanalysis.CPP.run` and :meth:`~aaanalysis.CPP.run_num`: ``n_sample_batches`` now
-  creates exactly the requested number of balanced, non-empty sample batches. It bounds the
-  dominant per-batch working set, but not total peak memory: the pre-filtered candidate matrix and
-  its test statistics remain resident. The documentation now distinguishes this from
-  ``n_batches``: :meth:`~aaanalysis.CPP.run` applies FDR correction per selected-feature batch,
-  while :meth:`~aaanalysis.CPP.run_num` batches only pass-1 statistics.
+  :mod:`aaanalysis.pipe` layer is for, its shared return shape, and the parity anchors that keep it
+  honest against the explicit path. :func:`~aaanalysis.pipe.find_features` documents that only its
+  fast search is parity-anchored.
+- Protocols *P2: Exploratory sequence analysis* and *P3: Sampling* brought to the protocol quality
+  rubric: each opens with a mental model and shows every concept it names as a contrast figure.
+- :meth:`~aaanalysis.CPP.run`: the ``n_sample_batches`` documentation no longer claims that peak
+  memory is bounded by the batch size. Measurements show it bounds the dominant per-batch tensor
+  while the survivor matrix stays resident, so peak memory still grows with the sample count, on a
+  far flatter slope.
 
 Version 1.1
 --------------------------------
@@ -314,793 +142,149 @@ Version 1.1
 v1.1.0 (2026-09-10)
 --------------------------------
 
-This release substantially expands the feature-engineering surface: a unified
-**feature-preprocessor family** (embedding / structure / annotation sources), a
-**numerical CPP mode**, a configuration-sweep wrapper, sequence-window sampling,
-site-localization metrics, and an opt-in golden-pipeline API.
-
 Added
 ~~~~~
-
-**Data Handling**
-
-- :class:`~aaanalysis.EmbeddingPreprocessor`: Per-residue protein language model (PLM) embeddings.
-  ``encode`` normalizes raw embeddings into a ``[0, 1]`` per-residue ``dict_num``
-  (``minmax`` / ``quantile`` / ``sigmoid``) for :meth:`~aaanalysis.CPP.run_num`; ``build_scales`` /
-  ``build_cat`` collapse them into pseudo-scales for :meth:`~aaanalysis.CPP.run`. ``fetch_embeddings``
-  (``[embed]`` extra) downloads a curated PLM (ESM-2, ESM-1b, ProtT5, ProstT5) from the
-  Hugging Face Hub and computes per-protein (mean/max/cls pooling) or per-residue
-  embeddings; ``pool_embeddings`` reduces per-residue arrays to per-protein vectors. The
-  new ``[embed]`` extra isolates the heavy ``torch`` / ``transformers`` dependencies.
-- :class:`~aaanalysis.StructurePreprocessor` (``[pro]``): Converts PDB / CIF / AlphaFold files (and PAE
-  sidecars) into ``[0, 1]``-normalized per-residue tensors (``get_dssp``, ``encode_dssp``,
-  ``encode_pdb``, ``encode_pae``, ``get_domains``, ``encode_domains``, ``encode``,
-  ``build_scales``, ``build_cat``). ``encode`` is a single feature/backend router that
-  dispatches each requested feature key to its owning encoder and merges the outputs into
-  one ``dict_num``, so callers no longer need to know the DSSP / PDB / PAE / domain split.
-  Failure isolation is **per-feature**: an unavailable feature (e.g. ``depth`` without the
-  external ``msms`` binary) or a per-entry encoder error now fills only that feature's
-  column(s) with NaN, keeps every other feature, and emits one actionable ``UserWarning``
-  — instead of NaN-ing the whole protein (``on_failure='raise'`` still raises).
-- :class:`~aaanalysis.AnnotationPreprocessor` (``[pro]``): Fetches UniProt (or ingests user / predictor)
-  per-residue PTM and functional-site annotations and encodes them into tensors
-  (``fetch_uniprot``, ``ingest``, ``register_feature``, ``encode``, ``build_scales``,
-  ``build_cat``, ``to_df_seq``).
-- **combine_dict_nums**: Concatenates per-residue tensors (embedding / structure /
-  annotation) along the feature axis into one combined ``CPP.run_num`` input.
-- **get_labels**: Derives a binary ``int`` label vector from a sequence DataFrame's
-  label column (``positive_label`` mapped to ``1``, everything else to ``0``) — the
-  single-call form of the recurring ``(df[col] == x).astype(int).to_numpy()`` expression.
-- :func:`~aaanalysis.get_provenance`: An **opt-in**, JSON-serializable plain ``dict``
-  recording how a run can be reproduced. Its one field that external code cannot easily
-  recover is the **effective resolved seed** — ``random_state`` is resolved through the
-  same check the tools use, so the record reports the seed that actually takes effect,
-  including when ``options['random_state']`` overrides the value passed at the call site.
-  Alongside it: a ``deterministic`` flag, ``aaanalysis`` / Python / key-dependency
-  versions, the git commit when resolvable (``None`` for a regular install), and an
-  optional stable ``sha256`` fingerprint of the input via ``data``. It is **opt-in only**:
-  nothing attaches it to any output, no return type changes, and default results stay
-  byte-identical plain numpy / pandas. The record carries no timestamp or hostname —
-  every field is something that can change a result, which is what lets two records be
-  compared as a reproducibility key. No new dependency.
-- :func:`~aaanalysis.combine_dict_nums`: Concatenates per-residue tensors (embedding / structure /
-  annotation) along the feature axis into one combined :meth:`~aaanalysis.CPP.run_num` input.
-- :meth:`~aaanalysis.SequencePreprocessor.pad_parts`: Pads the sequence-part columns of a
-  ``df_parts`` DataFrame to a uniform length with a gap symbol (``length`` target or each column's
-  per-part max; N-terminal, C-terminal, or symmetric ``both``). The selected ``list_parts`` columns
-  are padded (default all) and a padded copy is returned (non-selected columns and the index
-  unchanged; input never mutated). Enables analyzing short, variable-length parts at a finer,
-  uniform resolution via *pad* → :class:`~aaanalysis.CPP` (``accept_gaps=True``) → larger uniform
-  ``n_split_max`` than the shortest real part allows.
-- :func:`~aaanalysis.load_dataset`: Every bundled dataset now carries a human-readable ``gene``
-  column immediately after ``entry`` — the UniProt gene symbol for the domain datasets
-  (``DOM_GSEC`` / ``DOM_GSEC_PU``) and a positional ``name_<row>`` placeholder for the amino-acid /
-  sequence datasets (whose entries are synthetic). All other columns are byte-identical. The
-  ``gene`` column lets a ``sample`` selector resolve by gene symbol:
-  :func:`~aaanalysis.SequenceFeature.get_seq_kws` (and the ``sample_kws`` plot path) now consult the
-  optional ``gene`` / ``display_name`` columns of ``df_seq`` (order: ``entry`` → ``gene`` →
-  ``display_name`` → ``name``), so ``sample="APP"`` resolves on ``DOM_GSEC``.
-
-**Feature Engineering**
-
-- :class:`~aaanalysis.SequenceFeatureTransformer`: A scikit-learn transformer
-  (``BaseEstimator`` + ``TransformerMixin``) that wraps the ``get_df_parts`` ->
-  :meth:`~aaanalysis.CPP.run` -> :meth:`~aaanalysis.SequenceFeature.feature_matrix` chain so CPP
-  feature **selection happens on the training fold only**: ``fit(X, y)`` selects features from a
-  ``df_seq`` (or ``df_parts``) + labels and stores them (``features_`` / ``df_feat_``), and
-  ``transform(X)`` applies the **same** features -> the numeric matrix. Dropped into a
-  :class:`sklearn.pipeline.Pipeline` (or :func:`sklearn.model_selection.cross_val_score`), the test
-  fold never influences which features are chosen — the leak-free counterpart of selecting on the
-  full labeled set. Follows the scikit-learn estimator contract (cloneable, validation in ``fit``,
-  learned state with a trailing underscore) and supports ``get_feature_names_out`` /
-  ``set_output(transform="pandas")``. Core (no new dependency; scikit-learn is already required).
-- :class:`~aaanalysis.CPPGrid`: ``Tool``-style wrapper (``run`` + ``eval``) that runs a parallel grid
-  sweep of :class:`~aaanalysis.CPP` configurations in one call; configurations differing only in
-  ``n_filter`` collapse into a single run. ``eval(sort_by=...)`` scores the
-  configurations (``avg_ABS_AUC`` by default) best-first.
-- :meth:`~aaanalysis.CPP.run_num`: Numerical mode sourcing per-residue values from a pre-sliced tensor
-  (``dict_num_parts``) instead of an amino-acid → scale lookup — embedding / structure /
-  annotation features through the same pipeline and output schema as :meth:`~aaanalysis.CPP.run`.
-- :meth:`~aaanalysis.CPP.run_composit`:
-  Composition mode — build a ``df_feat`` of **composition** features (iFeature-style descriptors
-  [Chen18]_) scored with CPP's discriminative statistics. ``composition="aac"`` (amino-acid
-  composition) *is* positional CPP — a one-hot identity scale set with the whole-part ``Segment(1,1)``
-  split, so it yields ``<PART>-Segment(1,1)-<AA>`` features **with positions** drawn by the feature
-  map. ``composition="dpc"`` (dipeptide) / ``"kmer"`` (general ``k``) are **non-positional** (a k-mer
-  is an adjacent-tuple property, not a per-residue scale): the ``20 ** k`` k-mers are scored and
-  filtered by adjusted AUC (top ``n_filter``), a min-occurrence guard (``min_count``), and optional
-  correlation dedup (``max_cor``). The composition matrices themselves come from
-  :meth:`~aaanalysis.SequenceFeature.kmer_composition` (which documents the compositional approaches).
-- **CPP bootstrap / stability annotation** (:class:`~aaanalysis.CPP` constructor: ``bootstrap``,
-  ``bootstrap_kws``): Opt-in resampling-based **stability annotation**, a thin wrapper applied uniformly
-  by :meth:`~aaanalysis.CPP.run`, :meth:`~aaanalysis.CPP.run_num`, and
-  :meth:`~aaanalysis.CPP.run_composit`. With ``bootstrap=True`` the data is resampled
-  ``bootstrap_kws['rounds']`` times (``bootstrap_kws['resample']='reference'`` fixes the test group and
-  resamples only the reference group; also ``'both'`` / ``'test'``; per-group draw size
-  ``bootstrap_kws['frac']``, with replacement) and re-selected each round to score how often each feature
-  is selected, then the **ordinary full-data run is returned with a ``selection_frequency`` column** (0
-  to 1) added. The selected features are exactly those of a normal run (``n_filter`` stays the selection
-  criterion); ``selection_frequency`` flags which are reproducible under resampling — a trust /
-  interpretability aid, not a change to the list or accuracy. The tuned config lives in one
-  ``bootstrap_kws`` dict (keys ``rounds`` / ``resample`` / ``frac``, parallel to ``split_kws``);
-  ``bootstrap=True`` defaults to ``dict(rounds=20, resample='reference', frac=0.8)`` and any omitted key
-  falls back to its default. The default ``bootstrap=False`` is byte-identical to previous versions.
-  Reuses the constructor ``random_state``.
-- **CPP.run ``redundancy='legacy'|'exact'``** (also :meth:`~aaanalysis.CPP.run_num`): Opt-in
-  position-overlap criterion for the redundancy-reduction step. The default ``'legacy'`` is
-  byte-identical to previous versions (published signatures stay reproducible); ``'exact'``
-  compares the actual residue positions — an interpretability enhancement (a more concentrated
-  signature, fewer redundant subcategories) that does not change predictive performance. For a
-  stronger, more efficient reduction, see :meth:`~aaanalysis.CPP.simplify`.
-- **CPP.simplify ``candidate_search='fast'``**: Opt-in heuristic capping the candidate
-  scales evaluated per feature, for a large speed-up on big scale pools (mainly
-  ``greedy``). The default ``'exact'`` reproduces the previous result; ``'fast'`` is
-  statistically equivalent (kept-feature Jaccard ≥ 0.95, ΔavgABS_AUC ≤ 0.005 on the
-  canonical data).
-- **SequenceFeature.get_labels_ovr / get_labels_ovo**: Convert multi-class ``labels``
-  into binary sets for :class:`~aaanalysis.CPP` — one-vs-rest (all samples kept) or one-vs-one (per
-  class-pair, each pair's value source row-matched).
-- **SequenceFeature.get_labels_quantile / get_labels_tiered**: Discretize a continuous
-  target into binary ``labels`` — a single quantile cut, or a fixed positive set swept
-  against stepwise-lowered negative cuts (each tier row-matched).
-- **SequenceFeature.scale_composition**: Scale-composition baseline featurizer that turns
-  sequences + scales into a ``(n_seq, n_scales)`` matrix by averaging each scale over a
-  sequence span (``list_parts=None`` → whole ``jmd_n`` + ``tmd`` + ``jmd_c``), dropping
-  missing / non-canonical residues — the sequence's mean profile in scale-space (the
-  scale-based analogue of amino-acid composition). The no-positional-split baseline to
-  compare against ``feature_matrix`` / CPP; optional ``return_df=True`` for a labeled frame.
-- :meth:`~aaanalysis.NumericalFeature.feature_matrix`: Turns :meth:`~aaanalysis.CPP.run_num`-selected
-  features back into a model matrix ``X`` — the numerical analog of
-  :meth:`~aaanalysis.SequenceFeature.feature_matrix`. Reconstructs each ``PART-SPLIT-SCALE`` value
-  from the per-residue tensors in ``dict_num_parts``, with per-part lengths taken from ``df_parts``
-  (the same length source :meth:`~aaanalysis.CPP.run_num` uses), re-applying the split to the part's
-  residue axis rather than the JMD-offset ``positions`` display numbering. ``X`` is therefore
-  byte-identical to the values :meth:`~aaanalysis.CPP.run_num` computed and preserves the per-residue
-  context that per-AA-averaged sequence features discard.
-- **SequenceFeature.aa_composition**: Amino-acid-composition (AAC) baseline featurizer that
-  turns sequences into a ``(n_seq, 20)`` matrix — the fraction of each of the 20 canonical
-  amino acids (``ut.LIST_CANONICAL_AA`` column order) over a sequence span
-  (``list_parts=None`` → whole ``jmd_n`` + ``tmd`` + ``jmd_c``), dropping gaps /
-  non-canonical residues so each row sums to 1. Fully vectorized; the no-positional-split
-  residue-frequency baseline to compare against ``feature_matrix`` / CPP; optional
-  ``return_df=True`` for a labeled frame.
-- **SequenceFeature.dipeptide_composition**: Dipeptide-composition (DPC) baseline featurizer
-  that turns sequences into a ``(n_seq, 400)`` matrix — the fraction of each of the 400
-  ordered adjacent canonical amino-acid pairs (``AA, AC, ..., YY``) over a sequence span,
-  dropping gaps / non-canonical residues before pairing (adjacencies span dropped residues
-  and cross concatenated part boundaries); each row with at least two canonical residues sums
-  to 1. Captures local sequential order that plain composition discards; fully vectorized;
-  optional ``return_df=True`` for a labeled frame.
-- **SequenceFeature.kmer_composition**: General k-mer-composition baseline featurizer — the
-  fraction of each of the ``20 ** k`` ordered overlapping k-mers of adjacent canonical residues
-  over a sequence span, a ``(n_seq, 20 ** k)`` matrix (columns in
-  ``itertools.product(ut.LIST_CANONICAL_AA, repeat=k)`` order). ``k`` selects the composition:
-  ``k=1`` is amino-acid composition (identical to ``aa_composition``), ``k=2`` dipeptide
-  composition (identical to ``dipeptide_composition``), and higher ``k`` (up to 4) captures
-  longer local sequential order. Same non-canonical-dropping, gap-free-span, each-row-sums-to-1
-  semantics as the ``k=1`` / ``k=2`` special cases; fully vectorized (one ``bincount`` over
-  base-20 k-mer codes); optional ``return_df=True`` for a labeled frame. ``return_scales=True`` also
-  returns the CPP-ready ``(df_scales, df_cat)``: for ``k=1`` the ``(20, 20)`` one-hot identity scale set
-  + amino-acid-class ``df_cat`` (feed to :meth:`~aaanalysis.CPP.run` with a whole-part ``Segment(1,1)``
-  split to get amino-acid composition as a real ``df_feat`` / feature map); for ``k>=2`` ``df_scales`` is
-  ``None`` (a k-mer is not a per-residue scale) and ``df_cat`` categorizes the k-mers by residue class.
-- **SequenceFeature.acc**: Order-aware scale **auto-covariance** (ACC) baseline featurizer — for
-  each scale and lag ``k`` (``1 .. n_lag``) the mean-centered auto-covariance of that scale's
-  values along a sequence span, a ``(n_seq, n_scales * n_lag)`` matrix in lag-major column order
-  (``list_parts=None`` → whole ``jmd_n`` + ``tmd`` + ``jmd_c``), dropping gaps / non-canonical
-  residues before the covariance. The lag extension of ``scale_composition`` (same default scales,
-  span, and NaN handling): where the scale mean is order-blind, ``acc`` keeps short-range sequential
-  order in scale-space while staying position-agnostic — the natural middle point between
-  ``scale_composition`` and CPP for a "baseline vs CPP" comparison. Only the auto-covariance over the
-  full default scales is computed (no cross-covariance, ``n_scales * n_lag`` columns). A lag whose
-  span is too short (``N - k < 1``) is ``NaN``; fully vectorized (segment sums, no per-sequence
-  loop); optional ``return_df=True`` for a labeled frame (``f"{scale}_lag{k}"`` columns).
-- **SequenceFeature.get_df_parts_from_windows**: Assemble a reference ``df_parts`` from
-  per-part window sets (e.g. ``AAWindowSampler.sample_synthetic`` output).
-- **SequenceFeature.get_seq_kws**: Return one protein's ``{jmd_n_seq, tmd_seq, jmd_c_seq}``
-- :meth:`~aaanalysis.SequenceFeature.get_df_parts_from_windows`: Assemble a reference ``df_parts`` from
-  per-part window sets (e.g. :meth:`~aaanalysis.AAWindowSampler.sample_synthetic` output).
-- :meth:`~aaanalysis.SequenceFeature.get_seq_kws`: Return one protein's ``{jmd_n_seq, tmd_seq, jmd_c_seq}``
-  as a ready-to-splat ``seq_kws`` dict (by entry or position), parts taken from
-  ``df_parts`` so the residues stay bound to the feature geometry — removing the manual
-  slicing glue when feeding :meth:`~aaanalysis.CPPPlot.profile` / ``feature_map`` (e.g. sample-level SHAP
-  plots).
-- **``sample_kws`` bundle on CPPPlot plots**: :meth:`~aaanalysis.CPPPlot.feature_map`,
-  :meth:`~aaanalysis.CPPPlot.heatmap`, and :meth:`~aaanalysis.CPPPlot.profile` take a structured
-  ``sample_kws=dict(sample, df_seq, df_parts)`` — the bundled alternative to providing the TMD-JMD
-  sequences directly. ``sample`` accepts an ``entry`` name or a value from the optional ``name`` column
-  of ``df_seq`` (``str``), or a row position (``int``); a ``name`` is resolved to its ``entry``, and a
-  selector that matches nothing or is ambiguous (a duplicated ``entry`` or a ``name`` shared by several
-  entries) raises a ``ValueError``. It resolves that sample's sequence band (and, for the SHAP variants,
-  the per-sample ``feat_impact`` column) from ``df_parts`` and **overrides** any explicitly passed
-  ``tmd_seq`` / ``jmd_n_seq`` / ``jmd_c_seq``. The displayed sequence stays faithful to the ``df_parts`` the features
-  map to, so its own lengths set the grid geometry (``tmd_len`` / ``jmd_n_len`` / ``jmd_c_len`` apply
-  only when no sequence is shown). See the keyword-dict parameters overview in the docstring guide.
-- :meth:`~aaanalysis.SequenceFeature.get_feature_descriptions`: One standardized, human-readable
-  sentence per ``PART-SPLIT-SCALE`` feature id (region + split + AAontology scale name /
-  category). Additive (the ``'feature'`` id is unchanged); fills an optional
-  ``'feature_description'`` column.
-- :meth:`~aaanalysis.AAclust.pre_select_scales`: Metadata-only pre-filter that drops scales by AAontology
-  ``category`` (``cat_out``) / ``subcategory`` (``subcat_out``) via ``df_cat`` — the
-  preparation step before ``select_scales`` or ``filter_coverage`` (no clustering).
-- :meth:`~aaanalysis.AAclust.select_scales`: Wrapper around :meth:`~aaanalysis.AAclust.fit` that returns the
-  redundancy-reduced scale subset (one medoid per cluster) directly, ready for :class:`~aaanalysis.CPP`.
-- :meth:`~aaanalysis.AAclust.select_proteins`: Protein-level redundancy reduction over a per-protein
-  feature matrix ``X`` — clusters proteins, selects one medoid per cluster, annotates
-  ``df_seq`` with ``cluster`` / ``is_representative`` / ``dist_to_rep`` — the numerical
-  counterpart to :func:`~aaanalysis.filter_seq`.
-- **AAclustPlot.centers / medoids accept ``df_scales``**: Pass scales via ``df_scales``
-  (transposed internally) instead of ``centers(np.array(df_scales).T, ...)``; pass
-  proteins / embeddings / CPP features via ``X`` (used as-is). The explicit ``X``
-  signature is unchanged.
-
-**Prediction**
-
-- :class:`~aaanalysis.ReliabilityModel`: Per-sample **prediction reliability** — quantifies how much
-  to trust a prediction, separately from the score itself (a model can be confident about a ``0.55``
-  and worthless about a ``1.0`` out-of-distribution score). Wraps a fitted predictor (an
-  :class:`~aaanalysis.AAPred`, a :class:`~aaanalysis.TreeModel`, or any scikit-learn classifier) plus
-  its training data and reports, per sample: stability (ensemble/bootstrap ``score_std`` and a
-  confidence interval), an **applicability-domain** out-of-distribution signal (k-NN distance,
-  Mahalanobis, leverage → ``ood_score`` / ``in_domain``), calibrated sharpness (``margin`` /
-  ``entropy``), a marginal split-conformal prediction set that can abstain, and a headline
-  ``reliable`` flag (in-domain, stable, and a confident conformal singleton). ``fit`` / ``predict`` /
-  ``eval``; core scikit-learn only, no new required dependency.
-- :class:`~aaanalysis.ReliabilityModelPlot`: Visualizes :class:`~aaanalysis.ReliabilityModel` output —
-  a per-sample ``ranking`` (each prediction's score with its uncertainty interval, colored by trust
-  status), a calibration curve (``reliability_diagram``), the out-of-distribution score distribution
-  (``ood_hist``), and a score-vs-OOD ``trust_map`` colored by the ``reliable`` flag.
-- :class:`~aaanalysis.ModelEvaluator`: Rigorous, model-agnostic evaluation harness for a feature
-  matrix ``X`` and ``labels``. ``run`` scores one or more scikit-learn models by **repeated
-  stratified cross-validation** (multi-seed mean/std over ``n_cv * n_rounds`` folds) with a
-  **percentile bootstrap confidence interval** of the mean per (model, metric); ``eval`` compares
-  the models **pairwise on the same folds** with a signed ``delta`` (e.g. ΔMCC), a bootstrap CI on
-  the paired differences, and a two-sided **Wilcoxon signed-rank** ``p_value``. Metrics add ``mcc``
-  (Matthews correlation coefficient) to the prediction metric set; both outputs are byte-identical
-  under ``random_state`` and reuse :func:`~aaanalysis.comp_bootstrap_ci` — no new dependency.
-- :class:`~aaanalysis.ModelEvaluatorPlot`: Visualizes :class:`~aaanalysis.ModelEvaluator` output —
-  ``scores`` draws grouped confidence-interval bars of the cross-validated scores per (model,
-  metric), and ``compare`` draws the paired comparison as signed delta bars with CI whiskers and
-  significance stars.
-- :meth:`~aaanalysis.AAPred.eval`: New ``baseline`` option to compare the bound (CPP) features
-  against simple, non-positional **baselines** built internally from ``df_seq`` —
-  ``'scale'`` (:meth:`~aaanalysis.SequenceFeature.scale_composition`), ``'aac'``
-  (:meth:`~aaanalysis.SequenceFeature.aa_composition`), ``'dpc'``
-  (:meth:`~aaanalysis.SequenceFeature.dipeptide_composition`), and ``'acc'``
-  (:meth:`~aaanalysis.SequenceFeature.acc`, the order-aware scale auto-covariance); ``baseline=True``
-  selects the scale baseline. Each baseline is cross-validated with the same models and folds and appended to
-  ``df_eval`` under a new leading ``features`` column (``'cpp'`` for the bound rows), so the whole
-  "CPP vs baseline" comparison comes from one call. Purely additive: with ``baseline=None``
-  (default) ``df_eval`` is byte-identical to before (no ``features`` column).
-  :meth:`~aaanalysis.AAPredPlot.eval` (bar plot) reads the ``features`` column as the hue, so it
-  draws the ``cpp`` and baseline bars side by side instead of averaging them.
-- :meth:`~aaanalysis.AAPred.eval`: New ``cv`` option to cross-validate with an arbitrary
-  scikit-learn splitter (e.g. ``LeaveOneOut()``) instead of the integer ``n_cv`` folds. Unlike
-  ``n_cv``, a splitter is **not** capped at the smallest class count, so ``LeaveOneOut`` works on
-  small, imbalanced sets. Its rows are scored by a new ``'cv_pooled'`` principle: every held-out
-  prediction is pooled and each metric is applied **once** on that pooled vector (reproducing
-  ``metric(labels, cross_val_predict(estimator, X, labels, cv=cv))``), rather than averaging a
-  degenerate per-fold score — the correct principle when a single-sample test fold makes per-fold
-  averaging meaningless. ``score_std`` is ``NaN`` for ``cv_pooled`` (a single estimate). Purely
-  additive: with ``cv=None`` (default) ``df_eval`` is byte-identical to before.
-- :meth:`~aaanalysis.AAPred.predict_oof`: New method returning **cross-validated out-of-fold**
-  per-sample scores for the training set — each sample is scored by models fit on the folds that
-  exclude it (stratified k-fold ``cross_val_predict``), so the training-set scores are free of the
-  optimistic in-sample bias that scoring them with :meth:`~aaanalysis.AAPred.predict` would incur.
-  Every configured model is cross-validated independently and the per-model out-of-fold scores are
-  averaged, returning the same ``score`` / ``score_std`` shape as
-  :meth:`~aaanalysis.AAPred.predict` (mean over the ensemble, std across models). Like
-  :meth:`~aaanalysis.AAPred.eval` it cross-validates the constructor models and needs no prior
-  :meth:`~aaanalysis.AAPred.fit`; deterministic under ``random_state``.
-- :meth:`~aaanalysis.AAPred.score_to_group`: New stateless staticmethod mapping prediction scores
-  to an **ordered categorical** of named confidence bands (``thresholds`` delimit the bands,
-  ``labels`` names them low-to-high; each threshold is an inclusive lower bound). ``score_range``
-  (``'percent'`` / ``'proba'``) bounds the thresholds so probabilities and percentages can't be
-  silently mixed; ``NaN`` scores stay missing and a ``pd.Series`` input keeps its index. It is the
-  single source of truth for the band boundaries used by
-  :meth:`~aaanalysis.AAPredPlot.predict_group` (``band=True``), so a table and its plot always agree.
-- :meth:`~aaanalysis.AAPredPlot.eval`: New ``kind='heatmap'`` that renders any 2D score grid
-  (rows x columns are the two sweep axes) as a square annotated heatmap and boxes the best cell(s)
-  with a full-cell frame — ``highlight`` selects how many (a positive int for the top-N,
-  ``"max"`` / ``"min"``, an explicit ``(row, col)`` / list, or ``None``); ``vmin`` / ``vmax`` /
-  ``cmap`` / ``cbar_label`` style the color scale and its tick-side-edged colorbar. One call for the
-  recurring "grid of scores -> seaborn heatmap -> mark the best configuration" block.
-- :meth:`~aaanalysis.AAPredPlot.predict_group`: New ``kind='rank_scatter'`` — a per-protein rank
-  scatter (proteins ranked by their maximum score and colored by group, with optional threshold
-  lines), the standard sanity check for a deployed per-protein predictor. Plus a new ``band=True``
-  mode for ``kind='hist'`` that colors each bar by the confidence band it falls into (delimited by
-  ``thresholds``) instead of by class ``labels`` — for scoring unlabeled candidates. Both additions
-  are purely additive; existing default outputs are unchanged.
-
-**Explainable AI**
-
-- **ShapModel — accession-based interface** (``[pro]``): ``fit`` accepts entry-keyed
-  soft labels (``fuzzy_labels={'P05067': 0.6}``) together with ``df_seq``;
-  ``add_feat_impact`` / ``add_sample_mean_dif`` accept ``df_seq`` and a ``samples``
-  parameter taking row positions or entry names. The array-``labels`` path is unchanged;
-  ``sample_positions`` is a deprecated alias for ``samples`` (removed in 1.2.0).
-- **ShapModel — unbiased fuzzy estimator, now the default** (``[pro]``): ``fit`` gains
-  ``fuzzy_aggregation``, defaulting to the new ``'interpolate'`` estimator. It weights a
-  soft label by *exactly* ``p`` — fitting at 0 (``S0``) and at 1 (``S1``) and blending
-  ``p * S1 + (1 - p) * S0`` — the unbiased alternative to the biased threshold sweep, which
-  stays available as a first-class option via ``fuzzy_aggregation='threshold'``. For
-  ``interpolate``, ``n_rounds`` (default ``5``) is a speed/stability dial: ``1`` is the fast
-  exact two-fit estimate (~2x faster than the threshold default on the same cell), ``5`` adds
-  light Monte-Carlo averaging, and the mean converges (run-to-run spread below ~5%) around
-  ``n_rounds ≈ 15–20``; a fixed ``random_state`` keeps every run reproducible.
-- :class:`~aaanalysis.CPPStructurePlot` (``[pro]``): Paints per-residue CPP / CPP-SHAP feature impact onto an
-  interactive 3D protein structure, rendered with `py3Dmol <https://pypi.org/project/py3Dmol/>`_
-  (no matplotlib structure fallback — the cartoon is always a real 3D view). ``map_structure(
-  df_feat, pdb=...)`` (or ``uniprot=...`` to auto-fetch the AlphaFold model) returns a
-  ``StructureView`` (``show`` / ``write_html`` / ``_repr_html_``). Supports an ``'impact'``
-  red-white-blue ramp and a ``'plddt'`` AlphaFold-confidence mode, with ``whole`` / ``fade`` /
-  ``zoom`` focus. By default each feature's full impact is painted on every residue it spans
-  (app-fidelity colouring); ``normalize_by_span=True`` switches to the span-normalized sum used
-  by :meth:`~aaanalysis.CPPPlot.profile` and the :meth:`~aaanalysis.CPPPlot.feature_map` top per-position bar. ``plot_combined``
-  returns a ``CombinedView`` showing the py3Dmol cartoon next to the :meth:`~aaanalysis.CPPPlot.feature_map`
-  image (``write_html`` exports the pair; ``savefig(path)`` saves the feature-map panel as a static
-  PNG / PDF for papers — the 3D cartoon is interactive and has no headless image), reproducing the
-  deployed cleavage app's signature layout. ``interactive`` returns a live `ipywidgets <https://ipywidgets.readthedocs.io>`_
-  explorer (added to the ``[pro]`` extra) where a site slider drives a user ``predictor`` and
-  repaints the linked 3D structure and :meth:`~aaanalysis.CPPPlot.feature_map` together (debounced), the
-  notebook-native version of the app's per-site explore loop. A **highlight (position) slider**
-  links the two panels live: picking a residue lights it up in the 3D cartoon and marks its
-  feature-map column without re-predicting, and with the ``ipympl`` (``%matplotlib widget``)
-  backend the feature map becomes **clickable** for the same highlight (``ipympl`` is optional —
-  the slider is the always-present link, no extra dependency). ``plot_linked`` returns a
-  ``LinkedView`` — a self-contained HTML where **hovering a feature-map column highlights the
-  corresponding residue** in the 3Dmol cartoon (the app's signature interaction); ``write_html``
-  exports it as a standalone, shareable page. ``explore(df_feat, sequence, df_seq=..., labels=...,
-  model=...)`` is the integrated one call: it builds a **built-in per-site predictor** (compute the
-  query window's values for the fixed feature set, predict the probability, attach the per-site SHAP
-  impact via a default :class:`~aaanalysis.ShapModel` refit — no :meth:`~aaanalysis.CPP.run` rediscovery) and dispatches to a
-  selectable ``output`` (``'widget'`` / ``'html'`` / ``'static'``); ``model`` takes a name
-  (``'rf'`` / ``'svm'`` / ``'log_reg'``), an estimator, or a list, and a custom
-  ``predictor=(sequence, p1) -> df_feat`` remains the escape hatch. With ``output='html'``,
-  passing ``sites=[...]`` bakes a **multi-site live** standalone page: a client-side JS slider
-  switches the pre-computed prediction per P1 (feature map + structure restyle) with no kernel,
-  keeping the column-residue linking (warned past 40 sites, hard-capped at 200).
-
-**PU Learning**
-
-- **dPULearn.fit — positives/unlabeled split input**: for the common positive / unlabeled
-  setup, ``fit`` now accepts ``X_pos`` and ``X_unlabeled`` separately (an alternative to
-  ``X`` + ``labels``) instead of stacking them by hand and building a ``1`` / ``2`` label
-  vector. After fitting, the new ``dPULearn.mask_neg_`` attribute holds the **boolean mask
-  of reliable negatives** — over the rows of ``X_unlabeled`` in the split mode, over ``X``
-  otherwise (equal to the manual ``labels_[len(X_pos):] == 0`` result exactly). ``fit`` still
-  returns ``self`` and the existing ``fit(X, labels=...)`` path is unchanged.
-- :meth:`~aaanalysis.dPULearn.project`: Projects held-out samples from the same feature space into
-  the **fitted PC space** (the ``PCi`` columns of ``df_pu_``) after PCA-based identification, so new
-  proteins can be placed alongside the identified negatives. ``method`` selects the reconstructed
-  linear map — ``'lstsq'`` (default, affine least-squares) or ``'components'`` (exact PCA-geometry
-  map); both are exact on the fitted samples and interpolate for new ones.
-  :meth:`~aaanalysis.dPULearnPlot.pca` gains ``df_pu_add`` / ``names_add`` / ``colors_add`` to
-  overlay one or more projected groups (a one-call four-group PCA); the default (``df_pu_add=None``)
-  output is unchanged.
-
-**Sequence Analysis**
-
-- :class:`~aaanalysis.AAWindowSampler`: Samples fixed-length sequence windows for PU-learning and
-  hard-negative-mining workflows (``sample_same_protein``, ``sample_different_protein``,
-  ``sample_motif_matched``, ``sample_synthetic``).
-- :func:`~aaanalysis.scan_motif` (``[pro]``): Scans candidate proteins for statistically significant PWM
-  occurrences via MEME/FIMO, complementing the pure-Python
-  :meth:`~aaanalysis.AAWindowSampler.sample_motif_matched` sampler.
-
-**Protein Engineering**
-
-- **SeqOpt — multi-objective protein engineering** (**core**; only ``mode="impact"`` needs
-  ``aaanalysis[pro]``): A new :class:`~aaanalysis.SeqOpt` optimizer
-  (with :class:`~aaanalysis.SeqOptPlot`) performs **machine-learning-guided directed evolution** of one
-  wild-type — searching the Pareto front across several objectives at once, with a
-  model-bound :class:`~aaanalysis.SeqMut` as the fitness engine and a re-implementation of NSGA-II for
-  selection (this is protein *engineering*, not *de novo design*). Two guidance modes:
-  ``mode="impact"`` refits :class:`~aaanalysis.ShapModel` each generation under fuzzy labeling to target the
-  strongest-``feat_impact`` residues; ``mode="importance"`` walks positions by static
-  ``feat_importance``. The evolutionary toolbox is a complete pure-Python re-implementation
-  (DEAP is a dev/test-only parity oracle; runtime stays DEAP-free): ``crossover`` (uniform /
-  one- / two-point), ``mutation`` (substitution / shift), ``variation`` (varAnd / varOr),
-  ``survival`` ((mu+lambda) / (mu,lambda) / eaSimple), ``constraints`` (delta / closest-valid
-  penalty), a single-objective Hall of Fame (``hall_of_fame_``), and a memory-bounded
-  (chunked) vectorized non-dominated sort. Objectives accept any
-  ``callable(sequence) -> float`` (an external scikit / torch model or sequence-level
-  tool / web API), cached per variant. ``run`` returns ``df_pareto`` (objective columns +
-  ``rank`` + ``crowding``) backed by a cumulative Pareto archive; ``eval`` reports
-  hypervolume / front size / spread / convergence. **Visualization**: :class:`~aaanalysis.SeqOptPlot` covers
-  ``pareto_front`` (2-D / 3-D), ``parallel_coordinates``, ``convergence`` (hypervolume +
-  spread + per-objective best/mean/worst band), ``hypervolume``, ``mutation_map`` (front
-  substitution-enrichment heatmap) and ``genealogy`` (mutational-lineage tree). Reproducible
-  via ``random_state`` / ``seed``.
-- **SeqMut model-guided mode (ML-guided directed evolution)**: :class:`~aaanalysis.SeqMut` is optionally
-  model-aware — binding a fitted classifier (``SeqMut(model=..., target_class=...)``, any
-  object with ``predict_proba``) makes ``scan`` / ``suggest`` / ``mutate`` report
-  ``delta_pred`` (the prediction-score shift in percentage points) and ``suggest`` rank
-  by it. Without a model, :class:`~aaanalysis.SeqMut` stays the deterministic, model-free ΔCPP tool.
-- :meth:`~aaanalysis.SeqMut.combine`: Scores combined multi-mutation variants — several point mutations
-  applied to one sequence and evaluated as a single design.
-- :class:`~aaanalysis.SeqMutPlot`: ``mutation_landscape`` renders the ``delta_pred`` prediction-shift
-  mutation-scan heatmap; new ``variant_impact`` (ranked-variant bar) and ``epistasis``
-  (pairwise non-additivity) plots.
-
-**Metrics**
-
-- :func:`~aaanalysis.comp_per_protein_ap`: Per-protein average precision for site-localization ranking,
-  with an optional ``tolerance=±k`` variant for positional jitter.
-- :func:`~aaanalysis.comp_detection_metrics`: Recall / precision / F1 / MCC at a fixed score threshold,
-  pooled across per-residue predictions.
-- :func:`~aaanalysis.comp_bootstrap_ci`: Seeded percentile confidence interval over a per-protein metric
-  vector (returns ``{'mean', 'ci_low', 'ci_high'}``).
-- :func:`~aaanalysis.comp_smooth_scores`: Peak-preserving (``max(smoothed, raw)``), NaN-aware smoothing
-  of per-residue score tracks.
-
-**Plotting**
-
-- **cell_size** on :meth:`~aaanalysis.CPPPlot.feature_map` / :meth:`~aaanalysis.CPPPlot.heatmap` /
-  :meth:`~aaanalysis.CPPPlot.profile`: a ``(width, height)`` inches tuple that holds every grid
-  cell at that exact physical size — the figure shrinks for a small grid and grows for a large one,
-  and nothing clips the figure edge — for any sequence length or number of scale subcategories.
-  ``figsize`` seeds the layout; ``cell_size`` sets the cell (the profile uses only the width). The
-  cumulative-importance bar strips (top per-position, right per-subcategory) are sized in grid-cell
-  units and clamped to a min/max cell range, so they lock to a near-constant physical size instead
-  of ballooning on dense grids or vanishing on sparse ones; the importance-axis maximum value sits
-  left of the right spine on a short strip and right of it on a tall one (the standard look), and
-  the ``[%]`` suffix is dropped from the heatmap-only label so both variants read the same.
-- **seq_size** on :meth:`~aaanalysis.CPPPlot.feature_map` / :meth:`~aaanalysis.CPPPlot.heatmap` /
-  :meth:`~aaanalysis.CPPPlot.profile` gains ``"auto"`` (default): it fits the residue letters to the
-  grid cell and steps them down for a short TMD, so a fixed cell keeps the sequence consistent too.
-  A value in ``(0, 1]`` sets the letter height to that fraction of the cell, and a value ``> 1`` is
-  an absolute font size in points; the letters never overlap at any size.
-- **fontsize_labels** on :meth:`~aaanalysis.CPPPlot.feature_map` / :meth:`~aaanalysis.CPPPlot.heatmap`
-  gains ``"auto"``, which tracks the ``plot_settings`` font scale, caps at about 13 pt, and shrinks
-  on overlap so the scale-subcategory rows never collide.
-- **COLOR_SAMPLES_POS / COLOR_SAMPLES_NEG / COLOR_SAMPLES_UNL / COLOR_SAMPLES_REL_NEG**:
-  Public, named constants for the canonical sample-group colors (positive / negative /
-  unlabeled / reliable-negative). They equal the ``plot_get_cdict("DICT_COLOR")["SAMPLES_*"]``
-  values exactly, so a named constant replaces indexing the color dict by string key.
-- **options['plot_settings']**: Opt-in, session-persistent :func:`~aaanalysis.plot_settings`.
-  Assign a dict of :func:`~aaanalysis.plot_settings` keyword arguments (e.g.
-  ``aa.options['plot_settings'] = {'font_scale': 1.2, 'weight_bold': True}``) and every subsequent
-  ``*Plot`` figure adopts the publication style automatically, so :func:`~aaanalysis.plot_settings`
-  need not be repeated before each plot. The default (``None``) applies no implicit styling and keeps
-  plot output byte-identical; the style is (re)applied only when the option's value changes, so an
-  explicit :func:`~aaanalysis.plot_settings` call takes precedence for the figures drawn after it.
-
-**Golden Pipelines**
-
-- **aaanalysis.pipe** (``ap``): A second, opt-in convenience API of stateless, one-call
-  *golden pipelines* over the AAanalysis primitives (``import aaanalysis.pipe as ap``).
-- **ap.find_features**: Staged, interpretable CPP AutoML search. Stage 1
-  cross-validates the full Cartesian Part × Split × Scale grid and ranks each axis by
-  its marginal-mean impact; Stage 2 refines the single highest-impact axis against
-  ``n_filter``; Stage 3 refines the winning feature set (:meth:`~aaanalysis.CPP.simplify` + recursive
-  feature elimination, each kept only if it is not Pareto-dominated). Selection is
-  multi-objective: within each stage the Pareto-optimal-then-simplest configuration
-  across all ``metric`` wins, scored by the averaged cross-validated performance of one
-  or more ``model`` s. The winner is ranked by tree-based importance and drawn as the
-  feature map. The ``search`` grade scopes the effort (``"fast"`` is byte-identical to
-  the explicit single-CPP path); it returns ``(df_feat, ax, df_eval)`` where ``ax`` also
-  carries the publication eval figures (``ax.eval``) and ``df_eval`` has one
-  ``<metric>_mean``/``_std`` column per metric plus ``stage`` / ``is_pareto`` / ``rank``
-  / ``is_selected``.
-- **ap.find_features**: New ``selection_scope="global"|"fold"`` for an opt-in **honest
-  nested cross-validation**. ``"global"`` (default) is unchanged — CPP selects on the full
-  labeled set, so the scores are an in-sample (optimistic) ranking signal — and remains
-  byte-identical. ``"fold"`` re-selects CPP features on the **train split only** inside every
-  fold of every configuration score (Stages 1–2 and the simplify refine), so ``df_eval`` reports
-  held-out (typically lower) generalization estimates instead. The winner's second-step refinement
-  (:meth:`~aaanalysis.CPP.simplify` + recursive feature elimination) runs on all data in **both**
-  scopes, so no refinement capability is lost in ``"fold"``; the returned ``df_feat`` is the winner
-  refit on all data. ``df_eval`` gains a ``selection_scope`` column, and a ``UserWarning`` flags the
-  costly ``"fold"`` + ``search="exhaustive"`` combination.
-- **ap.explain_features**: New opt-in ``add_sample_mean_dif`` (+ ``label_ref``) that enriches the
-  returned ``df_feat`` with per-sample **mean-difference** columns ``mean_dif_'name'`` (each explained
-  sample's feature value minus the ``label_ref`` group average) alongside the SHAP
-  ``feat_impact_'name'`` columns, for the same sample(s) — reusing :meth:`~aaanalysis.ShapModel.add_sample_mean_dif`
-  so compute stays separate from plotting. Default ``add_sample_mean_dif=False`` leaves the output
-  unchanged.
-- **ap.predict_samples**: Trains and cross-validates every ``(feature set × model)`` combination
-  over one ``df_seq`` in a single call, returning the refit predictors and a tidy comparison table.
-  With ``plot=True`` (the default) it now also draws the **model comparison** bar plot (hue = model,
-  one bar group per metric, cross-validation ``std`` error bars) and returns its ``Axes`` in the
-  previously-unused middle slot, completing the ``(results, fig, evals)`` symmetry with
-  ``find_features`` / ``explain_features`` (``figsize`` / ``dict_color`` / ``baseline`` style it).
-- **ap.plot_eval**: Publication-ready evaluation figures of a ``find_features`` sweep —
-  the high-dimensional Part × Split × Scale grid is **decomposed** into a series of clean
-  2D ``viridis`` heatmaps (the two most-informative axes on each panel, the least on the
-  slice), with a shared colorbar, the selected configuration starred, plus marginal-impact
-  and ``n_filter`` panels. Returns the list of figures so each drops straight into a paper;
-  also usable standalone on a ``find_features`` eval table.
-
-**Package**
-
-- **aa.__version__**: The installed package version is exposed at top level via
-  ``importlib.metadata``.
-- **CHANGELOG.md + deprecation policy**: A root ``CHANGELOG.md``
-  (`Keep a Changelog <https://keepachangelog.com/en/1.1.0/>`_ format) gives a terse,
-  developer-facing index alongside these narrative notes. From v1.x onward, any rename or
-  removal of a public symbol ships at least one minor release carrying a
-  ``DeprecationWarning`` first; an internal ``deprecated(reason, version_removed)``
-  decorator marks such symbols. See *Versioning and Deprecation Policy* in
-  ``CONTRIBUTING.rst``.
-
-**Documentation**
-
-- **Docs-version coherence**: the rendered docs now say which version they document.
-  ``conf.py`` derives Sphinx's ``version`` / ``release`` from ``aaanalysis.__version__``
-  (a single source, ultimately ``pyproject.toml``) instead of the hardcoded
-  ``version="latest"`` / ``release='2023'`` literals, which had left the pages
-  advertising a 2023-era build while the package moved on. Any build that is **not**
-  from a release tag — the ``latest`` branch build, a pull-request preview, or a local
-  build — now carries an *unreleased development version* banner on every page, naming
-  the version and linking to ``stable``, so a reader (or an agent) can no longer mistake
-  documentation of unreleased capabilities for the release they installed.
-- **Prediction tasks** concept page (*Usage Principles*): maps a biological question to
-  the right workflow via a task table keyed on unit of comparison and reference
-  construction, across the residue / domain / protein levels — the front door to the
-  Protocols catalog.
-- **A minimal CPP analysis** tutorial (``tutorial0_minimal``): the shortest end-to-end
-  loop — load a dataset, run CPP, read out the signature.
-- **Documentation navigation**: the sidebar is grouped into four sections — *Overview*,
-  *Guides* (Tutorials · Protocols · Use Cases), *Reference*, and *Project* — and the landing
-  page gains a "You want to… / Go to" routing table; the previously unwired **Comparison
-  Harness** tutorial (``tutorial6_comparison_harness``) is now reachable.
-- **Use Cases** guide (third *Guides* subchapter): each use case showcases a published
-  study end to end from bundled data. The first, *Charting γ-secretase substrates by
-  explainable AI* (``use_case1_gamma_secretase``), walks the full AAanalysis pipeline of
-  Breimann and Kamp *et al.*, Nat. Commun. 2025 on the bundled ``DOM_GSEC`` /
-  ``DOM_GSEC_PU`` sets: AALogo sequence logos of the three protein groups, AAclust
-  redundancy-reduced scale sets, the CPP + TreeModel signature and feature map, dPULearn
-  reliable-negative mining (with PCA and logo), a prediction benchmark (feature
-  engineering × data expansion) plus a CPP/dPULearn optimization heatmap, and SHAP
-  single-residue explanations for individual substrates (APP, N-cadherin).
-- **Standardized tutorial header box**: every tool tutorial now opens with a uniform
-  green *You will learn* box (Tool · Input · Output · Best used for · Related protocol ·
-  Related API), giving a one-glance answer to *what tool, what goes in, what comes out,
-  and where to go next* and cross-linking the matching protocol and API reference.
-- **Split API reference**: the reference is now two pages, each listing its members
-  directly at the top level. *API* documents the explicit **building blocks**
-  (``import aaanalysis as aa``) grouped by category; the new *API (Pipelines)* page documents
-  the **golden pipelines** (``import aaanalysis.pipe as ap``), one function per pipeline.
-  Golden pipelines are no longer mixed into the building-block page or the Tutorials
-  section; Getting Started links both references.
-- **Tutorial gallery**: the *Tutorials* landing page now opens with a seaborn-style grid
-  of thumbnail cards — one real headline figure per tool tutorial (Data Loader, Scales
-  Loader, AAclust, SequenceFeature, CPP, Data representations, dPULearn, ShapModel,
-  Evaluation, Protein engineering) — so the tool catalog is scannable at a glance, mirroring
-  the Protocols gallery. Each tile is rendered from the actual AAanalysis pipeline on bundled
-  fixtures (generator: ``docs/source/_artwork/thumb_scripts/make_tutorial_thumbs.py``). The
-  Protocols gallery thumbnails were also refreshed against the current CPPPlot layout so the
-  two galleries render consistently.
+- **Per-residue input preprocessors**: :class:`~aaanalysis.EmbeddingPreprocessor` (protein language
+  model embeddings), :class:`~aaanalysis.StructurePreprocessor` (``[pro]``; PDB / CIF / AlphaFold and
+  PAE files) and :class:`~aaanalysis.AnnotationPreprocessor` (``[pro]``; UniProt records) turn each
+  source into the per-residue tensors :meth:`~aaanalysis.CPP.run_num` consumes.
+- **Input helpers**: :func:`~aaanalysis.combine_dict_nums` concatenates per-residue tensors from
+  several sources, :func:`~aaanalysis.get_labels` derives a binary label vector from a sequence
+  DataFrame, :meth:`~aaanalysis.SequencePreprocessor.pad_parts` pads part columns to equal length,
+  and every bundled dataset now carries a human-readable gene name.
+- :func:`~aaanalysis.get_provenance`: opt-in, JSON-serializable record of how a result was
+  produced (versions, parameters and the effective seed), so a figure can be traced back to the run
+  behind it.
+- :class:`~aaanalysis.SequenceFeatureTransformer`: scikit-learn transformer that runs CPP feature
+  selection inside a pipeline, fitting the selection on the training fold only, so cross-validated
+  scores stay honest instead of being inflated by selection on the full set.
+- :class:`~aaanalysis.CPPGrid`: tool-style wrapper (``run`` + ``eval``) that sweeps CPP
+  configurations in parallel and returns one evaluation table across the grid, so a configuration
+  choice is made on evidence rather than by hand.
+- :meth:`~aaanalysis.CPP.run_num`: numerical mode sourcing per-residue values from a pre-sliced
+  tensor, and :meth:`~aaanalysis.CPP.run_composit`: composition mode scoring amino-acid, dipeptide
+  and k-mer descriptors with CPP's discriminative statistics.
+- **CPP stability and cost controls**: opt-in bootstrap / stability annotation (``bootstrap``,
+  ``bootstrap_kws``) adding ``selection_frequency``, ``redundancy='legacy'|'exact'`` on
+  :meth:`~aaanalysis.CPP.run` / :meth:`~aaanalysis.CPP.run_num`, and
+  ``candidate_search='fast'`` on :meth:`~aaanalysis.CPP.simplify`.
+- **Label helpers on** :class:`~aaanalysis.SequenceFeature`: ``get_labels_ovr`` / ``get_labels_ovo``
+  convert multi-class labels to binary settings, ``get_labels_quantile`` / ``get_labels_tiered``
+  discretize a continuous target.
+- **Baseline featurizers on** :class:`~aaanalysis.SequenceFeature`: ``scale_composition``,
+  ``aa_composition``, ``dipeptide_composition``, ``kmer_composition`` and the order-aware
+  ``acc`` (scale auto-covariance), so CPP features can be compared against non-positional
+  baselines. :meth:`~aaanalysis.NumericalFeature.feature_matrix` builds the matrix for
+  :meth:`~aaanalysis.CPP.run_num`-selected features.
+- **Part and description helpers**: :meth:`~aaanalysis.SequenceFeature.get_df_parts_from_windows`
+  assembles a reference ``df_parts`` from windows, :meth:`~aaanalysis.SequenceFeature.get_seq_kws`
+  returns one protein's part sequences, and
+  :meth:`~aaanalysis.SequenceFeature.get_feature_descriptions` gives each feature a standardized,
+  human-readable description.
+- **sample_kws bundle**: the CPP plots take one bundle of sample-selection keywords instead of
+  several flat parameters.
+- **Scale and protein selection on** :class:`~aaanalysis.AAclust`: ``pre_select_scales`` filters by
+  AAontology metadata before clustering, ``select_scales`` returns the redundancy-reduced set
+  directly, and ``select_proteins`` reduces redundancy over a per-protein matrix.
+  :class:`~aaanalysis.AAclustPlot` ``centers`` / ``medoids`` accept ``df_scales``.
+- :class:`~aaanalysis.ReliabilityModel` and :class:`~aaanalysis.ReliabilityModelPlot`: per-sample
+  prediction reliability. One call per sample reports calibrated score, ensemble spread, a
+  confidence interval, applicability-domain distance and a conformal set, so a prediction carries
+  how much it can be trusted. The plot class renders the calibration curve and the trust axes.
+- :class:`~aaanalysis.ModelEvaluator` and :class:`~aaanalysis.ModelEvaluatorPlot`: model-agnostic
+  evaluation harness. Repeated stratified cross-validation over several seeds, bootstrap intervals
+  per metric, and a paired comparison on identical folds, so two models are separated by evidence
+  rather than by a single split.
+- **New** :class:`~aaanalysis.AAPred` **capabilities**: ``eval(baseline=...)`` compares CPP features
+  against composition baselines, ``eval(cv=...)`` accepts an arbitrary scikit-learn splitter,
+  ``predict_oof`` returns cross-validated out-of-fold per-sample scores, and ``score_to_group``
+  maps scores to named confidence bands. :class:`~aaanalysis.AAPredPlot` gains
+  ``eval(kind='heatmap')`` and ``predict_group(kind='rank_scatter')``.
+- :class:`~aaanalysis.ShapModel` (``[pro]``): accession-based ``fit`` interface, and an unbiased
+  fuzzy estimator that is now the default.
+- :class:`~aaanalysis.CPPStructurePlot` (``[pro]``): paints per-residue CPP and CPP-SHAP impact onto
+  a 3D structure.
+- **PU learning**: :meth:`~aaanalysis.dPULearn.fit` accepts a positives / unlabeled split directly,
+  :meth:`~aaanalysis.dPULearn.project` projects held-out samples into the same space, and
+  :class:`~aaanalysis.AAWindowSampler` samples fixed-length windows for PU learning.
+- :func:`~aaanalysis.scan_motif` (``[pro]``): scans candidate proteins for statistically
+  significant position-weight-matrix motif hits, reporting each hit with its match p-value.
+- **Protein engineering**: :class:`~aaanalysis.SeqOpt` and :class:`~aaanalysis.SeqOptPlot` perform
+  multi-objective, machine-learning-guided directed evolution over one wild-type (core; only
+  ``mode="impact"`` needs ``[pro]``). :class:`~aaanalysis.SeqMut` gains a model-guided mode and
+  ``combine`` for multi-mutation variants, and :class:`~aaanalysis.SeqMutPlot` renders the
+  prediction-shift landscape.
+- **Metrics**: :func:`~aaanalysis.comp_per_protein_ap`, :func:`~aaanalysis.comp_detection_metrics`,
+  :func:`~aaanalysis.comp_bootstrap_ci` and :func:`~aaanalysis.comp_smooth_scores` for
+  site-localization ranking and thresholded detection.
+- **Plot sizing**: ``cell_size`` holds every grid cell at an exact physical size, ``seq_size``
+  defaults to ``"auto"`` and fits residue letters to the cell, and ``fontsize_labels`` gains
+  ``"auto"``, which tracks the font scale and shrinks on overlap.
+- **Named sample colors**: ``COLOR_SAMPLES_POS`` / ``_NEG`` / ``_UNL`` / ``_REL_NEG`` expose the
+  canonical group colors as public constants.
+- ``options['plot_settings']``: opt-in, session-persistent :func:`~aaanalysis.plot_settings`, so
+  every subsequent figure adopts the publication style automatically.
+- :mod:`aaanalysis.pipe` (``ap``): an opt-in convenience API of stateless, one-call pipelines —
+  ``find_features`` (staged CPP AutoML, with ``selection_scope="global"|"fold"`` for honest
+  evaluation), ``predict_samples``, ``explain_features`` and ``plot_eval``.
+- ``aa.__version__`` exposes the installed version, and a root ``CHANGELOG.md`` gives a terse,
+  developer-facing index alongside these notes.
 
 Changed
 ~~~~~~~
-
-- :class:`~aaanalysis.AAPred`: **capability-based estimator validation** — the constructor now
-  requires only ``predict`` (hard-label prediction), so a probability-free estimator such as
-  ``SVC(kernel="linear")`` is accepted. ``predict_proba`` is validated *per operation*: it is
-  required only when :meth:`~aaanalysis.AAPred.eval` is asked for a probability metric (``roc_auc``)
-  and by the probability-scoring paths (:meth:`~aaanalysis.AAPred.predict` /
-  :meth:`~aaanalysis.AAPred.predict_oof`), with an actionable error naming the metric when it is
-  missing. Estimators that support ``predict_proba`` are unaffected (default RandomForest paths
-  unchanged).
-- :class:`~aaanalysis.TreeModel`: **per-round seeding fix** — with a fixed ``random_state`` (or the
-  global ``options["random_state"]``), :meth:`~aaanalysis.TreeModel.fit` now reseeds each round to
-  ``random_state + i`` so the rounds are independent. Previously every round fit identical estimators,
-  so ``feat_importance_std`` (and :meth:`~aaanalysis.TreeModel.predict_proba`'s ``pred_std``) collapsed
-  to exactly ``0`` and rounds 2..N were wasted. Fixed-seed importances change once (degenerate → real
-  Monte-Carlo mean with non-zero std); the ``random_state=None`` default is unchanged.
-- **Consistent auto_font sizing**: :meth:`~aaanalysis.CPPPlot.heatmap` / :meth:`~aaanalysis.CPPPlot.profile` /
-  :meth:`~aaanalysis.CPPPlot.ranking` now default to ``figsize=None`` and honor any explicit ``figsize`` as
-  a fixed size, so "explicit figsize wins" holds package-wide (matching :meth:`~aaanalysis.CPPPlot.feature_map`);
-  omitting ``figsize`` auto-sizes as before. :meth:`~aaanalysis.CPPPlot.heatmap` / :meth:`~aaanalysis.CPPPlot.profile`
-  gain the ``seq_char_fill`` residue-band option already on :meth:`~aaanalysis.CPPPlot.feature_map`, and
-  :meth:`~aaanalysis.AAPredPlot.predict_group` (``kind='rank_scatter'``) joins ``auto_font`` — its width grows
-  with the number of ranked proteins when ``figsize`` is omitted.
-- **Constant-cell sizing shrinks as well as grows**: on the ``auto_font`` path (and whenever
-  ``cell_size`` is set), :meth:`~aaanalysis.CPPPlot.feature_map` / :meth:`~aaanalysis.CPPPlot.heatmap` /
-  :meth:`~aaanalysis.CPPPlot.profile` now size the figure so each cell hits the target exactly — a
-  sparse grid yields a *smaller* figure (previously it floored at the default and the cells ballooned),
-  a dense grid a larger one, and nothing clips at the figure edge at any size. The TMD/JMD part labels
-  are capped in size and held a constant distance below the sequence band (they previously rode the
-  residue-letter size and could grow huge or collide with the sequence). The bottom furniture is laid
-  out as one compact, top-aligned row clustered just below the grid — the scale-category legend, the
-  ``Feature value`` colorbar (a fixed-thickness gradient bar, no longer collapsing to a thin line when
-  the figure shrinks) and the feature-importance legend — so it no longer scatters or overlaps the
-  position ticks on a sparse grid. The coloured per-residue sequence cells and the scale-category
-  sidebar render as solid, gap-free blocks (the sidebar at a readable, cell-relative width), and the
-  subcategory row labels are lifted to the colorbar/legend size so they are no longer a step smaller
-  than the rest — matching the cheat-sheet reference at any figure size.
-- **Uniform plot return contract**: Every public ``*Plot`` method now returns a single
-  ``(fig, ax)`` pair (forwarding attribute access to ``ax``, so existing
-  ``ax = plot(...); ax.set_title(...)`` code keeps working), replacing the previous mix
-  of shapes. **Breaking change, scheduled for the next major release:**
-  :meth:`~aaanalysis.AAclustPlot.centers` / ``medoids`` return ``(fig, ax)`` and expose the PCA-component
-  DataFrame on the ``df_components_`` attribute instead of as the second return value.
-- **CPP performance**: The Cython feature-matrix kernel, macOS-safe threaded ``n_jobs``,
-  scale / AA-index caching, and scale / sample batching land in this release, replacing
-  the hour-long, low-CPU CPP runs of ``≤1.0.3`` — users on those versions should upgrade.
-  When the compiled extension is missing and CPP falls back to the pure-Python kernel,
-  the one-time notice is now a ``UserWarning`` (visible even with ``verbose=False``).
-- :meth:`~aaanalysis.SequenceFeature.feature_matrix`: New ``batch=`` parameter accepts a list of
-  ``df_parts`` built in a single Cython pass (faster for many small part tables).
-- **SequenceFeature.feature_matrix**: New ``df_seq=`` / ``list_parts=`` parameters build
-  ``df_parts`` internally (via ``get_df_parts``), collapsing the ``get_df_parts`` →
-  ``feature_matrix`` two-step into one call. Exactly one of ``df_parts`` / ``df_seq`` is
-  required; the existing ``df_parts=`` path is unchanged (byte-identical).
-- **get_df_parts / NumericalFeature.get_parts**: New ``pos``-anchor mode (``tmd_len=``)
-  explodes each 1-based anchor into one ``jmd_n`` / ``tmd`` / ``jmd_c`` row
-  (``entry_win``). ``get_df_parts`` is also several-fold faster (vectorized; output
-  unchanged).
-- **n_jobs**: Unified parallelism convention across :class:`~aaanalysis.CPP` / :class:`~aaanalysis.CPPGrid` (``1`` serial,
-  ``-1`` all cores, ``N>1`` exactly N, ``None`` optimized), with an ``options['n_jobs']``
-  global override.
-- :meth:`~aaanalysis.CPPPlot.feature`: Titles the plot with the feature's human-readable description,
-  line-wrapped via ``show_title`` (default ``True``) and ``title_wrap_width`` (default
-  ``45``).
-- **load_dataset verbose reporting**: New ``verbose`` parameter (default ``False``)
-  reports how many entries each removal step (``min_len``, ``max_len``, and
-  ``non_canonical_aa='remove'``) drops, making the previously silent filtering
-  observable. The returned data is unchanged; to retain every entry use
-  ``non_canonical_aa='keep'``.
-- **Docstring discoverability**: Surfaced previously implicit API contracts at the
-  docstrings users read (no behavior change) — the ``get_parts`` → ``run_num`` call order
-  and ``[0, 1]`` normalization contract, and a ``[pro]`` install marker on the pro
-  classes / functions.
-- :meth:`~aaanalysis.dPULearn.fit`: Flexible label handling via ``label_pos`` / ``label_unl`` /
-  ``label_neg`` markers (only unlabeled samples are candidates; pre-labeled negatives are
-  kept and never re-selected). The negative count is set by exactly one of ``n_neg`` (the
-  total wanted) or ``n_unl_to_neg`` (drawn directly from the unlabeled pool); output uses
-  the package convention (``1`` positive, ``0`` negative, ``2`` unlabeled).
-- **Pooled, optionally concurrent web fetches**: ``fetch_alphafold`` / ``fetch_uniprot``
-  route every request through a pooled ``requests.Session`` and accept a ``max_workers``
-  parameter. Concurrency is off by default (parallel requests risk HTTP-429 throttling);
-  when enabled, results reassemble in input order, so output is byte-identical.
-- **Performance (same output)**: Many internal hotspots were vectorized or parallelized
-  with byte-identical results — :class:`~aaanalysis.AAWindowSampler` filtering / sampling, :class:`~aaanalysis.AAclust`
-  medoid distances, the per-feature KLD path in :meth:`~aaanalysis.dPULearn.eval`, ``encode_one_hot``,
-  :meth:`~aaanalysis.AAMut.comp_substitution_impact`, ``get_sliding_aa_window``, and several
-  :class:`~aaanalysis.StructurePreprocessor` encoders (``encode_pdb`` contact / disulfide / pLDDT, a shared
-  per-entry chain-pick and alignment cache, ``get_dssp``). Public APIs and outputs are
-  unchanged.
-- **Developer tooling**: A committed ``pytest-benchmark`` suite (``tests/benchmarks/``,
-  ``[bench]`` extra) micro-benchmarks the hot entry points as a non-gating nightly; a
-  numerical-equivalence tolerance policy defines three tiers (T1 byte-identical, T2
-  ``allclose`` plus identical discrete decisions, T3 statistically-equivalent within an
-  agreed band) for output-affecting optimizations; and an advisory pyright ratchet
-  (``.github/pyright_baseline.txt``) drives the type-contract count down per subpackage
-  (now 887, every public-API signature pyright-clean). None gate a merge or change the
-  public API.
-- **Packaging gate**: a ``Packaging`` workflow (``.github/workflows/packaging.yml``) builds the
-  sdist + wheel with the default ``python -m build`` on every push / PR to ``master``, then installs
-  **both** the built wheel and the sdist into separate fresh base-deps-only venvs (no ``[dev]`` /
-  ``[pro]``) and asserts that every :data:`aaanalysis.__all__` symbol imports, that ``pro`` / ``dev``
-  symbols degrade to an install hint when their extra is absent, and that bundled ``_data`` resources
-  load — across the min + max supported Python (3.10, 3.14). It catches a missing package-data file,
-  a broken re-export, or a sdist that cannot build before a release reaches PyPI, where the editable
-  dev matrix cannot. No public-API change.
-- **Version truth**: ``aaanalysis.__version__`` on ``master`` is now ``1.1.0`` and no longer collides
-  with the published ``1.0.3`` release, so a development checkout and a released install are
-  distinguishable — for bug reports, cached environments, and reproducibility records alike. A
-  ``Version Guard`` workflow (``.github/workflows/version_guard.yml``) enforces the invariant on every
-  push / PR to ``master``: ``.github/scripts/check_version_ahead.py`` fails the build unless the
-  declared version is strictly ahead of the latest release published on PyPI (falling back to the
-  latest ``vX.Y.Z`` git tag offline). The version stays a hand-edited ``pyproject.toml`` string —
-  deriving it from git tags was rejected to avoid ``.devN`` / ``+g<sha>`` proliferation. Release
-  procedure gains one closing step: after publishing, bump ``master`` to the next unreleased number
-  (see *Version truth* in ``CONTRIBUTING.rst``). No public-API change.
-- **Named logger for library output**: all package messages now flow through
-  ``logging.getLogger("aaanalysis")``. ``print_out`` (``ut.print_out``) is a thin, permanent
-  shim over ``logger.info(...)`` — the function name and signature are unchanged, so every
-  call site is unaffected. Power users can now attach handlers, capture output in pytest's
-  ``caplog``, redirect it to a file, or raise/lower verbosity with
-  ``logging.getLogger("aaanalysis").setLevel(...)`` (or the ``ut.set_logger_verbosity`` helper).
-  The logger level is an independent power-user control: the existing ``verbose`` flag /
-  ``options['verbose']`` continue to gate output at the call sites exactly as before, so a
-  global ``options['verbose']`` never mutes an object explicitly built with ``verbose=True``.
-  A single default stdout handler reproduces the previous blue-coloured output, so on-screen
-  behaviour is unchanged (no new dependency; stdlib ``logging`` only). The live progress bar
-  keeps writing to stdout directly. No public-API change.
-
-Changed
-~~~~~~~
-
-- **Module rename**: the ``protein_design`` subpackage is now ``protein_engineering``,
-  matching its user-facing name (``AAMut`` / ``SeqMut`` / ``SeqOpt`` are amino-acid
-  mutation and directed-evolution tools). The public classes are unchanged and imported
-  the same way (``import aaanalysis as aa`` → :class:`~aaanalysis.AAMut`,
-  :class:`~aaanalysis.SeqMut`, :class:`~aaanalysis.SeqOpt` and their plot classes); only a
-  full-path import such as ``from aaanalysis.protein_design import SeqMut`` must become
-  ``from aaanalysis.protein_engineering import SeqMut``.
+- **Module rename**: ``protein_design`` is now ``protein_engineering``.
+- :class:`~aaanalysis.AAPred`: capability-based estimator validation, so a model is rejected at
+  construction rather than mid-run.
+- :class:`~aaanalysis.TreeModel`: per-round seeding fix, so a fixed ``random_state`` reproduces
+  exactly.
+- **Consistent plot sizing**: ``auto_font`` applies across the CPP plots, constant-cell sizing now
+  shrinks as well as grows, and every public plot method returns a single, uniform object.
+- **CPP performance**: a Cython feature-matrix kernel, macOS-safe threaded ``n_jobs``, and a unified
+  parallelism convention across :class:`~aaanalysis.CPP` and :class:`~aaanalysis.CPPGrid`. Many
+  internal hotspots were vectorized with unchanged output.
+- **Feature-matrix and part building**: :meth:`~aaanalysis.SequenceFeature.feature_matrix` gains
+  ``batch``, ``df_seq`` and ``list_parts``; ``get_df_parts`` and
+  :meth:`~aaanalysis.NumericalFeature.get_parts` gain a position-anchor mode (``tmd_len``).
+- :meth:`~aaanalysis.CPPPlot.feature`: titles the plot with the feature's human-readable description.
+- :func:`~aaanalysis.load_dataset`: new ``verbose`` parameter (default ``False``).
+- :meth:`~aaanalysis.dPULearn.fit`: flexible label handling via ``label_pos`` / ``label_unl``.
+- **Docstring discoverability**: previously implicit API contracts are stated in the docstrings,
+  so the expected inputs, outputs and defaults are readable from the reference itself.
+- **Web fetches**: ``fetch_alphafold`` and ``fetch_uniprot`` are pooled and optionally concurrent.
+- **Library output**: all messages flow through a named logger, so they can be captured or silenced.
+- **Release engineering**: a packaging workflow builds and checks the distributions, a committed
+  benchmark suite guards the hot paths, and ``aaanalysis.__version__`` on master no longer collides
+  with the released version.
 
 Fixed
 ~~~~~
-
-- **Clearer failure messages on the golden pipelines**: an invalid call now names the offending
-  input in the package's own voice. :func:`~aaanalysis.pipe.find_features` validates ``labels`` up
-  front, so a single-class or length-misaligned label vector raises a precise ``ValueError``
-  ("``'labels'`` should contain more than one different value" / "should contain N values") instead
-  of an opaque "produced no valid configurations" runtime error, and
-  :meth:`~aaanalysis.AAPred.predict_proba` raises a self-explaining "``'X'`` n_features (...) should
-  match the fitted model's n_features" instead of scikit-learn's internal estimator message when a
-  feature matrix has the wrong width. The failure contract of the golden pipelines and the CPP to
-  :class:`~aaanalysis.AAPred` path (a bare ``ValueError`` / ``RuntimeError``, or an install-hint
-  ``ImportError`` for a missing ``[pro]`` dependency) is now regression-guarded by an integration
-  test suite and, from an installed distribution, by the packaging smoke check. See
-  :ref:`Failure contracts <error_contracts>`.
-- **Source install from the sdist now builds**: the published sdist previously omitted the Cython
-  source ``_filters_c/_inner.pyx``, so the default ``python -m build`` (which builds the wheel from
-  the sdist) and any source install (``pip install <sdist>``, ``pip install aaanalysis --no-binary``)
-  failed to cythonize. A ``MANIFEST.in`` now ships the Cython sources into the sdist, so both paths
-  build and import the compiled extension. The shipped wheels (the default install) were never
-  affected. No public-API change.
-- **Composite-plot furniture no longer lands on the heatmap**: :meth:`~aaanalysis.CPPPlot.feature_map`
-  and :meth:`~aaanalysis.CPPPlot.heatmap` place their colorbar and legends below the grid in figure
-  coordinates. Ending a cell with the usual ``plt.tight_layout(); plt.show()`` re-packed the axes and
-  pulled that furniture back onto the heatmap. Both methods now manage their own layout and neutralize
-  ``tight_layout`` on the returned figure, so the composed layout survives the standard idiom
-  (``fig.savefig(..., bbox_inches="tight")`` and ``plt.show()`` are unaffected).
-- **Consistent feature-map / heatmap layout at any figure size**: several dense-grid / fixed-``figsize``
-  layout fixes for :meth:`~aaanalysis.CPPPlot.feature_map` and :meth:`~aaanalysis.CPPPlot.heatmap`. The
-  no-sequence TMD/JMD bar is a **constant** height (a fixed fraction of a grid cell-row) rather than
-  scaling with the figure. Under ``auto_font`` the subcategory row labels **and** the cumulative-importance
-  ``%`` annotations shrink independently until they no longer overlap (re-run on the final layout, below the
-  former 5pt floor if a tight fixed ``figsize`` needs it). The ``■`` feature-impact markers scale with the
-  cell size so they never overflow a small cell. On a manual ``figsize`` the three legends are laid out as one
-  aligned bottom row (the grid cells adapting to the reserved space, the figure keeping its exact size), and
-  on a very narrow figure the colorbar drops to its own row below the category legend instead of colliding
-  with it. The standalone heatmap now uses the **same cell height** as the feature map.
-- **Sequence bar in CPP-SHAP plots**: with ``seq_char_fill=True`` (the auto_font default),
-  :meth:`~aaanalysis.CPPPlot.feature_map`, :meth:`~aaanalysis.CPPPlot.heatmap`, and
-  :meth:`~aaanalysis.CPPPlot.profile` drew each residue's colored background as a glyph-sized text
-  box, so narrow letters left hairline white gaps and the TMD/JMD band read as ragged against the
-  heatmap grid. Each residue now gets a seamless full-width (one-column) colored cell, centered on
-  its column, so the sequence band is gap-free and aligned. ``seq_char_fill=False`` keeps the
-  legacy glyph-box rendering unchanged.
-- **BH-adjusted p-values (#343)**: ``p_val_fdr_bh`` in ``df_feat`` now follows canonical
-  Benjamini–Hochberg — the reverse cumulative-minimum (monotonicity) step was missing, so the
-  reported values could be non-monotone / slightly conservative in non-monotone regions. Only the
-  reported column changes; feature selection and ranking (``abs_auc`` / ``abs_mean_dif``) are
-  unaffected.
-- :meth:`~aaanalysis.CPP.run` with ``n_jobs > 1`` no longer crashes in non-interactive
-  contexts (e.g. ``python -c``, heredocs, some subprocess shells) where starting a
-  ``multiprocessing.Manager`` for the cross-process progress bar raised ``EOFError`` /
-  ``OSError``. The Manager is now created best-effort: on failure CPP degrades to the
-  thread-safe, single-process progress path and the run completes normally instead of
-  aborting (previously the only workaround was ``n_jobs=1``). When the Manager is
-  available, behavior and output are unchanged.
-- **CPP splits on free peptides / short parts (#338)**: ``ap.find_features`` and the
-  ``Pattern`` / ``PeriodicPattern`` splits were unusable on free peptides with no flanking
-  context (the linear-epitope case). ``find_features(search="fast")`` and its Stage-3
-  simplify step ignored the requested / winning split configuration and always used the
-  default (``len_max=15``, ``n_split_max=15``), so any target region shorter than ~15
-  residues raised. Now:
-
-  - **CPP auto-caps splits to the shortest part** instead of raising. When a ``df_parts``
-    sequence part is too short for the requested ``split_kws``, :class:`~aaanalysis.CPP`
-    caps the ``Segment`` ``n_split_max`` and drops the ``Pattern`` / ``PeriodicPattern``
-    split types that cannot fit (``Segment`` is always kept), emits one ``UserWarning``, and
-    stores the capped ``split_kws`` as ``self.split_kws`` (used by both :meth:`~aaanalysis.CPP.run`
-    and :meth:`~aaanalysis.CPP.run_num`). For parts long enough for the requested splits this
-    is a no-op, so results for flanked inputs are byte-identical.
-  - **``find_features`` handles free peptides end to end.** The bounded ``kws`` dict now accepts
-    ``len_max`` (and actually honors ``n_split_max``). Passing ``kws={"n_jmd": 0}`` (no flanking
-    context) switches the part sweep to **TMD-only** (the whole peptide is one part, instead of
-    half-TMD composite fragments) and **caps the swept ``n_split_max`` range** to the shortest
-    part length, deduped, with a ``UserWarning``. The staged ``balanced`` / ``exhaustive`` searches
-    no longer hard-error on short parts. On normal (long-part) inputs the range cap is a no-op.
+- **BH-adjusted p-values**: ``p_val_fdr_bh`` in ``df_feat`` now follows the canonical
+  Benjamini-Hochberg procedure.
+- :meth:`~aaanalysis.CPP.run` with ``n_jobs > 1`` no longer crashes in non-interactive contexts, and
+  CPP splits no longer fail on free peptides or very short parts.
+- **Source install**: the published sdist omitted the Cython sources and could not build; it now does.
+- **Plot layout**: composite-plot furniture no longer lands on the heatmap, dense grids keep a
+  consistent layout at any figure size, and the sequence bar in CPP-SHAP plots renders correctly
+  with ``seq_char_fill=True``.
+- **Golden pipelines**: an invalid call names the offending argument instead of failing obscurely.
 
 Deprecated
 ~~~~~~~~~~
+- ``AAlogo`` / ``AAlogoPlot`` are deprecated in favour of :class:`~aaanalysis.AALogo` /
+  :class:`~aaanalysis.AALogoPlot`. The strict-semver deprecation policy and the ``deprecated``
+  decorator are now in force.
 
-- **``AAlogo`` / ``AAlogoPlot`` are deprecated** in favour of the PascalCase
-  :class:`~aaanalysis.AALogo` / :class:`~aaanalysis.AALogoPlot`. The old names remain
-  importable from both ``aaanalysis`` and ``aaanalysis.seq_analysis`` and now emit a
-  ``DeprecationWarning`` on attribute access; they are scheduled for removal in the next
-  major release. Existing code keeps working unchanged, so the import can be updated at
-  your convenience.
-- The strict-semver deprecation policy and the ``deprecated`` decorator are now in force
-  for all further public-API renames and removals.
+Documentation
+~~~~~~~~~~~~~
+- The rendered docs state which version they document, derived from ``aaanalysis.__version__``.
+- New **Prediction tasks** concept page maps a biological question to the right workflow, and a new
+  **A minimal CPP analysis** tutorial gives the shortest end-to-end loop.
+- **Navigation**: the sidebar is grouped into *Overview*, *Guides*, *Reference* and *Project*, the
+  landing page gains a routing table, and the API reference is split into building blocks and
+  golden pipelines.
+- **Guides**: a new *Use Cases* subchapter walks a published study end to end, every tool tutorial
+  opens with a uniform *You will learn* box, and the tutorials landing page opens with a gallery of
+  headline figures.
 
 
 Version 1.0 (Stable Version)

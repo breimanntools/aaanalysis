@@ -433,6 +433,23 @@ places:
 - ``docs/source/index/release_notes.rst`` — the narrative, RTD-rendered notes
   under the current ``Unreleased`` version, with cross-references and examples.
 
+**How long an entry should be.** The narrative notes sit between the two extremes, not at
+either end. Write **one to three lines per entry**: lead with the symbol
+(``:meth:`~aaanalysis.CPP.run```) or a short bold label, say what changed, and add the one
+thing a reader needs in order to use it. Then stop.
+
+- Do **not** write multi-paragraph bullets or nested sub-bullets that run half a page. If an
+  entry needs that much, it is several entries, or it belongs in the docstring.
+- Do **not** restate parameter documentation. The API reference owns accepted values, defaults
+  and edge cases; the notes say what is new and why it matters.
+- Group naturally related items into one entry rather than listing near-identical siblings
+  (five baseline featurizers are one entry, not five).
+- One entry per change. Two entries describing the same parameter is a defect, not thoroughness.
+
+As a rough gauge, a large release lands near 150 lines, not 800. The ``CHANGELOG.md`` index
+stays one line per change; the pre-v1.0 entries in the release notes show the terse end of the
+range, and v1.1.0 and v1.2.0 show the intended register.
+
 At release time, the ``Unreleased`` heading in both files is renamed to the new
 version with its date.
 
