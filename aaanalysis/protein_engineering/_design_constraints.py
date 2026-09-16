@@ -339,6 +339,10 @@ class DesignConstraints:
         * :meth:`DesignConstraints.check`: the primary ``(ok, reasons)`` contract.
         * :meth:`SeqMut.scan`: whose ``region`` / ``to_aa`` this object subsumes.
         * :meth:`SeqOpt.run`: whose ``constraints`` accepts this object directly.
+
+        Examples
+        --------
+        .. include:: examples/dc.rst
         """
         # Validate
         self.immutable_positions = check_positions(name="immutable_positions",
