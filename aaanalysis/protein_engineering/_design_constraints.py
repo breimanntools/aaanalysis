@@ -424,6 +424,9 @@ class DesignConstraints:
 
         .. versionadded:: 1.2.0
 
+        Examples
+        --------
+        .. include:: examples/dc_check.rst
         """
         # Validate
         parent = self._resolve_parent(parent=parent)
@@ -469,6 +472,9 @@ class DesignConstraints:
 
         .. versionadded:: 1.2.0
 
+        Examples
+        --------
+        .. include:: examples/dc_as_predicate.rst
         """
         # Validate
         parent = self._resolve_parent(parent=parent)
@@ -501,6 +507,9 @@ class DesignConstraints:
 
         .. versionadded:: 1.2.0
 
+        Examples
+        --------
+        .. include:: examples/dc_to_dict.rst
         """
         def _copy(val):
             if isinstance(val, dict):
@@ -546,6 +555,9 @@ class DesignConstraints:
 
         .. versionadded:: 1.2.0
 
+        Examples
+        --------
+        .. include:: examples/dc_from_dict.rst
         """
         # Validate
         ut.check_dict(name="dict_constraints", val=dict_constraints, accept_none=False)

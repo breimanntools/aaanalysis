@@ -31,7 +31,7 @@ notes — with cross-references and examples — live in
   now build a `DesignConstraints` internally, so a limit is never expressed twice; passing a
   shorthand and an object that sets the same limit differently raises a `ValueError`. Output is
   unchanged when no object is passed, and `SeqOpt.run(constraints=[...])` keeps accepting its
-  published list of `genome -> bool` callables (#475).
+  published list of `genome -> bool` callables. The class is part of the public API (`aa.DesignConstraints`, registered abbreviation `dc`), listed in the API reference under *Protein Engineering*, and each of its four methods ships an example notebook (#475).
 - `ReliabilityModel.eval(use_calibrated=..., add_metrics=...)`: score the calibrated column
   (`score_calibrated`) instead of the raw `score`, and append Brier-score / expected
   calibration error (ECE) rows (`bin='brier'` / `bin='ece'`, value in `mean_score`); defaults

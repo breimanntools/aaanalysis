@@ -438,6 +438,10 @@ one row, and parallel-modality families run sequence → structure → embedding
      - ``me`` / ``me_plot``
      -
    * - :ref:`Protein Engineering <protein_engineering_api>`
+     - :class:`~aaanalysis.DesignConstraints`
+     - ``dc``
+     -
+   * -
      - :class:`~aaanalysis.AAMut` / :class:`~aaanalysis.AAMutPlot`
      - ``aam`` / ``aam_plot``
      -

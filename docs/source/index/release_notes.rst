@@ -42,6 +42,13 @@ Added
   mechanisms; combining a shorthand with an object that sets the same limit to a different value
   raises a ``ValueError``. Results are unchanged when no object is passed, and
   ``SeqOpt.run(constraints=[...])`` still accepts its published list of feasibility callables.
+- :class:`~aaanalysis.DesignConstraints` is part of the public API: it is re-exported at the top
+  level (``aa.DesignConstraints``), listed in the :ref:`API reference <protein_engineering_api>`
+  under *Protein Engineering*, registered with the canonical abbreviation ``dc``, and each of its
+  four methods (:meth:`~aaanalysis.DesignConstraints.check`,
+  :meth:`~aaanalysis.DesignConstraints.as_predicate`,
+  :meth:`~aaanalysis.DesignConstraints.to_dict`,
+  :meth:`~aaanalysis.DesignConstraints.from_dict`) ships an example notebook.
 
 - Calibration quality is now measurable. :meth:`~aaanalysis.ReliabilityModel.eval` gains two
   keyword-only parameters: ``use_calibrated=True`` bins the calibrated probability

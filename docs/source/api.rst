@@ -117,6 +117,7 @@ Protein Engineering
     :toctree: generated/
     :template: autosummary/class_template.rst
 
+    DesignConstraints
     AAMut
     AAMutPlot
     SeqMut
