@@ -14,6 +14,9 @@ from aaanalysis.feature_engineering._sequence_feature import SequenceFeature
 from ._seqmut import SeqMut, check_region, check_to_aa_set
 from ._design_constraints import DesignConstraints, resolve_constraints
 from ._backend.design_constraints import filter_search_space, has_sequence_limits
+from ._candidate_lineage import (resolve_lineage, check_lineage, build_lineage,
+                                 check_match_lineage_candidate_id)
+from ._backend.candidate_lineage import trace_records
 # ShapModel (and its heavy SHAP dependency) is imported lazily inside mode="impact" only, so
 # SeqOpt stays importable in a base install; mode="impact" then needs aaanalysis[pro].
 from ._backend.seqopt.genome import canonical, apply_genome, variant_label
@@ -278,6 +281,8 @@ class SeqOpt(Tool):
             labels = ut.check_labels(labels=labels, len_required=len(df_seq_ref))
         self._df_seq_ref = df_seq_ref
         self._labels = labels
+        # Set by run(lineage=...): one plain, JSON-serializable record per returned variant.
+        self.lineage_: Optional[List[Dict[str, Any]]] = None
 
     # Helper methods
     def _scannable(self, df_seq, df_feat, region, to_aa, jmd_n_len, jmd_c_len):
@@ -430,6 +435,7 @@ class SeqOpt(Tool):
             seed: Optional[int] = None,
             jmd_n_len: int = 10,
             jmd_c_len: int = 10,
+            lineage: Union[bool, Dict[str, Any]] = False,
             ) -> pd.DataFrame:
         """
         Run multi-objective directed evolution and return the Pareto front of variants.
@@ -517,6 +523,23 @@ class SeqOpt(Tool):
             Length of JMD-N in number of amino acids.
         jmd_c_len : int, default=10
             Length of JMD-C in number of amino acids.
+        lineage : bool or dict, default=False
+            Opt in to the candidate-lineage record: the thin, JSON-serializable record of how
+            each returned variant was made (its content-hash ``candidate_id``, its parent, the
+            ordered wild-type-relative mutations, the generating method and algorithm, the
+            objective values, the effective seed, and a digest of the applied design limits).
+            ``False`` (default) builds nothing and leaves the returned table exactly as
+            documented below. ``True`` builds one record per returned variant, treating the
+            wild-type as the root of the chain. Passing a **lineage record** (one element of a
+            previous ``SeqOpt.lineage_`` or ``SeqMut.lineage_``) opts in *and* declares that
+            parent: its ``candidate_id`` becomes the ``parent_id`` of every record built here,
+            which is how the rounds of a multi-generation design chain up -- one run optimizes
+            one wild-type, so a candidate that becomes the next round's ``df_seq`` is linked
+            through its record, not through the internal ``n_gen`` counter. When opted in, the
+            records are stored in ``SeqOpt.lineage_``, row-aligned with the returned table, and
+            the ``candidate_id`` column is appended.
+
+            .. versionadded:: 1.2.0
 
         Returns
         -------
@@ -524,7 +547,8 @@ class SeqOpt(Tool):
             One row per final-population variant with ``entry``, ``variant``, ``n_mut``,
             ``sequence_mut``, one column per objective (named by ``objectives``), the
             non-dominated ``rank`` (0 = best front) and the ``crowding`` distance, sorted by
-            ``rank`` then descending ``crowding``.
+            ``rank`` then descending ``crowding``. When ``lineage`` is opted in, the
+            ``candidate_id`` column is appended.
 
         Raises
         ------
@@ -532,7 +556,12 @@ class SeqOpt(Tool):
             If ``df_seq`` does not hold exactly one position-based wild-type, if ``objectives``
             or any option string is invalid, if ``constraints`` is neither a list of callables nor
             a :class:`DesignConstraints` object, if it conflicts with ``region`` / ``to_aa`` /
-            ``n_mut_max``, or if the resulting search space is empty.
+            ``n_mut_max``, if ``lineage`` is neither a bool nor a lineage record, or if the
+            resulting search space is empty.
+
+        See Also
+        --------
+        * :meth:`SeqOpt.trace_lineage`: which walks the lineage records back to their root.
 
         Examples
         --------
@@ -590,6 +619,7 @@ class SeqOpt(Tool):
                              f"(got {cx_prob} + {mut_prob}).")
         if seed is not None:
             ut.check_number_range(name="seed", val=seed, min_val=0, just_int=True)
+        with_lineage, parent_record = resolve_lineage(lineage=lineage)
         # Resolve RNG + scannable space
         import random as _random
         resolved_seed = seed if seed is not None else self._random_state
@@ -636,6 +666,21 @@ class SeqOpt(Tool):
         # Per-generation history (hypervolume + spread + per-objective best front value).
         self.history_ = self._build_history(res, names)
         df_pareto = self._build_output(res, wt_entry, wt_seq, names, goals)
+        if with_lineage:
+            # Built from the returned table, so the records are row-aligned with it.
+            cols_obj = [str(name) for name in names]
+            list_obj = [list(df_pareto[col]) for col in cols_obj]
+            list_objective_values = [dict(zip(cols_obj, values)) for values in zip(*list_obj)]
+            self.lineage_ = build_lineage(
+                list_source_seq=[wt_seq] * len(df_pareto),
+                list_candidate_seq=list(df_pareto[ut.COL_SEQ_MUT]),
+                method=f"SeqOpt.run:{algorithm}",
+                list_objective_values=list_objective_values,
+                seed=resolved_seed,
+                spec=design_constraints.to_dict(),
+                parent=parent_record)
+            df_pareto[ut.COL_CANDIDATE_ID] = [record["candidate_id"]
+                                              for record in self.lineage_]
         if self._verbose:
             n_front = int((df_pareto[ut.COL_RANK] == 0).sum())
             ut.print_out(f"SeqOpt ({self._mode}/{algorithm}) returned {len(df_pareto)} variants "
@@ -762,3 +807,59 @@ class SeqOpt(Tool):
             record[ut.COL_CONVERGENCE] = convergence(W, ref_W)
         df_eval = pd.DataFrame([record])
         return df_eval
+
+    @staticmethod
+    def trace_lineage(lineage: List[Dict[str, Any]],
+                      candidate_id: str,
+                      ) -> List[Dict[str, Any]]:
+        """
+        Reconstruct the chain of lineage records that leads to one designed candidate.
+
+        Directed evolution over several rounds is a chain: the candidate picked from one run
+        becomes the wild-type of the next, and each record names its parent by content hash.
+        This walks those links backwards from ``candidate_id`` to the root the export still
+        contains, so the full parent-to-candidate path is recovered from the records alone --
+        including after a JSON round trip, and including records from different runs.
+
+        Parameters
+        ----------
+        lineage : list of dict
+            Lineage records collected over one or more design rounds, as produced by
+            :meth:`SeqOpt.run` or :meth:`SeqMut.combine` with ``lineage`` opted in (read from
+            ``SeqOpt.lineage_`` / ``SeqMut.lineage_``, or reloaded from JSON). Records of
+            unrelated candidates may be present; only the traced chain is returned.
+        candidate_id : str
+            Identifier of the candidate to trace, as found in the ``candidate_id`` column of the
+            returned table or in the ``candidate_id`` field of a record.
+
+        Returns
+        -------
+        list_lineage : list of dict
+            The records from the root ancestor to ``candidate_id``, root first, so concatenating
+            their ``mutations`` replays the design from the root sequence to the candidate. The
+            chain holds one record when the candidate descends directly from its wild-type.
+
+        Raises
+        ------
+        ValueError
+            If ``lineage`` is not a non-empty list of lineage records, or if ``candidate_id`` is
+            not the identifier of one of them.
+        RuntimeError
+            If the records are cyclic, so a candidate would be its own ancestor.
+
+        See Also
+        --------
+        * :meth:`SeqOpt.run`: whose ``lineage`` parameter produces the records.
+        * :meth:`SeqMut.trace_lineage`: the same tracer on the mutation class.
+
+        .. versionadded:: 1.2.0
+
+        Examples
+        --------
+        .. include:: examples/seqo_trace_lineage.rst
+        """
+        # Validate
+        lineage = check_lineage(name="lineage", val=lineage)
+        check_match_lineage_candidate_id(lineage=lineage, candidate_id=candidate_id)
+        # Walk the parent links back to the root of the exported chain
+        return trace_records(lineage=lineage, candidate_id=candidate_id)

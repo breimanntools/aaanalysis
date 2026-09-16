@@ -748,6 +748,13 @@ SeqMut.combine combined-variant table (one row per multi-mutation variant; all o
      - no
      - Change of the model prediction score (percentage points) for the combined variant; present only with a model.
      - e.g. 18.7
+   * - ``candidate_id``
+     - str
+     - no
+     - no
+     - no
+     - Lineage identifier: sha256 content hash over the source sequence and the candidate's ordered mutations; present only when a lineage record was requested.
+     - e.g. sha256:9f86d0818...
 
 ``df_seqmut_eval``
 ------------------
@@ -887,6 +894,13 @@ SeqOpt.run Pareto front (one row per non-dominated variant of the single wild-ty
      - no
      - Objective: signed shift toward the test-class profile. Present when an objective uses it.
      - e.g. 1.3
+   * - ``candidate_id``
+     - str
+     - no
+     - no
+     - no
+     - Lineage identifier: sha256 content hash over the source sequence and the candidate's ordered mutations; present only when a lineage record was requested.
+     - e.g. sha256:9f86d0818...
 
 ``df_seqopt_eval``
 ------------------

@@ -323,6 +323,14 @@ LIST_DESIGN_SEQ_LIMITS = ["immutable_positions", "forbidden_substitutions",
                           "min_identity", "max_identity",
                           "forbidden_motifs", "required_motifs"]
 
+# Protein engineering (candidate lineage) - the thin, opt-in record of how one designed
+# candidate was made (SeqMut.combine / SeqOpt.run). A plain, JSON-serializable dict; the
+# positions in 'mutations' are 1-BASED over the parent, the DesignConstraints convention.
+COL_CANDIDATE_ID = "candidate_id"   # SeqMut/SeqOpt - content hash of (source, ordered mutations)
+# Record fields, in the order they are written.
+LIST_CANDIDATE_LINEAGE = ["candidate_id", "parent_id", "source_seq_id", "mutations",
+                          "method", "objective_values", "seed", "constraints_digest"]
+
 # Protein engineering (SeqOpt) — multi-objective directed-evolution optimizer.
 # NSGA-II output columns (COL_RANK is shared, defined in the eval block below; COL_VARIANT,
 # COL_N_MUT, COL_SEQ_MUT, COL_ENTRY are reused from the SeqMut block above).
