@@ -13,6 +13,8 @@ from sklearn.preprocessing import StandardScaler
 from sklearn.neighbors import NearestNeighbors
 from sklearn.model_selection import train_test_split
 
+import aaanalysis.utils as ut
+
 
 # I Helper Functions
 def _set_seed(estimator, seed):
@@ -93,7 +95,8 @@ def fit_applicability_domain(X_train, k=5, percentile=95.0, ridge=1e-6):
 def apply_applicability_domain(state, X_new):
     """Score new samples against a fitted applicability-domain reference."""
     Xnew = state["scaler"].transform(X_new)
-    knn = state["nn"].kneighbors(Xnew)[0].mean(axis=1)
+    dist, ind = state["nn"].kneighbors(Xnew)
+    knn = dist.mean(axis=1)
     thr = state["thr"]
     diff = Xnew - state["mu"]
     if state.get("degenerate"):
@@ -109,7 +112,25 @@ def apply_applicability_domain(state, X_new):
     usable_thr = bool(np.isfinite(thr)) and thr > 0
     return dict(ood_score=(knn / thr if usable_thr else np.full(len(Xnew), np.nan)),
                 in_domain=(knn <= thr if usable_thr else np.zeros(len(Xnew), dtype=bool)),
-                knn=knn, maha=maha, leverage=leverage)
+                knn=knn, maha=maha, leverage=leverage, nearest=ind[:, 0].astype(np.int64))
+
+
+def comp_ad_status(ood_score, in_domain, borderline=0.1):
+    """Band the applicability-domain verdict: 'inside' | 'borderline' | 'outside' | 'unknown'.
+
+    'inside' is taken from ``in_domain`` itself so the bool shorthand and the status can never
+    disagree; a non-finite ``ood_score`` (no usable reference) is 'unknown'.
+    """
+    ood = np.asarray(ood_score, dtype=float)
+    inside = np.asarray(in_domain, dtype=bool)
+    finite = np.isfinite(ood)
+    with np.errstate(invalid="ignore"):
+        in_band = ood <= 1.0 + borderline
+    status = np.full(len(ood), ut.STR_AD_UNKNOWN, dtype=object)
+    status[finite & ~inside & in_band] = ut.STR_AD_BORDERLINE
+    status[finite & ~inside & ~in_band] = ut.STR_AD_OUTSIDE
+    status[inside] = ut.STR_AD_INSIDE
+    return status
 
 
 # --- calibrated-score sharpness (aleatoric) -------------------------------------------------

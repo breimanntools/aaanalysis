@@ -1,4 +1,5 @@
 """Unit tests for ReliabilityModel (prediction-reliability measures)."""
+import inspect
 import warnings
 import numpy as np
 import pandas as pd
@@ -6,19 +7,28 @@ import pytest
 from hypothesis import given, settings
 import hypothesis.strategies as some
 from scipy.stats import norm
-from sklearn.ensemble import RandomForestClassifier
 from sklearn.datasets import make_classification
+from sklearn.ensemble import GradientBoostingClassifier, RandomForestClassifier
 from sklearn.linear_model import LogisticRegression
 from sklearn.metrics import brier_score_loss
+from sklearn.model_selection import StratifiedKFold
 from sklearn.naive_bayes import GaussianNB
+from sklearn.neighbors import NearestNeighbors
+from sklearn.preprocessing import StandardScaler
+from sklearn.svm import SVC
 
 import aaanalysis as aa
 import aaanalysis.utils as ut
 from aaanalysis.prediction._backend.reliability.reliability import (
-    comp_calibration_bins, comp_brier, comp_ece)
+    apply_applicability_domain, comp_ad_status, comp_calibration_bins, comp_brier, comp_ece)
 
 settings.register_profile("ci", deadline=None)
 settings.load_profile("ci")
+
+# The 14 columns predict returned before the applicability-domain columns were appended.
+_COLS_LEGACY = ["score", "score_std", "ci_low", "ci_high", "ood_score", "in_domain", "ad_knn",
+                "ad_mahalanobis", "ad_leverage", "score_calibrated", "margin", "entropy",
+                "conformal_set", "reliable"]
 
 
 def _data(n=120, n_features=8, seed=0):
@@ -29,6 +39,94 @@ def _data(n=120, n_features=8, seed=0):
 
 def _ood_point(X_train):
     return (X_train.mean(axis=0) + 20.0)[None, :]
+
+
+def _mixed_new(Xtr, Xte):
+    """Held-out rows plus stretched rows so all three finite statuses tend to occur."""
+    return np.vstack([Xte, Xte * 1.3, Xte * 1.6, _ood_point(Xtr)])
+
+
+def _hand_threshold(Xtr, k=5, percentile=95.0):
+    Z = StandardScaler().fit_transform(Xtr)
+    d, _ = NearestNeighbors(n_neighbors=k + 1).fit(Z).kneighbors(Z)
+    return float(np.percentile(d[:, 1:].mean(axis=1), percentile))
+
+
+def _status_from_score(ood, borderline):
+    out = np.full(len(ood), "unknown", dtype=object)
+    finite = np.isfinite(ood)
+    out[finite & (ood <= 1)] = "inside"
+    out[finite & (ood > 1) & (ood <= 1 + borderline)] = "borderline"
+    out[finite & (ood > 1 + borderline)] = "outside"
+    return out
+
+
+def _degenerate_data(n_features=8, n_copies=20):
+    distinct = np.array([[0.0] * n_features, [1.0] * n_features, [2.0] * n_features])
+    Xtr = np.repeat(distinct, n_copies, axis=0)
+    ytr = np.array([0, 1] * (len(Xtr) // 2))
+    return Xtr, ytr
+
+
+def _miscal_data(seed=0):
+    """Redundant features make Gaussian naive Bayes strongly over-confident (mis-calibrated)."""
+    X, y = make_classification(n_samples=600, n_features=20, n_informative=3, n_redundant=15,
+                               class_sep=0.8, random_state=seed)
+    return X[:400], y[:400], X[400:], y[400:]
+
+
+def _failed_calibration_data():
+    """Binary data whose positive class has ONE member, so the internal cv=2 calibration fails."""
+    X, y = make_classification(n_samples=40, n_features=5, n_informative=3, random_state=0)
+    y = np.zeros(len(y), dtype=int)
+    y[0] = 1
+    return X, y
+
+
+def _metric(df_eval, name):
+    return float(df_eval.loc[df_eval["bin"] == name, "mean_score"].iloc[0])
+
+
+def _legacy_eval(rm, X, labels, n_bins=5):
+    """Verbatim reference of the pre-1.2.0 eval body (raw score, no metric rows)."""
+    y = (np.asarray(labels) == rm.label_pos_).astype(int)
+    df = rm.predict(X)
+    s = df["score"].to_numpy()
+    edges = np.linspace(0, 1, n_bins + 1)
+    rows = []
+    for b in range(n_bins):
+        m = (s >= edges[b]) & (s <= edges[b + 1] if b == n_bins - 1 else s < edges[b + 1])
+        rows.append([f"{edges[b]:.2f}-{edges[b+1]:.2f}",
+                     float(np.mean(s[m])) if m.any() else np.nan,
+                     float(np.mean(y[m])) if m.any() else np.nan,
+                     int(m.sum())])
+    sets = df["conformal_set"].to_numpy()
+    covered = (np.isin(sets, ["pos", "both"]) & (y == 1)) | (np.isin(sets, ["neg", "both"]) & (y == 0))
+    rows.append(["summary", float(np.mean(df["in_domain"])), float(np.mean(covered)), len(X)])
+    return pd.DataFrame(rows, columns=["bin", "mean_score", "empirical_pos", "n_samples"])
+
+
+@pytest.fixture(scope="module")
+def rm_miscal():
+    Xtr, ytr, Xte, yte = _miscal_data()
+    rm = aa.ReliabilityModel(random_state=0).fit(Xtr, ytr, model=GaussianNB(), n_bootstrap=0)
+    return rm, Xte, yte
+
+
+@pytest.fixture(scope="module")
+def rm_uncal():
+    Xtr, ytr, Xte, yte = _miscal_data()
+    rm = aa.ReliabilityModel(random_state=0).fit(Xtr, ytr, model=GaussianNB(), n_bootstrap=0,
+                                                calibrate=False)
+    return rm, Xte, yte
+
+
+@pytest.fixture(scope="module")
+def rm_ad():
+    """A default fit plus new rows spanning the inside / borderline / outside bands."""
+    Xtr, ytr, Xte = _data()
+    rm = aa.ReliabilityModel(random_state=0, verbose=False).fit(Xtr, ytr, n_bootstrap=3)
+    return rm, Xtr, _mixed_new(Xtr, Xte)
 
 
 # I __init__
@@ -52,6 +150,7 @@ class TestReliabilityModelInit:
 
 # II fit
 class TestFit:
+    # X / labels / model / label_pos
     def test_fit_default_returns_self(self):
         Xtr, ytr, _ = _data()
         rm = aa.ReliabilityModel(random_state=0)
@@ -95,6 +194,18 @@ class TestFit:
         with pytest.raises(ValueError, match="n_samples does not match"):
             aa.ReliabilityModel().fit(Xtr, ytr[:-3])
 
+    @pytest.mark.parametrize("X", ["abc", 5, [[1, 2], [3]]])
+    def test_X_invalid(self, X):
+        _, ytr, _ = _data()
+        with pytest.raises(ValueError, match="'X'"):
+            aa.ReliabilityModel().fit(X, ytr)
+
+    @pytest.mark.parametrize("labels", [[1] * 90, ["a", "b"] * 45, 5])
+    def test_labels_invalid(self, labels):
+        Xtr, _, _ = _data()
+        with pytest.raises(ValueError, match="labels"):
+            aa.ReliabilityModel().fit(Xtr, labels)
+
     def test_empty_model_list_raises(self):
         Xtr, ytr, _ = _data()
         with pytest.raises(ValueError, match="'model'"):
@@ -107,9 +218,8 @@ class TestFit:
             aa.ReliabilityModel().fit(X, y)
 
     def test_model_without_predict_proba_raises(self):
-        from sklearn.svm import SVC
         Xtr, ytr, _ = _data()
-        with pytest.raises(ValueError, match="'model'"):                      # SVC() has no predict_proba by default
+        with pytest.raises(ValueError, match="'model'"):          # SVC() has no predict_proba
             aa.ReliabilityModel().fit(Xtr, ytr, model=SVC().fit(Xtr, ytr))
 
     def test_unfitted_aapred_rejected(self):
@@ -120,6 +230,7 @@ class TestFit:
         with pytest.raises(ValueError, match="not fitted"):
             aa.ReliabilityModel().fit(Xtr, ytr, model=_Pred())
 
+    # k
     @pytest.mark.parametrize("k", [1, 3, 10])
     def test_k_valid(self, k):
         Xtr, ytr, _ = _data()
@@ -131,6 +242,7 @@ class TestFit:
         with pytest.raises(ValueError, match="'k'"):
             aa.ReliabilityModel().fit(Xtr, ytr, k=k)
 
+    # ad_percentile
     @pytest.mark.parametrize("p", [1, 50, 100])
     def test_ad_percentile_valid(self, p):
         Xtr, ytr, _ = _data()
@@ -142,6 +254,97 @@ class TestFit:
         with pytest.raises(ValueError, match="'ad_percentile'"):
             aa.ReliabilityModel().fit(Xtr, ytr, ad_percentile=p)
 
+    # ad_borderline (+ the fitted ad_threshold_ / ad_method_ it bands)
+    @settings(max_examples=5, deadline=None)
+    @given(b=some.floats(min_value=0.0, max_value=3.0, allow_nan=False))
+    def test_ad_borderline_valid_float(self, b):
+        Xtr, ytr, Xte = _data()
+        rm = aa.ReliabilityModel(random_state=0, verbose=False).fit(Xtr, ytr, ad_borderline=b,
+                                                                   n_bootstrap=0, calibrate=False)
+        df = rm.predict(_mixed_new(Xtr, Xte))
+        assert set(df["ad_status"]) <= set(ut.LIST_AD_STATUS)
+
+    @settings(max_examples=5, deadline=None)
+    @given(b=some.integers(min_value=0, max_value=5))
+    def test_ad_borderline_valid_int(self, b):
+        Xtr, ytr, _ = _data()
+        rm = aa.ReliabilityModel(verbose=False).fit(Xtr, ytr, ad_borderline=b, n_bootstrap=0,
+                                                    calibrate=False)
+        assert rm.ad_threshold_ > 0
+
+    def test_ad_borderline_numpy_float(self):
+        Xtr, ytr, _ = _data()
+        rm = aa.ReliabilityModel(verbose=False).fit(Xtr, ytr, ad_borderline=np.float64(0.2),
+                                                    n_bootstrap=0, calibrate=False)
+        assert rm.ad_method_ == "knn"
+
+    def test_ad_borderline_does_not_change_threshold(self):
+        Xtr, ytr, _ = _data()
+        kw = dict(n_bootstrap=0, calibrate=False)
+        a = aa.ReliabilityModel(verbose=False).fit(Xtr, ytr, ad_borderline=0.0, **kw)
+        b = aa.ReliabilityModel(verbose=False).fit(Xtr, ytr, ad_borderline=2.0, **kw)
+        assert a.ad_threshold_ == b.ad_threshold_
+
+    def test_attributes_none_before_fit(self):
+        rm = aa.ReliabilityModel()
+        assert rm.ad_threshold_ is None and rm.ad_method_ is None
+
+    def test_attributes_set_after_fit(self, rm_ad):
+        rm, _, _ = rm_ad
+        assert isinstance(rm.ad_threshold_, float) and rm.ad_threshold_ > 0
+        assert rm.ad_method_ == ut.STR_AD_METHOD_KNN == "knn"
+
+    def test_ad_borderline_is_keyword_only(self):
+        p = inspect.signature(aa.ReliabilityModel.fit).parameters["ad_borderline"]
+        assert p.kind == inspect.Parameter.KEYWORD_ONLY and p.default == 0.1
+
+    @pytest.mark.parametrize("b", [-0.1, -1, -1e-12])
+    def test_ad_borderline_negative_raises(self, b):
+        Xtr, ytr, _ = _data()
+        with pytest.raises(ValueError, match="ad_borderline"):
+            aa.ReliabilityModel().fit(Xtr, ytr, ad_borderline=b)
+
+    @pytest.mark.parametrize("b", [None, "0.1", [0.1], {"b": 1}])
+    def test_ad_borderline_wrong_type_raises(self, b):
+        Xtr, ytr, _ = _data()
+        with pytest.raises(ValueError, match="ad_borderline"):
+            aa.ReliabilityModel().fit(Xtr, ytr, ad_borderline=b)
+
+    @pytest.mark.parametrize("b", [True, False])
+    def test_ad_borderline_bool_raises(self, b):
+        Xtr, ytr, _ = _data()
+        with pytest.raises(ValueError, match="ad_borderline"):
+            aa.ReliabilityModel().fit(Xtr, ytr, ad_borderline=b)
+
+    @pytest.mark.parametrize("b", [np.nan, np.inf, -np.inf])
+    def test_ad_borderline_non_finite_raises(self, b):
+        Xtr, ytr, _ = _data()
+        with pytest.raises(ValueError, match="ad_borderline"):
+            aa.ReliabilityModel().fit(Xtr, ytr, ad_borderline=b)
+
+    def test_ad_borderline_non_finite_message(self):
+        # House message format: the supplied value first, then the requirement.
+        Xtr, ytr, _ = _data()
+        with pytest.raises(ValueError,
+                           match=r"'ad_borderline' \(inf\) should be a finite number >= 0"):
+            aa.ReliabilityModel().fit(Xtr, ytr, ad_borderline=np.inf)
+
+    def test_ad_borderline_bool_message(self):
+        Xtr, ytr, _ = _data()
+        with pytest.raises(ValueError,
+                           match=r"'ad_borderline' \(True\) should be a finite number >= 0"):
+            aa.ReliabilityModel().fit(Xtr, ytr, ad_borderline=True)
+
+    def test_invalid_ad_borderline_leaves_instance_unfitted(self):
+        Xtr, ytr, _ = _data()
+        rm = aa.ReliabilityModel()
+        with pytest.raises(ValueError, match="'ad_borderline'"):
+            rm.fit(Xtr, ytr, ad_borderline=-1)
+        assert rm.ad_threshold_ is None
+        with pytest.raises(RuntimeError, match="Call 'fit' before 'predict'"):
+            rm.predict(Xtr)
+
+    # ci
     @settings(max_examples=5, deadline=None)
     @given(ci=some.floats(min_value=0.01, max_value=0.99))
     def test_ci_valid(self, ci):
@@ -162,7 +365,6 @@ class TestFit:
             aa.ReliabilityModel().fit(Xtr, ytr, ci=ci)
 
     def test_ci_default_is_fraction(self):
-        import inspect
         assert inspect.signature(aa.ReliabilityModel.fit).parameters["ci"].default == 0.90
 
     def test_ci_default_equals_explicit(self):
@@ -201,6 +403,12 @@ class TestFit:
         with pytest.raises(ValueError, match="finite"):
             aa.ReliabilityModel().fit(Xtr, ytr, ad_percentile=p)
 
+    def test_ad_percentile_non_finite_message(self):
+        Xtr, ytr, _ = _data()
+        with pytest.raises(ValueError,
+                           match=r"'ad_percentile' \(inf\) should be a finite float or an integer"):
+            aa.ReliabilityModel().fit(Xtr, ytr, ad_percentile=np.inf)
+
     @pytest.mark.parametrize("a", [float("nan"), np.float64("nan"), float("inf"), float("-inf")])
     def test_conformal_alpha_non_finite_raises(self, a):
         Xtr, ytr, _ = _data()
@@ -227,6 +435,14 @@ class TestFit:
         Xtr, ytr, _ = _data()
         with pytest.raises(ValueError, match="should be an integer"):
             aa.ReliabilityModel().fit(Xtr, ytr, n_bootstrap=val)
+    # n_bootstrap
+    @settings(max_examples=3, deadline=None)
+    @given(nb=some.integers(min_value=0, max_value=5))
+    def test_n_bootstrap_valid(self, nb):
+        Xtr, ytr, _ = _data()
+        rm = aa.ReliabilityModel(random_state=0, verbose=False).fit(Xtr, ytr, n_bootstrap=nb,
+                                                                    calibrate=False)
+        assert rm.model_ is not None
 
     @pytest.mark.parametrize("nb", [-1, 2.5])
     def test_n_bootstrap_invalid(self, nb):
@@ -234,16 +450,7 @@ class TestFit:
         with pytest.raises(ValueError, match="'n_bootstrap'"):
             aa.ReliabilityModel().fit(Xtr, ytr, n_bootstrap=nb)
 
-    def test_calibration_method_invalid(self):
-        Xtr, ytr, _ = _data()
-        with pytest.raises(ValueError, match="calibration_method"):
-            aa.ReliabilityModel().fit(Xtr, ytr, calibration_method="bogus")
-
-    @pytest.mark.parametrize("m", ["isotonic", "sigmoid"])
-    def test_calibration_method_valid(self, m):
-        Xtr, ytr, _ = _data()
-        assert aa.ReliabilityModel().fit(Xtr, ytr, calibration_method=m, n_bootstrap=3) is not None
-
+    # calibrate / calibration_method
     @pytest.mark.parametrize("calibrate", [True, False])
     def test_calibrate_flag(self, calibrate):
         Xtr, ytr, Xte = _data()
@@ -257,15 +464,139 @@ class TestFit:
         with pytest.raises(ValueError, match="'calibrate'"):
             aa.ReliabilityModel().fit(Xtr, ytr, calibrate=val)
 
+    def test_calibration_method_invalid(self):
+        Xtr, ytr, _ = _data()
+        with pytest.raises(ValueError, match="calibration_method"):
+            aa.ReliabilityModel().fit(Xtr, ytr, calibration_method="bogus")
+
+    @pytest.mark.parametrize("m", ["isotonic", "sigmoid"])
+    def test_calibration_method_valid(self, m):
+        Xtr, ytr, _ = _data()
+        assert aa.ReliabilityModel().fit(Xtr, ytr, calibration_method=m, n_bootstrap=3) is not None
+
+    # conformal_alpha
+    @settings(max_examples=3, deadline=None)
+    @given(a=some.floats(min_value=0.02, max_value=0.5))
+    def test_conformal_alpha_valid(self, a):
+        Xtr, ytr, _ = _data()
+        rm = aa.ReliabilityModel(random_state=0, verbose=False).fit(Xtr, ytr, conformal_alpha=a,
+                                                                    n_bootstrap=0, calibrate=False)
+        assert rm.predict(Xtr[:5])["conformal_set"].isin(["neg", "pos", "both", "none"]).all()
+
     @pytest.mark.parametrize("a", [-0.1, 1.5])
     def test_conformal_alpha_invalid(self, a):
         Xtr, ytr, _ = _data()
-        with pytest.raises(ValueError, match="'conformal_alpha'"):
+        with pytest.raises(ValueError, match="conformal_alpha"):
             aa.ReliabilityModel().fit(Xtr, ytr, conformal_alpha=a)
 
 
 class TestFitComplex:
-    """Calibration, ensemble, and interval parameters of fit crossed with each other."""
+    """Fit parameters crossed with each other: the applicability-domain leakage
+    contract and the calibration outcome."""
+
+    def test_ad_borderline_zero_has_no_borderline(self, rm_ad):
+        _, _, Xnew = rm_ad
+        Xtr, ytr, _ = _data()
+        rm = aa.ReliabilityModel(random_state=0, verbose=False).fit(Xtr, ytr, ad_borderline=0,
+                                                                    n_bootstrap=3)
+        assert "borderline" not in set(rm.predict(Xnew)["ad_status"])
+
+    def test_ad_borderline_default_equals_explicit(self, rm_ad):
+        rm, _, Xnew = rm_ad
+        Xtr, ytr, _ = _data()
+        rm_exp = aa.ReliabilityModel(random_state=0, verbose=False).fit(Xtr, ytr, ad_borderline=0.1,
+                                                                       n_bootstrap=3)
+        pd.testing.assert_frame_equal(rm.predict(Xnew), rm_exp.predict(Xnew))
+
+    @settings(max_examples=5, deadline=None)
+    @given(b1=some.floats(min_value=0.0, max_value=1.0), extra=some.floats(min_value=0.0, max_value=1.0))
+    def test_wider_band_moves_outside_to_borderline(self, b1, extra):
+        Xtr, ytr, Xte = _data()
+        Xnew = _mixed_new(Xtr, Xte)
+        kw = dict(n_bootstrap=0, calibrate=False)
+        s1 = aa.ReliabilityModel(verbose=False).fit(Xtr, ytr, ad_borderline=b1, **kw).predict(Xnew)["ad_status"]
+        s2 = aa.ReliabilityModel(verbose=False).fit(Xtr, ytr, ad_borderline=b1 + extra, **kw).predict(Xnew)["ad_status"]
+        assert (s2 == "outside").sum() <= (s1 == "outside").sum()
+        assert (s2 == "borderline").sum() >= (s1 == "borderline").sum()
+        assert ((s1 == "inside") == (s2 == "inside")).all()
+
+    def test_leakage_fold_reference_differs_from_full(self):
+        Xtr, ytr, _ = _data()
+        kw = dict(n_bootstrap=0, calibrate=False)
+        full = aa.ReliabilityModel(random_state=0, verbose=False).fit(Xtr, ytr, **kw)
+        skf = StratifiedKFold(n_splits=5, shuffle=True, random_state=0)
+        for train_idx, test_idx in skf.split(Xtr, ytr):
+            fold = aa.ReliabilityModel(random_state=0, verbose=False).fit(
+                Xtr[train_idx], ytr[train_idx], **kw)
+            assert fold.ad_threshold_ != full.ad_threshold_
+            assert fold.ad_threshold_ == pytest.approx(_hand_threshold(Xtr[train_idx]), abs=1e-12)
+
+    def test_leakage_test_rows_do_not_influence_reference(self):
+        Xtr, ytr, _ = _data()
+        kw = dict(n_bootstrap=0, calibrate=False)
+        train_idx, test_idx = next(StratifiedKFold(n_splits=5, shuffle=True, random_state=1)
+                                   .split(Xtr, ytr))
+        X_alt = Xtr.copy()
+        X_alt[test_idx] = np.random.default_rng(0).normal(50, 10, size=X_alt[test_idx].shape)
+        a = aa.ReliabilityModel(random_state=0, verbose=False).fit(Xtr[train_idx], ytr[train_idx], **kw)
+        b = aa.ReliabilityModel(random_state=0, verbose=False).fit(X_alt[train_idx], ytr[train_idx], **kw)
+        assert a.ad_threshold_ == b.ad_threshold_
+        thr_before = a.ad_threshold_
+        da, db = a.predict(Xtr[test_idx]), b.predict(Xtr[test_idx])
+        pd.testing.assert_frame_equal(da[["ood_score", "ad_status", "ad_nearest_train"]],
+                                      db[["ood_score", "ad_status", "ad_nearest_train"]])
+        assert a.ad_threshold_ == thr_before                     # predicting does not refit
+        assert da["ad_nearest_train"].between(0, len(train_idx) - 1).all()
+
+    @pytest.mark.parametrize("p_lo, p_hi", [(50, 90), (80, 99), (5, 100)])
+    def test_ad_percentile_orders_threshold_and_inside(self, p_lo, p_hi):
+        Xtr, ytr, Xte = _data()
+        Xnew = _mixed_new(Xtr, Xte)
+        kw = dict(n_bootstrap=0, calibrate=False)
+        lo = aa.ReliabilityModel(verbose=False).fit(Xtr, ytr, ad_percentile=p_lo, **kw)
+        hi = aa.ReliabilityModel(verbose=False).fit(Xtr, ytr, ad_percentile=p_hi, **kw)
+        assert lo.ad_threshold_ < hi.ad_threshold_
+        assert (lo.predict(Xnew)["ad_status"] == "inside").sum() <= \
+               (hi.predict(Xnew)["ad_status"] == "inside").sum()
+
+    @pytest.mark.parametrize("k", [1, 3, 7])
+    def test_k_changes_threshold_consistently(self, k):
+        Xtr, ytr, _ = _data()
+        rm = aa.ReliabilityModel(verbose=False).fit(Xtr, ytr, k=k, n_bootstrap=0, calibrate=False)
+        assert rm.ad_threshold_ == pytest.approx(_hand_threshold(Xtr, k=k), abs=1e-12)
+
+    def test_invalid_ad_borderline_with_invalid_k_raises(self):
+        Xtr, ytr, _ = _data()
+        with pytest.raises(ValueError, match=r"'k'|'ad_borderline'"):
+            aa.ReliabilityModel().fit(Xtr, ytr, k=0, ad_borderline=-1)
+
+    def test_invalid_ad_borderline_with_valid_rest_raises(self):
+        Xtr, ytr, _ = _data()
+        with pytest.raises(ValueError, match="ad_borderline"):
+            aa.ReliabilityModel().fit(Xtr, ytr, k=3, ad_percentile=90, ci=0.8, ad_borderline=-0.5)
+
+    def test_invalid_ad_borderline_with_ensemble_raises(self):
+        Xtr, ytr, _ = _data()
+        models = [LogisticRegression(max_iter=300).fit(Xtr, ytr)]
+        with pytest.raises(ValueError, match="ad_borderline"):
+            aa.ReliabilityModel().fit(Xtr, ytr, model=models, ad_borderline=np.nan)
+
+    def test_percent_ci_with_valid_ad_borderline_raises(self):
+        Xtr, ytr, _ = _data()
+        with pytest.raises(ValueError, match="should be a fraction"):
+            aa.ReliabilityModel().fit(Xtr, ytr, ci=90, ad_borderline=0.2)
+
+    def test_non_binary_labels_with_ad_params_raises(self):
+        X, y = make_classification(n_samples=90, n_features=8, n_informative=5, n_classes=3,
+                                   n_clusters_per_class=1, random_state=0)
+        with pytest.raises(ValueError, match="binary labels"):
+            aa.ReliabilityModel().fit(X, y, ad_percentile=90, ad_borderline=0.3)
+
+    def test_invalid_calibrate_with_ensemble_raises(self):
+        Xtr, ytr, _ = _data()
+        models = [LogisticRegression(max_iter=300).fit(Xtr, ytr)]
+        with pytest.raises(ValueError, match="'calibrate'"):
+            aa.ReliabilityModel().fit(Xtr, ytr, model=models, calibrate="yes")
 
     # Calibration outcome at fit time (the eval-time message is TestEvalComplex's job)
     def test_failed_calibration_warns_at_fit(self):
@@ -360,7 +691,6 @@ class TestFitComplex:
                                       calibration_method="sigmoid")
 
     def test_member_without_predict_proba_with_calibration_raises(self):
-        from sklearn.svm import SVC
         Xtr, ytr, _ = _data()
         with pytest.raises(ValueError, match="predict_proba"):
             aa.ReliabilityModel().fit(Xtr, ytr, model=[SVC().fit(Xtr, ytr)], calibrate=True)
@@ -387,6 +717,41 @@ class TestFitComplex:
                                       calibration_method="isotonic")
 
 
+class TestFitGoldenValues:
+    """Hand-computed applicability-domain reference learned by fit."""
+
+    def test_threshold_equals_hand_percentile(self):
+        Xtr, ytr, _ = _data()
+        rm = aa.ReliabilityModel(verbose=False).fit(Xtr, ytr, k=5, ad_percentile=95.0,
+                                                    n_bootstrap=0, calibrate=False)
+        assert rm.ad_threshold_ == pytest.approx(_hand_threshold(Xtr, k=5, percentile=95.0), abs=1e-12)
+
+    @pytest.mark.parametrize("k", [1, 5])
+    @pytest.mark.parametrize("percentile", [50.0, 95.0, 100.0])
+    def test_threshold_grid_equals_hand_percentile(self, k, percentile):
+        Xtr, ytr, _ = _data()
+        rm = aa.ReliabilityModel(verbose=False).fit(Xtr, ytr, k=k, ad_percentile=percentile,
+                                                    n_bootstrap=0, calibrate=False)
+        assert rm.ad_threshold_ == pytest.approx(_hand_threshold(Xtr, k=k, percentile=percentile),
+                                                 abs=1e-12)
+
+    def test_threshold_of_diagonal_line(self):
+        # Training points (i, i) for i in 0..7 with k=1: after standardization every
+        # nearest-neighbour distance is sqrt(2)/std, so ad_threshold_ = sqrt(2)/std.
+        line = np.arange(8, dtype=float)
+        Xtr = np.column_stack([line, line])
+        ytr = np.array([0, 1] * 4)
+        rm = aa.ReliabilityModel(random_state=0, verbose=False).fit(
+            Xtr, ytr, k=1, n_bootstrap=0, calibrate=False)
+        assert rm.ad_threshold_ == pytest.approx(np.sqrt(2) / np.std(line), abs=1e-12)
+
+    def test_degenerate_reference_threshold_is_not_positive(self):
+        Xtr, ytr = _degenerate_data()
+        rm = aa.ReliabilityModel(random_state=0, verbose=False).fit(Xtr, ytr, n_bootstrap=0,
+                                                                    calibrate=False)
+        assert rm.ad_threshold_ <= 0                         # no usable spread in the reference
+
+
 # III predict
 class TestPredict:
     def test_columns(self):
@@ -395,9 +760,17 @@ class TestPredict:
         assert isinstance(df, pd.DataFrame) and len(df) == len(Xte)
         for c in ["score", "score_std", "ci_low", "ci_high", "ood_score", "in_domain",
                   "ad_knn", "ad_mahalanobis", "ad_leverage", "score_calibrated",
-                  "margin", "entropy", "conformal_set", "reliable"]:
+                  "margin", "entropy", "conformal_set", "reliable",
+                  "ad_status", "ad_nearest_train"]:
             assert c in df.columns
         assert df["in_domain"].dtype == bool and df["reliable"].dtype == bool
+
+    def test_columns_order_matches_constant_bundle(self, rm_ad):
+        rm, _, Xnew = rm_ad
+        df = rm.predict(Xnew)
+        assert list(df.columns) == ut.COLS_RELIABILITY
+        assert list(df.columns[:14]) == _COLS_LEGACY
+        assert list(df.columns[14:]) == ["ad_status", "ad_nearest_train"]
 
     def test_before_fit_raises(self):
         _, _, Xte = _data()
@@ -407,8 +780,15 @@ class TestPredict:
     def test_feature_mismatch_raises(self):
         Xtr, ytr, Xte = _data()
         rm = aa.ReliabilityModel(random_state=0).fit(Xtr, ytr, n_bootstrap=3)
-        with pytest.raises(ValueError, match="features but the model was fit on"):
+        with pytest.raises(ValueError, match=r"'X' has 4 features"):
             rm.predict(Xte[:, :4])
+
+    @pytest.mark.parametrize("X", [None, "abc", 5, [[1, 2], [3]]])
+    def test_X_invalid(self, X):
+        Xtr, ytr, _ = _data()
+        rm = aa.ReliabilityModel(random_state=0).fit(Xtr, ytr, n_bootstrap=3)
+        with pytest.raises(ValueError, match="'X'"):
+            rm.predict(X)
 
     def test_ood_point_flagged(self):
         Xtr, ytr, _ = _data()
@@ -451,6 +831,71 @@ class TestPredict:
         assert df["entropy"].between(0, 1.0001).all()
         assert df["conformal_set"].isin(["neg", "pos", "both", "none"]).all()
 
+    # ad_status
+    def test_ad_status_values_never_null(self, rm_ad):
+        rm, _, Xnew = rm_ad
+        s = rm.predict(Xnew)["ad_status"]
+        assert s.notna().all()
+        assert set(s) <= {"inside", "borderline", "outside", "unknown"}
+        assert ut.LIST_AD_STATUS == ["inside", "borderline", "outside", "unknown"]
+
+    def test_all_finite_statuses_occur(self, rm_ad):
+        rm, _, Xnew = rm_ad
+        s = set(rm.predict(Xnew)["ad_status"])
+        assert {"inside", "borderline", "outside"} <= s and "unknown" not in s
+
+    @settings(max_examples=5, deadline=None)
+    @given(seed=some.integers(min_value=0, max_value=50),
+           b=some.floats(min_value=0.0, max_value=1.0))
+    def test_in_domain_equals_inside(self, seed, b):
+        Xtr, ytr, Xte = _data(seed=seed)
+        rm = aa.ReliabilityModel(verbose=False).fit(Xtr, ytr, ad_borderline=b, n_bootstrap=0,
+                                                    calibrate=False)
+        df = rm.predict(_mixed_new(Xtr, Xte))
+        assert (df["in_domain"] == (df["ad_status"] == "inside")).all()
+
+    def test_ood_point_is_outside(self, rm_ad):
+        rm, Xtr, _ = rm_ad
+        assert rm.predict(_ood_point(Xtr))["ad_status"].iloc[0] == "outside"
+
+    # ad_nearest_train
+    def test_nearest_train_dtype_and_range(self, rm_ad):
+        rm, Xtr, Xnew = rm_ad
+        nn = rm.predict(Xnew)["ad_nearest_train"]
+        assert np.issubdtype(nn.dtype, np.integer)
+        assert nn.between(0, len(Xtr) - 1).all()
+
+    def test_nearest_train_of_training_rows_is_itself(self, rm_ad):
+        rm, Xtr, _ = rm_ad
+        nn = rm.predict(Xtr)["ad_nearest_train"].to_numpy()
+        np.testing.assert_array_equal(nn, np.arange(len(Xtr)))
+
+    def test_nearest_train_of_perturbed_copy(self, rm_ad):
+        rm, Xtr, _ = rm_ad
+        idx = [3, 17, 42]
+        nn = rm.predict(Xtr[idx] + 1e-6)["ad_nearest_train"].tolist()
+        assert nn == idx
+
+    # the legacy columns stay exactly as they were
+    @settings(max_examples=3, deadline=None)
+    @given(b=some.floats(min_value=0.0, max_value=2.0))
+    def test_legacy_columns_unaffected_by_ad_borderline(self, b):
+        Xtr, ytr, Xte = _data()
+        Xnew = _mixed_new(Xtr, Xte)
+        kw = dict(n_bootstrap=3)
+        a = aa.ReliabilityModel(random_state=0, verbose=False).fit(Xtr, ytr, **kw).predict(Xnew)
+        c = aa.ReliabilityModel(random_state=0, verbose=False).fit(Xtr, ytr, ad_borderline=b,
+                                                                  **kw).predict(Xnew)
+        pd.testing.assert_frame_equal(a[_COLS_LEGACY], c[_COLS_LEGACY])
+
+    def test_legacy_ad_columns_match_backend(self, rm_ad):
+        rm, _, Xnew = rm_ad
+        ad = apply_applicability_domain(rm._ad_state, Xnew)
+        df = rm.predict(Xnew)
+        np.testing.assert_array_equal(df["ood_score"].to_numpy(), ad["ood_score"])
+        np.testing.assert_array_equal(df["in_domain"].to_numpy(), ad["in_domain"])
+        np.testing.assert_array_equal(df["ad_knn"].to_numpy(), ad["knn"])
+
     def test_degenerate_reference_is_not_silently_in_domain(self):
         """A training reference with no spread must not wave every sample through.
 
@@ -469,6 +914,137 @@ class TestPredict:
         assert not df["in_domain"].any()
         assert df["ood_score"].isna().all()
         assert not df["reliable"].any()
+
+    def test_degenerate_reference_status_unknown(self):
+        Xtr, ytr = _degenerate_data()
+        rm = aa.ReliabilityModel(random_state=0, verbose=False).fit(Xtr, ytr, n_bootstrap=3)
+        df = rm.predict(np.vstack([np.full((3, 8), 99.0), Xtr[:2]]))
+        assert (df["ad_status"] == "unknown").all()
+        assert df["ood_score"].isna().all() and not df["in_domain"].any()
+        assert (df["in_domain"] == (df["ad_status"] == "inside")).all()
+        assert rm.ad_threshold_ <= 0
+        assert df["ad_nearest_train"].between(0, len(Xtr) - 1).all()
+
+
+class TestPredictComplex:
+    """The appended columns crossed with the fit parameters and degenerate inputs."""
+
+    def test_ensemble_model_with_ad_borderline(self):
+        Xtr, ytr, Xte = _data()
+        models = [RandomForestClassifier(n_estimators=10, random_state=i).fit(Xtr, ytr) for i in range(3)]
+        df = aa.ReliabilityModel(random_state=0, verbose=False).fit(
+            Xtr, ytr, model=models, ad_borderline=0.5).predict(_mixed_new(Xtr, Xte))
+        assert list(df.columns) == ut.COLS_RELIABILITY
+        assert (df["in_domain"] == (df["ad_status"] == "inside")).all()
+
+    def test_features_exceed_samples_status_is_known(self):
+        X, y = make_classification(n_samples=40, n_features=30, n_informative=12, random_state=0)
+        rm = aa.ReliabilityModel(random_state=0, verbose=False).fit(X[:14], y[:14], n_bootstrap=3)
+        df = rm.predict(X[14:])
+        assert df["ad_mahalanobis"].isna().all()
+        assert "unknown" not in set(df["ad_status"])
+
+    def test_reliable_implies_inside(self, rm_ad):
+        rm, _, Xnew = rm_ad
+        df = rm.predict(Xnew)
+        assert (df.loc[df["reliable"], "ad_status"] == "inside").all()
+
+    def test_degenerate_with_borderline_band_still_unknown(self):
+        Xtr, ytr = _degenerate_data()
+        rm = aa.ReliabilityModel(random_state=0, verbose=False).fit(Xtr, ytr, n_bootstrap=0,
+                                                                    ad_borderline=100.0)
+        assert (rm.predict(Xtr[:4])["ad_status"] == "unknown").all()
+
+    def test_single_row_keeps_full_schema(self, rm_ad):
+        rm, Xtr, _ = rm_ad
+        df = rm.predict(Xtr[:1])
+        assert len(df) == 1 and list(df.columns) == ut.COLS_RELIABILITY
+        assert df["ad_status"].iloc[0] in ut.LIST_AD_STATUS
+
+    def test_repeated_predict_is_identical(self, rm_ad):
+        rm, _, Xnew = rm_ad
+        pd.testing.assert_frame_equal(rm.predict(Xnew), rm.predict(Xnew))
+
+    def test_feature_mismatch_still_raises(self, rm_ad):
+        rm, _, Xnew = rm_ad
+        with pytest.raises(ValueError, match=r"'X' has 3 features"):
+            rm.predict(Xnew[:, :3])
+
+    def test_predict_before_fit_raises(self):
+        with pytest.raises(RuntimeError, match="Call 'fit' before 'predict'"):
+            aa.ReliabilityModel().predict(np.zeros((2, 3)))
+
+    def test_predict_none_raises(self, rm_ad):
+        rm, _, _ = rm_ad
+        with pytest.raises(ValueError, match="'X'"):
+            rm.predict(None)
+
+    def test_predict_with_nan_raises(self, rm_ad):
+        rm, _, Xnew = rm_ad
+        X_nan = Xnew.copy()
+        X_nan[0, 0] = np.nan
+        with pytest.raises(ValueError, match="'X'"):
+            rm.predict(X_nan)
+
+    def test_predict_with_inf_raises(self, rm_ad):
+        rm, _, Xnew = rm_ad
+        X_inf = Xnew.copy()
+        X_inf[0, 0] = np.inf
+        with pytest.raises(ValueError, match="'X'"):
+            rm.predict(X_inf)
+
+
+class TestPredictGoldenValues:
+    """Hand-computed band edges, the ood_score identity, and the nearest-neighbour index."""
+
+    def test_ood_score_identity(self, rm_ad):
+        rm, _, Xnew = rm_ad
+        df = rm.predict(Xnew)
+        np.testing.assert_allclose(df["ood_score"], df["ad_knn"] / rm.ad_threshold_, rtol=0, atol=1e-9)
+
+    @pytest.mark.parametrize("b", [0.0, 0.1, 0.25, 1.0])
+    def test_status_matches_score_bands(self, rm_ad, b):
+        _, _, Xnew = rm_ad
+        Xtr, ytr, _ = _data()
+        rm = aa.ReliabilityModel(random_state=0, verbose=False).fit(Xtr, ytr, ad_borderline=b, n_bootstrap=3)
+        df = rm.predict(Xnew)
+        np.testing.assert_array_equal(df["ad_status"].to_numpy(),
+                                      _status_from_score(df["ood_score"].to_numpy(), b))
+
+    def test_nearest_train_matches_hand_neighbors(self, rm_ad):
+        rm, Xtr, Xnew = rm_ad
+        sc = StandardScaler().fit(Xtr)
+        nn = NearestNeighbors(n_neighbors=5).fit(sc.transform(Xtr))
+        expected = nn.kneighbors(sc.transform(Xnew))[1][:, 0]
+        np.testing.assert_array_equal(rm.predict(Xnew)["ad_nearest_train"].to_numpy(), expected)
+
+    def test_band_edges_backend(self):
+        ood = np.array([0.5, 1.0, 1.0 + 1e-12, 1.1, 1.1 + 1e-12, 5.0, np.nan])
+        status = comp_ad_status(ood, ood <= 1, borderline=0.1)
+        assert status.tolist() == ["inside", "inside", "borderline", "borderline", "outside",
+                                   "outside", "unknown"]
+
+    def test_band_edges_zero_width(self):
+        ood = np.array([1.0, 1.0 + 1e-12, np.inf, np.nan])
+        status = comp_ad_status(ood, ood <= 1, borderline=0.0)
+        assert status.tolist() == ["inside", "outside", "unknown", "unknown"]
+
+    def test_hand_computed_diagonal_line(self):
+        # Training points (i, i) for i in 0..7 (k=1): after standardization every nearest-neighbour
+        # distance is sqrt(2)/std, so ad_threshold_ = sqrt(2)/std and ood_score equals the raw gap
+        # to the nearest training point along the line.
+        line = np.arange(8, dtype=float)
+        Xtr = np.column_stack([line, line])
+        ytr = np.array([0, 1] * 4)
+        rm = aa.ReliabilityModel(random_state=0, verbose=False).fit(
+            Xtr, ytr, k=1, ad_borderline=0.1, n_bootstrap=0, calibrate=False)
+        assert rm.ad_threshold_ == pytest.approx(np.sqrt(2) / np.std(line), abs=1e-12)
+        q = np.array([3.5, 8.05, 8.2, -1.05, 7.0])
+        df = rm.predict(np.column_stack([q, q]))
+        np.testing.assert_allclose(df["ood_score"], [0.5, 1.05, 1.2, 1.05, 0.0], atol=1e-9)
+        assert df["ad_status"].tolist() == ["inside", "borderline", "outside", "borderline", "inside"]
+        assert df["ad_nearest_train"].tolist()[1:] == [7, 7, 0, 7]
+        assert df["ad_nearest_train"].iloc[0] in (3, 4)
 
 
 class TestDistinctions:
@@ -511,7 +1087,6 @@ class TestDistinctions:
     def test_score_is_centre_of_its_interval(self):
         # score is the member mean, so it never falls outside [ci_low, ci_high] (even with an
         # overfitting base model, which previously produced score-outside-CI rows)
-        from sklearn.ensemble import GradientBoostingClassifier
         Xtr, ytr, Xte = _data(n=180)
         rm = aa.ReliabilityModel(random_state=3).fit(
             Xtr, ytr, model=GradientBoostingClassifier().fit(Xtr, ytr), n_bootstrap=25)
@@ -530,60 +1105,6 @@ class TestDistinctions:
 
 
 # IV eval
-# Fixtures / references for eval: raw and calibrated scoring
-def _miscal_data(seed=0):
-    """Redundant features make Gaussian naive Bayes strongly over-confident (mis-calibrated)."""
-    X, y = make_classification(n_samples=600, n_features=20, n_informative=3, n_redundant=15,
-                               class_sep=0.8, random_state=seed)
-    return X[:400], y[:400], X[400:], y[400:]
-
-
-@pytest.fixture(scope="module")
-def rm_miscal():
-    Xtr, ytr, Xte, yte = _miscal_data()
-    rm = aa.ReliabilityModel(random_state=0).fit(Xtr, ytr, model=GaussianNB(), n_bootstrap=0)
-    return rm, Xte, yte
-
-
-@pytest.fixture(scope="module")
-def rm_uncal():
-    Xtr, ytr, Xte, yte = _miscal_data()
-    rm = aa.ReliabilityModel(random_state=0).fit(Xtr, ytr, model=GaussianNB(), n_bootstrap=0,
-                                                calibrate=False)
-    return rm, Xte, yte
-
-
-def _metric(df_eval, name):
-    return float(df_eval.loc[df_eval["bin"] == name, "mean_score"].iloc[0])
-
-
-def _legacy_eval(rm, X, labels, n_bins=5):
-    """Verbatim reference of the pre-1.2.0 eval body (raw score, no metric rows)."""
-    y = (np.asarray(labels) == rm.label_pos_).astype(int)
-    df = rm.predict(X)
-    s = df["score"].to_numpy()
-    edges = np.linspace(0, 1, n_bins + 1)
-    rows = []
-    for b in range(n_bins):
-        m = (s >= edges[b]) & (s <= edges[b + 1] if b == n_bins - 1 else s < edges[b + 1])
-        rows.append([f"{edges[b]:.2f}-{edges[b+1]:.2f}",
-                     float(np.mean(s[m])) if m.any() else np.nan,
-                     float(np.mean(y[m])) if m.any() else np.nan,
-                     int(m.sum())])
-    sets = df["conformal_set"].to_numpy()
-    covered = (np.isin(sets, ["pos", "both"]) & (y == 1)) | (np.isin(sets, ["neg", "both"]) & (y == 0))
-    rows.append(["summary", float(np.mean(df["in_domain"])), float(np.mean(covered)), len(X)])
-    return pd.DataFrame(rows, columns=["bin", "mean_score", "empirical_pos", "n_samples"])
-
-
-def _failed_calibration_data():
-    """Binary data whose positive class has ONE member, so the internal cv=2 calibration fails."""
-    X, y = make_classification(n_samples=40, n_features=5, n_informative=3, random_state=0)
-    y = np.zeros(len(y), dtype=int)
-    y[0] = 1
-    return X, y
-
-
 class TestEval:
     def test_eval_default(self):
         Xtr, ytr, _ = _data()
@@ -843,6 +1364,11 @@ class TestEvalComplex:
         Xtr, ytr, _ = _data()
         rm = aa.ReliabilityModel(random_state=0).fit(Xtr, ytr, n_bootstrap=3)
         pd.testing.assert_frame_equal(rm.eval(), _legacy_eval(rm, Xtr, ytr), check_exact=True)
+
+    def test_eval_unchanged_by_new_columns(self, rm_ad):
+        rm, _, _ = rm_ad
+        ev = rm.eval()
+        assert list(ev.columns) == ut.COLS_EVAL_RELIABILITY
 
     def test_calibrated_metrics_with_custom_bins(self, rm_miscal):
         rm, Xte, yte = rm_miscal
