@@ -14,6 +14,18 @@ from sklearn.neighbors import NearestNeighbors
 from sklearn.model_selection import train_test_split
 
 
+# I Helper Functions
+def _set_seed(estimator, seed):
+    """Set ``random_state`` on an estimator when it supports it (reproducibility)."""
+    try:
+        if "random_state" in estimator.get_params(deep=False):
+            estimator.set_params(random_state=seed)
+    except (ValueError, AttributeError):
+        pass
+    return estimator
+
+
+# II Main Functions
 # --- uncertainty (epistemic stability) ------------------------------------------------------
 def positive_proba(model, X, label_pos=1):
     """Positive-class probability column of a fitted classifier."""
@@ -109,6 +121,33 @@ def comp_sharpness(p):
     return margin, entropy
 
 
+# --- calibration quality (curve + scalar metrics) -------------------------------------------
+def comp_calibration_bins(s, y, n_bins=5):
+    """Equal-width calibration bins over ``[0, 1]`` as positional rows
+    ``[bin, mean_score, empirical_pos, n_samples]`` (the last bin is closed on the right)."""
+    edges = np.linspace(0, 1, n_bins + 1)
+    rows = []
+    for b in range(n_bins):
+        m = (s >= edges[b]) & (s <= edges[b + 1] if b == n_bins - 1 else s < edges[b + 1])
+        rows.append([f"{edges[b]:.2f}-{edges[b+1]:.2f}",
+                     float(np.mean(s[m])) if m.any() else np.nan,
+                     float(np.mean(y[m])) if m.any() else np.nan,
+                     int(m.sum())])
+    return rows
+
+
+def comp_brier(s, y):
+    """Brier score: mean squared difference between the score and the binary outcome."""
+    return float(np.mean((np.asarray(s, dtype=float) - np.asarray(y, dtype=float)) ** 2))
+
+
+def comp_ece(bin_rows, n_samples):
+    """Expected calibration error from calibration bin rows: the population-weighted mean of
+    ``|mean_score - empirical_pos|`` over the non-empty bins."""
+    return float(sum((n / n_samples) * abs(mean_s - emp)
+                     for _, mean_s, emp, n in bin_rows if n > 0))
+
+
 # --- distribution-free validity (marginal split-conformal) ----------------------------------
 def fit_conformal(estimator, X_train, y_train, alpha=0.1, label_pos=1, cal_size=0.3,
                   random_state=0):
@@ -138,13 +177,3 @@ def apply_conformal(state, X_new):
     inc_pos, inc_neg = (1 - p) <= state["q"], p <= state["q"]
     return np.where(inc_pos & inc_neg, "both",
                     np.where(inc_pos, "pos", np.where(inc_neg, "neg", "none"))).astype(object)
-
-
-def _set_seed(estimator, seed):
-    """Set ``random_state`` on an estimator when it supports it (reproducibility)."""
-    try:
-        if "random_state" in estimator.get_params(deep=False):
-            estimator.set_params(random_state=seed)
-    except (ValueError, AttributeError):
-        pass
-    return estimator

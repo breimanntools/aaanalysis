@@ -12,6 +12,7 @@ from ._backend.reliability.reliability_plot import (
     plot_reliability_diagram_, plot_ood_hist_, plot_trust_map_, plot_ranking_)
 
 
+# I Helper Functions
 def _check_df_cols(df, name, cols):
     """The plotted frame must be a DataFrame carrying the required columns."""
     if not isinstance(df, pd.DataFrame):
@@ -20,7 +21,7 @@ def _check_df_cols(df, name, cols):
     if missing:
         raise ValueError(f"'{name}' is missing required columns: {missing}.")
 
-
+# II Main Functions
 class ReliabilityModelPlot:
     """
     Visualize :class:`ReliabilityModel` outputs — calibration and the two trust axes.
@@ -104,6 +105,7 @@ class ReliabilityModelPlot:
     def reliability_diagram(df_eval: pd.DataFrame,
                             *, figsize: Tuple[float, float] = (5, 5),
                             color: str = "tab:blue",
+                            label: str = "model",
                             title: Optional[str] = None,
                             ax: Optional[Axes] = None,
                             ) -> Tuple[Figure, Axes]:
@@ -111,16 +113,31 @@ class ReliabilityModelPlot:
         Calibration curve — mean predicted score vs. empirical positive rate, per bin.
 
         Points on the diagonal are perfectly calibrated; points below it mean the score
-        overstates the true positive rate (over-confident), above it under-confident.
+        overstates the true positive rate (over-confident), above it under-confident. When
+        ``df_eval`` carries the Brier score and ECE rows
+        (``ReliabilityModel.eval(add_metrics=True)``), both values are annotated in the curve's
+        legend entry. To compare the raw and the calibrated curve, draw both frames onto the same
+        ``ax`` with distinct ``label`` / ``color``; the perfect-calibration diagonal is drawn only
+        once.
+
+        .. versionchanged:: 1.2.0
+           Metric rows are excluded from the plotted points and annotate their curve's legend
+           entry; repeated calls on one ``ax`` retain a single perfect-calibration diagonal.
 
         Parameters
         ----------
         df_eval : pd.DataFrame
-            Output of :meth:`ReliabilityModel.eval` (per-bin ``mean_score`` / ``empirical_pos``).
+            Output of :meth:`ReliabilityModel.eval` (per-bin ``mean_score`` / ``empirical_pos``);
+            either the raw-score or the calibrated-score table (``use_calibrated=True``).
         figsize : tuple, default=(5, 5)
             Figure size (used only when ``ax`` is ``None``).
         color : str, default="tab:blue"
             Line/marker color of the model curve.
+        label : str, default="model"
+            Legend label of the curve. The Brier score and ECE are appended when present, so
+            distinct labels identify raw and calibrated curves drawn on the same ``ax``.
+
+            .. versionadded:: 1.2.0
         title : str, optional
             Axes title.
         ax : matplotlib.axes.Axes, optional
@@ -133,12 +150,26 @@ class ReliabilityModelPlot:
         ax : matplotlib.axes.Axes
             The axes drawn on.
 
+        Raises
+        ------
+        ValueError
+            If ``df_eval`` is not a DataFrame or lacks the ``bin`` / ``mean_score`` /
+            ``empirical_pos`` columns, or if ``figsize`` is not a tuple of two positive numbers,
+            ``color`` is not a matplotlib color, ``label`` or ``title`` is not a string, or ``ax``
+            is not a matplotlib ``Axes``.
+
         Examples
         --------
         .. include:: examples/rm_plot_reliability_diagram.rst
         """
         _check_df_cols(df_eval, "df_eval", [ut.COL_BIN, ut.COL_MEAN_SCORE, ut.COL_EMPIRICAL_POS])
-        fig, ax = plot_reliability_diagram_(df_eval, figsize=figsize, color=color, title=title, ax=ax)
+        ut.check_figsize(figsize=figsize, accept_none=False)
+        ut.check_color(name="color", val=color, accept_none=False)
+        ut.check_str(name="label", val=label)
+        ut.check_str(name="title", val=title, accept_none=True)
+        ut.check_ax(ax=ax, accept_none=True)
+        fig, ax = plot_reliability_diagram_(df_eval, figsize=figsize, color=color, label=label,
+                                            title=title, ax=ax)
         return ut.FigAxResult(fig, ax)
 
     @staticmethod
