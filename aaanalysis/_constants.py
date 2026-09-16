@@ -297,6 +297,22 @@ COLS_SEQMUT_VARIANT = [COL_ENTRY, COL_VARIANT, COL_N_MUT, COL_SEQ_MUT,
 # SeqMut.suggest — optional weighting of the shift score by a df_feat column
 LIST_SHIFT_WEIGHTS = [COL_FEAT_IMPORT, COL_ABS_AUC]
 
+# Protein engineering (DesignConstraints) — one shared, validated container of design
+# limits for AAMut / SeqMut / SeqOpt. Candidate positions are 1-BASED over the parent
+# (wild-type) sequence, the same convention as 'region' and the pos column of the
+# SeqMut / SeqOpt mutation tables.
+COL_IS_FEASIBLE = "is_feasible"      # DesignConstraints — candidate satisfies every limit
+COL_REASONS = "reasons"              # DesignConstraints — '; '-joined rejection reasons ('' when feasible)
+# Constraint fields, in the order DesignConstraints.check() reports their violations.
+LIST_DESIGN_CONSTRAINTS = ["immutable_positions", "mutable_positions",
+                           "permitted_substitutions", "forbidden_substitutions",
+                           "n_mut_max", "min_identity", "max_identity",
+                           "forbidden_motifs", "required_motifs"]
+# Fields that need the full candidate sequence (evaluated by check(), never structurally).
+LIST_DESIGN_SEQ_LIMITS = ["immutable_positions", "forbidden_substitutions",
+                          "min_identity", "max_identity",
+                          "forbidden_motifs", "required_motifs"]
+
 # Protein engineering (SeqOpt) — multi-objective directed-evolution optimizer.
 # NSGA-II output columns (COL_RANK is shared, defined in the eval block below; COL_VARIANT,
 # COL_N_MUT, COL_SEQ_MUT, COL_ENTRY are reused from the SeqMut block above).

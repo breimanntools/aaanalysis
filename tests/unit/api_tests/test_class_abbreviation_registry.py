@@ -43,6 +43,7 @@ REGISTRY = {
     "CPPStructurePlot": "cpps_plot",
     "dPULearn": "dpul",
     "dPULearnPlot": "dpul_plot",
+    "DesignConstraints": "dc",
     "AAMut": "aam",
     "AAMutPlot": "aam_plot",
     "SeqMut": "seqm",
