@@ -77,6 +77,13 @@ notes — with cross-references and examples — live in
   `1.0` is every fold's complete training set and reproduces
   `ModelEvaluator.run` when both calls use the same `random_state`, `n_cv`, `n_rounds`, and
   metrics, also when the training folds differ in size (#93).
+- `AAPredPlot.group_cluster`: `kind="dendrogram"` with `layout="rectangular"|"circular"` draws
+  the sample relation tree alone, leaves colored by `labels` / `labels_row` (one strip or ring
+  each, titled legends). It reuses the clustermap's linkage (now computed explicitly with SciPy
+  and passed to seaborn), so both kinds show the same topology; the clustermap figure is
+  unchanged when `fastcluster` is not installed (with `fastcluster`, seaborn used to compute the
+  linkage itself, so exact ties between equidistant merges may be broken differently).
+  (Addresses #391)
 
 ### Fixed
 - `ReliabilityModel.fit`: non-finite numbers (`NaN`, `inf`, `-inf`) are rejected for `ci`,
