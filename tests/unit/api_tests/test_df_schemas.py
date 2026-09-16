@@ -170,6 +170,26 @@ class TestCrossFrameContract:
 
 
 # ------------------------------------------------------------------------- doc sync
+class TestFieldRecordGuards:
+    """The field builder rejects a contradictory range declaration, and the rendered page
+    states the per-scale range for a column whose scale changes its bounds."""
+
+    def test_range_and_scale_ranges_together_raise(self):
+        from aaanalysis import _schemas
+        with pytest.raises(ValueError, match=r"'range'.*should be None.*'scale_ranges'"):
+            _schemas._field("float", "Score.", range=[0, 1],
+                            scale_ranges={"proba": [0, 1], "percent": [0, 100]})
+
+    def test_scale_ranges_alone_is_accepted(self):
+        from aaanalysis import _schemas
+        rec = _schemas._field("float", "Score.",
+                              scale_ranges={"proba": [0, 1], "percent": [0, 100]})
+        assert rec["scale_ranges"]["percent"] == [0, 100] and "range" not in rec
+
+    def test_rendered_page_states_the_per_scale_range(self):
+        assert "range per score_range" in ut.render_schemas_rst()
+
+
 class TestDocSync:
     def test_committed_doc_matches_registry(self):
         doc = (pathlib.Path(aa.__file__).resolve().parent.parent
