@@ -313,10 +313,11 @@ class TestEvalSelectiveComplex:
         assert first_rows[ut.COL_SCORE].isna().all()
         assert df_eval_selective[ut.COL_SCORE_AURC].isna().all()
 
-    def test_accuracy_is_non_decreasing_when_confidence_is_informative(self):
+    def test_balanced_accuracy_is_non_decreasing_when_confidence_is_informative(self):
+        # The acceptance criterion names balanced accuracy, so assert that metric verbatim.
         X, labels = _graded_data()
         df_eval_selective = _aap_graded().eval_selective(
-            X, labels, metrics=["accuracy"], coverages=[0.25, 0.5, 0.75, 1.0], n_cv=2)
+            X, labels, metrics=["balanced_accuracy"], coverages=[0.25, 0.5, 0.75, 1.0], n_cv=2)
         scores = df_eval_selective[ut.COL_SCORE].to_numpy()
         assert np.all(np.diff(scores) <= 0)
 
@@ -473,3 +474,41 @@ class TestEvalSelectiveGoldenValues:
                     f1_score(labels, labels_pred, pos_label=0, zero_division=0),
                     roc_auc_score(labels == 0, scores)]
         assert df_eval_selective[ut.COL_SCORE].to_list() == pytest.approx(expected, abs=1e-9)
+
+
+# IV The issue's acceptance criteria, asserted verbatim
+class TestEvalSelectiveAcceptanceCriteria:
+    """The criteria stated on the issue, each asserted directly rather than by proxy."""
+
+    def test_full_coverage_equals_the_pooled_eval_score(self):
+        # "The curve at coverage=1.0 reproduces the ordinary eval metric within 1e-9." The
+        # comparable principle is the pooled one: every held-out prediction scored once, which
+        # is what the selective table does at full coverage. The per-fold 'cv' principle
+        # averages fold scores instead and is a different quantity.
+        from sklearn.model_selection import StratifiedKFold
+        X, labels = _graded_data()
+        aap = _aap_graded()
+        cv = StratifiedKFold(n_splits=2, shuffle=True, random_state=42)
+        df_eval = aap.eval(X, labels, metrics=["accuracy"], cv=cv)
+        pooled = df_eval[df_eval[ut.COL_PRINCIPLE] == ut.STR_PRINCIPLE_CV_POOLED]
+        expected = float(pooled[ut.COL_SCORE].iloc[0])
+        df_eval_selective = aap.eval_selective(
+            X, labels, metrics=["accuracy"], coverages=[0.5, 1.0], n_cv=2)
+        full = df_eval_selective[df_eval_selective[ut.COL_COVERAGE] == 1.0][ut.COL_SCORE].iloc[0]
+        assert full == pytest.approx(expected, abs=1e-9)
+
+    def test_eval_output_is_unchanged_by_running_eval_selective(self):
+        # "Default eval output is byte-identical to current; the selective report is opt-in."
+        X, labels = _data()
+        aap = aa.AAPred(models="rf", random_state=42)
+        before = aap.eval(X, labels, metrics=["accuracy", "balanced_accuracy"])
+        aap.eval_selective(X, labels, metrics=["accuracy"])
+        after = aap.eval(X, labels, metrics=["accuracy", "balanced_accuracy"])
+        pd.testing.assert_frame_equal(before, after, check_exact=True)
+
+    def test_eval_keeps_its_documented_columns_and_principle(self):
+        X, labels = _data()
+        aap = aa.AAPred(models="rf", random_state=42)
+        df_eval = aap.eval(X, labels, metrics=["accuracy"])
+        assert list(df_eval) == list(ut.COLS_EVAL_PRED)
+        assert set(df_eval[ut.COL_PRINCIPLE]) == {ut.STR_PRINCIPLE_CV}
