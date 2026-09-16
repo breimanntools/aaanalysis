@@ -9,7 +9,7 @@
 * the sample-batched path never assigns more than one batch of sequences at a time (asserted
   cheaply, without measuring memory, in ``TestCPPRunChunkedBatchSize``),
 * ``df_feat`` is identical to the in-memory run across >= 2 chunk sizes on both axes
-  (sample axis: exact; scale axis: exact except the whole-candidate-set BH FDR p-value),
+  (both exact; the scale axis pools the whole-candidate-set BH FDR correction across batches),
 * hand-computed statistics are reproduced on both chunked axes,
 * feature ids and row order do not depend on the chunk size,
 * the default call is byte-identical to an explicit ``None`` chunking call.
@@ -28,6 +28,7 @@ from hypothesis import given, settings
 import hypothesis.strategies as some
 
 import aaanalysis as aa
+from aaanalysis.feature_engineering._backend import cpp_run
 
 settings.register_profile("ci", deadline=None)
 settings.load_profile("ci")
@@ -57,8 +58,9 @@ MAX_FIXED_BATCH_VS_FIXED_COUNT_RATIO = 0.7
 # Fixture guard: if the in-memory run stopped allocating a big tensor, the ratios would be noise.
 MIN_IN_MEMORY_GROWTH_MB = 60.0
 
-# BH FDR correction spans the whole candidate set, so scale-axis batching (which applies it
-# per feature batch) legitimately changes this column and only this column.
+# BH FDR correction spans the whole candidate set. Scale-axis batching pools the p-values of
+# all batches before correcting, so this column matches single-pass too; it is still isolated
+# here so a per-column test can pin the selection-driving columns separately.
 COL_FDR = "p_val_fdr_bh"
 # Stats are rounded to 3 decimals; the sample-axis accumulator variance may differ from
 # np.std at ULP level, so the documented tolerance is one rounding step.
@@ -418,7 +420,7 @@ class TestCPPRunChunked:
         pd.testing.assert_frame_equal(small["df_ref"], df, check_exact=True)
 
     @pytest.mark.parametrize("n_batches", [2, 3, 8])
-    def test_scale_axis_identical_except_fdr(self, small, n_batches):
+    def test_scale_axis_identical_on_non_fdr_columns(self, small, n_batches):
         df = small["cpp"].run(labels=small["labels"], n_filter=N_FILTER, n_jobs=1, n_batches=n_batches)
         _assert_same_except_fdr(small["df_ref"], df)
 
@@ -430,13 +432,18 @@ class TestCPPRunChunked:
         # The FDR-corrected p-value never undercuts the raw Mann-Whitney p-value.
         assert np.all(fdr >= df["p_val_mann_whitney"].to_numpy() - 1e-12)
 
-    @pytest.mark.xfail(strict=True, reason=(
-        "n_batches applies the BH FDR correction per feature batch, so p_val_fdr_bh differs "
-        "from the in-memory run; the full df_feat is not byte-identical on the scale axis."))
     @pytest.mark.parametrize("n_batches", [2, 3])
     def test_scale_axis_fully_byte_identical(self, small, n_batches):
+        # Including p_val_fdr_bh: the BH correction is pooled over all batches, so the
+        # reported p-value does not depend on how the scale axis was partitioned.
         df = small["cpp"].run(labels=small["labels"], n_filter=N_FILTER, n_jobs=1, n_batches=n_batches)
         pd.testing.assert_frame_equal(small["df_ref"], df, check_exact=True)
+
+    @pytest.mark.parametrize("n_batches", [2, 3])
+    def test_scale_axis_fdr_matches_single_pass(self, small, n_batches):
+        # The column the pooling fixes, pinned on its own so a regression names itself.
+        df = small["cpp"].run(labels=small["labels"], n_filter=N_FILTER, n_jobs=1, n_batches=n_batches)
+        assert df[COL_FDR].to_list() == small["df_ref"][COL_FDR].to_list()
 
     def test_default_equals_explicit_none(self, small):
         df = small["cpp"].run(labels=small["labels"], n_filter=N_FILTER, n_jobs=1,
@@ -447,6 +454,27 @@ class TestCPPRunChunked:
         df = small["cpp"].run(labels=small["labels"], n_filter=N_FILTER, n_jobs=1)
         pd.testing.assert_frame_equal(small["df_ref"], df, check_exact=True)
 
+    def test_default_path_never_pools_fdr(self, small, monkeypatch):
+        # The pooled correction belongs to the scale-batched orchestration only. The default
+        # (single-pass) path corrects once by construction and must not route through it, so
+        # the default output cannot have been changed by the pooling.
+        def _fail(**kwargs):
+            raise AssertionError("the unbatched path must not call apply_pooled_fdr")
+
+        monkeypatch.setattr(cpp_run, "apply_pooled_fdr", _fail)
+        df = small["cpp"].run(labels=small["labels"], n_filter=N_FILTER, n_jobs=1)
+        pd.testing.assert_frame_equal(small["df_ref"], df, check_exact=True)
+
+    def test_sample_axis_never_pools_fdr(self, small, monkeypatch):
+        # Same for the sample axis: it runs add_stat once on the full survivor matrix.
+        def _fail(**kwargs):
+            raise AssertionError("the sample-batched path must not call apply_pooled_fdr")
+
+        monkeypatch.setattr(cpp_run, "apply_pooled_fdr", _fail)
+        df = small["cpp"].run(labels=small["labels"], n_filter=N_FILTER, n_jobs=1,
+                              n_sample_batches=3)
+        pd.testing.assert_frame_equal(small["df_ref"], df, check_exact=True)
+
 
 # ---------------------------------------------------------------------------
 # Combinations, ordering, cross-chunk-size agreement
@@ -454,10 +482,10 @@ class TestCPPRunChunked:
 class TestCPPRunChunkedComplex:
     """Chunk sizes crossed against each other: ordering, reproducibility, agreement."""
 
-    def test_two_scale_chunk_sizes_agree_except_fdr(self, small):
+    def test_two_scale_chunk_sizes_agree(self, small):
         df_a = small["cpp"].run(labels=small["labels"], n_filter=N_FILTER, n_jobs=1, n_batches=2)
         df_b = small["cpp"].run(labels=small["labels"], n_filter=N_FILTER, n_jobs=1, n_batches=4)
-        _assert_same_except_fdr(df_a, df_b)
+        pd.testing.assert_frame_equal(df_a, df_b, check_exact=True)
 
     def test_two_sample_chunk_sizes_agree(self, small):
         df_a = small["cpp"].run(labels=small["labels"], n_filter=N_FILTER, n_jobs=1, n_sample_batches=2)
@@ -579,9 +607,9 @@ class TestCPPRunChunkedGoldenValues:
         df = _golden_run(**kws)
         assert df["positions"].to_list() == ["1,2,3,4"] * 2
 
-    def test_golden_chunked_axes_match_in_memory_except_fdr(self):
+    def test_golden_chunked_axes_match_in_memory(self):
         df_ref = _golden_run()
-        _assert_same_except_fdr(df_ref, _golden_run(n_batches=2))
+        pd.testing.assert_frame_equal(df_ref, _golden_run(n_batches=2), check_exact=True)
         pd.testing.assert_frame_equal(df_ref, _golden_run(n_sample_batches=2), check_exact=True)
 
 

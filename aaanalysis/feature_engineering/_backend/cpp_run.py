@@ -53,7 +53,7 @@ from .cpp._filters._stat_filter import (
     finalize_stats,
 )
 from .cpp._filters._pre_filter import pre_filtering
-from .cpp._filters._add_stat import add_stat
+from .cpp._filters._add_stat import add_stat, apply_pooled_fdr
 from .cpp._filters._recompute import recompute_feature_matrix
 from .cpp._filters._redundancy_filter import filtering
 
@@ -343,8 +343,10 @@ def cpp_run_batch(df_parts=None, split_kws=None, df_scales=None, df_cat=None, ve
     Per scale-batch: assign + streaming pre-filter stats (no cache). After all
     batches, concat stats, pre_filter narrows to survivors, then recompute the
     (n_samples, n_pre_filter) matrix per scale-batch and feed add_stat
-    per feature-batch (so ``p_val_fdr_bh`` matches the legacy batched
-    BH-correction).
+    per feature-batch. The per-feature statistics are independent of that
+    partition, but the BH FDR correction is not, so it is recomputed once over
+    the pooled p-values of all batches; the output is bit-exact with
+    :func:`cpp_run_single`.
     """
     args_len = dict(tmd_len=tmd_len, jmd_n_len=jmd_n_len, jmd_c_len=jmd_c_len)
     list_scales = list(df_scales)
@@ -402,7 +404,7 @@ def cpp_run_batch(df_parts=None, split_kws=None, df_scales=None, df_cat=None, ve
 
     # Pass 2: recompute survivor columns per scale-batch (to keep memory peak
     # bounded by one batch's (n, L, D) tensor + the survivor matrix).
-    # Then run add_stat per feature-batch to match legacy batched FDR.
+    # add_stat then runs per feature-batch; its FDR column is pooled afterwards.
     scale_to_batch_idx = {}
     for batch_idx, scales_batch in enumerate(scale_batches):
         for s in scales_batch:
@@ -416,8 +418,7 @@ def cpp_run_batch(df_parts=None, split_kws=None, df_scales=None, df_cat=None, ve
     # Pass 2 + per feature-batch add_stat. Use legacy ``get_feature_matrix_``
     # per feature-batch to guarantee BIT-EXACT parity (vectorized recompute
     # diverges at ULP for a few features via Mann-Whitney rank cascades; see
-    # cpp_run_single notes). Mirrors legacy ``cpp_run_batch``'s per-batch
-    # BH-FDR semantics.
+    # cpp_run_single notes).
     feature_batches = np.array_split(np.array(features), n_batches)
     builder = feature_matrix_builder or get_feature_matrix_fast_
     list_batch_dfs = []
@@ -436,6 +437,12 @@ def cpp_run_batch(df_parts=None, split_kws=None, df_scales=None, df_cat=None, ve
         _df = add_scale_info_(df_feat=_df, df_cat=df_cat)
         list_batch_dfs.append(_df)
     df_merged = pd.concat(list_batch_dfs, ignore_index=True)
+    # Every per-feature statistic above depends only on that feature's own column,
+    # so batching leaves it untouched. The BH FDR correction is the exception: it
+    # depends on how many features were tested together, so correcting per batch
+    # would make the reported p-value a function of an arbitrary partition. Pool
+    # the raw p-values of all batches and correct once, as cpp_run_single does.
+    df_merged = apply_pooled_fdr(df_feat=df_merged, parametric=parametric)
 
     if verbose:
         ut.print_out(f"3. CPP filtering algorithm")

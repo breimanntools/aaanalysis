@@ -20,12 +20,11 @@ Documented tolerance per compared output (numerical-equivalence policy tiers):
     - ``CPPGrid`` per-config ``df_feat``
 * ``n_sample_batches`` (sample-axis chunking) invariance -> EXACT (T1): ``CPP.run``
   ``df_feat`` is byte-identical to the unchunked run.
-* ``n_batches`` (scale-axis chunking) invariance -> EXACT on the *selection-driving*
-  outputs (selected feature set, row order, ``abs_auc``, ``abs_mean_dif``) but NOT on
-  ``p_val_fdr_bh``: the Benjamini-Hochberg FDR correction is by definition computed
-  across the whole candidate set, so batching the scale axis changes the corrected
-  p-value. This is a known, expected batch-dependence (documented on ``CPP.run``),
-  not nondeterminism -- feature selection and ranking are unaffected.
+* ``n_batches`` (scale-axis chunking) invariance -> EXACT (T1): ``CPP.run`` ``df_feat``
+  is byte-identical to the unchunked run, ``p_val_fdr_bh`` included. The
+  Benjamini-Hochberg FDR correction is by definition computed across the whole candidate
+  set, so the scale-batched path pools the p-values of all batches and corrects once
+  instead of correcting each batch against its own size.
 
 No third-party op in the covered paths is legitimately non-deterministic: joblib
 splits an independent per-feature loop and the results are concatenated in a fixed
@@ -46,7 +45,7 @@ N_PER_CLASS = 12
 N_SCALES = 16
 N_FILTER = 15
 # Selection-driving columns: identical regardless of how the scale axis is chunked
-# (only p_val_fdr_bh depends on the whole-candidate-set FDR correction).
+# (pinned separately from the full-frame check so a selection regression names itself).
 SELECTION_COLS = ["feature", "abs_auc", "abs_mean_dif"]
 # Worker counts >1 compared against the serial (n_jobs=1) baseline.
 PARALLEL_N_JOBS = [2, 3]
@@ -116,25 +115,23 @@ class TestCPPRunChunkingInvariance:
 
     def test_scale_batches_identical_selection(self, inputs):
         # n_batches chunks the SCALE axis. Feature selection + ranking are driven by
-        # abs_auc / abs_mean_dif, which are byte-identical; only p_val_fdr_bh differs
-        # because BH FDR correction spans the whole candidate set (documented).
+        # abs_auc / abs_mean_dif, which are byte-identical.
         cpp = _cpp(inputs)
         df_unchunked = cpp.run(labels=inputs["labels"], n_filter=N_FILTER, n_jobs=1)
         df_chunked = cpp.run(labels=inputs["labels"], n_filter=N_FILTER, n_jobs=1, n_batches=3)
         pd.testing.assert_frame_equal(df_unchunked[SELECTION_COLS], df_chunked[SELECTION_COLS],
                                       check_exact=True)
 
-    def test_scale_batches_perturb_only_fdr_pvalue(self, inputs):
-        # Pin the known batch-dependence: the ONLY numeric column that may differ
-        # under scale-batching is p_val_fdr_bh. A new batch-dependent column would
-        # surface here as an unexpected difference.
+    def test_scale_batches_perturb_no_numeric_column(self, inputs):
+        # No numeric column may depend on the scale partition. The BH FDR correction is
+        # pooled across batches, so a batch-dependent column would surface here.
         cpp = _cpp(inputs)
         df_unchunked = cpp.run(labels=inputs["labels"], n_filter=N_FILTER, n_jobs=1)
         df_chunked = cpp.run(labels=inputs["labels"], n_filter=N_FILTER, n_jobs=1, n_batches=3)
         numeric_cols = df_unchunked.select_dtypes(include=[np.number]).columns
         differing = [c for c in numeric_cols
                      if not np.array_equal(df_unchunked[c].to_numpy(), df_chunked[c].to_numpy())]
-        assert differing in ([], ["p_val_fdr_bh"])
+        assert differing == []
 
 
 # ---------------------------------------------------------------------------
