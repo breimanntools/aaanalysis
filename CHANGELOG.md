@@ -58,10 +58,15 @@ notes — with cross-references and examples — live in
   fitted `ad_threshold_` (raw training k-NN distance threshold; when it is positive,
   `ood_score == ad_knn / ad_threshold_`) and `ad_method_` (`"knn"`). Apart from the
   `ad_knn_dist` → `ad_knn` rename, existing `predict` columns keep their order and values
-  (partially addresses #473). **Not included:** the mutation-candidate entry
-  point that would score `SeqMut` / `SeqOpt` output in one call. `predict` still takes a
-  prebuilt feature matrix `X`, so a candidate set is scored by building that matrix with
-  `SequenceFeature.feature_matrix` first.
+  (addresses #473).
+- `ReliabilityModel.predict_candidates(df_cand, df_seq, features, df_scales=..., col_seq=...,
+  jmd_n_len=..., jmd_c_len=..., n_jobs=...)`: score a design-candidate set in one call. It takes
+  the `entry` + `sequence_mut` table that `SeqMut.mutate`, `SeqMut.combine` and `SeqOpt.run`
+  emit (`col_seq` selects another sequence column, e.g. `sequence` for wild-types), rebuilds the
+  feature matrix with `SequenceFeature.feature_matrix` using the wild-type TMD coordinates from
+  `df_seq`, and delegates to `predict`. The result carries the `df_rel` columns, is row-aligned
+  with `df_cand` (same index, so `df_cand.join(...)` works), and is identical to a manual
+  `feature_matrix` + `predict` round-trip (addresses #473).
 - Output contract for the prediction tier, advancing the per-sample and per-residue half of
   the documented boundary contract (addresses #26; the `df_feat` half is already covered by
   `DICT_DF_FEAT` / the CPP output schema): `DICT_DF_SCHEMAS` now documents `df_pred`

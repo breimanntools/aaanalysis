@@ -514,10 +514,12 @@ DICT_DF_SCHEMAS = {
     },
     "df_rel": {
         "description": (
-            "ReliabilityModel.predict output; one row per sample, one column per "
-            "reliability axis: stability (score_std, ci_*), applicability domain "
-            "(ood_score, in_domain, ad_*), score ambiguity (margin, entropy), "
-            "validity (conformal_set) and the headline flag (reliable)."),
+            "ReliabilityModel.predict output (and ReliabilityModel.predict_candidates, "
+            "which returns the same columns for a rebuilt candidate matrix); one row "
+            "per sample, one column per reliability axis: stability (score_std, ci_*), "
+            "applicability domain (ood_score, in_domain, ad_*), score ambiguity "
+            "(margin, entropy), validity (conformal_set) and the headline flag "
+            "(reliable)."),
         "columns": {
             COL_SCORE: _field("float", "Positive-class probability averaged over the "
                               "ensemble members.", range=[0, 1], example=0.78),

@@ -11,6 +11,7 @@ from sklearn.calibration import CalibratedClassifierCV
 
 import aaanalysis.utils as ut
 from aaanalysis.template_classes import Wrapper
+from aaanalysis.feature_engineering._sequence_feature import SequenceFeature
 
 from ._backend.reliability.reliability import (
     positive_proba, proba_members, fit_bootstrap_models, comp_uncertainty,
@@ -100,6 +101,63 @@ def _reason_no_calibrator(calibrate_requested=False, calibration_error=None):
         return (f"it was fitted with 'calibrate=True', but the calibrator could not be fitted "
                 f"({calibration_error})")
     return "no calibrator was fitted"
+
+
+def get_list_features(features: Union[ut.ArrayLike1D, pd.DataFrame]) -> list:
+    """Return the feature ids as a plain list, accepting a ``df_feat`` or an array-like."""
+    if isinstance(features, pd.DataFrame):
+        ut.check_df(name="features", df=features, cols_required=[ut.COL_FEATURE])
+        return list(features[ut.COL_FEATURE])
+    return ut.check_list_like(name="features", val=features, accept_str=True, min_len=1)
+
+
+def get_parts_from_features(features: list) -> list:
+    """Return the sorted lower-case sequence parts referenced by a list of feature ids."""
+    parts = set()
+    for feat_id in features:
+        ut.check_str(name="feature id", val=feat_id)
+        if feat_id.count("-") != 2:
+            raise ValueError(f"'features' entry ('{feat_id}') should follow the "
+                             f"'PART-SPLIT-SCALE' grammar (e.g. 'TMD-Segment(1,1)-LINS010101').")
+        parts.add(ut.split_feat_id(feat_id=feat_id)[0].lower())
+    return sorted(parts)
+
+
+def check_df_seq_pos_based(df_seq: pd.DataFrame) -> None:
+    """Check that ``df_seq`` is position-based (sequence + TMD coordinates) with unique entries."""
+    ut.check_df_seq(df_seq=df_seq)
+    missing = [c for c in ut.COLS_SEQ_POS if c not in df_seq.columns]
+    if len(missing) > 0:
+        raise ValueError(f"'df_seq' should be in the position-based format with columns "
+                         f"{ut.COLS_SEQ_POS}; missing: {missing}. The wild-type sequences and "
+                         f"their TMD coordinates are needed to rebuild the candidate parts.")
+    entries = list(df_seq[ut.COL_ENTRY])
+    if len(set(entries)) != len(entries):
+        raise ValueError("'df_seq' should contain unique 'entry' values (one row per wild-type).")
+
+
+def build_df_seq_candidates(df_cand: pd.DataFrame, df_seq: pd.DataFrame,
+                            col_seq: str) -> pd.DataFrame:
+    """Build a position-based ``df_seq`` for the candidates, reusing wild-type TMD coordinates.
+
+    Each candidate gets a unique synthetic entry id, so duplicate candidate rows (the same
+    variant of the same wild-type) never collapse and the output stays row-aligned.
+    """
+    seq_by_entry = dict(zip(df_seq[ut.COL_ENTRY], df_seq[ut.COL_SEQ]))
+    start_by_entry = dict(zip(df_seq[ut.COL_ENTRY], df_seq[ut.COL_TMD_START]))
+    stop_by_entry = dict(zip(df_seq[ut.COL_ENTRY], df_seq[ut.COL_TMD_STOP]))
+    list_entries, list_seq, list_start, list_stop = [], [], [], []
+    for i, (entry, seq) in enumerate(zip(df_cand[ut.COL_ENTRY], df_cand[col_seq])):
+        if entry not in seq_by_entry:
+            raise ValueError(f"'df_cand' entry ('{entry}') is not in 'df_seq'. Available "
+                             f"entries: {ut.preview_options(seq_by_entry)}.")
+        ut.check_str(name=f"'{col_seq}' (entry: '{entry}')", val=seq, accept_none=False)
+        list_entries.append(f"{entry}__{i}")
+        list_seq.append(seq)
+        list_start.append(start_by_entry[entry])
+        list_stop.append(stop_by_entry[entry])
+    return pd.DataFrame({ut.COL_ENTRY: list_entries, ut.COL_SEQ: list_seq,
+                         ut.COL_TMD_START: list_start, ut.COL_TMD_STOP: list_stop})
 
 
 # II Main Functions
@@ -577,6 +635,136 @@ class ReliabilityModel(Wrapper):
             ut.COL_AD_STATUS: comp_ad_status(ad["ood_score"], ad["in_domain"],
                                              borderline=self._ad_borderline),
             ut.COL_AD_NEAREST_TRAIN: ad["nearest"]})
+
+    def predict_candidates(self,
+                           df_cand: pd.DataFrame,
+                           df_seq: pd.DataFrame,
+                           features: Union[ut.ArrayLike1D, pd.DataFrame],
+                           *, df_scales: Optional[pd.DataFrame] = None,
+                           col_seq: str = ut.COL_SEQ_MUT,
+                           jmd_n_len: int = 10,
+                           jmd_c_len: int = 10,
+                           n_jobs: Optional[int] = 1,
+                           ) -> pd.DataFrame:
+        """
+        Score a set of design candidates for reliability, rebuilding their feature matrix first.
+
+        The one-call entry point from the design tier. :meth:`SeqMut.mutate`,
+        :meth:`SeqMut.combine` and :meth:`SeqOpt.run` all return **sequences**, whereas
+        :meth:`predict` takes a **feature matrix**, so scoring a candidate set used to mean
+        rebuilding that matrix by hand. This method does it: it slices every candidate
+        sequence into the parts its ``features`` reference (reusing the wild-type TMD
+        coordinates from ``df_seq``), builds the matrix with
+        :meth:`SequenceFeature.feature_matrix`, and hands it to :meth:`predict`. No scoring
+        logic is duplicated.
+
+        Designed candidates are pushed *away* from the training data by construction, which is
+        exactly what the applicability-domain columns measure: ``ood_score``, ``ad_status`` and
+        ``ad_nearest_train`` say which candidates the model can still be trusted on, and
+        ``reliable`` is the headline verdict.
+
+        .. versionadded:: 1.2.0
+
+        Parameters
+        ----------
+        df_cand : pd.DataFrame, shape (n_candidates, n_cand_info)
+            Candidate table from the design tier: an ``entry`` column naming the wild-type each
+            candidate derives from, plus the candidate sequence in the ``col_seq`` column.
+            :meth:`SeqMut.mutate`, :meth:`SeqMut.combine` and :meth:`SeqOpt.run` all emit this
+            shape (``entry`` + ``sequence_mut``); every other column is ignored and kept out of
+            the result.
+        df_seq : pd.DataFrame, shape (n_samples, n_seq_info)
+            DataFrame containing an ``entry`` column with unique protein identifiers, in the
+            **position-based** format (``sequence``, ``tmd_start``, ``tmd_stop``). See
+            :meth:`SequenceFeature.get_df_parts` for the full ``df_seq`` format specification.
+            It supplies the wild-type TMD coordinates reused for every candidate of an ``entry``.
+        features : array-like, shape (n_features,) or pd.DataFrame
+            Feature ids (``'PART-SPLIT-SCALE'``), or a ``df_feat`` whose ``'feature'`` column
+            holds them. Pass the same feature set, in the same order, that produced the training
+            ``X`` of :meth:`fit`; a different number of features raises.
+        df_scales : pd.DataFrame, shape (n_letters, n_scales), optional
+            DataFrame of amino acid scales (index = amino acids, columns = scale ids). Pass the
+            scales used to build the training ``X``. If ``None``, the default scale set from
+            :func:`load_scales` is used.
+        col_seq : str, default='sequence_mut'
+            Name of the ``df_cand`` column carrying the candidate sequence. ``'sequence_mut'`` is
+            the column :meth:`SeqMut.mutate`, :meth:`SeqMut.combine` and :meth:`SeqOpt.run`
+            emit; pass ``'sequence'`` to score wild-type sequences with the same call.
+        jmd_n_len : int, default=10
+            Length of JMD-N in number of amino acids (a non-negative integer). Use the value the
+            training matrix was built with, or the candidate parts will not match it.
+        jmd_c_len : int, default=10
+            Length of JMD-C in number of amino acids (a non-negative integer). Use the value the
+            training matrix was built with, or the candidate parts will not match it.
+        n_jobs : int, None, or -1, default=1
+            Number of CPU cores (>=1) used to build the candidate feature matrix. If ``None``,
+            the number is optimized automatically; if ``-1``, all available cores are used. It
+            changes speed only, never the returned values.
+
+        Returns
+        -------
+        df_rel : pd.DataFrame, shape (n_candidates, 16)
+            The :meth:`predict` table for the rebuilt candidate matrix: one row per ``df_cand``
+            row, in ``df_cand`` order and carrying its index, with exactly the columns
+            :meth:`predict` returns (``score`` ... ``reliable``, ``ad_status``,
+            ``ad_nearest_train``). Attach it to the candidates with ``df_cand.join(df_rel)``.
+
+        Raises
+        ------
+        RuntimeError
+            If called before :meth:`fit`.
+        ValueError
+            If ``df_cand`` is not a DataFrame, is empty, or lacks an ``entry`` / ``col_seq``
+            column; if a candidate ``entry`` is absent from ``df_seq`` or its sequence is not a
+            string; if ``df_seq`` is not position-based or its entries are not unique; if
+            ``features`` is empty or a feature id does not follow the ``'PART-SPLIT-SCALE'``
+            grammar; if ``col_seq`` is not a string, ``jmd_n_len`` / ``jmd_c_len`` are not
+            non-negative integers, or ``n_jobs`` is invalid; or if the rebuilt matrix has a
+            different number of features than the training ``X``.
+
+        Notes
+        -----
+        * **Substitutions only.** A substituted candidate keeps the wild-type length, so the
+          wild-type ``tmd_start`` / ``tmd_stop`` still locate its TMD. Insertions or deletions
+          shift those coordinates: score such candidates by passing a ``df_seq`` whose
+          coordinates are already corrected for them.
+        * The result equals building the matrix yourself with
+          :meth:`SequenceFeature.feature_matrix` and calling :meth:`predict` on it; both routes
+          give the same ``ood_score``.
+        * Duplicate candidate rows are kept and scored independently, so the output never
+          collapses rows and stays row-aligned with ``df_cand``.
+
+        Examples
+        --------
+        .. include:: examples/rm_predict_candidates.rst
+        """
+        if self._ad_state is None:
+            raise RuntimeError("Call 'fit' before 'predict_candidates'.")
+        ut.check_str(name="col_seq", val=col_seq)
+        ut.check_df(name="df_cand", df=df_cand, cols_required=[ut.COL_ENTRY, col_seq])
+        if len(df_cand) == 0:
+            raise ValueError("'df_cand' should contain at least one candidate row.")
+        check_df_seq_pos_based(df_seq=df_seq)
+        ut.check_number_range(name="jmd_n_len", val=jmd_n_len, min_val=0, just_int=True)
+        ut.check_number_range(name="jmd_c_len", val=jmd_c_len, min_val=0, just_int=True)
+        n_jobs = ut.check_n_jobs(n_jobs=n_jobs)
+        list_features = get_list_features(features=features)
+        list_parts = get_parts_from_features(features=list_features)
+        df_seq_cand = build_df_seq_candidates(df_cand=df_cand, df_seq=df_seq, col_seq=col_seq)
+        # Rebuild the candidate matrix through the same builder that made the training X,
+        # then delegate to predict (feature-count mismatch is caught there).
+        sf = SequenceFeature(verbose=False)
+        X = sf.feature_matrix(features=list_features, df_seq=df_seq_cand, df_scales=df_scales,
+                              n_jobs=n_jobs,
+                              df_parts_kws=dict(list_parts=list_parts, jmd_n_len=jmd_n_len,
+                                                jmd_c_len=jmd_c_len))
+        df_rel = self.predict(np.asarray(X, dtype=float))
+        df_rel.index = df_cand.index
+        if self._verbose:
+            n_in = int(df_rel[ut.COL_IN_DOMAIN].sum())
+            ut.print_out(f"ReliabilityModel scored {len(df_rel)} candidate(s) "
+                         f"({n_in} inside the applicability domain).")
+        return df_rel
 
     def eval(self,
              *, X: Optional[ut.ArrayLike2D] = None,

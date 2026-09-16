@@ -88,10 +88,21 @@ Added
   the fitted boundary as ``ad_threshold_`` (when it is positive,
   ``ood_score == ad_knn / ad_threshold_``) and the decision rule as ``ad_method_`` (``"knn"``).
   Apart from the ``ad_knn_dist`` → ``ad_knn`` rename, existing columns keep their order and
-  values. Scoring a mutation-candidate set in one call is not part of this release:
-  :meth:`~aaanalysis.ReliabilityModel.predict` still takes a prebuilt feature matrix ``X``, so
-  :meth:`~aaanalysis.SeqMut.mutate` or :meth:`~aaanalysis.SeqOpt.run` output is scored by
-  building that matrix with :meth:`~aaanalysis.SequenceFeature.feature_matrix` first.
+  values.
+- A mutation-candidate set is now scored in one call.
+  :meth:`~aaanalysis.ReliabilityModel.predict_candidates` takes the candidate table that
+  :meth:`~aaanalysis.SeqMut.mutate`, :meth:`~aaanalysis.SeqMut.combine` and
+  :meth:`~aaanalysis.SeqOpt.run` emit (an ``entry`` column plus the candidate sequence in
+  ``sequence_mut``; ``col_seq`` selects a different column, e.g. ``sequence`` to score
+  wild-types), rebuilds its feature matrix with
+  :meth:`~aaanalysis.SequenceFeature.feature_matrix` from the wild-type TMD coordinates in
+  ``df_seq``, and delegates to :meth:`~aaanalysis.ReliabilityModel.predict`. The returned table
+  carries the ``df_rel`` columns, is row-aligned with the candidates (it keeps their index, so
+  ``df_cand.join(df_rel)`` attaches it), and matches a manual
+  :meth:`~aaanalysis.SequenceFeature.feature_matrix` + ``predict`` round-trip exactly. Designed
+  candidates are pushed away from the training data by construction, so ``ood_score`` /
+  ``ad_status`` / ``ad_nearest_train`` are what say which of them the model can still be
+  trusted on.
 - The :ref:`Data Schemas <df_schemas>` page now documents the prediction outputs that downstream
   tools read, advancing the per-sample and per-residue half of the documented output contract:
   ``df_pred`` from :meth:`~aaanalysis.AAPred.predict` (sequence, domain and window levels),
