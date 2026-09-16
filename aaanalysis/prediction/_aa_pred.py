@@ -687,10 +687,10 @@ class AAPred(Wrapper):
             ``'accuracy'``, ``'balanced_accuracy'``, ``'precision'``, ``'recall'``, ``'f1'``,
             ``'roc_auc'`` and ``'mcc'``. Defaults to ``list_metrics`` from the constructor.
         coverages : list of int or float, optional
-            Coverage grid: the fractions of samples retained, each in ``(0, 1]`` and in strictly
-            increasing order. Defaults to ``[0.2, 0.4, 0.6, 0.8, 1.0]``. Level ``c`` retains the
-            leading ``ceil(c * n_samples)`` samples of the confidence ranking, so a level is
-            never empty and ``1.0`` retains all of them.
+            Target coverage grid: the minimum fractions of samples to retain, each in ``(0, 1]``
+            and in strictly increasing order. Defaults to ``[0.2, 0.4, 0.6, 0.8, 1.0]``. Level
+            ``c`` retains the leading ``ceil(c * n_samples)`` samples of the confidence ranking,
+            so a level is never empty and its actual retained fraction can be greater than ``c``.
         n_cv : int, default=5
             Number of stratified cross-validation folds behind the out-of-fold scores (must not
             exceed the smallest class count).
@@ -701,14 +701,14 @@ class AAPred(Wrapper):
         Returns
         -------
         df_eval_selective : pd.DataFrame, shape (n_metrics * n_coverages, 5)
-            Long-format risk-coverage table with columns ``metric``, ``coverage``,
-            ``n_retained`` (samples kept at that level), ``score`` (the metric on that retained
-            subset) and ``score_aurc`` (the area under that metric's coverage-performance curve
-            divided by the coverage span, repeated on each of the metric's rows, so a flat curve
-            at ``0.8`` has an area of ``0.8``). ``score`` is ``NaN`` where a metric is undefined
-            on the retained subset (``balanced_accuracy`` and ``roc_auc`` need both classes
-            present), and ``score_aurc`` is ``NaN`` for a single-level grid or a curve with a
-            ``NaN`` point.
+            Long-format risk-coverage table with columns ``metric``, ``coverage`` (the fraction
+            actually retained), ``n_retained`` (samples kept at that level), ``score`` (the metric
+            on that retained subset) and ``score_aurc`` (the area under that metric's
+            coverage-performance curve divided by the actual coverage span, repeated on each of
+            the metric's rows, so a flat curve at ``0.8`` has an area of ``0.8``). ``score`` is
+            ``NaN`` where a metric is undefined on the retained subset (``balanced_accuracy`` and
+            ``roc_auc`` need both classes present), and ``score_aurc`` is ``NaN`` for a
+            single-level grid or a curve with a ``NaN`` point.
 
         See Also
         --------

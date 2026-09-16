@@ -1239,7 +1239,7 @@ ReliabilityModel.eval output: one row per equal-width score bin (the calibration
 ``df_eval_selective``
 ---------------------
 
-AAPred.eval_selective output: the selective-prediction (risk-coverage) measurement in long format, one row per (metric, coverage level). Samples are ranked by a per-sample confidence signal and each level retains the leading ceil(coverage * n_samples) of them, so the coverage=1.0 row is the ordinary out-of-fold score of that metric. score_aurc repeats, on each of a metric's rows, the area under that metric's own coverage-performance curve.
+AAPred.eval_selective output: the selective-prediction (risk-coverage) measurement in long format, one row per (metric, coverage level). Samples are ranked by a per-sample confidence signal and each level retains the leading ceil(target * n_samples) of them, so the reported coverage is the fraction actually retained (it can exceed the requested target after rounding up) and the coverage=1.0 row is the ordinary out-of-fold score of that metric. score_aurc repeats, on each of a metric's rows, the area under that metric's own coverage-performance curve.
 
 .. list-table::
    :header-rows: 1
@@ -1264,14 +1264,14 @@ AAPred.eval_selective output: the selective-prediction (risk-coverage) measureme
      - yes
      - no
      - no
-     - Fraction of samples retained at this level.
+     - Fraction of samples actually retained at this level (n_retained / n_samples), which can exceed the requested target after rounding up.
      - range: [0, 1]; e.g. 0.6
    * - ``n_retained``
      - int
      - yes
      - no
      - no
-     - Samples retained at this level: ceil(coverage * n_samples), at least 1.
+     - Samples retained at this level: ceil(target * n_samples), at least 1.
      - range: [1, inf]; e.g. 18
    * - ``score``
      - float
@@ -1285,7 +1285,7 @@ AAPred.eval_selective output: the selective-prediction (risk-coverage) measureme
      - yes
      - yes
      - no
-     - Area under this metric's coverage-performance curve divided by the coverage span (a flat curve at 0.8 has an area of 0.8); NaN for a single-level grid or a curve with a NaN point.
+     - Area under this metric's coverage-performance curve divided by the actual coverage span (a flat curve at 0.8 has an area of 0.8); NaN for a single-level grid or a curve with a NaN point.
      - e.g. 0.88
 
 ``X``

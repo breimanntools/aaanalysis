@@ -5,11 +5,12 @@ import pytest
 from hypothesis import given, settings
 import hypothesis.strategies as some
 from sklearn.base import BaseEstimator, ClassifierMixin
+from sklearn.metrics import (accuracy_score, balanced_accuracy_score, f1_score,
+                             precision_score, recall_score, roc_auc_score)
 from sklearn.svm import SVC
-from sklearn.metrics import accuracy_score, balanced_accuracy_score
 
-import aaanalysis.utils as ut
 import aaanalysis as aa
+import aaanalysis.utils as ut
 
 settings.register_profile("ci", deadline=None)
 settings.load_profile("ci")
@@ -180,6 +181,15 @@ class TestEvalSelective:
         X, labels = _data()
         confidence = np.ones(len(labels))
         confidence[0] = np.nan
+        with pytest.raises(ValueError):
+            aa.AAPred(models="rf", random_state=42).eval_selective(
+                X, labels, confidence=confidence)
+
+    @pytest.mark.parametrize("value", [np.inf, -np.inf])
+    def test_confidence_with_infinity_raises(self, value):
+        X, labels = _data()
+        confidence = np.ones(len(labels))
+        confidence[0] = value
         with pytest.raises(ValueError):
             aa.AAPred(models="rf", random_state=42).eval_selective(
                 X, labels, confidence=confidence)
@@ -383,6 +393,14 @@ class TestEvalSelectiveGoldenValues:
         # (0.25*1 + 0.25*1 + 0.25*0.875) / 0.75
         assert df_eval_selective[ut.COL_SCORE_AURC].iloc[0] == pytest.approx(0.9583333333, abs=1e-9)
 
+    def test_coverage_and_area_use_actual_retained_fraction(self):
+        X, labels = _graded_data()
+        df_eval_selective = _aap_graded().eval_selective(
+            X, labels, metrics=["accuracy"], coverages=[0.2, 0.5, 1.0], n_cv=2)
+        assert df_eval_selective[ut.COL_COVERAGE].to_list() == [0.25, 0.5, 1.0]
+        # (0.25*1 + 0.5*0.875) / 0.75
+        assert df_eval_selective[ut.COL_SCORE_AURC].iloc[0] == pytest.approx(0.9166666667, abs=1e-9)
+
     def test_area_is_repeated_on_every_row_of_the_metric(self):
         X, labels = _graded_data()
         df_eval_selective = _aap_graded().eval_selective(
@@ -442,3 +460,16 @@ class TestEvalSelectiveGoldenValues:
         # Scoring class 0 as positive inverts every probability, so the margin ranking is the
         # same and the hard-label decisions are mirrored: the same accuracy curve.
         assert df_eval_selective[ut.COL_SCORE].to_list() == [1.0, 0.75]
+
+    def test_label_pos_zero_controls_asymmetric_metrics(self):
+        X, labels = _graded_data()
+        metrics = ["precision", "recall", "f1", "roc_auc"]
+        df_eval_selective = _aap_graded().eval_selective(
+            X, labels, metrics=metrics, coverages=[1.0], n_cv=2, label_pos=0)
+        scores = _aap_graded().predict_oof(X, labels, n_cv=2, label_pos=0)[ut.COL_SCORE].to_numpy()
+        labels_pred = np.where(scores >= 0.5, 0, 1)
+        expected = [precision_score(labels, labels_pred, pos_label=0, zero_division=0),
+                    recall_score(labels, labels_pred, pos_label=0, zero_division=0),
+                    f1_score(labels, labels_pred, pos_label=0, zero_division=0),
+                    roc_auc_score(labels == 0, scores)]
+        assert df_eval_selective[ut.COL_SCORE].to_list() == pytest.approx(expected, abs=1e-9)

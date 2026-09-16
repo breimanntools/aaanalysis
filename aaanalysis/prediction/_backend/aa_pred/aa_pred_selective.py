@@ -30,8 +30,14 @@ def _score_subset(labels, scores, metric, label_pos, label_neg):
     score_func, needs_proba = METRIC_SCORE_FUNCS[metric]
     if metric in LIST_METRICS_NEED_BOTH_CLASSES and len(np.unique(labels)) < 2:
         return float("nan")
-    y_pred = scores if needs_proba else np.where(scores >= 0.5, label_pos, label_neg)
+    if needs_proba:
+        labels = labels == label_pos
+        y_pred = scores
+    else:
+        y_pred = np.where(scores >= 0.5, label_pos, label_neg)
     kwargs = DICT_METRIC_KWARGS.get(metric, {})
+    if metric in {"precision", "recall", "f1"}:
+        kwargs = {**kwargs, "pos_label": label_pos}
     return float(score_func(labels, y_pred, **kwargs))
 
 
@@ -76,15 +82,18 @@ def eval_selective_scores(labels, scores, confidence, metrics=None, coverages=No
     rows = []
     for metric in metrics:
         list_scores = []
+        list_coverages = []
         list_rows = []
         for coverage in coverages:
             n_retained = int(np.ceil(float(coverage) * n_samples))
             n_retained = max(1, min(n_samples, n_retained))
+            retained_coverage = n_retained / n_samples
             idx = order[:n_retained]
             score = _score_subset(labels=labels[idx], scores=scores[idx], metric=metric,
                                   label_pos=label_pos, label_neg=label_neg)
             list_scores.append(score)
-            list_rows.append([metric, float(coverage), n_retained, score])
-        area = _comp_area(coverages=[float(c) for c in coverages], scores=list_scores)
+            list_coverages.append(retained_coverage)
+            list_rows.append([metric, retained_coverage, n_retained, score])
+        area = _comp_area(coverages=list_coverages, scores=list_scores)
         rows += [row + [area] for row in list_rows]
     return pd.DataFrame(rows, columns=ut.COLS_EVAL_SELECTIVE)

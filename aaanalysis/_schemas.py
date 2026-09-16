@@ -600,25 +600,29 @@ DICT_DF_SCHEMAS = {
             "AAPred.eval_selective output: the selective-prediction (risk-coverage) "
             "measurement in long format, one row per (metric, coverage level). Samples are "
             "ranked by a per-sample confidence signal and each level retains the leading "
-            "ceil(coverage * n_samples) of them, so the coverage=1.0 row is the ordinary "
-            "out-of-fold score of that metric. score_aurc repeats, on each of a metric's "
-            "rows, the area under that metric's own coverage-performance curve."),
+            "ceil(target * n_samples) of them, so the reported coverage is the fraction "
+            "actually retained (it can exceed the requested target after rounding up) and "
+            "the coverage=1.0 row is the ordinary out-of-fold score of that metric. "
+            "score_aurc repeats, on each of a metric's rows, the area under that metric's "
+            "own coverage-performance curve."),
         "columns": {
             COL_METRIC: _field("str", "Performance metric scored on the retained subset.",
                                allowed_values=list(LIST_METRICS_PRED),
                                example="balanced_accuracy"),
-            COL_COVERAGE: _field("float", "Fraction of samples retained at this level.",
+            COL_COVERAGE: _field("float", "Fraction of samples actually retained at this "
+                                 "level (n_retained / n_samples), which can exceed the "
+                                 "requested target after rounding up.",
                                  range=[0, 1], example=0.6),
             COL_N_RETAINED: _field("int", "Samples retained at this level: "
-                                   "ceil(coverage * n_samples), at least 1.",
+                                   "ceil(target * n_samples), at least 1.",
                                    range=[1, None], example=18),
             COL_SCORE: _field("float", "Metric value on the retained subset; NaN where the "
                               "metric is undefined there (balanced_accuracy and roc_auc need "
                               "both classes present).", nullable=True, example=0.91),
             COL_SCORE_AURC: _field("float", "Area under this metric's coverage-performance "
-                                   "curve divided by the coverage span (a flat curve at 0.8 "
-                                   "has an area of 0.8); NaN for a single-level grid or a "
-                                   "curve with a NaN point.", nullable=True, example=0.88),
+                                   "curve divided by the actual coverage span (a flat curve "
+                                   "at 0.8 has an area of 0.8); NaN for a single-level grid "
+                                   "or a curve with a NaN point.", nullable=True, example=0.88),
         },
     },
     # ------------------------------------------------ non-DataFrame contracts
