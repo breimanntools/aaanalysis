@@ -14,6 +14,35 @@ In development.
 Added
 ~~~~~
 
+- Design limits are now one shared, validated object. :class:`~aaanalysis.DesignConstraints`
+  collects everything a design campaign has to say about which variants are admissible: the
+  positions that must keep their wild-type residue (``immutable_positions``), the span a
+  substitution may fall in (``mutable_positions``), the target residues that are allowed or
+  banned, globally or per position (``permitted_substitutions`` / ``forbidden_substitutions``),
+  the mutation budget (``n_mut_max``), how close a variant must stay to its parent
+  (``min_identity`` / ``max_identity``), and the motifs it must avoid or keep
+  (``forbidden_motifs`` / ``required_motifs``). Every position is a **1-based position in the
+  parent sequence**, the convention the ``region`` parameter and the ``pos`` column already use.
+- The primary contract is :meth:`~aaanalysis.DesignConstraints.check`, which returns
+  ``(ok, reasons)`` for a candidate sequence and names each violated limit in a fixed field
+  order, so a rejected candidate explains itself instead of disappearing.
+  :meth:`~aaanalysis.DesignConstraints.as_predicate` adapts the same limits to the
+  ``genome -> bool`` callable :meth:`~aaanalysis.SeqOpt.run` already consumes, and
+  :meth:`~aaanalysis.DesignConstraints.to_dict` / :meth:`~aaanalysis.DesignConstraints.from_dict`
+  round-trip a constraint set through JSON.
+- :class:`~aaanalysis.AAMut`, :class:`~aaanalysis.SeqMut` and :class:`~aaanalysis.SeqOpt` accept
+  the same object as ``constraints``: :meth:`~aaanalysis.AAMut.run` applies its residue-level
+  substitution rules, :meth:`~aaanalysis.SeqMut.scan` and :meth:`~aaanalysis.SeqMut.suggest` drop
+  the excluded mutations from the scan, :meth:`~aaanalysis.SeqMut.combine` appends an
+  ``is_feasible`` column and a ``reasons`` column rather than dropping variants, and
+  :meth:`~aaanalysis.SeqOpt.run` restricts its search space and penalizes the sequence-level
+  limits through its existing feasibility path. The ``region``, ``to_aa`` and ``n_mut_max``
+  parameters keep their meaning and are now shorthand that builds a
+  :class:`~aaanalysis.DesignConstraints` internally, so no limit is expressed by two independent
+  mechanisms; combining a shorthand with an object that sets the same limit to a different value
+  raises a ``ValueError``. Results are unchanged when no object is passed, and
+  ``SeqOpt.run(constraints=[...])`` still accepts its published list of feasibility callables.
+
 - Calibration quality is now measurable. :meth:`~aaanalysis.ReliabilityModel.eval` gains two
   keyword-only parameters: ``use_calibrated=True`` bins the calibrated probability
   (``score_calibrated``) instead of the raw ``score``, and ``add_metrics=True`` appends the Brier

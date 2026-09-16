@@ -7,7 +7,9 @@ import pandas as pd
 
 import aaanalysis.utils as ut
 from aaanalysis.template_classes import Tool
+from ._design_constraints import DesignConstraints, resolve_constraints
 from ._backend.aamut.aamut import comp_substitution_impact, eval_substitution_impact
+from ._backend.design_constraints import filter_substitution_pairs
 
 
 # I Helper Functions
@@ -91,6 +93,7 @@ class AAMut(Tool):
             from_aa: Optional[Union[str, List[str]]] = None,
             to_aa: Optional[Union[str, List[str]]] = None,
             scales: Optional[List[str]] = None,
+            constraints: Optional[DesignConstraints] = None,
             ) -> pd.DataFrame:
         """
         Compute the signed per-scale impact of amino acid substitutions.
@@ -108,6 +111,16 @@ class AAMut(Tool):
             Amino acid(s) to substitute to. If ``None``, all canonical amino acids are used.
         scales : list of str, optional
             Subset of scale ids to evaluate. If ``None``, all scales of ``df_scales`` are used.
+        constraints : DesignConstraints, optional
+            Shared design limits (see :class:`DesignConstraints`). ``AAMut`` is residue-level and
+            carries no sequence positions, so only the **global** (amino acid list) forms of
+            ``permitted_substitutions`` and ``forbidden_substitutions`` apply: they restrict
+            ``to_aa`` exactly as the ``to_aa`` shorthand does. Position-, count-, identity- and
+            motif-based limits need a full sequence and are applied by :class:`SeqMut` and
+            :class:`SeqOpt` instead. Passing ``to_aa`` *and* a ``constraints`` object whose
+            ``permitted_substitutions`` differ raises. ``None`` (default) applies no limit.
+
+            .. versionadded:: 1.2.0
 
         Returns
         -------
@@ -115,14 +128,31 @@ class AAMut(Tool):
             Tidy substitution-impact table with columns ``from_aa``, ``to_aa``, ``scale_id``,
             ``category``, ``subcategory``, ``delta`` (signed), and ``abs_delta`` (magnitude).
 
+        Raises
+        ------
+        ValueError
+            If ``from_aa`` / ``to_aa`` are not canonical amino acids, if ``scales`` are not
+            columns of ``df_scales``, if ``constraints`` is not a :class:`DesignConstraints`
+            object, if it conflicts with ``to_aa``, or if its substitution limits leave no
+            ``from_aa`` -> ``to_aa`` pair.
+
         Examples
         --------
         .. include:: examples/aam_run.rst
         """
         # Validate
         list_from = check_aa(name="from_aa", val=from_aa) or ut.LIST_CANONICAL_AA
-        list_to = check_aa(name="to_aa", val=to_aa) or ut.LIST_CANONICAL_AA
+        list_to = check_aa(name="to_aa", val=to_aa)
+        constraints, _region, list_to, _n_mut_max = resolve_constraints(
+            constraints=constraints, to_aa=list_to)
+        list_to = list_to or ut.LIST_CANONICAL_AA
         list_scales = check_scales_subset(scales=scales, df_scales=self.df_scales)
+        # Apply the residue-level substitution limits (the only ones AAMut can honour)
+        list_from, list_to = filter_substitution_pairs(list_from=list_from, list_to=list_to,
+                                                       spec=constraints.to_dict())
+        if len(list_to) == 0:
+            raise ValueError(f"'constraints' ({constraints}) should leave at least one target "
+                             f"amino acid; its substitution limits exclude every 'to_aa'.")
         # Compute
         df_impact = comp_substitution_impact(df_scales=self.df_scales, df_cat=self._df_cat,
                                              list_from=list_from, list_to=list_to,

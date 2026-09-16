@@ -4,14 +4,16 @@ optimization over sequence variants of one wild-type, reusing a model-bound SeqM
 fitness engine. SeqOpt is a core class; only its SHAP-guided ``mode="impact"`` (per-generation
 ShapModel refit) needs the optional ``aaanalysis[pro]`` dependency, imported lazily.
 """
-from typing import Optional, List, Any, Callable, Tuple, Dict, Literal
+from typing import Optional, List, Any, Callable, Tuple, Dict, Literal, Union
 import numpy as np
 import pandas as pd
 
 import aaanalysis.utils as ut
 from aaanalysis.template_classes import Tool
 from aaanalysis.feature_engineering._sequence_feature import SequenceFeature
-from ._seqmut import SeqMut
+from ._seqmut import SeqMut, check_region, check_to_aa_set
+from ._design_constraints import DesignConstraints, resolve_constraints
+from ._backend.design_constraints import filter_search_space, has_sequence_limits
 # ShapModel (and its heavy SHAP dependency) is imported lazily inside mode="impact" only, so
 # SeqOpt stays importable in a base install; mode="impact" then needs aaanalysis[pro].
 from ._backend.seqopt.genome import canonical, apply_genome, variant_label
@@ -418,7 +420,7 @@ class SeqOpt(Tool):
             mut_prob: float = 0.2,
             survival: str = "mu_plus_lambda",
             variation: str = "and",
-            constraints: Optional[List[Callable]] = None,
+            constraints: Optional[Union[List[Callable], DesignConstraints]] = None,
             penalty: str = "delta",
             hof_size: int = 10,
             n_mut_max: int = 5,
@@ -474,9 +476,23 @@ class SeqOpt(Tool):
         variation : str, default='and'
             Variation scheme: ``'and'`` (varAnd — crossover *and* mutation) or ``'or'`` (varOr —
             each offspring is crossover *or* mutation *or* reproduction; needs cx_prob+mut_prob<=1).
-        constraints : list of callable, optional
-            Feasibility predicates ``genome -> bool`` (``True`` = feasible). Infeasible variants
-            are penalized so the search avoids them.
+        constraints : list of callable or DesignConstraints, optional
+            Design limits, in either of two forms. A **list of callables** is the published form:
+            feasibility predicates ``genome -> bool`` (``True`` = feasible) over the internal
+            ``{1-based position: target amino acid}`` genome; infeasible variants are penalized so
+            the search avoids them. A :class:`DesignConstraints` **object** is the shared,
+            declarative form: its ``mutable_positions`` / ``permitted_substitutions`` /
+            ``n_mut_max`` are the object form of ``region`` / ``to_aa`` / ``n_mut_max`` and
+            restrict the search space directly, while its sequence-level limits (immutable
+            positions, forbidden substitutions, identity bounds, motifs) are turned into one
+            feasibility predicate via :meth:`DesignConstraints.as_predicate` and penalized the
+            same way. Passing the object together with a ``region`` / ``to_aa`` / non-default
+            ``n_mut_max`` that sets the same limit differently raises. ``None`` (default) applies
+            no limit.
+
+            .. versionchanged:: 1.2.0
+               Also accepts a :class:`DesignConstraints` object; the list-of-callables form is
+               unchanged.
         penalty : str, default='delta'
             Penalty applied to infeasible variants: ``'delta'`` (fixed worst objective) or
             ``'closest_valid'`` (penalty scaled by the number of violated constraints).
@@ -484,11 +500,14 @@ class SeqOpt(Tool):
             Size of the single-objective Hall of Fame (``SeqOpt.hall_of_fame_``) accumulated
             across generations.
         n_mut_max : int, default=5
-            Maximum number of point mutations per variant.
+            Maximum number of point mutations per variant. Shorthand for the ``n_mut_max`` of
+            ``constraints``, which it builds internally.
         region : str or list of int, optional
-            Restrict the mutable span (see :meth:`SeqMut.scan`).
+            Restrict the mutable span (see :meth:`SeqMut.scan`). Shorthand for the
+            ``mutable_positions`` of ``constraints``, which it builds internally.
         to_aa : list of str, optional
-            Substitution alphabet (see :meth:`SeqMut.scan`).
+            Substitution alphabet (see :meth:`SeqMut.scan`). Shorthand for the
+            ``permitted_substitutions`` of ``constraints``, which it builds internally.
         init : str, default='random'
             Population initialization: ``'random'`` or ``'suggest'`` (warm start from the top
             single mutations).
@@ -506,6 +525,14 @@ class SeqOpt(Tool):
             ``sequence_mut``, one column per objective (named by ``objectives``), the
             non-dominated ``rank`` (0 = best front) and the ``crowding`` distance, sorted by
             ``rank`` then descending ``crowding``.
+
+        Raises
+        ------
+        ValueError
+            If ``df_seq`` does not hold exactly one position-based wild-type, if ``objectives``
+            or any option string is invalid, if ``constraints`` is neither a list of callables nor
+            a :class:`DesignConstraints` object, if it conflicts with ``region`` / ``to_aa`` /
+            ``n_mut_max``, or if the resulting search space is empty.
 
         Examples
         --------
@@ -535,12 +562,24 @@ class SeqOpt(Tool):
         ut.check_number_range(name="hof_size", val=hof_size, min_val=1, just_int=True)
         ut.check_number_range(name="cx_prob", val=cx_prob, min_val=0, max_val=1, just_int=False)
         ut.check_number_range(name="mut_prob", val=mut_prob, min_val=0, max_val=1, just_int=False)
-        if constraints is not None:
+        # 'constraints' is either the published list of genome->bool predicates or one shared
+        # DesignConstraints object; the region / to_aa / n_mut_max shorthands fold into the latter,
+        # so every design limit has exactly one definition.
+        dc_arg = None
+        if isinstance(constraints, DesignConstraints):
+            dc_arg, constraints = constraints, None
+        elif constraints is not None:
             constraints = ut.check_list_like(name="constraints", val=constraints)
             for i, c in enumerate(constraints):
                 if not callable(c):
                     raise ValueError(f"'constraints[{i}]' ({c}) should be a callable "
-                                     f"genome->bool feasibility predicate.")
+                                     f"genome->bool feasibility predicate, or 'constraints' "
+                                     f"should be a DesignConstraints object.")
+        region = check_region(region=region)
+        to_aa = None if to_aa is None else check_to_aa_set(to_aa=to_aa)
+        design_constraints, region, to_aa, n_mut_max = resolve_constraints(
+            constraints=dc_arg, region=region, to_aa=to_aa, n_mut_max=n_mut_max,
+            n_mut_max_default=5)
         if variation == ut.LIST_SEQOPT_VARIATION[1] and cx_prob + mut_prob > 1:
             raise ValueError(f"variation='or' requires cx_prob + mut_prob <= 1 "
                              f"(got {cx_prob} + {mut_prob}).")
@@ -554,6 +593,17 @@ class SeqOpt(Tool):
             df_seq, df_feat, region, to_aa, jmd_n_len, jmd_c_len)
         if len(positions) == 0:
             raise ValueError("No scannable positions for the given 'region'.")
+        # Structural enforcement: the genome operators never propose an excluded move.
+        positions, alphabet = filter_search_space(positions=positions, alphabet=alphabet,
+                                                  spec=design_constraints.to_dict())
+        if len(positions) == 0 or len(alphabet) == 0:
+            raise ValueError(f"'constraints' ({design_constraints}) should leave at least one "
+                             f"position and one target amino acid; the search space is empty.")
+        # Sequence-level limits cannot be guaranteed by the operators (they depend on the whole
+        # variant), so they ride the existing feasibility-penalty path as one predicate.
+        constraints = list(constraints) if constraints else []
+        if has_sequence_limits(spec=design_constraints.to_dict()):
+            constraints.append(design_constraints.as_predicate(parent=wt_seq))
         # Fitness + guidance
         fitness_fn, _, _ = self._build_fitness(df_seq, df_feat, names, sources, goals,
                                                constraints, penalty, jmd_n_len, jmd_c_len)

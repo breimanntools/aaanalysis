@@ -16,6 +16,22 @@ notes — with cross-references and examples — live in
 ## [Unreleased]
 
 ### Added
+- `DesignConstraints`: one validated, JSON-round-trippable container for the design limits
+  `AAMut`, `SeqMut` and `SeqOpt` all express -- immutable positions, a mutable span, permitted /
+  forbidden substitutions (globally or per position), a mutation budget, sequence-identity bounds
+  to the parent, and forbidden / required motifs. Positions are 1-based over the parent sequence,
+  the same convention as `region`. Its primary contract is `check(candidate) -> (ok, reasons)`,
+  which names every violated limit in a fixed order, so a discarded candidate carries its
+  explanation; `as_predicate()` adapts the same limits to the genome-shaped callable `SeqOpt.run`
+  already consumes, and `to_dict()` / `from_dict()` round-trip a constraint set. All three classes
+  take it as `constraints=`: `AAMut.run` applies its residue-level substitution rules,
+  `SeqMut.scan` / `SeqMut.suggest` drop the excluded mutations from the scan, `SeqMut.combine`
+  appends `is_feasible` / `reasons` columns, and `SeqOpt.run` restricts the search space and
+  penalizes the sequence-level limits. The existing `region`, `to_aa` and `n_mut_max` shorthands
+  now build a `DesignConstraints` internally, so a limit is never expressed twice; passing a
+  shorthand and an object that sets the same limit differently raises a `ValueError`. Output is
+  unchanged when no object is passed, and `SeqOpt.run(constraints=[...])` keeps accepting its
+  published list of `genome -> bool` callables (#475).
 - `ReliabilityModel.eval(use_calibrated=..., add_metrics=...)`: score the calibrated column
   (`score_calibrated`) instead of the raw `score`, and append Brier-score / expected
   calibration error (ECE) rows (`bin='brier'` / `bin='ece'`, value in `mean_score`); defaults

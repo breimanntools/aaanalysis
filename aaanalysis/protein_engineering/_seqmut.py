@@ -7,6 +7,8 @@ import pandas as pd
 
 import aaanalysis.utils as ut
 from aaanalysis.feature_engineering._sequence_feature import SequenceFeature
+from ._design_constraints import DesignConstraints, check_constraints, resolve_constraints
+from ._backend.design_constraints import filter_scan_plan
 from ._backend.seqmut.seqmut import (build_scan_plan, comp_feature_matrices, comp_scan_scores,
                                      comp_pred_scores, comp_seq_scores, build_scan_output,
                                      eval_disruptive, classify_region)
@@ -297,6 +299,7 @@ class SeqMut:
              to_aa: Optional[List[str]] = None,
              jmd_n_len: int = 10,
              jmd_c_len: int = 10,
+             constraints: Optional[DesignConstraints] = None,
              ) -> pd.DataFrame:
         """
         Run an exhaustive single-position mutational scan and rank mutations by |ΔCPP|.
@@ -323,6 +326,17 @@ class SeqMut:
             Length of JMD-N in number of amino acids.
         jmd_c_len : int, default=10
             Length of JMD-C in number of amino acids.
+        constraints : DesignConstraints, optional
+            Shared design limits (see :class:`DesignConstraints`). Its ``mutable_positions`` and
+            ``permitted_substitutions`` are the object form of ``region`` and ``to_aa``, and its
+            ``immutable_positions`` / ``forbidden_substitutions`` additionally drop the excluded
+            ``(pos, to_aa)`` mutations from the scan. Limits that need a multi-mutation candidate
+            (``n_mut_max``, the identity bounds, the motifs) apply to :meth:`SeqMut.combine` and
+            :meth:`SeqOpt.run`, not to a single-substitution scan. Passing ``region`` or ``to_aa``
+            *and* a ``constraints`` object that sets the same limit differently raises. ``None``
+            (default) applies no limit.
+
+            .. versionadded:: 1.2.0
 
         Returns
         -------
@@ -333,6 +347,13 @@ class SeqMut:
             prediction-shift columns ``delta_pred`` (ΔP, percentage points), ``wt_pred`` and
             ``wt_pred_std`` are appended — this is the data behind the mutation-scan heatmap.
 
+        Raises
+        ------
+        ValueError
+            If ``df_seq`` is not in the position-based format, if ``df_feat`` does not match the
+            bound model, if ``region`` / ``to_aa`` / ``constraints`` are invalid or conflict, or
+            if no scannable mutation is left.
+
         Examples
         --------
         .. include:: examples/seqm_scan.rst
@@ -342,6 +363,9 @@ class SeqMut:
         df_feat = ut.check_df_feat(df_feat=df_feat)
         check_match_model_df_feat(model=self._model, df_feat=df_feat)
         region = check_region(region=region)
+        to_aa = None if to_aa is None else check_to_aa_set(to_aa=to_aa)
+        constraints, region, to_aa, _ = resolve_constraints(constraints=constraints,
+                                                            region=region, to_aa=to_aa)
         to_aa = check_to_aa_set(to_aa=to_aa)
         ut.check_number_range(name="jmd_n_len", val=jmd_n_len, min_val=0, just_int=True)
         ut.check_number_range(name="jmd_c_len", val=jmd_c_len, min_val=0, just_int=True)
@@ -350,6 +374,10 @@ class SeqMut:
                                   jmd_n_len=jmd_n_len, jmd_c_len=jmd_c_len)
         if len(df_plan) == 0:
             raise ValueError("No scannable positions for the given 'region'.")
+        df_plan = filter_scan_plan(df_plan=df_plan, spec=constraints.to_dict())
+        if len(df_plan) == 0:
+            raise ValueError(f"'constraints' ({constraints}) should leave at least one "
+                             f"substitution; every scannable mutation is excluded.")
         df_scan = self._delta_table(df_plan=df_plan, df_seq=df_seq, df_feat=df_feat,
                                     jmd_n_len=jmd_n_len, jmd_c_len=jmd_c_len)
         if self._verbose:
@@ -365,6 +393,7 @@ class SeqMut:
                 weight: Optional[str] = None,
                 jmd_n_len: int = 10,
                 jmd_c_len: int = 10,
+                constraints: Optional[DesignConstraints] = None,
                 ) -> pd.DataFrame:
         """
         Suggest the top mutations that move a sequence toward the desired CPP / model outcome.
@@ -399,6 +428,17 @@ class SeqMut:
             Length of JMD-N in number of amino acids.
         jmd_c_len : int, default=10
             Length of JMD-C in number of amino acids.
+        constraints : DesignConstraints, optional
+            Shared design limits (see :class:`DesignConstraints`). Its ``mutable_positions`` and
+            ``permitted_substitutions`` are the object form of ``region`` and ``to_aa``, and its
+            ``immutable_positions`` / ``forbidden_substitutions`` additionally drop the excluded
+            ``(pos, to_aa)`` mutations from the scan. Limits that need a multi-mutation candidate
+            (``n_mut_max``, the identity bounds, the motifs) apply to :meth:`SeqMut.combine` and
+            :meth:`SeqOpt.run`, not to a single-substitution scan. Passing ``region`` or ``to_aa``
+            *and* a ``constraints`` object that sets the same limit differently raises. ``None``
+            (default) applies no limit.
+
+            .. versionadded:: 1.2.0
 
         Returns
         -------
@@ -406,6 +446,13 @@ class SeqMut:
             The top-``n`` mutations sorted by descending ``shift_score`` — or by descending
             ``delta_pred`` when a ``model`` is bound (the table then also carries the model
             prediction-shift columns).
+
+        Raises
+        ------
+        ValueError
+            If ``df_seq`` is not in the position-based format, if ``df_feat`` does not match the
+            bound model, if ``n`` / ``weight`` / ``region`` / ``to_aa`` / ``constraints`` are
+            invalid or conflict, or if no scannable mutation is left.
 
         Examples
         --------
@@ -416,6 +463,9 @@ class SeqMut:
         df_feat = ut.check_df_feat(df_feat=df_feat)
         check_match_model_df_feat(model=self._model, df_feat=df_feat)
         region = check_region(region=region)
+        to_aa = None if to_aa is None else check_to_aa_set(to_aa=to_aa)
+        constraints, region, to_aa, _ = resolve_constraints(constraints=constraints,
+                                                            region=region, to_aa=to_aa)
         to_aa = check_to_aa_set(to_aa=to_aa)
         ut.check_number_range(name="n", val=n, min_val=1, just_int=True)
         get_weight_vec(df_feat=df_feat, weight=weight)  # validate weight early
@@ -426,6 +476,10 @@ class SeqMut:
                                   jmd_n_len=jmd_n_len, jmd_c_len=jmd_c_len)
         if len(df_plan) == 0:
             raise ValueError("No scannable positions for the given 'region'.")
+        df_plan = filter_scan_plan(df_plan=df_plan, spec=constraints.to_dict())
+        if len(df_plan) == 0:
+            raise ValueError(f"'constraints' ({constraints}) should leave at least one "
+                             f"substitution; every scannable mutation is excluded.")
         df_scan = self._delta_table(df_plan=df_plan, df_seq=df_seq, df_feat=df_feat,
                                     jmd_n_len=jmd_n_len, jmd_c_len=jmd_c_len, weight=weight)
         rank_col = ut.COL_DELTA_PRED if self._model is not None else ut.COL_SHIFT_SCORE
@@ -477,6 +531,7 @@ class SeqMut:
                 df_feat: pd.DataFrame,
                 jmd_n_len: int = 10,
                 jmd_c_len: int = 10,
+                constraints: Optional[DesignConstraints] = None,
                 ) -> pd.DataFrame:
         """
         Score combined (multi-mutation) variants by applying their mutations together.
@@ -504,6 +559,15 @@ class SeqMut:
             Length of JMD-N in number of amino acids.
         jmd_c_len : int, default=10
             Length of JMD-C in number of amino acids.
+        constraints : DesignConstraints, optional
+            Shared design limits (see :class:`DesignConstraints`). Each combined variant is a
+            full candidate sequence, so **every** limit applies, including ``n_mut_max``, the
+            identity bounds and the motifs. Nothing is dropped: two columns are appended instead,
+            ``is_feasible`` and ``reasons`` (the ``'; '``-joined rejection reasons, empty for a
+            feasible variant), so a discarded candidate carries its explanation. ``None``
+            (default) applies no limit and appends no column.
+
+            .. versionadded:: 1.2.0
 
         Returns
         -------
@@ -511,7 +575,16 @@ class SeqMut:
             One row per combined variant with ``entry``, ``variant`` (the ``'+'``-joined single
             mutations, e.g. ``"R20K+K27P"``), ``n_mut``, ``sequence_mut``, ``delta_cpp`` and
             ``shift_score`` — plus ``delta_pred`` when a model is bound — sorted by descending
-            ``delta_pred`` (model) or ``shift_score`` (model-free).
+            ``delta_pred`` (model) or ``shift_score`` (model-free). When ``constraints`` is given,
+            the ``is_feasible`` and ``reasons`` columns are appended.
+
+        Raises
+        ------
+        ValueError
+            If ``df_seq`` is not in the position-based format, if ``variants`` does not match it
+            (unknown entry, out-of-range position, non-canonical ``to_aa``, or two mutations of
+            one variant at the same position), if ``df_feat`` does not match the bound model, or
+            if ``constraints`` is not a :class:`DesignConstraints` object.
 
         Examples
         --------
@@ -522,6 +595,7 @@ class SeqMut:
         df_feat = ut.check_df_feat(df_feat=df_feat)
         check_match_model_df_feat(model=self._model, df_feat=df_feat)
         list_from = check_match_variants_df_seq(variants=variants, df_seq=df_seq)
+        constraints = check_constraints(name="constraints", val=constraints)
         ut.check_number_range(name="jmd_n_len", val=jmd_n_len, min_val=0, just_int=True)
         ut.check_number_range(name="jmd_c_len", val=jmd_c_len, min_val=0, just_int=True)
         # Build one combined sequence per (entry, variant)
@@ -556,5 +630,14 @@ class SeqMut:
         if self._model is not None:
             df_variant[ut.COL_DELTA_PRED] = scores[ut.COL_DELTA_PRED]
             rank_col = ut.COL_DELTA_PRED
+        if constraints is not None:
+            # Keep every variant and attach WHY it was rejected, rather than dropping it.
+            list_ok, list_reasons = [], []
+            for entry, seq_mut in zip(df_variant[ut.COL_ENTRY], df_variant[ut.COL_SEQ_MUT]):
+                ok, reasons = constraints.check(candidate=seq_mut, parent=seq_by_entry[entry])
+                list_ok.append(ok)
+                list_reasons.append("; ".join(reasons))
+            df_variant[ut.COL_IS_FEASIBLE] = list_ok
+            df_variant[ut.COL_REASONS] = list_reasons
         df_variant = df_variant.sort_values(rank_col, ascending=False).reset_index(drop=True)
         return df_variant

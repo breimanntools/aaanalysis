@@ -7,6 +7,10 @@ is reproducible and matches the DEAP parity oracle, which reuses these same oper
 from typing import Dict, List, Tuple, Optional
 import numpy as np
 
+# The genome -> sequence application is shared with the DesignConstraints feasibility
+# adapter, so it is defined once in the shared backend module and re-exported here.
+from ..design_constraints import apply_genome as apply_genome_
+
 
 # I Helper Functions
 def canonical(genome: Dict[int, str]) -> Tuple[Tuple[int, str], ...]:
@@ -16,10 +20,7 @@ def canonical(genome: Dict[int, str]) -> Tuple[Tuple[int, str], ...]:
 
 def apply_genome(wt_seq: str, genome: Dict[int, str]) -> str:
     """Apply all of a genome's point mutations to the wild-type sequence."""
-    chars = list(wt_seq)
-    for pos, to_aa in genome.items():
-        chars[pos - 1] = to_aa
-    return "".join(chars)
+    return apply_genome_(parent=wt_seq, genome=genome)
 
 
 def variant_label(wt_seq: str, genome: Dict[int, str]) -> str:
