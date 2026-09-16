@@ -43,20 +43,39 @@ from ._constants import (
     COL_EVIDENCE, COL_SCORE, COL_BOND_ID,
     LIST_CAT, LIST_ALL_PARTS, LIST_CANONICAL_AA, COLS_SEQ_POS, COLS_SEQ_PARTS,
     COLS_SEQ_TMD,
+    COL_SCORE_STD, COL_OFFSET, COL_RESIDUE_POS, COL_PRED_LABEL, COL_IS_BEST,
+    COL_CI_LOW, COL_CI_HIGH, COL_OOD_SCORE, COL_IN_DOMAIN, COL_AD_KNN, COL_AD_MAHALANOBIS,
+    COL_AD_LEVERAGE, COL_SCORE_CAL, COL_MARGIN, COL_ENTROPY, COL_CONFORMAL_SET, COL_RELIABLE,
+    STR_CONF_NEG, STR_CONF_POS, STR_CONF_BOTH, STR_CONF_NONE,
+    COL_BIN, COL_MEAN_SCORE, COL_EMPIRICAL_POS, COL_N_SAMPLES, STR_BIN_SUMMARY,
+    COL_AD_STATUS, COL_AD_NEAREST_TRAIN, LIST_AD_STATUS, STR_BIN_BRIER, STR_BIN_ECE,
+    STR_SCORE_RANGE_PROBA, STR_SCORE_RANGE_PERCENT,
 )
 
+# I Helper Functions
 # Field-record keys (kept positionless / dict-based on purpose; documented above).
-FIELD_KEYS = ("dtype", "required", "nullable", "unique", "range",
+FIELD_KEYS = ("dtype", "required", "nullable", "unique", "range", "scale_ranges",
               "allowed_values", "example", "validation", "description")
 
 
 def _field(dtype, description, *, required=True, nullable=False, unique=False,
-           range=None, allowed_values=None, example=None, validation=None):
-    """Build one column's field record; optional keys are omitted when None."""
+           range=None, scale_ranges=None, allowed_values=None, example=None,
+           validation=None):
+    """Build one column's field record; optional keys are omitted when None.
+
+    ``range`` is the single numeric range a column always satisfies. ``scale_ranges``
+    replaces it for a column whose range depends on an output scale the caller picks
+    (``AAPred.predict(score_range=...)``): it maps each scale name to that scale's
+    range, so every scale is contracted rather than one of them being undocumented.
+    """
+    if range is not None and scale_ranges is not None:
+        raise ValueError("'range' (not None) should be None when 'scale_ranges' is set.")
     rec = {"dtype": dtype, "required": required, "nullable": nullable,
            "unique": unique, "description": description}
     if range is not None:
         rec["range"] = range
+    if scale_ranges is not None:
+        rec["scale_ranges"] = scale_ranges
     if allowed_values is not None:
         rec["allowed_values"] = allowed_values
     if example is not None:
@@ -66,6 +85,7 @@ def _field(dtype, description, *, required=True, nullable=False, unique=False,
     return rec
 
 
+# II Main Functions
 DICT_DF_SCHEMAS = {
     # ---------------------------------------------------------------- inputs
     "df_seq": {
@@ -454,6 +474,126 @@ DICT_DF_SCHEMAS = {
             "dtype": "float",
         },
     },
+    # ------------------------------------------------------- prediction outputs
+    "df_pred": {
+        "description": (
+            "AAPred.predict output in long format; the columns depend on 'level': "
+            "'sequence' = entry, score, score_std (one row per protein); 'domain' = entry, "
+            "offset, score, is_best (one row per protein and boundary shift); 'window' = "
+            "entry, position, score, score_std (one row per protein and residue anchor). "
+            "'predicted_label' is appended when a threshold is given. Both score columns "
+            "carry the scale chosen by score_range: 'proba' (the default, [0, 1]) or "
+            "'percent' (the same values multiplied by 100, [0, 100]); the score row below "
+            "contracts one range per scale."),
+        "columns": {
+            COL_ENTRY: _field("str", "Protein identifier from df_seq; unique only at "
+                              "level='sequence'.", example="P05067"),
+            COL_OFFSET: _field("int", "level='domain': boundary shift applied to tmd_start "
+                               "and tmd_stop, in residues.", required=False, example=-2),
+            COL_RESIDUE_POS: _field("int", "level='window': 1-based anchor position of the "
+                                    "scored window.", required=False, range=[1, None],
+                                    example=31),
+            COL_SCORE: _field("float", "Positive-class score averaged over the fitted "
+                              "models. Its range depends on the score_range argument: "
+                              "[0, 1] on the default 'proba' scale and [0, 100] on "
+                              "'percent', which holds the same values times 100.",
+                              scale_ranges={STR_SCORE_RANGE_PROBA: [0, 1],
+                                            STR_SCORE_RANGE_PERCENT: [0, 100]},
+                              example=0.83),
+            COL_SCORE_STD: _field("float", "Standard deviation of the score across the "
+                                  "fitted models (level='sequence' and 'window'), on the "
+                                  "same scale as score.",
+                                  required=False, range=[0, None], example=0.04),
+            COL_IS_BEST: _field("bool", "level='domain': True for the highest-scoring offset "
+                                "of each protein.", required=False, example=True),
+            COL_PRED_LABEL: _field("int", "Class label from the score when a threshold is "
+                                   "given (score >= threshold is the positive label).",
+                                   required=False, example=1),
+        },
+    },
+    "df_rel": {
+        "description": (
+            "ReliabilityModel.predict output; one row per sample, one column per "
+            "reliability axis: stability (score_std, ci_*), applicability domain "
+            "(ood_score, in_domain, ad_*), score ambiguity (margin, entropy), "
+            "validity (conformal_set) and the headline flag (reliable)."),
+        "columns": {
+            COL_SCORE: _field("float", "Positive-class probability averaged over the "
+                              "ensemble members.", range=[0, 1], example=0.78),
+            COL_SCORE_STD: _field("float", "Standard deviation of the score across the "
+                                  "ensemble members.", range=[0, None], example=0.06),
+            COL_CI_LOW: _field("float", "Lower bound of the score's confidence interval.",
+                               range=[0, 1], example=0.66),
+            COL_CI_HIGH: _field("float", "Upper bound of the score's confidence interval.",
+                                range=[0, 1], example=0.88),
+            COL_OOD_SCORE: _field("float", "k-NN distance relative to the training "
+                                  "threshold (1.0 = threshold); NaN when the training "
+                                  "reference is degenerate.", nullable=True,
+                                  range=[0, None], example=0.72),
+            COL_IN_DOMAIN: _field("bool", "True if the sample lies inside the training "
+                                  "applicability domain (ood_score <= 1).", example=True),
+            COL_AD_KNN: _field("float", "Mean distance to the k nearest training samples in "
+                               "the standardized feature space.", range=[0, None],
+                               example=1.9),
+            COL_AD_MAHALANOBIS: _field("float", "Mahalanobis distance to the training "
+                                       "center; NaN when the training reference is "
+                                       "degenerate (n_features >= n_samples), where the "
+                                       "covariance is rank-deficient and the distance is "
+                                       "not identifiable.", nullable=True,
+                                       range=[0, None], example=2.4),
+            COL_AD_LEVERAGE: _field("float", "Leverage (hat value) relative to the "
+                                    "training feature space; NaN on the same degenerate "
+                                    "training reference as ad_mahalanobis.",
+                                    nullable=True, range=[0, None], example=0.05),
+            COL_SCORE_CAL: _field("float", "Calibrated positive-class probability; NaN when "
+                                  "no calibrator is available (calibration was disabled or "
+                                  "could not be fitted).",
+                                  nullable=True, range=[0, 1], example=0.74),
+            COL_MARGIN: _field("float", "Sharpness |p - 0.5| * 2 (1 = decisive, 0 = "
+                               "coin-flip), from the calibrated score when available and "
+                               "otherwise the ensemble score.", range=[0, 1], example=0.48),
+            COL_ENTROPY: _field("float", "Binary entropy of the calibrated score when "
+                                "available, otherwise the ensemble score (0 = decisive, "
+                                "1 = coin-flip).", range=[0, 1], example=0.83),
+            COL_CONFORMAL_SET: _field("str", "Split-conformal prediction set.",
+                                      allowed_values=[STR_CONF_NEG, STR_CONF_POS,
+                                                      STR_CONF_BOTH, STR_CONF_NONE],
+                                      example=STR_CONF_POS),
+            COL_RELIABLE: _field("bool", "Headline flag: in the applicability domain and a "
+                                 "conformal singleton, or margin >= 0.5 when no conformal "
+                                 "reference is available.", example=True),
+            COL_AD_STATUS: _field("str", "Banded applicability-domain verdict derived from "
+                                  "ood_score and the fitted ad_borderline band; 'unknown' "
+                                  "when the training reference is degenerate.",
+                                  allowed_values=list(LIST_AD_STATUS), example="inside"),
+            COL_AD_NEAREST_TRAIN: _field("int", "0-based row index of the closest training "
+                                         "sample in the X passed to fit.", range=[0, None],
+                                         example=12),
+        },
+    },
+    "df_eval_reliability": {
+        "description": (
+            "ReliabilityModel.eval output: one row per equal-width score bin (the "
+            "calibration curve) plus a summary row (bin='summary') holding the in-domain "
+            "fraction in mean_score, the empirical conformal coverage in empirical_pos, "
+            "and the number of evaluated samples in n_samples. With add_metrics=True, "
+            f"rows bin='{STR_BIN_BRIER}' and bin='{STR_BIN_ECE}' follow, holding the Brier "
+            "score and the expected calibration error in mean_score (empirical_pos is NaN)."),
+        "columns": {
+            COL_BIN: _field("str", f"Score-bin label, '{STR_BIN_SUMMARY}' for the summary "
+                            f"row, or '{STR_BIN_BRIER}' / '{STR_BIN_ECE}' for the optional "
+                            "calibration-metric rows.", unique=True, example="0.00-0.20"),
+            COL_MEAN_SCORE: _field("float", "Mean predicted score in the bin (summary row: "
+                                   "in-domain fraction); NaN for an empty bin.",
+                                   nullable=True, range=[0, 1], example=0.12),
+            COL_EMPIRICAL_POS: _field("float", "Empirical positive rate in the bin (summary "
+                                      "row: conformal coverage); NaN for an empty bin and "
+                                      "for the metric rows.",
+                                      nullable=True, range=[0, 1], example=0.1),
+            COL_N_SAMPLES: _field("int", "Number of samples in the bin (summary row: all "
+                                  "evaluated samples).", range=[0, None], example=18),
+        },
+    },
     # ------------------------------------------------ non-DataFrame contracts
     "X": {
         "description": (
@@ -560,6 +700,10 @@ def render_schemas_rst():
                 lo, hi = rec["range"]
                 extra.append(f"range: [{lo if lo is not None else '-inf'}, "
                              f"{hi if hi is not None else 'inf'}]")
+            if "scale_ranges" in rec:
+                shown = "; ".join(f"{name}: [{lo}, {hi}]"
+                                  for name, (lo, hi) in rec["scale_ranges"].items())
+                extra.append(f"range per score_range: {shown}")
             if "example" in rec:
                 extra.append(f"e.g. {_format_value(rec['example'])}")
             extra_str = "; ".join(extra) if extra else ""

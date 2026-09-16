@@ -20,8 +20,6 @@ import pytest
 import aaanalysis as aa
 import aaanalysis.utils as ut
 
-aa.options["verbose"] = False
-
 
 def _kind(series):
     if pdt.is_bool_dtype(series):
@@ -73,12 +71,20 @@ class TestSchemaStructure:
                 assert isinstance(rec["description"], str) and rec["description"].endswith(".")
                 if "range" in rec:
                     assert len(rec["range"]) == 2
+                if "scale_ranges" in rec:
+                    # A scale-dependent column contracts one range per scale and
+                    # must not also carry a single unconditional range.
+                    assert "range" not in rec, (frame, col)
+                    assert rec["scale_ranges"], (frame, col)
+                    for scale, rng in rec["scale_ranges"].items():
+                        assert isinstance(scale, str) and len(rng) == 2
                 if "allowed_values" in rec:
                     assert isinstance(rec["allowed_values"], list) and rec["allowed_values"]
 
     def test_expected_frames_present(self):
         for frame in ["df_seq", "df_parts", "df_scales", "df_cat", "df_subcat",
-                      "df_feat", "df_eval", "X", "prediction"]:
+                      "df_feat", "df_eval", "X", "prediction",
+                      "df_pred", "df_rel", "df_eval_reliability"]:
             assert frame in ut.DICT_DF_SCHEMAS
 
     def test_rich_df_feat_agrees_with_simple_dict(self):
@@ -164,6 +170,26 @@ class TestCrossFrameContract:
 
 
 # ------------------------------------------------------------------------- doc sync
+class TestFieldRecordGuards:
+    """The field builder rejects a contradictory range declaration, and the rendered page
+    states the per-scale range for a column whose scale changes its bounds."""
+
+    def test_range_and_scale_ranges_together_raise(self):
+        from aaanalysis import _schemas
+        with pytest.raises(ValueError, match=r"'range'.*should be None.*'scale_ranges'"):
+            _schemas._field("float", "Score.", range=[0, 1],
+                            scale_ranges={"proba": [0, 1], "percent": [0, 100]})
+
+    def test_scale_ranges_alone_is_accepted(self):
+        from aaanalysis import _schemas
+        rec = _schemas._field("float", "Score.",
+                              scale_ranges={"proba": [0, 1], "percent": [0, 100]})
+        assert rec["scale_ranges"]["percent"] == [0, 100] and "range" not in rec
+
+    def test_rendered_page_states_the_per_scale_range(self):
+        assert "range per score_range" in ut.render_schemas_rst()
+
+
 class TestDocSync:
     def test_committed_doc_matches_registry(self):
         doc = (pathlib.Path(aa.__file__).resolve().parent.parent
