@@ -1,6 +1,7 @@
 .. _release_notes:
 
 Release Notes
+=============
 
 Version 1.2
 --------------------------------
@@ -128,34 +129,6 @@ Added
   scale, ``[0, 1]`` for ``score_range='proba'`` and ``[0, 100]`` for ``'percent'``, so both
   outputs of :meth:`~aaanalysis.AAPred.predict` are checked against the same contract.
 
-Changed
-~~~~~~~
-
-- Consistency pass on the prediction and design tier. These classes are still marked
-  experimental, so the changes land without a deprecation cycle:
-
-  - :meth:`~aaanalysis.ReliabilityModel.fit`: ``ci`` is now a fraction in ``(0, 1)`` with default
-    ``0.90`` (it was a percent, ``90.0``), the same unit as :meth:`~aaanalysis.ModelEvaluator.run`
-    and :func:`~aaanalysis.comp_bootstrap_ci`. Passing a percent raises a ``ValueError`` that says
-    so.
-  - :meth:`~aaanalysis.ReliabilityModel.predict`: the ``ad_knn_dist`` column is renamed to
-    ``ad_knn``, following the ``ad_<method>`` pattern of ``ad_mahalanobis`` and ``ad_leverage``.
-  - :meth:`~aaanalysis.ReliabilityModel.eval`: the ``n`` column is renamed to ``n_samples``. The
-    shape of the table, including its summary row, is unchanged.
-  - :class:`~aaanalysis.SeqOpt`: the default ``mode`` is now ``"importance"``, which needs no
-    fitted model, reference set, or ``[pro]`` extra, so ``aa.SeqOpt()`` constructs in a base
-    install. ``mode="impact"`` remains the recommended SHAP-guided search.
-  - :meth:`~aaanalysis.AAPred.eval`: ``"mcc"`` (Matthews correlation coefficient) is accepted, so
-    ``AAPred`` and :class:`~aaanalysis.ModelEvaluator` share one metric vocabulary.
-  - The :class:`~aaanalysis.ReliabilityModel` docstring now states that its ``score_std`` is the
-    spread of a sample's score across ensemble members, whereas the ``score_std`` of
-    :meth:`~aaanalysis.AAPred.eval` and :meth:`~aaanalysis.ModelEvaluator.run` is the spread of a
-    metric across cross-validation folds.
-  - :class:`~aaanalysis.AAPred` and :class:`~aaanalysis.SeqOpt` validate ``df_scales``, and
-    :meth:`~aaanalysis.AAPred.eval` validates ``list_parts``, so an invalid value raises a
-    ``ValueError`` naming the parameter instead of failing later or being ignored.
-Added
-~~~~~
 
 - :meth:`~aaanalysis.NumericalFeature.from_pssm` makes position-specific scoring matrices (PSSMs) a
   CPP value source. It reads PSI-BLAST ASCII ``.pssm`` files (a folder, single file, or an
@@ -194,6 +167,33 @@ Added
   optional ``fastcluster`` package is not installed; with ``fastcluster``, seaborn used to
   compute the linkage internally, so exact ties between equidistant merges may now be broken
   differently.
+
+Changed
+~~~~~~~
+
+- Consistency pass on the prediction and design tier. These classes are still marked
+  experimental, so the changes land without a deprecation cycle:
+
+  - :meth:`~aaanalysis.ReliabilityModel.fit`: ``ci`` is now a fraction in ``(0, 1)`` with default
+    ``0.90`` (it was a percent, ``90.0``), the same unit as :meth:`~aaanalysis.ModelEvaluator.run`
+    and :func:`~aaanalysis.comp_bootstrap_ci`. Passing a percent raises a ``ValueError`` that says
+    so.
+  - :meth:`~aaanalysis.ReliabilityModel.predict`: the ``ad_knn_dist`` column is renamed to
+    ``ad_knn``, following the ``ad_<method>`` pattern of ``ad_mahalanobis`` and ``ad_leverage``.
+  - :meth:`~aaanalysis.ReliabilityModel.eval`: the ``n`` column is renamed to ``n_samples``. The
+    shape of the table, including its summary row, is unchanged.
+  - :class:`~aaanalysis.SeqOpt`: the default ``mode`` is now ``"importance"``, which needs no
+    fitted model, reference set, or ``[pro]`` extra, so ``aa.SeqOpt()`` constructs in a base
+    install. ``mode="impact"`` remains the recommended SHAP-guided search.
+  - :meth:`~aaanalysis.AAPred.eval`: ``"mcc"`` (Matthews correlation coefficient) is accepted, so
+    ``AAPred`` and :class:`~aaanalysis.ModelEvaluator` share one metric vocabulary.
+  - The :class:`~aaanalysis.ReliabilityModel` docstring now states that its ``score_std`` is the
+    spread of a sample's score across ensemble members, whereas the ``score_std`` of
+    :meth:`~aaanalysis.AAPred.eval` and :meth:`~aaanalysis.ModelEvaluator.run` is the spread of a
+    metric across cross-validation folds.
+  - :class:`~aaanalysis.AAPred` and :class:`~aaanalysis.SeqOpt` validate ``df_scales``, and
+    :meth:`~aaanalysis.AAPred.eval` validates ``list_parts``, so an invalid value raises a
+    ``ValueError`` naming the parameter instead of failing later or being ignored.
 
 Fixed
 ~~~~~
