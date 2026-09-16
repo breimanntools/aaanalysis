@@ -577,9 +577,14 @@ class SeqOpt(Tool):
                                      f"should be a DesignConstraints object.")
         region = check_region(region=region)
         to_aa = None if to_aa is None else check_to_aa_set(to_aa=to_aa)
-        design_constraints, region, to_aa, n_mut_max = resolve_constraints(
+        # The resolved cap keeps its own local: 'n_mut_max' is the caller's int argument, while
+        # the resolved value comes back out of the merged constraint object.
+        design_constraints, region, to_aa, n_mut_max_resolved = resolve_constraints(
             constraints=dc_arg, region=region, to_aa=to_aa, n_mut_max=n_mut_max,
             n_mut_max_default=5)
+        # resolve_constraints leaves the cap open when neither side sets one; here the argument
+        # always carries a value (validated above), so the search always has an integer cap.
+        n_mut_max_resolved = n_mut_max if n_mut_max_resolved is None else int(n_mut_max_resolved)
         if variation == ut.LIST_SEQOPT_VARIATION[1] and cx_prob + mut_prob > 1:
             raise ValueError(f"variation='or' requires cx_prob + mut_prob <= 1 "
                              f"(got {cx_prob} + {mut_prob}).")
@@ -618,10 +623,10 @@ class SeqOpt(Tool):
         # Evolve
         if algorithm == ut.LIST_SEQOPT_ALGORITHMS[1]:       # "greedy"
             res = evolve_greedy(wt_seq, positions, alphabet, goals, fitness_fn, guide_fn,
-                                n_mut_max=n_mut_max)
+                                n_mut_max=n_mut_max_resolved)
         else:                                               # "nsga2"
             res = evolve_nsga2(wt_seq, positions, alphabet, goals, fitness_fn, guide_fn, rng,
-                               pop_size=pop_size, n_gen=n_gen, n_mut_max=n_mut_max,
+                               pop_size=pop_size, n_gen=n_gen, n_mut_max=n_mut_max_resolved,
                                crossover=crossover, mutation=mutation, cx_prob=cx_prob,
                                mut_prob=mut_prob, survival=survival, variation=variation,
                                hof_size=hof_size, suggest_seeds=suggest_seeds)

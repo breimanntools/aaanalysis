@@ -3,7 +3,7 @@ This is a script for the frontend of the DesignConstraints class: the one valida
 of protein-design limits that AAMut, SeqMut and SeqOpt all consume, so a constraint set written
 for one of them can be handed to the others and every rejected candidate carries its reasons.
 """
-from typing import Optional, List, Dict, Tuple, Union, Callable, Any
+from typing import Optional, List, Dict, Tuple, Union, Callable, Any, Literal, overload
 import numpy as np
 
 import aaanalysis.utils as ut
@@ -11,6 +11,10 @@ from ._backend.design_constraints import apply_genome, comp_reasons
 
 
 # I Helper Functions
+@overload
+def check_sequence(name=None, val=None, accept_none: Literal[True] = True) -> Optional[str]: ...
+@overload
+def check_sequence(name=None, val=None, accept_none: Literal[False] = ...) -> str: ...
 def check_sequence(name=None, val=None, accept_none=True):
     """Check a protein sequence: a non-empty string of upper-case one-letter residue codes.
 
@@ -134,9 +138,13 @@ def check_match_permitted_forbidden(permitted_substitutions=None, forbidden_subs
                              f"({permitted_substitutions}) allowed.")
 
 
-def check_match_candidate_parent(candidate=None, parent=None):
-    """Check that a candidate is a same-length substitution variant of its parent."""
-    check_sequence(name="candidate", val=candidate, accept_none=False)
+def check_match_candidate_parent(candidate: str, parent: str):
+    """Check that a candidate is a same-length substitution variant of its parent.
+
+    Both arguments are required: the caller resolves the effective parent first (which raises
+    when none is available), so neither can legitimately be ``None`` here.
+    """
+    candidate = check_sequence(name="candidate", val=candidate, accept_none=False)
     if len(candidate) != len(parent):
         raise ValueError(f"'candidate' (len={len(candidate)}) should have the same length as "
                          f"'parent' (len={len(parent)}); DesignConstraints compares position by "
@@ -357,7 +365,7 @@ class DesignConstraints:
         self.max_identity = None if max_identity is None else float(max_identity)
 
     # Helper methods
-    def _resolve_parent(self, parent=None):
+    def _resolve_parent(self, parent: Optional[str] = None) -> str:
         """Return the effective parent sequence (a per-call parent overrides the stored one)."""
         if parent is not None:
             return check_sequence(name="parent", val=parent, accept_none=False)
