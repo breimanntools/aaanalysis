@@ -1527,6 +1527,7 @@ class StructurePreprocessor:
         -------
         df_out : pd.DataFrame
             A copy of ``df_seq`` with two appended columns:
+
             * ``chopping`` (str): the Merizo/ChainSaw common-format
               chopping string, or ``''`` on failure.
             * ``domain_ok`` (bool): ``True`` if the tool returned a

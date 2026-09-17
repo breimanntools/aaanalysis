@@ -573,7 +573,7 @@ DICT_DF_SCHEMAS = {
                                   "no calibrator is available (calibration was disabled or "
                                   "could not be fitted).",
                                   nullable=True, range=[0, 1], example=0.74),
-            COL_MARGIN: _field("float", "Sharpness |p - 0.5| * 2 (1 = decisive, 0 = "
+            COL_MARGIN: _field("float", "Sharpness ``|p - 0.5| * 2`` (1 = decisive, 0 = "
                                "coin-flip), from the calibrated score when available and "
                                "otherwise the ensemble score.", range=[0, 1], example=0.48),
             COL_ENTROPY: _field("float", "Binary entropy of the calibrated score when "
