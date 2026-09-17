@@ -170,6 +170,37 @@ def _refit_grid_tables(rst):
     return '\n'.join(out)
 
 
+# nbconvert renders a stream / text output of a code cell as ``.. parsed-literal::``,
+# and docutils interprets inline markup inside such a block. Raw program output is not
+# RST, so a CPP progress bar (``|.........|``) is read as a substitution reference and a
+# printed fitted attribute (``ad_threshold_ = 5.568``) as a link target, both of which
+# fail the build with "Undefined substitution referenced" / "Unknown target name".
+# Escaping the two characters that trigger it keeps the output verbatim.
+_PARSED_LITERAL = re.compile(r'^(\s*)\.\. parsed-literal::\s*$')
+_TRAILING_UNDERSCORE = re.compile(r'(?<=\w)_(?=\W|$)')
+
+
+def _escape_parsed_literals(rst):
+    """Escape the RST inline markup that raw notebook output triggers by accident."""
+    lines = rst.split('\n')
+    out, i, n = [], 0, len(lines)
+    while i < n:
+        line = lines[i]
+        out.append(line)
+        match = _PARSED_LITERAL.match(line)
+        i += 1
+        if match is None:
+            continue
+        # The block body is every following blank line plus every line indented
+        # deeper than the directive itself.
+        indent = len(match.group(1))
+        while i < n and (not lines[i].strip() or len(lines[i]) - len(lines[i].lstrip()) > indent):
+            body = lines[i].replace('|', r'\|')
+            out.append(_TRAILING_UNDERSCORE.sub(r'\_', body))
+            i += 1
+    return '\n'.join(out)
+
+
 # Helper functions
 class CustomPreprocessor(Preprocessor):
     """Class for notebook preprocessing"""
@@ -219,7 +250,7 @@ def export_tutorial_notebooks_to_rst():
             custom_preprocessor = CustomPreprocessor(notebook_name=notebook_name)
             rst_exporter = nbconvert.RSTExporter(preprocessors=[custom_preprocessor])
             output, resources = rst_exporter.from_notebook_node(notebook)
-            output = _linkify_api(output)
+            output = _escape_parsed_literals(_linkify_api(output))
             # Keep Getting-Started notebooks out of the sidebar nav (linked via :doc: instead)
             if notebook_name in ORPHAN_TUTORIALS:
                 output = ":orphan:\n\n" + output
@@ -246,7 +277,7 @@ def export_protocol_notebooks_to_rst():
             custom_preprocessor = CustomPreprocessor(notebook_name=notebook_name)
             rst_exporter = nbconvert.RSTExporter(preprocessors=[custom_preprocessor])
             output, resources = rst_exporter.from_notebook_node(notebook)
-            output = _linkify_api(output)
+            output = _escape_parsed_literals(_linkify_api(output))
             # Write the RST and any accompanying files (like images)
             writer = FilesWriter(build_directory=FOLDER_GENERATED_RST)
             writer.write(output, resources, notebook_name=filename.replace('.ipynb', ''))
@@ -270,7 +301,7 @@ def export_use_case_notebooks_to_rst():
             custom_preprocessor = CustomPreprocessor(notebook_name=notebook_name)
             rst_exporter = nbconvert.RSTExporter(preprocessors=[custom_preprocessor])
             output, resources = rst_exporter.from_notebook_node(notebook)
-            output = _linkify_api(output)
+            output = _escape_parsed_literals(_linkify_api(output))
             # Write the RST and any accompanying files (like images)
             writer = FilesWriter(build_directory=FOLDER_GENERATED_RST)
             writer.write(output, resources, notebook_name=filename.replace('.ipynb', ''))
@@ -292,6 +323,7 @@ def export_example_notebooks_to_rst():
                     custom_preprocessor = CustomPreprocessor(notebook_name=notebook_name, in_examples=True)
                     rst_exporter = nbconvert.RSTExporter(preprocessors=[custom_preprocessor])
                     output, resources = rst_exporter.from_notebook_node(notebook)
+                    output = _escape_parsed_literals(output)
                     # Write the RST and any accompanying files (like images)
                     writer = FilesWriter(build_directory=FOLDER_EXAMPLES_RST)
                     writer.write(output, resources, notebook_name=notebook_name)

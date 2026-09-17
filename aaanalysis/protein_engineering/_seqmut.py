@@ -307,7 +307,7 @@ class SeqMut:
              constraints: Optional[DesignConstraints] = None,
              ) -> pd.DataFrame:
         """
-        Run an exhaustive single-position mutational scan and rank mutations by |ΔCPP|.
+        Run an exhaustive single-position mutational scan and rank mutations by ``|ΔCPP|``.
 
         For every scannable position and every substitution, the change in the CPP feature
         vector is measured and aggregated into ``delta_cpp`` (the L1 magnitude ``Sum|ΔX|``).

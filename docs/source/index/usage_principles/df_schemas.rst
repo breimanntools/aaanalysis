@@ -1195,7 +1195,7 @@ ReliabilityModel.predict output (and ReliabilityModel.predict_candidates, which 
      - yes
      - no
      - no
-     - Sharpness |p - 0.5| * 2 (1 = decisive, 0 = coin-flip), from the calibrated score when available and otherwise the ensemble score.
+     - Sharpness ``|p - 0.5| * 2`` (1 = decisive, 0 = coin-flip), from the calibrated score when available and otherwise the ensemble score.
      - range: [0, 1]; e.g. 0.48
    * - ``entropy``
      - float
