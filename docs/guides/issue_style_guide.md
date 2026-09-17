@@ -20,7 +20,7 @@ note.
    - ❌ `Performance improvements` · `New scale selection`
 
 2. **Labels** — exactly one `prio:1|2|3`, one `topic:core|data|performance|XAI`,
-   one `type:feature|bug|dcos`.
+   one `type:feature|bug|docs`.
 
 3. **## Problem** — the gap *and why it costs something now*. Quantify the pain
    where you can (#62: "O(n_seq × n_scales × n_positions) … proteome scale …

@@ -3,9 +3,6 @@
     - Refer to 'Vision' for project aims and 'Documentation' for naming conventions.
     - This file mirrors CONTRIBUTING.rst: modify CONTRIBUTING.rst first, then update this copy.
     - Remove '/docs/source' from image paths for CONTRIBUTING_COPY.
-    - EXCEPTION — the 'Agentic Engineering' section is RTD-only and has NO counterpart in
-      CONTRIBUTING.rst (the root file drops it). When re-syncing the two files, do not delete
-      this section. It is an inline RST port of /docs/guides/agentic_engineering.md (canonical).
     Some minor doc tools
     - You can use Traffic analytics (https://docs.readthedocs.io/en/stable/analytics.html) for doc traffic.
     - Check URLs with LinkChecker (bash: linkchecker ./docs/_build/html/index.html).
