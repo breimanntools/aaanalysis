@@ -17,6 +17,11 @@ notes — with cross-references and examples — live in
 
 ### Added
 - `CPPPlot.ranking(show_ci=True)`: draws the bootstrap confidence interval of `mean_dif` as whiskers on the mean difference bars, with `ci_color` setting their color. Off by default, so existing figures are unchanged; a feature with `NaN` bounds keeps a bare bar (#16).
+- Candidate lineage: `SeqMut.combine(lineage=...)` and `SeqOpt.run(lineage=...)` attach one plain,
+  JSON-serializable record per candidate (content-hash `candidate_id`, `parent_id`, ordered
+  parent-relative `mutations`, `method`, `objective_values`, effective `seed`, constraints digest) in
+  `lineage_` and as a `candidate_id` column, and `trace_lineage` walks a chain back to its root.
+  Opt-in: default outputs are unchanged (#476).
 - `DesignConstraints`: one validated, JSON-round-trippable container for the design limits
   `AAMut`, `SeqMut` and `SeqOpt` all express -- immutable positions, a mutable span, permitted /
   forbidden substitutions (globally or per position), a mutation budget, sequence-identity bounds

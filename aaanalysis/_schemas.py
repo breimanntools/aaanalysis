@@ -38,6 +38,7 @@ from ._constants import (
     COL_POS, COL_REGION, COL_DELTA_CPP, COL_SHIFT_SCORE,
     COL_DELTA_PRED, COL_WT_PRED, COL_WT_PRED_STD, COL_VARIANT, COL_SEQ_MUT,
     COL_N_MUT, COL_N_DISRUPTIVE, COL_FRAC_DISRUPTIVE, COL_MEAN_DELTA_CPP,
+    COL_CANDIDATE_ID,
     COL_RANK, COL_GENERATION, COL_CROWDING,
     COL_HYPERVOLUME, COL_N_FRONT, COL_SPREAD,
     COL_PROTEIN_ID, COL_START, COL_STOP, COL_AA, COL_FEATURE_TYPE, COL_SOURCE,
@@ -391,6 +392,11 @@ DICT_DF_SCHEMAS = {
                                    "(percentage points) for the combined variant; "
                                    "present only with a model.", required=False,
                                    example=18.7),
+            COL_CANDIDATE_ID: _field("str", "Lineage identifier: sha256 content hash "
+                                     "over the source sequence and the candidate's "
+                                     "ordered mutations; present only when a lineage "
+                                     "record was requested.", required=False,
+                                     example="sha256:9f86d0818..."),
         },
     },
     "df_seqmut_eval": {
@@ -444,6 +450,11 @@ DICT_DF_SCHEMAS = {
             COL_SHIFT_SCORE: _field("float", "Objective: signed shift toward the "
                                     "test-class profile. Present when an objective uses "
                                     "it.", required=False, example=1.3),
+            COL_CANDIDATE_ID: _field("str", "Lineage identifier: sha256 content hash "
+                                     "over the source sequence and the candidate's "
+                                     "ordered mutations; present only when a lineage "
+                                     "record was requested.", required=False,
+                                     example="sha256:9f86d0818..."),
         },
     },
     "df_seqopt_eval": {

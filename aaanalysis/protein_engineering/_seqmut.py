@@ -2,7 +2,7 @@
 This is a script for the frontend of the SeqMut class for CPP-guided sequence mutation and
 ΔCPP / model prediction-shift analysis.
 """
-from typing import Optional, List, Union, Any
+from typing import Optional, List, Union, Any, Dict
 import pandas as pd
 
 import aaanalysis.utils as ut
@@ -12,6 +12,9 @@ from ._backend.design_constraints import filter_scan_plan
 from ._backend.seqmut.seqmut import (build_scan_plan, comp_feature_matrices, comp_scan_scores,
                                      comp_pred_scores, comp_seq_scores, build_scan_output,
                                      eval_disruptive, classify_region)
+from ._candidate_lineage import (resolve_lineage, check_lineage, build_lineage,
+                                 check_match_lineage_candidate_id, check_match_parent_source)
+from ._backend.candidate_lineage import trace_records
 
 
 # I Helper Functions
@@ -185,6 +188,8 @@ class SeqMut:
         self._sf = SequenceFeature(verbose=False)
         self._model = check_model(model=model)
         self._target_class = check_target_class(model=self._model, target_class=target_class)
+        # Set by combine(lineage=...): one plain, JSON-serializable record per candidate.
+        self.lineage_: Optional[List[Dict[str, Any]]] = None
 
     # Helper methods
     def _delta_table(self, df_plan=None, df_seq=None, df_feat=None, jmd_n_len=10, jmd_c_len=10,
@@ -532,6 +537,7 @@ class SeqMut:
                 jmd_n_len: int = 10,
                 jmd_c_len: int = 10,
                 constraints: Optional[DesignConstraints] = None,
+                lineage: Union[bool, Dict[str, Any]] = False,
                 ) -> pd.DataFrame:
         """
         Score combined (multi-mutation) variants by applying their mutations together.
@@ -568,6 +574,21 @@ class SeqMut:
             (default) applies no limit and appends no column.
 
             .. versionadded:: 1.2.0
+        lineage : bool or dict, default=False
+            Opt in to the candidate-lineage record: the thin, JSON-serializable record of how
+            each candidate was made (its content-hash ``candidate_id``, its parent, the ordered
+            parent-relative mutations, the generating method, the objective values, the
+            effective seed, and a digest of the applied ``constraints``). ``False`` (default)
+            builds nothing and leaves the returned table exactly as documented above. ``True``
+            builds one record per scored variant, treating the ``df_seq`` sequence as the root
+            of the chain. Passing a **lineage record** (one element of a previous
+            ``SeqMut.lineage_`` or ``SeqOpt.lineage_``) opts in *and* declares that parent: its
+            ``candidate_id`` becomes the ``parent_id`` of every record built here, which is how
+            the rounds of a multi-generation design chain up. When opted in, the records are
+            stored in ``SeqMut.lineage_``, row-aligned with the returned table, and the
+            ``candidate_id`` column is appended.
+
+            .. versionadded:: 1.2.0
 
         Returns
         -------
@@ -576,15 +597,22 @@ class SeqMut:
             mutations, e.g. ``"R20K+K27P"``), ``n_mut``, ``sequence_mut``, ``delta_cpp`` and
             ``shift_score`` — plus ``delta_pred`` when a model is bound — sorted by descending
             ``delta_pred`` (model) or ``shift_score`` (model-free). When ``constraints`` is given,
-            the ``is_feasible`` and ``reasons`` columns are appended.
+            the ``is_feasible`` and ``reasons`` columns are appended, and when ``lineage`` is
+            opted in, the ``candidate_id`` column is appended.
 
         Raises
         ------
         ValueError
             If ``df_seq`` is not in the position-based format, if ``variants`` does not match it
             (unknown entry, out-of-range position, non-canonical ``to_aa``, or two mutations of
-            one variant at the same position), if ``df_feat`` does not match the bound model, or
-            if ``constraints`` is not a :class:`DesignConstraints` object.
+            one variant at the same position), if ``df_feat`` does not match the bound model,
+            if ``constraints`` is not a :class:`DesignConstraints` object, or if ``lineage`` is
+            neither a bool nor a lineage record (or names a parent while variants of several
+            sequences are scored).
+
+        See Also
+        --------
+        * :meth:`SeqMut.trace_lineage`: which walks the records back to their root.
 
         Examples
         --------
@@ -596,6 +624,7 @@ class SeqMut:
         check_match_model_df_feat(model=self._model, df_feat=df_feat)
         list_from = check_match_variants_df_seq(variants=variants, df_seq=df_seq)
         constraints = check_constraints(name="constraints", val=constraints)
+        with_lineage, parent_record = resolve_lineage(lineage=lineage)
         ut.check_number_range(name="jmd_n_len", val=jmd_n_len, min_val=0, just_int=True)
         ut.check_number_range(name="jmd_c_len", val=jmd_c_len, min_val=0, just_int=True)
         # Build one combined sequence per (entry, variant)
@@ -640,4 +669,76 @@ class SeqMut:
             df_variant[ut.COL_IS_FEASIBLE] = list_ok
             df_variant[ut.COL_REASONS] = list_reasons
         df_variant = df_variant.sort_values(rank_col, ascending=False).reset_index(drop=True)
+        if with_lineage:
+            # Built after the sort, so the records are row-aligned with the returned table.
+            cols_obj = [col for col in [ut.COL_DELTA_CPP, ut.COL_SHIFT_SCORE, ut.COL_DELTA_PRED]
+                        if col in df_variant.columns]
+            list_source_seq = [seq_by_entry[entry] for entry in df_variant[ut.COL_ENTRY]]
+            check_match_parent_source(parent=parent_record, list_source_seq=list_source_seq)
+            self.lineage_ = build_lineage(
+                list_source_seq=list_source_seq,
+                list_candidate_seq=list(df_variant[ut.COL_SEQ_MUT]),
+                method="SeqMut.combine",
+                list_objective_values=df_variant[cols_obj].to_dict(orient="records"),
+                seed=ut.check_random_state(random_state=None),
+                spec=None if constraints is None else constraints.to_dict(),
+                parent=parent_record)
+            df_variant[ut.COL_CANDIDATE_ID] = [record["candidate_id"]
+                                               for record in self.lineage_]
         return df_variant
+
+    @staticmethod
+    def trace_lineage(lineage: List[Dict[str, Any]],
+                      candidate_id: str,
+                      ) -> List[Dict[str, Any]]:
+        """
+        Reconstruct the chain of lineage records that leads to one candidate.
+
+        A design campaign is a chain: a candidate of one round becomes the parent of the next,
+        and each record names its parent by content hash. This walks those links backwards from
+        ``candidate_id`` to the root the export still contains, so the full parent-to-candidate
+        path is recovered from the records alone -- including after a JSON round trip, and
+        including records that came from different runs or different classes.
+
+        Parameters
+        ----------
+        lineage : list of dict
+            Lineage records collected over one or more design rounds, as produced by
+            :meth:`SeqMut.combine` or :meth:`SeqOpt.run` with ``lineage`` opted in (read from
+            ``SeqMut.lineage_`` / ``SeqOpt.lineage_``, or reloaded from JSON). Records of
+            unrelated candidates may be present; only the traced chain is returned.
+        candidate_id : str
+            Identifier of the candidate to trace, as found in the ``candidate_id`` column of the
+            returned table or in the ``candidate_id`` field of a record.
+
+        Returns
+        -------
+        list_lineage : list of dict
+            The records from the root ancestor to ``candidate_id``, root first, so concatenating
+            their ``mutations`` replays the design from the root sequence to the candidate. The
+            chain holds one record when the candidate descends directly from its source.
+
+        Raises
+        ------
+        ValueError
+            If ``lineage`` is not a non-empty list of lineage records, or if ``candidate_id`` is
+            not the identifier of one of them.
+        RuntimeError
+            If the records are cyclic, so a candidate would be its own ancestor.
+
+        See Also
+        --------
+        * :meth:`SeqMut.combine`: whose ``lineage`` parameter produces the records.
+        * :meth:`SeqOpt.trace_lineage`: the same tracer on the optimizer.
+
+        .. versionadded:: 1.2.0
+
+        Examples
+        --------
+        .. include:: examples/seqm_trace_lineage.rst
+        """
+        # Validate
+        lineage = check_lineage(name="lineage", val=lineage)
+        check_match_lineage_candidate_id(lineage=lineage, candidate_id=candidate_id)
+        # Walk the parent links back to the root of the exported chain
+        return trace_records(lineage=lineage, candidate_id=candidate_id)

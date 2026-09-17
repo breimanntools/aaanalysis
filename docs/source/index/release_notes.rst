@@ -17,6 +17,11 @@ between minor releases without the usual deprecation cycle. The
 
 Added
 ~~~~~
+- **Candidate lineage**: ``lineage=`` on :meth:`~aaanalysis.SeqMut.combine` and
+  :meth:`~aaanalysis.SeqOpt.run` attaches one opt-in, JSON-serializable record per candidate
+  (content-hash ``candidate_id``, parent, ordered parent-relative mutations, method, objective
+  values, effective seed, constraints digest); ``trace_lineage`` walks a chain of records back to
+  its root, so a multi-round design replays exactly. Default outputs are unchanged.
 - :class:`~aaanalysis.DesignConstraints`: one validated container for the design limits that
   :class:`~aaanalysis.AAMut`, :class:`~aaanalysis.SeqMut` and :class:`~aaanalysis.SeqOpt` all
   express — immutable and mutable positions, permitted and forbidden substitutions, a mutation
