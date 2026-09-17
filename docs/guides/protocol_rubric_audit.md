@@ -1,4 +1,4 @@
-# Protocol rubric audit: P6, P9, P10
+# Protocol rubric audit: P2, P3, P6, P9, P10
 
 The recorded audit of protocols **P6 (compositional vs positional)**, **P9
 (interpretability)** and **P10 (validation)** against
@@ -22,6 +22,9 @@ committed notebook, and every one marked **closed** was fixed in the same change
 | **P6** Compositional vs positional | partial | **fail** | partial | **fail** | **FAIL** |
 | **P9** Interpretability | partial | **fail** | partial | **fail** | **FAIL** |
 | **P10** Validation | partial | partial | partial | partial | **FAIL** |
+
+P2 and P3 were audited later and are recorded separately in [§7](#7-p2-and-p3-audited-after-the-fact),
+because they entered that audit already passing.
 
 None of the three passed on entry. The most serious single finding is in P6 and is
 not a teaching-depth issue at all: the notebook asserted that a CPP strategy switch
@@ -319,6 +322,140 @@ should be refreshed together on one machine.
 | **P6** | pass | pass | pass | pass | **PASS** |
 | **P9** | pass | pass | pass | pass | **PASS** |
 | **P10** | pass | pass | pass | pass | **PASS** |
+
+## 7. P2 and P3: audited after the fact
+
+P2 and P3 never received epic children, so they were audited last, at
+`origin/master` = `64a0cdef`. They are the only two protocols that **entered the audit
+already passing**, and the reason is on the record: the gap-closing work the other
+protocols received in their audit had already shipped for these two, in
+
+- `bd5a87cc` docs(protocols): bring P2 sequence analysis and P3 sampling to the protocol rubric
+- `675657e5` docs(protocols): address review findings on the P2/P3 rubric pass
+- `a416a53a` docs(protocols): contrast motif-matched sampling with a figure
+- `27b9a387` docs(protocols): correct the claims about sampling anchors and loader behaviour
+
+What was missing was the audit **record**, not the work. This section is that record.
+**No notebook was changed by it**, which is the correct outcome: adding a further figure
+to a protocol that already shows every concept it names would be decoration, and the
+rubric asks for concept contrast, not a figure quota.
+
+### Verdict
+
+| Protocol | §1 Concept contrast | §2 Public surface | §3 Skeleton | §4 Mechanics | Entry verdict | Exit verdict |
+|---|---|---|---|---|---|---|
+| **P2** Exploratory sequence analysis | pass | pass | pass | pass | **PASS** | **PASS** (unchanged) |
+| **P3** Sampling | pass | pass | pass | pass | **PASS** | **PASS** (unchanged) |
+
+### P2: Exploratory sequence analysis
+
+**§1 Concept-contrast visualizations: pass.** Six figures, and every concept the prose
+names is one of them, each drawn against its alternative:
+
+| Concept | Shown? | Contrast |
+|---|---|---|
+| composition per position | yes, the pooled probability logo (gallery image) | reference view |
+| composition vs conservation | yes, the information logo | same set, letters scaled to bits |
+| signal vs chance | yes, real vs shuffled conservation bars | same residues, order destroyed |
+| the chance floor depends on set size | yes, bits vs number of sequences | real against its shuffled twin, `n` = 6 to 126 |
+| one pooled set vs two groups | yes, substrate vs non-substrate logos | same parts, split by `label` |
+| a first two-group look by sampling | yes, the window logos | two sampling strategies |
+
+The *Key mental model* makes three claims (letter height is composition, the gray bar is
+conservation; conservation needs a baseline; a pooled logo describes rather than
+compares) and each has its own figure. There is no concept left asserted in prose only,
+so no figure was added.
+
+**§2 Full public-surface coverage: pass.** Twelve demonstrated call sites, every public
+parameter passed by name: `load_dataset` 8/8, `SequenceFeature.get_df_parts` 8/8,
+`AALogo` 1/1, `get_df_logo` 7/7, `get_df_logo_info` 7/7, `get_conservation` 2/2,
+`AALogoPlot` 4/4, `single_logo` 33/33, `multi_logo` 29/29, `AAWindowSampler` 7/7,
+`sample_same_protein` 17/17, `sample_different_protein` 16/16.
+
+**§3 Narrative skeleton: pass.** Seven bold lead-in fields, in order, with the *Key
+mental model* ahead of any API. Both cross-references (*P1: CPP signature*,
+*P3: Sampling*) match the target protocols' actual H1 titles, so the stale-reference
+defect found in P6, P9 and P10 does not occur here.
+
+**§4 Presentation mechanics: pass.** All 6 `display_df` calls pass `n_rows` **and**
+`show_shape=True`; every plot cell ends `plt.tight_layout()` then `plt.show()`; 6
+committed `image/png` outputs; no cell with `output_type == "error"`; no code cell with
+a null `execution_count`; kernelspec `python3`; no em dashes.
+
+**§2b Source-verified API: pass.** Each checkable claim was read off the shipped
+signature or behaviour rather than trusted: the default parts of `get_df_parts`
+(`tmd` / `jmd_n_tmd_n` / `tmd_c_jmd_c`), `tmd_len` applying to the anchor-based `df_seq`
+format only, `aa_window_size` applying to the residue-level `AA_*` datasets only, and
+`get_conservation` accepting `min` / `mean` / `median` / `max`. The quantitative claim in
+*How to interpret* ("the TMD rises well above its shuffled twin, mean 1.37 vs 0.62 bits")
+matches the committed output of the region table exactly. `4.32` bits for a
+fully-conserved residue is `log2(20)`.
+
+### P3: Sampling
+
+**§1 Concept-contrast visualizations: pass.** Five figures, one per sampling choice, and
+each holds the proteins and `n` fixed so the only difference is the choice being taught:
+
+| Concept | Shown? | Contrast |
+|---|---|---|
+| the assembled reference set | yes, windows on substrate proteins + role composition (gallery image) | test windows against sampled negatives |
+| the distance band | yes, distance to nearest positive | no band vs non-overlapping vs neighbourhood |
+| where the reference comes from | yes, composition heatmap + distance table | test composition against five candidate references |
+| motif-matched lookalikes | yes, score distribution + per-position PWM contribution | test vs `motif_matched` vs the pool it is drawn from |
+| anti-leakage and redundancy filters | yes, identity strips | same seed, filters off vs on |
+
+This is the protocol's thesis (an unfairly drawn reference measures your sampling rather
+than the biology) shown five separate ways, so again nothing is left asserted in prose
+alone.
+
+**§2 Full public-surface coverage: pass.** Nine demonstrated call sites, complete:
+`AAWindowSampler` 7/7, `sample_same_protein` 17/17, `sample_different_protein` 16/16,
+`sample_motif_matched` 14/14, `sample_synthetic` 8/8, `sample_benchmark_set` 3/3,
+`SequencePreprocessor.get_aa_window` 7/7, `AALogo` 1/1, `get_df_logo` 7/7.
+
+**§3 Narrative skeleton: pass.** Seven fields, in order, *Key mental model* first. Both
+cross-references (*P1: CPP signature*, *P4: Prediction levels*) resolve to the right
+protocols.
+
+**§4 Presentation mechanics: pass.** All 13 `display_df` calls carry `n_rows` and
+`show_shape=True`; every plot cell ends `plt.tight_layout()` then `plt.show()`; 5
+committed figures; zero error outputs; zero null execution counts; kernelspec `python3`.
+
+**§2b Source-verified API: pass, and this is the part worth recording.** P6's audit found
+a protocol asserting that a shipped parameter did not exist, so every checkable claim in
+P3 was re-verified against the running package rather than read for plausibility. All of
+them hold:
+
+- **Window geometry.** The protocol says a window starts `(window_size - 1) // 2`
+  residues upstream of its P1 anchor, and both the `source_position` column and the
+  gallery figure depend on it. Re-deriving each sampled window from its
+  `source_position` with `get_aa_window` reproduces the sampler's own `window` string
+  exactly, so the figure places its bars where the residues actually are.
+- **`sample_motif_matched` scans only rows with no positives**, as claimed: the backend
+  builds its candidate pool from the non-positive rows.
+- **Synthetic rows** carry `entry=""`, `source_position=-1` and a per-call
+  `entry_win="synth_{i}"`, which is what makes the notebook's dedupe warning correct.
+- **Per-arm sub-seeds** of `sample_benchmark_set` are derived deterministically from the
+  master seed via `numpy.random.SeedSequence`.
+- **`aa.options["random_state"]`** is a real option key, not an invented one.
+- **`AA_CASPASE3` is already windowed** (9-mers), the claim the *Input* section uses to
+  justify building a toy full-sequence `df_seq` instead.
+- The five sampler methods share one 8-column `segments` schema, and the pool arithmetic
+  in *Common mistakes* (3 non-substrate proteins x 42 admissible 8-mers = 126) is right.
+
+**One cosmetic inconsistency, left alone.** The same convention is written
+`Schechter–Berger` (en dash) in *When to use it* and `Schechter-Berger` (hyphen) in the
+motif figure's lead-in. Neither is an em dash, so no house rule is broken, and changing a
+markdown cell would mean re-executing a notebook that has no defect. Recorded here rather
+than fixed.
+
+### Thumbnails, again
+
+Not regenerated, for the reason established earlier in this document: re-execution alone
+shifts tiles for environmental reasons, and refreshing 2 of 10 gallery tiles would buy a
+visible inconsistency across the gallery in exchange for nothing. Neither notebook was
+re-executed for content here at all. Both were run under `nbmake` to confirm they still
+execute green, which validates them without touching the committed outputs.
 
 ## See also
 
