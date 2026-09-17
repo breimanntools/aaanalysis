@@ -196,6 +196,9 @@ notes — with cross-references and examples — live in
   name, and `display_df(..., show_shape=True)` throughout. P6 no longer claims that
   `get_split_kws` has no `strategy` switch, which stopped being true when the compositional /
   positional presets shipped. Three stale protocol cross-references corrected.
+- Protocols P2 (exploratory sequence analysis) and P3 (sampling) audited against the same
+  rubric and recorded in `docs/guides/protocol_rubric_audit.md`; both already satisfied it,
+  so neither notebook changed.
 
 ### Tests
 - `aaanalysis.pipe` contract suite: `predict_samples` defaults pinned byte-identical to the

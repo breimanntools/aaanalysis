@@ -143,6 +143,8 @@ Documentation
   :class:`~aaanalysis.ModelEvaluator` and :class:`~aaanalysis.AAPredPlot` call passes its public
   parameters by name, and *P6* documents the ``strategy`` presets of
   :meth:`~aaanalysis.SequenceFeature.get_split_kws` instead of stating that no such switch exists.
+- Protocols *P2: Exploratory sequence analysis* and *P3: Sampling* audited against the same rubric,
+  with the result recorded under ``docs/guides/``: both already met it, so neither notebook changed.
 - :meth:`~aaanalysis.CPP.run`: the ``n_sample_batches`` documentation no longer claims that peak
   memory is bounded by the batch size. Measurements show it bounds the dominant per-batch tensor
   while the survivor matrix stays resident, so peak memory still grows with the sample count, on a
