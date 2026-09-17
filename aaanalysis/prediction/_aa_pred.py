@@ -61,8 +61,6 @@ def check_coverages(coverages=None):
     for i, coverage in enumerate(coverages):
         ut.check_number_range(name=f"coverages[{i}]", val=coverage, min_val=0, max_val=1,
                               just_int=False)
-        if not np.isfinite(float(coverage)):
-            raise ValueError(f"'coverages[{i}]' ({coverage}) should be a finite number in (0, 1].")
         if float(coverage) == 0:
             raise ValueError(f"'coverages[{i}]' ({coverage}) should be greater than 0; every "
                              f"coverage level retains at least one sample.")
