@@ -326,7 +326,7 @@ class TestFit:
         # House message format: the supplied value first, then the requirement.
         Xtr, ytr, _ = _data()
         with pytest.raises(ValueError,
-                           match=r"'ad_borderline' \(inf\) should be a finite number >= 0"):
+                           match=r"'ad_borderline' \(inf\) should be a finite float or an integer"):
             aa.ReliabilityModel().fit(Xtr, ytr, ad_borderline=np.inf)
 
     def test_ad_borderline_bool_message(self):

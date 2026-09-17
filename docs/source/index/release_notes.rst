@@ -97,6 +97,9 @@ Changed
 
 Fixed
 ~~~~~
+- **Non-finite parameters**: every numeric parameter is checked for finiteness in the shared
+  validator, so ``float("nan")``, ``inf`` and ``-inf`` raise a ``ValueError`` naming the parameter
+  instead of passing the range test and producing a ``NaN`` result several layers below the call.
 - :meth:`~aaanalysis.ReliabilityModel.fit` rejects non-finite values for ``ci``,
   ``ad_percentile`` and ``conformal_alpha``. A ``NaN`` passed both range comparisons silently and
   produced ``NaN`` interval columns.

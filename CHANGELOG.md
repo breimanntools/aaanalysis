@@ -140,6 +140,9 @@ notes — with cross-references and examples — live in
   (Addresses #391)
 
 ### Fixed
+- Numeric parameters reject non-finite values package-wide: `NaN`, `inf` and `-inf` raise a
+  `ValueError` naming the parameter in the shared range validator, where a `NaN` previously
+  passed every range comparison and surfaced later as an empty selection or a `NaN` score (#545).
 - `ReliabilityModel.fit`: non-finite numbers (`NaN`, `inf`, `-inf`) are rejected for `ci`,
   `ad_percentile` and `conformal_alpha`. `NaN` passed both range comparisons silently
   (`nan < 0` and `nan > 1` are each `False`), so `fit(ci=float("nan"))` was accepted and

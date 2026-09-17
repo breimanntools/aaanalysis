@@ -10,6 +10,20 @@ from .utils_types import VALID_INT_TYPES, VALID_INT_FLOAT_TYPES
 
 
 # Type checking functions
+def _check_finite(name=None, val=None, just_int=False, str_add=None):
+    """Check that a numeric value is finite (reject ``NaN`` and +/-infinity)
+
+    A non-finite float passes every range comparison silently (``nan < 0`` and ``nan > 1`` are
+    both ``False``), so it would slip through a range check and only surface much later as a
+    ``NaN`` output, empty selection, or all-``False`` mask far from the parameter that caused it.
+    """
+    if isinstance(val, (float, np.floating)) and not np.isfinite(val):
+        type_description = "a finite integer" if just_int else "a finite float or an integer"
+        str_error = add_str(str_error=f"'{name}' ({val}) should be {type_description}.",
+                            str_add=str_add)
+        raise ValueError(str_error)
+
+
 def check_number_val(name=None, val=None, accept_none=False, just_int=False, str_add=None):
     """Check if value is a valid integer or float"""
     if val is None:
@@ -26,6 +40,7 @@ def check_number_val(name=None, val=None, accept_none=False, just_int=False, str
         str_error = add_str(str_error=f"'{name}' should be {type_description}, but got {type(val).__name__}.",
                             str_add=str_add)
         raise ValueError(str_error)
+    _check_finite(name=name, val=val, just_int=just_int, str_add=str_add)
 
 
 def check_number_range(name=None, val=None, min_val: Union[int, float] = 0,
@@ -47,6 +62,7 @@ def check_number_range(name=None, val=None, min_val: Union[int, float] = 0,
         str_error = add_str(str_error=f"'{name}' should be {type_description}, but got {type(val).__name__}.",
                             str_add=str_add)
         raise ValueError(str_error)
+    _check_finite(name=name, val=val, just_int=just_int, str_add=str_add)
     # Min and max values are excluded from allowed values
     if exclusive_limits:
         if val <= min_val or (max_val is not None and val >= max_val):
