@@ -834,9 +834,6 @@ class ShapModel(Wrapper):
 
         .. versionadded:: 0.1.0
 
-        .. versionchanged:: 1.2.0
-           Added ``X_ref`` for an explicit external reference group; ``labels`` is now optional.
-
         Parameters
         ----------
         X : array-like, shape (n_samples, n_features)
@@ -875,9 +872,10 @@ class ShapModel(Wrapper):
             Deprecated alias for ``samples`` (removed in 1.2.0).
         X_ref : array-like, shape (n_ref_samples, n_features), optional
             External reference feature matrix. When given, the reference group average (MEAN_REF) is
-            ``X_ref.mean(axis=0)`` and ``labels`` / ``label_ref`` are not needed — use this to explain
-            each sample against a *separate* population (e.g. an ``others`` set not contained in ``X``),
-            avoiding the manual concatenation of samples and reference rows into one labelled matrix.
+            ``X_ref.mean(axis=0)`` and ``labels`` / ``label_ref`` are not needed: use it to explain
+            each sample against a *separate* population, e.g. an ``others`` set not contained in ``X``.
+
+            .. versionadded:: 1.2.0
 
         Returns
         -------

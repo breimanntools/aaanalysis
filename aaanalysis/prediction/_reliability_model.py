@@ -148,52 +148,29 @@ def build_df_seq_candidates(df_cand: pd.DataFrame, df_seq: pd.DataFrame,
 # II Main Functions
 class ReliabilityModel(Wrapper):
     """
-    Assess **how much to trust** each prediction — the reliability of a score, not the score itself.
+    Assess **how much to trust** each prediction: the reliability of a score, not the score itself.
 
-    A high score is not the same as a trustworthy one: a model can be right to call a case a
-    ``0.55`` toss-up, and badly wrong to call an input it has never seen a ``1.0``. Reporting only
-    the score hides this. ``ReliabilityModel`` returns the score **together with** the answer to
-    **three plain questions** — the categories that decide trust:
+    A high score is not the same as a trustworthy one. A model can be right to call a case a
+    ``0.55`` toss-up, and badly wrong to call a protein it has never seen a ``1.0``. Alongside the
+    score, this class answers the three questions that decide trust:
 
-    1. **Has the model seen anything like this before?** If the input is unlike the training data,
-       the model is guessing, and the score cannot be trusted no matter how high it is. *(the
-       "applicability domain" — ``ood_score`` / ``in_domain``.)*
-    2. **Do repeated models agree?** If an ensemble, or the same model refit on resampled data,
-       disagree, the score is shaky. *(stability — ``score_std``, ``ci_low`` / ``ci_high``.)*
-    3. **Is the case clear-cut, or a genuine toss-up?** Even a familiar, agreed-on case can be a
-       real 50/50; a well-calibrated score near ``0.5`` means "honestly borderline," not "broken."
-       *(decisiveness — ``margin`` / ``entropy``; the conformal set can also **abstain**.)*
+    1. **Has the model seen anything like this before?** An input unlike the training data leaves
+       the model guessing, however high its score (applicability domain: ``ood_score``,
+       ``in_domain``, ``ad_status``).
+    2. **Do repeated models agree?** A score the ensemble members, or refits on resampled data,
+       disagree about is shaky (stability: ``score_std``, ``ci_low`` / ``ci_high``).
+    3. **Is the case clear-cut, or a genuine toss-up?** A well-calibrated score near ``0.5`` means
+       "honestly borderline", not "broken" (decisiveness: ``margin``, ``entropy``, and a conformal
+       set that may abstain).
 
-    So the two classic failures separate cleanly:
+    The headline flag ``reliable`` combines the first and the last: familiar **and** decisive. The
+    class wraps an already-fitted binary predictor (an :class:`AAPred`, a
+    :class:`~aaanalysis.TreeModel`, or any scikit-learn classifier) together with its training
+    data; the prediction itself stays with the model.
 
-    .. list-table::
-       :header-rows: 1
-       :widths: 32 22 22 38
-
-       * - case
-         - seen before?
-         - clear-cut?
-         - verdict
-       * - confident about ``0.55``
-         - yes
-         - no (real toss-up)
-         - trust it *as* "borderline"
-       * - worthless about ``1.0``
-         - no (out-of-distribution)
-         - --
-         - do **not** trust, at any score
-
-    The headline flag ``reliable`` = **familiar and decisive** (``in_domain`` and a confident
-    conformal singleton, or ``margin >= 0.5`` when no conformal reference is available). It wraps
-    an already-fitted binary predictor (an :class:`AAPred`, a :class:`~aaanalysis.TreeModel`, or
-    any scikit-learn classifier) plus its training data and adds nothing but reliability — the
-    prediction itself stays with the model.
-
-    In uncertainty-quantification terms, questions 1-2 are **epistemic** uncertainty (the model's
-    reducible lack of knowledge) and question 3 is **aleatoric** uncertainty (irreducible ambiguity
-    in the data) [Huellermeier21]_. The applicability domain follows the QSAR idea [Sahigara12]_
-    (features here are a descriptor space), calibration follows [Guo17]_ (a raw ``predict_proba`` is
-    not a confidence until calibrated), and the conformal set follows [Angelopoulos23]_.
+    Questions 1-2 concern epistemic uncertainty, question 3 aleatoric uncertainty
+    [Huellermeier21]_. The applicability domain follows the QSAR idea [Sahigara12]_, calibration
+    follows [Guo17]_, and the conformal set follows [Angelopoulos23]_.
 
     .. warning::
 
@@ -203,43 +180,21 @@ class ReliabilityModel(Wrapper):
 
     .. versionadded:: 1.1.0
 
-    .. versionchanged:: 1.2.0
-       Adds a banded applicability-domain verdict and exposes the fitted k-nearest-neighbor
-       boundary and its decision rule.
-
     Notes
     -----
-    * **Scope.** Binary classification only. ``ad_mahalanobis`` / ``ad_leverage`` are auxiliary
-      diagnostics that need more training samples than features (they are ``NaN`` otherwise); the
-      ``in_domain`` decision uses the robust k-NN distance and is always valid.
-    * **``score`` is the member mean** — the ensemble average, or the bootstrap ("bagged") average
-      for a single model — so it is always the centre of ``[ci_low, ci_high]``. Set ``n_bootstrap=0``
-      to report a single model's own probability instead (then ``score_std`` is 0).
-    * **``score_std`` is a per-sample spread across members.** Here it is the standard deviation of
-      one sample's probability across the ensemble members (or bootstrap resamples). The
-      same-named column in :meth:`AAPred.eval` and :meth:`ModelEvaluator.run` means something
-      different: the standard deviation of a metric across cross-validation folds.
-    * **``reliable`` is conformal-based** (``in_domain`` and a confident conformal singleton)
-      when a conformal reference is available; otherwise it uses ``in_domain`` and
-      ``margin >= 0.5``. ``margin`` / ``entropy`` can therefore disagree with it on a borderline
-      case.
-    * **Calibration** affects ``score_calibrated`` / ``margin`` / ``entropy`` only; when no
-      calibrator is available, the latter two use ``score``. ``score`` stays the reported model
-      score. Raw scoring is the **default** everywhere: :meth:`eval` bins
-      ``score`` and :meth:`ReliabilityModelPlot.reliability_diagram` draws that curve, whereas
-      ``eval(use_calibrated=True)`` returns the calibrated table, from which the same method draws
-      the calibrated curve (both can share one ``ax``). If ``calibrate=True`` but no calibrator can
-      be fitted (e.g. a class with a single member, or a model that cannot be cloned), :meth:`fit`
-      warns, ``score_calibrated`` is ``NaN``, and ``eval(use_calibrated=True)`` raises naming that
-      reason. For a passed ensemble, the calibrator and conformal reference are built from its
-      first member.
-    * **Reproducibility.** The bootstrap, calibration split, and conformal split are stochastic —
-      set ``random_state`` for identical output across fits.
-    * **Banded domain verdict.** ``ad_status`` refines the bool ``in_domain`` into ``inside``
-      (``ood_score <= 1``), ``borderline`` (``1 < ood_score <= 1 + ad_borderline``), ``outside``
-      (above the band), and ``unknown`` (the training reference has no usable spread, so
-      ``ood_score`` is ``NaN``). ``in_domain`` always equals ``ad_status == "inside"``.
-    * All fitted-state attributes carry a trailing underscore and are set by :meth:`fit`.
+    * Binary classification only. ``ad_mahalanobis`` and ``ad_leverage`` are auxiliary diagnostics
+      that need more training samples than features and are ``NaN`` otherwise; the ``in_domain``
+      decision rests on the k-nearest-neighbor distance and is always valid.
+    * ``score`` is the mean over the ensemble members, or over the bootstrap resamples of a single
+      model, so it is always the centre of ``[ci_low, ci_high]``. ``score_std`` is one sample's
+      spread across those members. The same-named column of :meth:`AAPred.eval` and
+      :meth:`ModelEvaluator.run` means something else: the spread of a metric across folds.
+    * Calibration affects ``score_calibrated``, ``margin``, and ``entropy`` only. ``score`` stays
+      the raw model score, and it is what :meth:`eval` and
+      :meth:`ReliabilityModelPlot.reliability_diagram` report unless the calibrated score is asked
+      for.
+    * The bootstrap, calibration split, and conformal split are stochastic; set ``random_state``
+      for identical output across fits.
 
     Attributes
     ----------
@@ -248,14 +203,12 @@ class ReliabilityModel(Wrapper):
     label_pos_ : int
         Positive-class label whose probability is scored.
     ad_threshold_ : float
-        Applicability-domain boundary: the ``ad_percentile``-th percentile of the training
-        samples' mean distance to their ``k`` nearest other training samples (standardized
-        feature space). ``ood_score`` is ``ad_knn / ad_threshold_``, so ``ood_score == 1`` is the
-        boundary. A non-positive value marks a degenerate reference (``ad_status='unknown'``).
+        Applicability-domain boundary: the ``ad_percentile``-th percentile of the training samples'
+        distance to their ``k`` nearest neighbors, so ``ood_score == 1`` sits on the boundary.
 
         .. versionadded:: 1.2.0
     ad_method_ : str
-        Decision rule behind ``ood_score`` / ``in_domain`` / ``ad_status``; always ``"knn"``.
+        Decision rule behind ``ood_score`` and ``in_domain``; always ``"knn"``.
 
         .. versionadded:: 1.2.0
 
@@ -319,13 +272,9 @@ class ReliabilityModel(Wrapper):
         """
         Fit the reliability reference from a (fitted or default) model and its training data.
 
-        Learns, **once**, everything :meth:`predict` needs: the applicability-domain reference,
-        the ensemble / bootstrap source of uncertainty, an optional probability calibrator, and
-        the split-conformal calibration.
-
-        .. versionchanged:: 1.2.0
-           When calibration was requested but cannot be fitted, emit a ``UserWarning`` and record
-           why calibrated evaluation is unavailable.
+        Learns, once, everything :meth:`predict` needs: the applicability-domain reference, the
+        ensemble or bootstrap source of uncertainty, an optional probability calibrator, and the
+        split-conformal calibration.
 
         Parameters
         ----------
@@ -359,13 +308,9 @@ class ReliabilityModel(Wrapper):
             .. versionadded:: 1.2.0
         ci : float, default=0.90
             Central width of the reported score confidence interval, as a fraction in ``(0, 1)``
-            (e.g. ``0.90`` for a 90% interval), matching :meth:`ModelEvaluator.run`; a finite
-            value in that open interval is required.
+            (e.g. ``0.90`` for a 90% interval), matching :meth:`ModelEvaluator.run`.
 
-            .. versionchanged:: 1.2.0
-               Now a fraction in ``(0, 1)`` (default ``0.90``) instead of a percent (``90.0``),
-               matching :meth:`ModelEvaluator.run` and ``comp_bootstrap_ci``. A percent value
-               raises a ``ValueError`` with a hint; the interval itself is unchanged.
+            .. versionchanged:: 1.2.0 A fraction, no longer a percent (``90.0``).
         n_bootstrap : int, default=20
             Bootstrap resamples for uncertainty when ``model`` is a single estimator (not an
             ensemble); ``score`` is then the bagged mean over the resamples (see Notes). ``0``
@@ -373,9 +318,9 @@ class ReliabilityModel(Wrapper):
             Must be a non-negative integer.
         calibrate : bool, default=True
             If ``True``, fit a probability calibrator for ``score_calibrated``, ``margin``, and
-            ``entropy``. If fitting fails, emit a ``UserWarning`` and leave
-            ``score_calibrated`` as ``NaN``; if ``False``, ``score_calibrated`` is ``NaN``
-            and sharpness uses ``score``.
+            ``entropy``; for an ensemble it is built from the first member. If fitting fails, emit
+            a ``UserWarning`` and leave ``score_calibrated`` as ``NaN``; if ``False``,
+            ``score_calibrated`` is ``NaN`` and sharpness uses ``score``.
         calibration_method : {'isotonic', 'sigmoid'}, default='isotonic'
             Calibration method passed to :class:`~sklearn.calibration.CalibratedClassifierCV`.
 
@@ -404,14 +349,8 @@ class ReliabilityModel(Wrapper):
         UserWarning
             If ``calibrate=True`` but no calibrator can be fitted, for example because a class
             holds fewer members than the internal cross-validation needs or the model cannot be
-            cloned.
-            ``score_calibrated`` is then ``NaN`` and :meth:`eval` with ``use_calibrated=True``
-            raises, naming that reason.
-
-            .. versionchanged:: 1.2.0
-
-        .. versionchanged:: 1.2.0
-           Adds ``ad_borderline`` and reports a warning when requested calibration is unavailable.
+            cloned. ``score_calibrated`` is then ``NaN`` and :meth:`eval` with
+            ``use_calibrated=True`` raises, naming that reason.
 
         Examples
         --------
@@ -521,20 +460,11 @@ class ReliabilityModel(Wrapper):
         """
         Score new samples for reliability (one row per sample).
 
-        Applies the references learned by :meth:`fit` (applicability domain, ensemble / bootstrap,
-        calibrator, conformal calibration) — no model is refitted here, so repeated calls are cheap
-        and deterministic. Each column maps to one axis of the mental model: ``score_std`` /
-        ``ci_*`` (stability), ``ood_score`` / ``in_domain`` / ``ad_*`` (applicability domain,
-        banded by ``ad_status``),
-        ``margin`` / ``entropy`` (score ambiguity), ``conformal_set`` (validity), and
-        ``reliable`` (the headline flag).
-
-        .. versionchanged:: 1.2.0
-           The applicability-domain column ``ad_knn_dist`` is named ``ad_knn``, matching its
-           ``ad_mahalanobis`` / ``ad_leverage`` siblings, and two columns are appended at the
-           end of the table: ``ad_status`` (the banded domain verdict) and ``ad_nearest_train``
-           (the closest training row). Apart from the ``ad_knn_dist`` rename, previously returned
-           columns keep their position and values.
+        Applies the references learned by :meth:`fit`, without refitting any model, so repeated
+        calls are cheap and deterministic. Each column belongs to one of the three trust
+        questions: stability (``score_std``, ``ci_low`` / ``ci_high``), applicability domain
+        (``ood_score``, ``in_domain``, ``ad_*``), and decisiveness (``margin``, ``entropy``,
+        ``conformal_set``), with ``reliable`` as the headline flag.
 
         Parameters
         ----------
@@ -567,8 +497,7 @@ class ReliabilityModel(Wrapper):
             * ``ad_nearest_train`` (int): 0-based row index, into the ``X`` passed to :meth:`fit`,
               of the closest training sample.
 
-            .. versionadded:: 1.2.0
-               The ``ad_status`` and ``ad_nearest_train`` columns (appended at the end).
+            .. versionadded:: 1.2.0 ``ad_status`` and ``ad_nearest_train``.
 
         Raises
         ------
@@ -632,19 +561,15 @@ class ReliabilityModel(Wrapper):
         """
         Score a set of design candidates for reliability, rebuilding their feature matrix first.
 
-        The one-call entry point from the design tier. :meth:`SeqMut.mutate`,
-        :meth:`SeqMut.combine` and :meth:`SeqOpt.run` all return **sequences**, whereas
-        :meth:`predict` takes a **feature matrix**, so scoring a candidate set used to mean
-        rebuilding that matrix by hand. This method does it: it slices every candidate
-        sequence into the parts its ``features`` reference (reusing the wild-type TMD
-        coordinates from ``df_seq``), builds the matrix with
-        :meth:`SequenceFeature.feature_matrix`, and hands it to :meth:`predict`. No scoring
-        logic is duplicated.
+        A designed variant sits, by construction, away from the sequences the model was trained
+        on, which is exactly what makes its score hard to trust. The applicability-domain columns
+        (``ood_score``, ``ad_status``, ``ad_nearest_train``) say which candidates the model still
+        has ground for, and ``reliable`` is the headline verdict.
 
-        Designed candidates are pushed *away* from the training data by construction, which is
-        exactly what the applicability-domain columns measure: ``ood_score``, ``ad_status`` and
-        ``ad_nearest_train`` say which candidates the model can still be trusted on, and
-        ``reliable`` is the headline verdict.
+        The design tier (:meth:`SeqMut.mutate`, :meth:`SeqMut.combine`, :meth:`SeqOpt.run`) returns
+        sequences, while :meth:`predict` takes a feature matrix. This method bridges the two: it
+        rebuilds the matrix with :meth:`SequenceFeature.feature_matrix`, reusing the wild-type TMD
+        coordinates from ``df_seq``, and scores it with :meth:`predict`.
 
         .. versionadded:: 1.2.0
 
@@ -711,11 +636,8 @@ class ReliabilityModel(Wrapper):
           wild-type ``tmd_start`` / ``tmd_stop`` still locate its TMD. Insertions or deletions
           shift those coordinates: score such candidates by passing a ``df_seq`` whose
           coordinates are already corrected for them.
-        * The result equals building the matrix yourself with
-          :meth:`SequenceFeature.feature_matrix` and calling :meth:`predict` on it; both routes
-          give the same ``ood_score``.
-        * Duplicate candidate rows are kept and scored independently, so the output never
-          collapses rows and stays row-aligned with ``df_cand``.
+        * Duplicate candidate rows are kept and scored independently, so the output stays
+          row-aligned with ``df_cand``.
 
         Examples
         --------
@@ -759,17 +681,12 @@ class ReliabilityModel(Wrapper):
         """
         Reliability diagnostics: calibration curve, empirical conformal coverage, in-domain rate.
 
-        Aggregates :meth:`predict` over a labeled evaluation set into a compact table — per-bin
-        predicted-vs-empirical positive rate (how well calibrated the score is) plus a summary row
-        with the fraction in the applicability domain and the empirical coverage of the conformal
-        sets (which should track ``1 - conformal_alpha``). Optionally, the calibrated score is
-        binned instead of the raw one, and the Brier score and expected calibration error (ECE)
-        [Guo17]_ are added as scalar rows, so two calibrations can be compared by number.
-
-        .. versionchanged:: 1.2.0
-           The per-bin sample-count column ``n`` is named ``n_samples``. Adds optional calibrated
-           scoring and scalar Brier-score / expected-calibration-error rows; passing ``X`` without
-           ``labels`` now raises instead of evaluating the training labels silently.
+        Aggregates :meth:`predict` over a labeled evaluation set: the predicted against the
+        empirical positive rate per bin (how well calibrated the score is), plus a summary row with
+        the fraction inside the applicability domain and the empirical coverage of the conformal
+        sets, which should track ``1 - conformal_alpha``. The Brier score and the expected
+        calibration error (ECE) [Guo17]_ can be added as scalar rows to compare two calibrations
+        by number.
 
         Parameters
         ----------
@@ -826,8 +743,6 @@ class ReliabilityModel(Wrapper):
 
         Notes
         -----
-        * With both parameters left at their defaults, the output is the raw-score table of
-          earlier versions, unchanged.
         * Scoring the calibrated column on the training data flatters the calibrator (it was fit
           there); pass a held-out ``X`` / ``labels`` to judge whether calibration helps.
 
