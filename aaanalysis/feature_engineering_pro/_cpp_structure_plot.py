@@ -113,30 +113,23 @@ class CPPStructurePlot:
         usual deprecation cycle. Pin a version if you depend on the current behaviour.
 
     Each feature's signed impact is mapped to the residue positions it spans and painted
-    residue-by-residue onto the protein cartoon, rendered with the interactive
-    `py3Dmol <https://pypi.org/project/py3Dmol/>`_ viewer. A red-white-blue ramp shows where
-    features raise (red) or lower (blue) the prediction; an AlphaFold pLDDT mode shows
-    per-residue model confidence instead.
+    residue-by-residue onto the protein cartoon, so a physicochemical signature discovered in
+    sequence space can be read where it actually sits in the folded protein. A red-white-blue
+    ramp shows where features raise (red) or lower (blue) the prediction; an AlphaFold pLDDT
+    mode shows per-residue model confidence instead.
 
-    Five methods drive it: :meth:`map_structure` returns a ``StructureView`` (the interactive
-    3D cartoon); :meth:`plot_combined` returns a ``CombinedView`` (the cartoon next to the
-    :meth:`CPPPlot.feature_map` image, the deployed app's layout); :meth:`plot_linked` returns a
-    ``LinkedView`` (a self-contained HTML where hovering a feature-map column highlights the
-    matching residue); :meth:`interactive` returns a live ipywidgets explorer (a site slider that
-    re-predicts and a feature-map-to-structure highlight link); and :meth:`explore` is the
-    integrated one call (a built-in per-site predictor plus a selectable ``output`` of widget /
-    HTML / static). All render real 3D structures via py3Dmol — there is no matplotlib structure
-    fallback.
+    :meth:`map_structure` paints the structure on its own, :meth:`plot_combined` and
+    :meth:`plot_linked` place it beside the :meth:`CPPPlot.feature_map`, :meth:`interactive`
+    adds a site slider that re-predicts, and :meth:`explore` does all of it in one call.
 
     .. versionadded:: 1.1.0
 
     Notes
     -----
-    * The ``jmd_n_len`` and ``jmd_c_len`` values supplied at construction are stored as
-      ``_jmd_n_len`` and ``_jmd_c_len`` and reused by the plot methods, mirroring
-      :class:`CPPPlot` so juxta-membrane domain (JMD) lengths stay consistent.
+    * ``jmd_n_len`` and ``jmd_c_len`` are set at construction and reused by every plot method,
+      mirroring :class:`CPPPlot` so juxta-membrane domain (JMD) lengths stay consistent.
     * This is a ``pro`` feature: ``biopython`` parses structures, ``py3Dmol`` renders them, and
-      ``ipywidgets`` powers :meth:`interactive` — all in the ``pro`` extra.
+      ``ipywidgets`` powers :meth:`interactive`.
     * Parameters ending in ``_kws`` (e.g. ``feature_map_kws``) bundle related keyword arguments
       into one dict; see the :ref:`keyword-dict parameters overview <kws-overview>`.
 
@@ -378,8 +371,6 @@ class CPPStructurePlot:
         colours and the feature map tell one consistent story. Returns a ``CombinedView`` that
         renders inline and exports the pair with ``write_html(path)``.
 
-        .. versionadded:: 1.1.0
-
         Parameters
         ----------
         df_feat : pd.DataFrame, shape (n_features, n_feature_info)
@@ -576,8 +567,6 @@ class CPPStructurePlot:
         standalone, shareable ``.html`` via ``write_html(path)`` — ideal for exploring a site and
         as a publication-figure source. In JupyterLab (which sandboxes output scripts), use
         ``write_html`` and open the page in a browser.
-
-        .. versionadded:: 1.1.0
 
         Parameters
         ----------
@@ -897,8 +886,6 @@ class CPPStructurePlot:
         column drives the same highlight); ``ipympl`` is optional — the slider is the always-present
         link, so no extra dependency is required.
 
-        .. versionadded:: 1.1.0
-
         Parameters
         ----------
         predictor : callable
@@ -1080,29 +1067,28 @@ class CPPStructurePlot:
         """
         Predict per site and paint the structure, with a selectable output type.
 
-        The integrated explorer (**[pro]**): given a feature set ``df_feat`` plus a labeled training
-        population (``df_seq`` + ``labels``) and a ``model``, it builds a per-site predictor that, for
-        a P1 site, computes the query window's feature values for the **fixed** feature set (never a
-        :meth:`CPP.run` rediscovery), predicts its probability, and attaches the per-site SHAP impact
-        (a default :class:`ShapModel` refit, fuzzy interpolate). It then dispatches to one of the
-        render paths by ``output``:
+        The integrated explorer (**[pro]**): it walks a candidate site ``p1`` along ``sequence``,
+        scores the window at each site with a model trained on ``df_seq`` and ``labels``, and
+        paints that site's per-feature impact onto the structure. One view therefore answers both
+        questions at once: which site of this protein scores highest, and which residues make it
+        score that way. The feature set stays fixed throughout, every window is scored on the
+        features of ``df_feat`` and never rediscovered per site.
 
-        - ``'widget'`` -> :meth:`interactive` (a live ipywidgets explorer; the P1 slider re-predicts
-          and repaints per site; needs a kernel + ``ipywidgets``).
-        - ``'html'`` -> a self-contained linked HTML, written to ``path`` if given. Baked for the
-          single ``init_site`` by default; pass ``sites=[...]`` to bake a **multi-site live** page
-          whose JS slider switches the pre-computed per-site prediction client-side (no kernel).
-        - ``'static'`` -> :meth:`plot_combined` (the structure beside the feature map, baked for
-          ``init_site``). With ``path`` given, the feature-map panel is saved (``CombinedView.savefig``,
-          format from the extension, e.g. PNG/PDF); the 3D structure stays interactive.
+        ``output`` selects what comes back:
 
-        The site geometry follows the package convention: ``p1`` is the first TMD residue, so the
-        TMD spans ``[p1, p1 + tmd_len - 1]`` and ``start = p1 - jmd_n_len`` (the construction
-        ``jmd_n_len`` / ``jmd_c_len``). Pass ``predictor`` to override the built-in with a custom
-        ``(sequence, p1) -> df_feat`` callable, in which case ``df_seq`` / ``labels`` / ``model`` are
-        ignored.
+        - ``'widget'``: a live ipywidgets explorer whose P1 slider re-predicts and repaints per
+          site; needs a running kernel.
+        - ``'html'``: a self-contained page, written to ``path`` if given. Baked for the single
+          ``init_site`` by default; ``sites=[...]`` bakes a multi-site page whose slider switches
+          between pre-computed sites in the browser, with no kernel.
+        - ``'static'``: the structure beside the feature map, baked for ``init_site``. With
+          ``path``, the feature-map panel is saved as an image (format from the extension); the 3D
+          structure stays interactive.
 
-        .. versionadded:: 1.1.0
+        Sites follow the package convention: ``p1`` is the first TMD residue, so the TMD spans
+        ``[p1, p1 + tmd_len - 1]`` and ``start = p1 - jmd_n_len``. Pass ``predictor`` to supply
+        your own ``(sequence, p1) -> df_feat`` callable instead of the built-in one; ``df_seq``,
+        ``labels`` and ``model`` are then ignored.
 
         Parameters
         ----------
