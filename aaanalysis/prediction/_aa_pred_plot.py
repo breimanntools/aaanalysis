@@ -511,19 +511,17 @@ class AAPredPlot:
     """
     Plotting class for :class:`AAPred` evaluation and prediction results [Breimann25]_.
 
-    The single home for prediction figures, dispatched by ``kind`` from three methods:
+    The home of the prediction figures, each method dispatching on ``kind``:
 
-    - :meth:`predict_sample` visualizes **single-protein positional predictions**: the
-      per-residue profile (``kind='window'``) and the domain boundary-sensitivity curve
-      (``kind='domain'``).
-    - :meth:`predict_group` visualizes **across-samples predictions**: score histograms
-      (``kind='hist'``), ranked candidates (``kind='ranking'``), per-protein rank scatters
-      (``kind='rank_scatter'``), two-predictor scatters (``kind='scatter'``), and survival
-      curves (``kind='cutoff'``).
-    - :meth:`group_cluster` clusters the sample group by explanation similarity: the
-      hierarchically clustered sample x sample correlation heatmap (``kind='clustermap'``).
-    - :meth:`eval` visualizes **model/feature-set evaluation**: metric bars per model
-      (``kind='eval'``) and grouped benchmark comparisons (``kind='comparison'``).
+    - :meth:`predict_sample` for one protein: the per-residue profile (``kind='window'``) and the
+      domain boundary-sensitivity curve (``kind='domain'``).
+    - :meth:`predict_group` across samples: score histograms (``kind='hist'``), ranked candidates
+      (``kind='ranking'``), per-protein rank scatters (``kind='rank_scatter'``), two-predictor
+      scatters (``kind='scatter'``), and survival curves (``kind='cutoff'``).
+    - :meth:`group_cluster` for how the samples relate: the clustered sample x sample correlation
+      heatmap (``kind='clustermap'``) and its tree (``kind='dendrogram'``).
+    - :meth:`eval` for model and feature-set evaluation: metric bars per model (``kind='eval'``),
+      grouped benchmark comparisons (``kind='comparison'``), and score grids (``kind='heatmap'``).
 
     .. warning::
 
@@ -542,17 +540,12 @@ class AAPredPlot:
         """
         Notes
         -----
-        The figures are built on Matplotlib and seaborn. A small set of shared modification
-        functions recurs across the ``predict_group`` plots (only the main ones are listed):
-
-        * :func:`seaborn.despine` — remove the top and right axes spines.
-        * :meth:`matplotlib.axes.Axes.axvline` — the dashed confidence cut-off / threshold lines.
-        * :meth:`matplotlib.axes.Axes.legend` — the per-class color legend.
+        The figures are built on Matplotlib and seaborn, and every method returns its
+        ``(fig, ax)`` for further styling.
 
         See Also
         --------
         * :class:`AAPred`: the logic class whose results this visualizes.
-        * :func:`seaborn.despine` for the shared axes-spine styling.
 
         Examples
         --------
@@ -581,30 +574,21 @@ class AAPredPlot:
         """
         Visualize single-protein positional predictions as a multi-track sequence viewer.
 
-        One entry point for the three positional figures; ``kind`` selects the base renderer.
-        For ``'window'`` / ``'domain'`` ``data`` is the prediction frame from :meth:`AAPred.predict`;
-        the base profile is stacked, top to bottom, with optional extra tracks that all share the
-        residue-position x-axis: a **CPP-importance** profile (``df_feat``), one **subcategory** scale
-        profile per entry in ``subcats``, the **user annotation** tracks (``list_annotations``), and a
-        **sequence** row at the bottom. Any track whose inputs are not provided is simply omitted.
+        One entry point for the three positional figures, selected with ``kind``. The base profile
+        is stacked, top to bottom, with optional tracks that share its x-axis: a CPP-importance
+        profile (``df_feat``), one scale profile per entry in ``subcats``, the annotation tracks
+        (``list_annotations``), and the sequence itself at the bottom. A track whose input is
+        missing is simply omitted.
 
-        * ``'window'`` — per-residue profile from :meth:`AAPred.predict` (``level='window'``);
-          ``data`` is the ``df_window`` frame (columns ``entry``, ``position``, ``score``). The
-          x-axis is the residue position, so every extra track aligns residue-by-residue.
-        * ``'domain'`` — boundary-sensitivity curve from :meth:`AAPred.predict` (``level='domain'``);
-          ``data`` is the ``df_domain`` frame (columns ``entry``, ``offset``, ``score``, ``is_best``).
-          The x-axis is the boundary offset; the residue-anchored tracks (subcategory, sequence)
-          map each offset to residue ``tmd_start + offset`` and therefore need ``df_seq`` with a
-          ``tmd_start`` column.
-        * ``'sequence'`` — a CPP-feature-map-style **heatmap over the complete protein sequence**;
-          rows are **subcategories** (``subcats``, or every subcategory in ``df_cat`` capped at 25
-          when ``subcats=None``), columns are the **residue positions** ``1..len(sequence)``, and each
-          cell is that subcategory's mean scale value at that residue (the same per-residue
-          subcategory profile the line tracks use, stacked into a matrix). It needs only ``df_seq``
-          (plus ``df_scales`` / ``df_cat``, default-loaded when omitted); ``data`` is **optional** and,
-          when given as a ``df_window`` frame, is drawn as a thin prediction track above the heatmap.
-          The **sequence** row is drawn below the heatmap and ``highlight`` / ``zoom`` behave exactly
-          as for the other kinds (cyan spans over the residue columns; zoom reveals the letters).
+        * ``'window'``: the per-residue profile of :meth:`AAPred.predict` (``level='window'``), on
+          a residue-position x-axis, so every extra track aligns residue by residue.
+        * ``'domain'``: the boundary-sensitivity curve of :meth:`AAPred.predict`
+          (``level='domain'``), on a boundary-offset x-axis. The residue-anchored tracks map each
+          offset to residue ``tmd_start + offset`` and therefore need ``df_seq``.
+        * ``'sequence'``: a heatmap over the whole protein, with subcategories as rows and residue
+          positions as columns, each cell the mean scale value of that subcategory at that residue.
+          It needs only ``df_seq``; a ``df_window`` frame passed as ``data`` is drawn as a thin
+          prediction track above it.
 
         .. versionadded:: 1.1.0
 
@@ -766,29 +750,19 @@ class AAPredPlot:
         is its primary input. For sample-relation views (clustering samples by their feature or
         SHAP vectors) see :meth:`AAPredPlot.group_cluster`.
 
-        * ``'hist'`` — histogram of per-sample scores; ``data`` is the ``scores`` array. By default
-          class-separated by ``labels``; with ``band=True`` the bars are instead colored by the
-          confidence band they fall into (delimited by ``thresholds``), for scoring unlabeled
-          samples. Uses ``labels``, ``bins``, ``thresholds``, ``band``, ``dict_color``,
-          ``band_colors``, ``cmap``, ``xlabel``, ``ylabel``.
-        * ``'ranking'`` — ranked-candidate horizontal bars; ``data`` is a per-sample ``df_pred``.
-          Uses ``col_name``, ``col_score``, ``col_group``, ``col_std``, ``dict_color``,
-          ``thresholds`` (cut-off lines, default ``(50, 80)``), ``top_n``, ``ascending``,
-          ``group_order``, ``xlabel``, ``title``. Split into side-by-side
-          panels with either ``panel_col`` (one panel per distinct column value) or ``panels`` (a
-          ``{title: [group values]}`` dict grouping ``col_group`` values into named panels);
-          ``sort='group'`` clusters the bars in each panel by ``col_group`` instead of by score.
-        * ``'rank_scatter'`` — per-protein rank scatter: proteins ranked by their maximum score
-          (x-axis = rank, y-axis = score) and colored by group, the standard sanity check for a
-          deployed per-protein predictor; ``data`` is a per-protein ``df_rank``. Uses
-          ``col_score``, ``col_group`` (required here), ``group_order``, ``dict_color``,
-          ``thresholds`` (drawn as horizontal score lines), ``marker_size``, ``xlabel``, ``ylabel``.
-        * ``'scatter'`` — two-predictor agreement scatter; ``data`` is ``scores_x`` and the required
-          ``scores_y`` the y-axis. Uses ``labels``, ``dict_color``, ``marker_size``, ``diagonal``,
-          ``xlabel``, ``ylabel``.
-        * ``'cutoff'`` — survival curve of the scores; ``data`` is the ``scores`` array. Uses
-          ``n_steps``, ``thresholds``, ``xlabel``, ``ylabel``. With ``labels`` given, one curve is
-          drawn per group (colored by ``dict_color``) over a common cutoff grid.
+        * ``'hist'``: histogram of per-sample scores, class-separated by ``labels``, or colored by
+          confidence band (``band=True``) when the samples are unlabeled. ``data`` is the ``scores``
+          array.
+        * ``'ranking'``: ranked-candidate horizontal bars, optionally split into side-by-side panels
+          (``panel_col`` or ``panels``) and clustered by group (``sort='group'``). ``data`` is a
+          per-sample ``df_pred``.
+        * ``'rank_scatter'``: proteins ranked by their maximum score and colored by group, the
+          standard sanity check for a deployed per-protein predictor. ``data`` is a per-protein
+          ``df_rank``.
+        * ``'scatter'``: two-predictor agreement scatter. ``data`` holds the x-axis scores and
+          ``scores_y`` the y-axis ones.
+        * ``'cutoff'``: survival curve of the scores, one curve per group when ``labels`` is given.
+          ``data`` is the ``scores`` array.
 
         .. versionadded:: 1.1.0
 
@@ -820,8 +794,6 @@ class AAPredPlot:
             (``kind='hist'``) If ``True``, color each histogram bar by the confidence band it falls
             into (bands delimited by ``thresholds``) instead of splitting by ``labels``. Requires
             ``thresholds`` and is mutually exclusive with ``labels``.
-
-            .. versionadded:: 1.1.0
         dict_color : dict, optional
             The single ``label``/``group`` ``-> color`` mapping for every kind.
             (``kind='hist'``/``'scatter'``/``'cutoff'``) Colors the per-class data; defaults to the
@@ -856,23 +828,17 @@ class AAPredPlot:
             (``kind='ranking'``) Column whose distinct values each get their own ranked-bar panel,
             drawn side by side (requires ``ax=None``); ``None`` draws a single panel. Panels share
             the x-axis and return an array of axes. Mutually exclusive with ``panels``.
-
-            .. versionadded:: 1.1.0
         panels : dict, optional
             (``kind='ranking'``) A ``{panel_title: [col_group values]}`` dict that groups the
             ``col_group`` values into named, side-by-side panels (each panel holds the rows whose
             ``col_group`` is in its list). A convenience alternative to pre-computing a ``panel_col``;
             mutually exclusive with it and requires ``col_group`` and ``ax=None``. The per-panel
             group list also sets the ``sort='group'`` order within that panel.
-
-            .. versionadded:: 1.1.0
         sort : {'score', 'group'}, default='score'
             (``kind='ranking'``) Bar order within each panel: ``'score'`` ranks all bars by
             ``col_score`` (as before); ``'group'`` clusters the bars by ``col_group`` (in
             ``group_order`` / the panel's group list) and ranks by score inside each group. Requires
             ``col_group``.
-
-            .. versionadded:: 1.1.0
         title : str, optional
             (``kind='ranking'``) Axes title.
         scores_y : array-like, optional
@@ -892,8 +858,8 @@ class AAPredPlot:
             y-axis label; defaults to a per-kind label.
         legend_title : str, optional
             Title of the color-key legend, which is placed **below the plot** (house style, shared
-            across the group / eval figures: frameless, left-aligned, non-bold — set
-            ``options['legend_title_bold']=True`` for bold). Defaults to a per-kind label
+            across the group / eval figures: frameless, left-aligned, non-bold, unless
+            ``options['legend_title_bold']=True``). Defaults to a per-kind label
             (``'Class'`` / ``'Group'``); pass ``''`` for an untitled legend, which is also used
             automatically when the legend has a single entry.
         line_thresholds : int, float, or list, optional
@@ -1004,19 +970,14 @@ class AAPredPlot:
         :class:`ShapModel`) and lays the samples out by their similarity, annotating each sample
         with up to two per-sample class strips (a top and a left sidebar), each with a titled legend.
 
-        * ``'clustermap'`` — hierarchically clustered sample x sample correlation heatmap of the
-          feature/SHAP vectors. ``labels`` colors the top (column) sidebar and ``labels_row`` the
-          left (row) sidebar; a lone ``labels`` is mirrored onto both.
-        * ``'dendrogram'`` — the sample relation tree alone, drawn with the ``layout`` of choice
-          (``'rectangular'`` or a radial ``'circular'`` tree). It is built from exactly the same
-          linkage as the clustermap, so its topology and leaf order equal the clustermap's row
-          dendrogram. ``labels`` and ``labels_row`` color the leaves as one strip (rectangular)
-          or ring (circular) each, ``labels`` innermost, each with its titled legend.
+        * ``'clustermap'``: hierarchically clustered sample x sample correlation heatmap of the
+          feature or SHAP vectors. ``labels`` colors the top sidebar and ``labels_row`` the left
+          one; a lone ``labels`` is mirrored onto both.
+        * ``'dendrogram'``: the sample-relation tree alone, ``'rectangular'`` or radial
+          ``'circular'``. It uses the same linkage as the clustermap, so leaf order and topology
+          agree with it.
 
         .. versionadded:: 1.1.0
-
-        .. versionchanged:: 1.2.0
-           Added ``kind='dendrogram'`` and the ``layout`` parameter.
 
         Parameters
         ----------
@@ -1031,8 +992,7 @@ class AAPredPlot:
             - ``'clustermap'``: draw the clustered sample x sample Pearson-correlation heatmap.
             - ``'dendrogram'``: draw only the corresponding sample-relation tree.
 
-            .. versionchanged:: 1.2.0
-               Added the ``'dendrogram'`` option.
+            .. versionchanged:: 1.2.0 ``'dendrogram'`` added.
         layout : {'rectangular', 'circular'}, default='rectangular'
             Tree layout when ``kind='dendrogram'``. It has no visual effect for the default
             clustermap layout; a non-default value with ``kind='clustermap'`` raises a
@@ -1189,21 +1149,14 @@ class AAPredPlot:
 
         Three evaluation figures share one entry point:
 
-        * ``'eval'`` — grouped bar plot comparing **models** across metrics (hue = model), from the
-          long-format ``df_eval`` of :meth:`AAPred.eval` (columns ``model``, ``metric``,
-          ``principle``, ``score``, ``score_std``). Cross-validation bars carry ``score_std`` error
-          bars and held-out bars are hatched. Uses ``dict_color``, ``baseline``, ``ylabel``.
-        * ``'comparison'`` — grouped ``condition`` x ``group`` benchmark barplot with per-bar value
+        * ``'eval'``: grouped bar plot comparing models across metrics, from the long-format
+          ``df_eval`` of :meth:`AAPred.eval`. Cross-validation bars carry ``score_std`` error bars
+          and held-out bars are hatched.
+        * ``'comparison'``: grouped ``condition`` x ``group`` benchmark barplot with per-bar value
           labels and an optional baseline, from a tidy ``df_eval`` with ``group`` / ``condition`` /
-          ``value`` columns. Uses ``group``, ``condition``, ``value``, ``baseline``,
-          ``baseline_label``, ``annotate``, ``annotation_fmt``, ``group_order``, ``condition_order``,
-          ``dict_color``, ``bar_width``, ``xlabel``, ``ylabel``, ``title``, ``ylim``,
-          ``fontsize_annotations``, ``xtick_rotation``.
-        * ``'heatmap'`` — square annotated heatmap of a 2D score grid (``df_eval`` is a wide
-          DataFrame whose rows x columns are the two sweep axes and whose cells are the scores),
-          with the best cell(s) boxed (``highlight`` selects how many). Consolidates the recurring
-          "grid of scores -> seaborn heatmap -> box the best configuration" block. Uses ``annotate``,
-          ``annotation_fmt``, ``highlight``, ``vmin``, ``vmax``, ``cmap``, ``cbar_label``, ``title``.
+          ``value`` columns.
+        * ``'heatmap'``: annotated heatmap of a 2D score grid (``df_eval`` is a wide frame whose
+          rows and columns are the two sweep axes), with the best cell(s) boxed by ``highlight``.
 
         To compare **CPP parameter combinations** instead, use the feature-optimization protocol
         :func:`aaanalysis.pipe.find_features` and its evaluation-grid :func:`aaanalysis.pipe.plot_eval`.
@@ -1270,28 +1223,18 @@ class AAPredPlot:
             the ``N`` best (highest-value) cells (``1`` = the single best), ``"max"`` / ``"min"`` box
             the single best / worst cell, an explicit ``(row, col)`` (or list of them) boxes those
             cells, and ``None`` boxes nothing.
-
-            .. versionadded:: 1.1.0
         vmin : int or float, optional
             (``kind='heatmap'``) Lower bound of the color scale; auto-scaled when ``None``.
-
-            .. versionadded:: 1.1.0
         vmax : int or float, optional
             (``kind='heatmap'``) Upper bound of the color scale; auto-scaled when ``None``.
-
-            .. versionadded:: 1.1.0
         cmap : str, default="viridis"
             (``kind='heatmap'``) Colormap for the heatmap cells.
-
-            .. versionadded:: 1.1.0
         cbar_label : str, optional
             (``kind='heatmap'``) Label of the colorbar; defaults to ``"Score"``.
-
-            .. versionadded:: 1.1.0
         legend_title : str, optional
             (``kind='eval'``/``'comparison'``) Title of the color-key legend, placed **below the
-            plot** (house style: frameless, left-aligned, non-bold — set
-            ``options['legend_title_bold']=True`` for bold). Defaults to a per-kind label (the model
+            plot** (house style: frameless, left-aligned, non-bold, unless
+            ``options['legend_title_bold']=True``). Defaults to a per-kind label (the model
             / group name); pass ``''`` for an untitled legend.
 
         Returns

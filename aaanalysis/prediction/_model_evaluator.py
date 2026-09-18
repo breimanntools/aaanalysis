@@ -195,19 +195,16 @@ class ModelEvaluator(Tool):
 
     Turns a feature matrix ``X`` and ``labels`` into an honest performance table rather than a
     single optimistic hold-out number. :meth:`run` scores one or more scikit-learn models by
-    **repeated stratified cross-validation** (multi-seed mean and std over ``n_cv * n_rounds``
-    folds) with **percentile bootstrap confidence intervals** of the mean; :meth:`eval` compares
-    two or more models **pairwise on the same folds** with a signed ``delta`` (e.g. ΔMCC) and a
-    two-sided Wilcoxon signed-rank significance test. Both are reproducible under ``random_state``
-    and reuse :func:`comp_bootstrap_ci` and scikit-learn metrics — no new dependency.
-
-    :meth:`learning_curve` repeats the cross-validation on stratified subsets of increasing size of
-    each training fold, showing whether a task is still sampling-limited (the score keeps rising
-    with more data) or has saturated (a different representation or model is needed).
+    repeated stratified cross-validation, as a mean and standard deviation over ``n_cv * n_rounds``
+    folds with a bootstrap confidence interval. :meth:`eval` compares two or more models on the
+    same folds, reporting a signed ``delta`` (e.g. ΔMCC) and a Wilcoxon signed-rank test.
+    :meth:`learning_curve` repeats the cross-validation on growing subsets of each training fold,
+    showing whether a task is still sampling-limited (the score keeps rising with more data) or has
+    saturated (a different representation or model is needed).
 
     Where :class:`AAPred` deploys a fitted model and :class:`TreeModel` ranks features,
-    ``ModelEvaluator`` answers "how well does this model generalize, and is model A really better
-    than model B?" with mean±std, confidence intervals, and a paired significance test.
+    ``ModelEvaluator`` answers how well a model generalizes, and whether model A is really better
+    than model B.
 
     .. warning::
 
@@ -217,12 +214,8 @@ class ModelEvaluator(Tool):
 
     .. versionadded:: 1.1.0
 
-    .. versionchanged:: 1.2.0
-        Added :meth:`learning_curve` for cross-validated performance across training sizes.
-
     Notes
     -----
-    * All computed-state attributes carry a trailing underscore and are set by :meth:`run`.
     * The per-fold scores held on ``df_scores_`` are what :meth:`eval` compares, so a comparison
       never re-runs cross-validation.
 
@@ -436,23 +429,15 @@ class ModelEvaluator(Tool):
         """
         Evaluate every model at increasing training sizes to show whether a task is sampling-limited.
 
-        Runs the same repeated stratified cross-validation as :meth:`run`, but within each training
-        fold fits every model on a stratified subset of each size in ``train_sizes`` and scores it
-        on the **full, unchanged test fold** (the test fold is never subsampled and never used for
-        training). Within a fold, the subsets are nested (a larger subset contains the smaller
-        ones). The per-fold scores are aggregated per (model, training size, metric) into a mean, a
-        population std, a percentile bootstrap confidence interval of the mean, and the fold count,
-        by the same aggregation :meth:`run` uses. A fractional size is resolved **within each
-        training fold**, so the fraction ``1.0`` uses every fold's complete training set and
-        reproduces the scores of :meth:`run` exactly **when both calls use the same resolved**
-        ``random_state`` (and the same ``n_cv``, ``n_rounds``, and ``metrics``) - also when the
-        training folds differ in size; with ``random_state=None`` the two calls shuffle the folds
-        differently, so they then agree only in distribution. An absolute size is used as given in
-        every fold, so it matches :meth:`run` only where it equals the training fold.
-
-        A curve that is still rising at the largest size suggests that more data will help; a
-        curve that has flattened suggests changing the representation or model instead. The
+        A curve still rising at the largest training size says that more data will help; a curve
+        that has flattened says that a different representation or model is needed instead. The
         decision is left to the user.
+
+        Every model is fitted on stratified subsets of each training fold and scored on the full
+        test fold, which is never subsampled and never trained on, and the per-fold scores are
+        aggregated as in :meth:`run`. The fraction ``1.0`` therefore reproduces the scores of
+        :meth:`run` whenever both calls resolve to the same ``random_state``, ``n_cv``,
+        ``n_rounds``, and ``metrics``.
 
         .. versionadded:: 1.2.0
 
@@ -465,15 +450,12 @@ class ModelEvaluator(Tool):
             Binary class labels aligned with ``X``. Values must be exactly 0 and 1; 1 is the
             positive class for ``precision``, ``recall``, ``f1``, and ``roc_auc``.
         train_sizes : array-like of float or int, optional
-            Training-subset sizes (at least two), either all fractions in ``(0, 1]`` or all
-            distinct absolute sample counts (int >= 2). A fraction is resolved within each training fold
-            (rounded down to samples, raised to at least 2, one per class), so ``1.0`` is every
-            fold's complete training set; the curve point is labelled by its size in the smallest
-            training fold, and fractions collapsing onto the same label are de-duplicated. An
-            absolute count is used as given in every fold, so counts must be distinct and fit into
-            the smallest training fold. If ``None``, uses ``[0.2, 0.4, 0.6, 0.8, 1.0]``; on sufficiently
-            large data these resolve to five sizes, each with a bootstrap CI. On small data they
-            can collapse to fewer sizes, and at least two distinct sizes are required.
+            Training-subset sizes (at least two), either all fractions in ``(0, 1]`` or all distinct
+            absolute sample counts (int >= 2). A fraction is taken of each training fold, so ``1.0``
+            is that fold's complete training set and the curve point is labelled by its size in the
+            smallest fold; an absolute count is used as given and must fit into the smallest fold.
+            If ``None``, uses ``[0.2, 0.4, 0.6, 0.8, 1.0]``, which on small data can collapse to
+            fewer, though never fewer than two, distinct sizes.
         n_cv : int, default=5
             Number of stratified cross-validation folds per round. Must be at least 2 and not
             exceed the smallest class count; increasing it changes the train/test split size and
@@ -500,8 +482,7 @@ class ModelEvaluator(Tool):
         -------
         df_curve : pd.DataFrame, shape (n_models * n_train_sizes * n_metrics, 8)
             Long-format learning-curve table with columns ``model``, ``train_size`` (number of
-            training samples, ascending; for a fraction this is the size in the smallest training
-            fold, while every fold uses that same fraction of its own training set), ``metric``, ``score`` (mean over folds), ``score_std``
+            training samples, ascending), ``metric``, ``score`` (mean over folds), ``score_std``
             (population std over folds), ``ci_low`` / ``ci_high`` (bootstrap CI of the mean,
             ``NaN`` when ``ci`` is ``None``), and ``n_scores`` (fold count).
 

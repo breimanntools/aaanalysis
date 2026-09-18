@@ -101,14 +101,10 @@ class ModelEvaluatorPlot:
     delta bars with bootstrap-CI whiskers and significance markers. :meth:`learning_curve` draws the
     metric versus training size from :meth:`ModelEvaluator.learning_curve` with a CI band.
 
-    Every plotting method returns a ``(fig, ax)`` pair (a thin tuple subclass): unpack as
-    ``fig, ax = ...``. For backward compatibility, the returned object also forwards attribute
-    access to ``ax``.
+    Every plotting method returns a ``(fig, ax)`` pair to unpack as ``fig, ax = ...``, which also
+    forwards attribute access to ``ax``.
 
     .. versionadded:: 1.1.0
-
-    .. versionchanged:: 1.2.0
-        Added :meth:`learning_curve` for learning-curve tables.
 
     See Also
     --------
@@ -261,12 +257,8 @@ class ModelEvaluatorPlot:
         df_curve : pd.DataFrame, shape (n_models * n_train_sizes * n_metrics, 8)
             Learning-curve table from :meth:`ModelEvaluator.learning_curve` with columns ``model``,
             ``train_size``, ``metric``, ``score``, ``score_std``, ``ci_low``, ``ci_high``, and
-            ``n_scores``. Model and metric values must be non-empty strings; training sizes must
-            be integer-valued and at least 2, score counts positive integer-valued, and scores and
-            standard deviations finite (with non-negative standard deviations). Each (model,
-            training size, metric) tuple must occur once and each model/metric curve must have at
-            least two training sizes. Confidence bounds must be finite and ordered, or both
-            ``NaN`` when the curve was computed with ``ci=None``.
+            ``n_scores``. Each (model, training size, metric) tuple occurs once, and every curve
+            needs at least two training sizes.
         metric : str or None, default=None
             Metric to plot; must be one of the metrics in ``df_curve``. Defaults to ``"mcc"`` when
             present, otherwise the first metric of ``df_curve``.
