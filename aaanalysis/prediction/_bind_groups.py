@@ -10,7 +10,7 @@ import aaanalysis.utils as ut
 
 
 # I Helper Functions
-def check_cv(cv=None):
+def check_cv(cv):
     """Check that ``cv`` is a usable scikit-learn splitter instance."""
     if isinstance(cv, type):
         raise ValueError(f"'cv' ({cv.__name__}) should be a splitter instance, not the class "
@@ -21,7 +21,7 @@ def check_cv(cv=None):
                              f"providing '{method}()'")
 
 
-def check_groups(groups=None):
+def check_groups(groups):
     """Check the group labels and return them as a 1D object array."""
     groups = ut.check_array_like(name="groups", val=groups, accept_none=False)
     groups = np.asarray(groups)
@@ -34,14 +34,14 @@ def check_groups(groups=None):
     return groups
 
 
-def check_match_groups_n_samples(groups=None, n_samples=None):
+def check_match_groups_n_samples(groups, n_samples):
     """Check that one group label was given per sample."""
     if len(groups) != n_samples:
         raise ValueError(f"'groups' (length={len(groups)}) should have one label per sample "
                          f"in 'X' (n samples={n_samples})")
 
 
-def check_match_cv_groups(cv=None, groups=None):
+def check_match_cv_groups(cv, groups):
     """Check that the requested number of folds is feasible for the group structure."""
     n_groups = len(np.unique(groups))
     n_splits = getattr(cv, "n_splits", None)
@@ -51,7 +51,7 @@ def check_match_cv_groups(cv=None, groups=None):
                          f"filled without splitting a group")
 
 
-def _comp_pos_rate(labels=None, idx=None, label_pos=1):
+def _comp_pos_rate(idx, labels=None, label_pos=1):
     """Compute the share of the positive class in one part of a fold."""
     if labels is None:
         return np.nan
@@ -61,16 +61,16 @@ def _comp_pos_rate(labels=None, idx=None, label_pos=1):
     return float(np.mean(part == label_pos))
 
 
-def _comp_fold_row(fold=None, train_idx=None, test_idx=None, groups=None, labels=None):
+def _comp_fold_row(fold, train_idx, test_idx, groups, labels=None):
     """Build one positional row of the fold-metadata frame."""
     return [fold,
             len(train_idx), len(test_idx),
             len(np.unique(groups[train_idx])), len(np.unique(groups[test_idx])),
-            _comp_pos_rate(labels=labels, idx=train_idx),
-            _comp_pos_rate(labels=labels, idx=test_idx)]
+            _comp_pos_rate(idx=train_idx, labels=labels),
+            _comp_pos_rate(idx=test_idx, labels=labels)]
 
 
-def _check_no_group_overlap(fold=None, train_idx=None, test_idx=None, groups=None):
+def _check_no_group_overlap(fold, train_idx, test_idx, groups):
     """Raise when a group id appears in both parts of a fold (the leak this guards)."""
     shared = np.intersect1d(np.unique(groups[train_idx]), np.unique(groups[test_idx]))
     if len(shared) > 0:
@@ -84,7 +84,7 @@ def _check_no_group_overlap(fold=None, train_idx=None, test_idx=None, groups=Non
 class _GroupBoundSplitter(BaseCrossValidator):
     """Splitter that supplies its own group labels to a wrapped scikit-learn splitter."""
 
-    def __init__(self, cv=None, groups=None, allow_overlap=False):
+    def __init__(self, cv, groups, allow_overlap=False):
         self._cv = cv
         self._groups = groups
         self._allow_overlap = allow_overlap
