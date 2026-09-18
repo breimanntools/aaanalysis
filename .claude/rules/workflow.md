@@ -63,7 +63,7 @@ python dev_scripts/dev_aa_window_sampler.py
   labels use `df_seq["label"].to_list()`, not `len(df_seq)`-based assumptions.
 - **Coverage is measured on the package only** — `--cov=aaanalysis`, never
   `--cov=./` (that counts the test files and inflates the number). See ADR-0016.
-- **A push/PR to `master` triggers up to 8 workflows**, in two groups. Feature-branch
+- **A push/PR to `master` triggers up to 9 workflows**, in two groups. Feature-branch
   *pushes* trigger none (CI is gated to master push/PR). **Verify against
   `.github/workflows/*` before quoting this — it drifts.**
   - **Code-gated (6)** — each carries `paths-ignore: ['docs/**', '**/*.md',
@@ -72,10 +72,13 @@ python dev_scripts/dev_aa_window_sampler.py
     (`perf_nightly.yml`), **Version Guard** (`version_guard.yml`), and **Type Check
     (ratchet)** (`pyright.yml` — gates on a *rise* above the committed diagnostic
     baseline; merging at or below it is fine).
-  - **Always-run (2)** — deliberately **no `paths-ignore`**, so they run on *every*
+  - **Always-run (3)** — deliberately **no `paths-ignore`**, so they run on *every*
     master push including docs-only: **Test Coverage** (`test_coverage.yml`; the
-    Codecov badge must stay current) and **Packaging** (`packaging.yml`; required
-    checks must not be "skipped-but-required", ADR-0060).
+    Codecov badge must stay current), **Packaging** (`packaging.yml`; required
+    checks must not be "skipped-but-required", ADR-0060), and **Docs Build (gate)**
+    (`docs_build.yml`; builds the docs and fails on a docutils `ERROR` — it parses
+    the log because Sphinx exits 0 with errors present, and it runs on code too
+    since docstrings and committed notebook output both produce them).
 
   The exact-value CPP regression anchor (`-m regression`) runs only in the nightly,
   not the blocking matrix (ADR-0015); the Perf gate benchmarks
@@ -87,9 +90,9 @@ python dev_scripts/dev_aa_window_sampler.py
   (`visual_regression.yml`, PR-only, scoped to `aaanalysis/**/*.py` +
   `tests/unit/plotting_tests/**`).
 - **A docs-only push does NOT skip everything.** It skips all 6 code-gated workflows
-  but still runs the 2 always-run ones — so a docs-only push that **doesn't** touch
-  `docs/adr/**` triggers **two** (Test Coverage + Packaging); one that **does** touch
-  an ADR triggers **three** (+ ADR hygiene). Don't tell the user "all of CI will run"
+  but still runs the 3 always-run ones — so a docs-only push that **doesn't** touch
+  `docs/adr/**` triggers **three** (Test Coverage + Packaging + Docs Build); one that
+  **does** touch an ADR triggers **four** (+ ADR hygiene). Don't tell the user "all of CI will run"
   for a docs-only change — nor that nothing will.
 
 ## Git / PR workflow

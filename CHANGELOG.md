@@ -16,6 +16,16 @@ notes — with cross-references and examples — live in
 ## [Unreleased]
 
 ### Added
+- `Docs Build (gate)` CI workflow (`.github/scripts/check_docs_build.py`): builds the
+  documentation and fails on a docutils `ERROR`, so a broken reference cannot reach `master`
+  silently. It parses the build log rather than Sphinx's exit code, which is `0` even with
+  errors present, and it is a plain zero-error gate rather than a ratchet because the count
+  was taken to zero first. The pre-existing `CRITICAL: Unexpected section title` backlog in
+  the generated example pages rides a separate no-regression ratchet in the same script
+  (`.github/docs_critical_baseline.txt`, seeded from a CI run); warnings are reported but
+  never gated, since most are one pre-existing autosummary pattern. The workflow carries no
+  `paths-ignore`: errors originate in `.py` docstrings *and* in committed notebook output
+  (#571).
 - `CPPPlot.ranking(show_ci=True)`: draws the bootstrap confidence interval of `mean_dif` as whiskers on the mean difference bars, with `ci_color` setting their color. Off by default, so existing figures are unchanged; a feature with `NaN` bounds keeps a bare bar (#16).
 - Candidate lineage: `SeqMut.combine(lineage=...)` and `SeqOpt.run(lineage=...)` attach one plain,
   JSON-serializable record per candidate (content-hash `candidate_id`, `parent_id`, ordered
