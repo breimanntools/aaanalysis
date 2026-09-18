@@ -33,9 +33,14 @@ python .github/scripts/check_branch_coverage.py
 # parameter coverage meta-test (fast, no coverage run needed)
 pytest tests/unit/api_tests/test_param_coverage.py -x -vv -c tests/pytest.ini
 
-# run notebooks — LOCAL gate only (nbmake is NOT in blocking CI; re-run + re-commit
-# outputs before every push; RTD renders committed outputs but does not execute them)
+# run notebooks — the full sweep is LOCAL (CI executes only a canonical example
+# subset + ALL TEN protocols, in notebook_examples.yml). Re-run + re-commit outputs
+# before every push; RTD renders committed outputs but does not execute them.
 pytest --nbmake --nbmake-timeout=120 tutorials/ examples/
+
+# protocols — the set CI gates (needs [pro]: protocol 9 fits a ShapModel). They are
+# the first pages a new user reaches, so they must stay runnable, not just rendered.
+pytest --nbmake --nbmake-timeout=600 protocols/
 
 # perf benchmark suite (issue #187) — opt-in [bench] extra, runs in the perf
 # nightly only (NOT the blocking matrix; wall-clock is noisy). Needs the plugin:

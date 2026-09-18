@@ -11,6 +11,16 @@ name: Notebook Examples (canonical subset)
 # examples + tutorials sweep (heavier deps: torch/transformers, biopython, FIMO,
 # py3Dmol) is left to a nightly and is not built here.
 #
+# The second job executes ALL TEN workflow protocols. They are the RTD pages a
+# new user reaches first, and they had no execution gate at all: nbmake covered
+# only tutorials/ and examples/, integration_e2e.yml runs Python tests rather
+# than notebooks, and RTD renders the committed outputs without executing them,
+# so a protocol could rot silently. Protocols are teaching-sized (tiny seeded
+# datasets), so the whole set is cheap enough to gate on; only protocol 9 needs
+# an extra (shap, via [pro]), so the job installs that rather than splitting the
+# set. They run in their own job so a protocol failure is legible on the checks
+# list and does not mask an example failure.
+#
 # paths-ignore mirrors the code-gated workflows: a pure-docs change (docs/**,
 # *.md, *.rst) cannot break a notebook, so it skips. A change to library code or
 # to any tracked notebook still runs the subset.
@@ -80,5 +90,47 @@ jobs:
           examples/pu_learning/dpul_fit.ipynb
           examples/explainable_ai/tm_fit.ipynb
           examples/prediction/aap_fit.ipynb
+        env:
+          MPLBACKEND: Agg
+
+  protocols:
+    name: Execute the ten workflow protocols
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+
+      - name: Set up Python 3.12
+        uses: actions/setup-python@v6
+        with:
+          python-version: '3.12'
+
+      - name: Cache Python dependencies
+        uses: actions/cache@v5
+        with:
+          path: ~/.cache/pip
+          key: ${{ runner.os }}-pip-nbmake-pro-${{ hashFiles('pyproject.toml') }}
+          restore-keys: |
+            ${{ runner.os }}-pip-nbmake-pro-
+
+      # [pro] rather than a base install: protocol 9 (interpretability) fits a
+      # ShapModel, so it needs shap. The other nine are core-only, and none of
+      # the ten fetches anything over the network, so the set stays offline and
+      # deterministic. The editable install compiles the Cython CPP backend.
+      - name: Install package + notebook test deps
+        run: |
+          python -m pip install --upgrade pip
+          pip install -e .[pro]
+          pip install pytest nbmake ipykernel
+
+      - name: Register the python3 Jupyter kernel
+        run: python -m ipykernel install --user --name python3
+
+      # Sequential on purpose: ten teaching-sized notebooks are cheap, and a
+      # deterministic run keeps a first failure easy to read. If this job ever
+      # becomes the critical path, `-n auto` (pytest-xdist) is the lever.
+      - name: Execute all ten protocols (nbmake)
+        run: >
+          pytest --nbmake --nbmake-timeout=600 -p no:cacheprovider
+          protocols/
         env:
           MPLBACKEND: Agg
