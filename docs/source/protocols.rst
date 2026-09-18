@@ -52,6 +52,7 @@ protocol; click it to open that protocol.
      <a href="generated/protocol8_prediction.html"><img src="_static/img/thumbs/protocol8.png" alt="P8: Prediction"><div class="cap">P8: Prediction</div></a>
      <a href="generated/protocol9_interpretability.html"><img src="_static/img/thumbs/protocol9.png" alt="P9: Interpretability"><div class="cap">P9: Interpretability</div></a>
      <a href="generated/protocol10_validation.html"><img src="_static/img/thumbs/protocol10.png" alt="P10: Validation"><div class="cap">P10: Validation</div></a>
+     <a href="generated/protocol11_benchmark.html"><img src="_static/img/thumbs/protocol11.png" alt="P11: Benchmark protocol"><div class="cap">P11: Benchmark protocol</div></a>
    </div>
 
 AAanalysis turns a biological *question* into an
@@ -61,7 +62,9 @@ distinguish them), and the rest of the pipeline helps you sample fairly, enginee
 features, select what matters, predict, explain, and check that the signal is
 real. The catalog follows that data flow, opening with the CPP signature, then an
 exploratory no-label first look, and on through sampling, feature engineering,
-selection, modelling, explanation, and validation.
+selection, modelling, explanation, and validation. It closes with the **benchmark
+protocol**, which pins the dataset, split, metric and seed a score has to come from
+before two scores can be compared at all.
 
 .. toctree::
    :maxdepth: 1
@@ -77,3 +80,4 @@ selection, modelling, explanation, and validation.
    generated/protocol8_prediction
    generated/protocol9_interpretability
    generated/protocol10_validation
+   generated/protocol11_benchmark
