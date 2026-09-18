@@ -252,14 +252,12 @@ class SequencePreprocessor:
         """
         Pad sequence-part columns of a ``df_parts`` DataFrame to a uniform length with a gap symbol.
 
-        **Application**: Padding lets short or variable-length sequence parts (e.g. free peptides or
-        linear epitopes with no flanking context) be analyzed at a uniform, finer resolution than the
-        shortest real part allows. The in-house recipe is *pad* → :class:`CPP` (with ``accept_gaps=True``)
-        → uniform ``n_split_max``: a padded part has a longer string length, so :class:`CPP`'s split
-        validation permits a larger ``n_split_max`` (the ``Segment`` cap equals the part length) than the
-        shortest *original* part would allow. The caveat is that padded positions carry the gap-scale
-        value (``NaN`` is omitted when ``accept_gaps=True``) and therefore still feed into the computed
-        features, so pad only as far as needed for the desired split resolution.
+        Short or variable-length parts, such as free peptides or linear epitopes with no
+        flanking context, can only be split as finely as the shortest part allows. Padding
+        them to a common length raises that ceiling, so :class:`CPP` (run with
+        ``accept_gaps=True``) accepts a larger, uniform ``n_split_max``. Padded positions
+        still carry the gap value into the computed features, so pad only as far as the
+        intended split resolution needs.
 
         .. versionadded:: 1.1.0
 
