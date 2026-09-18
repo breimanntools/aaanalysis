@@ -26,6 +26,17 @@ notes — with cross-references and examples — live in
   rejected at construction with both counts in the message. Once the folds are consumed,
   `df_folds_` reports per-fold sample counts, group counts and class balance. The package performs
   the split; it runs no homology search or clustering itself (#478).
+- `to_table(df, file_path, name="df_feat", sep=None, random_state=None)`: writes an output table
+  (`df_feat`, `df_seq`, the feature matrix, ...) to CSV/TSV together with a JSON metadata sidecar
+  named after it (`<stem>.meta.json`), and returns that sidecar record. The package previously had
+  no table-export surface at all, so every downstream consumer re-implemented `to_csv` and
+  hand-wrote the metadata needed to read a `df_feat` back months later. The sidecar is assembled
+  from what already ships: the column meanings, dtypes, allowed values and ranges come from the
+  data schemas, and the package/environment record comes from `get_provenance`, so no metadata
+  format is invented. Every exported column carries a non-empty description, columns outside the
+  named contract are flagged in `columns_undocumented`, and the row index is not written, so the
+  CSV round-trips losslessly through plain `pd.read_csv`. Delimited text only: no new dependency,
+  and no parquet path (#33).
 - `Docs Build (gate)` CI workflow (`.github/scripts/check_docs_build.py`): builds the
   documentation and fails on a docutils `ERROR`, so a broken reference cannot reach `master`
   silently. It parses the build log rather than Sphinx's exit code, which is `0` even with
