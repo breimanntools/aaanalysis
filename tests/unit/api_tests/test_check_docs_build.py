@@ -145,7 +145,14 @@ class TestEvaluate:
     def test_critical_below_baseline_passes_and_asks_to_lower(self, mod):
         code, lines = mod.evaluate(CLEAN_LOG, baseline=5)
         assert code == 0
-        assert any("Lower the baseline to 0" in line for line in lines)
+        assert any("IMPROVED" in line for line in lines)
+
+    def test_improved_message_points_at_a_ci_run_not_a_local_count(self, mod):
+        """A local build can undercount, so the message must not name a number to commit."""
+        _, lines = mod.evaluate(CLEAN_LOG, baseline=5)
+        improved = next(line for line in lines if "IMPROVED" in line)
+        assert "CI" in improved
+        assert "Lower the baseline to 0" not in improved
 
     def test_error_fails_even_when_critical_is_at_baseline(self, mod):
         code, _ = mod.evaluate(ERROR_LOG + CRITICAL_LOG, baseline=1)
