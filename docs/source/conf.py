@@ -95,7 +95,11 @@ autodoc_default_options = {
     "private-members": False,
     "special-members": "",
     "inherited-members": False,  # Document members that are inherited from the base class
-    "show-inheritance": False,  # Show the base classes in the documentation for a class
+    # NOTE: "show-inheritance" is deliberately ABSENT. In autodoc_default_options a flag is
+    # enabled by the KEY'S PRESENCE, so `"show-inheritance": False` switched it ON and put a
+    # "Bases: object" line on every class page. Every public class here derives from `object`
+    # or an internal template ABC, so that line is pure noise. Do not re-add the key, and keep
+    # `:show-inheritance:` out of _templates/autosummary/class_template.rst as well.
     "ignore-module-all": False,  # Ignore __all__ when looking for members to document
     "exclude-members": "",
     "autodoc_typehints": "description",
