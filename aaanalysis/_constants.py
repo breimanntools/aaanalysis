@@ -628,6 +628,17 @@ COLS_CURVE_MODELEVAL = [COL_MODEL, COL_TRAIN_SIZE, COL_METRIC, COL_SCORE, COL_SC
                         COL_CI_LOW, COL_CI_HIGH, COL_N_SCORES]
 LIST_TRAIN_SIZES_MODELEVAL = [0.2, 0.4, 0.6, 0.8, 1.0]  # default training fractions (>= 4 sizes)
 
+# bind_groups (group-aware cross-validation): one row per fold of the bound splitter,
+# recorded on df_folds_ while the folds are consumed. Reuses COL_FOLD (above).
+COL_N_TRAIN = "n_train"                 # training samples in the fold
+COL_N_TEST = "n_test"                   # test samples in the fold
+COL_N_GROUPS_TRAIN = "n_groups_train"   # distinct group ids in the training part
+COL_N_GROUPS_TEST = "n_groups_test"     # distinct group ids in the test part
+COL_POS_RATE_TRAIN = "pos_rate_train"   # share of the positive class in the training part (NaN without labels)
+COL_POS_RATE_TEST = "pos_rate_test"     # share of the positive class in the test part (NaN without labels)
+COLS_FOLDS_GROUPS = [COL_FOLD, COL_N_TRAIN, COL_N_TEST, COL_N_GROUPS_TRAIN, COL_N_GROUPS_TEST,
+                     COL_POS_RATE_TRAIN, COL_POS_RATE_TEST]
+
 # Labels
 LABEL_FEAT_VAL = "Feature value"
 LABEL_HIST_COUNT = "Number of proteins"

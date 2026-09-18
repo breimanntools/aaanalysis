@@ -16,6 +16,16 @@ notes — with cross-references and examples — live in
 ## [Unreleased]
 
 ### Added
+- `bind_groups(cv, groups, *, allow_overlap=False)`: binds a group label per sample (protein
+  accession, family, or an externally computed homology cluster) to any scikit-learn splitter, so
+  dependent samples stay within one fold. It exists because the evaluation entry points call
+  `cross_val_*` without a `groups` argument, which is exactly what a group splitter needs: with the
+  labels bound, `AAPred.eval(cv=...)` and `ModelEvaluator.run(cv=...)` take a group-aware splitter
+  with no change to either. Every fold is verified and a splitter that ignores groups raises a
+  `ValueError` naming the shared groups, unless `allow_overlap=True`; an infeasible fold count is
+  rejected at construction with both counts in the message. Once the folds are consumed,
+  `df_folds_` reports per-fold sample counts, group counts and class balance. The package performs
+  the split; it runs no homology search or clustering itself (#478).
 - `Docs Build (gate)` CI workflow (`.github/scripts/check_docs_build.py`): builds the
   documentation and fails on a docutils `ERROR`, so a broken reference cannot reach `master`
   silently. It parses the build log rather than Sphinx's exit code, which is `0` even with
