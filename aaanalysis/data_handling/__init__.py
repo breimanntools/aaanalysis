@@ -2,11 +2,12 @@
 Data loading and sequence/embedding preprocessing — the package's data entry point.
 
 Public objects: load_dataset, load_scales, load_features, get_labels, read_fasta,
-to_fasta, SequencePreprocessor, EmbeddingPreprocessor, combine_dict_nums.
+to_fasta, to_table, SequencePreprocessor, EmbeddingPreprocessor, combine_dict_nums.
 Produces the core data objects the rest of the pipeline consumes: ``load_dataset``
 yields ``df_seq``, ``load_scales`` yields ``df_scales`` (fed to
 ``feature_engineering.AAclust`` / ``CPP``), ``load_features`` yields a reference
-``df_feat``, and ``read_fasta`` / ``to_fasta`` handle FASTA I/O. ``SequencePreprocessor``
+``df_feat``, ``read_fasta`` / ``to_fasta`` handle FASTA I/O, and ``to_table`` writes any
+output table to CSV/TSV with a JSON metadata sidecar. ``SequencePreprocessor``
 turns raw sequences into windows / numeric encodings; ``EmbeddingPreprocessor`` normalizes
 protein-language-model embeddings into the per-residue ``dict_num`` consumed by
 ``CPP.run_num`` (``combine_dict_nums`` stacks such tensors).
@@ -20,6 +21,7 @@ from ._load_features import load_features
 from ._get_labels import get_labels
 from ._read_fasta import read_fasta
 from ._to_fasta import to_fasta
+from ._to_table import to_table
 from ._seq_preproc import SequencePreprocessor
 from ._embed_preproc import EmbeddingPreprocessor
 from ._combine_dict_nums import combine_dict_nums
@@ -31,6 +33,7 @@ __all__ = [
     "get_labels",
     "read_fasta",
     "to_fasta",
+    "to_table",
     "SequencePreprocessor",
     "EmbeddingPreprocessor",
     "combine_dict_nums",
