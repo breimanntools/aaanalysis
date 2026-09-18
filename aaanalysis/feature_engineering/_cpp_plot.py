@@ -437,7 +437,7 @@ class CPPPlot:
     ``fig, ax = ...``. For backward compatibility, the returned object also forwards attribute
     access to ``ax``, so legacy ``ax = ...; ax.set_title(...)`` keeps working.
 
-    .. versionadded:: 0.1.2
+    .. versionadded:: 1.0.0
 
     Notes
     -----
@@ -445,8 +445,6 @@ class CPPPlot:
       ``_jmd_c_len`` and are reused by all plot methods (``ranking``, ``profile``, ``heatmap``,
       ``feature_map``, ``update_seq_size``) so that juxta middle domain (JMD) lengths are
       consistent across a single :class:`CPPPlot` instance.
-    * Parameters ending in ``_kws`` (e.g. ``cbar_kws``, ``legend_kws``) bundle related keyword
-      arguments into one dict; see the :ref:`keyword-dict parameters overview <kws-overview>`.
 
     """
     def __init__(self,
@@ -550,7 +548,7 @@ class CPPPlot:
         * **Redundancy** measures ('n_clusters', 'avg_n_feat_per_clust', and 'std_n_feat_per_clust'), which
           evaluate the internal redundancy of a feature set using Pearson correlation-based clustering.
 
-        .. versionadded:: 0.1.0
+        .. versionadded:: 1.0.0
 
         Parameters
         ----------
@@ -667,7 +665,7 @@ class CPPPlot:
             3. **Scale Value Assignment**: For each amino acid in the **Part-Split** subsequence,
                assign its corresponding scale value and calculate the average, which is termed the feature value.
 
-        .. versionadded:: 0.1.0
+        .. versionadded:: 1.0.0
 
         Parameters
         ----------
@@ -827,7 +825,7 @@ class CPPPlot:
         the test and the reference dataset groups. At sample level, the feature impact derived from SHAP values
         of a specific sample can be used for ranking if ``shap_plot=True`` and 'feature_impact' column in ``df_feat``.
 
-        .. versionadded:: 0.1.0
+        .. versionadded:: 1.0.0
 
         Parameters
         ----------
@@ -863,9 +861,6 @@ class CPPPlot:
             ``auto_font`` option is enabled, the height grows with ``n_top`` (width and fonts
             fixed); any explicit ``figsize`` is honored as a fixed size. With ``auto_font``
             disabled, ``None`` falls back to ``(8.5, 5)``.
-
-            .. versionchanged:: 1.1.0
-                Defaults to ``None`` and participates in ``auto_font``; explicit ``figsize`` wins.
         tmd_len : int, default=20
             Length of target middle domain (TMD) to be depicted (>0).
         tmd_jmd_space : int, default=2
@@ -1066,7 +1061,7 @@ class CPPPlot:
         most discriminative signal from :meth:`CPP.run` (group-level) or SHAP-enriched feature tables
         (sample-level when ``shap_plot=True``).
 
-        .. versionadded:: 0.1.0
+        .. versionadded:: 1.0.0
 
         Parameters
         ----------
@@ -1107,9 +1102,6 @@ class CPPPlot:
             calibrated default on the ``auto_font`` path. Ignored when an explicit ``ax`` is passed.
 
             .. versionadded:: 1.1.0
-
-            .. versionchanged:: 1.1.0
-                Defaults to ``None`` and participates in ``auto_font``; explicit ``figsize`` wins.
         start : int, default=1
             Position label of first residue position (starting at N-terminus).
         tmd_len : int, default=20
@@ -1384,7 +1376,7 @@ class CPPPlot:
         giving a two-dimensional view of the physicochemical signature produced by :meth:`CPP.run`.
         At sample level (``shap_plot=True``) the same layout visualises per-residue SHAP feature impact.
 
-        .. versionadded:: 0.1.0
+        .. versionadded:: 1.0.0
 
         Parameters
         ----------
@@ -1427,9 +1419,6 @@ class CPPPlot:
             is taller than the feature map's so row labels do not crowd.
 
             .. versionadded:: 1.1.0
-
-            .. versionchanged:: 1.1.0
-                Defaults to ``None`` and participates in ``auto_font``; explicit ``figsize`` wins.
         start : int, default=1
             Position label of first residue position (starting at N-terminus).
         tmd_len : int, default=20
@@ -1473,9 +1462,6 @@ class CPPPlot:
             ``12`` leaves the output unchanged). ``"auto"`` scales the size with the
             ``plot_settings`` font scale, caps it at about 13 pt, and shrinks it further if the
             subcategory rows would overlap, so the rows never collide.
-
-            .. versionchanged:: 1.1.0
-                Accepts ``"auto"`` to track the ``plot_settings`` font scale without row overlap.
         add_xticks_pos : bool, default=False
             If ``True``, include x-tick positions when TMD-JMD sequence is given.
         grid_linewidth : int or float, default=0.01
@@ -1783,7 +1769,7 @@ class CPPPlot:
         (positive in red, negative in blue) — the per-sample attribution obtained via
         :class:`ShapModel`.
 
-        .. versionadded:: 0.1.0
+        .. versionadded:: 1.0.0
 
         Parameters
         ----------
@@ -1791,36 +1777,28 @@ class CPPPlot:
             Feature DataFrame with a unique identifier, scale information, statistics, and positions for each feature.
             Must also include a feature importance/impact column (``col_imp``).
         shap_plot : bool, default=False
-            Set the analysis type: **CPP Analysis** (if ``False``) for group-level or
-            **CPP-SHAP Analysis** for sample-level (or subgroup-level) results:
+            Set the analysis type: **CPP Analysis** (``False``) for group-level or **CPP-SHAP
+            Analysis** (``True``) for sample-level (or subgroup-level) results. It determines how
+            ``col_imp`` and ``col_val`` are read:
 
-             **CPP Analysis**
-
-            - ``col_imp``: Refers to the group-level `feat_importance` column; markers and bars (gray)
-              show the cumulative feature importance per position and scale subcategory.
-            - ``col_val``: Displays the difference of feature values at group-level (`mean_dif`) or
-              sample-level when a `mean_dif_'name'` column is provided.
-
-             **CPP-SHAP Analysis**
-
-            - ``col_imp``: Selects the SHAP feature impact (per-sample attribution) from a
-              `feat_impact_'name'` column. The cumulative bars stack it in one direction colored by
-              sign (positive in red, negative in blue), and the markers encode ``abs`` impact (magnitude).
-            - ``col_val``: When a `mean_dif_'name'` column is given, the heatmap shows the sample-level
-              feature value difference and the impact bars are shown. When a `feat_impact_'name'` column
-              is given instead, the SHAP impact is shown directly in the heatmap (diverging colormap) and
+            - **CPP Analysis**: ``col_imp`` is the group-level `feat_importance`, drawn as gray
+              markers and cumulative bars per position and scale subcategory. ``col_val`` shows the
+              feature value difference at group level (`mean_dif`) or sample level
+              (`mean_dif_'name'`).
+            - **CPP-SHAP Analysis**: ``col_imp`` is the per-sample SHAP impact
+              (`feat_impact_'name'`), whose bars stack in one direction colored by sign (positive in
+              red, negative in blue) while the markers encode its magnitude. With a
+              `mean_dif_'name'` as ``col_val`` the heatmap shows the sample-level value difference;
+              with a `feat_impact_'name'` it shows the SHAP impact directly (diverging colormap) and
               the cumulative bars are switched off.
 
             .. note::
 
-               A sample-level map must be colored by a *sample-specific* difference, i.e. **this one
-               sample (protein) minus the reference group average**, not by the group-level `mean_dif`
-               (test group minus reference group). Compute it per sample with
-               :meth:`ShapModel.add_sample_mean_dif` (which writes a `mean_dif_'name'` column contrasting
-               the selected sample against the ``label_ref`` group) and pass that column as ``col_val``.
-               Reusing the group-level `mean_dif` here would show the group signature under every sample's
-               SHAP impact instead of each protein's own deviation. Set ``name_ref`` to the reference
-               group's name (e.g. ``"others"``) so the colorbar label matches.
+               A sample-level map must be colored by a *sample-specific* difference, this one protein
+               minus the reference group average, not by the group-level `mean_dif`. Compute it with
+               :meth:`ShapModel.add_sample_mean_dif` and pass that column as ``col_val``; otherwise the
+               map shows the group signature under every sample's SHAP impact instead of each protein's
+               own deviation.
 
         col_cat : {'category', 'subcategory', 'scale_name'}, default='subcategory'
             Column name in ``df_feat`` for scale information (y-axis).
@@ -1838,20 +1816,13 @@ class CPPPlot:
         figsize : tuple, optional
             Figure dimensions (width, height) in inches. When ``None`` (default) and the global
             ``auto_font`` option is enabled (see :class:`aaanalysis.options`), the size is derived
-            automatically from the grid shape (number of scale subcategories and residue
-            positions). Any explicit ``figsize`` (including ``(8, 8)``) is honored as a fixed size
-            and wins over ``auto_font`` — pass one to pin a predictable size (e.g. when embedding
-            the figure). With ``auto_font`` disabled, ``None`` falls back to ``(8, 8)``.
-
-            .. versionchanged:: 1.1.0
-                Auto-derived from the grid shape when ``auto_font`` is enabled and ``figsize`` is
-                omitted (the figure now shrinks for a small grid as well as growing for a large
-                one); an explicit ``figsize`` (without ``cell_size``) still wins.
+            automatically from the grid shape (number of scale subcategories and residue positions).
+            Any explicit ``figsize`` is honored as a fixed size and wins over ``auto_font``. With
+            ``auto_font`` disabled, ``None`` falls back to ``(8, 8)``.
         cell_size : tuple, optional
             Target physical size ``(width, height)`` in inches of one grid cell (a single residue
             position wide, a single subcategory row tall). When given, the figure is sized so every
-            cell renders at this exact size — shrinking for a small grid and growing for a large
-            one, with nothing clipping — regardless of ``auto_font``. When ``None`` (default) the
+            cell renders at this exact size, regardless of ``auto_font``. When ``None`` (default) the
             ``auto_font`` path uses a calibrated default cell. ``figsize`` seeds the layout;
             ``cell_size`` sets the cell.
 
@@ -1904,9 +1875,6 @@ class CPPPlot:
             ``12`` leaves the output unchanged). ``"auto"`` scales the size with the
             ``plot_settings`` font scale, caps it at about 13 pt, and shrinks it further if the
             subcategory rows would overlap, so the rows never collide.
-
-            .. versionchanged:: 1.1.0
-                Accepts ``"auto"`` to track the ``plot_settings`` font scale without row overlap.
         fontsize_annotations : int or float, default=11
             Font size (>= 0) for figure annotations. If ``None``, determined automatically.
         fontsize_imp_bar : int or float, default=9
@@ -1958,21 +1926,15 @@ class CPPPlot:
             If ``True``, the sequence renders as a continuous, gap-free colored band (one full-width
             cell per residue) with the letters drawn on top. If ``False``, each residue gets its own
             glyph-sized colored box. If ``None`` (default), follows the ``auto_font`` option: on when
-            auto-sizing is enabled, off otherwise
-            (so the ``auto_font=False`` output stays unchanged).
-
-            .. versionchanged:: 1.1.0
-                Now defaults to ``True`` (edge-to-edge residue characters).
+            auto-sizing is enabled, off otherwise.
         sample_kws : dict, optional
-            Structured bundle selecting one sample for a sample-level CPP-SHAP feature map — the
+            Structured bundle selecting one sample for a sample-level CPP-SHAP feature map, the
             bundled alternative to providing the TMD-JMD sequences directly. Fixed keys: ``sample``
-            (an ``entry`` name or ``name``-column value ``str``, or a row-position ``int``), ``df_seq`` and
-            ``df_parts``. When given, ``col_imp`` is resolved to ``feat_impact_<entry>`` (an int
-            position is mapped to its entry name via ``df_parts``), the TMD-JMD sequence parts are
-            read from ``df_parts`` via :meth:`SequenceFeature.get_seq_kws`, and ``shap_plot`` is set
-            to ``True`` automatically. It **overrides** any explicitly passed ``tmd_seq`` /
-            ``jmd_n_seq`` / ``jmd_c_seq``. Because the displayed sequence must stay faithful to the
-            ``df_parts`` the features map to, the sequence's own lengths set the grid geometry;
+            (an ``entry`` name or ``name``-column value ``str``, or a row-position ``int``), ``df_seq``
+            and ``df_parts``. When given, ``col_imp`` is resolved to ``feat_impact_<entry>``, the
+            TMD-JMD sequence parts are read from ``df_parts``, and ``shap_plot`` is set to ``True``
+            automatically. It **overrides** any explicitly passed ``tmd_seq`` / ``jmd_n_seq`` /
+            ``jmd_c_seq``, and the displayed sequence's own lengths set the grid geometry, so
             ``tmd_len`` / ``jmd_n_len`` / ``jmd_c_len`` apply only when no sequence is shown. See the
             :ref:`keyword-dict parameters overview <kws-overview>`.
 
@@ -1990,9 +1952,9 @@ class CPPPlot:
 
         The returned figure is self-contained: the scale-category legend, the "Feature value"
         colorbar and the feature-importance legend are arranged automatically below the grid. The
-        method manages its own layout, so calling ``plt.tight_layout()`` afterwards is unnecessary
-        (it is neutralized on the returned figure to keep this furniture from being pulled back onto
-        the heatmap); ``fig.savefig(..., bbox_inches="tight")`` and ``plt.show()`` work as usual.
+        method manages its own layout, so ``plt.tight_layout()`` afterwards is unnecessary and is
+        neutralized on the returned figure; ``fig.savefig(..., bbox_inches="tight")`` and
+        ``plt.show()`` work as usual.
 
         See Also
         --------
@@ -2252,7 +2214,7 @@ class CPPPlot:
         This method adjusts the font size of TMD-JMD sequence characters based on their provided sequences
         to ensure that the labels are clearly legible and do not overlap in the plot.
 
-        .. versionadded:: 0.1.0
+        .. versionadded:: 1.0.0
 
         Parameters
         ----------

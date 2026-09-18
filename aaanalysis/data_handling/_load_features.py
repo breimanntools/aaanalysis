@@ -29,7 +29,7 @@ def load_features(name: Literal["DOM_GSEC"] = "DOM_GSEC") -> pd.DataFrame:
 
         - 'DOM_GSEC' ([Breimann25]_)
 
-    .. versionadded:: 0.1.3
+    .. versionadded:: 1.0.0
 
     Parameters
     ----------

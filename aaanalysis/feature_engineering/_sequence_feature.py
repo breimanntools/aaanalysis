@@ -325,7 +325,7 @@ class SequenceFeature:
     The three feature components are the primary input for the :class:`aaanalysis.CPP` class and define
     Comparative Physicochemical Profiling (CPP) features.
 
-    .. versionadded:: 0.1.0
+    .. versionadded:: 1.0.0
 
     Notes
     -----
@@ -370,9 +370,6 @@ class SequenceFeature:
     Default parts:
         The following three parts are provided by default: ``tmd``, ``jmd_n_tmd_n``, ``tmd_c_jmd_c``.
 
-    Parameters ending in ``_kws`` (e.g. ``split_kws``, ``df_parts_kws``) bundle related keyword
-    arguments into one dict; see the :ref:`keyword-dict parameters overview <kws-overview>`.
-
     """
 
     def __init__(self,
@@ -406,10 +403,7 @@ class SequenceFeature:
         DataFrame is the primary sequence input for :class:`CPP` and for
         :meth:`SequenceFeature.feature_matrix`.
 
-        .. versionadded:: 0.1.0
-
-        .. versionchanged:: 1.1.0
-            Added the ``pos``-anchor input mode (``tmd_len``).
+        .. versionadded:: 1.0.0
 
         Parameters
         ----------
@@ -426,6 +420,8 @@ class SequenceFeature:
             TMD length in amino acids for the **Anchor-based format** only (a ``sequence`` + ``pos`` ``df_seq``).
             Each 1-based anchor in ``pos`` is placed at the P1 position of a length-``tmd_len`` TMD
             (right-heavy for even ``tmd_len``); ignored for the other formats.
+
+            .. versionadded:: 1.1.0
         all_parts: bool, default=False
             Whether to create DataFrame with all possible sequence parts (if ``True``) or parts given by ``list_parts``.
         remove_entries_with_gaps: bool, default=False
@@ -599,10 +595,7 @@ class SequenceFeature:
         A ``strategy`` preset names the Comparative Physicochemical Profiling (CPP) strategy directly
         instead of spelling it out through ``split_types``, ``n_split_min``, and ``n_split_max``.
 
-        .. versionadded:: 0.1.0
-
-        .. versionchanged:: 1.2.0
-            Added the ``strategy`` presets for compositional and positional CPP features.
+        .. versionadded:: 1.0.0
 
         Parameters
         ----------
@@ -648,6 +641,8 @@ class SequenceFeature:
             Together, both presets cover the default split set. If ``None``, the split set is defined by
             ``split_types``, ``n_split_min``, and ``n_split_max``. Otherwise, those three parameters must
             remain at their defaults.
+
+            .. versionadded:: 1.2.0
 
         Returns
         -------
@@ -765,7 +760,7 @@ class SequenceFeature:
         * For sample vs group or sample vs sample comparison, the amino acid segments
           and patterns for the respective sample from the test dataset (label = 1) will be given.
 
-        .. versionadded:: 0.1.0
+        .. versionadded:: 1.0.0
 
         Parameters
         ----------
@@ -882,14 +877,7 @@ class SequenceFeature:
         The result is the numerical input ``X`` consumed by :meth:`CPP.run` and
         by :meth:`NumericalFeature.filter_correlation`.
 
-        .. versionadded:: 0.1.0
-
-        .. versionchanged:: 1.1.0
-            Added the ``batch`` parameter for building a list of ``df_parts`` in a single pass.
-
-        .. versionchanged:: 1.1.0
-            Added the ``df_seq`` and ``df_parts_kws`` parameters to build ``df_parts`` internally, so the
-            sequence-to-matrix step no longer requires a separate :meth:`get_df_parts` call.
+        .. versionadded:: 1.0.0
 
         Parameters
         ----------
@@ -914,11 +902,15 @@ class SequenceFeature:
             Use for per-protein sliding scoring where the same ``features`` are applied to many small
             ``df_parts`` in a tight loop; the result is **byte-identical** to calling this per batch.
             Not supported together with ``df_seq``.
+
+            .. versionadded:: 1.1.0
         df_seq : pd.DataFrame, shape (n_samples, n_seq_info), optional
             DataFrame containing an ``entry`` column with unique protein identifiers and sequence information
             in a distinct format: **Position-based**, **Part-based**, **Sequence-based**, or **Sequence-TMD-based**.
             If given, ``df_parts`` is built internally via :meth:`get_df_parts`, as an alternative to passing
             ``df_parts`` directly. Provide exactly one of ``df_parts`` or ``df_seq``.
+
+            .. versionadded:: 1.1.0
         df_parts_kws : dict, optional
             Keyword arguments forwarded to :meth:`get_df_parts` when building ``df_parts`` from ``df_seq``
             (e.g. ``{"list_parts": ["tmd"], "jmd_n_len": 10, "jmd_c_len": 10}``). Keys must be
@@ -926,6 +918,8 @@ class SequenceFeature:
             The JMD flank lengths ``jmd_n_len`` / ``jmd_c_len`` default to 10, while ``tmd_len`` defaults
             to ``None`` (the TMD length is variable, read from each sequence, except in the Position-based
             input mode where it is fixed). Only valid together with ``df_seq``.
+
+            .. versionadded:: 1.1.0
 
         Returns
         -------
@@ -1742,7 +1736,7 @@ class SequenceFeature:
         These ids can be passed directly to :meth:`SequenceFeature.feature_matrix`
         or used to pre-select a feature space before calling :meth:`CPP.run`.
 
-        .. versionadded:: 0.1.0
+        .. versionadded:: 1.0.0
 
         Parameters
         ----------
@@ -1800,7 +1794,7 @@ class SequenceFeature:
         positions covered by the feature's Split, making feature results easier
         to interpret in :class:`CPP` output DataFrames.
 
-        .. versionadded:: 0.1.0
+        .. versionadded:: 1.0.0
 
         Parameters
         ----------
@@ -1960,7 +1954,7 @@ class SequenceFeature:
         numbers, which is useful for inspecting :class:`CPP` feature results on a
         specific protein.
 
-        .. versionadded:: 0.1.0
+        .. versionadded:: 1.0.0
 
         Parameters
         ----------
@@ -2035,7 +2029,7 @@ class SequenceFeature:
         then aggregating by scale category. The resulting position-by-category
         matrix is the direct input for :class:`CPPPlot` position plots.
 
-        .. versionadded:: 0.1.0
+        .. versionadded:: 1.0.0
 
         Parameters
         ----------
@@ -2135,8 +2129,7 @@ class SequenceFeature:
           argument of :meth:`CPP.run` / :meth:`CPP.run_num`.
         * To aggregate the per-class results, run CPP per array and concatenate the
           returned ``df_feat`` frames, tagging each with its class key.
-        * **Complexity:** O(n_samples x n_classes); scales linearly in both, so OvR
-          stays cheap for large K.
+        * One contrast per class, so this stays cheap even for many classes.
 
         See Also
         --------
@@ -2207,9 +2200,9 @@ class SequenceFeature:
         -----
         * The selection is applied positionally; ``df_parts_pair.index`` records which
           original rows the pair retained.
-        * **Complexity:** O(n_samples x n_classes^2): K classes produce K(K-1)/2 pairs
-          (K=10 -> 45, K=20 -> 190), each needing its own CPP instance. Prefer OvO for
-          small K (~<10) and :meth:`get_labels_ovr` for larger problems.
+        * ``K`` classes produce ``K(K-1)/2`` pairs (10 classes give 45, 20 classes give 190),
+          each needing its own CPP instance. Prefer one-vs-one for few classes (up to about 10)
+          and :meth:`get_labels_ovr` for larger problems.
 
         See Also
         --------
@@ -2278,8 +2271,6 @@ class SequenceFeature:
         * Targets are converted to ``float64``. Raises ``ValueError`` up front if the
           split would yield only one class (constant targets, or a cut leaving one
           side empty), instead of failing later inside :meth:`CPP.run`.
-        * **Complexity:** O(n_samples log n_samples) from the quantile, negligible
-          beside CPP runtime.
 
         See Also
         --------
@@ -2365,7 +2356,6 @@ class SequenceFeature:
           ``q_pos`` leaving no negatives).
         * The selection is applied positionally; ``df_parts_tier.index`` records which
           original rows the tier retained.
-        * **Complexity:** O(n_samples log n_samples x n_tiers).
 
         See Also
         --------

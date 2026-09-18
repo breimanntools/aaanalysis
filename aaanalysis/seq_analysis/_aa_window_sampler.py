@@ -454,8 +454,6 @@ class AAWindowSampler:
         method with :meth:`sample_different_protein` when an unlabeled cross-protein
         pool is also needed.
 
-        .. versionadded:: 1.1.0
-
         Parameters
         ----------
         df_seq : pd.DataFrame, shape (n_samples, n_seq_info)
@@ -626,8 +624,6 @@ class AAWindowSampler:
         alongside :meth:`sample_same_protein` to build a combined reference pool that
         covers both within- and cross-protein negatives.
 
-        .. versionadded:: 1.1.0
-
         Parameters
         ----------
         df_seq : pd.DataFrame, shape (n_samples, n_seq_info)
@@ -763,8 +759,6 @@ class AAWindowSampler:
         with a per-call counter — concatenating multiple :meth:`sample_synthetic`
         outputs may collide on ``entry_win``; deduplicate on the ``window`` column
         instead.
-
-        .. versionadded:: 1.1.0
 
         Parameters
         ----------
@@ -942,8 +936,6 @@ class AAWindowSampler:
         Useful for hard-negative mining: candidates that look like positives at
         the local-motif level but were not labeled positive.
 
-        .. versionadded:: 1.1.0
-
         Parameters
         ----------
         df_seq : pd.DataFrame, shape (n_samples, n_seq_info)
@@ -1067,8 +1059,6 @@ class AAWindowSampler:
         adds no new sampling behavior. Each arm is one ordinary ``sample_*`` call
         in ``'segments'`` mode, tagged with its arm name in an extra ``arm``
         column so a downstream benchmark can consume any mix of arms uniformly.
-
-        .. versionadded:: 1.1.0
 
         Parameters
         ----------

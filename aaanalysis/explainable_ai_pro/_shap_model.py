@@ -347,7 +347,7 @@ class ShapModel(Wrapper):
     represent a feature's responsibility for a change in the model output to increase or decrease a sample prediction
     score due to the positive or negative impact of its features, respectively.
 
-    .. versionadded:: 0.1.3
+    .. versionadded:: 1.0.0
 
     Attributes
     ----------
@@ -497,7 +497,7 @@ class ShapModel(Wrapper):
         ``shap_values``. Pass the result to :meth:`ShapModel.add_feat_impact` to attach impact scores
         to a feature DataFrame.
 
-        .. versionadded:: 0.1.0
+        .. versionadded:: 1.0.0
 
         Parameters
         ----------
@@ -685,7 +685,7 @@ class ShapModel(Wrapper):
         corresponding to each sample or group. Additionally, the SHAP value-based feature importance can be included
         as ``feat_importance`` column.
 
-        .. versionadded:: 0.1.0
+        .. versionadded:: 1.0.0
 
         Parameters
         ----------
@@ -832,10 +832,7 @@ class ShapModel(Wrapper):
            contrast you want each sample explained against (e.g. an ``others`` / unlabeled group rather
            than a curated negative set).
 
-        .. versionadded:: 0.1.0
-
-        .. versionchanged:: 1.2.0
-           Added ``X_ref`` for an explicit external reference group; ``labels`` is now optional.
+        .. versionadded:: 1.0.0
 
         Parameters
         ----------
@@ -875,9 +872,10 @@ class ShapModel(Wrapper):
             Deprecated alias for ``samples`` (removed in 1.2.0).
         X_ref : array-like, shape (n_ref_samples, n_features), optional
             External reference feature matrix. When given, the reference group average (MEAN_REF) is
-            ``X_ref.mean(axis=0)`` and ``labels`` / ``label_ref`` are not needed — use this to explain
-            each sample against a *separate* population (e.g. an ``others`` set not contained in ``X``),
-            avoiding the manual concatenation of samples and reference rows into one labelled matrix.
+            ``X_ref.mean(axis=0)`` and ``labels`` / ``label_ref`` are not needed: use it to explain
+            each sample against a *separate* population, e.g. an ``others`` set not contained in ``X``.
+
+            .. versionadded:: 1.2.0
 
         Returns
         -------

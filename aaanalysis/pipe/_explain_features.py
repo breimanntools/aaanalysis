@@ -94,12 +94,10 @@ def explain_features(df_feat: pd.DataFrame,
     """
     Explain a feature set in one call: compute per-sample SHAP impact and draw the SHAP feature map.
 
-    A thin, stateless *pro* facade over the explicit primitive path. It rebuilds the feature matrix
-    ``X`` from the feature identifiers in ``df_feat`` (via :meth:`SequenceFeature.get_df_parts` +
-    :meth:`SequenceFeature.feature_matrix`), fits a :class:`ShapModel`, attaches the per-sample SHAP
-    feature impact to ``df_feat`` (via :meth:`ShapModel.add_feat_impact`), and draws the
-    SHAP-coloured feature map (:meth:`CPPPlot.feature_map` with ``shap_plot=True``). The defaults are
-    byte-identical to writing those calls by hand.
+    Where the feature map shows what separates the two groups on average, this shows what drives
+    the prediction for one individual protein: each feature's signed contribution to that sample's
+    score, coloured onto the same map. It is a thin, stateless *pro* facade over the explicit
+    :class:`ShapModel` path and gives the same result as writing those calls by hand.
 
     By default a single sample is explained: the ``label_target_class`` sample the models predict
     most confidently — the most representative correct prediction. Pass ``samples`` (an ``entry``

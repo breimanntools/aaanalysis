@@ -419,18 +419,19 @@ def find_features(labels: ut.ArrayLike1D,
     """
     Identify discriminating features in one call via a staged, interpretable CPP AutoML search.
 
-    The search is **staged** so its cost stays interpretable. Stage 1 cross-validates the full
-    Cartesian Part × Split × Scale grid (at a reference ``n_filter``) and ranks each axis by its
-    **marginal-mean impact**; Stage 2 refines only the single highest-impact axis against
-    ``n_filter`` (the others pinned at the stage optimum); Stage 3 refines the winning feature set
-    with :meth:`CPP.simplify` and recursive feature elimination. Selection is **multi-objective**:
-    within each stage the Pareto-optimal-then-simplest configuration across all ``metric`` wins,
-    scored by the average cross-validated performance of one or more ``model`` s. The winner is then
-    ranked by tree-based importance and drawn as the CPP feature map. At ``search="fast"`` no search
-    is run — its returned ``df_feat`` is byte-identical to the explicit single-CPP path. This is
-    the only parity anchored by a test. ``search="balanced"`` and ``search="exhaustive"`` select
-    among many configurations, so neither has a single explicit chain to compare against or a parity
-    anchor; with a fixed ``random_state`` they are reproducible run to run.
+    Where :meth:`CPP.run` asks what separates two groups for one fixed configuration, this asks
+    the same question while searching for the configuration itself: which sequence parts, which
+    splits, which scale set, and how many features best tell the labeled groups apart. The search
+    is staged rather than exhaustive, so its cost stays predictable. An early pass ranks the levers
+    by how much each one moves the score, later passes refine only the lever that matters and then
+    the winning feature set itself. Among configurations that score equally well the simplest wins,
+    judged by the cross-validated performance of one or more ``model`` s over all ``metric`` s. The
+    winner is ranked by tree-based importance and drawn as the CPP feature map.
+
+    ``search="fast"`` runs no search at all: it is the single default CPP configuration, for when
+    the configuration is already settled and only the features are wanted. ``"balanced"`` and
+    ``"exhaustive"`` choose among many configurations and are reproducible run to run with a fixed
+    ``random_state``.
 
     .. warning::
 
@@ -477,23 +478,16 @@ def find_features(labels: ut.ArrayLike1D,
           features and scored on the held-out fold. This removes the selection leakage, so the
           ``df_eval`` scores are held-out generalization estimates (typically lower). It re-runs CPP
           per fold, so it is much more expensive; pair it with ``search="fast"`` / ``"balanced"``.
-          The returned ``df_feat`` is always the winning configuration refit on all data
-          (outer-CV semantics). Nesting applies to the **configuration-selection** scores (the
-          Stage-1/2 grid and the ``"fast"`` single-configuration score); the winner's second-step
-          refinement (:meth:`CPP.simplify` + recursive feature elimination) runs on all data in
-          **both** scopes, so no refinement capability is lost in ``"fold"`` mode.
+          The returned ``df_feat`` is always the winning configuration refit on all data, and the
+          refinement of that winner runs on all data in both scopes, so nothing is lost by
+          choosing ``"fold"`` other than time.
     kws : dict, optional
-        Bounded power-user overrides; each pins a swept lever to a single value (unknown keys raise).
-        Recognized keys: ``n_explain``, ``n_split_max`` (max ``Segment`` splits), ``len_max`` (max
-        ``Pattern`` span), ``n_filter``, ``n_jmd`` (the symmetric JMD length ``jmd_n_len =
-        jmd_c_len``), ``simplify_strategy``, ``max_cor``, ``max_overlap``. For **free peptides / short
-        parts** (no flanking context), pass ``kws={"n_jmd": 0}`` so no JMD is carved out; the search
-        then uses **TMD-only** parts (the whole peptide is one part, rather than half-TMD fragments)
-        and **caps the swept ``n_split_max``** range to the shortest part length (deduped), with a
-        ``UserWarning``. The split config also auto-caps to the shortest part (``Pattern`` /
-        ``PeriodicPattern`` that cannot fit are dropped and ``n_split_max`` is clamped). On normal
-        (long-part) inputs the range cap is a no-op. Lower ``n_split_max`` / ``len_max`` yourself to
-        control which splits are used.
+        Pin a swept lever to a single value (unknown keys raise). Recognized keys: ``n_explain``,
+        ``n_split_max`` (max ``Segment`` splits), ``len_max`` (max ``Pattern`` span), ``n_filter``,
+        ``n_jmd`` (the symmetric JMD length ``jmd_n_len = jmd_c_len``), ``simplify_strategy``,
+        ``max_cor``, ``max_overlap``. For free peptides, or any short part without flanking context,
+        pass ``kws={"n_jmd": 0}``: no JMD is carved out, the whole peptide becomes one part instead
+        of half-TMD fragments, and splits that cannot fit it are dropped with a ``UserWarning``.
     subcategories : list of str, optional
         AAontology subcategories to restrict the scale sets to. If ``None``, all scales of the grade.
     top_n : int, optional
