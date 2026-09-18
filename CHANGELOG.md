@@ -17,6 +17,13 @@ notes — with cross-references and examples — live in
 
 ### Added
 - `CPPPlot.ranking(show_ci=True)`: draws the bootstrap confidence interval of `mean_dif` as whiskers on the mean difference bars, with `ci_color` setting their color. Off by default, so existing figures are unchanged; a feature with `NaN` bounds keeps a bare bar (#16).
+- Protocol execution gate: `notebook_examples.yml` gained a second job that runs all ten
+  workflow protocols under nbmake on every PR (`pytest --nbmake protocols/`, installed with
+  `[pro]` because protocol 9 fits a `ShapModel`). The protocols are the first pages a new user
+  reaches and had no execution gate: nbmake covered only `examples/` and `tutorials/`,
+  `integration_e2e.yml` runs Python tests rather than notebooks, and Read the Docs renders the
+  committed outputs without executing them, so a protocol could rot silently. `CONTRIBUTING.rst`
+  and its docs copy no longer describe notebook execution as a local-only gate (#455).
 - Candidate lineage: `SeqMut.combine(lineage=...)` and `SeqOpt.run(lineage=...)` attach one plain,
   JSON-serializable record per candidate (content-hash `candidate_id`, `parent_id`, ordered
   parent-relative `mutations`, `method`, `objective_values`, effective `seed`, constraints digest) in

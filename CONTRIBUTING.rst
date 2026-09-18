@@ -711,8 +711,8 @@ Quality gates
      - numpydoc shape, named ``Returns``, per-method ``Examples`` include, no doc-vs-signature drift
      - the ``/docstrings`` skill: ``check_docstrings.py``, ``doc_signature_drift.py``, ``check_example_notebooks.py``. The first two are **blocking CI** in the ``codeql_analysis.yml`` "code-quality" job; ``check_example_notebooks`` runs there **advisory (non-blocking)** until the remaining notebook param-coverage gaps are cleared. All three also run locally via the skill.
    * - **Notebooks execute**
-     - every ``examples/`` + ``tutorials/`` notebook runs clean with embedded outputs
-     - ``pytest --nbmake --nbmake-timeout=120 examples/ tutorials/``. **Local gate only — NOT in blocking CI.** Re-run and re-commit outputs before every push.
+     - every ``examples/`` + ``tutorials/`` + ``protocols/`` notebook runs clean with embedded outputs
+     - ``pytest --nbmake --nbmake-timeout=120 examples/ tutorials/`` locally, plus ``pytest --nbmake --nbmake-timeout=600 protocols/`` (needs ``[pro]``). **Blocking CI covers a canonical example subset and ALL TEN protocols** (``notebook_examples.yml``); the rest of the sweep stays local, so re-run and re-commit outputs before every push.
    * - **Architecture**
      - matches ``CONTEXT.md`` / ADRs; no cross-class backend imports or layering violations
      - machine: ``tests/unit/api_tests/test_backend_import_hygiene.py``. Spec / ADR conformance is human + ``/grill-with-docs``.
@@ -753,6 +753,8 @@ Process notes (hard-won)
   safe because GitHub merges only on all-green + conflict-free, preserving *never merge red*. When
   a check goes red, **fix forward on the same branch** — the armed auto-merge needs no re-issuing
   and completes on the green re-run. Use ``gh pr merge --disable-auto`` to hold a PR.
-- **Notebooks are a local-only gate.** Because nbmake is not in blocking CI, a broken example
-  surfaces only on RTD (as wrong/un-rendered output) or in a local run. Always run
+- **Notebook execution is only partly gated.** Blocking CI executes a canonical example
+  subset and all ten protocols (``notebook_examples.yml``); everything else — the rest of
+  ``examples/`` and all of ``tutorials/`` — is still local-only, so a broken one surfaces
+  on RTD (as wrong/un-rendered output) or in a local run. Always run
   ``pytest --nbmake examples/ tutorials/`` and commit fresh outputs before pushing.
