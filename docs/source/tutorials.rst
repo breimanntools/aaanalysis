@@ -44,6 +44,7 @@ click it to open that tutorial. The full, section-ordered list follows below.
      <a href="generated/tutorial5a_shap_model.html"><img src="_static/img/thumbs/tut5a.png" alt="ShapModel explanation"><div class="cap">ShapModel</div></a>
      <a href="generated/tutorial6_comparison_harness.html"><img src="_static/img/thumbs/tut6.png" alt="Evaluation and comparison"><div class="cap">Evaluation</div></a>
      <a href="generated/tutorial7_protein_engineering.html"><img src="_static/img/thumbs/tut7.png" alt="SeqOpt protein engineering"><div class="cap">Protein engineering</div></a>
+     <a href="generated/tutorial8_upstream_bridge.html"><img src="_static/img/thumbs/tut8.png" alt="Upstream bridge from FASTA to a scikit-learn pipeline"><div class="cap">Upstream bridge</div></a>
    </div>
 
 Data Handling
@@ -120,3 +121,20 @@ mutation map and lineage.
    :maxdepth: 1
 
    generated/tutorial7_protein_engineering
+
+Interoperability
+----------------
+Most analyses start with another tool's output. The **Upstream bridge** tutorial is the
+recipe that carries a plain FASTA file, the one hand-off every tool can produce, all the way
+to a fitted model: :func:`~aaanalysis.read_fasta` reads it, :meth:`~aaanalysis.SequenceFeature.get_df_parts`
+adapts it to the part geometry CPP needs, and :class:`~aaanalysis.SequenceFeatureTransformer`
+drops into a stock ``scikit-learn`` ``Pipeline`` so CPP feature selection runs *inside*
+cross-validation instead of before it. This is the counterpart to the fixed-feature route,
+where :meth:`~aaanalysis.SequenceFeature.feature_matrix` hands a plain numeric matrix to any
+estimator. The two heavy representations, language model embeddings and AlphaFold channels,
+have their own bridge in the **Embeddings & AlphaFold** tutorial above.
+
+.. toctree::
+   :maxdepth: 1
+
+   generated/tutorial8_upstream_bridge
