@@ -149,3 +149,8 @@ Utility Functions
     plot_get_cmap
     plot_legend
     plot_settings
+
+.. toctree::
+   :maxdepth: 1
+
+   Beta Features <index/usage_principles/beta_features>
