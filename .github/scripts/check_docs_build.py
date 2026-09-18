@@ -37,13 +37,15 @@ This is CI tooling, not library code, so it prints to stdout for the CI log
 
 Local use::
 
-    python .github/scripts/check_docs_build.py               # build, then check
+    python .github/scripts/check_docs_build.py               # full build, then check
     python .github/scripts/check_docs_build.py build.log     # parse an existing log
     python .github/scripts/check_docs_build.py --report      # print counts, never fail
 """
 import re
 import sys
+import shutil
 import argparse
+import tempfile
 import subprocess
 from collections import Counter
 from pathlib import Path
@@ -79,15 +81,30 @@ def read_baseline(path=BASELINE_PATH):
 
 
 def build_docs(source_dir=SOURCE_DIR, out_dir=None):
-    """Build the HTML docs and return the combined build log.
+    """Build the HTML docs from scratch and return the combined build log.
+
+    The build always goes into a FRESH directory, because the counts are only
+    meaningful for a full build. Sphinx is incremental: a second build into the
+    same output directory re-reads only the changed pages, so every message from
+    an untouched page is missing from the log. Locally that silently undercounts
+    -- a re-run reported 89 critical against a true 167 and invited the baseline
+    to be lowered to a number CI would never reproduce. CI always builds a fresh
+    checkout, so this keeps a local run honest and agreeing with it.
 
     Sphinx writes its messages to stderr and returns 0 with errors present, so
     both streams are captured and the return code is deliberately ignored.
     """
-    out_dir = out_dir or (REPO_ROOT / "docs" / "_build" / "gate")
+    tmp_dir = None
+    if out_dir is None:
+        tmp_dir = tempfile.mkdtemp(prefix="aaanalysis-docs-gate-")
+        out_dir = tmp_dir
     cmd = [sys.executable, "-m", "sphinx", "-b", "html", str(source_dir), str(out_dir)]
     proc = subprocess.run(cmd, capture_output=True, text=True)
     log = proc.stdout + proc.stderr
+    if tmp_dir is not None:
+        # Always discard it: the log is the deliverable, and a kept tree would make the
+        # NEXT run incremental, which is the very thing this function exists to avoid.
+        shutil.rmtree(tmp_dir, ignore_errors=True)
     if not log.strip():
         raise RuntimeError(f"sphinx produced no output (exit {proc.returncode})")
     return log
@@ -142,7 +159,8 @@ def evaluate(log, baseline=None):
         code = 1
     elif n_critical < baseline:
         lines.append(f"IMPROVED: {n_critical} critical < baseline {baseline} "
-                     f"(-{baseline - n_critical}). Lower the baseline to {n_critical}.")
+                     f"(-{baseline - n_critical}). Lower the baseline to the count a CI "
+                     f"run reports, not to a local one.")
     else:
         lines.append(f"OK: critical at baseline ({baseline}).")
     return code, lines

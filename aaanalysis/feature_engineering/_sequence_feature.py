@@ -325,7 +325,7 @@ class SequenceFeature:
     The three feature components are the primary input for the :class:`aaanalysis.CPP` class and define
     Comparative Physicochemical Profiling (CPP) features.
 
-    .. versionadded:: 0.1.0
+    .. versionadded:: 1.0.0
 
     Notes
     -----
@@ -403,7 +403,7 @@ class SequenceFeature:
         DataFrame is the primary sequence input for :class:`CPP` and for
         :meth:`SequenceFeature.feature_matrix`.
 
-        .. versionadded:: 0.1.0
+        .. versionadded:: 1.0.0
 
         Parameters
         ----------
@@ -595,7 +595,7 @@ class SequenceFeature:
         A ``strategy`` preset names the Comparative Physicochemical Profiling (CPP) strategy directly
         instead of spelling it out through ``split_types``, ``n_split_min``, and ``n_split_max``.
 
-        .. versionadded:: 0.1.0
+        .. versionadded:: 1.0.0
 
         Parameters
         ----------
@@ -760,7 +760,7 @@ class SequenceFeature:
         * For sample vs group or sample vs sample comparison, the amino acid segments
           and patterns for the respective sample from the test dataset (label = 1) will be given.
 
-        .. versionadded:: 0.1.0
+        .. versionadded:: 1.0.0
 
         Parameters
         ----------
@@ -877,7 +877,7 @@ class SequenceFeature:
         The result is the numerical input ``X`` consumed by :meth:`CPP.run` and
         by :meth:`NumericalFeature.filter_correlation`.
 
-        .. versionadded:: 0.1.0
+        .. versionadded:: 1.0.0
 
         Parameters
         ----------
@@ -1736,7 +1736,7 @@ class SequenceFeature:
         These ids can be passed directly to :meth:`SequenceFeature.feature_matrix`
         or used to pre-select a feature space before calling :meth:`CPP.run`.
 
-        .. versionadded:: 0.1.0
+        .. versionadded:: 1.0.0
 
         Parameters
         ----------
@@ -1794,7 +1794,7 @@ class SequenceFeature:
         positions covered by the feature's Split, making feature results easier
         to interpret in :class:`CPP` output DataFrames.
 
-        .. versionadded:: 0.1.0
+        .. versionadded:: 1.0.0
 
         Parameters
         ----------
@@ -1954,7 +1954,7 @@ class SequenceFeature:
         numbers, which is useful for inspecting :class:`CPP` feature results on a
         specific protein.
 
-        .. versionadded:: 0.1.0
+        .. versionadded:: 1.0.0
 
         Parameters
         ----------
@@ -2029,7 +2029,7 @@ class SequenceFeature:
         then aggregating by scale category. The resulting position-by-category
         matrix is the direct input for :class:`CPPPlot` position plots.
 
-        .. versionadded:: 0.1.0
+        .. versionadded:: 1.0.0
 
         Parameters
         ----------

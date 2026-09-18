@@ -147,7 +147,7 @@ class SequencePreprocessor:
         while all other positions are set to 0. Gaps are represented by zero vectors. Shorter sequences are
         padded with gaps either N- or C-terminally.
 
-        .. versionadded:: 0.1.0
+        .. versionadded:: 1.0.0
 
         Parameters
         ----------
@@ -200,7 +200,7 @@ class SequencePreprocessor:
         Each amino acid is represented by an integer between 1 and n, where n is the number of characters.
         Gaps are represented by 0. Shorter sequences are padded with gaps either N- or C-terminally.
 
-        .. versionadded:: 0.1.0
+        .. versionadded:: 1.0.0
 
         Parameters
         ----------
@@ -347,7 +347,7 @@ class SequencePreprocessor:
         This window starts from a given start position (``pos_start``) and stops either at a defined
         stop position (``pos_stop``) or after a number of residues defined by ``window_size``.
 
-        .. versionadded:: 0.1.0
+        .. versionadded:: 1.0.0
 
         Parameters
         ----------
@@ -423,7 +423,7 @@ class SequencePreprocessor:
         at a fixed site, it returns a list covering every slide position in the
         requested range.
 
-        .. versionadded:: 0.1.0
+        .. versionadded:: 1.0.0
 
         Parameters
         ----------

@@ -133,7 +133,11 @@ DICT_DF_SCHEMAS = {
         "description": (
             "Sequence parts table consumed by CPP / SequenceFeature; one row per "
             "sequence. Columns are DYNAMIC: one column per selected sequence part, named "
-            "by the part vocabulary; each value is the part's amino acid subsequence."),
+            "by the part vocabulary; each value is the part's amino acid subsequence. "
+            "In that vocabulary 'tmd' is the TARGET MIDDLE DOMAIN (the target span of "
+            "interest) and 'jmd_n' / 'jmd_c' are its flanks: a geometry, not a membrane "
+            "claim, which is why the same names serve a domain, a cleavage-site window or "
+            "a whole chain. See the Feature Identification chapter of the documentation."),
         "dynamic_columns": {
             "name_from": "LIST_ALL_PARTS",
             "allowed_names": list(LIST_ALL_PARTS),

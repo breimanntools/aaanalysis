@@ -30,6 +30,17 @@ traps to keep front-of-mind on touch:
   in the decision layer only: `docs/adr/`, `CONTEXT.md`, `.claude/rules/`,
   `docs/guides/`.
 - Module docstring opens with `"""This is a script for ..."""` (CLAUDE.md §3).
+- **A docstring is NOT a changelog — never stack `.. versionchanged::` at class or
+  method level.** One `.. versionadded::` per public symbol (when it first appeared,
+  **floored at 1.0.0** — the public history starts at the first release) is all that
+  belongs there. A behaviour change goes on the **parameter that
+  changed**, inside that parameter's description; everything else belongs in
+  `CHANGELOG.md` and the release notes. A 2026-06-01 pass backfilled version history
+  into docstrings package-wide (242 `versionadded`, 40 `versionchanged`, 11 in `_cpp.py`
+  alone) and the result reads as history burying behaviour — `CPP.__init__`'s docstring
+  tripled from 36 to 117 lines. **When you add a feature, its rationale goes in the
+  changelog, not in the constructor docstring.** Full rule: *Versioning & deprecation*
+  in `docs/source/index/docstring_guide.rst`.
 - **Example/tutorial notebooks** (the `.ipynb` behind each `examples/<name>.rst`)
   show DataFrames with `aa.display_df(df, n_rows=10, show_shape=True)` — never
   `print(df)` / bare `df` / `df.head()` (CLAUDE.md §3).

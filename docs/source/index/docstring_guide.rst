@@ -258,10 +258,22 @@ Citations
 Versioning & deprecation
 ------------------------
 
-* ``.. versionadded:: X.Y.Z`` (true first-release version) on every public class
-  and function; ``.. versionchanged:: X.Y.Z`` when behaviour changes.
-* **Parameter-level directives** — when a *parameter or option* is added/changed
-  after its class, annotate it inside the parameter description:
+**A docstring is not a changelog.** The release history lives in ``CHANGELOG.md`` and in
+the rendered *Release Notes*; a docstring says what the object does **today**.
+
+* ``.. versionadded:: X.Y.Z`` on every public class and function — **exactly one**,
+  marking when the symbol first appeared, **floored at 1.0.0**. The public history of the
+  package starts at its first release, so a symbol that predates it reads
+  ``.. versionadded:: 1.0.0``; "added in 0.1.0" names a version no user installed.
+* **Never stack** ``.. versionchanged::`` **entries at class or method level.** A
+  method that accumulates "Changed in version …" blocks buries what it *does*
+  under what happened to it, and the reader who wants history is better served by
+  the release notes. If a behaviour change is important enough to surface in the
+  API docs, it belongs on the **parameter that changed** (below), and otherwise
+  only in ``CHANGELOG.md`` / the release notes.
+* **Parameter-level directives are the rule, not the alternative** — when a
+  *parameter or option* is added or changed after its class, annotate it inside
+  that parameter's description and nowhere else:
 
   .. code-block:: text
 
@@ -269,6 +281,18 @@ Versioning & deprecation
           If ``True``, also return the filter-funnel statistics.
 
           .. versionadded:: 1.1.0
+
+  The same for a changed default or a changed meaning: put the note under that
+  parameter, not in the method's prose.
+
+  .. code-block:: text
+
+      n_batches : int, optional
+          Number of scale-axis batches. Output is byte-identical to the
+          single-pass result.
+
+          .. versionchanged:: 1.2.0
+             The multiple-testing correction is pooled across batches.
 
 * **Deprecation** uses ``.. deprecated:: X.Y.Z`` in the docstring plus a
   ``DeprecationWarning`` shim (see :ref:`api-stability <usage_principles>`); a

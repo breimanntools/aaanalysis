@@ -45,7 +45,9 @@ LIST_PARTS = ["tmd", "jmd_n_tmd_n", "tmd_c_jmd_c"]
 # Canonical, human-readable label per sequence part (the PART field of a
 # PART-SPLIT-SCALE feature id). Single source of the part-label vocabulary used by
 # SequenceFeature.get_feature_descriptions; keys cover every part in LIST_ALL_PARTS.
-# ('region' is deliberately avoided here — reserved for the #27 region abstraction.)
+# 'tmd' is the TARGET MIDDLE DOMAIN: the span of interest, flanked by jmd_n / jmd_c.
+# The vocabulary is a geometry, not a membrane claim, so it is already general — do not
+# add a per-domain renaming layer on top of it (see the 'part' entry in CONTEXT.md).
 DICT_PART_LABEL = {"tmd": "TMD",
                    "tmd_e": "extended TMD",
                    "tmd_n": "TMD-N",

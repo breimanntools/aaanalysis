@@ -27,12 +27,16 @@ examples, the latter adding the conceptual background, and the
    your goal (*explore*, *predict*, or *optimize*) to the exact AAanalysis class or
    function. Then run the notebooks below for your first result.
 
-The fastest way in is the short notebooks below:
+The fastest way in is the short notebooks below. They are the four chapters of this
+section, and they are listed in the sidebar under *Getting Started*:
 
-- :doc:`A minimal CPP analysis </generated/tutorial0_minimal>`
-- :doc:`Quick start with AAanalysis </generated/tutorial1_quick_start>`
-- :doc:`Slow start with AAanalysis </generated/tutorial1_slow_start>`
-- :doc:`Plotting Prelude </generated/plotting_prelude>`
+.. toctree::
+   :maxdepth: 1
+
+   A minimal CPP analysis </generated/tutorial0_minimal>
+   Quick start with AAanalysis </generated/tutorial1_quick_start>
+   Slow start with AAanalysis </generated/tutorial1_slow_start>
+   Plotting Prelude </generated/plotting_prelude>
 
 Quick start
 -----------

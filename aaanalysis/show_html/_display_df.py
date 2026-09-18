@@ -84,7 +84,7 @@ def display_df(df: Optional[pd.DataFrame] = None,
     This is a development-convenience helper and has no visible effect outside of
     Jupyter.
 
-    .. versionadded:: 0.1.3
+    .. versionadded:: 1.0.0
 
     Parameters
     ----------
