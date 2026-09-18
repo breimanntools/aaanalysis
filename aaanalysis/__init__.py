@@ -9,7 +9,7 @@ from .feature_engineering import (AAclust, AAclustPlot, SequenceFeature, Numeric
 from .pu_learning import dPULearn, dPULearnPlot
 from .explainable_ai import TreeModel
 from .prediction import (AAPred, AAPredPlot, ReliabilityModel, ReliabilityModelPlot,
-                         ModelEvaluator, ModelEvaluatorPlot, bind_groups)
+                         ModelEvaluator, ModelEvaluatorPlot, bind_groups, audit_leakage)
 from .protein_engineering import (DesignConstraints,
                                   AAMut, AAMutPlot, SeqMut, SeqMutPlot, SeqOpt, SeqOptPlot)
 from .plotting import (plot_get_clist, plot_get_cmap, plot_get_cdict,
@@ -74,6 +74,7 @@ __all__ = [
     "ModelEvaluator",
     "ModelEvaluatorPlot",
     "bind_groups",
+    "audit_leakage",
     # "ShapModel"       # SHAP
     "plot_get_clist",
     "plot_get_cmap",
