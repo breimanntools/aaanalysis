@@ -23,8 +23,9 @@ Sequences & data objects
       ``tmd_start`` / ``tmd_stop``.
 
    df_parts
-      Wide table with one column per :term:`part` (``tmd``, ``jmd_n``,
-      ``jmd_c``, …), produced by :meth:`~aaanalysis.SequenceFeature.get_df_parts`.
+      Wide table with one column per :term:`part` (``tmd`` = Target Middle
+      Domain, ``jmd_n``, ``jmd_c``, …), produced by
+      :meth:`~aaanalysis.SequenceFeature.get_df_parts`.
 
    df_feat
       Ranked feature table: ``feature`` id, ``abs_auc``, ``mean_dif``,
@@ -36,9 +37,12 @@ Sequences & data objects
    part
       A named region of a sequence over which a :term:`split` operates and a
       :term:`scale` is averaged; the ``PART`` field of a feature id
-      (``PART-SPLIT-SCALE``). The default vocabulary is TMD-centric (``jmd_n`` /
-      ``tmd`` / ``jmd_c`` and composites); name parts after the
-      :term:`prediction level` when that fits better.
+      (``PART-SPLIT-SCALE``). The vocabulary is ``tmd`` / ``jmd_n`` / ``jmd_c``
+      and their composites, where **TMD is the Target Middle Domain** — the
+      target span of interest — and the JMDs are its two flanks. It is a
+      **geometry, not a biological claim**: the same names serve a domain, a
+      cleavage-site window or a whole chain, so parts are not renamed per data
+      set. See :ref:`part_vocabulary`.
 
    scale
       A mapping from each amino acid to a real number — a physicochemical

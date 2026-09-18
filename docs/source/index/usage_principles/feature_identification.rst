@@ -25,8 +25,20 @@ The core idea of CPP is its feature concept:
 
    Scheme of CPP feature (**Part-Split-Scale** combination) with example of feature creation, from [Breimann25]_.
 
+.. _part_vocabulary:
+
 All possible parts are sub-parts or combinations of the **Target Middle Domain (TMD)**,
-**Juxta Middle Domain N-terminal (JMD-N)**, and **Juxta Middle Domain N-terminal (JMD-C)**.
+**Juxta Middle Domain N-terminal (JMD-N)**, and **Juxta Middle Domain C-terminal (JMD-C)**.
+
+.. admonition:: TMD means *Target Middle Domain*, not *transmembrane domain*
+   :class: important
+
+   The part vocabulary is a **geometry**, not a biological claim: one target span (``tmd``)
+   flanked by two juxta spans (``jmd_n``, ``jmd_c``), plus their composites. It is already
+   general and applies unchanged to a Pfam domain, a kinase domain, a cleavage-site window or
+   a whole chain. A feature id such as ``TMD-Segment(2,4)-ANDN920101`` therefore does **not**
+   assert a transmembrane helix; it names the target span. The letters are historical, as the
+   paragraph below explains, and there is nothing to rename per data set.
 
 .. figure:: /_artwork/schemes/scheme_CPP2.png
 

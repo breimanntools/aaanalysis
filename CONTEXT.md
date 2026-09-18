@@ -27,15 +27,27 @@ The single rule governing `tmd_start` / `tmd_stop` (`ut.COL_TMD_START` / `ut.COL
 _Avoid_: 0-based, half-open / exclusive-stop, `len()`-style stop (a stop equal to `start + length` reads as exclusive — it is not).
 
 **part**:
-A named region of a protein over which a **split** operates and a scale is averaged; the `PART` field of a feature id (`PART-SPLIT-SCALE`). Parts are the columns of `df_parts`, produced by `SequenceFeature.get_df_parts`. The default vocabulary is **TMD-centric** — `jmd_n` / `tmd` / `jmd_c` (plus composites like `jmd_n_tmd_n`) — which fits **domain-level** tasks but is *semantically wrong* for other levels, so part naming should follow the **prediction level**:
-- **Domain level:** replace the generic `tmd` with the **specific domain name** where known (e.g. the Pfam / InterPro domain), rather than the placeholder "tmd".
-- **Residue level (cleavage / between-residues):** name positions by the **Schechter–Berger** convention — `… P2 · P1 │ P1′ · P2′ …` around the scissile bond (`│` = cleavage site; see **P1 anchor / source position**), not "tmd".
-- **Protein level:** the whole chain is a single part; use a neutral name (e.g. `seq`, or N-term / core / C-term thirds), not "tmd".
-First-class user-defined / renamed regions are tracked by **#27** (region abstraction); today a part is chosen from the predefined family.
-_Avoid_: region (reserved for the #27 abstraction), domain (a part may be a window or sub-region, not a whole domain), segment (a split type).
+A named region of a protein over which a **split** operates and a scale is averaged; the `PART` field of a feature id (`PART-SPLIT-SCALE`). Parts are the columns of `df_parts`, produced by `SequenceFeature.get_df_parts`.
+
+> **`tmd` means TARGET MIDDLE DOMAIN. It is already the general abstraction — do not "generalize" it.**
+>
+> The part vocabulary is a **geometry**, not a biological claim: one **target middle domain** (`tmd`) flanked by two **juxta middle domains** (`jmd_n`, `jmd_c`), plus their composites (`jmd_n_tmd_n`, `tmd_c_jmd_c`, …). The letters are historical — the abstraction is "the span of interest and its two flanks", and it applies unchanged to a Pfam domain, a kinase domain, a cleavage-site window or a whole chain. A feature id reading `TMD-Segment(2,4)-ANDN920101` is therefore **not** claiming a transmembrane helix; it names the target span.
+>
+> The published statement of this is the *Feature Identification* chapter of the docs
+> (`docs/source/index/usage_principles/feature_identification.rst`, anchor `part_vocabulary`),
+> which has said "Target Middle Domain" all along; this glossary had drifted away from it.
+>
+> This paragraph exists because the earlier wording here (the vocabulary is "TMD-centric", "semantically wrong" for non-membrane levels, "replace the generic `tmd` with the specific domain name") read as a defect and repeatedly generated proposals to add a region-naming layer to CPP. Three independent planning passes reached that same wrong conclusion from this text alone. There is nothing to rename: **renaming parts is cosmetic, and CPP is not to be changed for it.**
+
+How the geometry maps onto each **prediction level** (the *names* stay the same; only what the span means changes):
+- **Domain level:** `tmd` is the domain of interest (e.g. a Pfam / InterPro domain), `jmd_n` / `jmd_c` its flanks.
+- **Residue level (cleavage / between-residues):** `tmd` is the window around the scissile bond. When describing positions in prose, the **Schechter–Berger** convention (`… P2 · P1 │ P1′ · P2′ …`, `│` = cleavage site; see **P1 anchor / source position**) is the reader-facing vocabulary — it is a way of *talking about positions*, not a different part vocabulary.
+- **Protein level:** the whole chain is the target span.
+
+_Avoid_: region (an informal synonym; **part** is the term), domain (a part may be a window or sub-region, not a whole domain), segment (a split type).
 
 **part label**:
-The fixed, human-readable display string for a `part` token (e.g. `tmd` → "TMD", `jmd_n_tmd_n` → "JMD-N+TMD-N"), defined once in `ut.DICT_PART_LABEL` and used when rendering a feature id as prose. Deliberately *not* called a "region" (that noun is reserved for #27); a part label is purely cosmetic and changes no behavior.
+The fixed, human-readable display string for a `part` token (e.g. `tmd` → "TMD", `jmd_n_tmd_n` → "JMD-N+TMD-N"), defined once in `ut.DICT_PART_LABEL` and used when rendering a feature id as prose. The term is **part label**, not "region"; a part label is purely cosmetic and changes no behavior.
 
 **feature description**:
 One standardized, human-readable sentence built deterministically from a `PART-SPLIT-SCALE` feature id by `SequenceFeature.get_feature_descriptions`: it joins the **part label**, the **split** rendered as a phrase (e.g. "segment 2 of 4"), the residue positions, and the scale's AAontology name / category / subcategory from `df_cat`. Additive only — the `feature` id string is unchanged — and optionally carried as the `feature_description` (`ut.COL_FEAT_DES`) column of `df_feat`. Distinct from the compact **feature name** (`get_feature_names`, `'subcategory [positions]'`), which drops the part and category.
