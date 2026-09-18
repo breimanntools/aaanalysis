@@ -27,16 +27,8 @@ examples, the latter adding the conceptual background, and the
    your goal (*explore*, *predict*, or *optimize*) to the exact AAanalysis class or
    function. Then run the notebooks below for your first result.
 
-The fastest way in is the short notebooks below. They are the four chapters of this
-section, and they are listed in the sidebar under *Getting Started*:
-
-.. toctree::
-   :maxdepth: 1
-
-   A minimal CPP analysis </generated/tutorial0_minimal>
-   Quick start with AAanalysis </generated/tutorial1_quick_start>
-   Slow start with AAanalysis </generated/tutorial1_slow_start>
-   Plotting Prelude </generated/plotting_prelude>
+The fastest way in is the **Quick start** below, whose four short notebooks take you
+from a first result to publication-ready figures.
 
 Quick start
 -----------
@@ -56,8 +48,17 @@ feature signature.
     df_feat = cpp.run(labels=labels)            # the CPP signature
 
 ``df_feat`` is the CPP signature, the interpretable feature table that the rest
-of the workflow (modelling, explanation, plotting) builds on. The notebooks
-above walk through this loop step by step.
+of the workflow (modelling, explanation, plotting) builds on. The four notebooks
+below walk through this loop step by step: the minimal loop first, then the same
+examples at two speeds, and finally the plotting utilities.
+
+.. toctree::
+   :maxdepth: 1
+
+   A minimal CPP analysis </generated/tutorial0_minimal>
+   Quick start with AAanalysis </generated/tutorial1_quick_start>
+   Slow start with AAanalysis </generated/tutorial1_slow_start>
+   Plotting Prelude </generated/plotting_prelude>
 
 The two APIs
 ------------
@@ -89,3 +90,16 @@ your question; click it to open the full-size version.
      <img src="_static/decision_map.png" alt="AAanalysis Decision Map (click to open the full map)"
           style="width:70%; display:block; margin:0 auto; border:1px solid #e3e7ec; border-radius:4px;">
    </a>
+
+The AAanalysis Ecosystem
+------------------------
+AAanalysis is the interpretable middle layer between bioinformatics I/O and the
+downstream machine-learning, explainable-AI and protein-design stack. Which packages it
+consumes upstream, which it feeds downstream, and where it deliberately stops are laid
+out in :ref:`the ecosystem map <ecosystem_map>`.
+
+.. toctree::
+   :hidden:
+   :maxdepth: 1
+
+   Ecosystem map <index/ecosystem>
