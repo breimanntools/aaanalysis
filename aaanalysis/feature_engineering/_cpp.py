@@ -294,7 +294,7 @@ class CPP(Tool):
     CPP aims at identifying a set of non-redundant features that are most discriminant between the
     test and reference group of sequences.
 
-    .. versionadded:: 0.1.0
+    .. versionadded:: 1.0.0
 
     Attributes
     ----------
@@ -580,7 +580,7 @@ class CPP(Tool):
         The aim of the CPP algorithm is to identify a set of unique, non-redundant features that are most
         discriminant between the test and reference group of sequences. See [Breimann25]_ for details on the algorithm.
 
-        .. versionadded:: 0.1.0
+        .. versionadded:: 1.0.0
 
         .. versionchanged:: 1.1.0
             Added the ``return_stats`` parameter, returning the filter-funnel statistics alongside ``df_feat``.
@@ -1474,7 +1474,7 @@ class CPP(Tool):
         - **Discriminative Power**: The capability of features to distinguish between test and reference datasets.
         - **Redundancy**: Assessed by the optimized number of clusters, based on Pearson correlation among features.
 
-        .. versionadded:: 0.1.0
+        .. versionadded:: 1.0.0
 
         Parameters
         ----------

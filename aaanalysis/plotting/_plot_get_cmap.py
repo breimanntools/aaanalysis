@@ -21,7 +21,7 @@ def plot_get_cmap(name: str = "CPP",
     complement the categorical colors from :func:`plot_get_cdict` and the discrete list
     from :func:`plot_get_clist`.
 
-    .. versionadded:: 0.1.2
+    .. versionadded:: 1.0.0
 
     Parameters
     ----------

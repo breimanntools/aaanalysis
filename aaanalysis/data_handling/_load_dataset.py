@@ -158,7 +158,7 @@ def load_dataset(name: str = "Overview",
     ↔ ``level='domain'``, and ``SEQ_`` ↔ ``level='sequence'`` (a whole sequence, typically a protein).
     By default, an overview table is provided (``name='Overview'``). For in-depth details, refer to [Breimann24a]_.
 
-    .. versionadded:: 0.1.0
+    .. versionadded:: 1.0.0
 
     .. versionchanged:: 1.1.0
         Added the ``verbose`` parameter, which reports how many entries each

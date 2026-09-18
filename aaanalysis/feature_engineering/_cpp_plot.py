@@ -437,7 +437,7 @@ class CPPPlot:
     ``fig, ax = ...``. For backward compatibility, the returned object also forwards attribute
     access to ``ax``, so legacy ``ax = ...; ax.set_title(...)`` keeps working.
 
-    .. versionadded:: 0.1.2
+    .. versionadded:: 1.0.0
 
     Notes
     -----
@@ -550,7 +550,7 @@ class CPPPlot:
         * **Redundancy** measures ('n_clusters', 'avg_n_feat_per_clust', and 'std_n_feat_per_clust'), which
           evaluate the internal redundancy of a feature set using Pearson correlation-based clustering.
 
-        .. versionadded:: 0.1.0
+        .. versionadded:: 1.0.0
 
         Parameters
         ----------
@@ -667,7 +667,7 @@ class CPPPlot:
             3. **Scale Value Assignment**: For each amino acid in the **Part-Split** subsequence,
                assign its corresponding scale value and calculate the average, which is termed the feature value.
 
-        .. versionadded:: 0.1.0
+        .. versionadded:: 1.0.0
 
         Parameters
         ----------
@@ -827,7 +827,7 @@ class CPPPlot:
         the test and the reference dataset groups. At sample level, the feature impact derived from SHAP values
         of a specific sample can be used for ranking if ``shap_plot=True`` and 'feature_impact' column in ``df_feat``.
 
-        .. versionadded:: 0.1.0
+        .. versionadded:: 1.0.0
 
         Parameters
         ----------
@@ -1066,7 +1066,7 @@ class CPPPlot:
         most discriminative signal from :meth:`CPP.run` (group-level) or SHAP-enriched feature tables
         (sample-level when ``shap_plot=True``).
 
-        .. versionadded:: 0.1.0
+        .. versionadded:: 1.0.0
 
         Parameters
         ----------
@@ -1384,7 +1384,7 @@ class CPPPlot:
         giving a two-dimensional view of the physicochemical signature produced by :meth:`CPP.run`.
         At sample level (``shap_plot=True``) the same layout visualises per-residue SHAP feature impact.
 
-        .. versionadded:: 0.1.0
+        .. versionadded:: 1.0.0
 
         Parameters
         ----------
@@ -1783,7 +1783,7 @@ class CPPPlot:
         (positive in red, negative in blue) — the per-sample attribution obtained via
         :class:`ShapModel`.
 
-        .. versionadded:: 0.1.0
+        .. versionadded:: 1.0.0
 
         Parameters
         ----------
@@ -2252,7 +2252,7 @@ class CPPPlot:
         This method adjusts the font size of TMD-JMD sequence characters based on their provided sequences
         to ensure that the labels are clearly legible and do not overlap in the plot.
 
-        .. versionadded:: 0.1.0
+        .. versionadded:: 1.0.0
 
         Parameters
         ----------

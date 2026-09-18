@@ -109,7 +109,7 @@ class dPULearnPlot:
     ``fig, ax = ...``. For backward compatibility, the returned object also forwards attribute
     access to ``ax``, so legacy ``ax = ...; ax.set_title(...)`` keeps working.
 
-    .. versionadded:: 0.1.2
+    .. versionadded:: 1.0.0
 
     """
     def __init__(self):
@@ -135,7 +135,7 @@ class dPULearnPlot:
         assessing the dissimilarity between the identified negatives and the other reference groups including
         positive samples ('Pos'), unlabeled samples ('Unl'), and ground-truth negative samples ('Neg') if given.
 
-        .. versionadded:: 0.1.0
+        .. versionadded:: 1.0.0
 
         Parameters
         ----------
@@ -229,7 +229,7 @@ class dPULearnPlot:
         a lower-dimensional feature space. Optionally, the average PC value for the positive samples can be shown,
         which was used for ``PCA-based identification`` of negatives.
 
-        .. versionadded:: 0.1.0
+        .. versionadded:: 1.0.0
 
         Parameters
         ----------
