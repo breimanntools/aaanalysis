@@ -99,6 +99,17 @@ notes — with cross-references and examples — live in
   both `AAPred.predict(score_range=...)` outputs are checked against the same contract. The
   domain level's `is_best` column is now routed through `COL_IS_BEST` (no output change).
 
+### Fixed
+- A `CPPPlot` method that is not handed an `ax` now always creates its own figure. It used to
+  reuse whatever figure happened to be open and return no axes with it, so the plot was drawn
+  into the *previous* figure's current axes. Interactively this never showed, because
+  `plt.show()` closes the figure and leaves none open for the next call; headless
+  (`MPLBACKEND=Agg`, i.e. any script, server or CI run) `plt.show()` is a no-op, so a second
+  plot was silently painted on top of the first. `profile(tmd_seq=...)` then measured the wrong
+  axes' tick labels and raised `ValueError: not enough values to unpack (expected 2, got 0)`.
+  Rendering is unchanged: the three `pytest-mpl` baselines are byte-identical before and after,
+  and a caller-supplied `ax` is still drawn into, so multi-panel composition is unaffected.
+
 ### Changed
 - `CPP.run(n_batches=...)` (scale-axis batching) now returns output identical to the
   single-pass run. The Benjamini-Hochberg FDR correction used to be applied separately to

@@ -54,14 +54,18 @@ class PlotElements:
     # Set plot elements
     @staticmethod
     def set_figsize(ax=None, figsize=None, force_set=False):
-        """Set the figure size. Optionally create a figure and an axes object if none exists."""
+        """Set the figure size, creating the figure and axes when none was passed."""
         # DEV: figsize is not used as argument in seaborn (but in pandas)
-        if ax:
+        # A caller that passes an axes owns the layout, so its figure is used as-is. Otherwise
+        # this call owns a FRESH figure: reusing whatever figure happened to be open (the old
+        # `plt.gcf()` branch) also returned `ax=None`, so the plot was drawn into the *previous*
+        # figure's current axes. Interactively that never showed, because `plt.show()` closes the
+        # figure and leaves none open; headless it silently painted a second plot on top of the
+        # first, and a sequence plot then read the wrong axes' tick labels and raised.
+        if ax is not None:
             fig = ax.figure
-        elif not plt.get_fignums():
-            fig, ax = plt.subplots(figsize=figsize)
         else:
-            fig = plt.gcf()
+            fig, ax = plt.subplots(figsize=figsize)
         # Set figure size if force_set is True or if there are no axes in the figure
         if force_set or len(fig.get_axes()) == 0:
             fig.set_size_inches(figsize, forward=True)
