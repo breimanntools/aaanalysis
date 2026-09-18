@@ -423,104 +423,17 @@ class StructurePreprocessor:
           :meth:`NumericalFeature.get_parts` slices into the per-part inputs of
           :meth:`CPP.run_num`, and that stack along the D axis via
           :func:`aaanalysis.combine_dict_nums`. The accompanying
-          ``(df_scales, df_cat)`` pair names the D dimensions for the
-          redundancy filter and output columns.
-        * **Feature value range, always normalized to ``[0, 1]``** (NaN for
-          unresolved positions). Use the table below to de-normalize back to
-          raw units if needed:
-
-          .. list-table::
-             :header-rows: 1
-             :widths: 34 22 30 34
-
-             * - Feature key
-               - Raw range
-               - Recipe → normalized
-               - Inverse (de-normalize)
-             * - ``ss3`` / ``ss8``
-               - {0, 1} (one-hot)
-               - identity
-               - identity
-             * - ``rasa``
-               - [0, ~1.2]
-               - ``clip(x, 0, 1)``
-               - identity (clipped)
-             * - ``phi_psi_sincos``
-               - [-1, 1]
-               - ``(x + 1) / 2``
-               - ``x * 2 - 1`` (in [-1, 1])
-             * - ``bfactor``
-               - [0, 100+] Å²
-               - ``clip(x / 100, 0, 1)``
-               - ``x * 100`` (lossy when ≥1)
-             * - ``depth``
-               - [0, ~15] Å
-               - ``clip(x / 15, 0, 1)``
-               - ``x * 15`` (lossy when ≥1)
-             * - ``plddt``
-               - [0, 100]
-               - ``x / 100``
-               - ``x * 100``
-             * - ``plddt_disorder``
-               - {0, 1}
-               - identity
-               - identity
-             * - ``plddt_tier``
-               - {0, 1} (4-dim one-hot)
-               - identity
-               - identity
-             * - ``chi1_sincos`` / ``chi2_sincos``
-               - [-1, 1]
-               - ``(x + 1) / 2``
-               - ``x * 2 - 1`` (in [-1, 1])
-             * - ``ca_centroid_dist``
-               - [0, ~40] Å
-               - ``clip(x / 40, 0, 1)``
-               - ``x * 40`` (lossy when ≥1)
-             * - ``ca_centroid_dist_norm``
-               - [0, ~2] (Rg units)
-               - ``clip(x / 2, 0, 1)``
-               - ``x * 2`` (lossy when ≥1)
-             * - ``contact_count_8A``
-               - [0, ~30]
-               - ``clip(x / 30, 0, 1)``
-               - ``x * 30`` (lossy when ≥1)
-             * - ``contact_count_12A``
-               - [0, ~80]
-               - ``clip(x / 80, 0, 1)``
-               - ``x * 80`` (lossy when ≥1)
-             * - ``hse``
-               - [0, ~30]
-               - ``clip(x / 30, 0, 1)``
-               - ``x * 30`` (lossy when ≥1)
-             * - ``pae_row_*`` / ``pae_local_mean`` / ``pae_distal_mean`` / ``pae_band_means``
-               - [0, 31.75] Å
-               - ``clip(x / 31.75, 0, 1)``
-               - ``x * 31.75``
-             * - ``pae_asymmetry``
-               - [0, ~10] Å
-               - ``clip(x / 10, 0, 1)``
-               - ``x * 10`` (lossy when ≥1)
-
-          The recipes are the source of truth in
-          ``feature_registry.NORMALIZATION_RECIPES``; this table is generated
-          to match.
-
-        * **Feature categorization.** Every feature key emits
-          ``category='Structure'`` (the top-level redundancy / color bucket;
-          see ``ut.DICT_COLOR_CAT['Structure']`` = ``#2E6E5E`` deep teal-green).
-          The fine-grained split (``Secondary structure (3-state)``,
-          ``B-factor (CA mean)``, ``AlphaFold pLDDT (raw)``, etc.) lives in
-          ``subcategory`` and is what ``CPPPlot.feature_map`` displays on the
-          y-axis. Subcategory names follow the AAontology convention
-          (descriptive name with source / detail in parentheses). The redundancy filter's
-          ``check_cat=True`` arm therefore groups all Structure features into
-          one bucket; ``build_scales`` populates ``df_scales`` so the
-          ``max_cor`` gate can discriminate within that bucket.
+          ``(df_scales, df_cat)`` pair names the D dimensions.
+        * Every feature value is normalized to ``[0, 1]``, with NaN for
+          unresolved positions. The per-feature recipes, and the inverses that
+          recover raw units such as Å or pLDDT, live in the feature registry.
+        * Every feature is categorized as ``'Structure'``; the finer split
+          (secondary structure, B-factor, pLDDT, ...) is the ``subcategory``
+          that ``CPPPlot.feature_map`` shows on the y-axis.
         * Requires ``aaanalysis[pro]`` (biopython) plus a ``mkdssp`` / ``dssp``
           binary on PATH. The ``depth`` feature additionally requires the
           ``msms`` binary; install via ``conda install -c bioconda msms``.
-        * Single-chain PDBs only — the chain whose ATOM sequence best matches
+        * Single-chain PDBs only: the chain whose ATOM sequence best matches
           ``df_seq[sequence]`` is selected automatically.
 
         See Also
@@ -556,13 +469,10 @@ class StructurePreprocessor:
         Fetches each entry's F1 structure and PAE sidecar from the AlphaFold
         Protein Structure Database [Varadi22]_ (https://alphafold.ebi.ac.uk),
         saving them under the canonical filenames :meth:`encode_pdb` /
-        :meth:`encode_pae` / :meth:`get_dssp` already resolve — so a single call
-        populates the ``pdb_folder`` / ``pae_folder`` those methods consume. The
-        download URLs are resolved through the AlphaFold API, so the fetch tracks
-        the current data version automatically (the file naming moved
-        ``v4`` → ``v6`` and will move again). This is the ``fetch_`` (web)
-        acquisition counterpart to the local ``get_`` tools; it downloads all
-        entries in one bulk call.
+        :meth:`encode_pae` / :meth:`get_dssp` already resolve, so a single call
+        populates the ``pdb_folder`` / ``pae_folder`` those methods consume.
+        Download URLs come from the AlphaFold API, so the fetch follows the
+        current data version as the file naming changes.
 
         .. versionadded:: 1.1.0
 
@@ -599,11 +509,9 @@ class StructurePreprocessor:
             boolean ``alphafold_ok`` column as a second element.
         max_workers : int, optional
             Number of threads for concurrent downloads. ``None`` or ``1``
-            (default) fetches entries sequentially. Greater than ``1`` downloads
-            on a thread pool; the status table is reassembled in input order and
-            is identical to the sequential result. Concurrency is opt-in because
-            parallel requests to AlphaFold DB risk HTTP-429 throttling that can
-            turn successful downloads into failures.
+            (default) fetches sequentially; a larger value uses a thread pool and
+            returns the same status table in input order. Concurrency is opt-in
+            because parallel requests to AlphaFold DB risk throttling.
 
         Returns
         -------
@@ -1030,19 +938,15 @@ class StructurePreprocessor:
             AlphaFold pLDDT is below this value is flagged disordered (``1.0``),
             else ordered (``0.0``).
         on_failure : {'nan', 'drop', 'raise'}, default='nan'
-            Failure policy. Two independent failure axes are handled:
+            Failure policy, applied on two levels:
 
-            - **Entry-level** (missing file, unparseable structure, no matched
+            - entry-level (missing file, unparseable structure, no matched
               chain): ``'nan'`` fills the whole entry with NaN and sets
-              ``pdb_ok=False``; ``'drop'`` removes the entry; ``'raise'``
-              re-raises.
-            - **Feature-level** (a single feature is unavailable — e.g.
-              ``depth`` without ``msms`` — or its encoder raises for an entry):
-              under ``'nan'`` / ``'drop'`` only that feature's column(s) are
-              NaN-filled while every other feature is kept and the entry is
-              retained (``pdb_ok`` stays ``True``); one ``UserWarning`` names
-              each isolated feature. Under ``'raise'`` any feature failure
-              re-raises.
+              ``pdb_ok=False``, ``'drop'`` removes it, ``'raise'`` re-raises.
+            - feature-level (a feature is unavailable, e.g. ``depth`` without
+              ``msms``): only that feature's column(s) are NaN-filled, the entry
+              and its other features are kept, and one ``UserWarning`` names it.
+              ``'raise'`` re-raises here too.
         return_df : bool, default=False
             If ``True``, also return the per-row status DataFrame as a second
             element ``(dict_num, df_seq_out)``. If ``False`` (default), return
@@ -1655,20 +1559,15 @@ class StructurePreprocessor:
     ) -> Union[Dict[str, np.ndarray], Tuple[Dict[str, np.ndarray], pd.DataFrame]]:
         """Read pre-computed domain segmentation files into ``dict_domains``.
 
-        Bring-your-own-segmentation: the user pre-runs Merizo / ChainSaw /
-        AFragmenter / a hand-curated domain table on their PDB files and
-        saves the **chopping string** (Merizo/ChainSaw native format) to
-        one file per entry in ``domain_folder``. Two file formats are
-        accepted by the resolver (looked up by entry name):
-
-          * ``<entry>.txt`` — first non-empty line is the chopping string,
-            e.g. ``6-18_296-459,19-156``.
-          * ``<entry>.tsv`` — Merizo/ChainSaw TSV output with a
-            ``chopping`` header (first data row used).
-
-        The chopping format: domains separated by commas, segments within
-        a domain separated by underscores; segments are 1-based inclusive
-        ``start-end``. Discontinuous domains supported.
+        Ingests a domain segmentation you produced yourself, with Merizo
+        [Lau23]_, ChainSaw [Wells24]_, AFragmenter [Verwimp25]_, or a curated
+        domain table. Save one chopping string per entry in ``domain_folder``,
+        either as ``<entry>.txt`` (first non-empty line, e.g.
+        ``6-18_296-459,19-156``) or as ``<entry>.tsv`` with a ``chopping``
+        header. Domains are separated by commas and their segments by
+        underscores, as 1-based inclusive ``start-end`` ranges, so
+        discontinuous domains are supported. Use :meth:`get_domains` to run a
+        tool inline instead.
 
         .. versionadded:: 1.1.0
 
@@ -1716,17 +1615,11 @@ class StructurePreprocessor:
 
         Notes
         -----
-        * AAanalysis deliberately does NOT bundle a segmentation tool runtime
-          (no PyTorch, no model weights, no Merizo / ChainSaw / AFragmenter
-          pinned). Keep ``aaanalysis[pro]`` lean; pre-run the tool of your
-          choice, then ingest its chopping output here.
-        * Merizo [Lau23]_ (invariant-point-attention residue clustering):
-          https://github.com/psipred/Merizo (~2 s per 425-residue chain on CPU,
-          bundled weights, pip-installable).
-        * ChainSaw [Wells24]_ (fully-convolutional boundary prediction):
-          https://github.com/JudeWells/Chainsaw (manual install).
-        * Output chopping strings: same `chopping` column in both tools'
-          TSV output, drop-in compatible.
+        * No segmentation tool is bundled, so no model weights ship with
+          ``aaanalysis[pro]``. Merizo [Lau23]_ clusters residues by
+          invariant-point attention, ChainSaw [Wells24]_ predicts boundaries
+          with a fully-convolutional network, and both write the same
+          ``chopping`` column, so either output is drop-in here.
 
         Examples
         --------
@@ -2080,11 +1973,10 @@ class StructurePreprocessor:
         pairs where ``df_seq[sequence][entry][i] == a``. Non-canonical residues
         are skipped; AAs absent from the corpus get NaN rows.
 
-        This is the **dataset-dependent** step. The values feed
-        :meth:`CPP.run_num`'s redundancy filter (``df_scales.corr()`` arm); a
-        meaningful corpus is required to make ``max_cor`` discriminative.
-        Compute pseudo-scales once on a fixed reference corpus and reuse for
-        cross-dataset comparability.
+        This is the dataset-dependent step: the values feed the ``max_cor``
+        redundancy filter of :meth:`CPP.run_num`, which needs a meaningful corpus
+        to discriminate. Compute pseudo-scales once on a fixed reference corpus
+        and reuse them for cross-dataset comparability.
 
         .. versionadded:: 1.1.0
 
@@ -2097,10 +1989,9 @@ class StructurePreprocessor:
         dict_num : dict[str, np.ndarray]
             Combined per-residue tensors ``{entry: (L_entry, D_total)
             ndarray}`` — typically the output of
-            :func:`aaanalysis.combine_dict_nums`. Every entry in ``df_seq``
-            must be a key; per entry, ``L_entry == len(sequence)``;
-            ``D_total`` must equal ``sum(REGISTRY[f]['num_dims'] for f in
-            features)`` (i.e. the encoder outputs in feature-key order).
+            :func:`aaanalysis.combine_dict_nums`. Every entry in ``df_seq`` must
+            be a key, ``L_entry`` must equal ``len(sequence)``, and ``D_total``
+            must match the total dimensionality of ``features``.
         features : list of str
             Feature keys from the StructurePreprocessor registry in the same
             order as the ``dict_num`` D-axis layout. Used to name the D
@@ -2241,10 +2132,10 @@ class StructurePreprocessor:
         -------
         df_cat : pd.DataFrame, shape (D_total, 5)
             One row per dimension: ``scale_id``, ``category``, ``subcategory``,
-            ``scale_name``, ``scale_description``. ``category`` is the
-            top-level color/redundancy-bucket bucket; ``subcategory`` carries
-            the fine-grained semantic split (``'DSSP_SS_3state'``,
-            ``'Flexibility_bfactor'``, etc.).
+            ``scale_name``, ``scale_description``. ``category`` is the top-level
+            color and redundancy bucket, while ``subcategory`` carries the
+            fine-grained split (``'DSSP_SS_3state'``, ``'Flexibility_bfactor'``,
+            and so on).
 
         See Also
         --------

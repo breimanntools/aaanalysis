@@ -160,14 +160,6 @@ def load_dataset(name: str = "Overview",
 
     .. versionadded:: 0.1.0
 
-    .. versionchanged:: 1.1.0
-        Added the ``verbose`` parameter, which reports how many entries each
-        removal step (``min_len``, ``max_len``, and ``non_canonical_aa='remove'``)
-        dropped. The returned data is unchanged. Every dataset now carries a
-        human-readable ``gene`` column immediately after ``entry`` (the UniProt
-        gene symbol for the domain datasets, a positional ``name_<row>`` placeholder
-        for the amino-acid / sequence datasets); all other columns are unchanged.
-
     Parameters
     ----------
     name : str, default='Overview'
@@ -178,6 +170,7 @@ def load_dataset(name: str = "Overview",
         Number of proteins per class, selected by index. If ``None``, the whole dataset will be returned.
     random : bool, default=False
         If ``True``, ``n`` randomly selected proteins per class will be chosen.
+        The draw is unseeded, so repeated calls return different subsets.
     non_canonical_aa : {'remove', 'keep', 'gap'}, default='remove'
         Options for handling non-canonical amino acids:
 
@@ -200,6 +193,8 @@ def load_dataset(name: str = "Overview",
         If ``True``, report how many entries each removal step (``min_len``,
         ``max_len``, and ``non_canonical_aa='remove'``) dropped. Does not change
         the returned data.
+
+        .. versionadded:: 1.1.0
 
     Returns
     -------
