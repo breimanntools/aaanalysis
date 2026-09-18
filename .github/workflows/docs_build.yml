@@ -1,0 +1,62 @@
+name: Docs Build (gate)
+
+# Builds the documentation and FAILS on a docutils ERROR, so a broken reference
+# cannot reach master silently. Three broken references did, because nothing
+# here built the docs, Read the Docs sets no `fail_on_warning`, and Sphinx exits
+# 0 with ERROR lines in its log -- so the gate parses the log rather than the
+# exit code (.github/scripts/check_docs_build.py).
+#
+# It is a plain ZERO-ERROR gate, not a ratchet: the error count was taken to
+# zero first, so there is no baseline to maintain. The separate, pre-existing
+# CRITICAL backlog (`Unexpected section title` in the generated example pages)
+# rides a no-regression ratchet in the same script against
+# .github/docs_critical_baseline.txt, seeded from a CI run -- a local build
+# differs (offline intersphinx, a different page set without `[docs]`).
+# WARNING is reported but never gated: ~340 of them are one pre-existing
+# autosummary pattern, which is also why `-W` is not usable here.
+#
+# NO paths-ignore, deliberately: errors originate in `.py` docstrings AND in
+# committed notebook output, so scoping this to `docs/**` would miss half of
+# them and the code-gated workflows' `paths-ignore: ['docs/**']` misses the
+# other half. The toolchain is pinned in the `docs` extra (sphinx, docutils),
+# so the counts are reproducible without pinning anything here.
+on:
+  push:
+    branches:
+      - master
+  pull_request:
+    branches:
+      - master
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: ${{ github.ref != 'refs/heads/master' }}
+
+jobs:
+  docs-build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+
+      # 3.12 matches the Read the Docs build image, so this gate and the
+      # rendered site see the same toolchain.
+      - name: Set up Python 3.12
+        uses: actions/setup-python@v6
+        with:
+          python-version: '3.12'
+          cache: 'pip'
+
+      # nbsphinx converts the committed notebooks through pandoc. The runner
+      # image ships it; install it only if that ever stops being true.
+      - name: Ensure pandoc
+        run: pandoc --version || (sudo apt-get update && sudo apt-get install -y pandoc)
+
+      - name: Install package + docs extra (pins sphinx/docutils)
+        run: |
+          python -m pip install --upgrade pip
+          pip install -e .[docs]
+
+      # nbsphinx_execute = 'never', so this renders the committed outputs and
+      # never runs a notebook -- notebook execution is notebook_examples.yml.
+      - name: Build docs and gate on docutils errors
+        run: python .github/scripts/check_docs_build.py
