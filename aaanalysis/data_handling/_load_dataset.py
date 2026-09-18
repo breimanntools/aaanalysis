@@ -66,6 +66,20 @@ def post_check_df_seq(df_seq: pd.DataFrame, n: Optional[int] = None, name: Optio
 
 
 # Helper functions
+def _get_sampling_rng(random_state: Optional[int] = None) -> Optional[np.random.RandomState]:
+    """Get random number generator for the balanced class sampling
+
+    A single generator is shared by the per-class draws, so each class continues the same
+    stream instead of repeating it. ``np.random.RandomState`` is used (not ``default_rng``)
+    because its stream is guaranteed stable across numpy versions, which is what makes a
+    given seed reproduce the same sample in another process or environment. ``None`` keeps
+    the truly random default (pandas then draws from the global numpy random state).
+    """
+    if random_state is None:
+        return None
+    return np.random.RandomState(random_state)
+
+
 def _is_aa_level(name: str) -> bool:
     return name.split("_")[0] == "AA"
 
@@ -147,6 +161,7 @@ def load_dataset(name: str = "Overview",
                  max_len: Optional[int] = None,
                  aa_window_size: Union[int, None] = 9,
                  verbose: bool = False,
+                 random_state: Optional[int] = None,
                  ) -> DataFrame:
     """
     Load protein benchmarking datasets.
@@ -178,6 +193,7 @@ def load_dataset(name: str = "Overview",
         Number of proteins per class, selected by index. If ``None``, the whole dataset will be returned.
     random : bool, default=False
         If ``True``, ``n`` randomly selected proteins per class will be chosen.
+        Set ``random_state`` to make that selection reproducible.
     non_canonical_aa : {'remove', 'keep', 'gap'}, default='remove'
         Options for handling non-canonical amino acids:
 
@@ -200,6 +216,12 @@ def load_dataset(name: str = "Overview",
         If ``True``, report how many entries each removal step (``min_len``,
         ``max_len``, and ``non_canonical_aa='remove'``) dropped. Does not change
         the returned data.
+    random_state : int, optional
+        The seed used by the random number generator. If a positive integer, results of stochastic processes are
+        consistent, enabling reproducibility. If ``None``, stochastic processes will be truly random. Only used
+        together with ``random=True``; overridden by ``options['random_state']`` when set.
+
+        .. versionadded:: 1.2.0
 
     Returns
     -------
@@ -266,6 +288,7 @@ def load_dataset(name: str = "Overview",
     is_cs_dataset = _is_cleavage_site_dataset(name=name)
     check_aa_window_size(aa_window_size=aa_window_size, is_cs_dataset=is_cs_dataset)
     verbose = ut.check_verbose(verbose)
+    random_state = ut.check_random_state(random_state=random_state)
 
     # Load overview table
     if name == "Overview":
@@ -311,7 +334,8 @@ def load_dataset(name: str = "Overview",
     if n is not None:
         labels = set(df_seq[ut.COL_LABEL])
         if random:
-            df_seq = pd.concat([df_seq[df_seq[ut.COL_LABEL] == l].sample(n) for l in labels])
+            rng = _get_sampling_rng(random_state=random_state)
+            df_seq = pd.concat([df_seq[df_seq[ut.COL_LABEL] == l].sample(n=n, random_state=rng) for l in labels])
         else:
             df_seq = pd.concat([df_seq[df_seq[ut.COL_LABEL] == l].head(n) for l in labels])
     post_check_df_seq(df_seq=df_seq, n=n, name=name)

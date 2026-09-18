@@ -1,6 +1,12 @@
 """
 This is a script for testing the aa.load_dataset function.
 """
+import hashlib
+import os
+import subprocess
+import sys
+from pathlib import Path
+
 from hypothesis import given, example, settings
 import hypothesis.strategies as some
 import numpy as np
@@ -382,3 +388,157 @@ class TestLoadDatasetGene:
         sf = aa.SequenceFeature(verbose=False)
         df_parts = sf.get_df_parts(df_seq=df)
         assert resolve_sample_entry(df_seq=df, df_parts=df_parts, sample="APP") == "P05067"
+
+
+# Int-labelled datasets, whose class blocks are concatenated in a process-independent
+# order, so a seeded frame can be compared byte-for-byte across processes.
+LIST_SEEDED_NAMES = ["DOM_GSEC", "SEQ_CAPSID", "SEQ_LOCATION"]
+
+
+def _digest(df_seq):
+    """Byte-level digest of a frame (values, index, shape, and dtypes)."""
+    meta = f"{df_seq.shape}|{[f'{c}:{t}' for c, t in df_seq.dtypes.astype(str).items()]}"
+    return hashlib.sha256(df_seq.to_csv(index=True).encode("utf-8") + meta.encode("utf-8")).hexdigest()
+
+
+class TestLoadDatasetRandomState:
+    """Test the 'random_state' parameter of load_dataset (issue #582)."""
+
+    # Reproducibility under an explicit seed
+    def test_same_seed_returns_identical_frame(self):
+        """The same seed reproduces the sample exactly."""
+        df_1 = aa.load_dataset(name="DOM_GSEC", n=5, random=True, random_state=42)
+        df_2 = aa.load_dataset(name="DOM_GSEC", n=5, random=True, random_state=42)
+        pd.testing.assert_frame_equal(df_1, df_2)
+
+    @pytest.mark.parametrize("name", LIST_SEEDED_NAMES)
+    def test_same_seed_identical_for_every_level(self, name):
+        """A fixed seed is reproducible on the sequence and domain levels alike."""
+        df_1 = aa.load_dataset(name=name, n=3, random=True, random_state=0)
+        df_2 = aa.load_dataset(name=name, n=3, random=True, random_state=0)
+        assert _digest(df_1) == _digest(df_2)
+
+    @settings(max_examples=10, deadline=None)
+    @given(random_state=some.integers(min_value=0, max_value=10000))
+    def test_any_seed_is_reproducible(self, random_state):
+        """Any valid seed reproduces its own sample (property-based)."""
+        kwargs = dict(name="SEQ_CAPSID", n=3, random=True, random_state=random_state)
+        pd.testing.assert_frame_equal(aa.load_dataset(**kwargs), aa.load_dataset(**kwargs))
+
+    def test_seed_zero_is_honoured(self):
+        """random_state=0 is a valid seed, not treated as 'unset'."""
+        df_1 = aa.load_dataset(name="DOM_GSEC", n=5, random=True, random_state=0)
+        df_2 = aa.load_dataset(name="DOM_GSEC", n=5, random=True, random_state=0)
+        pd.testing.assert_frame_equal(df_1, df_2)
+
+    def test_different_seeds_give_different_samples(self):
+        """Different seeds draw different samples (not a constant selection)."""
+        digests = {_digest(aa.load_dataset(name="SEQ_LOCATION", n=5, random=True, random_state=rs))
+                   for rs in [0, 1, 2, 3, 42]}
+        assert len(digests) > 1
+
+    def test_seeded_sample_is_balanced(self):
+        """A seeded random selection still returns n entries per class."""
+        df_seq = aa.load_dataset(name="SEQ_LOCATION", n=5, random=True, random_state=42)
+        assert len(df_seq) == 5 * 2
+        assert set(df_seq[ut.COL_LABEL]) == {0, 1}
+
+    def test_columns_and_dtypes_unchanged_by_seed(self):
+        """Seeding changes which rows are drawn, never the columns or their dtypes."""
+        df_unseeded = aa.load_dataset(name="DOM_GSEC", n=5, random=True)
+        df_seeded = aa.load_dataset(name="DOM_GSEC", n=5, random=True, random_state=42)
+        assert list(df_unseeded.columns) == list(df_seeded.columns)
+        assert df_unseeded.dtypes.astype(str).to_dict() == df_seeded.dtypes.astype(str).to_dict()
+
+    def test_reproducible_across_processes(self):
+        """A seeded frame is identical in a fresh interpreter (KPI: across processes)."""
+        df_seq = aa.load_dataset(name="DOM_GSEC", n=5, random=True, random_state=42)
+        code = (
+            "import hashlib, warnings; warnings.simplefilter('ignore');"
+            "import aaanalysis as aa;"
+            "df = aa.load_dataset(name='DOM_GSEC', n=5, random=True, random_state=42);"
+            "meta = f\"{df.shape}|{[f'{c}:{t}' for c, t in df.dtypes.astype(str).items()]}\";"
+            "print(hashlib.sha256(df.to_csv(index=True).encode('utf-8') + meta.encode('utf-8')).hexdigest())"
+        )
+        env = dict(os.environ, MPLBACKEND="Agg",
+                   PYTHONPATH=str(Path(aa.__file__).resolve().parents[1]))
+        out = subprocess.run([sys.executable, "-c", code], capture_output=True, text=True, env=env)
+        assert out.returncode == 0, out.stderr
+        assert out.stdout.strip().splitlines()[-1] == _digest(df_seq)
+
+    # Global option override
+    def test_option_random_state_is_honoured(self):
+        """options['random_state'] seeds the sampling with no explicit argument."""
+        aa.options["random_state"] = 42
+        df_1 = aa.load_dataset(name="DOM_GSEC", n=5, random=True)
+        df_2 = aa.load_dataset(name="DOM_GSEC", n=5, random=True)
+        pd.testing.assert_frame_equal(df_1, df_2)
+
+    def test_option_random_state_matches_explicit_seed(self):
+        """The option resolves to the same sample as passing that seed directly."""
+        df_explicit = aa.load_dataset(name="DOM_GSEC", n=5, random=True, random_state=42)
+        aa.options["random_state"] = 42
+        df_option = aa.load_dataset(name="DOM_GSEC", n=5, random=True)
+        pd.testing.assert_frame_equal(df_explicit, df_option)
+
+    def test_option_random_state_overrides_argument(self):
+        """options['random_state'] wins over the per-call argument (documented contract)."""
+        df_explicit = aa.load_dataset(name="DOM_GSEC", n=5, random=True, random_state=42)
+        aa.options["random_state"] = 42
+        df_option = aa.load_dataset(name="DOM_GSEC", n=5, random=True, random_state=7)
+        pd.testing.assert_frame_equal(df_explicit, df_option)
+
+    # random=False is unaffected
+    @pytest.mark.parametrize("name", LIST_SEEDED_NAMES + ["AA_CASPASE3", "DOM_GSEC_PU"])
+    def test_random_false_ignores_seed(self, name):
+        """random=False returns the head-of-class selection, seed or no seed."""
+        df_plain = aa.load_dataset(name=name, n=3)
+        assert _digest(aa.load_dataset(name=name, n=3, random_state=42)) == _digest(df_plain)
+        assert _digest(aa.load_dataset(name=name, n=3, random_state=7)) == _digest(df_plain)
+
+    def test_random_false_ignores_option(self):
+        """A global random_state does not touch the deterministic selection either."""
+        df_plain = aa.load_dataset(name="DOM_GSEC", n=5)
+        aa.options["random_state"] = 42
+        pd.testing.assert_frame_equal(aa.load_dataset(name="DOM_GSEC", n=5), df_plain)
+
+    def test_full_dataset_ignores_seed(self):
+        """Without 'n' there is no sampling, so the seed cannot change the output."""
+        df_plain = aa.load_dataset(name="SEQ_CAPSID")
+        assert _digest(aa.load_dataset(name="SEQ_CAPSID", random_state=42)) == _digest(df_plain)
+
+    # Invalid input
+    def test_invalid_random_state_negative(self):
+        """A negative seed is rejected."""
+        with pytest.raises(ValueError):
+            aa.load_dataset(name="DOM_GSEC", n=5, random=True, random_state=-1)
+
+    @settings(max_examples=10, deadline=None)
+    @given(random_state=some.integers(max_value=-1))
+    def test_invalid_random_state_negative_property(self, random_state):
+        """Every negative seed is rejected (property-based)."""
+        with pytest.raises(ValueError):
+            aa.load_dataset(name="DOM_GSEC", n=5, random=True, random_state=random_state)
+
+    def test_invalid_random_state_float(self):
+        """A non-integer seed is rejected."""
+        with pytest.raises(ValueError):
+            aa.load_dataset(name="DOM_GSEC", n=5, random=True, random_state=1.5)
+
+    def test_invalid_random_state_str(self):
+        """A string seed is rejected with a message naming the parameter."""
+        with pytest.raises(ValueError, match="random_state"):
+            aa.load_dataset(name="DOM_GSEC", n=5, random=True, random_state="42")
+
+    def test_invalid_random_state_rejected_without_random(self):
+        """The seed is validated even when random=False (fail fast, not silently)."""
+        with pytest.raises(ValueError):
+            aa.load_dataset(name="DOM_GSEC", n=5, random_state=-5)
+
+    def test_option_random_state_read_per_call(self):
+        """The option is resolved on every call, so changing it changes the next sample."""
+        aa.options["random_state"] = 42
+        df_1 = aa.load_dataset(name="SEQ_LOCATION", n=5, random=True)
+        aa.options["random_state"] = 7
+        df_2 = aa.load_dataset(name="SEQ_LOCATION", n=5, random=True)
+        assert _digest(df_1) != _digest(df_2)
