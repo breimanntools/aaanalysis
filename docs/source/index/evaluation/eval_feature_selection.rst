@@ -101,3 +101,10 @@ and does not license:
 For the canonical short definitions of ``selection_scope`` and the four regimes, see the
 project glossary. For the mechanism itself, see :func:`~aaanalysis.pipe.find_features` and
 its ``selection_scope`` parameter.
+
+Naming the regime fixes what a score *means*, but not whether two scores may be compared.
+That needs the dataset, the split, the metric and the seed pinned as well, which is the
+subject of :doc:`P11: Benchmark protocol </generated/protocol11_benchmark>`. It runs the
+first regime above deliberately (the feature set is selected once, then frozen) so that a
+rerun measures the method rather than a reshuffled feature set, and it records the
+resulting scores together with the seed spread that separates noise from a regression.
