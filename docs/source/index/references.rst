@@ -232,6 +232,10 @@ Sampling Strategies
    *Procleave: predicting protease-specific substrate cleavage sites by combining sequence and structural information*,
    `Genomics, Proteomics & Bioinformatics <https://doi.org/10.1016/j.gpb.2019.08.002>`__.
 
+.. [Roberts17] Roberts *et al.* (2017),
+   *Cross-validation strategies for data with temporal, spatial, hierarchical, or phylogenetic structure*,
+   `Ecography <https://doi.org/10.1111/ecog.02881>`__.
+
 .. [LiuDeber99] Liu L.-P., Deber C.M. (1999),
    *Combining hydrophobicity and helicity: a novel approach to membrane protein structure prediction*,
    `Bioorganic & Medicinal Chemistry <https://www.sciencedirect.com/science/article/pii/S0968089698002338>`__.

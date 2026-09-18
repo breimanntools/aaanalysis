@@ -108,6 +108,7 @@ Prediction
     ReliabilityModelPlot
     ModelEvaluator
     ModelEvaluatorPlot
+    bind_groups
 
 .. _protein_engineering_api:
 
