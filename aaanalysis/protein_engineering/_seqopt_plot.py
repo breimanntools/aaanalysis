@@ -41,8 +41,10 @@ class SeqOptPlot:
     """
     Plotting class for :class:`SeqOpt` (Sequence Optimizer) results [Breimann24a]_.
 
-    Visualizes the Pareto front produced by :meth:`SeqOpt.run`: a 2-D objective scatter colored
-    by non-dominated rank, and the per-generation hypervolume convergence trace.
+    Shows what a design run produced and whether it had converged: the trade-off front itself
+    (as a scatter, or as parallel coordinates for more than three objectives), which residues the
+    winning variants mutated, how the candidates descend from the wild-type, and the
+    per-generation convergence traces.
 
     Every plotting method returns a ``(fig, ax)`` pair (a thin tuple subclass): unpack as
     ``fig, ax = ...``. For backward compatibility, the returned object also forwards attribute
