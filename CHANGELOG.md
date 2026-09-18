@@ -26,6 +26,19 @@ notes — with cross-references and examples — live in
   rejected at construction with both counts in the message. Once the folds are consumed,
   `df_folds_` reports per-fold sample counts, group counts and class balance. The package performs
   the split; it runs no homology search or clustering itself (#478).
+- `audit_leakage(df_seq=None, *, labels=None, groups=None, splits=None, X=None, names=None,
+  raise_on=None)`: inspects an evaluation setup for leakage risks and returns a plain `DataFrame`
+  of findings (`check`, `severity`, `detail`, `ids`), worst first, with the overall verdict in
+  `df_audit.attrs["status"]`. Without `splits` it audits the dataset, which is the check to run
+  before choosing a split; with `splits` it also compares the training against the test part
+  within each fold. It reports duplicate sequences, a row index, protein or group present on both
+  sides of a fold, a feature correlating with the label at `|r| >= 0.95`, an empty or strongly
+  uneven fold, and a single-class or skewed fold. Windowed input is handled correctly: `window`
+  takes precedence over the repeated parent `sequence`, so siblings are not mistaken for
+  duplicates. `raise_on` turns findings at or above a severity into a `ValueError`; the default
+  reports only and never raises. The checks are heuristic and a clean report is not a proof that
+  no leakage exists, and the severities are labels for a human reader, not a machine taxonomy
+  (#479).
 - `Docs Build (gate)` CI workflow (`.github/scripts/check_docs_build.py`): builds the
   documentation and fails on a docutils `ERROR`, so a broken reference cannot reach `master`
   silently. It parses the build log rather than Sphinx's exit code, which is `0` even with
