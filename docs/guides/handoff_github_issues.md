@@ -101,7 +101,17 @@ Verified in the tree, not from PR titles: `aaanalysis/_utils/check_type.py:20` n
 >
 > **Re-measured independently this pass** (`python -m sphinx -b html source <out>` from a worktree
 > at `de4d85f5`, Sphinx 8.1.3, offline): **`build succeeded, 508 warnings`, and zero `ERROR` or
-> `SEVERE` messages.** #572's claim holds. Two consequences for the gate's design: `-W` is *not*
+> `SEVERE` messages.** #572's claim holds.
+>
+> **But an `ERROR`-only reading is incomplete, and this nearly slipped through.** The same build
+> emits **167 `CRITICAL: Unexpected section title`** lines — a level *above* `ERROR` — every one of
+> them in a **generated** page under `source/generated/examples/`. A grep for `ERROR|SEVERE`
+> returns zero and looks clean; the count only appears if `CRITICAL` is read too. The issue body
+> already flags these 167 as the next-largest untracked signal. They cannot ride the zero gate
+> (it would be red on adoption), so the gate as built pairs **zero `ERROR`/`SEVERE`** with a
+> **no-regression ratchet on `CRITICAL`**, the pyright-budget pattern.
+>
+> Two consequences for the gate's design: `-W` is *not*
 > an option (508 warnings would fail instantly, and one of them is only an offline artefact — the
 > unreachable intersphinx inventory), and the honest gate is **ERROR/SEVERE count == 0**. For
 > context on how close the neighbouring class is: **168 of the 508 warnings are `[docutils]`**,
@@ -235,7 +245,7 @@ the post-merge tree. Nothing on this list is waiting on another branch.
    highest-consequence remaining action in the v1.2 milestone. — *lane A, now free*
 4. **#455 — the protocol execution gate** (S). Re-verified this pass: `notebook_examples.yml`
    executes a canonical *example* subset only, and no workflow mentions the ten notebooks in
-   `docs/source/protocols/`. With #570 merged, this gate is the entire remainder of #455.
+   `protocols/` (repo root, beside `examples/` and `tutorials/`). With #570 merged, this gate is the entire remainder of #455.
    — *lane G, CONFIRM-FIRST*
 5. **#16 — the `abs_auc` interval renderer** (S). The `df_feat` columns and the `mean_dif`
    whiskers ship; `abs_auc_ci_low/high` are computed and **rendered nowhere**. — *lane A*
@@ -398,7 +408,7 @@ morning pass marked occupied (A and G) were released by #573 and #569/#570/#572.
 
 | # | prio · ms | verdict | PR | scope / standards | already-addressed (verified) | implementation note |
 |---|---|---|---|---|---|---|
-| #455 | 2 · v1.2 | ☑️ **85%** | #519 #534 #567 #559 #570 ↗ | Docs + CONFIRM-FIRST workflow | Rubric shipped; P2/P3 audit **recorded** (#570 merged); P4/P5/P7/P8 figures; P6/P9/P10 audited and recorded; 10 protocols exist in `docs/source/protocols/` | **Re-verified this pass:** no workflow references `docs/source/protocols/` — `notebook_examples.yml` executes a canonical *example* subset only — so the execution gate is the entire remainder, and it is maintainer-gated. Pair it with #571: both are one `.github/` edit, one approval. Second, smaller gap: the audit record covers P2/P3/P6/P9/P10 but **not P4/P5/P7/P8**, which got figures without a recorded audit |
+| #455 | 2 · v1.2 | ☑️ **85%** | #519 #534 #567 #559 #570 ↗ | Docs + CONFIRM-FIRST workflow | Rubric shipped; P2/P3 audit **recorded** (#570 merged); P4/P5/P7/P8 figures; P6/P9/P10 audited and recorded; 10 protocols exist in `protocols/` at the repo root | **Re-verified this pass:** no workflow references `protocols/` — `notebook_examples.yml` executes a canonical *example* subset only — so the execution gate is the entire remainder, and it is maintainer-gated. Pair it with #571: both are one `.github/` edit, one approval. Second, smaller gap: the audit record covers P2/P3/P6/P9/P10 but **not P4/P5/P7/P8**, which got figures without a recorded audit |
 | #548 · #549 · #550 · #551 | 3 · none | ☑️ **90%** | #562 · #563 · #564 · #566 ↗ | Docs-only, rubric-driven | One concept-contrast figure each: P4 three prediction levels on one protein; P5 sequence vs numerical arms; P7 what survived reduction and why; P8 measured feature-selection leakage | Each delivered the figure but **not a recorded rubric audit** (unlike #552–#554). Closing the set properly means one audit entry per protocol in `protocol_rubric_audit.md`. **Milestone them under v1.2 with #455** |
 | #552 · #553 · #554 | 3 · none | ☑️ **95%** | #567 ↗ | Docs-only | P10/P6/P9 audited, recorded, **exit verdict PASS on all four rubric sections**; three stale cross-references fixed; P6's false "there is no `strategy=` switch" claim removed | Effectively complete. The one deliberate carve-out: the three gallery thumbnails were **not** regenerated (font-rasterization drift would make 3 of 10 tiles inconsistent). If thumbnails are ever refreshed, refresh **all ten on one machine** |
 | #555 | 3 · none | ✅ | — | Docs-only; no new dep | The upstream bridges it documents already ship | Cheapest #210 child by far. One notebook per existing adapter; no library change. Milestone it |
