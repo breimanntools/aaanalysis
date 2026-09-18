@@ -29,9 +29,11 @@ _Avoid_: 0-based, half-open / exclusive-stop, `len()`-style stop (a stop equal t
 **part**:
 A named region of a protein over which a **split** operates and a scale is averaged; the `PART` field of a feature id (`PART-SPLIT-SCALE`). Parts are the columns of `df_parts`, produced by `SequenceFeature.get_df_parts`.
 
-> **`tmd` means TARGET MIDDLE DOMAIN. It is already the general abstraction — do not "generalize" it.**
+> **`tmd` was TRANSMEMBRANE DOMAIN and is now TARGET MIDDLE DOMAIN. It is already the general abstraction — do not "generalize" it.**
 >
-> The part vocabulary is a **geometry**, not a biological claim: one **target middle domain** (`tmd`) flanked by two **juxta middle domains** (`jmd_n`, `jmd_c`), plus their composites (`jmd_n_tmd_n`, `tmd_c_jmd_c`, …). The letters are historical — the abstraction is "the span of interest and its two flanks", and it applies unchanged to a Pfam domain, a kinase domain, a cleavage-site window or a whole chain. A feature id reading `TMD-Segment(2,4)-ANDN920101` is therefore **not** claiming a transmembrane helix; it names the target span.
+> The letters come from CPP's first application, to γ-secretase substrates, where the span of interest *is* the transmembrane domain and its flanks *are* the juxtamembrane domains. When the method was generalized the acronyms were **deliberately kept and re-read**: `tmd` as **target middle domain**, `jmd_n` / `jmd_c` as **juxta middle domains**. Same letters, same geometry, wider meaning.
+>
+> So the vocabulary is a **geometry**, not a biological claim: one target span flanked by two juxta spans, plus their composites (`jmd_n_tmd_n`, `tmd_c_jmd_c`, …), applying unchanged to a Pfam domain, a kinase domain, a cleavage-site window or a whole chain. A feature id reading `TMD-Segment(2,4)-ANDN920101` names the target span; it describes a transmembrane helix only when the data are membrane proteins.
 >
 > The published statement of this is the *Feature Identification* chapter of the docs
 > (`docs/source/index/usage_principles/feature_identification.rst`, anchor `part_vocabulary`),
