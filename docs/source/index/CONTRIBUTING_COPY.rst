@@ -521,6 +521,13 @@ To cut a release:
         Description:   the release_notes / CHANGELOG entry for this version
       -> Publish release
 
+   The new tag also becomes a documentation version: a Read the Docs automation rule
+   (``^v\d+\.\d+\.\d+$`` -> *Activate version*, see ``.readthedocs.yaml``) activates
+   and builds it, so https://aaanalysis.readthedocs.io/en/vX.Y.Z/ appears in the
+   version selector and ``stable`` moves to it. Check that the tag's build is green
+   on https://app.readthedocs.org/projects/aaanalysis/builds/ ; a tag is built from
+   its own commit, so a red build there cannot be fixed from ``master``.
+
 5. **Verify the upload.**
 
    Confirm the version, files and metadata on https://pypi.org/project/aaanalysis/ ,
