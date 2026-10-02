@@ -434,8 +434,6 @@ class DesignConstraints:
         * :meth:`DesignConstraints.as_predicate`: the same limits as a ``SeqOpt`` feasibility callable.
         * :meth:`SeqMut.combine`: which appends the ``is_feasible`` / ``reasons`` columns from this check.
 
-        .. versionadded:: 1.2.0
-
         Examples
         --------
         .. include:: examples/dc_check.rst
@@ -482,8 +480,6 @@ class DesignConstraints:
         * :meth:`DesignConstraints.check`: the primary contract this predicate wraps.
         * :meth:`SeqOpt.run`: whose ``constraints`` list consumes the returned callable.
 
-        .. versionadded:: 1.2.0
-
         Examples
         --------
         .. include:: examples/dc_as_predicate.rst
@@ -516,8 +512,6 @@ class DesignConstraints:
         See Also
         --------
         * :meth:`DesignConstraints.from_dict`: the inverse.
-
-        .. versionadded:: 1.2.0
 
         Examples
         --------
@@ -564,8 +558,6 @@ class DesignConstraints:
         See Also
         --------
         * :meth:`DesignConstraints.to_dict`: the inverse.
-
-        .. versionadded:: 1.2.0
 
         Examples
         --------

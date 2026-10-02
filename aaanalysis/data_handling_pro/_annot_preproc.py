@@ -134,13 +134,14 @@ class AnnotationPreprocessor:
         * Encoder values are normalized to ``[0, 1]``; non-annotated in-coverage
           residues are ``0.0``; ``NaN`` marks genuinely unresolved positions.
         * Bond features (disulfide / cross-link) expand to two single-residue
-          endpoints sharing a ``bond_id``; cleavage P1 anchors come from
-          SIGNAL / PROPEP / TRANSIT span ends, not from the ``SITE`` grab-bag.
-        * Two methods have no :class:`StructurePreprocessor` analog by design, not
-          oversight: :meth:`register_feature` is the surface of the *open*
-          ``'Functional sites'`` vocabulary (structure's registry is closed), and
-          :meth:`to_df_seq` exports a seq-mode window-split because here an
-          annotation *is* the window label (a structure feature never is).
+          endpoints sharing a ``bond_id``, and cleavage P1 anchors come from
+          SIGNAL / PROPEP / TRANSIT span ends rather than the generic ``SITE``
+          category.
+        * :meth:`register_feature` opens the ``'Functional sites'`` vocabulary to
+          your own keys, and :meth:`to_df_seq` turns annotated residues into
+          :class:`AAWindowSampler` anchors. Neither has a
+          :class:`StructurePreprocessor` counterpart, whose registry is closed and
+          whose features never label a window.
 
         See Also
         --------
@@ -198,11 +199,9 @@ class AnnotationPreprocessor:
             Per-request timeout in seconds.
         max_workers : int, optional
             Number of threads for concurrent fetches. ``None`` or ``1``
-            (default) fetches entries sequentially. Greater than ``1`` fetches
-            on a thread pool; rows are concatenated in input order and the
-            ``df_annot`` is identical to the sequential result. Concurrency is
-            opt-in because parallel requests to UniProt risk HTTP-429 throttling
-            that can turn successful fetches into failures.
+            (default) fetches sequentially; a larger value uses a thread pool and
+            returns the same ``df_annot`` in input order. Concurrency is opt-in
+            because parallel requests to UniProt risk throttling.
 
         Returns
         -------

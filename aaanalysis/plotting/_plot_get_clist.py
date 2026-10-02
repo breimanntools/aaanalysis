@@ -60,7 +60,7 @@ def plot_get_clist(n_colors: int = 3,
     documentation for the full set. For a full pre-sized diverging colormap (101 points
     by default) use :func:`plot_get_cmap` instead.
 
-    .. versionadded:: 0.1.2
+    .. versionadded:: 1.0.0
 
     Parameters
     ----------

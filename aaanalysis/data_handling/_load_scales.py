@@ -168,7 +168,7 @@ def load_scales(name: Literal["scales", "scales_raw", "scales_cat", "scales_pc",
     simplified scale sets restricted to the most interpretable AAontology subcategories are available via
     ``top_explain_n`` (optionally redundancy-reduced with ``top_explain_min_th``).
 
-    .. versionadded:: 0.1.0
+    .. versionadded:: 1.0.0
 
     Parameters
     ----------

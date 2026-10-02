@@ -31,8 +31,9 @@ traps to keep front-of-mind on touch:
   `docs/guides/`.
 - Module docstring opens with `"""This is a script for ..."""` (CLAUDE.md §3).
 - **A docstring is NOT a changelog — never stack `.. versionchanged::` at class or
-  method level.** One `.. versionadded::` per public symbol (when the symbol first
-  appeared) is all that belongs there. A behaviour change goes on the **parameter that
+  method level.** One `.. versionadded::` per public symbol (when it first appeared,
+  **floored at 1.0.0** — the public history starts at the first release) is all that
+  belongs there. A behaviour change goes on the **parameter that
   changed**, inside that parameter's description; everything else belongs in
   `CHANGELOG.md` and the release notes. A 2026-06-01 pass backfilled version history
   into docstrings package-wide (242 `versionadded`, 40 `versionchanged`, 11 in `_cpp.py`

@@ -180,7 +180,7 @@ class dPULearn(Wrapper):
     * **Distance-based identification**: As a simple alternative, reliable negatives can also be identified using
       similarity measures like ``euclidean``, ``manhattan``, or ``cosine`` distance.
 
-    .. versionadded:: 0.1.0
+    .. versionadded:: 1.0.0
 
     Attributes
     ----------
@@ -272,7 +272,7 @@ class dPULearn(Wrapper):
         including identified negatives. Output labels always use the package convention
         (1 = positive, 0 = reliable negative, 2 = remaining unlabeled), regardless of the input markers.
 
-        .. versionadded:: 0.1.0
+        .. versionadded:: 1.0.0
 
         There are two input modes (provide exactly one): pass ``X`` + ``labels`` (a single feature
         matrix with per-sample markers), or — for the common positives-vs-unlabeled setup — pass the
@@ -515,7 +515,7 @@ class dPULearn(Wrapper):
           of positive samples ('pos'), unlabeled samples ('unl'), and a ground-truth negative
           ('neg') sample group if provided by ``X_neg``
 
-        .. versionadded:: 0.1.0
+        .. versionadded:: 1.0.0
 
         Parameters
         ----------
@@ -597,7 +597,7 @@ class dPULearn(Wrapper):
         Optionally, data format can be created for Upset Plots, which are useful for visualizing the intersection
         and unique elements across these sets.
 
-        .. versionadded:: 0.1.0
+        .. versionadded:: 1.0.0
 
         Parameters
         ----------

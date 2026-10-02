@@ -150,7 +150,7 @@ class TreeModel(Wrapper):
     Additionally, the class supports feature selection through recursive feature elimination (RFE) and offers
     comprehensive evaluation of feature selections.
 
-    .. versionadded:: 0.1.3
+    .. versionadded:: 1.0.0
 
     Attributes
     ----------
@@ -278,7 +278,7 @@ class TreeModel(Wrapper):
         performance, guided by the metric specified in ``metric``. The reduction continues until reaching
         ``n_feat_min``, with an upper limit of ``n_feat_max`` features considered.
 
-        .. versionadded:: 0.1.0
+        .. versionadded:: 1.0.0
 
         Parameters
         ----------
@@ -369,7 +369,7 @@ class TreeModel(Wrapper):
         and models. The output is a single DataFrame that lets you compare feature subsets side by side.
         Call :meth:`TreeModel.fit` first to obtain ``is_selected_`` arrays, then pass them here.
 
-        .. versionadded:: 0.1.0
+        .. versionadded:: 1.0.0
 
         Parameters
         ----------
@@ -451,14 +451,11 @@ class TreeModel(Wrapper):
         feature selections from the `is_selected_` attribute.
 
         .. note::
-           :meth:`TreeModel.fit` must be called before using this method.
+           :meth:`TreeModel.fit` must be called before using this method. ``TreeModel`` estimates
+           global feature *importance*; for training and deploying prediction models,
+           :class:`AAPred` is the recommended entry point.
 
-        .. note::
-           ``TreeModel`` is focused on global Monte-Carlo feature *importance*. For training and
-           deploying prediction models (selecting estimators, tuning, and scoring at the sequence,
-           domain, and window level), :class:`AAPred` is the recommended entry point.
-
-        .. versionadded:: 0.1.0
+        .. versionadded:: 1.0.0
 
         Parameters
         ----------
@@ -501,7 +498,7 @@ class TreeModel(Wrapper):
         Feature importance is included as ``feat_importance`` column and the standard deviation of
         the feature importance as ``feat_importance_std`` column.
 
-        .. versionadded:: 0.1.0
+        .. versionadded:: 1.0.0
 
         Parameters
         ----------
@@ -569,7 +566,7 @@ class TreeModel(Wrapper):
         :meth:`TreeModel.fit` engine (``use_rfe=True``) that produces the per-round ``is_selected_``
         masks the ``'frequency'`` strategy aggregates; without it every round keeps all features.
 
-        .. versionadded:: 0.1.0
+        .. versionadded:: 1.0.0
 
         Parameters
         ----------

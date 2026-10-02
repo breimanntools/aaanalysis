@@ -133,7 +133,7 @@ class AAclustPlot:
 
     Dimensionality reduction is performed using decomposition models such as Principal Component Analysis (PCA).
 
-    .. versionadded:: 0.1.2
+    .. versionadded:: 1.0.0
 
     """
     def __init__(self,
@@ -193,7 +193,7 @@ class AAclustPlot:
 
         The clustering evaluation metrics (BIC, CH, and SC) are ranked by the average of their independent rankings.
 
-        .. versionadded:: 0.1.0
+        .. versionadded:: 1.0.0
 
         Parameters
         ----------
@@ -267,7 +267,7 @@ class AAclustPlot:
         distinct markers, coloured by cluster label. Use :meth:`AAclust.comp_centers` to obtain the
         centers shown here, or pass labels directly from :meth:`AAclust.fit`.
 
-        .. versionadded:: 0.1.0
+        .. versionadded:: 1.0.0
 
         Parameters
         ----------
@@ -373,7 +373,7 @@ class AAclustPlot:
         :meth:`AAclust.comp_medoids`) as distinct markers, coloured by cluster label, so that the
         representative sample of each cluster is immediately visible.
 
-        .. versionadded:: 0.1.0
+        .. versionadded:: 1.0.0
 
         Parameters
         ----------
@@ -491,7 +491,7 @@ class AAclustPlot:
         heatmap, annotating rows and columns with coloured sidebars that group samples by their cluster
         label. Columns can optionally be hierarchically clustered via ``cluster_x``.
 
-        .. versionadded:: 0.1.0
+        .. versionadded:: 1.0.0
 
         Parameters
         ----------

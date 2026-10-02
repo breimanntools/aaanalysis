@@ -245,16 +245,14 @@ class AAPred(Wrapper):
     """
     AAPred: evaluate and deploy sequence-based prediction models (Wrapper) [Breimann25]_.
 
-    A thin, opinionated wrapper that closes the gap left by feature engineering: given a
-    feature matrix ``X`` and ``labels``, it **evaluates** one or more scikit-learn model
-    classes across metrics by cross-validation and an optional held-out set (:meth:`eval`),
-    and **deploys** them by fitting on all data and exposing prediction scores
-    (:meth:`fit` / :meth:`predict` / :meth:`eval`).
+    Picks up where feature engineering stops: given a feature matrix ``X`` and ``labels``, it
+    evaluates one or more scikit-learn models by cross-validation and an optional held-out set
+    (:meth:`eval`), and deploys them by fitting on all data and scoring new proteins
+    (:meth:`fit`, :meth:`predict`).
 
-    Unlike :class:`CPPGrid`, which optimizes the *feature space* and scores configurations
-    by feature separation, ``AAPred`` takes a *fixed* feature set and trains models that are
-    kept for deployment. It intentionally does **not** perform hyperparameter optimization —
-    pass configured estimators and it evaluates and deploys them.
+    Unlike :class:`CPPGrid`, which optimizes the *feature space* and scores configurations by
+    feature separation, ``AAPred`` takes a *fixed* feature set and keeps the trained models for
+    deployment. Estimators are used as configured, unless :meth:`fit` is asked to tune them.
 
     .. warning::
 
@@ -263,10 +261,6 @@ class AAPred(Wrapper):
         without the usual deprecation cycle. Pin a version if you depend on the current behaviour.
 
     .. versionadded:: 1.1.0
-
-    Notes
-    -----
-    * All fitted-state attributes carry a trailing underscore and are set by :meth:`fit`.
 
     See Also
     --------
@@ -307,9 +301,7 @@ class AAPred(Wrapper):
             Each should be one of ``accuracy``, ``balanced_accuracy``, ``precision``, ``recall``,
             ``f1``, ``roc_auc``, and ``mcc`` (Matthews correlation coefficient).
 
-            .. versionchanged:: 1.2.0
-               ``mcc`` (Matthews correlation coefficient) is accepted, giving ``AAPred`` the same
-               metric vocabulary as :class:`ModelEvaluator`.
+            .. versionchanged:: 1.2.0 ``mcc`` is accepted.
         df_feat : pd.DataFrame, shape (n_features, n_feature_info), optional
             CPP feature DataFrame (with a ``feature`` column) bound to the model. When given, the
             feature matrix ``X`` is computed internally from a ``df_seq`` by the sequence-level
@@ -496,19 +488,15 @@ class AAPred(Wrapper):
         provided, ``holdout`` (models fit on ``X`` and scored on ``X_holdout``). The result is a
         long-format table with one row per (model, metric, principle).
 
-        Pass ``cv`` to cross-validate with an **arbitrary scikit-learn splitter** (e.g.
-        ``LeaveOneOut()``) instead of the integer ``n_cv`` folds. The splitter is not capped at
-        the smallest class count, and its rows are scored by the ``cv_pooled`` principle: every
-        held-out prediction is pooled and each metric is applied **once** on that pooled vector
-        (reproducing ``metric(labels, cross_val_predict(estimator, X, labels, cv=cv))``), rather
-        than averaging a per-fold score. This is the correct principle for ``LeaveOneOut`` on a
-        small, imbalanced set, where a single-sample test fold makes per-fold averaging degenerate.
+        Passing a splitter as ``cv`` (e.g. ``LeaveOneOut()``) replaces the integer ``n_cv`` folds
+        and switches the cross-validation rows to the ``cv_pooled`` principle: the held-out
+        predictions are pooled and each metric is applied once on that pooled vector. That is the
+        honest reading for ``LeaveOneOut`` on a small, imbalanced set, where a single-sample test
+        fold makes per-fold averaging degenerate.
 
-        Set ``baseline`` to compare the bound features against simple, non-positional
-        **baseline featurizers** (amino-acid / dipeptide / scale composition) built internally
-        from ``df_seq``: each baseline is cross-validated with the same models and folds and its
-        rows are appended, so the whole "CPP vs baseline" comparison comes from one call. This
-        quantifies how much the positional CPP features add over a plain composition encoding.
+        Setting ``baseline`` cross-validates the bound features against plain composition
+        featurizers built from ``df_seq``, on the same models and folds, so a single call says how
+        much the positional CPP features add over a composition encoding.
 
         .. versionadded:: 1.1.0
 
@@ -526,9 +514,6 @@ class AAPred(Wrapper):
             Performance metrics to compute, each one of ``accuracy``, ``balanced_accuracy``,
             ``precision``, ``recall``, ``f1``, ``roc_auc``, and ``mcc`` (Matthews correlation
             coefficient). Defaults to ``list_metrics`` from the constructor.
-
-            .. versionchanged:: 1.2.0
-               ``mcc`` (Matthews correlation coefficient) is accepted.
         n_cv : int, default=5
             Number of stratified cross-validation folds (must not exceed the smallest class
             count). Ignored when ``cv`` is given.
@@ -542,7 +527,7 @@ class AAPred(Wrapper):
             DataFrame containing an ``entry`` column with unique protein identifiers and sequence
             information (the same input accepted by :meth:`SequenceFeature.get_df_parts`). Must be
             **row-aligned with** ``X`` / ``labels`` (row *i* is the same sample) and built with the
-            **same part geometry** as ``X`` for a fair comparison — the alignment cannot be verified
+            **same part geometry** as ``X`` for a fair comparison. The alignment cannot be verified
             from the opaque ``X``, only ``len(df_seq) == len(labels)`` is checked. Required when
             ``baseline`` is set, ignored otherwise.
         baseline : bool, str, or list of str, optional
@@ -561,7 +546,7 @@ class AAPred(Wrapper):
 
         Returns
         -------
-        df_eval : pd.DataFrame, shape (n_rows, 5) — or (n_rows, 6) in baseline mode
+        df_eval : pd.DataFrame, shape (n_rows, 5), or (n_rows, 6) in baseline mode
             Long-format evaluation table with columns ``model``, ``metric``, ``principle``,
             ``score``, and ``score_std``. The ``principle`` is ``cv`` for the default per-fold
             cross-validation, ``cv_pooled`` when a ``cv`` splitter is passed, and ``holdout`` for
@@ -646,21 +631,15 @@ class AAPred(Wrapper):
         """
         Measure the risk-coverage trade-off: performance as a function of the samples retained.
 
-        When a classifier may decline to score its least-confident samples, its accuracy on the
-        ones it does score rises. This method quantifies that trade-off instead of leaving it to
-        a guess: samples are ranked by a per-sample confidence signal, and every metric is scored
-        again on the most-confident ``coverage`` fraction of them, for each level of a coverage
-        grid. Reading "at 60% coverage the balanced accuracy is 0.93" off the returned table is
-        the evidence base for choosing a refusal threshold.
+        A classifier that may decline its least-confident cases scores better on the ones it does
+        keep, which is what makes a sensible refusal threshold hard to pick. Samples are ranked by
+        a per-sample confidence signal and every metric is scored again on the most-confident
+        fraction, at each level of a coverage grid, so the table reads "at 60% coverage the
+        balanced accuracy is 0.93".
 
-        This is a **measurement only**. Nothing abstains and no threshold is applied: acting on
-        the curve (refusing, escalating) is decision logic that belongs to the caller. The
-        ordinary :meth:`eval` output is untouched by this method.
-
-        Scores come from the same cross-validated out-of-fold path as :meth:`predict_oof`, so
-        every sample is scored by models fit on the folds that exclude it and no prior
-        :meth:`fit` is needed. The ``coverage = 1.0`` row therefore retains every sample and is
-        the ordinary out-of-fold score of that metric.
+        This is a measurement only: nothing abstains and no threshold is applied. Scores come from
+        the out-of-fold path of :meth:`predict_oof`, so no prior :meth:`fit` is needed and the
+        ``coverage = 1.0`` row is the ordinary out-of-fold score of that metric.
 
         .. versionadded:: 1.2.0
 
@@ -762,17 +741,13 @@ class AAPred(Wrapper):
         """
         Score the training set with cross-validated out-of-fold per-sample probabilities.
 
-        Where :meth:`predict` deploys models fit on all data to score *new* proteins, and
-        :meth:`eval` reports *aggregate* cross-validated metrics, ``predict_oof`` returns the
-        *per-sample* out-of-fold score for the **training** data: every sample is scored by models
-        fit on the folds that exclude it (stratified k-fold cross-validation), so the scores are
-        honest and free of the optimistic in-sample bias that scoring the training proteins with
-        :meth:`predict` would incur. Each configured model is cross-validated independently and the
-        per-model out-of-fold scores are averaged, matching the ``score`` / ``score_std`` shape of
-        :meth:`predict` (mean over the ensemble, std across models).
+        Scoring the training proteins with :meth:`predict` flatters the model, because it saw them
+        during fitting. Here every sample is scored by models fit on the folds that exclude it, so
+        the per-sample scores of the training set can be read without that in-sample bias. The
+        columns match :meth:`predict`: the mean over the model ensemble and its spread.
 
-        Like :meth:`eval`, this cross-validates the models given at construction and does **not**
-        require a prior :meth:`fit`; it never touches the deployment models in ``list_models_``.
+        Like :meth:`eval`, this cross-validates the models given at construction, so no prior
+        :meth:`fit` is needed and the deployment models in ``list_models_`` stay untouched.
 
         .. versionadded:: 1.1.0
 
@@ -835,14 +810,11 @@ class AAPred(Wrapper):
         """
         Map prediction scores to an ordered categorical of named confidence groups.
 
-        A stateless classifier that turns continuous scores into human-readable, ordered bands
-        (e.g. ``"low" < "medium" < "high"``): ``thresholds`` delimit the bands and ``labels`` names
-        them from the lowest to the highest scores. Each threshold is an **inclusive lower bound**,
-        so a score equal to a threshold falls in the band *above* it (right-open bands
-        ``[t_{i-1}, t_i)``); a score below the first threshold takes the first label and a score at
-        or above the last threshold the last label. This is the single source of truth for the band
-        boundaries also used by :meth:`AAPredPlot.predict_group` (``band=True``), so a table, a
-        filter, and the plotted colouring always agree.
+        Turns continuous scores into named, ordered bands (e.g. ``"low" < "medium" < "high"``):
+        ``thresholds`` delimit the bands and ``labels`` names them from the lowest to the highest
+        scores. Each threshold is an inclusive lower bound, so a score equal to a threshold falls
+        in the band above it. :meth:`AAPredPlot.predict_group` (``band=True``) uses these same
+        boundaries, so a table and its figure always agree.
 
         .. versionadded:: 1.1.0
 
@@ -923,23 +895,20 @@ class AAPred(Wrapper):
         """
         Predict from raw sequences at a chosen level: whole protein, domain, or residue window.
 
-        One predictor for all three **prediction levels**, selected with ``level``. These are the
-        package's prediction-level taxonomy: the ``AA_`` / ``DOM_`` / ``SEQ_`` dataset prefixes of
-        :func:`~aaanalysis.load_dataset` map 1:1 to them.
+        One predictor for the three prediction levels of the package, selected with ``level``. The
+        ``SEQ_`` / ``DOM_`` / ``AA_`` dataset prefixes of :func:`~aaanalysis.load_dataset` map onto
+        them one to one:
 
-        * ``'sequence'`` — **protein level** (``SEQ_*`` datasets): one score per whole sequence.
-          "Sequence" is the general term — a full amino-acid chain, typically a protein.
-        * ``'domain'`` — **domain level** (``DOM_*`` datasets): a boundary-sensitivity scan; the TMD
-          boundaries are shifted by every offset in ``[-window, +window]`` and each shifted definition
-          is featurized and scored.
-        * ``'window'`` — **residue level** (``AA_*`` datasets): a per-residue profile; each residue is
-          represented by a length-``tmd_len`` window slid along the sequence (spaced by ``step``) and
-          scored at every valid position.
+        * ``'sequence'``: protein level (``SEQ_*``), one score per whole amino-acid chain.
+        * ``'domain'``: domain level (``DOM_*``), a boundary-sensitivity scan that shifts the TMD
+          boundaries by every offset in ``[-window, +window]`` and scores each definition, showing
+          how much the score depends on where the domain is drawn.
+        * ``'window'``: residue level (``AA_*``), a per-residue profile scored from a
+          length-``tmd_len`` window slid along the sequence.
 
         Each level featurizes with the bound ``df_feat`` and averages the fitted-model ensemble.
-        When ``threshold`` is given, a ``predicted_label`` column is added (score at or above the
-        threshold -> ``label_pos`` from :meth:`fit`, else the negative class); with ``threshold=None``
-        (default) only the scores are returned.
+        A ``threshold`` adds a ``predicted_label`` column (score at or above it becomes the
+        ``label_pos`` of :meth:`fit`, else the negative class).
 
         .. note::
            Requires a ``df_feat`` bound at construction and a prior :meth:`fit`.
@@ -987,9 +956,8 @@ class AAPred(Wrapper):
         See Also
         --------
         * :meth:`AAPred.eval` for cross-validated model evaluation (``df_eval``).
-        * :func:`~aaanalysis.load_dataset` — benchmark datasets grouped by the same three prediction
-          levels (``AA_`` = residue → ``level='window'``, ``DOM_`` = domain → ``level='domain'``,
-          ``SEQ_`` = protein → ``level='sequence'``).
+        * :func:`~aaanalysis.load_dataset`: benchmark datasets grouped by the same three prediction
+          levels (``AA_`` = residue, ``DOM_`` = domain, ``SEQ_`` = protein).
 
         Examples
         --------
@@ -1031,18 +999,13 @@ class AAPred(Wrapper):
         """
         Score a precomputed feature matrix with the fitted deployment ensemble.
 
-        The matrix-level counterpart of :meth:`predict`: where :meth:`predict` takes raw sequences
-        (``df_seq``) and rebuilds the feature matrix internally, ``predict_proba`` scores an ``X``
-        you already hold, so a feature matrix built once (e.g. for a large candidate set such as a
-        substratome) is scored directly without re-featurizing. Each fitted model returns its
-        positive-class probability and the per-sample scores are reduced to a mean and a std across
-        the model ensemble, matching the ``score`` / ``score_std`` shape of :meth:`predict` and
-        :meth:`predict_oof`.
+        The matrix-level counterpart of :meth:`predict`: where that method takes raw sequences and
+        rebuilds the features internally, this one scores a matrix you already hold, so a large
+        candidate set such as a whole substratome is featurized once and scored directly. The
+        columns are the ``score`` / ``score_std`` pair of :meth:`predict` and :meth:`predict_oof`.
 
-        Unlike :meth:`predict`, this needs **no** bound ``df_feat`` (it operates purely on the given
-        matrix) but does require a prior :meth:`fit`, since it scores with the deployment models in
-        ``list_models_``. ``X`` must have the same features, in the same order, as the matrix passed
-        to :meth:`fit`.
+        No bound ``df_feat`` is needed, but a prior :meth:`fit` is, and ``X`` must carry the same
+        features, in the same order, as the matrix it was fitted on.
 
         .. note::
            Requires a prior :meth:`fit`.

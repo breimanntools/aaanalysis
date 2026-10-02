@@ -146,13 +146,10 @@ class EmbeddingPreprocessor:
         Raw PLM embeddings (ESM, ProtT5, …) are unbounded floats, whereas
         :meth:`CPP.run_num` expects per-residue values in ``[0, 1]`` (the same
         normalization convention as :class:`StructurePreprocessor` and
-        :class:`AnnotationPreprocessor`). ``encode`` fits one normalizer **per
-        embedding dimension** over the whole corpus (all residues of all
-        proteins in ``df_seq``) and applies it to every entry, returning a
-        ``dict_num`` that feeds straight into
-        :meth:`NumericalFeature.get_parts` → :meth:`CPP.run_num`. The fitted
-        parameters are stored on the instance (``self.norm_params_``) so the
-        identical transform can be reproduced.
+        :class:`AnnotationPreprocessor`). ``encode`` fits one normalizer per
+        embedding dimension over the whole corpus and applies it to every entry,
+        returning a ``dict_num`` that feeds :meth:`NumericalFeature.get_parts`
+        and then :meth:`CPP.run_num`.
 
         .. versionadded:: 1.1.0
 
@@ -339,11 +336,10 @@ class EmbeddingPreprocessor:
         so the result is a drop-in for the ``df_cat`` argument of
         :meth:`CPP.__init__`.
 
-        When ``df_stds`` is supplied, clustering becomes **std-aware**:
-        each dimension is represented by the per-column z-scored concatenation
-        of its per-amino acid (AA) ``(mean, std)`` (shape ``(D, 40)`` instead of
-        ``(D, 20)``). Two dimensions with similar per-AA means but very
-        different per-AA stds will then *not* collapse into the same cluster.
+        Supplying ``df_stds`` makes the clustering std-aware: each dimension is
+        described by both its per-amino acid (AA) mean and its spread, so two
+        dimensions with similar means but very different variability no longer
+        collapse into one cluster.
 
         .. versionadded:: 1.1.0
 
@@ -390,20 +386,11 @@ class EmbeddingPreprocessor:
         * The ``metric`` parameter only affects post-hoc merging. To
           experiment with non-Pearson similarity during k-optimization, a
           deeper AAclust change is required.
-        * **Std-aware recipe (when ``df_stds_emb`` is supplied).** A
-          composition of three textbook ingredients, not a single named
-          method: (i) each dimension is represented by its per-AA
-          ``(mean, std)`` — the sufficient statistics of a 1-D Gaussian over
-          that AA's residue embeddings; (ii) per-column z-scoring across the
-          D dimensions puts the mean half and std half on a common footing
-          so neither dominates row-Pearson [MilliganCooper88]_; (iii) AAclust
-          then clusters the (D, 40) descriptor matrix by Pearson
-          row-correlation, in the same tradition as gene-expression feature
-          clustering [Eisen98]_. This recipe is **not** a closed-form
-          approximation of Bhattacharyya / symmetric-KL between per-AA
-          Gaussians (under equal variance Bhattacharyya reduces to a function
-          of ``(μ₁ − μ₂)²`` alone, which would motivate dropping the std
-          half).
+        * In std-aware mode, the per-AA means and standard deviations are
+          z-scored per column so that neither half dominates the row-Pearson
+          distance [MilliganCooper88]_, and AAclust then clusters the combined
+          descriptors in the same tradition as gene-expression feature
+          clustering [Eisen98]_.
 
         See Also
         --------
@@ -462,11 +449,9 @@ class EmbeddingPreprocessor:
         (``mode='protein'``) or a per-residue array per protein (``mode='residue'``).
         The per-residue output is the raw, unbounded ``{entry: (L, D)}`` mapping that
         :meth:`encode` normalizes into the ``dict_num`` consumed by :meth:`CPP.run_num`;
-        the per-protein output is a redundancy-free feature matrix ready for
-        :meth:`AAclust.select_proteins` or :class:`TreeModel`. Embeddings are returned
-        **raw** — normalization is :meth:`encode`'s job. Requires the ``embed`` extra
-        (``pip install 'aaanalysis[embed]'``); the heavy dependencies are imported
-        lazily, so the rest of the class works without them.
+        the per-protein output is a feature matrix ready for
+        :meth:`AAclust.select_proteins` or :class:`TreeModel`. Requires the ``embed``
+        extra (``pip install 'aaanalysis[embed]'``).
 
         .. versionadded:: 1.1.0
 
@@ -483,9 +468,7 @@ class EmbeddingPreprocessor:
             Registry key of the PLM to use — one of ``'esm2_t6_8M'``,
             ``'esm2_t12_35M'``, ``'esm2_t30_150M'``, ``'esm2_t33_650M'``,
             ``'esm2_t36_3B'``, ``'esm1b'``, ``'prott5_xl_u50'``, ``'prostt5'``. See the
-            *Notes* table for each model's size, embedding dimension, and whether it runs
-            on a typical laptop CPU. An unknown key raises a ``ValueError`` listing the
-            valid options.
+            Notes table for each model's embedding dimension and memory cost.
         pooling : {'mean', 'max', 'cls'}, default='mean'
             Residue→protein reduction for ``mode='protein'``. ``'cls'`` uses the model's
             leading token and is only valid for models that have one (ESM, not ProtT5).
@@ -524,91 +507,60 @@ class EmbeddingPreprocessor:
 
         Notes
         -----
-        **Available models.** Footprints are inference floors (real peak grows with
-        ``batch_size`` × sequence length); *Local* marks models that run comfortably on a
-        typical 16 GB laptop CPU. ESM-2 spans accuracy/speed trade-offs; ProtT5/ProstT5
-        are stronger but heavier; ProstT5 is structure-aware (trained on 3Di tokens).
+        The memory figures below are inference floors; the real peak grows with
+        ``batch_size`` and sequence length. ESM-2 spans a speed / accuracy range, while
+        ProtT5 and ProstT5 are stronger but heavier, and ProstT5 is structure-aware
+        (trained on 3Di tokens).
 
         .. list-table::
            :header-rows: 1
-           :widths: 20 8 6 10 8 30
+           :widths: 24 10 16 40
 
            * - model
-             - params
              - dim
              - ~RAM (CPU)
-             - Local?
              - best for
            * - ``esm2_t6_8M``
-             - 8 M
              - 320
              - ~0.3 GB
-             - yes
              - laptops, large corpora, quick tests
            * - ``esm2_t12_35M``
-             - 35 M
              - 480
              - ~0.5 GB
-             - yes
-             - default; best size/quality on CPU
+             - default, best size / quality on CPU
            * - ``esm2_t30_150M``
-             - 150 M
              - 640
              - ~1.5 GB
-             - yes
              - richer residue features, still CPU-fine
            * - ``esm2_t33_650M``
-             - 650 M
              - 1280
              - ~3 GB
-             - slow
-             - strong; comfortable with a GPU
+             - strong, comfortable with a GPU
            * - ``esm2_t36_3B``
-             - 3 B
              - 2560
              - ~12 GB
-             - GPU
-             - highest quality; needs a ≥12 GB GPU
+             - highest quality, needs a >=12 GB GPU
            * - ``esm1b``
-             - 650 M
              - 1280
              - ~3 GB
-             - slow
-             - ESM-1b parity; 1022-residue cap
+             - ESM-1b parity, 1022-residue cap
            * - ``prott5_xl_u50``
-             - 1.2 B
              - 1024
              - ~5 GB
-             - GPU
-             - ProtT5; matches UniProt's embeddings
+             - matches UniProt's published embeddings
            * - ``prostt5``
-             - 1.2 B
              - 1024
              - ~5 GB
-             - GPU
              - structure-aware (3Di) embeddings
 
-        The larger ESM-2 models and both T5 models are slow on CPU and may exhaust memory;
-        ``fetch_embeddings`` emits a ``RuntimeWarning`` suggesting a smaller model when the
-        estimated footprint exceeds the detected device memory (override with
-        ``allow_oversized=True``, lower ``batch_size``, or select a GPU via ``device``).
-
-        **Compute locally vs. fetch precomputed (UniProt).** ``fetch_embeddings`` computes
-        embeddings on your machine, which works for *any* sequence — mutants, designs, or
-        non-model organisms not in any database. UniProt separately publishes
-        **precomputed ProtT5 per-protein embeddings** for UniProtKB/Swiss-Prot and selected
-        reference proteomes; when your proteins are covered and ProtT5 is acceptable,
-        downloading those (currently a bulk per-proteome file indexed by accession) avoids
-        local compute entirely. Prefer the precomputed route for large, fully-covered
-        Swiss-Prot sets on a CPU-only machine; compute here when proteins are novel/mutated,
-        when you need a non-ProtT5 model (e.g. ESM-2/ProstT5), or when you want per-residue
-        output for :meth:`encode` → :meth:`CPP.run_num`. A ``source='uniprot'`` path for the
-        precomputed route is reserved for a future release.
-
-        * Embedding extraction is deterministic (eval mode), so no ``random_state`` /
-          ``seed`` is needed.
-        * Returned embeddings are raw (unbounded) floats; pass ``mode='residue'`` output
-          to :meth:`encode` before :meth:`CPP.run_num`.
+        * Embeddings are computed locally, so any sequence works, including mutants,
+          designs, and proteins absent from every database. UniProt separately publishes
+          precomputed ProtT5 per-protein embeddings for Swiss-Prot and selected reference
+          proteomes, which are worth downloading instead for a large, fully covered set on
+          a CPU-only machine. A ``source='uniprot'`` path is reserved for a future release.
+        * Extraction is deterministic (eval mode), so no ``random_state`` is needed.
+        * Returned values are raw and unbounded; pass ``mode='residue'`` output to
+          :meth:`encode` before :meth:`CPP.run_num`.
 
         See Also
         --------

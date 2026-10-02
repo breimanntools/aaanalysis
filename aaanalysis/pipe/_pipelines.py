@@ -163,6 +163,8 @@ def predict_samples(list_df_feat: FeatArg,
         development; its API (signatures, defaults, return objects) may change between minor releases
         without the usual deprecation cycle. Pin a version if you depend on the current behaviour.
 
+    .. versionadded:: 1.1.0
+
     Parameters
     ----------
     list_df_feat : pd.DataFrame or list or dict
@@ -184,22 +186,14 @@ def predict_samples(list_df_feat: FeatArg,
     plot : bool, default=True
         If ``True``, draw the model comparison bar plot (hue = model, one bar group per metric,
         with cross-validation ``std`` error bars) from the comparison table and return its ``Axes``.
-
-        .. versionadded:: 1.1.0
     figsize : tuple, optional
         Figure size of the comparison plot; a per-kind default is used when ``None``.
-
-        .. versionadded:: 1.1.0
     dict_color : dict, optional
         Mapping ``model -> color`` for the comparison-plot bars; defaults to the house palette. When
         more than one feature set is compared, the bars are labelled ``"<feature_set> · <model>"``,
         so keys must match those composite labels.
-
-        .. versionadded:: 1.1.0
     baseline : int or float, optional
         y-value of a dashed chance line on the comparison plot (e.g. ``0.5``); none when ``None``.
-
-        .. versionadded:: 1.1.0
     random_state : int, optional
         The seed used by the random number generator. If a positive integer, results of stochastic
         processes are reproducible. Injected into each model only where the estimator exposes a

@@ -294,7 +294,7 @@ class CPP(Tool):
     CPP aims at identifying a set of non-redundant features that are most discriminant between the
     test and reference group of sequences.
 
-    .. versionadded:: 0.1.0
+    .. versionadded:: 1.0.0
 
     Attributes
     ----------
@@ -302,11 +302,6 @@ class CPP(Tool):
         Filter-funnel counts from the most recent :meth:`run` / :meth:`run_num` / :meth:`run_composit`
         (``n_candidates``, ``n_after_prefilter``, ``n_after_redundancy``, ``n_final``); ``None`` before
         the first call.
-
-    Notes
-    -----
-    Parameters ending in ``_kws`` (e.g. ``split_kws``, ``bootstrap_kws``) bundle related keyword
-    arguments into one dict; see the :ref:`keyword-dict parameters overview <kws-overview>`.
     """
 
     def __init__(
@@ -328,12 +323,9 @@ class CPP(Tool):
             DataFrame with sequence parts.
         split_kws : dict, optional
             Dictionary with parameter dictionary for each chosen split_type. Default from
-            :meth:`SequenceFeature.get_split_kws`. If a sequence part in ``df_parts`` is too short
-            for the requested splits (e.g. a free peptide with no flanking context), the split
-            lengths are **auto-capped** to the shortest part (``Segment`` ``n_split_max`` capped;
-            ``Pattern`` / ``PeriodicPattern`` that cannot fit are dropped) and one ``UserWarning``
-            is emitted; the capped ``split_kws`` is stored as ``self.split_kws``. For parts long
-            enough for the requested splits this is a no-op.
+            :meth:`SequenceFeature.get_split_kws`. If a sequence part is too short for the requested
+            splits (e.g. a free peptide without flanking context), the splits are auto-capped to the
+            shortest part with a ``UserWarning``, and the capped version is stored as ``self.split_kws``.
         df_scales : pd.DataFrame, shape (n_letters, n_scales), optional
             DataFrame of scales with letters typically representing amino acids. Default from :meth:`load_scales`
             unless specified in ``options['df_scales']``.
@@ -352,78 +344,42 @@ class CPP(Tool):
             consistent, enabling reproducibility. If ``None``, stochastic processes will be truly random. Also seeds the
             bootstrap resampling (``bootstrap=True``).
         bootstrap : bool, default=False
-            Whether to add **bootstrap stability annotation** to the selection. ``False`` (default) runs the
-            single-pass selection, so :meth:`run` / :meth:`run_num` / :meth:`run_composit` behave exactly as before
-            (output byte-identical) and ``bootstrap_kws`` is ignored. ``True`` wraps the ordinary run: the data is
-            resampled ``bootstrap_kws['rounds']`` times and re-selected each round to score how often each feature is
-            selected, then the **ordinary full-data selection is returned with a ``selection_frequency`` column**
-            (0 to 1) added. The selected features are exactly those of a normal run (``n_filter`` is the selection
-            criterion) — bootstrapping annotates their stability, it does not change which features are selected.
-            Set ``bootstrap_kws['ci']`` to additionally report a per-feature confidence interval for the
-            ``abs_auc`` and ``mean_dif`` statistics.
+            Whether to annotate the selection with **bootstrap stability**. If ``True``, the data is resampled
+            repeatedly and re-selected each round to score how often each feature is chosen, and :meth:`run`,
+            :meth:`run_num`, and :meth:`run_composit` return their ordinary full-data selection with a
+            ``selection_frequency`` column (0 to 1) added. This flags which features are reproducible under
+            resampling; it does not change which features are selected. If ``False``, ``bootstrap_kws`` is ignored.
         bootstrap_kws : dict, optional
-            Bootstrap configuration (only used when ``bootstrap=True``). A dict with any subset of these keys; unset
-            keys keep their tuned default, and ``None`` uses all defaults:
+            Bootstrap configuration (only used when ``bootstrap=True``), with any subset of these keys.
+            Unset keys keep their default:
 
-            * ``'rounds'`` (int, default ``20``): number of resampling rounds (>=1). More rounds give a more precise
-              ``selection_frequency`` estimate at a roughly linear cost; ~20 to ~50 is typically enough.
+            * ``'rounds'`` (int, default ``20``): number of resampling rounds (>=1). More rounds estimate
+              ``selection_frequency`` more precisely at a roughly linear cost.
             * ``'resample'`` ({'both', 'reference', 'test'}, default ``'reference'``): which class group is resampled
-              each round. ``'reference'`` fixes the test group and resamples only the reference group (isolating the
-              dominant source of selection instability); ``'both'`` resamples both; ``'test'`` resamples only the test
-              group.
+              each round. ``'reference'`` fixes the test group and resamples only the (usually larger) reference group.
             * ``'frac'`` (float, default ``0.8``): per-group resample size as a fraction of the group's samples
-              (``0<frac<=1``), drawn with replacement each round. ``0.8`` is the conventional sub-sample size; with
-              ``n_filter`` as the final cut the exact fraction only modestly affects the result.
-            * ``'ci'`` (float or None, default ``None``): confidence level (``0<ci<1``, e.g. ``0.95``) of the
-              **per-feature confidence intervals**. ``None`` leaves them off and the output unchanged. A level
-              summarizes the statistics computed in the resampling rounds into a central percentile interval per
-              feature, appending ``abs_auc_ci_low`` / ``abs_auc_ci_high`` and ``mean_dif_ci_low`` /
-              ``mean_dif_ci_high`` after ``selection_frequency``. A higher level widens the interval; more
-              ``rounds`` make it more precise.
+              (``0<frac<=1``), drawn with replacement each round.
+            * ``'ci'`` (float or None, default ``None``): confidence level (``0<ci<1``, e.g. ``0.95``) for
+              per-feature confidence intervals of ``abs_auc`` and ``mean_dif``, appending
+              ``abs_auc_ci_low`` / ``abs_auc_ci_high`` and ``mean_dif_ci_low`` / ``mean_dif_ci_high``
+              after ``selection_frequency``. ``None`` leaves them off.
 
         Notes
         -----
         * All scales from ``df_scales`` must be contained in ``df_cat``
-        * **Stability annotation (``bootstrap=True``) is a cross-cutting wrapper**, configured once on the object
-          and applied uniformly by :meth:`run`, :meth:`run_num`, and :meth:`run_composit`. It is a thin wrapper: it
-          re-runs the ordinary selection on ``bootstrap_kws['rounds']`` resamples of the data to score how often each
-          feature is selected, then returns the **ordinary full-data selection** with a per-feature
-          ``selection_frequency`` (0 to 1) added. The selected feature list is exactly a normal run (``n_filter`` is
-          the criterion); the annotation flags which of those features are reproducible under resampling vs
-          sample-specific — a **trust / interpretability** aid, not a change to the list or to predictive accuracy.
-          To keep any downstream cross-validation leakage-safe, run CPP (bootstrapped or not) **inside** each training
-          fold, never on the full dataset before splitting.
-        * **Per-feature confidence intervals (``bootstrap_kws['ci']``) reuse the same rounds.** Each round already
-          computes the CPP statistics on its resample; with a confidence level set, those values are retained and
-          summarized into a central percentile interval per feature, so the intervals cost no extra runs. They are
-          **conditional on selection**: a feature contributes a value only in the rounds in which it was selected,
-          so an interval is read together with ``selection_frequency`` (a narrow interval from 2 of 20 rounds says
-          little), and a feature selected in fewer than two rounds gets ``NaN`` bounds. The intervals describe the
-          resampling spread of the statistic, not a posterior or a calibrated significance test.
-        * **Choosing the settings.** ``bootstrap=True`` uses the tuned defaults in ``bootstrap_kws``
-          (``rounds=20``, ``frac=0.8``, ``resample='reference'``); pass a dict to override any of them.
-          ``rounds`` controls how precisely ``selection_frequency`` is estimated (~20 is a practical sweet spot, ~50
-          converges the estimate) at a roughly linear cost; ``frac=0.8`` is the conventional sub-sample size and a
-          robust default; ``resample='reference'`` resamples only the (usually larger, noisier) reference group.
-        * **Splits auto-cap to the shortest part.** A sequence part of length ``L`` can carry a
-          ``Segment`` with at most ``n_split_max = L`` pieces, a ``Pattern`` only if ``len_max <= L``,
-          and a ``PeriodicPattern`` only if its first step ``<= L``. When ``df_parts`` contains a
-          part too short for the requested ``split_kws`` (typically free peptides / short domains
-          with no flanking context), CPP caps the ``Segment`` ``n_split_max`` and drops the
-          ``Pattern`` / ``PeriodicPattern`` split types that cannot fit (``Segment`` is always kept),
-          emits one ``UserWarning``, and stores the capped ``split_kws`` as ``self.split_kws`` so
-          both :meth:`run` and :meth:`run_num` use it. This never raises; for parts long enough for
-          the requested splits it is a no-op and the output is unchanged.
-        * **CPP is intrinsically binary** (one test group vs one reference group). For
-          **multi-class** or **regression** tasks, do not change CPP: transform the target
-          into binary contrasts with the ``SequenceFeature.get_labels_*`` helpers and loop
-          :meth:`run` (or :meth:`run_num`) over them. Use
-          :meth:`SequenceFeature.get_labels_ovr` / :meth:`SequenceFeature.get_labels_ovo`
-          for multi-class and :meth:`SequenceFeature.get_labels_quantile` /
-          :meth:`SequenceFeature.get_labels_tiered` for regression. The row-dropping
-          helpers (``ovo`` / ``tiered``) return the row-matched ``df_parts`` /
-          ``dict_num_parts`` per contrast, ready to drop straight into a new ``CPP``. See
-          the **P8: Prediction** protocol for the end-to-end workflow.
+        * Stability annotation (``bootstrap=True``) is configured once on the object and applied
+          alike by :meth:`run`, :meth:`run_num`, and :meth:`run_composit`. To keep a downstream
+          cross-validation leakage-free, run CPP inside each training fold, never on the full
+          dataset before splitting.
+        * A confidence interval (``bootstrap_kws['ci']``) is conditional on selection: a feature
+          contributes a value only in the rounds in which it was selected, so read it together with
+          ``selection_frequency``. A feature selected in fewer than two rounds gets ``NaN`` bounds.
+        * CPP is intrinsically binary, comparing one test group against one reference group. For
+          multi-class or regression tasks, transform the target into binary contrasts with the
+          ``SequenceFeature.get_labels_*`` helpers and loop :meth:`run` over them. The row-dropping
+          helpers (``ovo`` / ``tiered``) return the row-matched ``df_parts`` / ``dict_num_parts``
+          per contrast, ready to pass straight into a new ``CPP``. See the **P8: Prediction**
+          protocol for the end-to-end workflow.
 
         See Also
         --------
@@ -580,25 +536,7 @@ class CPP(Tool):
         The aim of the CPP algorithm is to identify a set of unique, non-redundant features that are most
         discriminant between the test and reference group of sequences. See [Breimann25]_ for details on the algorithm.
 
-        .. versionadded:: 0.1.0
-
-        .. versionchanged:: 1.1.0
-            Added the ``return_stats`` parameter, returning the filter-funnel statistics alongside ``df_feat``.
-
-        .. versionchanged:: 1.2.0
-            ``n_sample_batches`` now creates exactly the requested number of balanced, non-empty
-            sample batches. ``n_batches`` and ``n_sample_batches`` document their distinct
-            output and memory trade-offs.
-
-        .. versionchanged:: 1.1.0
-            When the constructor enables bootstrap stability annotation (``CPP(bootstrap=True)``), ``df_feat`` gains a
-            ``selection_frequency`` column (the selected features are unchanged; see the ``bootstrap`` /
-            ``bootstrap_kws`` constructor parameters and the Notes below).
-
-        .. versionchanged:: 1.2.0
-            ``CPP(bootstrap=True, bootstrap_kws={'ci': <level>})`` additionally appends the per-feature
-            confidence-interval columns ``abs_auc_ci_low`` / ``abs_auc_ci_high`` and ``mean_dif_ci_low`` /
-            ``mean_dif_ci_high``. Without a level the output is unchanged.
+        .. versionadded:: 1.0.0
 
         Parameters
         ----------
@@ -609,8 +547,7 @@ class CPP(Tool):
         label_ref : int, default=0
             Class label in ``labels`` that defines the reference group used for feature statistics.
         n_filter : int, default=100
-            Number of features to be filtered/selected by CPP algorithm. With bootstrap stability selection
-            (``CPP(bootstrap=True)``) this still caps the final redundancy-filtered output computed on the full dataset.
+            Number of features to be filtered/selected by CPP algorithm.
         n_pre_filter : int or None, default=None
             Number of candidate features retained before redundancy filtering. If ``None``,
             ``pct_pre_filter`` determines this number from all candidate features.
@@ -647,42 +584,24 @@ class CPP(Tool):
                On Python 3.14 + macOS, calling this with ``n_jobs > 1`` (or ``-1`` /
                ``None``) from a script that lacks an ``if __name__ == "__main__":``
                guard (or from a bare REPL / heredoc) can trigger a recursive process
-               spawn (``FileNotFoundError`` / ``EOFError`` / ``cannot pickle '_thread.RLock'``).
-               Guard your entry point, or run serially with ``n_jobs=1``. See also
+               spawn. Guard your entry point, or run serially with ``n_jobs=1``. See also
                :class:`CPPGrid` (default ``backend="threads"``), which sidesteps this.
         vectorized : bool, default=True
             Whether to apply sequence splitting and the Mann-Whitney U test in 'vectorized' mode (``True``),
-            improving speed but increasing memory consumption. The vectorized Mann-Whitney U test uses a
-            fast normal approximation of the p-value (roughly an order of magnitude faster on the test
-            step); ``vectorized=False`` instead computes the exact :func:`scipy.stats.mannwhitneyu`
-            p-value, which is slower but reproducible bit-for-bit. This choice changes only the reported
-            'p_val_mann_whitney' and 'p_val_fdr_bh' columns: feature ranking and selection are driven by
-            'abs_auc' and 'abs_mean_dif', so the selected features are identical in either mode.
+            improving speed but increasing memory consumption. Vectorized mode approximates the p-value,
+            while ``vectorized=False`` computes the exact :func:`scipy.stats.mannwhitneyu` p-value. This
+            affects only the reported p-value columns: ranking and selection are driven by 'abs_auc' and
+            'abs_mean_dif', so the selected features are identical in either mode.
         n_batches : int or None, default=None
             Number of scale-axis batches (2 to ``len(df_scales.columns)``). If ``None``,
-            single-pass processing is used. A value reduces the per-batch scale-value tensor
-            and usually lowers peak memory at the cost of additional work. Output is
-            byte-identical to the single-pass result, ``p_val_fdr_bh`` included: the
-            Benjamini-Hochberg correction is computed once over the pooled p-values of all
-            batches, not per batch.
-
-            .. versionchanged:: 1.2.0
-                The Benjamini-Hochberg correction is now pooled across batches, so batched
-                output matches single-pass output exactly. Before, it was applied per
-                feature batch and ``p_val_fdr_bh`` could differ from the single-pass value.
+            single-pass processing is used. Batching lowers peak memory at the cost of
+            additional work, and the output stays byte-identical to the single-pass result
+            (the Benjamini-Hochberg correction is pooled over all batches).
         n_sample_batches : int or None, default=None
-            Number of non-empty, contiguous sample-axis batches (2 to ``n_samples``). If
-            ``None``, sample batching is disabled. A value divides samples into exactly this
-            many batches, whose sizes differ by at most one. It bounds the dominant per-batch
-            ``O(batch_size x part_length x n_scales)`` scale-value tensor by ``batch_size``.
-            It does **not** make peak memory independent of ``n``: the survivor matrix of
-            shape ``(n_samples, n_survivors)`` and its test statistics stay resident, so peak
-            memory still grows with ``n``. Floating-point accumulation across batches can
-            change statistics at rounding precision and resolve pathological ties differently.
-            Mutually exclusive with ``n_batches`` (which batches over scales).
-
-            .. versionchanged:: 1.2.0
-                Creates exactly the requested number of balanced, non-empty batches.
+            Number of balanced, non-empty sample-axis batches (2 to ``n_samples``). If ``None``,
+            sample batching is disabled. This bounds per-batch memory, but peak memory still grows
+            with the sample count, and accumulating across batches can shift statistics at rounding
+            precision. Mutually exclusive with ``n_batches`` (which batches over scales).
         return_stats : bool, default=False
             If ``True``, also return the filter-funnel statistics (``last_filter_stats_``)
             as a second element ``(df_feat, stats)``; if ``False``, return only ``df_feat``.
@@ -710,74 +629,35 @@ class CPP(Tool):
         -----
         * Pre-filtering can be adjusted by the following parameters: {'n_pre_filter', 'pct_pre_filter', 'max_std_test'}.
         * Filtering can be adjusted by the following parameters: {'n_filter', 'max_overlap', 'max_cor', 'check_cat', 'redundancy'}.
-        * ``redundancy='exact'`` is an optional **enhancement** of the redundancy step, not a correctness
-          fix: it compares the true residue positions and tends to yield a more *concentrated* signature
-          (fewer redundant subcategories) rather than higher predictive performance, which stays
-          essentially unchanged. Default ``'legacy'`` keeps prior results reproducible. For a stronger,
-          more efficient redundancy reduction, see :meth:`CPP.simplify`.
-        * **Bootstrap stability annotation** (``CPP(bootstrap=True)``) wraps this run: the data is
-          resampled ``bootstrap_kws['rounds']`` times (per ``bootstrap_kws``) and re-selected each
-          round to score how often each feature is selected, then **this ordinary full-data run is
-          returned with a ``selection_frequency`` column** (0 to 1) appended after ``positions``. The
-          selected features are exactly those of the non-bootstrap run (``n_filter`` is the selection
-          criterion); ``selection_frequency`` flags which are reproducible under resampling. The run is
-          otherwise unchanged (``bootstrap=False``, the default, is byte-identical). Not combinable
-          with ``n_batches`` / ``n_sample_batches``. Setting ``bootstrap_kws['ci']`` (e.g. ``0.95``)
-          additionally summarizes the statistics of those same rounds into a per-feature percentile
-          interval of ``abs_auc`` and ``mean_dif`` (``NaN`` bounds for a feature selected in fewer
-          than two rounds); the interval columns are appended after ``selection_frequency``.
-        * **Binary by design.** ``run`` compares one test group against one reference group. For
-          multi-class or regression tasks, build binary label contrasts with the
-          ``SequenceFeature.get_labels_*`` helpers and loop ``run`` over them (see the
-          :class:`CPP` class notes and the **P8: Prediction** protocol).
-        * **Cost** scales as ``O(n_scales x n_parts x n_splits)`` (the candidate feature count), so larger
-          scale sets / wider ``split_kws`` are proportionally slower — budget a sweep accordingly, or use
-          :class:`CPPGrid` (which runs CPP once per ``n_filter`` group and slices the rest).
-        * **Classifier head tracks the metric** when training a downstream model on ``df_feat``: in practice
-          SVM tends to be best for AP (ranking), logistic regression for balanced accuracy, and random forest
-          for MCC at a fixed threshold (detection). Pick the head to match the objective you report.
-        * For large datasets (due to long sequences or a high number of samples) or memory-limited systems,
-          memory consumption can be reduced by:
-
-          - Disabling vectorized mode (``vectorized=False``)
-          - Reducing ``n_jobs`` (down to ``n_jobs=1``)
-          - Using batch processing (``n_batches>=2``, with higher values reducing memory usage)
-
-          While this helps to prevent crashes, it may slow down processing.
-
-        * ``df_feat`` follows a **standardized, deterministic column order** (the
-          canonical schema), with the unique feature id (1), scale information (2-5),
-          statistical results for filtering and ranking (6-12), and feature positions (13):
-
-            1. 'feature': Feature ID (PART-SPLIT-SCALE)
-            2. 'category': Scale category
-            3. 'subcategory': Sub category of scales
-            4. 'scale_name': Name of scales
-            5. 'scale_description': Description of the scale
-            6. 'abs_auc': Absolute adjusted AUC (area under the curve) [-0.5 to 0.5]
-            7. 'abs_mean_dif': Absolute mean differences between test and reference group [0 to 1]
-            8. 'mean_dif': Mean differences between test and reference group [-1 to 1]
-            9. 'std_test': Standard deviation in test group
-            10. 'std_ref': Standard deviation in reference group
-            11. 'p_val_mann_whitney' or 'p_val_ttest_indep': p-value of the non-parametric
-                Mann-Whitney test (default) or, when ``parametric=True``, the independent
-                t-test. The column **name** reflects which test was run.
-            12. 'p_val_fdr_bh': Benjamini-Hochberg False Discovery Rate (FDR) corrected p-values
-            13. 'positions': Feature positions for default settings
-
-          The feature id (column 1) is an opaque ``PART-SPLIT-SCALE`` string; split it with
+        * ``redundancy='exact'`` compares the true residue positions and tends to yield a more
+          *concentrated* signature (fewer redundant subcategories) rather than higher predictive
+          performance. Default ``'legacy'`` keeps prior results reproducible. For a stronger
+          redundancy reduction, see :meth:`CPP.simplify`.
+        * With ``CPP(bootstrap=True)``, ``df_feat`` gains a ``selection_frequency`` column after
+          ``positions`` (and confidence-interval columns when ``bootstrap_kws['ci']`` is set), while
+          the selected features stay those of an ordinary run. Not combinable with ``n_batches`` /
+          ``n_sample_batches``.
+        * ``run`` compares one test group against one reference group. For multi-class or regression
+          tasks, build binary label contrasts with the ``SequenceFeature.get_labels_*`` helpers and
+          loop ``run`` over them (see the :class:`CPP` class notes and the **P8: Prediction** protocol).
+        * For large datasets or memory-limited systems, memory consumption can be reduced by disabling
+          vectorized mode (``vectorized=False``), reducing ``n_jobs`` (down to ``n_jobs=1``), or batch
+          processing (``n_batches>=2``). This helps to prevent crashes, but slows down processing.
+        * ``df_feat`` follows a standardized, deterministic column order: the unique feature id,
+          scale information ('category', 'subcategory', 'scale_name', 'scale_description'), the
+          statistics used for filtering and ranking ('abs_auc', 'abs_mean_dif', 'mean_dif',
+          'std_test', 'std_ref', the p-value of the chosen test, and 'p_val_fdr_bh'), and
+          'positions'. See the :ref:`df_feat contract <df_feat_contract>` for every column.
+          The feature id is an opaque ``PART-SPLIT-SCALE`` string; split it with
           :func:`aaanalysis.utils.split_feat_id` rather than parsing it by hand. Columns added
-          downstream — the explainable-AI columns ('feat_importance', 'feat_impact') and the
-          per-substrate SHAP columns ('feat_impact_<name>', 'mean_dif_<name>', ...) added by
-          :class:`TreeModel` / :class:`ShapModel` — are appended after 'positions' in a stable
-          order, so the canonical order is a lower bound, never a restriction.
+          downstream by :class:`TreeModel` / :class:`ShapModel` are appended after 'positions',
+          so the canonical order is a lower bound, never a restriction.
 
-        * **Compositional vs positional features** are not a separate setting — the distinction
-          emerges from ``split_kws``. A single whole-part average (``n_split_max=1`` with no
-          ``Pattern`` / ``PeriodicPattern``) yields **compositional** features (an
-          amino-acid-composition-like mean over the entire part, position-agnostic); using
-          ``n_split_max>1`` and/or patterns yields **positional** features resolved to specific
-          sub-regions.
+        * **Compositional vs positional features** follow from ``split_kws``. A single whole-part
+          average (``n_split_max=1`` with no ``Pattern`` / ``PeriodicPattern``) yields
+          **compositional** features, an amino-acid-composition-like mean over the entire part that
+          is position-agnostic. Using ``n_split_max>1`` and/or patterns yields **positional**
+          features resolved to specific sub-regions.
 
         See Also
         --------
@@ -977,15 +857,6 @@ class CPP(Tool):
 
         .. versionadded:: 1.1.0
 
-        .. versionchanged:: 1.1.0
-            Honors bootstrap stability annotation (``CPP(bootstrap=True)``) exactly like :meth:`run`, resampling
-            along the sample axis of ``dict_num_parts`` and adding a ``selection_frequency`` column to ``df_feat``
-            (the selected features are unchanged).
-
-        .. versionchanged:: 1.2.0
-            Honors ``bootstrap_kws['ci']`` exactly like :meth:`run`, appending the per-feature
-            confidence-interval columns of ``abs_auc`` and ``mean_dif`` to ``df_feat``.
-
         Parameters
         ----------
         dict_num_parts : dict[str, np.ndarray], required
@@ -1035,34 +906,22 @@ class CPP(Tool):
             when set. The Python 3.14 + macOS spawn caveat documented in :meth:`run` applies here too.
         vectorized : bool, default=True
             Whether to apply sequence splitting and the Mann-Whitney U test in 'vectorized' mode (``True``),
-            improving speed but increasing memory consumption. The vectorized Mann-Whitney U test uses a
-            fast normal approximation of the p-value (roughly an order of magnitude faster on the test
-            step); ``vectorized=False`` instead computes the exact :func:`scipy.stats.mannwhitneyu`
-            p-value, which is slower but reproducible bit-for-bit. This choice changes only the reported
-            'p_val_mann_whitney' and 'p_val_fdr_bh' columns: feature ranking and selection are driven by
-            'abs_auc' and 'abs_mean_dif', so the selected features are identical in either mode.
+            improving speed but increasing memory consumption. Vectorized mode approximates the p-value,
+            while ``vectorized=False`` computes the exact :func:`scipy.stats.mannwhitneyu` p-value. This
+            affects only the reported p-value columns: ranking and selection are driven by 'abs_auc' and
+            'abs_mean_dif', so the selected features are identical in either mode.
         n_batches : int or None, default=None
             Number of batches (2 to ``len(df_scales.columns)``) over the D axis of
-            ``dict_num_parts``. If ``None``, single-pass; a value bounds the **pass-1
-            stat** working set to one D-chunk (pass-2 recompute still runs globally, so
-            this trims pass-1 memory but does not bound overall peak RSS — use
-            ``n_sample_batches`` for that). Output is bit-exact with the single-pass
-            result. Mutually exclusive with ``n_sample_batches``.
-
-            .. versionchanged:: 1.2.0
-                Clarified that only the pass-1 working set is batched.
+            ``dict_num_parts``. If ``None``, single-pass. Batching trims the first-pass
+            working set but does not bound overall peak memory (use ``n_sample_batches``
+            for that), and the output stays bit-exact with the single-pass result.
+            Mutually exclusive with ``n_sample_batches``.
         n_sample_batches : int or None, default=None
-            Number of non-empty, contiguous batches (2 to ``n_samples``) over the **sample**
-            axis. If ``None``, single-pass. A value creates exactly this many batches whose
-            sizes differ by at most one, bounding the per-batch working set (stat
-            intermediates + pass-2 recompute) to ``O(batch_size)``. The resident input tensor
-            is unchanged. Pass-1 ``std_test`` uses accumulator-style variance, so the result
-            may differ from the single-pass run by ULP-level rounding (after the ``round(3)``
-            on the stat columns), which can reorder tie-broken features; hence opt-in, not the
-            default. Mutually exclusive with ``n_batches``.
-
-            .. versionchanged:: 1.2.0
-                Creates exactly the requested number of balanced, non-empty batches.
+            Number of balanced, non-empty batches (2 to ``n_samples``) over the **sample**
+            axis. If ``None``, single-pass. This bounds the per-batch working set, leaving the
+            resident input tensor unchanged. Results may differ from the single-pass run by
+            rounding at the last digit, which can reorder tie-broken features; hence opt-in,
+            not the default. Mutually exclusive with ``n_batches``.
         return_stats : bool, default=False
             If ``True``, also return the filter-funnel statistics (``last_filter_stats_``) as a second
             element ``(df_feat, stats)``; if ``False``, return only ``df_feat``.
@@ -1090,39 +949,24 @@ class CPP(Tool):
         Notes
         -----
         * ``redundancy`` behaves exactly as in :meth:`run` (default ``'legacy'`` keeps results
-          reproducible; ``'exact'`` compares the true residue positions — an optional enhancement,
-          not a correctness fix).
-        * **Call order — ``get_parts`` then ``run_num``.** ``dict_num_parts`` must come
-          from :meth:`NumericalFeature.get_parts` (step 1), which slices a raw
-          ``df_seq`` + ``dict_num`` into the per-part tensors consumed here (step 2).
-          There is no raw-``df_seq`` / ``dict_num`` entry point on ``run_num``; passing
-          ``dict_num_parts=None`` raises (use :meth:`run` for sequence-mode).
-        * **Peak memory is higher than :meth:`run` and scales with the input tensor.**
-          ``run_num`` carries the dense ``(n_samples, L_part_max, D)`` per-part tensor that
-          ``dict_num_parts`` materializes, so its peak memory is roughly an order of
-          magnitude above the same-data :meth:`run` (which streams an AA→scale lookup and
-          never builds that tensor) and grows with ``D``; runtime is otherwise comparable to
-          :meth:`run`. For large ``n``, pass ``n_sample_batches`` to bound the per-batch
-          working set, at the cost of ULP-level differences in tie-broken features.
-          ``n_batches`` only trims the pass-1 stat working set, not overall peak.
-        * **Raw PLM embeddings are not directly usable — normalize them first.**
-          Per-residue values are expected in ``[0, 1]`` (the ``StructurePreprocessor`` /
-          ``AnnotationPreprocessor`` normalization convention), since the default
-          ``max_std_test=0.2`` pre-filter is calibrated for that range. Raw embeddings
-          (unbounded floats) must be passed through
-          :meth:`EmbeddingPreprocessor.encode` to obtain a ``[0, 1]``-normalized
-          ``{entry: (L, D)}`` ``dict_num`` before :meth:`NumericalFeature.get_parts`.
-          Skipping normalization raises no error — the ``max_std_test`` pre-filter is
-          simply miscalibrated for the out-of-range spread, so the feature funnel
-          silently keeps/drops the wrong features.
-          (``EmbeddingPreprocessor.build_scales`` / ``build_cat`` serve the *other*,
-          AA-scale path via :meth:`run`; they are not a per-residue value source here.)
-        * **Three arms, one entry point.** *structure-only* (``dict_num`` from
-          :class:`StructurePreprocessor`), *embedding* (``EmbeddingPreprocessor.encode``),
-          and *fused* (concatenate sources with :func:`aaanalysis.combine_dict_nums` first)
-          all flow through ``get_parts`` → ``run_num`` — only the ``dict_num`` differs.
+          reproducible; ``'exact'`` compares the true residue positions).
+        * ``dict_num_parts`` must come from :meth:`NumericalFeature.get_parts`, which slices a raw
+          ``df_seq`` + ``dict_num`` into the per-part tensors consumed here. There is no
+          raw-``df_seq`` entry point on ``run_num``; use :meth:`run` for sequence-mode.
+        * Peak memory is higher than :meth:`run`, because ``run_num`` carries the dense
+          ``(n_samples, L_part_max, D)`` tensor that ``dict_num_parts`` materializes and that
+          :meth:`run` never builds. For large sample counts, pass ``n_sample_batches``.
+        * **Raw PLM embeddings must be normalized first.** Per-residue values are expected in
+          ``[0, 1]``, since the default ``max_std_test=0.2`` pre-filter is calibrated for that
+          range. Pass raw embeddings through :meth:`EmbeddingPreprocessor.encode` before
+          :meth:`NumericalFeature.get_parts`. Skipping this raises no error: the pre-filter is
+          simply miscalibrated, so the feature funnel silently keeps or drops the wrong features.
+        * Structure-only (``dict_num`` from :class:`StructurePreprocessor`), embedding
+          (:meth:`EmbeddingPreprocessor.encode`), and fused sources (concatenated with
+          :func:`aaanalysis.combine_dict_nums`) all flow through ``get_parts`` into ``run_num``;
+          only the ``dict_num`` differs.
         * **Compositional vs positional** features emerge from ``split_kws`` exactly as in
-          :meth:`run` (``n_split_max=1`` with no patterns ⇒ compositional whole-part mean;
+          :meth:`run` (``n_split_max=1`` with no patterns gives a compositional whole-part mean;
           otherwise positional).
 
         See Also
@@ -1355,11 +1199,6 @@ class CPP(Tool):
 
         .. versionadded:: 1.1.0
 
-        .. versionchanged:: 1.1.0
-            Honors bootstrap stability annotation (``CPP(bootstrap=True)``): the composition features are
-            re-selected on ``bootstrap_kws['rounds']`` resamples and this run gains a ``selection_frequency``
-            column (the selected features are unchanged).
-
         Parameters
         ----------
         labels : array-like, shape (n_samples,)
@@ -1474,7 +1313,7 @@ class CPP(Tool):
         - **Discriminative Power**: The capability of features to distinguish between test and reference datasets.
         - **Redundancy**: Assessed by the optimized number of clusters, based on Pearson correlation among features.
 
-        .. versionadded:: 0.1.0
+        .. versionadded:: 1.0.0
 
         Parameters
         ----------
@@ -1638,27 +1477,24 @@ class CPP(Tool):
         labels : array-like, shape (n_samples,)
             Class labels for samples in sequence DataFrame (typically, test=1, reference=0).
         strategy : {'greedy', 'consolidate', 'swap_all'}, default='greedy'
-            How candidate swaps are chosen and validated (see Notes for full behavior):
+            How candidate swaps are chosen and validated:
 
-            - ``'greedy'``: per-feature — each targeted feature is swapped to its best
-              candidate that keeps the cross-validation (CV) score within ``ml_th``.
-            - ``'consolidate'``: set-level — funnels features into the fewest interpretable
-              subcategories, keeping each batch swap only if the set CV score holds.
-            - ``'swap_all'``: apply every eligible best-candidate swap with no CV gate
-              (fastest; ``ml_model`` / ``ml_metric`` / ``ml_th`` / ``ml_cv`` ignored).
+            - ``'greedy'``: per-feature. Each targeted feature is swapped to its best correlated
+              candidate that keeps the cross-validation (CV) score within ``ml_th`` of the current
+              set; otherwise the next candidate is tried, so each swap is individually justified.
+            - ``'consolidate'``: set-level. Interpretable subcategories are taken best-first and
+              every targeted feature that can move into the current subcategory is swapped as one
+              batch, kept only if the set CV score holds. Funnels features into the fewest
+              subcategories.
+            - ``'swap_all'``: apply every eligible best-candidate swap with no CV gate (fastest;
+              ``ml_model`` / ``ml_metric`` / ``ml_th`` / ``ml_cv`` ignored). A pure
+              interpretability transform to evaluate yourself afterwards.
         candidate_search : {'exact', 'fast'}, default='exact'
-            How many candidate scales are evaluated per feature. ``'exact'`` (default) tests
-            every eligible candidate and reproduces the original result exactly. ``'fast'`` is
-            an **approximate** speed-up that caps the search to the most promising candidates
-            per feature (highest interpretability, then strongest correlation); it can change
-            which features are kept and so is most useful on large scale pools. If none of the
-            searched candidates is accepted, the feature keeps its original scale (it is never
-            dropped for this reason), so ``'fast'`` may leave a feature un-simplified that
-            ``'exact'`` would have swapped. The speed-up is concentrated in ``strategy='greedy'``
-            (one cross-validation per candidate tried); ``'consolidate'`` gains less and
-            ``'swap_all'`` is unaffected (it already stops at the first viable candidate). With
-            ``return_details=True`` the ``df_candidates`` report is correspondingly shorter
-            under ``'fast'``.
+            How many candidate scales are evaluated per feature. ``'exact'`` (default) tests every
+            eligible candidate. ``'fast'`` is an approximate speed-up that caps the search to the
+            most promising candidates (highest interpretability, then strongest correlation), so it
+            can leave a feature un-simplified that ``'exact'`` would have swapped. A feature is
+            never dropped for this reason.
         max_interpret_grade : int, optional
             The maximum (worst) interpretability **grade** kept (1-10, where **grade 1 is the
             best / most interpretable, so lower is better**). Every feature whose scale
@@ -1721,19 +1557,6 @@ class CPP(Tool):
         * Redundancy reduction **protects original features** — it never drops a feature the user
           already had, it only removes a *swapped* feature when the swap made it redundant with a
           kept feature (using signed correlation, matching :meth:`run`).
-        * The ``strategy`` controls how swaps are chosen and validated:
-
-          - **'greedy'**: per-feature. Each targeted feature is swapped to its best correlated
-            candidate that keeps the cross-validation score within ``ml_th`` of the current set;
-            otherwise the next candidate is tried. Each swap is individually justified.
-          - **'consolidate'**: set-level. Interpretable subcategories are taken best-first, and
-            every targeted feature that can move into the current subcategory is swapped as one
-            batch, which is kept only if the set CV score stays within ``ml_th``. Funnels features
-            into the fewest subcategories.
-          - **'swap_all'**: apply every eligible best-candidate swap with no cross-validation
-            (fastest); ``ml_model`` / ``ml_metric`` / ``ml_th`` / ``ml_cv`` are ignored. A pure
-            interpretability transform to evaluate yourself afterwards.
-
         * Features whose scale is **not a rated AAontology scale** (e.g. ``run_num`` pseudo-scales
           or unclassified scales) carry no interpretability grade and are skipped. If no feature
           is rated, ``df_feat`` is returned unchanged with a ``RuntimeWarning``.

@@ -53,7 +53,7 @@ def plot_legend(ax: Optional[Axes] = None,
     Legends can be flexibly adjusted based categories and colors provided in ``dict_color`` dictionary.
     This functions comprises the most convenient settings for ``func:`matplotlib.pyplot.legend``.
 
-    .. versionadded:: 0.1.0
+    .. versionadded:: 1.0.0
 
     Parameters
     ----------

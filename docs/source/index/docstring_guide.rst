@@ -261,8 +261,10 @@ Versioning & deprecation
 **A docstring is not a changelog.** The release history lives in ``CHANGELOG.md`` and in
 the rendered *Release Notes*; a docstring says what the object does **today**.
 
-* ``.. versionadded:: X.Y.Z`` (true first-release version) on every public class
-  and function — **exactly one**, marking when the symbol itself first appeared.
+* ``.. versionadded:: X.Y.Z`` on every public class and function — **exactly one**,
+  marking when the symbol first appeared, **floored at 1.0.0**. The public history of the
+  package starts at its first release, so a symbol that predates it reads
+  ``.. versionadded:: 1.0.0``; "added in 0.1.0" names a version no user installed.
 * **Never stack** ``.. versionchanged::`` **entries at class or method level.** A
   method that accumulates "Changed in version …" blocks buries what it *does*
   under what happened to it, and the reader who wants history is better served by

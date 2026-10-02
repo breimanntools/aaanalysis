@@ -24,14 +24,13 @@ def _check_df_cols(df, name, cols):
 # II Main Functions
 class ReliabilityModelPlot:
     """
-    Visualize :class:`ReliabilityModel` outputs — calibration and the two trust axes.
+    Visualize :class:`ReliabilityModel` outputs: calibration and the two trust axes.
 
-    Turns the tables from :class:`ReliabilityModel` into a **per-sample** view — each prediction's
-    score with its uncertainty interval, colored by trust status (:meth:`ranking`) — and three
-    **batch** diagnostics: a calibration curve (:meth:`reliability_diagram`, from
-    :meth:`ReliabilityModel.eval`), the out-of-distribution score distribution (:meth:`ood_hist`),
-    and a score-vs-OOD map colored by the ``reliable`` flag (:meth:`trust_map`; the last three from
-    :meth:`ReliabilityModel.predict`).
+    One figure asks "should I trust *this* prediction?": :meth:`ranking` shows each sample's score
+    with its uncertainty interval, colored by trust status. Three look at a batch: the calibration
+    curve (:meth:`reliability_diagram`), the spread of out-of-distribution scores
+    (:meth:`ood_hist`), and a score against OOD-score map colored by the ``reliable`` flag
+    (:meth:`trust_map`).
 
     .. warning::
 
@@ -58,12 +57,12 @@ class ReliabilityModelPlot:
                 ax: Optional[Axes] = None,
                 ) -> Tuple[Figure, Axes]:
         """
-        Per-sample view — each prediction's score with its uncertainty, colored by trust status.
+        Per-sample view: each prediction's score with its uncertainty, colored by trust status.
 
-        The core "should I trust *this* one?" figure: samples are ranked by score as horizontal
-        bars with the confidence interval as an error bar, colored green (**reliable**), amber
-        (in-domain but undecided), or red (**out-of-distribution**) — so an over-confident score on
-        an unfamiliar input stands out as a long red bar.
+        Samples are ranked by score as horizontal bars, with the confidence interval as an error
+        bar and the bar colored green (**reliable**), amber (in-domain but undecided), or red
+        (**out-of-distribution**), so an over-confident score on an unfamiliar input stands out as
+        a long red bar.
 
         Parameters
         ----------
@@ -110,7 +109,7 @@ class ReliabilityModelPlot:
                             ax: Optional[Axes] = None,
                             ) -> Tuple[Figure, Axes]:
         """
-        Calibration curve — mean predicted score vs. empirical positive rate, per bin.
+        Calibration curve: mean predicted score against empirical positive rate, per bin.
 
         Points on the diagonal are perfectly calibrated; points below it mean the score
         overstates the true positive rate (over-confident), above it under-confident. When
@@ -119,12 +118,6 @@ class ReliabilityModelPlot:
         legend entry. To compare the raw and the calibrated curve, draw both frames onto the same
         ``ax`` with distinct ``label`` / ``color``; the perfect-calibration diagonal is drawn only
         once.
-
-        .. versionchanged:: 1.2.0
-           Supports a custom curve label, displays the Brier score and expected calibration
-           error when supplied, and permits several curves on one axes. Metric rows are
-           excluded from the plotted points and annotate their curve's legend entry;
-           repeated calls on one ``ax`` retain a single perfect-calibration diagonal.
 
         Parameters
         ----------
@@ -188,8 +181,8 @@ class ReliabilityModelPlot:
         """
         Histogram of the out-of-distribution score, with the in-domain boundary at ``1.0``.
 
-        Mass to the right of the boundary is out-of-domain — predictions the model is extrapolating
-        and should not be trusted at face value.
+        Mass to the right of the boundary is out-of-domain: predictions the model is extrapolating,
+        not to be trusted at face value.
 
         Parameters
         ----------
@@ -229,7 +222,7 @@ class ReliabilityModelPlot:
                   ax: Optional[Axes] = None,
                   ) -> Tuple[Figure, Axes]:
         """
-        Score vs. OOD-score scatter colored by ``reliable`` — the two trust axes at a glance.
+        Score against OOD-score scatter colored by ``reliable``: the two trust axes at a glance.
 
         A point high on the x-axis (confident) but above the in-domain boundary (out-of-domain)
         is the untrustworthy, extrapolated prediction.

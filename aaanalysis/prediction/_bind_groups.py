@@ -166,17 +166,16 @@ def bind_groups(cv: BaseCrossValidator,
     """
     Bind group labels to a cross-validation splitter, so dependent samples stay in one fold.
 
-    Protein datasets are full of dependent samples: several windows cut from one protein, or
-    near-identical homologues across a family. A plain split scatters them over train and test,
-    so a model is scored partly on what it already saw and the reported performance is
-    inflated. A scikit-learn group splitter prevents that, but it needs a ``groups`` array at
-    split time, and the evaluation entry points of this package call ``cross_val_*`` without
-    one. Binding the labels to the splitter closes that gap: the returned object carries them
-    and is accepted anywhere a splitter is, so ``eval`` is unchanged [Roberts17]_.
+    Protein datasets are full of dependent samples: several windows cut from one protein,
+    near-identical homologues across a family. A plain split scatters them over train and test, so
+    the model is scored on what it has already seen and the reported performance is inflated
+    [Roberts17]_. Keeping every group whole removes that inflation, and the group vocabulary is
+    whatever is passed: an accession keeps each protein together, a family name or a homology
+    cluster keeps each family together.
 
-    The group vocabulary is whatever is passed: an accession keeps each protein whole, a family
-    or an externally computed homology cluster keeps each family whole. The package performs
-    the split and reports its properties; it runs no homology search or clustering itself.
+    Group splitters need their labels at split time, which the evaluation entry points of this
+    package do not pass. Binding them to the splitter closes that gap: the returned object carries
+    the labels and is accepted anywhere a splitter is.
 
     .. versionadded:: 1.2.0
 
@@ -189,8 +188,9 @@ def bind_groups(cv: BaseCrossValidator,
         including ``random_state``, are untouched, so reproducibility is the splitter's.
     groups : array-like, shape (n_samples,)
         Group label per sample, aligned with the rows of ``X``: a protein accession, a family
-        name, or a cluster id. Any hashable labels work; the number of distinct values is the
-        number of groups.
+        name, or a cluster id. Any hashable labels work, and the number of distinct values is the
+        number of groups. The labels are taken as given; no homology search or clustering is run
+        here.
     allow_overlap : bool, default=False
         Whether a group may appear in both train and test of a fold. ``False`` verifies every
         fold and raises a ``ValueError`` naming the shared groups, which turns a splitter that

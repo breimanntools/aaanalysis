@@ -206,7 +206,7 @@ class NumericalFeature:
     reconstructing the model matrix ``X`` from :meth:`CPP.run_num`-selected features
     (:meth:`feature_matrix`), and removing redundant features by Pearson correlation.
 
-    .. versionadded:: 0.1.3
+    .. versionadded:: 1.0.0
     """
 
     @staticmethod
@@ -221,7 +221,7 @@ class NumericalFeature:
         with an already-kept feature. Use this after :meth:`CPP.run` to reduce the
         selected feature set to a non-redundant subset.
 
-        .. versionadded:: 0.1.0
+        .. versionadded:: 1.0.0
 
         Parameters
         ----------
@@ -695,7 +695,7 @@ class NumericalFeature:
         For each scale (column), it computes a specific statistic (min, mean, median, max) based on the
         values of existing amino acids (rows) and assigns this computed value to the new amino acid.
 
-        .. versionadded:: 0.1.0
+        .. versionadded:: 1.0.0
 
         Parameters
         ----------

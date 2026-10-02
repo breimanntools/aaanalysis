@@ -118,61 +118,22 @@ class SeqOpt(Tool):
     variants [Breimann24a]_. Core class; only the SHAP-guided ``mode="impact"`` needs
     ``aaanalysis[pro]`` (``mode="importance"`` and everything else run in a base install).
 
-    ``SeqOpt`` performs **protein engineering**, not **de novo protein design**. The two are
-    distinct paradigms: *de novo design* builds **new proteins from the ground up** rather than
-    repurposing an existing one -- typically a structure-first deep-learning pipeline such as
-    **RFdiffusion** [Watson23]_ (backbone generation) -> **ProteinMPNN** [Dauparas22]_ (sequence
-    design) -> **AlphaFold** [Jumper21]_ (in-silico validation), reviewed in [Yang26]_. *Protein
-    engineering* instead **optimizes an existing sequence** through iterative mutation and
-    selection (directed evolution). ``SeqOpt`` is the **machine-learning-guided** flavour
-    [Yang19]_, [Wittmann21]_: a model predicts variant fitness so the search prioritizes which
-    mutations to make -- here as a multi-objective evolutionary search.
+    ``SeqOpt`` engineers an **existing** protein. Starting from one wild-type sequence, it
+    proposes variants carrying several point mutations at once and returns the trade-off
+    (Pareto) front: the variants that cannot be improved on one design goal without giving up
+    another, such as raising the predicted probability of the target class while keeping the
+    number of mutations low and the substitutions conservative. This is machine-learning-guided
+    directed evolution [Yang19]_, [Wittmann21]_, where a model predicts variant fitness so the
+    search knows which residues are worth trying. It is not *de novo* design, which builds new
+    proteins from the ground up with structure-first pipelines such as RFdiffusion [Watson23]_,
+    ProteinMPNN [Dauparas22]_ and AlphaFold [Jumper21]_, reviewed in [Yang26]_.
 
-    ``SeqOpt`` is the **search/optimization** counterpart of :class:`SeqMut`: where ``SeqMut``
-    *scores* mutations, ``SeqOpt`` *searches* the space of multi-mutation variants of a single
-    wild-type for the trade-off (Pareto) front that best satisfies several objectives at once.
-    It runs a re-implementation of NSGA-II [Deb02]_ using a model-bound :class:`SeqMut` as the
-    fitness engine, guided each generation by residue-level model attribution: ``mode="impact"``
-    refits :class:`ShapModel` under fuzzy labeling, ``mode="importance"`` uses the static
-    ``feat_importance`` ranking.
-
-    The evolutionary machinery is a **pure-Python re-implementation of DEAP** (a dev/test-only
-    parity oracle; the shipped runtime never imports DEAP). Each ``run`` setting selects the
-    equivalent DEAP function:
-
-    .. list-table:: SeqOpt setting -> DEAP function
-       :header-rows: 1
-       :widths: 45 55
-
-       * - SeqOpt (method / parameter = value)
-         - DEAP
-       * - ``run(...)`` driver
-         - ``algorithms.eaMuPlusLambda`` / ``eaMuCommaLambda`` / ``eaSimple``
-       * - ``algorithm="nsga2"``
-         - ``tools.selNSGA2`` (``sortNondominated`` + ``assignCrowdingDist``)
-       * - mating selection
-         - ``tools.selTournamentDCD``
-       * - ``survival="mu_plus_lambda" / "mu_comma_lambda" / "ea_simple"``
-         - ``eaMuPlusLambda`` / ``eaMuCommaLambda`` / ``eaSimple``
-       * - ``variation="and" / "or"``
-         - ``algorithms.varAnd`` / ``algorithms.varOr``
-       * - ``crossover="uniform" / "one_point" / "two_point"``
-         - ``tools.cxUniform`` / ``cxOnePoint`` / ``cxTwoPoint``
-       * - ``mutation="substitution"``
-         - ``tools.mutUniformInt`` (categorical resampling analogue)
-       * - ``constraints=[...], penalty="delta" / "closest_valid"``
-         - ``tools.DeltaPenalty`` / ``tools.ClosestValidPenalty``
-       * - ``objectives=[(name, "max"/"min", src)]``
-         - ``base.Fitness`` ``weights`` (+1 / -1 per objective) + ``toolbox.register("evaluate")``
-       * - ``df_pareto`` output / ``hall_of_fame_`` / ``trajectory_``
-         - ``tools.ParetoFront`` / ``tools.HallOfFame`` / ``tools.Logbook``
-       * - ``eval`` hypervolume / convergence / spread
-         - ``deap.benchmarks.tools.hypervolume`` / ``convergence`` / ``diversity``
-
-    Rows with no DEAP analogue are the aaanalysis value-add: the SHAP / ``feat_importance``
-    residue guidance (``mode``), the sequence genome + domain constraints (``n_mut_max``,
-    ``region``, ``to_aa``), the ``algorithm="greedy"`` baseline, and any ``callable(sequence)``
-    objective.
+    ``SeqOpt`` is the search counterpart of :class:`SeqMut`: ``SeqMut`` *scores* mutations,
+    ``SeqOpt`` *searches* the space of their combinations. The search is a multi-objective
+    evolutionary algorithm (NSGA-II [Deb02]_) scored by a model-bound :class:`SeqMut`, steered
+    each generation by residue-level model attribution: ``mode='impact'`` refits
+    :class:`ShapModel`, ``mode='importance'`` uses the static ``feat_importance`` ranking of
+    ``df_feat``.
 
     .. warning::
 
@@ -197,20 +158,14 @@ class SeqOpt(Tool):
         Parameters
         ----------
         mode : {'importance', 'impact'}, default='importance'
-            Residue-guidance mode:
+            Which residues the search tries first:
 
-            - ``'importance'``: uses the static ``feat_importance`` ranking from ``df_feat`` (no
-              SHAP, no refit) and walks positions highest-first. It needs no pro dependency, and is
-              the default so that a bare ``SeqOpt()`` constructs in a base install.
-            - ``'impact'``: the headline mode, refits :class:`ShapModel` every generation under
-              fuzzy labeling (the new variant's prediction score as a soft label vs. the balanced
-              reference) and mutates the strongest-``feat_impact`` residues. It is the only SeqOpt
-              feature that needs ``aaanalysis[pro]`` (SHAP), imported lazily, and requires
-              ``model``, ``df_seq_ref`` and ``labels``.
-
-            .. versionchanged:: 1.2.0
-               The default is ``'importance'`` (was ``'impact'``), so ``SeqOpt()`` constructs in a
-               base install; ``'impact'`` stays the documented headline mode.
+            - ``'importance'``: the ``feat_importance`` ranking of ``df_feat``, highest position
+              first. Needs no pro dependency.
+            - ``'impact'``: the strongest ``feat_impact`` residues of a :class:`ShapModel` refitted
+              each generation against the labeled reference set, so guidance follows the variant as
+              it drifts from the wild-type. Needs ``aaanalysis[pro]`` and ``model``, ``df_seq_ref``
+              and ``labels``.
         model : object, optional
             A fitted classifier exposing ``predict_proba`` used as the fitness engine (the
             ``delta_pred`` objective) and, in ``mode='impact'``, as the model whose attribution
@@ -456,12 +411,12 @@ class SeqOpt(Tool):
             CPP feature set (output of :meth:`CPP.run`) defining the features and the residue
             attribution (``feat_importance`` / ``feat_impact``, ``positions``) the search reads.
         objectives : list of (str, str, object)
-            ``(name, goal, source)`` per objective; ``goal`` in ``{'max','min'}`` and ``source``
-            in ``{'delta_pred','delta_cpp','shift_score','n_mut'}`` or a ``callable(sequence) ->
-            float``. The callable receives the **variant sequence** and returns a scalar, so any
-            external predictor (scikit / torch model, or a sequence-level tool / web API such as
-            a topology or signal-peptide predictor) can be optimized as an objective; its result
-            is cached per distinct variant. At least two objectives.
+            ``(name, goal, source)`` per objective, at least two. ``goal`` is ``'max'`` or
+            ``'min'``; ``source`` is one of ``'delta_pred'``, ``'delta_cpp'``, ``'shift_score'``,
+            ``'n_mut'``, or a ``callable(sequence) -> float``. The callable sees the variant
+            sequence, so an external scorer, a second model or a sequence-level predictor such as
+            a topology or signal-peptide tool can be optimized alongside the built-in ones; its
+            result is cached per distinct variant.
         algorithm : str, default='nsga2'
             ``'nsga2'`` (population) or ``'greedy'`` (importance-ordered single path).
         pop_size : int, default=50
@@ -483,22 +438,14 @@ class SeqOpt(Tool):
             Variation scheme: ``'and'`` (varAnd — crossover *and* mutation) or ``'or'`` (varOr —
             each offspring is crossover *or* mutation *or* reproduction; needs cx_prob+mut_prob<=1).
         constraints : list of callable or DesignConstraints, optional
-            Design limits, in either of two forms. A **list of callables** is the published form:
-            feasibility predicates ``genome -> bool`` (``True`` = feasible) over the internal
+            What the design is not allowed to do, in either of two forms. A **list of callables**
+            are feasibility predicates ``genome -> bool`` (``True`` = feasible) over the internal
             ``{1-based position: target amino acid}`` genome; infeasible variants are penalized so
-            the search avoids them. A :class:`DesignConstraints` **object** is the shared,
-            declarative form: its ``mutable_positions`` / ``permitted_substitutions`` /
-            ``n_mut_max`` are the object form of ``region`` / ``to_aa`` / ``n_mut_max`` and
-            restrict the search space directly, while its sequence-level limits (immutable
-            positions, forbidden substitutions, identity bounds, motifs) are turned into one
-            feasibility predicate via :meth:`DesignConstraints.as_predicate` and penalized the
-            same way. Passing the object together with a ``region`` / ``to_aa`` / non-default
-            ``n_mut_max`` that sets the same limit differently raises. ``None`` (default) applies
-            no limit.
-
-            .. versionchanged:: 1.2.0
-               Also accepts a :class:`DesignConstraints` object; the list-of-callables form is
-               unchanged.
+            the search avoids them. A :class:`DesignConstraints` **object** states the same limits
+            declaratively, including the ones a predicate cannot express cheaply (immutable
+            positions, forbidden substitutions, identity bounds, motifs to keep or avoid). Setting
+            the same limit twice, through the object and through ``region`` / ``to_aa`` /
+            ``n_mut_max``, raises. ``None`` (default) applies no limit.
         penalty : str, default='delta'
             Penalty applied to infeasible variants: ``'delta'`` (fixed worst objective) or
             ``'closest_valid'`` (penalty scaled by the number of violated constraints).
@@ -524,20 +471,13 @@ class SeqOpt(Tool):
         jmd_c_len : int, default=10
             Length of JMD-C in number of amino acids.
         lineage : bool or dict, default=False
-            Opt in to the candidate-lineage record: the thin, JSON-serializable record of how
-            each returned variant was made (its content-hash ``candidate_id``, its parent, the
-            ordered wild-type-relative mutations, the generating method and algorithm, the
-            objective values, the effective seed, and a digest of the applied design limits).
-            ``False`` (default) builds nothing and leaves the returned table exactly as
-            documented below. ``True`` builds one record per returned variant, treating the
-            wild-type as the root of the chain. Passing a **lineage record** (one element of a
-            previous ``SeqOpt.lineage_`` or ``SeqMut.lineage_``) opts in *and* declares that
-            parent: its ``candidate_id`` becomes the ``parent_id`` of every record built here,
-            which is how the rounds of a multi-generation design chain up -- one run optimizes
-            one wild-type, so a candidate that becomes the next round's ``df_seq`` is linked
-            through its record, not through the internal ``n_gen`` counter. When opted in, the
-            records are stored in ``SeqOpt.lineage_``, row-aligned with the returned table, and
-            the ``candidate_id`` column is appended.
+            Record how each returned variant was made. ``True`` stores one JSON-serializable
+            record per variant in ``SeqOpt.lineage_``, row-aligned with the returned table, and
+            appends the ``candidate_id`` column. Passing a **lineage record** from a previous run
+            (one element of ``SeqOpt.lineage_`` or ``SeqMut.lineage_``) also names that candidate
+            as the parent, which is how the rounds of a multi-round design chain up: one run
+            optimizes one wild-type, so the candidate promoted to the next round's ``df_seq``
+            stays linked to where it came from. ``False`` (default) records nothing.
 
             .. versionadded:: 1.2.0
 

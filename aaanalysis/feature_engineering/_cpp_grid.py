@@ -164,9 +164,6 @@ class CPPGrid(Tool):
     -----
     * Inside each configuration ``CPP.run`` / ``run_num`` runs serially (``n_jobs=1``);
       the grid is parallelized **across** configurations to avoid nested oversubscription.
-    * The default ``backend="threads"`` shares ``df_seq`` / ``df_scales`` in-process (no
-      dataframe serialization, and it sidesteps the Python 3.14 / macOS ``__main__``-guard
-      spawn footgun). Pass ``backend="loky"`` for process-based parallelism.
 
     After :meth:`run`, the feature tables and the sweep summary are also kept on the
     instance as ``list_df_feat_`` and ``df_params_`` (aligned by row index), and

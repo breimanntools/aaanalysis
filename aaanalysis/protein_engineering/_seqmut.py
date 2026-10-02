@@ -332,14 +332,13 @@ class SeqMut:
         jmd_c_len : int, default=10
             Length of JMD-C in number of amino acids.
         constraints : DesignConstraints, optional
-            Shared design limits (see :class:`DesignConstraints`). Its ``mutable_positions`` and
-            ``permitted_substitutions`` are the object form of ``region`` and ``to_aa``, and its
-            ``immutable_positions`` / ``forbidden_substitutions`` additionally drop the excluded
-            ``(pos, to_aa)`` mutations from the scan. Limits that need a multi-mutation candidate
-            (``n_mut_max``, the identity bounds, the motifs) apply to :meth:`SeqMut.combine` and
-            :meth:`SeqOpt.run`, not to a single-substitution scan. Passing ``region`` or ``to_aa``
-            *and* a ``constraints`` object that sets the same limit differently raises. ``None``
-            (default) applies no limit.
+            Shared design limits (see :class:`DesignConstraints`). ``mutable_positions`` and
+            ``permitted_substitutions`` are the object form of ``region`` and ``to_aa``;
+            ``immutable_positions`` and ``forbidden_substitutions`` drop the excluded mutations
+            from the scan. Limits only a multi-mutation candidate can violate (``n_mut_max``,
+            identity bounds, motifs) apply to :meth:`SeqMut.combine` and :meth:`SeqOpt.run`
+            instead. Setting the same limit twice, through the object and through ``region`` /
+            ``to_aa``, raises. ``None`` (default) applies no limit.
 
             .. versionadded:: 1.2.0
 
@@ -434,14 +433,13 @@ class SeqMut:
         jmd_c_len : int, default=10
             Length of JMD-C in number of amino acids.
         constraints : DesignConstraints, optional
-            Shared design limits (see :class:`DesignConstraints`). Its ``mutable_positions`` and
-            ``permitted_substitutions`` are the object form of ``region`` and ``to_aa``, and its
-            ``immutable_positions`` / ``forbidden_substitutions`` additionally drop the excluded
-            ``(pos, to_aa)`` mutations from the scan. Limits that need a multi-mutation candidate
-            (``n_mut_max``, the identity bounds, the motifs) apply to :meth:`SeqMut.combine` and
-            :meth:`SeqOpt.run`, not to a single-substitution scan. Passing ``region`` or ``to_aa``
-            *and* a ``constraints`` object that sets the same limit differently raises. ``None``
-            (default) applies no limit.
+            Shared design limits (see :class:`DesignConstraints`). ``mutable_positions`` and
+            ``permitted_substitutions`` are the object form of ``region`` and ``to_aa``;
+            ``immutable_positions`` and ``forbidden_substitutions`` drop the excluded mutations
+            from the scan. Limits only a multi-mutation candidate can violate (``n_mut_max``,
+            identity bounds, motifs) apply to :meth:`SeqMut.combine` and :meth:`SeqOpt.run`
+            instead. Setting the same limit twice, through the object and through ``region`` /
+            ``to_aa``, raises. ``None`` (default) applies no limit.
 
             .. versionadded:: 1.2.0
 
@@ -575,18 +573,12 @@ class SeqMut:
 
             .. versionadded:: 1.2.0
         lineage : bool or dict, default=False
-            Opt in to the candidate-lineage record: the thin, JSON-serializable record of how
-            each candidate was made (its content-hash ``candidate_id``, its parent, the ordered
-            parent-relative mutations, the generating method, the objective values, the
-            effective seed, and a digest of the applied ``constraints``). ``False`` (default)
-            builds nothing and leaves the returned table exactly as documented above. ``True``
-            builds one record per scored variant, treating the ``df_seq`` sequence as the root
-            of the chain. Passing a **lineage record** (one element of a previous
-            ``SeqMut.lineage_`` or ``SeqOpt.lineage_``) opts in *and* declares that parent: its
-            ``candidate_id`` becomes the ``parent_id`` of every record built here, which is how
-            the rounds of a multi-generation design chain up. When opted in, the records are
-            stored in ``SeqMut.lineage_``, row-aligned with the returned table, and the
-            ``candidate_id`` column is appended.
+            Record how each candidate was made. ``True`` stores one JSON-serializable record per
+            scored variant in ``SeqMut.lineage_``, row-aligned with the returned table, and
+            appends the ``candidate_id`` column. Passing a **lineage record** from an earlier
+            round (one element of ``SeqMut.lineage_`` or ``SeqOpt.lineage_``) also names that
+            candidate as the parent, so the rounds of a multi-round design chain up. ``False``
+            (default) records nothing.
 
             .. versionadded:: 1.2.0
 

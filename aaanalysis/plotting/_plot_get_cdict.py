@@ -15,7 +15,7 @@ def plot_get_cdict(name: str = "DICT_COLOR") -> dict:
     dict to pass consistent colors to matplotlib calls or to build custom palettes
     alongside :func:`plot_get_clist` and :func:`plot_get_cmap`.
 
-    .. versionadded:: 0.1.2
+    .. versionadded:: 1.0.0
 
     Parameters
     ----------
