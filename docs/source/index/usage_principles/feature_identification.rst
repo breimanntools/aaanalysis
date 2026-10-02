@@ -30,15 +30,20 @@ The core idea of CPP is its feature concept:
 All possible parts are sub-parts or combinations of the **Target Middle Domain (TMD)**,
 **Juxta Middle Domain N-terminal (JMD-N)**, and **Juxta Middle Domain C-terminal (JMD-C)**.
 
-.. admonition:: TMD means *Target Middle Domain*, not *transmembrane domain*
+.. admonition:: TMD: from *Transmembrane Domain* to *Target Middle Domain*
    :class: important
 
-   The part vocabulary is a **geometry**, not a biological claim: one target span (``tmd``)
-   flanked by two juxta spans (``jmd_n``, ``jmd_c``), plus their composites. It is already
-   general and applies unchanged to a Pfam domain, a kinase domain, a cleavage-site window or
-   a whole chain. A feature id such as ``TMD-Segment(2,4)-ANDN920101`` therefore does **not**
-   assert a transmembrane helix; it names the target span. The letters are historical, as the
-   paragraph below explains, and there is nothing to rename per data set.
+   The letters come from CPP's first application, to substrates of γ-secretase, where the span
+   of interest **is** the transmembrane domain and the flanks **are** the juxtamembrane domains.
+   When the method was generalized beyond membrane proteins the acronyms were deliberately kept
+   and re-read: **TMD** as *Target Middle Domain*, **JMD** as *Juxta Middle Domain*. Same
+   letters, same geometry, wider meaning.
+
+   So the vocabulary is a **geometry** - one target span flanked by two juxta spans - and it
+   already applies unchanged to a Pfam domain, a kinase domain, a cleavage-site window or a
+   whole chain. A feature id such as ``TMD-Segment(2,4)-ANDN920101`` names the target span; it
+   describes a transmembrane helix only when the data are membrane proteins, as in the
+   γ-secretase case below. There is nothing to rename per data set.
 
 .. figure:: /_artwork/schemes/scheme_CPP2.png
 
