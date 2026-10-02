@@ -94,6 +94,16 @@ LIST_TOP_EXPLAIN_MIN_TH = [0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9]
 
 STR_FILE_TYPE = "tsv"
 
+# Standardized table export (to_table): delimited text plus a JSON metadata sidecar.
+# The sidecar version is independent of the package version: it changes only when the
+# sidecar's own key layout changes, so a reader can dispatch on it without parsing
+# a release number.
+STR_SCHEMA_VERSION = "1.0"
+STR_SUFFIX_META = ".meta.json"   # sidecar written next to the table ('<stem>.meta.json')
+# Table file extension -> the separators that extension may carry. The first entry of
+# each list is the separator derived when none is given.
+DICT_TABLE_SEP = {".csv": [",", ";"], ".tsv": ["\t"]}
+
 # Column names for primary df
 # df_seq
 COL_ENTRY = "entry"     # ACC, protein entry, uniprot id

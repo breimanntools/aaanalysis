@@ -1,5 +1,5 @@
 from .data_handling import (load_dataset, load_scales, load_features, get_labels,
-                            read_fasta, to_fasta,
+                            read_fasta, to_fasta, to_table,
                             SequencePreprocessor,
                             EmbeddingPreprocessor,
                             combine_dict_nums)
@@ -38,6 +38,7 @@ __all__ = [
     "get_labels",
     "read_fasta",
     "to_fasta",
+    "to_table",
     "SequencePreprocessor",
     "EmbeddingPreprocessor",
     "combine_dict_nums",

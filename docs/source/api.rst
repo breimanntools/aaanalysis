@@ -33,6 +33,7 @@ Data Handling
     load_features
     read_fasta
     to_fasta
+    to_table
     SequencePreprocessor
     StructurePreprocessor
     EmbeddingPreprocessor
