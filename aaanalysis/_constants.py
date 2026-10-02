@@ -45,7 +45,9 @@ LIST_PARTS = ["tmd", "jmd_n_tmd_n", "tmd_c_jmd_c"]
 # Canonical, human-readable label per sequence part (the PART field of a
 # PART-SPLIT-SCALE feature id). Single source of the part-label vocabulary used by
 # SequenceFeature.get_feature_descriptions; keys cover every part in LIST_ALL_PARTS.
-# ('region' is deliberately avoided here — reserved for the #27 region abstraction.)
+# 'tmd' is the TARGET MIDDLE DOMAIN: the span of interest, flanked by jmd_n / jmd_c.
+# The vocabulary is a geometry, not a membrane claim, so it is already general — do not
+# add a per-domain renaming layer on top of it (see the 'part' entry in CONTEXT.md).
 DICT_PART_LABEL = {"tmd": "TMD",
                    "tmd_e": "extended TMD",
                    "tmd_n": "TMD-N",
@@ -648,6 +650,33 @@ COL_POS_RATE_TRAIN = "pos_rate_train"   # share of the positive class in the tra
 COL_POS_RATE_TEST = "pos_rate_test"     # share of the positive class in the test part (NaN without labels)
 COLS_FOLDS_GROUPS = [COL_FOLD, COL_N_TRAIN, COL_N_TEST, COL_N_GROUPS_TRAIN, COL_N_GROUPS_TEST,
                      COL_POS_RATE_TRAIN, COL_POS_RATE_TEST]
+
+# audit_leakage (heuristic leakage diagnostic): one row per finding, worst severity in .attrs
+COL_CHECK = "check"         # name of the heuristic that produced the finding
+COL_SEVERITY = "severity"   # human-readable label (not a machine taxonomy): low, medium, high
+COL_DETAIL = "detail"       # one-sentence, human-readable description of the finding
+COL_IDS = "ids"             # affected identifiers (list, capped; the true count is in detail)
+COLS_AUDIT_LEAKAGE = [COL_CHECK, COL_SEVERITY, COL_DETAIL, COL_IDS]
+# Severities, ordered from least to most severe. A label for a human reader, deliberately NOT a
+# stable machine code: deciding whether a finding blocks a workflow is decision-layer policy.
+STR_SEVERITY_LOW = "low"
+STR_SEVERITY_MEDIUM = "medium"
+STR_SEVERITY_HIGH = "high"
+LIST_SEVERITIES = [STR_SEVERITY_LOW, STR_SEVERITY_MEDIUM, STR_SEVERITY_HIGH]
+STR_STATUS_OK = "ok"        # df.attrs["status"] when no finding was made
+# Check names, i.e. the values of the 'check' column
+STR_CHECK_DUPLICATE_SEQ = "duplicate_sequences"          # identical sequence strings in df_seq
+STR_CHECK_TRAIN_TEST_OVERLAP = "train_test_overlap"      # a row index in both parts of a fold
+STR_CHECK_DUPLICATE_SEQ_FOLDS = "duplicate_sequences_across_folds"  # identical sequence split apart
+STR_CHECK_ENTRY_FOLDS = "same_protein_across_folds"      # windows of one protein split apart
+STR_CHECK_GROUP_FOLDS = "group_overlap_across_folds"     # a group id in both parts of a fold
+STR_CHECK_TARGET_LEAK = "target_derived_feature"         # a feature near-perfectly tracking the label
+STR_CHECK_FOLD_SIZE = "fold_size_anomaly"                # a test fold far from the average size
+STR_CHECK_CLASS_BALANCE = "class_balance_anomaly"        # a fold's class balance far from the whole
+LIST_CHECKS_LEAKAGE = [STR_CHECK_DUPLICATE_SEQ, STR_CHECK_TRAIN_TEST_OVERLAP,
+                       STR_CHECK_DUPLICATE_SEQ_FOLDS, STR_CHECK_ENTRY_FOLDS,
+                       STR_CHECK_GROUP_FOLDS, STR_CHECK_TARGET_LEAK,
+                       STR_CHECK_FOLD_SIZE, STR_CHECK_CLASS_BALANCE]
 
 # Labels
 LABEL_FEAT_VAL = "Feature value"

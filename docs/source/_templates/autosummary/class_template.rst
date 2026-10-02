@@ -5,7 +5,6 @@
 .. autoclass:: {{ objname }}
    :members: __init__
    :exclude-members: {{ methods|join(', ') }}
-   :show-inheritance:
 
    {% block methods %}
    {% if methods %}

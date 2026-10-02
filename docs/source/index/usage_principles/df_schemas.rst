@@ -104,7 +104,7 @@ Accepted column formats (besides the always-required columns):
 ``df_parts``
 ------------
 
-Sequence parts table consumed by CPP / SequenceFeature; one row per sequence. Columns are DYNAMIC: one column per selected sequence part, named by the part vocabulary; each value is the part's amino acid subsequence.
+Sequence parts table consumed by CPP / SequenceFeature; one row per sequence. Columns are DYNAMIC: one column per selected sequence part, named by the part vocabulary; each value is the part's amino acid subsequence. In that vocabulary 'tmd' is the TARGET MIDDLE DOMAIN (the target span of interest) and 'jmd_n' / 'jmd_c' are its flanks: a geometry, not a membrane claim, which is why the same names serve a domain, a cleavage-site window or a whole chain. See the Feature Identification chapter of the documentation.
 
 Dynamic columns (dtype: str, nullable: False): Amino acid subsequence of the named sequence part. Column names are drawn from the part vocabulary: ``tmd``, ``tmd_e``, ``tmd_n``, ``tmd_c``, ``jmd_n``, ``jmd_c``, ``ext_c``, ``ext_n``, ``tmd_jmd``, ``jmd_n_tmd_n``, ``tmd_c_jmd_c``, ``ext_n_tmd_n``, ``tmd_c_ext_c``.
 

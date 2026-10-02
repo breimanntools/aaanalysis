@@ -105,6 +105,16 @@ The detailed rules live in the path-scoped files above; these are the
 highest-risk traps worth keeping front-of-mind every session.
 
 - **No `print(...)` in library code.** Use `ut.print_out(...)`.
+- **`tmd` means TARGET MIDDLE DOMAIN — it is already the general abstraction.** The part
+  vocabulary (`tmd` + the `jmd_n` / `jmd_c` flanks and their composites) is a *geometry*,
+  not a membrane claim: the same names serve a Pfam domain, a cleavage-site window or a
+  whole chain, and `TMD-Segment(2,4)-ANDN920101` does **not** assert a transmembrane helix.
+  So **never propose "generalizing" part naming** — no `region=` parameter, no per-domain
+  rename layer, no mapping carried in `df.attrs`. Three independent planning passes each
+  proposed exactly that, purely because the glossary once called the vocabulary
+  "semantically wrong"; the text is fixed, and the rule is: renaming parts is cosmetic and
+  CPP is not changed for cosmetics. Canon: the *Feature Identification* chapter
+  (`part_vocabulary` anchor), the `part` entry in `CONTEXT.md`, and `docs/source/index/glossary.rst`.
 - **No ADR references in project code or GitHub (hard rule).** Never cite an
   ADR (`ADR-0001`, "see ADR-0001", a `docs/adr/...` path) in **any `.py` file**
   (docstrings **and** `#` comments, library **and** test) or in **GitHub**

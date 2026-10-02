@@ -50,6 +50,12 @@ version = ".".join(release.split(".")[:2])             # short X.Y, e.g. "1.1"
 rtd_version = os.environ.get("READTHEDOCS_VERSION", "")
 rtd_version_type = os.environ.get("READTHEDOCS_VERSION_TYPE", "")
 is_dev_build = rtd_version_type != "tag"
+on_rtd = os.environ.get("READTHEDOCS", "") == "True"
+
+# Canonical URL of the version being built (https://aaanalysis.readthedocs.io/en/<version>/).
+# Read the Docs sets it per build; it feeds <link rel="canonical"> so search engines
+# and citations resolve to the versioned page. Empty for local builds.
+html_baseurl = os.environ.get("READTHEDOCS_CANONICAL_URL", "")
 
 repository_url = "https://github.com/breimanntools/aaanalysis"
 pygments_style = "sphinx"
@@ -95,7 +101,11 @@ autodoc_default_options = {
     "private-members": False,
     "special-members": "",
     "inherited-members": False,  # Document members that are inherited from the base class
-    "show-inheritance": False,  # Show the base classes in the documentation for a class
+    # NOTE: "show-inheritance" is deliberately ABSENT. In autodoc_default_options a flag is
+    # enabled by the KEY'S PRESENCE, so `"show-inheritance": False` switched it ON and put a
+    # "Bases: object" line on every class page. Every public class here derives from `object`
+    # or an internal template ABC, so that line is pure noise. Do not re-add the key, and keep
+    # `:show-inheritance:` out of _templates/autosummary/class_template.rst as well.
     "ignore-module-all": False,  # Ignore __all__ when looking for members to document
     "exclude-members": "",
     "autodoc_typehints": "description",
@@ -162,9 +172,19 @@ intersphinx_mapping = {
 # -- Options for HTML output -------------------------------------------------
 html_title = "AAanalysis"
 html_theme = 'sphinx_rtd_theme'
+# Version selector. sphinx_rtd_theme >= 3.0 no longer draws the version under the
+# logo ("display_version" is gone); instead, on Read the Docs it renders a version
+# <select> in the sidebar header, filled at page-load time from the Read the Docs
+# Addons API with every *active* version (latest, stable, v1.0.0, v1.1.0, ...). The
+# list is therefore native and maintenance-free: activating a release tag in the RTD
+# dashboard (or the automation rule in .readthedocs.yaml) is all a new version needs.
+# "flyout_display": "hidden" keeps the theme from drawing a second, duplicate flyout
+# next to the Read the Docs one in the bottom-right corner.
 html_theme_options = {
     "logo_only": True,
-    "display_version": True,
+    "version_selector": True,
+    "language_selector": False,
+    "flyout_display": "hidden",
     "prev_next_buttons_location": "bottom",
     "style_external_links": False,
     "style_nav_header_background": "#343131",
@@ -176,6 +196,9 @@ html_theme_options = {
 }
 html_static_path = [os.path.join(path_source, '_static')]
 html_css_files = ['css/style.css', 'css/notebook.css']
+# Makes the sidebar version <select> keep the current page when switching versions
+# (the theme links each option to the version root). No-op outside Read the Docs.
+html_js_files = ['js/version_switch.js']
 html_show_sphinx = False
 html_logo = "_artwork/logos/logo_white_large.png"
 html_favicon = "_artwork/logos/favicon_white.svg"
@@ -191,6 +214,12 @@ html_context = {
     'is_dev_build': is_dev_build,
     'aa_release': release,
 }
+
+# The theme gates its Read the Docs integration (the addons <meta> tag and the sidebar
+# version selector) on this flag. Read the Docs used to inject it into every Sphinx
+# build; its documentation now asks projects to set it themselves.
+if on_rtd:
+    html_context["READTHEDOCS"] = True
 
 html_meta = {
     'google-site-verification': 'Rk3T0-H7cpFf5UxXiL4-LMS0WN7FIyU_3NiomozORV0',

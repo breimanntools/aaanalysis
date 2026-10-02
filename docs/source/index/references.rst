@@ -236,6 +236,10 @@ Sampling Strategies
    *Cross-validation strategies for data with temporal, spatial, hierarchical, or phylogenetic structure*,
    `Ecography <https://doi.org/10.1111/ecog.02881>`__.
 
+.. [Kaufman12] Kaufman *et al.* (2012),
+   *Leakage in data mining: formulation, detection, and avoidance*,
+   `ACM Transactions on Knowledge Discovery from Data <https://doi.org/10.1145/2382577.2382579>`__.
+
 .. [LiuDeber99] Liu L.-P., Deber C.M. (1999),
    *Combining hydrophobicity and helicity: a novel approach to membrane protein structure prediction*,
    `Bioorganic & Medicinal Chemistry <https://www.sciencedirect.com/science/article/pii/S0968089698002338>`__.

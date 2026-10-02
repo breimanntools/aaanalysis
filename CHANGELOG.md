@@ -37,6 +37,19 @@ notes — with cross-references and examples — live in
   named contract are flagged in `columns_undocumented`, and the row index is not written, so the
   CSV round-trips losslessly through plain `pd.read_csv`. Delimited text only: no new dependency,
   and no parquet path (#33).
+- `audit_leakage(df_seq=None, *, labels=None, groups=None, splits=None, X=None, names=None,
+  raise_on=None)`: inspects an evaluation setup for leakage risks and returns a plain `DataFrame`
+  of findings (`check`, `severity`, `detail`, `ids`), worst first, with the overall verdict in
+  `df_audit.attrs["status"]`. Without `splits` it audits the dataset, which is the check to run
+  before choosing a split; with `splits` it also compares the training against the test part
+  within each fold. It reports duplicate sequences, a row index, protein or group present on both
+  sides of a fold, a feature correlating with the label at `|r| >= 0.95`, an empty or strongly
+  uneven fold, and a single-class or skewed fold. Windowed input is handled correctly: `window`
+  takes precedence over the repeated parent `sequence`, so siblings are not mistaken for
+  duplicates. `raise_on` turns findings at or above a severity into a `ValueError`; the default
+  reports only and never raises. The checks are heuristic and a clean report is not a proof that
+  no leakage exists, and the severities are labels for a human reader, not a machine taxonomy
+  (#479).
 - `Docs Build (gate)` CI workflow (`.github/scripts/check_docs_build.py`): builds the
   documentation and fails on a docutils `ERROR`, so a broken reference cannot reach `master`
   silently. It parses the build log rather than Sphinx's exit code, which is `0` even with
@@ -140,6 +153,15 @@ notes — with cross-references and examples — live in
   axes' tick labels and raised `ValueError: not enough values to unpack (expected 2, got 0)`.
   Rendering is unchanged: the three `pytest-mpl` baselines are byte-identical before and after,
   and a caller-supplied `ax` is still drawn into, so multi-panel composition is unaffected.
+- `load_dataset(random=True)` is reproducible: the new `random_state` parameter seeds the
+  balanced per-class sampling, and `options['random_state']` overrides it like everywhere else
+  in the package. The function had no seed at all, so the first line of most workflows drew a
+  different sample on every call and no benchmark, tutorial or bug report using `random=True`
+  could be reproduced. The per-class draws share one `numpy.random.RandomState`, whose stream is
+  stable across numpy versions, so a given seed reproduces the same frame in another process.
+  Everything else is untouched: `random=False` (the deterministic head-of-class selection) and
+  an unseeded `random=True` are byte-identical to before, verified over all 14 bundled datasets
+  (#582).
 
 ### Changed
 - `CPP.run(n_batches=...)` (scale-axis batching) now returns output identical to the

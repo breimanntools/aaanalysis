@@ -21,17 +21,33 @@ sphinx:
 # is labelled with the version it actually documents, and a non-tag build renders the
 # "unreleased development version" banner (docs/source/_templates/layout.html).
 #
-# The rest is Read the Docs PROJECT ADMIN, not repo config -- it cannot be set from
-# this file and has to be done once in the RTD dashboard:
-#   1. Admin > Versions: activate the release tag versions (v1.0.3, ...). RTD only
-#      builds tags it has been told to activate; without this there is nothing for
-#      `stable` to point at.
-#   2. Admin > Settings > Default version: `stable` (not `latest`), so the bare
-#      https://aaanalysis.readthedocs.io/ URL and search results land readers on the
-#      newest *release* rather than the dev branch. RTD maintains the `stable` alias
-#      automatically from the highest active semver tag.
-#   3. Admin > Settings > Default branch: `master` (the `latest` alias).
+# Version selector: the sphinx_rtd_theme (>= 3.0) sidebar <select> and the Read the
+# Docs flyout are both filled at page-load time from the Read the Docs Addons API with
+# every ACTIVE version, so nothing in this repository lists versions. URLs follow the
+# standard layout:
+#   https://aaanalysis.readthedocs.io/en/latest/    master (development)
+#   https://aaanalysis.readthedocs.io/en/stable/    highest active release tag
+#   https://aaanalysis.readthedocs.io/en/v1.0.0/    exactly the v1.0.0 tag, immutable
+#
+# Which versions are active is Read the Docs PROJECT ADMIN, not repo config -- it
+# cannot be set from this file and has to be done once in the RTD dashboard
+# (https://app.readthedocs.org/dashboard/aaanalysis/):
+#   1. Versions: activate every release tag (v1.0.0, v1.0.1, v1.0.2, v1.0.3, v1.1.0).
+#      Each activation triggers a build of that tag's own commit, so its docs never
+#      change afterwards. RTD only builds tags it has been told to activate.
+#   2. Automation Rules: add one rule so future tags need no manual step --
+#        Match: Custom match  ^v\d+\.\d+\.\d+$   Version type: Tag
+#        Action: Activate version
+#      (and optionally a second rule with the same match and "Set version as default",
+#      which moves the bare https://aaanalysis.readthedocs.io/ URL to the new release).
+#   3. Settings > Default version: `stable` (not `latest`), so the bare URL and search
+#      results land readers on the newest *release* rather than the dev branch. RTD
+#      maintains the `stable` alias automatically from the highest active semver tag.
+#   4. Settings > Default branch: `master` (the `latest` alias).
+#   5. Settings > Addons: keep "Flyout" and "Version selector" enabled (default).
 # Tag naming is `vX.Y.Z`; RTD sorts `stable` by semver, so consistent tags matter.
+# Tags are built from their own commit: a tag whose docs build fails on today's RTD
+# builders cannot be repaired from master.
 
 python:
   install:

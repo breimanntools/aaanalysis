@@ -89,6 +89,7 @@ CPP signature is P1; the exploratory no-label first look is P2:
 5 engineer features            6 compositional vs positional
 7 select & reduce features     8 classifier
 9 interpretability             10 validate ("can I trust this?")
+11 benchmark ("is this number comparable?")
 ```
 
 This is a **living catalog**: append protocols as the package grows.
