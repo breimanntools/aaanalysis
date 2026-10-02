@@ -109,6 +109,7 @@ Prediction
     ModelEvaluator
     ModelEvaluatorPlot
     bind_groups
+    audit_leakage
 
 .. _protein_engineering_api:
 
