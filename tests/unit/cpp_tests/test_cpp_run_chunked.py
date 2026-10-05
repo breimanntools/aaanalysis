@@ -116,8 +116,21 @@ CONFIGS["fixed_chunks_%d" % MEM_SIZES[-1]] = (MEM_SIZES[-1], dict(n_sample_batch
 CONFIGS["scale_batched_%d" % MEM_SIZES[0]] = (MEM_SIZES[0], dict(n_batches=MEM_N_CHUNKS))
 
 
-def _peak_rss_bytes():
-    """Peak resident set size of this process (bytes on macOS, KB on Linux -> normalised)."""
+def _peak_rss_bytes(*, reset=False):
+    """Peak RSS in bytes; on Linux, optionally start a new measurement interval."""
+    if sys.platform == "linux":
+        # getrusage().ru_maxrss can retain the parent's RSS across fork/exec. A
+        # large pytest worker then hides every allocation below that inherited
+        # peak. VmHWM belongs to this interpreter's address space instead.
+        if reset:
+            # Drop import/fixture peaks too, immediately before the measured run.
+            with open("/proc/self/clear_refs", "w", encoding="ascii") as handle:
+                handle.write("5\n")
+        with open("/proc/self/status", encoding="ascii") as handle:
+            for line in handle:
+                if line.startswith("VmHWM:"):
+                    return float(line.split()[1]) * 1024.0
+        raise RuntimeError("Linux peak-RSS measurement requires VmHWM in /proc/self/status")
     import resource
     rss = float(resource.getrusage(resource.RUSAGE_SELF).ru_maxrss)
     return rss if sys.platform == "darwin" else rss * 1024.0
@@ -130,10 +143,11 @@ def _measure_in_this_process(name):
     df_parts, labels, df_scales = _build_inputs(n_samples=n_samples, n_scales=MEM_N_SCALES)
     cpp = aa.CPP(df_parts=df_parts, df_scales=df_scales, verbose=False, random_state=SEED)
     gc.collect()
-    base = _peak_rss_bytes()  # after imports and fixture construction
+    base = _peak_rss_bytes(reset=True)  # after imports and fixture construction
     cpp.run(labels=labels, n_filter=N_FILTER, n_jobs=1, **kws)
+    peak = _peak_rss_bytes()
     return dict(name=name, n_samples=n_samples, base_mb=base / 1e6,
-                peak_mb=_peak_rss_bytes() / 1e6, growth_mb=(_peak_rss_bytes() - base) / 1e6)
+                peak_mb=peak / 1e6, growth_mb=(peak - base) / 1e6)
 
 
 def _measure_in_subprocess(name):
@@ -159,7 +173,55 @@ def peaks():
 # ---------------------------------------------------------------------------
 def _growth(peaks, name):
     """Peak-RSS growth in MB attributable to ``CPP.run`` in the named configuration."""
-    return peaks[name]["growth_mb"]
+    growth = peaks[name]["growth_mb"]
+    assert growth > 0, f"No measurable peak-RSS growth for {name}: {peaks[name]}"
+    return growth
+
+
+@pytest.mark.skipif(sys.platform != "linux", reason="Linux peak-RSS accounting")
+class TestPeakRssMeasurement:
+    """A startup allocation must not hide a smaller allocation during the measured run."""
+
+    def test_growth_excludes_the_parent_process_peak(self):
+        import inspect
+
+        # Execute the real counter in a lightweight child, after a deliberately larger
+        # allocation in its parent. Linux retains that pre-exec peak in getrusage().
+        probe = ("import json, sys\n" + inspect.getsource(_peak_rss_bytes) +
+                 "\nbase = _peak_rss_bytes()\n"
+                 "memory = bytearray(16 * 1024 ** 2)\n"
+                 "print(json.dumps((_peak_rss_bytes() - base) / 1e6))\n")
+        launcher = ("import os, sys\n"
+                    "memory = bytearray(64 * 1024 ** 2)\n"
+                    f"os.execv(sys.executable, [sys.executable, '-c', {probe!r}])\n")
+        result = subprocess.run([sys.executable, "-c", launcher], check=True,
+                                capture_output=True, text=True, timeout=30)
+        assert 12.0 <= json.loads(result.stdout) <= 24.0, result.stdout
+
+    def test_growth_excludes_a_larger_startup_peak(self, monkeypatch):
+        import mmap
+
+        def allocate(n_bytes):
+            # Private anonymous pages are released on close, independently of Python's allocator.
+            with mmap.mmap(-1, n_bytes, flags=mmap.MAP_PRIVATE) as memory:
+                for offset in range(0, n_bytes, mmap.PAGESIZE):
+                    memory[offset] = 1
+
+        def build_inputs(**kwargs):
+            allocate(64 * 1024 ** 2)
+            return None, None, None
+
+        class MeasuredCPP:
+            def __init__(self, **kwargs):
+                pass
+
+            def run(self, **kwargs):
+                allocate(16 * 1024 ** 2)
+
+        monkeypatch.setattr(sys.modules[__name__], "_build_inputs", build_inputs)
+        monkeypatch.setattr(aa, "CPP", MeasuredCPP)
+        result = _measure_in_this_process("in_memory_100")
+        assert 12.0 <= result["growth_mb"] <= 24.0, result
 
 
 # Marked slow: eight fresh interpreters, each importing aaanalysis, building the memory fixture and
@@ -170,10 +232,12 @@ def _growth(peaks, name):
 class TestCPPRunChunkedPeakMemory:
     """What sample batching does and does not bound, measured across three total-input sizes.
 
-    Each subprocess reports ``ru_maxrss`` (bytes on macOS, KB on Linux) right before ``CPP.run``
-    (after imports and fixture construction) and again afterwards; the difference is the growth
-    attributable to the run. Measuring one configuration per process removes the order dependence
-    that a single-process measurement has (the first run warms the instance cache).
+    Each subprocess reports peak RSS right before ``CPP.run`` (after imports and fixture
+    construction) and again afterwards; the difference is the growth attributable to the run.
+    Linux uses ``VmHWM``, reset to current RSS before the run so neither an inherited pre-exec
+    peak nor an import/fixture peak can hide the measured allocations. macOS uses ``ru_maxrss``
+    (bytes). Measuring one configuration per process removes the order dependence that a
+    single-process measurement has (the first run warms the instance cache).
 
     Measured on the memory fixture (24 scales, 40-residue sequences, default parts and splits,
     ``n_filter=20``, ``n_jobs=1``), macOS / Python 3.13. 23760 candidate features and 1188
