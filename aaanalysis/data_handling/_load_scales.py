@@ -229,6 +229,8 @@ def load_scales(name: Literal["scales", "scales_raw", "scales_cat", "scales_pc",
       reduction. With ``top_explain_min_th`` set, the AAclust reduction (and a ``just_aaindex=True``
       post-filter) may leave a selected subcategory with no representative scale, so the reduced set is
       not guaranteed to cover every subcategory in the tier.
+      To preserve all input subcategories, apply :meth:`AAclust.filter_coverage` with
+      ``min_coverage=100`` to the unreduced tier (``top_explain_min_th=None``).
 
     See Also
     --------
