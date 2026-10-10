@@ -201,7 +201,7 @@ def load_scales(name: Literal["scales", "scales_raw", "scales_cat", "scales_pc",
         .. versionadded:: 1.1.0
     top_explain_min_th : float, optional
         AAclust redundancy-reduction threshold (one of 0.3, ..., 0.9) layered on ``top_explain_n``;
-        ``None`` (default) keeps the full set. See Notes.
+        ``None`` (default) keeps the full set. See Examples for a heatmap of remaining scale counts.
 
         .. versionadded:: 1.1.0
 
