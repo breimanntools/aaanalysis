@@ -31,7 +31,7 @@ jobs:
   # Pick the matrix by event so the PR gate stays fast (the merge-blocking check):
   #   - pull_request -> floor+ceiling Python on both OSes (4 jobs, ~5 min) and the
   #     heavy `slow` tier is deselected (it runs in the coverage job + nightly).
-  #   - push to master -> the full Linux 3.10-3.14 range + Windows brackets (7 jobs),
+  #   - push to master -> the full Linux 3.11-3.14 range + Windows brackets (6 jobs),
   #     so every supported interpreter is still exercised once changes land.
   configure:
     runs-on: ubuntu-latest
@@ -42,9 +42,9 @@ jobs:
         shell: bash
         run: |
           if [ "${{ github.event_name }}" = "pull_request" ]; then
-            echo 'matrix={"include":[{"os":"ubuntu-latest","python-version":"3.10"},{"os":"ubuntu-latest","python-version":"3.14"},{"os":"windows-2022","python-version":"3.10"},{"os":"windows-2022","python-version":"3.14"}]}' >> "$GITHUB_OUTPUT"
+            echo 'matrix={"include":[{"os":"ubuntu-latest","python-version":"3.11"},{"os":"ubuntu-latest","python-version":"3.14"},{"os":"windows-2022","python-version":"3.11"},{"os":"windows-2022","python-version":"3.14"}]}' >> "$GITHUB_OUTPUT"
           else
-            echo 'matrix={"include":[{"os":"ubuntu-latest","python-version":"3.10"},{"os":"ubuntu-latest","python-version":"3.11"},{"os":"ubuntu-latest","python-version":"3.12"},{"os":"ubuntu-latest","python-version":"3.13"},{"os":"ubuntu-latest","python-version":"3.14"},{"os":"windows-2022","python-version":"3.10"},{"os":"windows-2022","python-version":"3.14"}]}' >> "$GITHUB_OUTPUT"
+            echo 'matrix={"include":[{"os":"ubuntu-latest","python-version":"3.11"},{"os":"ubuntu-latest","python-version":"3.12"},{"os":"ubuntu-latest","python-version":"3.13"},{"os":"ubuntu-latest","python-version":"3.14"},{"os":"windows-2022","python-version":"3.11"},{"os":"windows-2022","python-version":"3.14"}]}' >> "$GITHUB_OUTPUT"
           fi
 
   # Is there anything in this PR a code check cares about? On a docs-only diff the

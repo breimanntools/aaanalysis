@@ -102,6 +102,13 @@ Changed
 
 Fixed
 ~~~~~
+- **Benchmark and dependency updates**: the optional ``bench`` extra constrains pytest
+  below 9.2 while pytest-benchmark still uses a removed private attribute. This fixes
+  benchmark setup failures without constraining ordinary unit-test installations.
+  Security updates raise the Pillow, setuptools, nbconvert, urllib3 and Black minimums
+  and refresh vulnerable transitive packages in the lockfile. **Python 3.11+ is now
+  required** because the patched Pillow and filelock releases do not support Python
+  3.10; test matrices and wheel builds use the same minimum.
 - **Non-finite parameters**: every numeric parameter is checked for finiteness in the shared
   validator, so ``float("nan")``, ``inf`` and ``-inf`` raise a ``ValueError`` naming the parameter
   instead of passing the range test and producing a ``NaN`` result several layers below the call.

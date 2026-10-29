@@ -115,7 +115,7 @@ python dev_scripts/dev_aa_window_sampler.py
   or discard changes you did not make — stop and surface unexpected edits instead.
 - Keep PRs small and focused; rebase on `master`.
 - Never merge if `pytest tests` fails on Linux *or* Windows. CI runs the
-  full matrix py 3.10–3.14 on Linux; Windows brackets min+max (3.10 + 3.14),
+  full matrix py 3.11–3.14 on Linux; Windows brackets min+max (3.11 + 3.14),
   with the full Windows range in the nightly.
 - **Issue lifecycle / `Closes #NN`.** A closing keyword
   (`Closes`/`Fixes`/`Resolves #NN`) auto-closes the issue on merge to `master`

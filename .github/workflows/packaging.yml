@@ -28,11 +28,11 @@ jobs:
       fail-fast: false
       matrix:
         # Min + max supported Python (matches the unit-matrix brackets). The wheel
-        # carries the compiled Cython extension, so it is ABI-specific (cp310 vs
+        # carries the compiled Cython extension, so it is ABI-specific (cp311 vs
         # cp314) — each leg builds and installs its own wheel; a single wheel cannot
         # cover the matrix. The sdist is portable, but is built + installed per leg
         # too so the source build is exercised on both interpreters.
-        python-version: ['3.10', '3.14']
+        python-version: ['3.11', '3.14']
 
     steps:
       - uses: actions/checkout@v6

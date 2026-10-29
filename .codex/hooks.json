@@ -1,0 +1,18 @@
+{
+  "hooks": {
+    "Stop": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "cd \"$(git rev-parse --show-toplevel)\" && python3 \".github/scripts/set_session_title.py\" 2>/dev/null || true"
+          },
+          {
+            "type": "command",
+            "command": "cd \"$(git rev-parse --show-toplevel)\" && python3 \".github/scripts/agent_readiness_hook.py\""
+          }
+        ]
+      }
+    ]
+  }
+}

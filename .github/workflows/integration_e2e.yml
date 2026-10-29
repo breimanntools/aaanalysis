@@ -72,7 +72,7 @@ jobs:
     strategy:
       fail-fast: true
       matrix:
-        python-version: ['3.10', '3.14']  # bracket the supported range
+        python-version: ['3.11', '3.14']  # bracket the supported range
 
     steps:
     - uses: actions/checkout@v6

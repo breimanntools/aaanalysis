@@ -144,6 +144,9 @@ notes — with cross-references and examples — live in
   domain level's `is_best` column is now routed through `COL_IS_BEST` (no output change).
 
 ### Fixed
+- Restore the performance gate with a benchmark-only `pytest<9.2` compatibility bound;
+  update vulnerable dependencies and the lockfile. Python 3.11+ is now required so
+  patched Pillow and filelock releases can be installed; CI and wheel builds match.
 - A `CPPPlot` method that is not handed an `ax` now always creates its own figure. It used to
   reuse whatever figure happened to be open and return no axes with it, so the plot was drawn
   into the *previous* figure's current axes. Interactively this never showed, because
