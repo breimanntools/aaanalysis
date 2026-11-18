@@ -144,6 +144,8 @@ notes — with cross-references and examples — live in
   domain level's `is_best` column is now routed through `COL_IS_BEST` (no output change).
 
 ### Fixed
+- Update the docs/notebook dependencies to patched Soup Sieve and Tornado releases;
+  require Python 3.11.5+ so the lockfile cannot retain a vulnerable Soup Sieve fallback.
 - Restore the performance gate with a benchmark-only `pytest<9.2` compatibility bound;
   update vulnerable dependencies and the lockfile. Python 3.11+ is now required so
   patched Pillow and filelock releases can be installed; CI and wheel builds match.

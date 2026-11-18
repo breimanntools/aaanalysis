@@ -102,6 +102,12 @@ Changed
 
 Fixed
 ~~~~~
+- **Notebook dependency security**: require Soup Sieve 4.0+ and Tornado 6.6.1+
+  in the ``docs`` extra (also installed by ``dev``), addressing three Soup Sieve
+  denial-of-service advisories and Tornado's open-redirect advisory. The lockfile
+  selects Soup Sieve 4.1.1 and Tornado 6.6.1. **Python 3.11.5+ is now required**
+  because patched Soup Sieve releases cannot run on Python 3.11.0 through 3.11.4;
+  retaining those interpreters would retain a vulnerable fallback in the lockfile.
 - **Benchmark and dependency updates**: the optional ``bench`` extra constrains pytest
   below 9.2 while pytest-benchmark still uses a removed private attribute. This fixes
   benchmark setup failures without constraining ordinary unit-test installations.

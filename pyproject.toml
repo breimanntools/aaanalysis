@@ -27,7 +27,7 @@ name = "aaanalysis"
 version = "1.2.0"
 description = "Python framework for interpretable protein prediction"
 readme = "README.rst"
-requires-python = ">=3.11"
+requires-python = ">=3.11.5"
 license = { text = "BSD-3-Clause" }
 authors = [{ name = "Stephan Breimann", email = "stephanbreimann@gmail.de" }]
 keywords = ["protein", "prediction", "bioinformatics", "machine learning", "interpretable AI"]
@@ -125,6 +125,9 @@ docs = [
   "aaanalysis[pro]",
   "docutils==0.21.2",
   "nbconvert>=7.17.2",
+  # Security floors for nbconvert's HTML parsing and Jupyter dependencies.
+  "soupsieve>=4.0",
+  "tornado>=6.6.1",
   "nbformat==5.10.4",
   "nbsphinx==0.9.6",
   "numpydoc==1.8.0",
